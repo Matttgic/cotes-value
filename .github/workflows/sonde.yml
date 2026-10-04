@@ -1,0 +1,32 @@
+name: Sonde PulseScore
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sonde:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Interroger PulseScore
+        env:
+          PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
+        run: python scripts/sonde_pulsescore.py
+      - name: Déposer les résultats sur la branche « sonde »
+        run: |
+          mv sonde /tmp/sonde
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan sonde
+          git rm -rq --cached . && git clean -fdq
+          cp -r /tmp/sonde/. .
+          git add -A
+          git commit -qm "Sonde PulseScore $(date -u +%FT%TZ)"
+          git push -f origin sonde
