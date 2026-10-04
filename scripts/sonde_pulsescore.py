@@ -20,9 +20,14 @@ import requests
 
 BASE = "https://api.pulsescore.net/api"
 OUT = Path("sonde")
-BOOKS = ["winamax", "betclic", "unibet-fr", "pmu", "netbet"]
-EXTRA_SPORTS = {"winamax": ["basketball", "tennis", "ice-hockey", "handball"],
-                "betclic": ["basketball", "tennis", "ice-hockey", "handball"]}
+# plan de sonde : bookmaker -> sports (variable SONDE_PLAN en JSON pour le changer sans modifier le code)
+PLAN = json.loads(os.environ.get("SONDE_PLAN") or "null") or {
+    "winamax": ["soccer", "basketball", "tennis", "ice-hockey", "handball"],
+    "betclic": ["soccer", "basketball", "tennis", "ice-hockey", "handball"],
+    "unibet-fr": ["soccer"], "pmu": ["soccer"], "netbet": ["soccer"]}
+# fiche complète d'un match (bookmaker, sport) et résultats à tester
+DETAIL = os.environ.get("SONDE_DETAIL", "winamax/soccer")
+RESULTATS = os.environ.get("SONDE_RESULTATS", "winamax")
 
 
 def get(session: requests.Session, path: str, params: dict | None = None):
@@ -87,9 +92,9 @@ def main() -> int:
     OUT.mkdir(exist_ok=True)
     report = {"date_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "requetes": [], "bookmakers": {}}
 
-    for bm in BOOKS:
+    for bm, sports in PLAN.items():
         info = {}
-        for sport in ["soccer"] + EXTRA_SPORTS.get(bm, []):
+        for sport in sports:
             data, meta = get(s, f"{bm}/{sport}/events", {"page": 1, "limit": 30})
             report["requetes"].append(meta)
             time.sleep(1.2)
@@ -101,23 +106,27 @@ def main() -> int:
                            **summarize_events(data["events"])}
         report["bookmakers"][bm] = info
 
-    # un match complet (Winamax, foot) pour comparer avec la version « liste »
+    # un match complet pour comparer avec la version « liste » (le match le plus fourni de la page)
+    bm_d, sp_d = DETAIL.split("/")
     try:
-        ev = json.loads(gzip.open(OUT / "brut" / "winamax_soccer_p1.json.gz", "rt").read())["events"][0]
-        data, meta = get(s, f"winamax/soccer/events/{ev['eventId']}")
+        evs = json.loads(gzip.open(OUT / "brut" / f"{bm_d}_{sp_d}_p1.json.gz", "rt").read())["events"]
+        ev = max(evs, key=lambda e: len(e.get("markets") or []))
+        time.sleep(1.2)
+        data, meta = get(s, f"{bm_d}/{sp_d}/events/{ev['eventId']}")
         report["requetes"].append(meta)
         if isinstance(data, dict) and data.get("data"):
-            save_raw("winamax_soccer_un_match", data)
-            report["winamax_un_match"] = {"eventId": ev["eventId"], "marches_liste": len(ev.get("markets") or []),
-                                          "marches_detail": len(data["data"].get("markets") or [])}
+            save_raw(f"{bm_d}_{sp_d}_un_match", data)
+            report["un_match"] = {"bookmaker": bm_d, "eventId": ev["eventId"], "marches_liste": len(ev.get("markets") or []),
+                                  "marches_detail": len(data["data"].get("markets") or [])}
     except (FileNotFoundError, KeyError, IndexError, ValueError) as e:
-        report["winamax_un_match"] = {"erreur": str(e)}
+        report["un_match"] = {"erreur": str(e)}
 
     # résultats (règlement des paris)
-    data, meta = get(s, "winamax/results", {"sport": "soccer", "page": 1, "limit": 30})
+    time.sleep(1.2)
+    data, meta = get(s, f"{RESULTATS}/results", {"sport": "soccer", "page": 1, "limit": 30})
     report["requetes"].append(meta)
     if data is not None:
-        save_raw("winamax_results_soccer", data)
+        save_raw(f"{RESULTATS}_results_soccer", data)
         items = data.get("results") or data.get("events") or data.get("data") if isinstance(data, dict) else None
         report["resultats"] = {"cles": sorted(data) if isinstance(data, dict) else type(data).__name__,
                                "exemple": (items or [None])[0] if isinstance(items, list) else None}
