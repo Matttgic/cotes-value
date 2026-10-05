@@ -16,6 +16,9 @@ def _lire(chemin: Path, defaut):
         return defaut
 
 
+PARIS_AFFICHES = 600
+
+
 def construire(donnees: Path, sortie: Path) -> Path:
     paris = _lire(donnees / "paris.json", [])
     etat = _lire(donnees / "etat.json", {})
@@ -25,7 +28,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
     groupes = [{k: g.get(k) for k in ("bookmaker", "sport", "marche", "periode", "type", "n", "mediane",
                                       "part_haute", "statut", "exemples", "dispersion", "dispersion_autre_periode")} for g in ctl.get("groupes", {}).values()]
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
-    data = {"paris": paris, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris), "controle": controle,
+    # page légère sur mobile : la liste ne garde que les paris récents (et tous ceux à régler à la main) ;
+    # le bilan, lui, est calculé sur tous les paris
+    recents = sorted(paris, key=lambda p: p.get("detecte") or "", reverse=True)
+    liste = recents[:PARIS_AFFICHES] + [p for p in recents[PARIS_AFFICHES:] if p.get("statut") == "a_regler"]
+    data = {"paris": liste, "paris_total": len(paris), "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris), "controle": controle,
             "simulations": {k: v["nom"] for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
@@ -205,6 +212,8 @@ for (const p of D.paris) {
 }
 const fiches = [...groupes.values()].sort((a,b) => (b.detecte||"").localeCompare(a.detecte||""));
 document.getElementById("nb-paris").textContent = fiches.length || "";
+if (D.paris_total > D.paris.length) document.getElementById("paris").insertAdjacentHTML("beforebegin",
+  `<p class="aide">Les ${D.paris.length} paris les plus récents sur ${D.paris_total} (le bilan compte tous les paris).</p>`);
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
   book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
