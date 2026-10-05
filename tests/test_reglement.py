@@ -50,6 +50,9 @@ def test_hockey_temps_reglementaire():
     assert s["TEMPS_REG"] == (2, 2)
     assert regler(p("RESULTAT_1N2", "NUL", periode="TEMPS_REG"), s) == "gagne"
     assert regler(p("VAINQUEUR", "DOM"), s) == "gagne"
+    assert regler(p("TOTAL", "PLUS", 4.5), s) == "gagne"             # prolongation incluse
+    tab = scores_par_periode("hockey", (3, 2), [(1, 1), (0, 1), (1, 0), (0, 0), (1, 0)], ["1", "2", "3", "OT", "SO"])
+    assert regler(p("TOTAL", "PLUS", 4.5), tab) is None               # tirs au but : à régler à la main
 
 
 def test_tennis():

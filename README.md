@@ -42,7 +42,7 @@ Toutes les 15 minutes (`scripts/cycle.py`) :
    **X** cotes > 10 (≥ 3 %). La cote juste est suivie jusqu'au coup d'envoi (**CLV**).
 6. **Règlement** (`cotes/reglement.py`) avec les résultats PulseScore du bookmaker du pari ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
-7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages.
+7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages, en onglets : À jouer, Bilan, Paris, À régler.
 
 ## Mise en route
 

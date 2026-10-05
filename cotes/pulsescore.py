@@ -144,6 +144,14 @@ def periode(sport: str, canonique: str | None, libelle: str) -> str | None:
             "THIRD_QUARTER": "QT3", "FOURTH_QUARTER": "QT4", "FIRST_SET": "SET1", "SECOND_SET": "SET2"}.get(c)
 
 
+# Hockey, marchés du match entier : prolongation incluse ou non selon le bookmaker.
+# Winamax : « Nombre de buts » prolongations incluses (vérifié sur winamax.fr le 05/10/2026).
+# Ailleurs, sans précision dans le libellé, la règle est inconnue : ces marchés ne sont pas comparés.
+PROLONGATION_INCLUSE = {"winamax": {"TOTAL", "TOTAL_DOM", "TOTAL_EXT"}}
+# marchés où le nul existe : forcément sur le temps réglementaire
+MARCHES_AVEC_NUL = {"RESULTAT_1N2", "DOUBLE_CHANCE", "DRAW_NO_BET", "HANDICAP_3", "HALF_TIME_FULL_TIME"}
+
+
 def _temps_reglementaire(libelle: str) -> bool:
     l = (libelle or "").lower()
     return any(x in l for x in ("t. rég", "tps rég", "temps réglementaire", "regular time", "60 min", "(rt)"))
@@ -182,10 +190,12 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str) -> list[dict]:
         for marche, ligne, issue, s in _marche(canon, libelle, sels, sport, dom, ext):
             p = per
             if sport == "hockey" and per == "MATCH":
-                if marche == "RESULTAT_1N2" or _temps_reglementaire(libelle):
+                if marche in MARCHES_AVEC_NUL or _temps_reglementaire(libelle):
                     p = "TEMPS_REG"
-                elif marche not in ("VAINQUEUR",):
-                    p = "MATCH?"            # prolongation incluse ou non : règle inconnue -> pas comparé
+                elif marche == "VAINQUEUR" or marche in PROLONGATION_INCLUSE.get(bookmaker, ()):
+                    p = "MATCH"             # prolongation (et tirs au but) inclus
+                else:
+                    p = "MATCH?"            # règle inconnue -> pas comparé
             out.append({**base, "marche": marche, "periode": p, "ligne": ligne, "issue": issue,
                         "cote": float(s["odds"]), "libelle": libelle, "cle_marche": f"{bookmaker}|{m.get('marketId')}",
                         "achat": s.get("back"), "vente": s.get("lay")})

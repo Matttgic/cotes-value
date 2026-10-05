@@ -49,8 +49,13 @@ def test_hockey_prolongation():
     tot = {"canonicalMarket": "OVER_UNDER", "period": "FULL_TIME", "rawName": "Nombre total de buts (tps rég.)",
            "selections": [sel("OVER", "+ de 5,5", 1.9, 5.5), sel("UNDER", "- de 5,5", 1.9, 5.5)]}
     tot2 = {**tot, "rawName": "Nombre de buts"}
+    dc = {"canonicalMarket": "DOUBLE_CHANCE", "period": "FULL_TIME", "rawName": "Double chance",
+          "selections": [sel("HOME_DRAW", "A ou nul", 1.3), sel("DRAW_AWAY", "B ou nul", 1.6)]}
     assert {l["periode"] for l in traduire(ev([tot]), "betclic", "hockey", "t")} == {"TEMPS_REG"}
-    assert {l["periode"] for l in traduire(ev([tot2]), "winamax", "hockey", "t")} == {"MATCH?"}
+    # Winamax : nombre de buts prolongations incluses (vérifié sur le site)
+    assert {l["periode"] for l in traduire(ev([tot2]), "winamax", "hockey", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([tot2]), "pmu", "hockey", "t")} == {"MATCH?"}
+    assert {l["periode"] for l in traduire(ev([dc]), "winamax", "hockey", "t")} == {"TEMPS_REG"}
 
 
 def test_pinnacle_specials():

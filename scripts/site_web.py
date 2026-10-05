@@ -1,10 +1,9 @@
-"""Génère le site (une page HTML autonome) à partir des données de la branche « donnees »."""
+"""Génère le site (une page HTML autonome, en onglets) à partir des données de la branche « donnees »."""
 from __future__ import annotations
 
 import json
-from pathlib import Path
-
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import REFERENCES, SIMULATIONS, bilan  # noqa: E402
@@ -37,182 +36,209 @@ MODELE = r"""<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value</title>
 <style>
-:root{--fond:#f6f7f9;--carte:#fff;--texte:#1d2330;--doux:#5d6677;--ligne:#e3e6ec;--accent:#2457d6;
---vert:#0f8a4b;--vert-f:#e3f5ea;--rouge:#c23434;--rouge-f:#fbe7e7;--jaune:#9a6a00;--jaune-f:#fff4d6}
-@media (prefers-color-scheme:dark){:root{--fond:#12151b;--carte:#1b1f27;--texte:#e7eaf0;--doux:#9aa3b2;
---ligne:#2c323d;--accent:#7aa2ff;--vert:#4cc98a;--vert-f:#173525;--rouge:#ff7b7b;--rouge-f:#3a1d1f;
---jaune:#f0c35a;--jaune-f:#3a3018}}
+:root{--fond:#f5f6f8;--carte:#fff;--texte:#1b2130;--doux:#677084;--ligne:#e4e7ec;--accent:#2457d6;
+--accent-f:#e8eefc;--vert:#0f8a4b;--vert-f:#e2f4e9;--rouge:#c23434;--rouge-f:#fbe6e6;--jaune:#8f6200;--jaune-f:#fff3d1}
+@media (prefers-color-scheme:dark){:root{--fond:#111419;--carte:#1a1e26;--texte:#e6e9ef;--doux:#9aa2b1;
+--ligne:#2a303b;--accent:#7ea4ff;--accent-f:#1f2a44;--vert:#4ec88a;--vert-f:#16321f;--rouge:#ff8080;
+--rouge-f:#3a1c1e;--jaune:#f0c35a;--jaune-f:#36301b}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--fond);color:var(--texte);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{padding:20px 16px 8px;max-width:1200px;margin:auto}
-h1{font-size:22px;margin:0 0 4px}
-h2{font-size:17px;margin:0 0 10px}
-.sous{color:var(--doux);font-size:13px}
-main{max-width:1200px;margin:auto;padding:0 16px 40px}
-section{background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:16px;margin:14px 0}
-.defile{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{border-collapse:collapse;width:100%;font-size:13.5px}
-th,td{padding:7px 8px;border-bottom:1px solid var(--ligne);text-align:left;white-space:nowrap}
-th{color:var(--doux);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
-td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-.pari{white-space:normal;min-width:180px}
-.pos{color:var(--vert);font-weight:600}.neg{color:var(--rouge);font-weight:600}
-.etiq{display:inline-block;padding:1px 7px;border-radius:999px;font-size:12px;font-weight:600}
+body{margin:0;background:var(--fond);color:var(--texte);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.haut{position:sticky;top:0;z-index:5;background:var(--fond);border-bottom:1px solid var(--ligne)}
+.titre{max-width:760px;margin:auto;padding:12px 16px 6px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+h1{font-size:18px;margin:0}
+.maj{color:var(--doux);font-size:12.5px}
+nav{max-width:760px;margin:auto;padding:0 12px 8px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav button{flex:none;font:inherit;font-size:14px;padding:7px 12px;border-radius:999px;border:1px solid var(--ligne);
+background:var(--carte);color:var(--texte);cursor:pointer}
+nav button.actif{background:var(--accent);border-color:var(--accent);color:#fff}
+nav .nb{font-size:12px;opacity:.75;margin-left:3px}
+main{max-width:760px;margin:auto;padding:12px 16px 40px}
+.onglet{display:none}.onglet.actif{display:block}
+.aide{color:var(--doux);font-size:13px;margin:0 0 10px}
+.carte{background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.l1{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--doux)}
+.l1 .match{color:var(--texte);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.l1 .quand{flex:none}
+.l2{margin:3px 0 6px;font-size:15px}
+.l3{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;font-size:13.5px}
+.l3 i{font-style:normal;color:var(--doux);font-size:12px}
+.ecart{margin-left:auto;font-weight:700;color:var(--vert)}
+.l4{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-size:12px;color:var(--doux);align-items:center}
+.badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:12px;font-weight:600;background:var(--accent-f);color:var(--accent)}
 .gagne,.demi_gagne{background:var(--vert-f);color:var(--vert)}
 .perdu,.demi_perdu{background:var(--rouge-f);color:var(--rouge)}
 .en_cours,.rembourse{background:var(--ligne);color:var(--doux)}
 .a_regler{background:var(--jaune-f);color:var(--jaune)}
-.grille td{text-align:center;white-space:normal;min-width:92px}
-.grille td.ref{text-align:left;font-weight:600}
-.grille .roi{font-size:16px;font-weight:700}
-.grille .det{font-size:12px;color:var(--doux)}
-.filtres{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-select,button{font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--ligne);
-background:var(--carte);color:var(--texte)}
-button{cursor:pointer;background:var(--accent);color:#fff;border:0}
-.vide{color:var(--doux);padding:8px 0}
-.indic{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-.indic div{background:var(--carte);border:1px solid var(--ligne);border-radius:10px;padding:8px 12px;font-size:13px}
-.indic b{display:block;font-size:17px}
-details summary{cursor:pointer;color:var(--doux);font-size:13px;margin-top:6px}
-.heure{display:block;color:var(--doux);font-size:12px}
-@media (max-width:720px){
- table.fiches tr:first-child{display:none}
- table.fiches tr{display:block;border:1px solid var(--ligne);border-radius:10px;margin:0 0 10px;padding:6px 10px}
- table.fiches td{display:flex;justify-content:space-between;gap:12px;border:0;padding:3px 0;white-space:normal;text-align:right}
- table.fiches td::before{content:attr(data-l);color:var(--doux);font-size:12px;text-align:left;flex:none}
- table.fiches td.pari{min-width:0}
-}
+.pos{color:var(--vert)}.neg{color:var(--rouge)}
+.vide{color:var(--doux);text-align:center;padding:30px 10px}
+.puces{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
+.puces button,select,.btn{flex:none;font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--ligne);
+background:var(--carte);color:var(--texte);cursor:pointer}
+.puces button.actif{border-color:var(--accent);color:var(--accent);font-weight:600}
+.btn{background:var(--accent);border-color:var(--accent);color:#fff}
+table{width:100%;border-collapse:collapse;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--ligne);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (max-width:480px){th,td{padding:8px 6px;font-size:13px}}
+th{font-size:12px;color:var(--doux);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+tr:last-child td{border-bottom:0}
+td small{display:block;color:var(--doux);font-size:11.5px}
+.filtres{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
+.infos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
+.infos div{background:var(--carte);border:1px solid var(--ligne);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--doux)}
+.infos b{display:block;color:var(--texte);font-size:16px}
 </style>
 </head>
 <body>
-<header>
-<h1>Cotes Value</h1>
-<div class="sous" id="maj"></div>
-<div class="indic" id="indic"></div>
-</header>
-<main>
-<section>
-<h2>À jouer maintenant</h2>
-<div class="sous" style="margin-bottom:8px">Cotes françaises au-dessus de la cote juste d'au moins une référence, au dernier passage.
-L'écart = cote × probabilité juste − 1.</div>
-<div class="defile"><table id="actuelles" class="fiches"></table></div>
-</section>
-<section>
-<h2>Bilan des simulations (10 € par pari)</h2>
-<div class="sous" style="margin-bottom:8px">ROI des paris réglés · nombre de paris (dont en cours) · gain · CLV moyenne
-(écart entre la cote prise et la cote juste juste avant le match : positive = on a battu le marché).</div>
-<div class="defile"><table class="grille" id="grille"></table></div>
-</section>
-<section>
-<h2>Paris simulés</h2>
-<div class="filtres">
-<select id="f-sim"></select><select id="f-ref"></select><select id="f-book"></select>
-<select id="f-sport"></select><select id="f-statut"></select>
+<div class="haut">
+  <div class="titre"><h1>Cotes Value</h1><span class="maj" id="maj"></span></div>
+  <nav id="onglets">
+    <button data-o="jouer">À jouer<span class="nb" id="nb-jouer"></span></button>
+    <button data-o="bilan">Bilan</button>
+    <button data-o="paris">Paris<span class="nb" id="nb-paris"></span></button>
+    <button data-o="regler">À régler<span class="nb" id="nb-regler"></span></button>
+  </nav>
 </div>
-<div class="defile"><table id="paris" class="fiches"></table></div>
-<div class="sous" id="nb-paris"></div>
-</section>
-<section>
-<h2>Paris à régler à la main</h2>
-<div class="sous" style="margin-bottom:8px">Résultat introuvable automatiquement (corners, match absent des résultats…).
-Copiez la liste et collez-la à Claude : il cherchera les résultats et les enregistrera.</div>
-<button id="copier">Copier la liste</button>
-<div class="defile"><table id="manuels" class="fiches"></table></div>
-</section>
+<main>
+  <section class="onglet" id="o-jouer">
+    <p class="aide">Cotes françaises au-dessus de la cote juste d'une référence, au dernier passage.</p>
+    <div id="jouer"></div>
+  </section>
+  <section class="onglet" id="o-bilan">
+    <div class="puces" id="puces-ref"></div>
+    <table id="bilan"></table>
+    <p class="aide" style="margin-top:8px">10 € par pari. ROI sur les paris réglés. CLV : écart entre la cote prise et la cote
+    juste juste avant le match (positive = on a battu le marché ; c'est l'indicateur le plus rapide à devenir fiable).</p>
+    <div class="infos" id="infos"></div>
+  </section>
+  <section class="onglet" id="o-paris">
+    <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
+    <select id="f-book"></select><select id="f-sport"></select></div>
+    <div id="paris"></div>
+    <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
+  </section>
+  <section class="onglet" id="o-regler">
+    <p class="aide">Résultat introuvable automatiquement. Copiez la liste et collez-la à Claude : il cherchera les
+    résultats et les enregistrera.</p>
+    <p><button class="btn" id="copier">Copier la liste</button></p>
+    <div id="regler"></div>
+  </section>
 </main>
 <script>
 const D = __DONNEES__;
-const fmtE = x => (x>0?"+":"") + x.toFixed(2).replace(".", ",") + " €";
-const fmtP = x => x==null ? "—" : (x>0?"+":"") + (100*x).toFixed(1).replace(".", ",") + " %";
-const fmtC = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
-const heure = s => { if(!s) return "—"; const d=new Date(s);
-  return d.toLocaleString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); };
+const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cote = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
+const pct = x => x==null ? "—" : (x>0?"+":"") + (100*x).toFixed(1).replace(".", ",") + " %";
+const eur = x => (x>0?"+":"") + Number(x).toFixed(2).replace(".", ",") + " €";
+const quand = s => s ? new Date(s).toLocaleString("fr-FR",{weekday:"short",day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
 const hm = s => s ? new Date(s).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "";
-const classe = x => x==null ? "" : (x>0 ? "pos" : x<0 ? "neg" : "");
+const signe = x => x==null ? "" : x>0 ? "pos" : x<0 ? "neg" : "";
 const STATUTS = {en_cours:"En cours",gagne:"Gagné",perdu:"Perdu",rembourse:"Remboursé",demi_gagne:"½ gagné",
   demi_perdu:"½ perdu",a_regler:"À régler"};
-const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const lire = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const ecrire = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
 
-// en-tête
+// --- en-tête et onglets
 const dc = (D.etat||{}).dernier_cycle || {};
-document.getElementById("maj").textContent = dc.debut ? "Dernière mise à jour : " + heure(dc.debut) +
-  (dc.mode==="test" ? " (cycle de test)" : "") : "Pas encore de données.";
-const moisCourant = new Date().toISOString().slice(0,7);
-const req = ((D.etat||{}).requetes_par_mois||{})[moisCourant] || 0;
-const nbRegles = D.paris.filter(p => !["en_cours","a_regler"].includes(p.statut)).length;
-document.getElementById("indic").innerHTML = [
-  ["Cotes françaises lues", (dc.cotes||{}).francaises ?? "—"], ["Matchs", dc.matchs_francais ?? "—"],
-  ["Erreurs détectées", dc.opportunites ?? "—"], ["Paris simulés", D.paris.length],
-  ["Paris réglés", nbRegles], ["Requêtes PulseScore ce mois", req]
-].map(([a,b]) => `<div>${a}<b>${b}</b></div>`).join("");
-
-// à jouer maintenant
-const act = D.actuelles;
-document.getElementById("actuelles").innerHTML = act.length ? `<tr><th>Début</th><th>Match</th><th>Pari</th>
-<th>Cote française</th><th>Cote juste (référence)</th><th class="num">Écart</th></tr>` +
- act.map(o => `<tr><td data-l="Début">${heure(o.debut)}</td><td data-l="Match">${e(o.domicile)} – ${e(o.exterieur)}</td>
-<td class="pari" data-l="Pari">${e(o.pari)}</td>
-<td data-l="Cote française"><b>${e(o.bookmaker)} ${fmtC(o.cote)}</b><span class="heure">lue à ${hm(o.detecte)}</span></td>
-<td data-l="Cote juste">${e(o.reference)} ${fmtC(o.cote_juste)}<span class="heure">lue à ${hm(o.lu_reference || o.detecte)}</span></td>
-<td class="num pos" data-l="Écart">${fmtP(o.ecart)}</td></tr>`).join("")
- : `<tr><td class="vide">Aucune erreur de cote au dernier passage.</td></tr>`;
-
-// grille des simulations
-const sims = Object.keys(D.simulations), refs = [...D.references, "Toutes"];
-let g = `<tr><th></th>${sims.map(s => `<th>${s}<br><span style="text-transform:none">${e(D.simulations[s])}</span></th>`).join("")}</tr>`;
-for (const r of refs) {
-  g += `<tr><td class="ref">${r === "Toutes" ? "Toutes références" : r}</td>`;
-  for (const s of sims) {
-    const b = D.bilan[s + "|" + r];
-    g += b ? `<td><div class="roi ${classe(b.roi)}">${fmtP(b.roi)}</div><div class="det">${b.regles} réglés`+
-      `${b.en_cours ? " (+" + b.en_cours + ")" : ""}<br>${fmtE(b.gains)} · CLV ${fmtP(b.clv_moyenne)}</div></td>` : `<td class="det">—</td>`;
-  }
-  g += "</tr>";
+document.getElementById("maj").textContent = dc.debut ? "mis à jour " + quand(dc.debut) + (dc.mode==="test" ? " · test" : "") : "pas encore de données";
+function ouvrir(o) {
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("actif", b.dataset.o===o));
+  document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+o));
+  ecrire("onglet", o); history.replaceState(null, "", "#"+o);
 }
-document.getElementById("grille").innerHTML = g;
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => ouvrir(b.dataset.o));
 
-// paris simulés + filtres
-const filtres = {sim:["simulation","Toutes simulations"], ref:["reference","Toutes références"],
-  book:["bookmaker","Tous bookmakers"], sport:["sport","Tous sports"], statut:["statut","Tous statuts"]};
-for (const [id,[champ,tous]] of Object.entries(filtres)) {
-  const vals = [...new Set(D.paris.map(p => p[champ]))].sort();
+// --- À jouer
+const carteActuelle = o => `<article class="carte">
+<div class="l1"><span class="match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="quand">${quand(o.debut)}</span></div>
+<div class="l2">${e(o.pari)}</div>
+<div class="l3"><span><b>${e(o.bookmaker)} ${cote(o.cote)}</b> <i>${hm(o.detecte)}</i></span>
+<span>${e(o.reference)} ${cote(o.cote_juste)} <i>${hm(o.lu_reference || o.detecte)}</i></span><span class="ecart">${pct(o.ecart)}</span></div>
+</article>`;
+document.getElementById("jouer").innerHTML = D.actuelles.length ? D.actuelles.map(carteActuelle).join("")
+  : `<div class="vide">Aucune erreur de cote au dernier passage.</div>`;
+document.getElementById("nb-jouer").textContent = D.actuelles.length || "";
+
+// --- Bilan
+let refBilan = "Toutes";
+function rendreBilan() {
+  document.getElementById("puces-ref").innerHTML = ["Toutes", ...D.references].map(r =>
+    `<button data-r="${r}" class="${r===refBilan?"actif":""}">${r==="Toutes"?"Toutes réf.":r}</button>`).join("");
+  document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
+  document.getElementById("bilan").innerHTML = `<tr><th>Simulation</th><th>Paris</th><th>Gain</th><th>ROI</th><th>CLV</th></tr>` +
+    Object.entries(D.simulations).map(([s, nom]) => {
+      const b = D.bilan[s + "|" + refBilan];
+      if (!b) return `<tr><td><b>${s}</b> <small>${e(nom)}</small></td><td>0</td><td>—</td><td>—</td><td>—</td></tr>`;
+      return `<tr><td><b>${s}</b> <small>${e(nom)}</small></td><td>${b.regles}<small>${b.en_cours ? "+" + b.en_cours + " en cours" : ""}</small></td>
+<td class="${signe(b.gains)}">${eur(b.gains)}</td><td class="${signe(b.roi)}"><b>${pct(b.roi)}</b></td><td class="${signe(b.clv_moyenne)}">${pct(b.clv_moyenne)}</td></tr>`;
+    }).join("");
+}
+rendreBilan();
+const mois = new Date().toISOString().slice(0,7);
+document.getElementById("infos").innerHTML = [
+  ["Cotes françaises lues", (dc.cotes||{}).francaises], ["Matchs comparés", dc.matchs_francais],
+  ["Erreurs au dernier passage", dc.opportunites], ["Requêtes PulseScore ce mois", ((D.etat||{}).requetes_par_mois||{})[mois] || 0]
+].map(([a,b]) => `<div>${a}<b>${b ?? "—"}</b></div>`).join("");
+
+// --- Paris : un même pari pris par plusieurs simulations = une seule fiche
+const groupes = new Map();
+for (const p of D.paris) {
+  const k = [p.reference, p.match_id, p.marche, p.periode, p.ligne, p.issue].join("|");
+  if (!groupes.has(k)) groupes.set(k, {...p, sims: []});
+  groupes.get(k).sims.push(p.simulation);
+}
+const fiches = [...groupes.values()].sort((a,b) => (b.detecte||"").localeCompare(a.detecte||""));
+document.getElementById("nb-paris").textContent = fiches.length || "";
+const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
+  book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
+for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
+  const vals = [...new Set(fiches.flatMap(f => champ==="sims" ? f.sims : [f[champ]]))].sort();
   const sel = document.getElementById("f-" + id);
-  sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(champ==="statut" ? STATUTS[v]||v : champ==="simulation" ? v + " " + (D.simulations[v]||"") : v)}</option>`).join("");
-  sel.onchange = rendreParis;
+  sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
+    champ==="statut" ? STATUTS[v]||v : champ==="sims" ? v + " " + (D.simulations[v]||"") : v)}</option>`).join("");
+  sel.onchange = () => { limite = 50; rendreParis(); };
 }
+let limite = 50;
+const carteParis = p => `<article class="carte">
+<div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${quand(p.debut)}</span></div>
+<div class="l2">${e(p.pari)}</div>
+<div class="l3"><span><b>${e(p.bookmaker)} ${cote(p.cote)}</b></span><span>${e(p.reference)} ${cote(p.cote_juste)}</span>
+<span class="ecart">${pct(p.ecart)}</span></div>
+<div class="l4"><span class="badge ${p.statut}">${STATUTS[p.statut]||p.statut}</span>
+${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
+<span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span><span>Sim. ${p.sims.join(" ")}</span><span>vu ${quand(p.detecte)}</span></div>
+</article>`;
 function rendreParis() {
-  const f = Object.fromEntries(Object.entries(filtres).map(([id,[champ]]) => [champ, document.getElementById("f-" + id).value]));
-  const L = D.paris.filter(p => Object.entries(f).every(([k,v]) => !v || p[k] === v))
-    .sort((a,b) => (b.detecte||"").localeCompare(a.detecte||""));
-  document.getElementById("nb-paris").textContent = L.length + " paris" + (L.length > 500 ? " (500 plus récents affichés)" : "");
-  document.getElementById("paris").innerHTML = L.length ? `<tr><th>Détecté</th><th>Match</th><th>Début</th><th>Pari</th>
-<th>Bookmaker</th><th class="num">Cote</th><th>Réf.</th><th class="num">Cote juste</th><th class="num">Écart</th>
-<th class="num">CLV</th><th>Sim.</th><th>Statut</th><th class="num">Gain</th></tr>` + L.slice(0,500).map(p => `<tr>
-<td data-l="Détecté">${heure(p.detecte)}</td><td data-l="Match">${e(p.domicile)} – ${e(p.exterieur)}</td>
-<td data-l="Début">${heure(p.debut)}</td><td class="pari" data-l="Pari">${e(p.pari)}</td>
-<td data-l="Bookmaker">${e(p.bookmaker)}</td><td class="num" data-l="Cote"><b>${fmtC(p.cote)}</b></td>
-<td data-l="Référence">${e(p.reference)}</td><td class="num" data-l="Cote juste">${fmtC(p.cote_juste)}<span class="heure">${hm(p.lu_reference)}</span></td>
-<td class="num pos" data-l="Écart">${fmtP(p.ecart)}</td><td class="num ${classe(p.clv)}" data-l="CLV">${fmtP(p.clv)}</td>
-<td data-l="Simulation">${p.simulation}</td>
-<td data-l="Statut"><span class="etiq ${p.statut}">${STATUTS[p.statut]||p.statut}</span></td>
-<td class="num ${classe(p.gain)}" data-l="Gain">${p.gain==null ? "—" : fmtE(p.gain)}</td></tr>`).join("")
-  : `<tr><td class="vide">Aucun pari pour ces filtres.</td></tr>`;
+  const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
+  const L = fiches.filter(p => Object.entries(f).every(([k,v]) => !v || (k==="sims" ? p.sims.includes(v) : p[k]===v)));
+  document.getElementById("paris").innerHTML = L.length ? L.slice(0, limite).map(carteParis).join("")
+    : `<div class="vide">Aucun pari pour ces filtres.</div>`;
+  const plus = document.getElementById("plus");
+  plus.style.display = L.length > limite ? "" : "none";
+  plus.onclick = () => { limite += 50; rendreParis(); };
 }
 rendreParis();
 
-// à régler à la main (un pari par sélection, toutes simulations confondues)
-const vus = new Set(), man = D.paris.filter(p => p.statut === "a_regler" && !vus.has(p.match_id + p.pari) && vus.add(p.match_id + p.pari));
-document.getElementById("manuels").innerHTML = man.length ? `<tr><th>Match</th><th>Début</th><th>Pari</th><th>Bookmaker</th></tr>` +
-  man.map(p => `<tr><td data-l="Match">${e(p.domicile)} – ${e(p.exterieur)}</td><td data-l="Début">${heure(p.debut)}</td>
-<td class="pari" data-l="Pari">${e(p.pari)}</td><td data-l="Bookmaker">${e(p.bookmaker)}</td></tr>`).join("")
-  : `<tr><td class="vide">Rien à régler à la main.</td></tr>`;
+// --- À régler
+const vus = new Set(), man = D.paris.filter(p => p.statut==="a_regler" && !vus.has(p.match_id+p.pari) && vus.add(p.match_id+p.pari));
+document.getElementById("nb-regler").textContent = man.length || "";
+document.getElementById("regler").innerHTML = man.length ? man.map(p => `<article class="carte">
+<div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${quand(p.debut)}</span></div>
+<div class="l2">${e(p.pari)}</div><div class="l4"><span>${e(p.bookmaker)}</span><span>${e(p.ligue||"")}</span></div></article>`).join("")
+  : `<div class="vide">Rien à régler à la main.</div>`;
+document.getElementById("copier").style.display = man.length ? "" : "none";
 document.getElementById("copier").onclick = () => {
   const txt = "Paris à régler (cotes-value) :\n" + man.map(p =>
     `- [${p.match_id}] ${p.domicile} – ${p.exterieur} (${p.sport}, ${p.ligue||""}, ${new Date(p.debut).toLocaleString("fr-FR")}) : ${p.pari}`).join("\n");
   navigator.clipboard.writeText(txt).then(() => { const b = document.getElementById("copier"); b.textContent = "Copié ✓";
     setTimeout(() => b.textContent = "Copier la liste", 2000); });
 };
+
+// onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
+const depart = location.hash.slice(1) || lire("onglet") || "jouer";
+const ONGLETS = ["jouer","bilan","paris","regler"];
+ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
+window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 </script>
 </body>
 </html>

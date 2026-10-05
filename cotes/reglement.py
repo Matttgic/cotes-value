@@ -63,7 +63,9 @@ def scores_par_periode(sport: str, score: tuple[int, int], periodes: list[tuple[
             out[f"P{i + 1}"] = p
         if len(reg) >= 3:
             out["TEMPS_REG"] = somme(reg[:3])
-        out["MATCH"] = score                       # prolongation et tirs au but inclus
+        out["MATCH"] = score                       # vainqueur : prolongation et tirs au but inclus
+        if "SO" in lab or "TAB" in lab:
+            out["TIRS_AU_BUT"] = (1, 1)            # totaux : compte-t-on le but des tirs au but ? à la main
     elif sport in ("basket", "football_americain"):
         for i, p in enumerate(reg[:4]):
             out[f"QT{i + 1}"] = p
@@ -100,6 +102,8 @@ def regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     else:
         s = scores.get(per)
     if not s:
+        return None
+    if m.startswith("TOTAL") and per == "MATCH" and "TIRS_AU_BUT" in scores:
         return None
     d, e = s
     if m in ("RESULTAT_1N2", "VAINQUEUR"):
