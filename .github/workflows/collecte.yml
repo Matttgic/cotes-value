@@ -3,9 +3,14 @@ name: Collecte et comparaison
 # Toutes les 15 minutes, seulement si la variable de dépôt COLLECTE_AUTO vaut « oui »
 # (Settings → Secrets and variables → Actions → Variables). À activer avec l'offre PulseScore PRO :
 # l'offre gratuite (500 requêtes/mois) ne tient pas un cycle complet toutes les 15 minutes.
+#
+# GitHub saute ou retarde souvent les tâches planifiées (2 lancements en 16 h constatés) : chaque cycle
+# relance donc lui-même le suivant, 15 minutes après son début. La tâche planifiée (toutes les heures) ne
+# sert qu'à redémarrer la chaîne si elle s'arrête. Une seule chaîne à la fois : le groupe « collecte » ne
+# garde qu'un lancement en attente. Pour arrêter : passer COLLECTE_AUTO à autre chose que « oui ».
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "7 * * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -19,6 +24,7 @@ on:
         default: false
 
 permissions:
+  actions: write
   contents: write
   pages: write
   id-token: write
@@ -31,10 +37,12 @@ jobs:
   cycle:
     if: github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui'
     runs-on: ubuntu-latest
-    timeout-minutes: 14
+    timeout-minutes: 30
     environment:
       name: github-pages
     steps:
+      - name: Heure de début
+        run: echo "DEBUT=$(date +%s)" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -72,3 +80,13 @@ jobs:
       - name: Publier le site (GitHub Pages)
         uses: actions/deploy-pages@v4
         continue-on-error: true      # tant que Pages n'est pas activé, la collecte continue quand même
+
+      - name: Relancer le cycle suivant (15 minutes après le début de celui-ci)
+        if: always() && vars.COLLECTE_AUTO == 'oui'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          reste=$(( DEBUT + 900 - $(date +%s) - 30 ))
+          if [ "$reste" -gt 0 ]; then sleep "$reste"; fi
+          gh workflow run collecte.yml --repo "${{ github.repository }}" --ref "${{ github.ref_name }}" \
+            -f mode="${{ vars.MODE_COLLECTE || 'complet' }}"

@@ -51,7 +51,10 @@ Toutes les 15 minutes (`scripts/cycle.py`) :
 2. Settings → Pages → Source : **GitHub Actions**.
 3. Test : Actions → « Collecte et comparaison » → Run workflow → mode `test` (≈ 4 requêtes).
 4. Collecte automatique (avec PulseScore PRO) : variable de dépôt `COLLECTE_AUTO` = `oui`
-   (et `MODE_COLLECTE` = `complet`, valeur par défaut).
+   (et `MODE_COLLECTE` = `complet`, valeur par défaut), puis lancer un cycle à la main une fois.
+   Chaque cycle relance le suivant 15 minutes après son début (GitHub saute trop souvent les tâches
+   planifiées) ; la tâche planifiée horaire redémarre la chaîne si elle s'arrête. Pour arrêter :
+   `COLLECTE_AUTO` ≠ `oui`.
 
 Coût en requêtes : `python scripts/simulation_appels.py` (≈ 415 000/mois pour les 5 bookmakers +
 Betfair toutes les 15 min : offre PRO nécessaire ; l'offre gratuite ne sert qu'aux tests).
