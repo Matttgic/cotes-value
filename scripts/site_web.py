@@ -16,7 +16,40 @@ def _lire(chemin: Path, defaut):
         return defaut
 
 
-PARIS_AFFICHES = 600
+FICHES_AFFICHEES = 600
+CHAMPS_FILTRES = {"sims": "simulation", "reference": "reference", "statut": "statut", "bookmaker": "bookmaker",
+                  "sport": "sport"}
+
+
+def cle_fiche(p: dict) -> tuple:
+    """Un même pari pris par plusieurs simulations = une seule fiche (même clé que la page)."""
+    return (p.get("reference"), p.get("match_id"), p.get("marche"), p.get("periode"), p.get("ligne"), p.get("issue"))
+
+
+CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
+                "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
+                "ligue")
+
+
+def selection_paris(paris: list[dict], n: int = FICHES_AFFICHEES) -> tuple[list[dict], int, dict]:
+    """Page légère : un même pari pris par plusieurs simulations = une fiche (celle de la première
+    détection, avec la liste des simulations). Garde les n fiches les plus récentes et toutes celles qui ont
+    un pari à régler à la main. Renvoie (fiches de la plus récente à la plus ancienne, nombre total de
+    fiches, valeurs des filtres calculées sur TOUS les paris)."""
+    groupes: dict[tuple, list[dict]] = {}
+    for p in paris:
+        groupes.setdefault(cle_fiche(p), []).append(p)
+    fiches = []
+    for lignes in groupes.values():
+        lignes.sort(key=lambda r: r.get("detecte") or "")
+        f = {c: lignes[0].get(c) for c in CHAMPS_FICHE}
+        f["sims"] = sorted({r.get("simulation") for r in lignes})
+        f["a_regler"] = any(r.get("statut") == "a_regler" for r in lignes)
+        fiches.append(f)
+    fiches.sort(key=lambda f: f["detecte"] or "", reverse=True)
+    gardees = fiches[:n] + [f for f in fiches[n:] if f["a_regler"]]
+    valeurs = {f: sorted({str(p.get(c)) for p in paris if p.get(c) is not None}) for f, c in CHAMPS_FILTRES.items()}
+    return gardees, len(fiches), valeurs
 
 
 def construire(donnees: Path, sortie: Path) -> Path:
@@ -28,11 +61,9 @@ def construire(donnees: Path, sortie: Path) -> Path:
     groupes = [{k: g.get(k) for k in ("bookmaker", "sport", "marche", "periode", "type", "n", "mediane",
                                       "part_haute", "statut", "exemples", "dispersion", "dispersion_autre_periode")} for g in ctl.get("groupes", {}).values()]
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
-    # page légère sur mobile : la liste ne garde que les paris récents (et tous ceux à régler à la main) ;
-    # le bilan, lui, est calculé sur tous les paris
-    recents = sorted(paris, key=lambda p: p.get("detecte") or "", reverse=True)
-    liste = recents[:PARIS_AFFICHES] + [p for p in recents[PARIS_AFFICHES:] if p.get("statut") == "a_regler"]
-    data = {"paris": liste, "paris_total": len(paris), "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris), "controle": controle,
+    # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
+    liste, fiches_total, valeurs = selection_paris(paris)
+    data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris), "controle": controle,
             "simulations": {k: v["nom"] for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
@@ -203,21 +234,15 @@ document.getElementById("infos").innerHTML = [
   ["Erreurs au dernier passage", dc.opportunites], ["Requêtes PulseScore ce mois", ((D.etat||{}).requetes_par_mois||{})[mois] || 0]
 ].map(([a,b]) => `<div>${a}<b>${b ?? "—"}</b></div>`).join("");
 
-// --- Paris : un même pari pris par plusieurs simulations = une seule fiche
-const groupes = new Map();
-for (const p of D.paris) {
-  const k = [p.reference, p.match_id, p.marche, p.periode, p.ligne, p.issue].join("|");
-  if (!groupes.has(k)) groupes.set(k, {...p, sims: []});
-  groupes.get(k).sims.push(p.simulation);
-}
-const fiches = [...groupes.values()].sort((a,b) => (b.detecte||"").localeCompare(a.detecte||""));
+// --- Paris : fiches déjà regroupées (un même pari pris par plusieurs simulations = une seule fiche)
+const fiches = D.paris;
 document.getElementById("nb-paris").textContent = fiches.length || "";
-if (D.paris_total > D.paris.length) document.getElementById("paris").insertAdjacentHTML("beforebegin",
-  `<p class="aide">Les ${D.paris.length} paris les plus récents sur ${D.paris_total} (le bilan compte tous les paris).</p>`);
+if (D.fiches_total > fiches.length) document.getElementById("paris").insertAdjacentHTML("beforebegin",
+  `<p class="aide">${fiches.length} paris affichés sur ${D.fiches_total} : les plus récents et ceux à régler (le bilan compte tous les paris).</p>`);
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
   book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
-  const vals = [...new Set(fiches.flatMap(f => champ==="sims" ? f.sims : [f[champ]]))].sort();
+  const vals = (D.valeurs_filtres || {})[champ] || [];
   const sel = document.getElementById("f-" + id);
   sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
     champ==="statut" ? STATUTS[v]||v : champ==="sims" ? v + " " + (D.simulations[v]||"") : v)}</option>`).join("");
@@ -245,7 +270,7 @@ function rendreParis() {
 rendreParis();
 
 // --- À régler
-const vus = new Set(), man = D.paris.filter(p => p.statut==="a_regler" && !vus.has(p.match_id+p.pari) && vus.add(p.match_id+p.pari));
+const vus = new Set(), man = D.paris.filter(p => p.a_regler && !vus.has(p.match_id+p.pari) && vus.add(p.match_id+p.pari));
 document.getElementById("nb-regler").textContent = man.length || "";
 document.getElementById("regler").innerHTML = man.length ? man.map(p => `<article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${quand(p.debut)}</span></div>
