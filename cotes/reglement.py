@@ -3,11 +3,11 @@
 Source des scores : les résultats PulseScore du bookmaker du pari (même identifiant de match, pas de
 comparaison de noms), avec le score par période. À défaut, le fichier donnees/resultats_manuels.json
 (résultats retrouvés à la main) : {"<id du pari>": "gagne" | "perdu" | "rembourse"} ou
-{"<match_id>": {"score": [2, 1], "mi_temps": [1, 0]}}.
+{"<match_id>": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3]}}.
 
 Règles : handicaps asiatiques et totaux en quart (x,25 / x,75) partagés en deux demi-mises ;
 ligne entière = remboursement en cas d'égalité ; 1N2 et totaux de foot sur le temps réglementaire.
-Les corners ne sont pas dans les résultats : réglés à la main.
+Les corners ne sont pas dans les résultats : réglés avec la saisie manuelle.
 """
 from __future__ import annotations
 
@@ -86,9 +86,12 @@ def regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     """Statut du pari, ou None si les scores ne suffisent pas."""
     m, per, i, ligne = p["marche"], p["periode"], p["issue"], p.get("ligne")
     unite_jeux = m.startswith("JEUX_")
-    if m.startswith(("CORNERS_", "CARTONS_")):
+    if m.startswith("CARTONS_"):
         return None
-    if unite_jeux:
+    if m.startswith("CORNERS_"):                   # corners : seulement si saisis à la main
+        m = m[8:]
+        s = scores.get("CORNERS" if per == "MATCH" else f"CORNERS_{per}")
+    elif unite_jeux:
         m = m[5:]
         s = scores.get("JEUX") if per == "MATCH" else scores.get(per)
     elif m.startswith("SETS_"):
@@ -153,6 +156,10 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
                     sc["MT2"] = (sc["MATCH"][0] - sc["MT1"][0], sc["MATCH"][1] - sc["MT1"][1])
                 if m.get("temps_reglementaire"):
                     sc["TEMPS_REG"] = tuple(m["temps_reglementaire"])
+                if m.get("corners"):
+                    sc["CORNERS"] = tuple(m["corners"])
+                if m.get("corners_mi_temps"):
+                    sc["CORNERS_MT1"] = tuple(m["corners_mi_temps"])
                 statut = regler(p, sc)
             elif r and r.get("final"):
                 statut = regler(p, scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"]))

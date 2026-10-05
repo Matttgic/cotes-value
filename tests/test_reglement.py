@@ -42,6 +42,7 @@ def test_specials_foot():
     assert regler(p("HALF_TIME_FULL_TIME", "DOM/DOM"), FOOT) == "gagne"
     assert regler(p("HANDICAP_3", "NUL", -1), FOOT) == "gagne"
     assert regler(p("CORNERS_TOTAL", "PLUS", 9.5), FOOT) is None
+    assert regler(p("CORNERS_TOTAL", "PLUS", 9.5), {**FOOT, "CORNERS": (7, 3)}) == "gagne"
 
 
 def test_hockey_temps_reglementaire():

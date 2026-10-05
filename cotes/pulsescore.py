@@ -67,20 +67,22 @@ class Client:
         return [e for e in out if (_heure(e["startTime"]) or limite) <= limite]
 
 
-def collecter(cle: str, bookmakers: list[str], sports: list[str], heures: float = 36) -> tuple[list[dict], int]:
-    """Lit chaque bookmaker en parallèle (la limite de débit est par bookmaker). Renvoie (lignes, requêtes)."""
+def collecter(cle: str, plan: dict[str, list[str]], heures: float = 36,
+              pages_max: int = 40) -> tuple[list[dict], dict[str, int]]:
+    """plan : bookmaker -> sports (noms PulseScore). Les bookmakers sont lus en parallèle (la limite de
+    débit est par bookmaker). Renvoie (lignes, requêtes par bookmaker)."""
     def un_bookmaker(bm: str):
         c = Client(cle)
         lignes = []
-        for sp in sports:
+        for sp in plan[bm]:
             moment = datetime.now(timezone.utc).isoformat(timespec="seconds")
-            for e in c.matchs(bm, sp, heures):
+            for e in c.matchs(bm, sp, heures, pages_max):
                 lignes += traduire(e, bm, SPORTS.get(sp, sp), moment)
-        return lignes, c.requetes
+        return bm, lignes, c.requetes
 
-    with ThreadPoolExecutor(max_workers=len(bookmakers)) as pool:
-        res = list(pool.map(un_bookmaker, bookmakers))
-    return [l for r, _ in res for l in r], sum(n for _, n in res)
+    with ThreadPoolExecutor(max_workers=max(1, len(plan))) as pool:
+        res = list(pool.map(un_bookmaker, list(plan)))
+    return [l for _, r, _ in res for l in r], {bm: n for bm, _, n in res}
 
 
 # --------------------------------------------------------------------------- traduction
