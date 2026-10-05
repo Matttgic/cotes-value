@@ -1,7 +1,15 @@
-name: Vérification Pinnacle = PS3838
+name: Vérifications des sources
 
 on:
   workflow_dispatch:
+    inputs:
+      script:
+        description: "Vérification à lancer"
+        type: choice
+        options:
+          - verif_ps3838.py
+          - verif_predictions.py
+        default: verif_predictions.py
 
 permissions:
   contents: write
@@ -15,10 +23,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - name: Comparer Pinnacle (direct) et PS3838 (PulseScore)
+      - name: Comparer nos lectures directes et PulseScore
         env:
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
-        run: python scripts/verif_ps3838.py
+        run: python scripts/${{ inputs.script }}
       - name: Déposer le rapport sur la branche « verif »
         run: |
           mv verif /tmp/verif
@@ -28,5 +36,5 @@ jobs:
           git rm -rq --cached . && git clean -fdq
           cp -r /tmp/verif/. .
           git add -A
-          git commit -qm "Vérification Pinnacle = PS3838 $(date -u +%FT%TZ)"
+          git commit -qm "Vérification ${{ inputs.script }} $(date -u +%FT%TZ)"
           git push -f origin verif
