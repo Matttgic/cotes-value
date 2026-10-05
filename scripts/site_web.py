@@ -20,7 +20,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
     paris = _lire(donnees / "paris.json", [])
     etat = _lire(donnees / "etat.json", {})
     actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", []) if not o.get("suspect")]
-    data = {"paris": paris, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
+    ctl = _lire(donnees / "controle.json", {})
+    groupes = [{k: g.get(k) for k in ("bookmaker", "sport", "marche", "periode", "type", "n", "mediane",
+                                      "part_haute", "statut", "exemples")} for g in ctl.get("groupes", {}).values()]
+    controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
+    data = {"paris": paris, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris), "controle": controle,
             "simulations": {k: v["nom"] for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
@@ -97,6 +101,7 @@ td small{display:block;color:var(--doux);font-size:11.5px}
     <button data-o="bilan">Bilan</button>
     <button data-o="paris">Paris<span class="nb" id="nb-paris"></span></button>
     <button data-o="regler">À régler<span class="nb" id="nb-regler"></span></button>
+    <button data-o="controle">Contrôle<span class="nb" id="nb-controle"></span></button>
   </nav>
 </div>
 <main>
@@ -122,6 +127,14 @@ td small{display:block;color:var(--doux);font-size:11.5px}
     résultats et les enregistrera.</p>
     <p><button class="btn" id="copier">Copier la liste</button></p>
     <div id="regler"></div>
+  </section>
+  <section class="onglet" id="o-controle">
+    <p class="aide">Chaque type d'intitulé de chaque bookmaker est comparé à la référence à chaque passage. Bien
+    traduit, un marché est en général un peu sous la cote juste (marge) : rapport médian cote / cote juste entre
+    0,70 et 1,02, et moins de 10 % des cotes au-dessus de 1,12. Seuls les intitulés <b>conformes</b> donnent des paris.</p>
+    <div class="infos" id="ctl-resume" style="margin:0 0 12px"></div>
+    <div class="puces" id="ctl-puces"></div>
+    <div id="ctl-liste"></div>
   </section>
 </main>
 <script>
@@ -234,9 +247,42 @@ document.getElementById("copier").onclick = () => {
     setTimeout(() => b.textContent = "Copier la liste", 2000); });
 };
 
+// --- Contrôle
+const CTL = {non_conforme:"Non conformes", a_verifier:"À vérifier", conforme:"Conformes"};
+const cg = (D.controle||{}).groupes || [], cm = (D.controle||{}).matchs || [];
+const nbc = s => cg.filter(g => g.statut===s).length;
+document.getElementById("nb-controle").textContent = nbc("non_conforme") || "";
+document.getElementById("ctl-resume").innerHTML = [["Conformes", nbc("conforme")], ["À vérifier", nbc("a_verifier")],
+  ["Non conformes", nbc("non_conforme")], ["Matchs mal associés ?", cm.length]].map(([a,b]) => `<div>${a}<b>${b}</b></div>`).join("");
+let ctlVue = nbc("non_conforme") ? "non_conforme" : "a_verifier";
+const num = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
+function rendreControle() {
+  document.getElementById("ctl-puces").innerHTML = [...Object.entries(CTL), ["matchs","Matchs"]].map(([k,v]) =>
+    `<button data-v="${k}" class="${k===ctlVue?"actif":""}">${v}</button>`).join("");
+  document.querySelectorAll("#ctl-puces button").forEach(b => b.onclick = () => { ctlVue = b.dataset.v; rendreControle(); });
+  let html;
+  if (ctlVue === "matchs") {
+    html = cm.length ? cm.map(m => `<article class="carte"><div class="l1"><span class="match">${e(m.match)}</span>
+<span>${e(m.bookmaker)}</span></div><div class="l4">Rapport médian ${num(m.rapport_median)} sur tous les marchés du match</div></article>`).join("")
+      : `<div class="vide">Aucun match suspect au dernier passage.</div>`;
+  } else {
+    const L = cg.filter(g => g.statut === ctlVue).slice(0, 300);
+    html = L.length ? L.map(g => `<article class="carte">
+<div class="l1"><span class="match">${e(g.bookmaker)} · ${e(g.sport)} · ${e(g.marche)} ${e(g.periode)}</span>
+<span class="quand">${g.n} mesure${g.n>1?"s":""}</span></div>
+<div class="l2">« ${e(g.type)} »</div>
+<div class="l4"><span>Rapport médian <b>${num(g.mediane)}</b></span><span>au-dessus de 1,12 : ${g.part_haute==null?"—":Math.round(100*g.part_haute)+" %"}</span></div>
+${(g.exemples||[]).map(x => `<div class="l4"><span>${e(x.match)}</span><span>${e(x.libelle)}${x.ligne!=null?" ["+e(x.ligne)+"]":""} ${e(x.issue)}</span>
+<span>${cote(x.cote)} / ${e(x.reference)} ${cote(x.cote_juste)}</span></div>`).join("")}</article>`).join("")
+      : `<div class="vide">Aucun intitulé dans cette catégorie.</div>`;
+  }
+  document.getElementById("ctl-liste").innerHTML = html;
+}
+rendreControle();
+
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
 const depart = location.hash.slice(1) || lire("onglet") || "jouer";
-const ONGLETS = ["jouer","bilan","paris","regler"];
+const ONGLETS = ["jouer","bilan","paris","regler","controle"];
 ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 </script>

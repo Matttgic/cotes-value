@@ -22,7 +22,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes import comparaison, kalshi, pinnacle, polymarket, pulsescore, reglement, simulation  # noqa: E402
+from cotes import comparaison, controle, kalshi, pinnacle, polymarket, pulsescore, reglement, simulation  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
 FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu", "netbet"]
@@ -97,8 +97,21 @@ def main() -> int:
     betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])
     references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly, "Kalshi": kal}
 
-    # 3. comparaison et paris simulés
-    opportunites = etape("comparaison", journal, comparaison.comparer, francais, references) or []
+    # 3. contrôle de conformité des marchés (cumulé d'un cycle à l'autre), comparaison et paris simulés :
+    #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari
+    index = etape("association", journal, comparaison.indexer, francais, references) or {}
+    mesures = controle.mesurer(francais, index)
+    etat_controle = controle.mettre_a_jour(lire_json(donnees / "controle.json", {}), mesures,
+                                           journal["debut"])
+    suspects = controle.matchs_suspects(mesures)
+    etat_controle["matchs_suspects"] = [
+        {"match_id": l["match_id"], "bookmaker": l["source"], "match": f'{l["domicile"]} – {l["exterieur"]}',
+         "rapport_median": suspects[l["match_id"]]}
+        for l in {l["match_id"]: l for l, *_ in mesures if l["match_id"] in suspects}.values()]
+    journal["controle"] = controle.resume(etat_controle) | {"mesures": len(mesures),
+                                                            "matchs_suspects": len(suspects)}
+    opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
+                         index=index, controle=(etat_controle, suspects)) or []
     paris = lire_json(donnees / "paris.json", [])
     nouveaux = simulation.placer(opportunites, paris)
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
@@ -123,6 +136,7 @@ def main() -> int:
 
     # 5. sauvegarde
     ecrire_json(donnees / "paris.json", paris)
+    ecrire_json(donnees / "controle.json", etat_controle)
     ecrire_json(donnees / "opportunites_actuelles.json", sorted(opportunites, key=lambda o: -o["ecart"]))
     if opportunites:
         jour = donnees / "opportunites" / f"{maintenant:%Y-%m-%d}.jsonl.gz"
@@ -139,7 +153,9 @@ def main() -> int:
         "requetes_pulsescore": requetes, "cotes": {"francaises": len(francais), "pinnacle": len(pin),
                                                     "betfair": len(betfair), "polymarket": len(poly),
                                                     "kalshi": len(kal)},
-        "matchs_francais": len({l["match_id"] for l in francais}), "opportunites": len(opportunites),
+        "matchs_francais": len({l["match_id"] for l in francais}),
+        "opportunites": sum(not o.get("suspect") for o in opportunites),
+        "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),
         "nouveaux_paris": len(nouveaux)})
     etat.update({"dernier_cycle": journal, "requetes_par_mois": compteur})
     historique = etat.get("historique", [])[-200:] + [{k: journal[k] for k in ("debut", "mode", "opportunites",
@@ -151,7 +167,7 @@ def main() -> int:
     from site_web import construire                                     # noqa: E402
     construire(donnees, Path(args.site))
     print(json.dumps({k: journal[k] for k in ("mode", "cotes", "matchs_francais", "opportunites", "nouveaux_paris",
-                                               "requetes_pulsescore", "etapes")}, ensure_ascii=False, indent=1))
+                                               "requetes_pulsescore", "controle", "etapes")}, ensure_ascii=False, indent=1))
     return 0
 
 

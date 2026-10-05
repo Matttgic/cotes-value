@@ -18,6 +18,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 
+from . import controle as CT
 from . import correspondance as C
 from .marches import cle, inverser
 from .marge import proba_justes
@@ -92,10 +93,10 @@ def _kalshi_issue(l: dict) -> dict | None:
 
 # --------------------------------------------------------------------------- comparaison
 
-def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min: float = ECART_MIN) -> list[dict]:
+def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str, dict]:
+    """nom de la référence -> {match français: {clé de marché: ligne de référence fiable}}."""
     matchs_fr = C.matchs_de(francais)
-    index: dict[str, dict] = {}            # nom -> {match_fr_id: {clé: ligne de référence}}
-    associations: dict[str, dict] = {}
+    index: dict[str, dict] = {}
     for nom, lignes in references.items():
         if nom == "Kalshi":
             lignes = [x for x in (_kalshi_issue(l) for l in lignes) if x]
@@ -104,12 +105,19 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
         for l in lignes:
             par_match.setdefault(l["match_id"], []).append(l)
         assoc = C.associer(matchs_fr, C.matchs_de(lignes))
-        associations[nom] = assoc
         index[nom] = {}
         for mid_fr, (mid_ref, inverse, score) in assoc.items():
             index[nom][mid_fr] = {cle(inverser(l) if inverse else l): {**l, "score_association": round(score, 2)}
                                   for l in par_match.get(mid_ref, [])}
+    return index
 
+
+def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min: float = ECART_MIN,
+             index: dict | None = None, controle: tuple[dict, dict] | None = None) -> list[dict]:
+    """Opportunités (cote française × probabilité juste − 1 ≥ ecart_min). `controle` = (état du contrôle
+    de conformité, matchs suspects) : une cote dont l'intitulé n'est pas contrôlé conforme est marquée
+    suspecte (pas de pari)."""
+    index = index if index is not None else indexer(francais, references)
     opportunites = []
     for l in francais:
         if l["periode"].endswith("?") or not l.get("cote"):
@@ -127,6 +135,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             if t_fr and t_ref and abs((t_fr - t_ref).total_seconds()) > FENETRE_MIN * 60:
                 continue
             trouvees[nom] = r
+        controle_raison = CT.raison(l, *controle) if controle and trouvees else None
         desaccord = False
         if len(trouvees) >= 2:
             justes = [1 / r["proba_juste"] for r in trouvees.values()]
@@ -139,10 +148,10 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             ecart = l["cote"] * r["proba_juste"] - 1
             if ecart < ecart_min:
                 continue
-            suspect = None
-            if desaccord:
+            suspect = controle_raison
+            if not suspect and desaccord:
                 suspect = "références en désaccord"
-            elif ecart > (ECART_SUSPECT if l["cote"] <= 10 else ECART_SUSPECT_GROSSES):
+            elif not suspect and ecart > (ECART_SUSPECT if l["cote"] <= 10 else ECART_SUSPECT_GROSSES):
                 suspect = "écart trop grand"
             opportunites.append({
                 "detecte": l["collecte"], "bookmaker": l["source"], "sport": l["sport"], "ligue": l.get("ligue"),
