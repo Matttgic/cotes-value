@@ -196,12 +196,12 @@ REGLE_PAR_DEFAUT = {
 # réglementaire (marché avec nul, voir MARCHES_AVEC_NUL)
 REGLE_PAR_SPORT = {"football_americain": "MATCH", "baseball": "MATCH"}
 # Exceptions vérifiées par marché, quand l'intitulé ne dit rien (un intitulé explicite l'emporte toujours) :
-# - Winamax, hockey : « Nombre de buts », total par équipe compris, prolongations incluses (vérifié sur
-#   winamax.fr) ; vainqueur à 2 issues = prolongation et tirs au but inclus (règlement) ;
-# - Unibet, hockey : total par équipe sur le temps réglementaire seulement (vérifié dans l'appli).
+# - Winamax, hockey : « Nombre de buts » du match prolongations incluses (vérifié sur winamax.fr) ;
+#   vainqueur à 2 issues = prolongation et tirs au but inclus (règlement) ;
+# - Winamax et Unibet, hockey : total par équipe sur le temps réglementaire seulement (vérifié dans l'appli).
 # Le contrôle de conformité ne remet pas en cause ces périodes vérifiées (cotes/controle.py).
 PERIODE_VERIFIEE = {
-    ("winamax", "hockey"): {"TOTAL": "MATCH", "TOTAL_DOM": "MATCH", "TOTAL_EXT": "MATCH", "VAINQUEUR": "MATCH"},
+    ("winamax", "hockey"): {"TOTAL": "MATCH", "TOTAL_DOM": "TEMPS_REG", "TOTAL_EXT": "TEMPS_REG", "VAINQUEUR": "MATCH"},
     ("unibet-fr", "hockey"): {"TOTAL_DOM": "TEMPS_REG", "TOTAL_EXT": "TEMPS_REG"},
 }
 # marchés où le nul existe : forcément sur le temps réglementaire

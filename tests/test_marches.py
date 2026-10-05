@@ -64,11 +64,11 @@ def test_hockey_prolongation():
     tot4 = {**tot, "rawName": "Nombre total de buts - Temps Réglementaire"}
     assert {l["periode"] for l in traduire(ev([tot4]), "unibet-fr", "hockey", "t")} == {"TEMPS_REG"}
     assert {l["periode"] for l in traduire(ev([tot2]), "unibet-fr", "hockey", "t")} == {"MATCH"}
-    # Unibet : total par équipe sur le temps réglementaire même sans mention (vérifié dans l'appli)
+    # Unibet et Winamax : total par équipe sur le temps réglementaire même sans mention (vérifié dans l'appli)
     eq = {"canonicalMarket": "HOME_OVER_UNDER", "period": "FULL_TIME", "rawName": "Plus / Moins But(s) - Lens 2.5",
           "selections": [sel("OVER", "Plus de 2.5", 2.1, 2.5), sel("UNDER", "Moins de 2.5", 1.7, 2.5)]}
     assert {l["periode"] for l in traduire(ev([eq]), "unibet-fr", "hockey", "t")} == {"TEMPS_REG"}
-    assert {l["periode"] for l in traduire(ev([eq]), "winamax", "hockey", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([eq]), "winamax", "hockey", "t")} == {"TEMPS_REG"}
     assert {l["periode"] for l in traduire(ev([tot2]), "unibet-fr", "basket", "t")} == {"MATCH"}
     assert {l["periode"] for l in traduire(ev([tot4]), "unibet-fr", "basket", "t")} == {"TEMPS_REG"}
     # NetBet : « prolongations incluses » écrit dans l'intitulé, sinon temps réglementaire
