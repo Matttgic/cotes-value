@@ -61,7 +61,9 @@ def reference_betfair(lignes: list[dict]) -> list[dict]:
             probs.append((pb + pv) / 2)
         if not ok or len(probs) < 2:
             continue
-        s = sum(probs)
+        # renormalisé seulement à la baisse : une somme < 1 veut dire que des issues manquent (score exact,
+        # mi-temps/fin…) et gonfler les autres créerait de fausses erreurs de cote
+        s = max(sum(probs), 1.0)
         for l, p in zip(g, probs):
             out.append({**l, "source": "Betfair", "proba_juste": round(p / s, 6), "cote_juste": round(s / p, 4)})
     return out

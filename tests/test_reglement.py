@@ -121,3 +121,13 @@ def test_signaux_suspects_sans_pari():
     paris = []
     placer(list(opp.values()), paris)
     assert paris and all(p["bookmaker"] == "betclic" for p in paris)
+
+
+def test_betfair_issues_manquantes_pas_gonflees():
+    from cotes.comparaison import reference_betfair
+    def l(issue, achat, vente):
+        return {"cle_marche": "cs", "marche": "CORRECT_SCORE", "periode": "MATCH", "ligne": None, "issue": issue,
+                "achat": [{"price": achat, "liquidity": 50}], "vente": [{"price": vente, "liquidity": 50}]}
+    # deux scores seulement sur une quinzaine : les probabilités restent celles du marché
+    r = {x["issue"]: x["proba_juste"] for x in reference_betfair([l("1-1", 9.0, 10.0), l("2-2", 15.0, 17.0)])}
+    assert abs(r["1-1"] - (1 / 9 + 1 / 10) / 2) < 1e-6
