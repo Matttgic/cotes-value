@@ -46,6 +46,11 @@ def _sans_accents(s: str) -> str:
     return unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
 
 
+# mots des noms d'équipes trop courants pour être remplacés dans un intitulé (« Les Herbiers » -> « les »)
+PETITS_MOTS = {"de", "du", "la", "le", "les", "des", "et", "of", "the", "fc", "sc", "ac", "cf", "cd", "ca", "sk", "fk",
+               "bk", "if", "ik", "un", "en", "au", "by", "to", "set", "but", "buts", "points", "total", "match"}
+
+
 def type_intitule(libelle: str | None, domicile: str | None, exterieur: str | None) -> str:
     """« Plus / Moins Tirs cadrés - Italie [2,5] » -> « plus / moins tirs cadres - {eq} [#] » ; les noms
     écrits autrement que dans le match (« D. Snigur » pour « Daria Snigur ») sont aussi remplacés."""
@@ -54,10 +59,10 @@ def type_intitule(libelle: str | None, domicile: str | None, exterieur: str | No
     for nom in sorted(noms, key=len, reverse=True):
         if len(nom) >= 2:
             s = s.replace(nom, "{eq}")
-    mots = {m for nom in noms for m in re.findall(r"[a-z0-9]+", nom) if len(m) >= 3}
+    mots = {m for nom in noms for m in re.findall(r"[a-z0-9]+", nom) if len(m) >= 2 and m not in PETITS_MOTS}
     for m in sorted(mots, key=len, reverse=True):
         s = re.sub(rf"\b{re.escape(m)}\b", "{eq}", s)
-    s = re.sub(r"\b[a-z]\.\s*(?=\{eq\})", "", s)                 # initiale du prénom
+    s = re.sub(r"\b[a-z]\.\s*(?:(?:de|van|von|da|di|del|le|la|du)\s+)*(?=\{eq\})", "", s)   # « a. de {eq} »
     s = re.sub(r"\{eq\}(?:[\s-]*\{eq\})+", "{eq}", s)
     s = re.sub(r"[-+]?\d+(?:[.,]\d+)?", "#", s)
     return re.sub(r"\s+", " ", s).strip()
