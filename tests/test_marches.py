@@ -66,6 +66,10 @@ def test_hockey_prolongation():
     assert {l["periode"] for l in traduire(ev([tot2]), "unibet-fr", "hockey", "t")} == {"MATCH"}
     assert {l["periode"] for l in traduire(ev([tot2]), "unibet-fr", "basket", "t")} == {"MATCH"}
     assert {l["periode"] for l in traduire(ev([tot4]), "unibet-fr", "basket", "t")} == {"TEMPS_REG"}
+    # NetBet : « prolongations incluses » écrit dans l'intitulé, sinon temps réglementaire
+    tot5 = {**tot, "rawName": "Nombre total de points (Prolongation(s) incluse(s))"}
+    assert {l["periode"] for l in traduire(ev([tot5]), "netbet", "basket", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([tot2]), "netbet", "basket", "t")} == {"TEMPS_REG"}
 
 
 def test_handicap_hockey_prolongation_sans_effet():

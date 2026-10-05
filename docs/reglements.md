@@ -57,7 +57,7 @@ but pour tous les marchés « prolongation incluse ».
 |---|---|---|
 | Winamax | « Les paris sur le basket sont proposés sur la base du temps total du match (temps règlementaire et prolongations éventuelles). Dans certains cas, les prolongations ne sont pas comptabilisées : le cas échéant, Winamax le précisera dans l'intitulé ou l'aide du pari. » | Prolongation incluse, sauf libellé contraire |
 | Unibet | Temps réglementaire à défaut de précision (règle générale ci-dessus). Pour les « face à face », « pour certains sports, il sera tenu compte des éventuelles prolongations ». **Vérifié dans l'appli** : « temps réglementaire » est écrit dans l'intitulé quand il s'applique | Temps réglementaire si l'intitulé le dit (non comparé : Pinnacle ne cote le basket que prolongation incluse), sinon prolongation incluse |
-| NetBet | Temps réglementaire (règle générale 4.2) ; « En cas d'égalité sur le résultat d'un pari et si cette option n'a pas été proposée par NETBET, tous les paris seront considérés comme nuls. » | Temps réglementaire, donc non comparé |
+| NetBet | Temps réglementaire (règle générale 4.2) ; « En cas d'égalité sur le résultat d'un pari et si cette option n'a pas été proposée par NETBET, tous les paris seront considérés comme nuls. » **Vérifié dans l'appli** : « prolongations incluses » est écrit dans l'intitulé quand elles comptent | Prolongation incluse si l'intitulé le dit (comparé), sinon temps réglementaire (non comparé) |
 | PMU (2022) | « tous les paris […] sont sur la base du temps réglementaire de 40 minutes […] ainsi que des prolongations le cas échéant » (idem 48 minutes en NBA) | Prolongation incluse |
 | Betclic | **Vérifié dans l'appli** : sans mention entre parenthèses, la prolongation compte (vainqueur, total de points) | Prolongation incluse |
 
@@ -101,6 +101,6 @@ Dans le code (`_regler_abandon`) :
 
 ## Vérifications faites dans les applis
 
-Betclic, PMU, Unibet (hockey et basket) et Winamax (totaux et handicaps au hockey) : vérifiés par l'utilisateur,
+Betclic, PMU, Unibet (hockey et basket), NetBet (basket) et Winamax (totaux et handicaps au hockey) : vérifiés par l'utilisateur,
 reportés dans les tableaux ci-dessus. Toute nouvelle vérification se traduit par une ligne dans
 `REGLE_PAR_DEFAUT` ou `PROLONGATION_VERIFIEE` (`cotes/pulsescore.py`).

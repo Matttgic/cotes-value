@@ -158,6 +158,7 @@ REGLE_PAR_DEFAUT = {
     # réglementaire » ; au basket, un face-à-face à égalité à la fin du temps réglementaire est annulé
     # NetBet : « le résultat qui fait foi est celui ... après le temps réglementaire » sauf mention ;
     # football américain : « résultat final prolongations incluses » ; baseball avant-match : 9 manches
+    # (vérifié dans l'appli : au basket, NetBet écrit « prolongations incluses » dans l'intitulé quand elles comptent)
     ("netbet", "hockey"): "TEMPS_REG", ("netbet", "basket"): "TEMPS_REG",
     ("netbet", "football_americain"): "MATCH", ("netbet", "baseball"): "TEMPS_REG",
     # PMU (règlement du 05/07/2022) : basket « temps réglementaire ... ainsi que des prolongations le cas
@@ -187,6 +188,8 @@ def _temps_reglementaire(libelle: str) -> bool:
 
 def _prolongation_incluse(libelle: str) -> bool:
     l = (libelle or "").lower()
+    if re.search(r"prol[^,;]*?inclu", l) and "non inclu" not in l:
+        return True                       # « prolongations incluses », « Prolongation(s) incluse(s) »…
     return any(x in l for x in ("prolongations incluses", "prolongation incluse", "prol. incl", "incl. ot",
                                 "including overtime", "incl. overtime", "tirs au but inclus", "t.a.b. inc", "(ot)"))
 
