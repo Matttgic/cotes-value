@@ -105,3 +105,19 @@ def test_gains():
     assert gain("demi_gagne", 10, 1.9) == 4.5
     assert gain("demi_perdu", 10, 1.9) == -5.0
     assert gain("rembourse", 10, 3) == 0.0
+
+
+def test_signaux_suspects_sans_pari():
+    from cotes.comparaison import comparer
+    from cotes.simulation import placer
+    base = {"sport": "football", "ligue": "L", "domicile": "Lens", "exterieur": "Lille",
+            "debut": "2030-01-01T20:00:00+00:00", "collecte": "2029-12-31T20:00:00+00:00", "marche": "TOTAL",
+            "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "joueur": None}
+    fr = [{**base, "source": "winamax", "match_id": "w1", "cote": 4.0},       # écart énorme
+          {**base, "source": "betclic", "match_id": "b1", "cote": 2.2}]       # écart de 10 %
+    ref = [{**base, "source": "pinnacle", "match_id": "p1", "cote": 1.95, "proba_juste": 0.5, "marge": 0.03}]
+    opp = {o["bookmaker"]: o for o in comparer(fr, {"Pinnacle": ref})}
+    assert opp["winamax"]["suspect"] == "écart trop grand" and opp["betclic"]["suspect"] is None
+    paris = []
+    placer(list(opp.values()), paris)
+    assert paris and all(p["bookmaker"] == "betclic" for p in paris)

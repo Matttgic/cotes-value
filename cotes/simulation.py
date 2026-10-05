@@ -38,6 +38,8 @@ def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
     # à écart égal, la meilleure cote d'abord ; un même pari peut être vu chez plusieurs bookmakers :
     # chaque bookmaker est un pari distinct (on sait ainsi lequel se trompe le plus souvent)
     for o in sorted(opportunites, key=lambda o: -o["ecart"]):
+        if o.get("suspect"):
+            continue
         for code, s in SIMULATIONS.items():
             if o["ecart"] < s["ecart"] or not (s["cote_min"] <= o["cote"] <= s["cote_max"]):
                 continue

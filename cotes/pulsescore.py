@@ -108,10 +108,35 @@ def _crochet(s) -> float | None:
 ORDINAUX = {"1": 1, "2": 2, "3": 3, "4": 4}
 
 
+# Statistiques que PulseScore range parfois dans les totaux ou handicaps ordinaires (« Plus / Moins Tirs
+# cadrés - Italie » classé en total de buts de l'équipe) : jamais comparées.
+STATISTIQUES = re.compile(
+    r"\btirs?\b(?! au but)|cadr|\bshots?\b|carton|\bcards?\b|booking|faute|\bfouls?\b|hors-jeu|offside|"
+    r"touches|throw|\bpasses?\b|tacle|tackle|arr[eê]ts|\bsaves?\b|possession|\baces?\b|double faute|"
+    r"rebond|rebound|passes? d[ée]cisive|assist|interception|steal|\bcontres?\b|\bblocks?\b|strikeout|"
+    r"\bhits?\b|home runs?|penalt|buteur|scorer|marqueur|\bjoueur|player|s[ée]ries?\b(?! [ab]\b)|\bbreaks?\b|"
+    r"\bwalks?\b|\bbases?\b|touchdowns?|field goals?|yards|sacks?|turnover|panier|\b3 points|three|3-pt")
+MANCHES = re.compile(r"(?:first|premi[eè]res?)\s+(\d+)\s+(?:innings|manches)|(\d+)\s+(?:premi[eè]res?|first)\s+"
+                     r"(?:innings|manches)|(?:innings|manches)\s+1\s*[-àa]\s*(\d+)")
+
+
+def libelle_exclu(sport: str, marche_canonique: str | None, libelle: str) -> bool:
+    l = (libelle or "").lower()
+    if "CORNERS" in (marche_canonique or ""):
+        return False
+    return bool(STATISTIQUES.search(l)) or ("corner" in l)
+
+
 def periode(sport: str, canonique: str | None, libelle: str) -> str | None:
     """Période commune, d'après le libellé d'abord (plus fiable), sinon la période canonique."""
     l = (libelle or "").lower()
     n = None
+    if sport == "baseball":
+        m = MANCHES.search(l)
+        if m:                             # « First 5 Innings » -> 5_MANCHES ; 3 ou 7 manches : non comparé
+            return "5_MANCHES" if next(g for g in m.groups() if g) == "5" else None
+        if re.search(r"\b(inning|manche)\b", l):
+            return None                   # une manche précise (« 1st Inning ») : non comparé
     m = re.search(r"\b([1-4])\s*(?:er|ère|re|e|ème|eme|de|nd|st|rd|th)?\s*(mi-temps|half|tiers-temps|période|periode|"
                   r"quart-temps|quarter|set|period)", l)
     if m:
@@ -238,6 +263,8 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str) -> list[dict]:
         if not sels:
             continue
         canon, libelle = m.get("canonicalMarket"), m.get("rawName") or ""
+        if libelle_exclu(sport, canon, libelle):
+            continue
         per = "MATCH" if canon == "HALF_TIME_FULL_TIME" else periode(sport, m.get("period"), libelle)
         if per is None:
             continue

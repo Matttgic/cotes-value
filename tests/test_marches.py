@@ -113,3 +113,26 @@ def test_noms():
     assert ressemblance("Llaneros F.C.", "Llaneros") == 1.0
     assert ressemblance("Cordoue", "Cordoba") == 1.0
     assert ressemblance("Lens", "Lille") < 0.6
+
+
+def test_statistiques_et_manches_partielles_ignorees():
+    tirs = {"canonicalMarket": "HOME_OVER_UNDER", "period": "FULL_TIME", "rawName": "Plus / Moins Tirs cadrés - Lens",
+            "selections": [sel("OVER", "Plus de 1,5", 1.1, 1.5), sel("UNDER", "Moins de 1,5", 7.5, 1.5)]}
+    assert traduire(ev([tirs]), "unibet-fr", "football", "t") == []
+    serie = {"canonicalMarket": "ASIAN_HANDICAP", "period": "FULL_TIME", "rawName": "Handicap - Series Outcome",
+             "selections": [sel("HOME", "A", 6.15, -1.5), sel("AWAY", "B", 1.1, -1.5)]}
+    manches3 = {**serie, "rawName": "Handicap - First 3 Innings"}
+    manches5 = {**serie, "rawName": "Handicap - First 5 Innings"}
+    assert traduire(ev([serie, manches3]), "pmu", "baseball", "t") == []
+    assert {l["periode"] for l in traduire(ev([manches5]), "pmu", "baseball", "t")} == {"5_MANCHES"}
+    tab = {"canonicalMarket": "MATCH_RESULT", "period": "FULL_TIME",
+           "rawName": "Vainqueur (prolongations et tirs au but inclus)",
+           "selections": [sel("HOME", "A", 1.8), sel("AWAY", "B", 2.0)]}
+    assert len(traduire(ev([tab]), "betclic", "hockey", "t")) == 2      # « tirs au but » n'est pas une stat
+
+
+def test_marqueur_u21_de_la_ligue_pinnacle():
+    from cotes.correspondance import avec_marqueurs_ligue
+    pin = avec_marqueurs_ligue("France", "UEFA - U21 Euro Championship Qualifiers")
+    assert ressemblance("France U21", pin) == 1.0
+    assert ressemblance("France", pin) < 1.0

@@ -28,6 +28,11 @@ ECART_ACHAT_VENTE_MAX = 0.05
 ECART_RELATIF_MAX = 0.25       # écart achat/vente rapporté au prix : 0,01/0,03 n'est pas un prix fiable
 LIQUIDITE_MIN = {"Betfair": 20.0, "Polymarket": 100.0, "Kalshi": 0.0}
 ECART_MIN = 0.02
+# Au-delà, une « erreur de cote » est presque toujours un marché mal reconnu (statistique prise pour des
+# buts, série prise pour un match…) : l'opportunité est gardée pour contrôle mais marquée suspecte, sans pari.
+ECART_SUSPECT = 0.25            # cotes <= 10
+ECART_SUSPECT_GROSSES = 1.0     # cotes > 10
+DESACCORD_MAX = 1.25            # cotes justes de deux références qui diffèrent de plus de 25 % : suspect
 
 
 def _t(s) -> datetime | None:
@@ -120,7 +125,10 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             if t_fr and t_ref and abs((t_fr - t_ref).total_seconds()) > FENETRE_MIN * 60:
                 continue
             trouvees[nom] = r
+        desaccord = False
         if len(trouvees) >= 2:
+            justes = [1 / r["proba_juste"] for r in trouvees.values()]
+            desaccord = max(justes) / min(justes) > DESACCORD_MAX
             p = sum(r["proba_juste"] for r in trouvees.values()) / len(trouvees)
             trouvees["Consensus"] = {"proba_juste": p, "cote_juste": 1 / p, "collecte": l["collecte"],
                                      "domicile": l["domicile"], "exterieur": l["exterieur"],
@@ -129,6 +137,11 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             ecart = l["cote"] * r["proba_juste"] - 1
             if ecart < ecart_min:
                 continue
+            suspect = None
+            if desaccord:
+                suspect = "références en désaccord"
+            elif ecart > (ECART_SUSPECT if l["cote"] <= 10 else ECART_SUSPECT_GROSSES):
+                suspect = "écart trop grand"
             opportunites.append({
                 "detecte": l["collecte"], "bookmaker": l["source"], "sport": l["sport"], "ligue": l.get("ligue"),
                 "match_id": l["match_id"], "domicile": l["domicile"], "exterieur": l["exterieur"],
@@ -139,7 +152,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "ecart": round(ecart, 4), "lu_reference": r.get("collecte"),
                 "match_reference": f'{r.get("domicile")} - {r.get("exterieur")}',
                 "score_association": r.get("score_association"), "sources": r.get("sources"),
-                "lien": l.get("lien")})
+                "lien": l.get("lien"), "suspect": suspect})
     return opportunites
 
 

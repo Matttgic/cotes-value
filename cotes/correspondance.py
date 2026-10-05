@@ -106,12 +106,33 @@ def _heure(s) -> datetime | None:
         return None
 
 
+LIGUE_JEUNES = re.compile(r"\b(u\d{2})\b", re.I)
+LIGUE_FEMININE = re.compile(r"\b(women|womens|feminin|feminine|femmes|ladies)\b|\(w\)", re.I)
+
+
+def avec_marqueurs_ligue(nom: str | None, ligue: str | None) -> str | None:
+    """Pinnacle écrit « U21 » ou « Women » dans la ligue, pas dans le nom (« France - Switzerland » en
+    « U21 Euro Championship Qualifiers ») : on reporte le marqueur sur le nom."""
+    if not nom or not ligue:
+        return nom
+    _, fem, jeunes = normaliser(nom)
+    m = LIGUE_JEUNES.search(ligue)
+    if m and not jeunes:
+        nom = f"{nom} {m.group(1).upper()}"
+    if LIGUE_FEMININE.search(ligue) and not fem:
+        nom = f"{nom} Women"
+    return nom
+
+
 def matchs_de(lignes: list[dict]) -> dict[str, dict]:
     """Un résumé par match (identifiant -> sport, équipes, début, ordre incertain)."""
     out = {}
     for l in lignes:
-        out.setdefault(l["match_id"], {"match_id": l["match_id"], "sport": l["sport"], "domicile": l["domicile"],
-                                       "exterieur": l["exterieur"], "debut": _heure(l["debut"]),
+        ligue = l.get("ligue") if l.get("source") == "pinnacle" else None
+        out.setdefault(l["match_id"], {"match_id": l["match_id"], "sport": l["sport"],
+                                       "domicile": avec_marqueurs_ligue(l["domicile"], ligue),
+                                       "exterieur": avec_marqueurs_ligue(l["exterieur"], ligue),
+                                       "debut": _heure(l["debut"]),
                                        "approx": bool(l.get("debut_approximatif")),
                                        "ordre_incertain": bool(l.get("ordre_incertain")) or l["source"] == "polymarket"})
     return out
