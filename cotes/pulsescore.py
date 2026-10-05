@@ -154,25 +154,22 @@ SPORTS_PROLONGATION = {"hockey", "basket", "football_americain", "baseball"}
 REGLE_PAR_DEFAUT = {
     # Winamax : hockey « par défaut sur la base du temps règlementaire » ; basket « temps total du match »
     ("winamax", "hockey"): "TEMPS_REG", ("winamax", "basket"): "MATCH",
-    # Unibet (règlement FDJ) : « A défaut d'être précisée, la période à prendre en compte est le temps
-    # réglementaire » ; au basket, un face-à-face à égalité à la fin du temps réglementaire est annulé
-    # NetBet : « le résultat qui fait foi est celui ... après le temps réglementaire » sauf mention ;
-    # football américain : « résultat final prolongations incluses » ; baseball avant-match : 9 manches
-    # (vérifié dans l'appli : au basket, NetBet écrit « prolongations incluses » dans l'intitulé quand elles comptent)
-    ("netbet", "hockey"): "TEMPS_REG", ("netbet", "basket"): "TEMPS_REG",
-    ("netbet", "football_americain"): "MATCH", ("netbet", "baseball"): "TEMPS_REG",
-    # PMU (règlement du 05/07/2022) : basket « temps réglementaire ... ainsi que des prolongations le cas
-    # échéant » ; hockey : prolongation incluse en NHL/AHL, temps réglementaire ailleurs, mais ce texte date
-    # d'avant le changement de plateforme -> non retenu tant que ce n'est pas vérifié
-    ("pmu", "basket"): "MATCH",
-    # Vérifié dans les applis : PMU écrit « Prol. et t.a.b. inc. » quand la prolongation compte (sinon temps
-    # réglementaire) ; Betclic : sans mention entre parenthèses, la prolongation compte (hockey et basket)
-    ("pmu", "hockey"): "TEMPS_REG",
+    # Betclic (vérifié dans l'appli) : sans mention entre parenthèses, la prolongation compte
     ("betclic", "hockey"): "MATCH", ("betclic", "basket"): "MATCH",
-    # Unibet (hockey et basket) : « temps réglementaire » est écrit dans l'intitulé quand il s'applique
-    # (vérifié dans l'appli) ; sans mention, la prolongation compte (face à face et handicaps : 2.3.1.40)
+    # Unibet (vérifié dans l'appli) : « temps réglementaire » est écrit dans l'intitulé quand il s'applique ;
+    # sans mention, la prolongation compte (face à face et handicaps : règlement 2.3.1.40)
     ("unibet-fr", "hockey"): "MATCH", ("unibet-fr", "basket"): "MATCH",
+    # NetBet : « le résultat qui fait foi est celui ... après le temps réglementaire » sauf mention ; au
+    # basket, « prolongations incluses » est écrit dans l'intitulé quand elles comptent (vérifié dans l'appli)
+    ("netbet", "hockey"): "TEMPS_REG", ("netbet", "basket"): "TEMPS_REG",
+    # PMU : basket « temps réglementaire ... ainsi que des prolongations le cas échéant » (règlement) ;
+    # hockey : « Prol. et t.a.b. inc. » écrit quand la prolongation compte, sinon temps réglementaire (appli)
+    ("pmu", "hockey"): "TEMPS_REG", ("pmu", "basket"): "MATCH",
 }
+# Football américain et baseball : prolongation (manches supplémentaires) incluse chez tous les bookmakers
+# (vérifié dans les applis ; NetBet : « résultat final prolongations incluses ») ; le 1N2 reste sur le temps
+# réglementaire (marché avec nul, voir MARCHES_AVEC_NUL)
+REGLE_PAR_SPORT = {"football_americain": "MATCH", "baseball": "MATCH"}
 # Exceptions vérifiées : Winamax « Nombre de buts » au hockey prolongations incluses (aide du pari,
 # vérifié sur winamax.fr) ; vainqueur à 2 issues au hockey = prolongation et tirs au but inclus (règlement).
 PROLONGATION_VERIFIEE = {("winamax", "hockey"): {"TOTAL", "TOTAL_DOM", "TOTAL_EXT", "VAINQUEUR"}}
@@ -211,7 +208,7 @@ def periode_match(bookmaker: str, sport: str, marche: str, libelle: str, ligne=N
         return "TEMPS_REG"
     if _prolongation_incluse(libelle) or marche in PROLONGATION_VERIFIEE.get((bookmaker, sport), ()):
         return "MATCH"
-    return REGLE_PAR_DEFAUT.get((bookmaker, sport)) or "MATCH?"
+    return REGLE_PAR_DEFAUT.get((bookmaker, sport)) or REGLE_PAR_SPORT.get(sport) or "MATCH?"
 
 
 def _equipe(nom: str, dom: str, ext: str) -> str | None:

@@ -66,10 +66,10 @@ marchés ne sont pas comparés.
 
 ### Football américain et baseball
 
-| Bookmaker | Règle officielle | Dans le code |
-|---|---|---|
-| NetBet | Football américain : « les paris portent sur le résultat final prolongations incluses, sauf mention contraire dans l'intitulé du pari. » Baseball : « En pré-match, Qui va gagner le match ?, concerne les neuf premières manches réglementaires. » | Football américain : prolongation incluse. Baseball : 9 manches |
-| Autres | Pas de règle par défaut claire, ou règlement inaccessible | **Non comparé** sans précision dans le libellé |
+Prolongation (manches supplémentaires au baseball) incluse **chez tous les bookmakers** : vérifié dans les
+applis. NetBet l'écrit aussi dans son règlement : « les paris portent sur le résultat final prolongations
+incluses, sauf mention contraire dans l'intitulé du pari. » Dans le code : prolongation incluse, sauf
+« temps réglementaire » dans l'intitulé ; le 1N2 (avec nul) reste sur le temps réglementaire.
 
 ## Tennis
 
@@ -101,6 +101,6 @@ Dans le code (`_regler_abandon`) :
 
 ## Vérifications faites dans les applis
 
-Betclic, PMU, Unibet (hockey et basket), NetBet (basket) et Winamax (totaux et handicaps au hockey) : vérifiés par l'utilisateur,
+Betclic, PMU, Unibet (hockey et basket), NetBet (basket), sports US (tous) et Winamax (totaux et handicaps au hockey) : vérifiés par l'utilisateur,
 reportés dans les tableaux ci-dessus. Toute nouvelle vérification se traduit par une ligne dans
 `REGLE_PAR_DEFAUT` ou `PROLONGATION_VERIFIEE` (`cotes/pulsescore.py`).
