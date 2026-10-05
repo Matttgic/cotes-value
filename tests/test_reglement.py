@@ -51,8 +51,25 @@ def test_hockey_temps_reglementaire():
     assert regler(p("RESULTAT_1N2", "NUL", periode="TEMPS_REG"), s) == "gagne"
     assert regler(p("VAINQUEUR", "DOM"), s) == "gagne"
     assert regler(p("TOTAL", "PLUS", 4.5), s) == "gagne"             # prolongation incluse
-    tab = scores_par_periode("hockey", (3, 2), [(1, 1), (0, 1), (1, 0), (0, 0), (1, 0)], ["1", "2", "3", "OT", "SO"])
-    assert regler(p("TOTAL", "PLUS", 4.5), tab) is None               # tirs au but : à régler à la main
+    assert regler(p("TOTAL", "PLUS", 4.5, "TEMPS_REG"), s) == "perdu"
+
+
+def test_hockey_tirs_au_but():
+    # 2-2 après prolongation, l'extérieur gagne les tirs au but 2-1 : un but de plus pour lui (3 buts à 2... soit 5)
+    s = scores_par_periode("hockey", (2, 3), [(1, 0), (1, 1), (0, 1), (0, 0), (1, 2)], ["1", "2", "3", "OT", "SO"])
+    assert s["MATCH"] == (2, 3)
+    assert regler(p("TOTAL", "PLUS", 4.5), s) == "gagne"
+    assert regler(p("VAINQUEUR", "EXT"), s) == "gagne"
+    assert regler(p("DRAW_NO_BET", "DOM", periode="TEMPS_REG"), s) == "rembourse"
+
+
+def test_basket_temps_reglementaire_et_prolongation():
+    s = scores_par_periode("basket", (110, 105), [(25, 25), (25, 25), (25, 25), (25, 25), (10, 5)],
+                           ["1", "2", "3", "4", "OT"])
+    assert s["TEMPS_REG"] == (100, 100) and s["MATCH"] == (110, 105)
+    assert regler(p("VAINQUEUR", "DOM", periode="TEMPS_REG"), s) == "rembourse"   # Unibet, NetBet
+    assert regler(p("VAINQUEUR", "DOM"), s) == "gagne"                            # Winamax, PMU
+    assert regler(p("TOTAL", "PLUS", 210.5), s) == "gagne"
 
 
 def test_tennis():
@@ -61,6 +78,26 @@ def test_tennis():
     assert regler(p("SETS_HANDICAP", "DOM", -1.5), s) == "perdu"
     assert regler(p("VAINQUEUR", "DOM", periode="SET1"), s) == "gagne"
     assert regler(p("JEUX_HANDICAP", "EXT", 1.5, "SET1"), s) == "perdu"
+
+
+def test_tennis_super_tie_break():
+    s = scores_par_periode("tennis", (2, 1), [(6, 4), (3, 6), (10, 8)], ["1", "2", "3"])
+    assert s["JEUX"] == (10, 10) and "ABANDON" not in s                   # super tie-break = 1 jeu
+    assert regler(p("JEUX_TOTAL", "MOINS", 20.5), s) == "gagne"
+
+
+def test_tennis_abandon():
+    # 6-4, 3-1 puis abandon
+    s = scores_par_periode("tennis", (1, 0), [(6, 4), (3, 1)], ["1", "2"])
+    assert s["ABANDON"]
+    assert regler(p("VAINQUEUR", "DOM"), s) == "rembourse"
+    assert regler(p("VAINQUEUR", "DOM", periode="SET1"), s) == "gagne"        # set terminé : maintenu
+    assert regler(p("JEUX_TOTAL", "PLUS", 12.5), s) == "gagne"                 # 14 jeux : seuil dépassé
+    assert regler(p("JEUX_TOTAL", "MOINS", 12.5), s) == "perdu"
+    assert regler(p("JEUX_TOTAL", "PLUS", 20.5), s) == "rembourse"
+    sets = {**p("SETS_TOTAL", "PLUS", 1.5), "bookmaker": "Winamax"}
+    assert regler(sets, s) == "gagne"                                          # 2 sets certains
+    assert regler({**sets, "bookmaker": "NetBet"}, s) == "rembourse"
 
 
 def test_gains():

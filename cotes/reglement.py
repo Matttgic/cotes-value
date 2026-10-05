@@ -43,12 +43,23 @@ def _ligne_asiatique(valeur: float, ligne: float) -> str:
     return _ligne_simple(valeur)
 
 
+def _set_termine(a: int, b: int) -> bool:
+    haut, bas = max(a, b), min(a, b)
+    return (haut >= 6 and haut - bas >= 2) or (haut == 7 and bas == 6) or (haut >= 10 and haut - bas >= 2)
+
+
 def scores_par_periode(sport: str, score: tuple[int, int], periodes: list[tuple[int, int]],
-                       libelles: list[str]) -> dict[str, tuple[int, int]]:
-    """Scores (domicile, extérieur) pour chaque période commune, d'après le score par période."""
-    out: dict[str, tuple[int, int]] = {}
+                       libelles: list[str]) -> dict:
+    """Scores (domicile, extérieur) pour chaque période commune, d'après le score par période.
+
+    Règles appliquées (docs/reglements.md) : au hockey, le vainqueur des tirs au but reçoit un but de plus
+    pour les marchés « prolongation incluse » ; au tennis, un super tie-break compte pour un jeu et un set,
+    et un abandon est signalé (clé ABANDON) pour appliquer les règles d'abandon.
+    """
+    out: dict = {}
     lab = [str(x).upper() for x in libelles]
-    reg = [p for p, l in zip(periodes, lab) if l not in ("OT", "SO", "ET", "AP", "P", "PEN", "TAB")]
+    hors_reg = ("OT", "SO", "ET", "AP", "P", "PEN", "TAB", "EI", "X")
+    reg = [p for p, l in zip(periodes, lab) if l not in hors_reg]
     somme = lambda ps: (sum(p[0] for p in ps), sum(p[1] for p in ps))  # noqa: E731
     if sport == "football":
         if len(reg) >= 1:
@@ -63,29 +74,80 @@ def scores_par_periode(sport: str, score: tuple[int, int], periodes: list[tuple[
             out[f"P{i + 1}"] = p
         if len(reg) >= 3:
             out["TEMPS_REG"] = somme(reg[:3])
-        out["MATCH"] = score                       # vainqueur : prolongation et tirs au but inclus
-        if "SO" in lab or "TAB" in lab:
-            out["TIRS_AU_BUT"] = (1, 1)            # totaux : compte-t-on le but des tirs au but ? à la main
+            prol = [p for p, l in zip(periodes, lab) if l in ("OT", "AP")]
+            tab = [p for p, l in zip(periodes, lab) if l in ("SO", "TAB", "PEN")]
+            d, e = somme(reg[:3] + prol)
+            if tab and tab[0][0] != tab[0][1]:
+                d, e = (d + 1, e) if tab[0][0] > tab[0][1] else (d, e + 1)   # un but au vainqueur des tirs au but
+            out["MATCH"] = (d, e)
+        else:
+            out["MATCH"] = score
     elif sport in ("basket", "football_americain"):
         for i, p in enumerate(reg[:4]):
             out[f"QT{i + 1}"] = p
         if len(reg) >= 2:
             out["MT1"] = somme(reg[:2])
-        if len(periodes) >= 4:
-            out["MT2"] = somme(periodes[2:])       # la 2e mi-temps inclut la prolongation
-        out["MATCH"] = score
+        if len(reg) >= 4:
+            out["MT2"] = somme(reg[2:4])
+            out["TEMPS_REG"] = somme(reg[:4])
+        out["MATCH"] = somme(periodes) if periodes else score   # prolongation incluse
+    elif sport == "baseball":
+        if len(reg) >= 9:
+            out["TEMPS_REG"] = somme(reg[:9])     # 9 manches
+        if len(reg) >= 5:
+            out["5_MANCHES"] = somme(reg[:5])
+        out["MATCH"] = score                       # manches supplémentaires incluses
     elif sport == "tennis":
-        for i, p in enumerate(periodes[:2]):
-            out[f"SET{i + 1}"] = p
-        out["MATCH"] = score                       # sets gagnés
-        out["JEUX"] = somme(periodes)              # jeux du match
+        sets = []
+        for i, (a, b) in enumerate(periodes):
+            if max(a, b) >= 10 and i == len(periodes) - 1:   # super tie-break : un jeu, un set
+                sets.append(((1, 0) if a > b else (0, 1), True, True))
+            else:
+                sets.append(((a, b), _set_termine(a, b), False))
+        for i, (jeux, termine, _) in enumerate(sets[:2]):
+            if termine:
+                out[f"SET{i + 1}"] = jeux
+        gagnes = (sum(1 for (a, b), t, _ in sets if t and a > b), sum(1 for (a, b), t, _ in sets if t and b > a))
+        out["MATCH"] = gagnes
+        out["JEUX"] = somme([j for j, _, _ in sets])
+        out["SETS_TERMINES"] = sum(1 for _, t, _ in sets if t)
+        if sets and (not all(t for _, t, _ in sets) or max(gagnes) < 2):
+            out["ABANDON"] = True
     else:
         out["MATCH"] = score
     return out
 
 
+def _regler_abandon(p: dict, scores: dict) -> str:
+    """Tennis, abandon ou disqualification : seuls les paris déjà décidés sont réglés, les autres remboursés.
+
+    Winamax, Unibet, NetBet, PMU : les paris sur une période terminée sont maintenus ; un « plus de X jeux »
+    déjà dépassé est gagnant (et le « moins » perdant). Nombre de sets : validé s'il est certain à la fin d'un
+    set chez Winamax et Unibet, remboursé chez NetBet (« le set en question n'a pas été mené à son terme »).
+    """
+    m, per, i, ligne = p["marche"], p["periode"], p["issue"], p.get("ligne")
+    if per.startswith("SET"):
+        if per in scores:
+            return regler({**p}, {k: v for k, v in scores.items() if k != "ABANDON"}) or "rembourse"
+        return "rembourse"
+    if m in ("JEUX_TOTAL", "JEUX_TOTAL_DOM", "JEUX_TOTAL_EXT"):
+        d, e = scores.get("JEUX", (0, 0))
+        t = {"JEUX_TOTAL": d + e, "JEUX_TOTAL_DOM": d, "JEUX_TOTAL_EXT": e}[m]
+        if t > ligne:
+            return "gagne" if i == "PLUS" else "perdu"
+        return "rembourse"
+    if m == "SETS_TOTAL" and (p.get("bookmaker") or "").lower() != "netbet":
+        certains = scores.get("SETS_TERMINES", 0) + 1
+        if certains > ligne:
+            return "gagne" if i == "PLUS" else "perdu"
+        return "rembourse"
+    return "rembourse"
+
+
 def regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     """Statut du pari, ou None si les scores ne suffisent pas."""
+    if scores.get("ABANDON"):
+        return _regler_abandon(p, scores)
     m, per, i, ligne = p["marche"], p["periode"], p["issue"], p.get("ligne")
     unite_jeux = m.startswith("JEUX_")
     if m.startswith("CARTONS_"):
@@ -102,8 +164,6 @@ def regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     else:
         s = scores.get(per)
     if not s:
-        return None
-    if m.startswith("TOTAL") and per == "MATCH" and "TIRS_AU_BUT" in scores:
         return None
     d, e = s
     if m in ("RESULTAT_1N2", "VAINQUEUR"):

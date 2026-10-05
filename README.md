@@ -40,7 +40,8 @@ Toutes les 15 minutes (`scripts/cycle.py`) :
 5. **Paris simulés** (`cotes/simulation.py`) : 10 € à la première détection, par simulation et par
    référence. **A** ≥ 2 %, **B** ≥ 3 %, **C** ≥ 4 %, **D** ≥ 5 %, **E** ≥ 7 % (cotes ≤ 10),
    **X** cotes > 10 (≥ 3 %). La cote juste est suivie jusqu'au coup d'envoi (**CLV**).
-6. **Règlement** (`cotes/reglement.py`) avec les résultats PulseScore du bookmaker du pari ;
+6. **Règlement** (`cotes/reglement.py`) avec les résultats PulseScore du bookmaker du pari, selon son
+   règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
 7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages, en onglets : À jouer, Bilan, Paris, À régler.
 

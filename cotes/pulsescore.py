@@ -144,17 +144,58 @@ def periode(sport: str, canonique: str | None, libelle: str) -> str | None:
             "THIRD_QUARTER": "QT3", "FOURTH_QUARTER": "QT4", "FIRST_SET": "SET1", "SECOND_SET": "SET2"}.get(c)
 
 
-# Hockey, marchés du match entier : prolongation incluse ou non selon le bookmaker.
-# Winamax : « Nombre de buts » prolongations incluses (vérifié sur winamax.fr le 05/10/2026).
-# Ailleurs, sans précision dans le libellé, la règle est inconnue : ces marchés ne sont pas comparés.
-PROLONGATION_INCLUSE = {"winamax": {"TOTAL", "TOTAL_DOM", "TOTAL_EXT"}}
+# ---------------------------------------------------------------- règles des bookmakers (prolongations)
+# Sports où une prolongation peut changer le résultat d'un marché « match entier ». Pour chacun, la règle
+# par défaut de chaque bookmaker quand le libellé ne précise rien, d'après les règlements officiels lus le
+# 05/10/2026 (détail et citations : docs/reglements.md) :
+#   "MATCH" = prolongation (et tirs au but) inclus, "TEMPS_REG" = temps réglementaire, None = inconnu.
+# Les marchés à la règle inconnue ne sont pas comparés (période « MATCH? »).
+SPORTS_PROLONGATION = {"hockey", "basket", "football_americain", "baseball"}
+REGLE_PAR_DEFAUT = {
+    # Winamax : hockey « par défaut sur la base du temps règlementaire » ; basket « temps total du match »
+    ("winamax", "hockey"): "TEMPS_REG", ("winamax", "basket"): "MATCH",
+    # Unibet (règlement FDJ) : « A défaut d'être précisée, la période à prendre en compte est le temps
+    # réglementaire » ; au basket, un face-à-face à égalité à la fin du temps réglementaire est annulé
+    ("unibet-fr", "hockey"): "TEMPS_REG", ("unibet-fr", "basket"): "TEMPS_REG",
+    # NetBet : « le résultat qui fait foi est celui ... après le temps réglementaire » sauf mention ;
+    # football américain : « résultat final prolongations incluses » ; baseball avant-match : 9 manches
+    ("netbet", "hockey"): "TEMPS_REG", ("netbet", "basket"): "TEMPS_REG",
+    ("netbet", "football_americain"): "MATCH", ("netbet", "baseball"): "TEMPS_REG",
+    # PMU (règlement du 05/07/2022) : basket « temps réglementaire ... ainsi que des prolongations le cas
+    # échéant » ; hockey : prolongation incluse en NHL/AHL, temps réglementaire ailleurs, mais ce texte date
+    # d'avant le changement de plateforme -> non retenu tant que ce n'est pas vérifié
+    ("pmu", "basket"): "MATCH",
+}
+# Exceptions vérifiées : Winamax « Nombre de buts » au hockey prolongations incluses (aide du pari,
+# vérifié sur winamax.fr) ; vainqueur à 2 issues au hockey = prolongation et tirs au but inclus chez Winamax
+# (règlement) et Betclic (libellé « prolongations et tirs au but éventuels inclus »).
+PROLONGATION_VERIFIEE = {("winamax", "hockey"): {"TOTAL", "TOTAL_DOM", "TOTAL_EXT", "VAINQUEUR"},
+                         ("betclic", "hockey"): {"VAINQUEUR"}}
 # marchés où le nul existe : forcément sur le temps réglementaire
 MARCHES_AVEC_NUL = {"RESULTAT_1N2", "DOUBLE_CHANCE", "DRAW_NO_BET", "HANDICAP_3", "HALF_TIME_FULL_TIME"}
 
 
 def _temps_reglementaire(libelle: str) -> bool:
     l = (libelle or "").lower()
-    return any(x in l for x in ("t. rég", "tps rég", "temps réglementaire", "regular time", "60 min", "(rt)"))
+    return any(x in l for x in ("t. rég", "tps rég", "temps réglementaire", "temps règlementaire", "regular time",
+                                "regulation", "60 min", "90 min", "(rt)", "hors prolong"))
+
+
+def _prolongation_incluse(libelle: str) -> bool:
+    l = (libelle or "").lower()
+    return any(x in l for x in ("prolongations incluses", "prolongation incluse", "prol. incl", "incl. ot",
+                                "including overtime", "incl. overtime", "tirs au but inclus", "(ot)"))
+
+
+def periode_match(bookmaker: str, sport: str, marche: str, libelle: str) -> str:
+    """Période d'un marché « match entier » selon les règles du bookmaker."""
+    if sport not in SPORTS_PROLONGATION:
+        return "MATCH"                    # football, handball, rugby… : MATCH = temps réglementaire partout
+    if _temps_reglementaire(libelle) or marche in MARCHES_AVEC_NUL:
+        return "TEMPS_REG"
+    if _prolongation_incluse(libelle) or marche in PROLONGATION_VERIFIEE.get((bookmaker, sport), ()):
+        return "MATCH"
+    return REGLE_PAR_DEFAUT.get((bookmaker, sport)) or "MATCH?"
 
 
 def _equipe(nom: str, dom: str, ext: str) -> str | None:
@@ -189,13 +230,10 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str) -> list[dict]:
             continue
         for marche, ligne, issue, s in _marche(canon, libelle, sels, sport, dom, ext):
             p = per
-            if sport == "hockey" and per == "MATCH":
-                if marche in MARCHES_AVEC_NUL or _temps_reglementaire(libelle):
-                    p = "TEMPS_REG"
-                elif marche == "VAINQUEUR" or marche in PROLONGATION_INCLUSE.get(bookmaker, ()):
-                    p = "MATCH"             # prolongation (et tirs au but) inclus
-                else:
-                    p = "MATCH?"            # règle inconnue -> pas comparé
+            if per == "MATCH":
+                p = periode_match(bookmaker, sport, marche, libelle)
+            elif sport in ("basket", "football_americain") and per in ("MT2", "QT4"):
+                p = per + "?"             # prolongation comptée dans la 2e mi-temps ? différent selon les sites
             out.append({**base, "marche": marche, "periode": p, "ligne": ligne, "issue": issue,
                         "cote": float(s["odds"]), "libelle": libelle, "cle_marche": f"{bookmaker}|{m.get('marketId')}",
                         "achat": s.get("back"), "vente": s.get("lay")})
