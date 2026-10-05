@@ -65,6 +65,36 @@ def harmoniser_pinnacle(lignes: list[dict]) -> list[dict]:
                 nv = ("CORRECT_SCORE", None, f"{s.group(2)}-{s.group(4)}")
         if nv and nv[2]:
             out.append({**l, "marche": nv[0], "ligne": nv[1], "issue": nv[2]})
+    return deriver_double_chance(out)
+
+
+DOUBLE_CHANCE = {"HOME_DRAW": ("DOM", "NUL"), "HOME_AWAY": ("DOM", "EXT"), "DRAW_AWAY": ("NUL", "EXT")}
+
+
+def deriver_double_chance(lignes: list[dict]) -> list[dict]:
+    """Double chance d'une référence recalculée depuis son 1N2 (1X = 1 + X…), à la place de la sienne.
+
+    Les trois issues d'une double chance se recouvrent (leurs probabilités font 2 au total) : retirer la
+    marge comme sur un marché ordinaire les diviserait par deux. Le 1N2 est aussi plus liquide."""
+    groupes: dict[tuple, dict[str, dict]] = {}
+    for l in lignes:
+        if l["marche"] == "RESULTAT_1N2" and l.get("proba_juste"):
+            groupes.setdefault((l["match_id"], l["periode"], l.get("cle_marche")), {})[l["issue"]] = l
+    out = [l for l in lignes if l["marche"] != "DOUBLE_CHANCE"]
+    for (mid, per, cm), g in groupes.items():
+        if set(g) != {"DOM", "NUL", "EXT"}:
+            continue
+        for issue, (a, b) in DOUBLE_CHANCE.items():
+            p = g[a]["proba_juste"] + g[b]["proba_juste"]
+            base = g[a]
+            nv = {**base, "marche": "DOUBLE_CHANCE", "ligne": None, "issue": issue, "proba_juste": round(p, 6),
+                  "cote_juste": round(1 / p, 4), "cote": None, "cle_marche": f"{cm}|dc"}
+            for champ in ("ecart_achat_vente",):          # fiabilité : la moins bonne des deux issues
+                if champ in base:
+                    nv[champ] = max(g[a].get(champ) or 0, g[b].get(champ) or 0)
+            if "liquidite" in base:
+                nv["liquidite"] = min(g[a].get("liquidite") or 0, g[b].get("liquidite") or 0)
+            out.append(nv)
     return out
 
 

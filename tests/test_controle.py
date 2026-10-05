@@ -42,3 +42,14 @@ def test_pas_de_pari_tant_que_l_intitule_n_est_pas_conforme():
 def test_match_mal_associe():
     mesures = [(ligne(match="m9"), "Pinnacle", 2.0, 1.6) for _ in range(8)]
     assert "m9" in CT.matchs_suspects(mesures)
+
+
+def test_noms_ecrits_autrement_et_periode_douteuse():
+    assert CT.type_intitule("Nombre de jeux de D. Snigur", "Daria Snigur", "Iga Swiatek") == "nombre de jeux de {eq}"
+    # la cote suit de près l'autre version (prolongation) et mal la sienne : période douteuse
+    import random
+    random.seed(1)
+    paires = [(0.9 * random.uniform(0.85, 1.15), 0.9 * random.uniform(0.99, 1.01)) for _ in range(20)]
+    assert CT.statut([a for a, _ in paires], "TOTAL", paires) == "non_conforme"
+    assert CT.statut([b for _, b in paires], "TOTAL", [(b, a) for a, b in paires]) == "conforme"
+    assert CT.statut([0.65] * 20, "CORRECT_SCORE") == "conforme"           # marge forte sur le score exact

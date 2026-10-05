@@ -22,7 +22,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", []) if not o.get("suspect")]
     ctl = _lire(donnees / "controle.json", {})
     groupes = [{k: g.get(k) for k in ("bookmaker", "sport", "marche", "periode", "type", "n", "mediane",
-                                      "part_haute", "statut", "exemples")} for g in ctl.get("groupes", {}).values()]
+                                      "part_haute", "statut", "exemples", "dispersion", "dispersion_autre_periode")} for g in ctl.get("groupes", {}).values()]
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     data = {"paris": paris, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris), "controle": controle,
             "simulations": {k: v["nom"] for k, v in SIMULATIONS.items()}, "references": REFERENCES}
@@ -271,7 +271,8 @@ function rendreControle() {
 <div class="l1"><span class="match">${e(g.bookmaker)} · ${e(g.sport)} · ${e(g.marche)} ${e(g.periode)}</span>
 <span class="quand">${g.n} mesure${g.n>1?"s":""}</span></div>
 <div class="l2">« ${e(g.type)} »</div>
-<div class="l4"><span>Rapport médian <b>${num(g.mediane)}</b></span><span>au-dessus de 1,12 : ${g.part_haute==null?"—":Math.round(100*g.part_haute)+" %"}</span></div>
+<div class="l4"><span>Rapport médian <b>${num(g.mediane)}</b></span><span>au-dessus de 1,12 : ${g.part_haute==null?"—":Math.round(100*g.part_haute)+" %"}</span>
+${g.dispersion_autre_periode!=null && g.dispersion_autre_periode < 0.8*g.dispersion ? `<b class="neg">suit mieux l'autre période (temps réglementaire / prolongation)</b>` : ""}</div>
 ${(g.exemples||[]).map(x => `<div class="l4"><span>${e(x.match)}</span><span>${e(x.libelle)}${x.ligne!=null?" ["+e(x.ligne)+"]":""} ${e(x.issue)}</span>
 <span>${cote(x.cote)} / ${e(x.reference)} ${cote(x.cote_juste)}</span></div>`).join("")}</article>`).join("")
       : `<div class="vide">Aucun intitulé dans cette catégorie.</div>`;

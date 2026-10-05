@@ -96,8 +96,19 @@ def test_pinnacle_specials():
         {**base, "marche": "SPECIAL:Winning Margin", "issue": "Lens By 1"},
     ])
     assert [(l["marche"], l["ligne"], l["issue"]) for l in L] == [
-        ("CORRECT_SCORE", None, "2-1"), ("DOUBLE_CHANCE", None, "DRAW_AWAY"),
+        ("CORRECT_SCORE", None, "2-1"),                 # double chance : recalculée depuis le 1N2
         ("HALF_TIME_FULL_TIME", None, "NUL/DOM"), ("HANDICAP_3", -1.0, "NUL")]
+
+
+def test_double_chance_depuis_le_1n2():
+    from cotes.marches import deriver_double_chance
+    base = {"match_id": "p1", "periode": "MATCH", "marche": "RESULTAT_1N2", "ligne": None, "cle_marche": "k",
+            "marge_pinnacle": 0.03}
+    L = deriver_double_chance([{**base, "issue": "DOM", "proba_juste": 0.5}, {**base, "issue": "NUL", "proba_juste": 0.3},
+                               {**base, "issue": "EXT", "proba_juste": 0.2},
+                               {**base, "marche": "DOUBLE_CHANCE", "issue": "HOME_DRAW", "proba_juste": 0.4}])
+    dc = {l["issue"]: l["proba_juste"] for l in L if l["marche"] == "DOUBLE_CHANCE"}
+    assert dc == {"HOME_DRAW": 0.8, "HOME_AWAY": 0.7, "DRAW_AWAY": 0.5}
 
 
 def test_inversion_domicile_exterieur():

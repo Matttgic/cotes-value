@@ -20,7 +20,7 @@ from datetime import datetime
 
 from . import controle as CT
 from . import correspondance as C
-from .marches import cle, inverser
+from .marches import cle, deriver_double_chance, inverser
 from .marge import proba_justes
 
 FENETRE_MIN = 15
@@ -67,7 +67,7 @@ def reference_betfair(lignes: list[dict]) -> list[dict]:
         s = max(sum(probs), 1.0)
         for l, p in zip(g, probs):
             out.append({**l, "source": "Betfair", "proba_juste": round(p / s, 6), "cote_juste": round(s / p, 4)})
-    return out
+    return deriver_double_chance(out)
 
 
 def _fiable(nom: str, l: dict) -> bool:
