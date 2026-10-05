@@ -34,7 +34,7 @@ match) portent toujours sur le temps réglementaire.
 | Bookmaker | Règle officielle | Dans le code |
 |---|---|---|
 | Winamax | « Les paris sur le hockey sur glace sont proposés par défaut sur la base du temps règlementaire. Dans certains cas, les prolongations sont comptabilisées : le cas échéant, Winamax le précisera dans l'intitulé ou l'aide du pari. » | Temps réglementaire par défaut. **Exception** : « Nombre de buts » (totaux, totaux par équipe) et vainqueur à 2 issues = prolongation incluse, vérifié par toi sur le site |
-| Unibet | « A défaut d'être précisée, la période à prendre en compte est le temps réglementaire. » | Temps réglementaire, sauf libellé contraire |
+| Unibet | « A défaut d'être précisée, la période à prendre en compte est le temps réglementaire. » ; pour les face-à-face et handicaps, « pour certains sports, il sera tenu compte des éventuelles prolongations ». **Vérifié dans l'appli** : « temps réglementaire » est écrit dans l'intitulé quand il s'applique | Temps réglementaire si l'intitulé le dit, sinon prolongation incluse |
 | NetBet | « Dans tous les sports qui adoptent un certain temps de jeu, le résultat qui fait foi est celui qui est établi après le temps de jeu normal (ou temps réglementaire) […]. Les prolongations ou séance de tirs au but n'auront aucune influence sur l'issue des paris sauf dans les cas contraires mentionnés sur le site. » | Temps réglementaire, sauf libellé contraire. (Les règles BetBuilder, prolongation incluse, ne concernent que les paris BetBuilder, qu'on ne simule pas) |
 | PMU | Règlement de 2022 : prolongation incluse en NHL et AHL, temps réglementaire ailleurs. **Vérifié dans l'appli** : la mention « Prol. et t.a.b. inc. » est écrite quand la prolongation compte | Temps réglementaire, sauf « Prol. et t.a.b. inc. » |
 | Betclic | Règlement inaccessible. **Vérifié dans l'appli** : sans mention entre parenthèses, la prolongation compte (vainqueur, totaux) ; « (tps rég.) » = temps réglementaire | Prolongation incluse, sauf « tps rég. » |
@@ -99,11 +99,8 @@ Dans le code (`_regler_abandon`) :
 - nombre total de sets : réglé sur « sets terminés + 1 » quand c'est certain, sauf chez NetBet, où il est
   remboursé.
 
-## Ce qu'il reste à vérifier dans les applis
+## Vérifications faites dans les applis
 
-1. **Unibet**, au hockey : les marchés dont le libellé ne parle ni de temps réglementaire ni de
-   prolongation (par exemple « Nombre de buts ») suivent-ils bien le règlement (temps réglementaire) ?
-   Le texte d'aide « i » du marché le précise en général.
-
-Chaque réponse se traduit par une ligne dans `REGLE_PAR_DEFAUT` ou `PROLONGATION_VERIFIEE`
-(`cotes/pulsescore.py`).
+Betclic, PMU, Unibet (hockey) et Winamax (totaux et handicaps au hockey) : vérifiés par l'utilisateur,
+reportés dans les tableaux ci-dessus. Toute nouvelle vérification se traduit par une ligne dans
+`REGLE_PAR_DEFAUT` ou `PROLONGATION_VERIFIEE` (`cotes/pulsescore.py`).
