@@ -1,0 +1,32 @@
+name: Vérification Pinnacle = PS3838
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verif:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Comparer Pinnacle (direct) et PS3838 (PulseScore)
+        env:
+          PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
+        run: python scripts/verif_ps3838.py
+      - name: Déposer le rapport sur la branche « verif »
+        run: |
+          mv verif /tmp/verif
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan verif
+          git rm -rq --cached . && git clean -fdq
+          cp -r /tmp/verif/. .
+          git add -A
+          git commit -qm "Vérification Pinnacle = PS3838 $(date -u +%FT%TZ)"
+          git push -f origin verif
