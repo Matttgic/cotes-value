@@ -24,6 +24,7 @@ import statistics
 import unicodedata
 
 from .marches import cle
+from .pulsescore import PERIODE_VERIFIEE
 
 MESURES_MIN = 8
 MEDIANE_MIN, MEDIANE_MAX = 0.70, 1.02
@@ -103,7 +104,8 @@ def _dispersion(rapports: list[float]) -> float:
 
 
 def statut(rapports: list[float], marche: str = "", paires_alt: list[tuple[float, float]] | None = None) -> str:
-    """paires_alt : (rapport, rapport avec l'autre version de la période) pour les cotes qui ont les deux."""
+    """paires_alt : (rapport, rapport avec l'autre version de la période) pour les cotes qui ont les deux ;
+    None quand la période a été vérifiée à la main (pas de test de période)."""
     if len(rapports) < MESURES_MIN:
         return "a_verifier"
     med = statistics.median(rapports)
@@ -138,7 +140,9 @@ def mettre_a_jour(etat: dict, mesures: list[tuple[dict, str, float, float]], mom
         g["rapports"] = g["rapports"][-GARDER:]
         if "paires_alt" in g:
             g["paires_alt"] = g["paires_alt"][-GARDER:]
-        g["statut"] = statut(g["rapports"], g["marche"], g.get("paires_alt"))
+        verifiee = PERIODE_VERIFIEE.get((g["bookmaker"], g["sport"]), {}).get(g["marche"]) == g["periode"]
+        g["periode_verifiee"] = verifiee
+        g["statut"] = statut(g["rapports"], g["marche"], None if verifiee else g.get("paires_alt"))
         if len(g.get("paires_alt") or []) >= MESURES_MIN:
             g["dispersion"] = round(_dispersion([a for a, _ in g["paires_alt"]]), 4)
             g["dispersion_autre_periode"] = round(_dispersion([b for _, b in g["paires_alt"]]), 4)

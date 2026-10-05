@@ -195,9 +195,15 @@ REGLE_PAR_DEFAUT = {
 # (vérifié dans les applis ; NetBet : « résultat final prolongations incluses ») ; le 1N2 reste sur le temps
 # réglementaire (marché avec nul, voir MARCHES_AVEC_NUL)
 REGLE_PAR_SPORT = {"football_americain": "MATCH", "baseball": "MATCH"}
-# Exceptions vérifiées : Winamax « Nombre de buts » au hockey prolongations incluses (aide du pari,
-# vérifié sur winamax.fr) ; vainqueur à 2 issues au hockey = prolongation et tirs au but inclus (règlement).
-PROLONGATION_VERIFIEE = {("winamax", "hockey"): {"TOTAL", "TOTAL_DOM", "TOTAL_EXT", "VAINQUEUR"}}
+# Exceptions vérifiées par marché, quand l'intitulé ne dit rien (un intitulé explicite l'emporte toujours) :
+# - Winamax, hockey : « Nombre de buts », total par équipe compris, prolongations incluses (vérifié sur
+#   winamax.fr) ; vainqueur à 2 issues = prolongation et tirs au but inclus (règlement) ;
+# - Unibet, hockey : total par équipe sur le temps réglementaire seulement (vérifié dans l'appli).
+# Le contrôle de conformité ne remet pas en cause ces périodes vérifiées (cotes/controle.py).
+PERIODE_VERIFIEE = {
+    ("winamax", "hockey"): {"TOTAL": "MATCH", "TOTAL_DOM": "MATCH", "TOTAL_EXT": "MATCH", "VAINQUEUR": "MATCH"},
+    ("unibet-fr", "hockey"): {"TOTAL_DOM": "TEMPS_REG", "TOTAL_EXT": "TEMPS_REG"},
+}
 # marchés où le nul existe : forcément sur le temps réglementaire
 MARCHES_AVEC_NUL = {"RESULTAT_1N2", "DOUBLE_CHANCE", "DRAW_NO_BET", "HANDICAP_3", "HALF_TIME_FULL_TIME"}
 
@@ -231,8 +237,10 @@ def periode_match(bookmaker: str, sport: str, marche: str, libelle: str, ligne=N
         return "MATCH"
     if _temps_reglementaire(libelle) or marche in MARCHES_AVEC_NUL:
         return "TEMPS_REG"
-    if _prolongation_incluse(libelle) or marche in PROLONGATION_VERIFIEE.get((bookmaker, sport), ()):
+    if _prolongation_incluse(libelle):
         return "MATCH"
+    if marche in PERIODE_VERIFIEE.get((bookmaker, sport), {}):
+        return PERIODE_VERIFIEE[(bookmaker, sport)][marche]
     return REGLE_PAR_DEFAUT.get((bookmaker, sport)) or REGLE_PAR_SPORT.get(sport) or "MATCH?"
 
 
