@@ -31,6 +31,7 @@ LIQUIDITE_MIN = {"Betfair": 20.0, "Polymarket": 100.0, "Kalshi": 0.0}
 ECART_MIN = 0.02
 # Au-delà, une « erreur de cote » est presque toujours un marché mal reconnu (statistique prise pour des
 # buts, série prise pour un match…) : l'opportunité est gardée pour contrôle mais marquée suspecte, sans pari.
+BRUT = "Pinnacle brut"          # référence témoin : cote Pinnacle affichée, marge comprise
 ECART_SUSPECT = 0.25            # cotes <= 10
 ECART_SUSPECT_GROSSES = 1.0     # cotes > 10
 DESACCORD_MAX = 1.25            # cotes justes de deux références qui diffèrent de plus de 25 % : suspect
@@ -144,6 +145,10 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             trouvees["Consensus"] = {"proba_juste": p, "cote_juste": 1 / p, "collecte": l["collecte"],
                                      "domicile": l["domicile"], "exterieur": l["exterieur"],
                                      "sources": "+".join(sorted(trouvees))}
+        # simulation témoin : la cote AFFICHÉE par Pinnacle, marge comprise (sans retrait de la marge)
+        pin = trouvees.get("Pinnacle")
+        if pin and pin.get("cote"):
+            trouvees[BRUT] = {**pin, "proba_juste": 1 / pin["cote"]}
         for nom, r in trouvees.items():
             ecart = l["cote"] * r["proba_juste"] - 1
             if ecart < ecart_min:
@@ -185,6 +190,8 @@ def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) 
     for v in out.values():
         if len(v) >= 2:
             v["Consensus"] = sum(v.values()) / len(v)
+        if "Pinnacle" in v:
+            v[BRUT] = v["Pinnacle"]      # CLV des paris « brut » mesurée contre la cote juste : la vraie valeur
     return out
 
 

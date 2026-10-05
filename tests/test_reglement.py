@@ -131,3 +131,15 @@ def test_betfair_issues_manquantes_pas_gonflees():
     # deux scores seulement sur une quinzaine : les probabilités restent celles du marché
     r = {x["issue"]: x["proba_juste"] for x in reference_betfair([l("1-1", 9.0, 10.0), l("2-2", 15.0, 17.0)])}
     assert abs(r["1-1"] - (1 / 9 + 1 / 10) / 2) < 1e-6
+
+
+def test_reference_pinnacle_brut():
+    from cotes.comparaison import comparer
+    base = {"sport": "football", "ligue": "L", "domicile": "Lens", "exterieur": "Lille", "libelle": "x",
+            "debut": "2030-01-01T20:00:00+00:00", "collecte": "2029-12-31T20:00:00+00:00", "marche": "VAINQUEUR",
+            "periode": "MATCH", "ligne": None, "issue": "DOM", "joueur": None}
+    ref = [{**base, "source": "pinnacle", "match_id": "p1", "cote": 1.95, "proba_juste": 0.5, "marge_pinnacle": 0.026}]
+    # 1,98 : au-dessus de la cote affichée (1,95) mais sous la cote juste (2,00) -> seulement « Pinnacle brut »
+    o = {x["reference"]: x for x in comparer([{**base, "source": "winamax", "match_id": "w1", "cote": 1.98}],
+                                             {"Pinnacle": ref}, ecart_min=0.01)}
+    assert set(o) == {"Pinnacle brut"} and o["Pinnacle brut"]["cote_juste"] == 1.95

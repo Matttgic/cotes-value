@@ -19,7 +19,8 @@ def _lire(chemin: Path, defaut):
 def construire(donnees: Path, sortie: Path) -> Path:
     paris = _lire(donnees / "paris.json", [])
     etat = _lire(donnees / "etat.json", {})
-    actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", []) if not o.get("suspect")]
+    actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", [])
+                 if not o.get("suspect") and o.get("reference") != "Pinnacle brut"]
     ctl = _lire(donnees / "controle.json", {})
     groupes = [{k: g.get(k) for k in ("bookmaker", "sport", "marche", "periode", "type", "n", "mediane",
                                       "part_haute", "statut", "exemples", "dispersion", "dispersion_autre_periode")} for g in ctl.get("groupes", {}).values()]
@@ -113,7 +114,9 @@ td small{display:block;color:var(--doux);font-size:11.5px}
     <div class="puces" id="puces-ref"></div>
     <table id="bilan"></table>
     <p class="aide" style="margin-top:8px">10 € par pari. ROI sur les paris réglés. CLV : écart entre la cote prise et la cote
-    juste juste avant le match (positive = on a battu le marché ; c'est l'indicateur le plus rapide à devenir fiable).</p>
+    juste juste avant le match (positive = on a battu le marché ; c'est l'indicateur le plus rapide à devenir fiable).
+    « Pinnacle brut » : témoin, comparé à la cote affichée par Pinnacle sans retirer sa marge (sa CLV est mesurée
+    contre la cote juste).</p>
     <div class="infos" id="infos"></div>
   </section>
   <section class="onglet" id="o-paris">

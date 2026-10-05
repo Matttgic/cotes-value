@@ -24,7 +24,7 @@ SIMULATIONS = {
     "E": {"ecart": 0.07, "cote_max": 10.0, "cote_min": 1.0, "nom": "≥ 7 %"},
     "X": {"ecart": 0.03, "cote_max": 1e9, "cote_min": 10.0001, "nom": "Cotes > 10 (≥ 3 %)"},
 }
-REFERENCES = ["Pinnacle", "Betfair", "Polymarket", "Kalshi", "Consensus"]
+REFERENCES = ["Pinnacle", "Betfair", "Polymarket", "Kalshi", "Consensus", "Pinnacle brut"]
 
 
 def _id(*parts) -> str:
