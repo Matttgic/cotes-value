@@ -156,7 +156,6 @@ REGLE_PAR_DEFAUT = {
     ("winamax", "hockey"): "TEMPS_REG", ("winamax", "basket"): "MATCH",
     # Unibet (règlement FDJ) : « A défaut d'être précisée, la période à prendre en compte est le temps
     # réglementaire » ; au basket, un face-à-face à égalité à la fin du temps réglementaire est annulé
-    ("unibet-fr", "basket"): "TEMPS_REG",
     # NetBet : « le résultat qui fait foi est celui ... après le temps réglementaire » sauf mention ;
     # football américain : « résultat final prolongations incluses » ; baseball avant-match : 9 manches
     ("netbet", "hockey"): "TEMPS_REG", ("netbet", "basket"): "TEMPS_REG",
@@ -169,9 +168,9 @@ REGLE_PAR_DEFAUT = {
     # réglementaire) ; Betclic : sans mention entre parenthèses, la prolongation compte (hockey et basket)
     ("pmu", "hockey"): "TEMPS_REG",
     ("betclic", "hockey"): "MATCH", ("betclic", "basket"): "MATCH",
-    # Unibet au hockey : « temps réglementaire » est écrit dans l'intitulé quand il s'applique (vérifié dans
-    # l'appli) ; sans mention, la prolongation compte (« face à face » et handicaps : règlement 2.3.1.40)
-    ("unibet-fr", "hockey"): "MATCH",
+    # Unibet (hockey et basket) : « temps réglementaire » est écrit dans l'intitulé quand il s'applique
+    # (vérifié dans l'appli) ; sans mention, la prolongation compte (face à face et handicaps : 2.3.1.40)
+    ("unibet-fr", "hockey"): "MATCH", ("unibet-fr", "basket"): "MATCH",
 }
 # Exceptions vérifiées : Winamax « Nombre de buts » au hockey prolongations incluses (aide du pari,
 # vérifié sur winamax.fr) ; vainqueur à 2 issues au hockey = prolongation et tirs au but inclus (règlement).

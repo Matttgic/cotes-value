@@ -64,6 +64,8 @@ def test_hockey_prolongation():
     tot4 = {**tot, "rawName": "Nombre total de buts - Temps Réglementaire"}
     assert {l["periode"] for l in traduire(ev([tot4]), "unibet-fr", "hockey", "t")} == {"TEMPS_REG"}
     assert {l["periode"] for l in traduire(ev([tot2]), "unibet-fr", "hockey", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([tot2]), "unibet-fr", "basket", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([tot4]), "unibet-fr", "basket", "t")} == {"TEMPS_REG"}
 
 
 def test_handicap_hockey_prolongation_sans_effet():
