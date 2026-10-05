@@ -54,8 +54,22 @@ def test_hockey_prolongation():
     assert {l["periode"] for l in traduire(ev([tot]), "betclic", "hockey", "t")} == {"TEMPS_REG"}
     # Winamax : nombre de buts prolongations incluses (vérifié sur le site)
     assert {l["periode"] for l in traduire(ev([tot2]), "winamax", "hockey", "t")} == {"MATCH"}
-    assert {l["periode"] for l in traduire(ev([tot2]), "pmu", "hockey", "t")} == {"MATCH?"}
+    # PMU : temps réglementaire sauf « Prol. et t.a.b. inc. » ; Betclic : prolongation sauf mention
+    assert {l["periode"] for l in traduire(ev([tot2]), "pmu", "hockey", "t")} == {"TEMPS_REG"}
+    tot3 = {**tot, "rawName": "Nombre de buts (Prol. et t.a.b. inc.)"}
+    assert {l["periode"] for l in traduire(ev([tot3]), "pmu", "hockey", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([tot2]), "betclic", "hockey", "t")} == {"MATCH"}
     assert {l["periode"] for l in traduire(ev([dc]), "winamax", "hockey", "t")} == {"TEMPS_REG"}
+
+
+def test_handicap_hockey_prolongation_sans_effet():
+    def hc(ligne):
+        return {"canonicalMarket": "ASIAN_HANDICAP", "period": "FULL_TIME", "rawName": "Handicap",
+                "selections": [sel("HOME", "A", 2.0, ligne), sel("AWAY", "B", 1.8, ligne)]}
+    # ±1,5 : la prolongation ne donne qu'un but d'écart, même règlement -> comparable à Pinnacle (match entier)
+    assert {l["periode"] for l in traduire(ev([hc(-1.5)]), "winamax", "hockey", "t")} == {"MATCH"}
+    # ±0,5 : la prolongation change tout -> règle du bookmaker (Winamax : temps réglementaire)
+    assert {l["periode"] for l in traduire(ev([hc(-0.5)]), "winamax", "hockey", "t")} == {"TEMPS_REG"}
 
 
 def test_pinnacle_specials():

@@ -36,8 +36,13 @@ match) portent toujours sur le temps réglementaire.
 | Winamax | « Les paris sur le hockey sur glace sont proposés par défaut sur la base du temps règlementaire. Dans certains cas, les prolongations sont comptabilisées : le cas échéant, Winamax le précisera dans l'intitulé ou l'aide du pari. » | Temps réglementaire par défaut. **Exception** : « Nombre de buts » (totaux, totaux par équipe) et vainqueur à 2 issues = prolongation incluse, vérifié par toi sur le site |
 | Unibet | « A défaut d'être précisée, la période à prendre en compte est le temps réglementaire. » | Temps réglementaire, sauf libellé contraire |
 | NetBet | « Dans tous les sports qui adoptent un certain temps de jeu, le résultat qui fait foi est celui qui est établi après le temps de jeu normal (ou temps réglementaire) […]. Les prolongations ou séance de tirs au but n'auront aucune influence sur l'issue des paris sauf dans les cas contraires mentionnés sur le site. » | Temps réglementaire, sauf libellé contraire. (Les règles BetBuilder, prolongation incluse, ne concernent que les paris BetBuilder, qu'on ne simule pas) |
-| PMU (2022) | NHL et AHL : « tous les paris sont traités sur la base du temps réglementaire et des prolongations (et éventuelle séance de tirs aux buts) » ; autres compétitions : « tous les paris sont traités sur la base du temps réglementaire » | **Non comparé** sans précision dans le libellé : le texte date d'avant la nouvelle plateforme |
-| Betclic | Inaccessible | Libellés : « (tps rég.) » = temps réglementaire ; vainqueur « prolongations et tirs au but éventuels inclus » = prolongation incluse ; le reste **non comparé** |
+| PMU | Règlement de 2022 : prolongation incluse en NHL et AHL, temps réglementaire ailleurs. **Vérifié dans l'appli** : la mention « Prol. et t.a.b. inc. » est écrite quand la prolongation compte | Temps réglementaire, sauf « Prol. et t.a.b. inc. » |
+| Betclic | Règlement inaccessible. **Vérifié dans l'appli** : sans mention entre parenthèses, la prolongation compte (vainqueur, totaux) ; « (tps rég.) » = temps réglementaire | Prolongation incluse, sauf « tps rég. » |
+
+**Handicaps à ±1,5, ±2,5…** : la prolongation (but en or) ou les tirs au but partent d'une égalité et
+donnent toujours 1 but d'écart. Un handicap -1,5 est donc perdu et un +1,5 gagné avec ou sans
+prolongation : ces handicaps sont comparés à Pinnacle chez tous les bookmakers. Les handicaps à ±0,5 ou
+±1, eux, changent avec la prolongation et suivent la règle du bookmaker.
 
 **Tirs au but** (Winamax, NetBet, PMU) : le vainqueur de la séance reçoit un but de plus. Exemple NetBet :
 « France - Allemagne 2-2 à la fin des prolongations. La France remporte la séance de tirs aux buts. Le
@@ -54,7 +59,7 @@ but pour tous les marchés « prolongation incluse ».
 | Unibet | Temps réglementaire à défaut de précision (règle générale ci-dessus). Pour les « face à face », « pour certains sports, il sera tenu compte des éventuelles prolongations » | Temps réglementaire, sauf libellé contraire (Pinnacle ne cote le basket que prolongation incluse : ces marchés ne sont donc pas comparés) |
 | NetBet | Temps réglementaire (règle générale 4.2) ; « En cas d'égalité sur le résultat d'un pari et si cette option n'a pas été proposée par NETBET, tous les paris seront considérés comme nuls. » | Temps réglementaire, donc non comparé |
 | PMU (2022) | « tous les paris […] sont sur la base du temps réglementaire de 40 minutes […] ainsi que des prolongations le cas échéant » (idem 48 minutes en NBA) | Prolongation incluse |
-| Betclic | Inaccessible | **Non comparé** sans précision dans le libellé |
+| Betclic | **Vérifié dans l'appli** : sans mention entre parenthèses, la prolongation compte (vainqueur, total de points) | Prolongation incluse |
 
 Deuxième mi-temps et 4e quart-temps : selon les bookmakers, la prolongation y est ajoutée ou non. Ces
 marchés ne sont pas comparés.
@@ -96,11 +101,9 @@ Dans le code (`_regler_abandon`) :
 
 ## Ce qu'il reste à vérifier dans les applis
 
-1. **Betclic** : la prolongation compte-t-elle au basket ? Au hockey, les totaux et handicaps sans
-   « tps rég. » incluent-ils la prolongation ? (Le texte d'aide du marché le dit en général.)
-2. **Winamax** : au hockey, le handicap inclut-il la prolongation, comme le « Nombre de buts » ?
-3. **PMU** : règles actuelles au hockey (le règlement lu date de 2022).
-4. **Unibet** : au hockey, que disent les marchés dont le libellé ne précise rien ?
+1. **Unibet**, au hockey : les marchés dont le libellé ne parle ni de temps réglementaire ni de
+   prolongation (par exemple « Nombre de buts ») suivent-ils bien le règlement (temps réglementaire) ?
+   Le texte d'aide « i » du marché le précise en général.
 
 Chaque réponse se traduit par une ligne dans `REGLE_PAR_DEFAUT` ou `PROLONGATION_VERIFIEE`
 (`cotes/pulsescore.py`).

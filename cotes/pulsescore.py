@@ -165,12 +165,14 @@ REGLE_PAR_DEFAUT = {
     # échéant » ; hockey : prolongation incluse en NHL/AHL, temps réglementaire ailleurs, mais ce texte date
     # d'avant le changement de plateforme -> non retenu tant que ce n'est pas vérifié
     ("pmu", "basket"): "MATCH",
+    # Vérifié dans les applis : PMU écrit « Prol. et t.a.b. inc. » quand la prolongation compte (sinon temps
+    # réglementaire) ; Betclic : sans mention entre parenthèses, la prolongation compte (hockey et basket)
+    ("pmu", "hockey"): "TEMPS_REG",
+    ("betclic", "hockey"): "MATCH", ("betclic", "basket"): "MATCH",
 }
 # Exceptions vérifiées : Winamax « Nombre de buts » au hockey prolongations incluses (aide du pari,
-# vérifié sur winamax.fr) ; vainqueur à 2 issues au hockey = prolongation et tirs au but inclus chez Winamax
-# (règlement) et Betclic (libellé « prolongations et tirs au but éventuels inclus »).
-PROLONGATION_VERIFIEE = {("winamax", "hockey"): {"TOTAL", "TOTAL_DOM", "TOTAL_EXT", "VAINQUEUR"},
-                         ("betclic", "hockey"): {"VAINQUEUR"}}
+# vérifié sur winamax.fr) ; vainqueur à 2 issues au hockey = prolongation et tirs au but inclus (règlement).
+PROLONGATION_VERIFIEE = {("winamax", "hockey"): {"TOTAL", "TOTAL_DOM", "TOTAL_EXT", "VAINQUEUR"}}
 # marchés où le nul existe : forcément sur le temps réglementaire
 MARCHES_AVEC_NUL = {"RESULTAT_1N2", "DOUBLE_CHANCE", "DRAW_NO_BET", "HANDICAP_3", "HALF_TIME_FULL_TIME"}
 
@@ -184,13 +186,22 @@ def _temps_reglementaire(libelle: str) -> bool:
 def _prolongation_incluse(libelle: str) -> bool:
     l = (libelle or "").lower()
     return any(x in l for x in ("prolongations incluses", "prolongation incluse", "prol. incl", "incl. ot",
-                                "including overtime", "incl. overtime", "tirs au but inclus", "(ot)"))
+                                "including overtime", "incl. overtime", "tirs au but inclus", "t.a.b. inc", "(ot)"))
 
 
-def periode_match(bookmaker: str, sport: str, marche: str, libelle: str) -> str:
+def _handicap_hockey_sans_effet(sport: str, marche: str, ligne) -> bool:
+    """Au hockey, la prolongation (mort subite) ou les tirs au but donnent toujours 1 but d'écart à partir
+    d'une égalité : un handicap à ±1,5, ±2,5… se règle pareil avec ou sans prolongation."""
+    return (sport == "hockey" and marche == "HANDICAP" and ligne is not None and abs(ligne) >= 1.5
+            and abs(ligne * 2) % 2 == 1)
+
+
+def periode_match(bookmaker: str, sport: str, marche: str, libelle: str, ligne=None) -> str:
     """Période d'un marché « match entier » selon les règles du bookmaker."""
     if sport not in SPORTS_PROLONGATION:
         return "MATCH"                    # football, handball, rugby… : MATCH = temps réglementaire partout
+    if _handicap_hockey_sans_effet(sport, marche, ligne):
+        return "MATCH"
     if _temps_reglementaire(libelle) or marche in MARCHES_AVEC_NUL:
         return "TEMPS_REG"
     if _prolongation_incluse(libelle) or marche in PROLONGATION_VERIFIEE.get((bookmaker, sport), ()):
@@ -231,7 +242,7 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str) -> list[dict]:
         for marche, ligne, issue, s in _marche(canon, libelle, sels, sport, dom, ext):
             p = per
             if per == "MATCH":
-                p = periode_match(bookmaker, sport, marche, libelle)
+                p = periode_match(bookmaker, sport, marche, libelle, ligne)
             elif sport in ("basket", "football_americain") and per in ("MT2", "QT4"):
                 p = per + "?"             # prolongation comptée dans la 2e mi-temps ? différent selon les sites
             out.append({**base, "marche": marche, "periode": p, "ligne": ligne, "issue": issue,
