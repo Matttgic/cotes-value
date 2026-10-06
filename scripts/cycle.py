@@ -24,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (comparaison, controle, kalshi, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, stockage)
+from cotes import resultats as resultats_mod  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
 FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu", "netbet"]
@@ -120,18 +121,22 @@ def main() -> int:
 
     # 4. règlement (une fois par heure, ou sur demande)
     if cle and (args.regler or maintenant.minute < 15):
-        a_regler = {}
-        for p in paris:
-            if p["statut"] in ("en_cours", "a_regler"):
-                debut = comparaison._t(p["debut"])
-                if debut and maintenant - debut > timedelta(hours=2):
-                    a_regler.setdefault((p["match_id"].split("|")[0], p["sport"]), True)
-        resultats = {}
+        # résultats validés par des bookmakers dont le flux marque les matchs terminés (cotes/resultats.py)
+        enregistrements = []
         client = pulsescore.Client(cle)
-        for (bm, sport) in a_regler:
-            if sport in API:
-                resultats |= etape(f"resultats_{bm}_{sport}", journal, reglement.lire_resultats_pulsescore,
-                                   client, bm, API[sport], sport) or {}
+        for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
+            if sport not in API:
+                continue
+            for bm in resultats_mod.VALIDATEURS:
+                enregistrements += etape(f"resultats_{bm}_{sport}", journal, resultats_mod.lire,
+                                         client, bm, API[sport], sport, depuis) or []
+        resultats = {}
+        for p in paris:
+            if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
+                r = resultats_mod.consensus(p, enregistrements)
+                if r:
+                    resultats[p["match_id"]] = r
+        journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
         requetes["resultats"] = client.requetes
         reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant)
 

@@ -226,7 +226,10 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
                     sc["CORNERS_MT1"] = tuple(m["corners_mi_temps"])
                 statut = regler(p, sc)
             elif r and r.get("final"):
-                statut = regler(p, scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"]))
+                sc = scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"])
+                if r.get("corners"):
+                    sc["CORNERS"] = tuple(r["corners"])
+                statut = regler(p, sc)
         if statut in GAIN:
             p["statut"] = statut
             p["gain"] = gain(statut, p["mise"], p["cote"])
@@ -236,7 +239,7 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
             debut = datetime.fromisoformat(p["debut"].replace("Z", "+00:00"))
         except (AttributeError, ValueError):
             continue
-        if maintenant - debut > timedelta(hours=6):
+        if maintenant - debut > timedelta(hours=12):
             p["statut"] = "a_regler"              # résultat introuvable : à régler à la main
 
 
