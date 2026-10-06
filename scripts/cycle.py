@@ -121,8 +121,8 @@ def main() -> int:
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
     simulation.suivre_cloture(paris, justes, maintenant)
 
-    # 4. règlement (une fois par heure, ou sur demande)
-    if cle and (args.regler or maintenant.minute < 15):
+    # 4. règlement, à chaque cycle (offre PulseScore PRO : requêtes illimitées)
+    if cle:
         # résultats validés par des bookmakers dont le flux marque les matchs terminés (cotes/resultats.py)
         enregistrements = []
         client = pulsescore.Client(cle)
