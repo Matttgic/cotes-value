@@ -121,15 +121,22 @@ def main() -> int:
     except (FileNotFoundError, KeyError, IndexError, ValueError) as e:
         report["un_match"] = {"erreur": str(e)}
 
-    # résultats (règlement des paris)
-    time.sleep(1.2)
-    data, meta = get(s, f"{RESULTATS}/results", {"sport": "soccer", "page": 1, "limit": 30})
-    report["requetes"].append(meta)
-    if data is not None:
-        save_raw(f"{RESULTATS}_results_soccer", data)
-        items = data.get("results") or data.get("events") or data.get("data") if isinstance(data, dict) else None
-        report["resultats"] = {"cles": sorted(data) if isinstance(data, dict) else type(data).__name__,
-                               "exemple": (items or [None])[0] if isinstance(items, list) else None}
+    # résultats (règlement des paris) : un ou plusieurs bookmakers séparés par des virgules
+    report["resultats"] = {}
+    for bm in [b.strip() for b in RESULTATS.split(",") if b.strip()]:
+        for sp in ("soccer", "ice-hockey"):
+            time.sleep(1.2)
+            data, meta = get(s, f"{bm}/results", {"sport": sp, "page": 1, "limit": 30})
+            report["requetes"].append(meta)
+            if data is None:
+                continue
+            save_raw(f"{bm}_results_{sp}", data)
+            items = (data.get("results") or []) if isinstance(data, dict) else []
+            report["resultats"][f"{bm}/{sp}"] = {
+                "total": data.get("total") if isinstance(data, dict) else None,
+                "final": sum(bool((x.get("settlement") or {}).get("final")) for x in items),
+                "etats": sorted({str((x.get("settlement") or {}).get("state")) for x in items}),
+                "exemple": items[0] if items else None}
 
     (OUT / "resume.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps({bm: {sp: {k: v for k, v in d.items() if k in ("total_matchs", "pages_de_30", "marches_par_match", "erreur")}
