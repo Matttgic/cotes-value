@@ -267,3 +267,12 @@ def a_lire(paris: list[dict], maintenant: datetime, apres_debut_h: float = 2) ->
         if debut and maintenant - debut > timedelta(hours=apres_debut_h) and maintenant - debut < timedelta(days=7):
             out[p["sport"]] = min(out.get(p["sport"], debut), debut - timedelta(hours=1))
     return out
+
+
+def diagnostic(p: dict, enregistrements: list[dict]) -> dict:
+    """Pourquoi le match d'un pari n'est pas (encore) réglé : sources trouvées et leurs scores."""
+    trouves = retrouver(p, enregistrements)
+    return {"match": f'{p["domicile"]} – {p["exterieur"]}', "sport": p["sport"], "debut": p.get("debut"),
+            "sources": {r["source"]: {"score": r["score"], "periodes": r["periodes"]} for r in trouves},
+            "raison": "aucune source" if not trouves else
+            ("sources en désaccord" if len({r["score"] for r in trouves}) > 1 else "pas assez de sources ou de périodes")}
