@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes.simulation import REFERENCES, SIMULATIONS, bilan  # noqa: E402
+from cotes.simulation import REFERENCES, SIMULATIONS, TRANCHES, bilan, bilan_tranches  # noqa: E402
 
 
 def _lire(chemin: Path, defaut):
@@ -63,7 +63,8 @@ def construire(donnees: Path, sortie: Path) -> Path:
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     liste, fiches_total, valeurs = selection_paris(paris)
-    data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris), "controle": controle,
+    data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
+            "bilan_tranches": bilan_tranches(paris), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "simulations": {k: v["nom"] for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
@@ -125,8 +126,9 @@ th,td{padding:9px 10px;border-bottom:1px solid var(--ligne);text-align:right;fon
 th{font-size:12px;color:var(--doux);font-weight:600}
 th:first-child,td:first-child{text-align:left}
 tr:last-child td{border-bottom:0}
-td small{display:block;color:var(--doux);font-size:11.5px}
+td small{display:block;color:var(--doux);font-size:11.5px;white-space:normal}
 .filtres{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
+.sous-titre{font-size:15px;margin:18px 0 8px}
 .infos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
 .infos div{background:var(--carte);border:1px solid var(--ligne);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--doux)}
 .infos b{display:block;color:var(--texte);font-size:16px}
@@ -155,6 +157,11 @@ td small{display:block;color:var(--doux);font-size:11.5px}
     juste juste avant le match (positive = on a battu le marché ; c'est l'indicateur le plus rapide à devenir fiable).
     « Pinnacle brut » : témoin, comparé à la cote affichée par Pinnacle sans retirer sa marge (sa CLV est mesurée
     contre la cote juste).</p>
+    <h2 class="sous-titre">Par tranche de cote</h2>
+    <table id="bilan-tranches"></table>
+    <p class="aide" style="margin-top:8px">Chaque pari compté une seule fois : tous les paris à au moins 2 % d'écart
+    (au moins 3 % au-dessus de 10), classés selon la cote prise.</p>
+
     <div class="infos" id="infos"></div>
   </section>
   <section class="onglet" id="o-paris">
@@ -219,13 +226,13 @@ function rendreBilan() {
   document.getElementById("puces-ref").innerHTML = ["Toutes", ...D.references].map(r =>
     `<button data-r="${r}" class="${r===refBilan?"actif":""}">${r==="Toutes"?"Toutes réf.":r}</button>`).join("");
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
-  document.getElementById("bilan").innerHTML = `<tr><th>Simulation</th><th>Paris</th><th>Gain</th><th>ROI</th><th>CLV</th></tr>` +
-    Object.entries(D.simulations).map(([s, nom]) => {
-      const b = D.bilan[s + "|" + refBilan];
-      if (!b) return `<tr><td><b>${s}</b> <small>${e(nom)}</small></td><td>0</td><td>—</td><td>—</td><td>—</td></tr>`;
-      return `<tr><td><b>${s}</b> <small>${e(nom)}</small></td><td>${b.regles}<small>${b.regles ? b.gagnes + " gagnés" : ""}${b.en_cours ? (b.regles ? " · " : "") + b.en_cours + " en cours" : ""}</small></td>
+  const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td><td>—</td></tr>`
+    : `<tr><td>${titre}</td><td>${b.regles}<small>${b.regles ? b.gagnes + (b.gagnes > 1 ? " gagnés" : " gagné") : ""}${b.en_cours ? (b.regles ? " · " : "") + b.en_cours + " en cours" : ""}</small></td>
 <td class="${signe(b.gains)}">${eur(b.gains)}</td><td class="${signe(b.roi)}"><b>${pct(b.roi)}</b></td><td class="${signe(b.clv_moyenne)}">${pct(b.clv_moyenne)}</td></tr>`;
-    }).join("");
+  document.getElementById("bilan").innerHTML = `<tr><th>Simulation</th><th>Paris</th><th>Gain</th><th>ROI</th><th>CLV</th></tr>` +
+    Object.entries(D.simulations).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("");
+  document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain</th><th>ROI</th><th>CLV</th></tr>` +
+    (D.tranches || []).map(t => ligne(`<b>${e(t)}</b>`, (D.bilan_tranches || {})[t + "|" + refBilan])).join("");
 }
 rendreBilan();
 const mois = new Date().toISOString().slice(0,7);

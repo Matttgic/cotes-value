@@ -80,14 +80,24 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, float]], mai
             p["cloture_lue"] = maintenant.isoformat(timespec="seconds")
 
 
-def bilan(paris: list[dict]) -> dict:
-    """Résumé par simulation et par référence : nombre, mises, gains, ROI, CLV moyenne."""
+TEMOIN = "Pinnacle brut"
+# tranches de cote (bornes basses exclues, hautes incluses)
+TRANCHES = [(1.0, 1.5, "1,01 – 1,50"), (1.5, 2.0, "1,51 – 2,00"), (2.0, 3.0, "2,01 – 3,00"),
+            (3.0, 5.0, "3,01 – 5,00"), (5.0, 10.0, "5,01 – 10"), (10.0, float("inf"), "plus de 10")]
+
+
+def tranche(cote: float) -> str:
+    return next(nom for bas, haut, nom in TRANCHES if bas < cote <= haut)
+
+
+def _cumuler(paris: list[dict], groupe) -> dict:
+    """Résumé par (groupe, référence) et (groupe, « Toutes ») : nombre, mises, gains, ROI, CLV moyenne.
+    « Toutes » = les vraies références ; le témoin « Pinnacle brut » n'a que sa propre ligne."""
     out: dict[str, dict] = {}
     for p in paris:
-        # « Toutes » = les vraies références ; le témoin « Pinnacle brut » n'a que sa propre ligne
-        clefs = [f'{p["simulation"]}|{p["reference"]}']
-        if p["reference"] != "Pinnacle brut":
-            clefs.append(f'{p["simulation"]}|Toutes')
+        clefs = [f'{groupe(p)}|{p["reference"]}']
+        if p["reference"] != TEMOIN:
+            clefs.append(f'{groupe(p)}|Toutes')
         for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
                                       "clv_somme": 0.0, "clv_n": 0, "gagnes": 0})
@@ -107,3 +117,15 @@ def bilan(paris: list[dict]) -> dict:
         b["clv_moyenne"] = round(b["clv_somme"] / b["clv_n"], 4) if b["clv_n"] else None
         b["gains"] = round(b["gains"], 2)
     return out
+
+
+def bilan(paris: list[dict]) -> dict:
+    """Par simulation (« A|Pinnacle », « A|Toutes »…)."""
+    return _cumuler(paris, lambda p: p["simulation"])
+
+
+def bilan_tranches(paris: list[dict]) -> dict:
+    """Par tranche de cote (« 1,51 – 2,00|Pinnacle »…). Chaque pari compte une seule fois : ceux de la
+    simulation A (écart ≥ 2 %, cotes ≤ 10) et de X (cotes > 10, écart ≥ 3 %), qui contiennent tous les
+    paris de B à E."""
+    return _cumuler([p for p in paris if p["simulation"] in ("A", "X")], lambda p: tranche(p["cote"]))

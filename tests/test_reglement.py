@@ -150,3 +150,13 @@ def test_bilan_toutes_sans_le_temoin():
     p = {"simulation": "A", "statut": "gagne", "mise": 10, "gain": 10.0, "clv": 0.02}
     b = bilan([{**p, "reference": "Pinnacle"}, {**p, "reference": "Pinnacle brut", "statut": "perdu", "gain": -10.0}])
     assert b["A|Toutes"]["gains"] == 10.0 and b["A|Toutes"]["gagnes"] == 1 and b["A|Pinnacle brut"]["gains"] == -10.0
+
+
+def test_bilan_par_tranche_de_cote():
+    from cotes.simulation import bilan_tranches, tranche
+    assert tranche(1.5) == "1,01 – 1,50" and tranche(1.51) == "1,51 – 2,00" and tranche(25) == "plus de 10"
+    p = {"reference": "Pinnacle", "statut": "gagne", "mise": 10, "clv": None}
+    b = bilan_tranches([{**p, "simulation": "A", "cote": 1.8, "gain": 8.0},
+                        {**p, "simulation": "B", "cote": 1.8, "gain": 8.0},       # même pari, déjà compté via A
+                        {**p, "simulation": "X", "cote": 15.0, "gain": 140.0}])
+    assert b["1,51 – 2,00|Toutes"]["paris"] == 1 and b["plus de 10|Pinnacle"]["gains"] == 140.0
