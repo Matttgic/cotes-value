@@ -65,7 +65,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     liste, fiches_total, valeurs = selection_paris(paris)
     data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
             "bilan_tranches": bilan_tranches(paris), "tranches": [t[2] for t in TRANCHES], "controle": controle,
-            "simulations": {k: v["nom"] for k, v in SIMULATIONS.items()}, "references": REFERENCES}
+            "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
     (sortie / "index.html").write_text(html, encoding="utf-8")
@@ -122,15 +122,21 @@ background:var(--carte);color:var(--texte);cursor:pointer}
 .btn{background:var(--accent);border-color:var(--accent);color:#fff}
 table{width:100%;border-collapse:collapse;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;overflow:hidden;font-size:14px}
 th,td{padding:9px 10px;border-bottom:1px solid var(--ligne);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-@media (max-width:480px){th,td{padding:8px 5px;font-size:13px}select.cumul{max-width:74px}}
-th{font-size:12px;color:var(--doux);font-weight:600}
+@media (max-width:480px){th,td{padding:8px 4px;font-size:12.5px}td small{font-size:11px}
+th:first-child,td:first-child{padding-left:8px}th:last-child,td:last-child{padding-right:8px}}
+th{font-size:12px;color:var(--doux);font-weight:600;vertical-align:bottom}
+th small{display:block;font-size:11px}
 th:first-child,td:first-child{text-align:left}
 tr:last-child td{border-bottom:0}
-td small{display:block;color:var(--doux);font-size:11.5px;white-space:normal}
+td{vertical-align:top}
+td small{display:block;color:var(--doux);font-size:11.5px;white-space:nowrap}
+td:first-child small{white-space:normal}
 .filtres{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
 .sous-titre{font-size:15px;margin:18px 0 8px}
+.tableau{overflow-x:auto;border-radius:12px}
 tr.total td{border-top:2px solid var(--ligne);background:var(--accent-f)}
-select.cumul{display:block;margin-top:4px;padding:3px 4px;font-size:12px;max-width:88px}
+select.cumul{display:block;margin-top:4px;padding:3px 4px;font-size:12px;max-width:70px}
+td small.roi{font-size:12px;font-weight:700;color:inherit}
 .infos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
 .infos div{background:var(--carte);border:1px solid var(--ligne);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--doux)}
 .infos b{display:block;color:var(--texte);font-size:16px}
@@ -154,14 +160,14 @@ select.cumul{display:block;margin-top:4px;padding:3px 4px;font-size:12px;max-wid
   </section>
   <section class="onglet" id="o-bilan">
     <div class="puces" id="puces-ref"></div>
-    <table id="bilan"></table>
+    <div class="tableau"><table id="bilan"></table></div>
     <p class="aide" style="margin-top:8px">10 € par pari. ROI sur les paris réglés. Simulations = tranches d'écart à la première détection : un pari
     n'appartient qu'à une seule. Total : somme des simulations choisies, chaque pari compté une fois. CLV : écart entre la cote prise et la cote
     juste juste avant le match (positive = on a battu le marché ; c'est l'indicateur le plus rapide à devenir fiable).
     « Pinnacle brut » : témoin, comparé à la cote affichée par Pinnacle sans retirer sa marge (sa CLV est mesurée
     contre la cote juste).</p>
     <h2 class="sous-titre">Par tranche de cote</h2>
-    <table id="bilan-tranches"></table>
+    <div class="tableau"><table id="bilan-tranches"></table></div>
     <p class="aide" style="margin-top:8px">Tous les paris (au moins 2 % d'écart, au moins 3 % au-dessus de 10),
     chacun compté une fois, classés selon la cote prise.</p>
 
@@ -194,6 +200,10 @@ const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",
 const cote = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
 const pct = x => x==null ? "—" : (x>0?"+":"") + (100*x).toFixed(1).replace(".", ",") + " %";
 const eur = x => (x>0?"+":"") + Number(x).toFixed(2).replace(".", ",") + " €";
+// bilan : montants compacts (euros entiers, séparateur de milliers ; pourcentages sans décimale au-delà de 100 %)
+const eurC = x => x==null ? "—" : (x>0?"+":"") + Math.round(x).toLocaleString("fr-FR") + " €";
+const pctC = x => x==null ? "—" : (x>0?"+":"") + (Math.abs(x) >= 1 ? Math.round(100*x).toLocaleString("fr-FR")
+  : (100*x).toFixed(1).replace(".", ",")) + " %";
 const quand = s => s ? new Date(s).toLocaleString("fr-FR",{weekday:"short",day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
 const hm = s => s ? new Date(s).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "";
 const signe = x => x==null ? "" : x>0 ? "pos" : x<0 ? "neg" : "";
@@ -248,16 +258,17 @@ function rendreBilan() {
   document.getElementById("puces-ref").innerHTML = ["Toutes", ...D.references].map(r =>
     `<button data-r="${r}" class="${r===refBilan?"actif":""}">${r==="Toutes"?"Toutes réf.":r}</button>`).join("");
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
-  const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td><td>—</td></tr>`
-    : `<tr><td>${titre}</td><td>${b.regles}<small>${b.regles ? b.gagnes + (b.gagnes > 1 ? " gagnés" : " gagné") : ""}${b.en_cours ? (b.regles ? " · " : "") + b.en_cours + " en cours" : ""}</small></td>
-<td class="${signe(b.gains)}">${eur(b.gains)}</td><td class="${signe(b.roi)}"><b>${pct(b.roi)}</b></td><td class="${signe(b.clv_moyenne)}">${pct(b.clv_moyenne)}</td></tr>`;
-  document.getElementById("bilan").innerHTML = `<tr><th>Simulation</th><th>Paris</th><th>Gain</th><th>ROI</th><th>CLV</th></tr>` +
+  const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
+    : `<tr><td>${titre}</td><td>${b.regles}${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""}</small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
+<td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
+<td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}</td></tr>`;
+  document.getElementById("bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     Object.entries(D.simulations).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
       additionner(CUMULS[cumul])).replace("<tr>", '<tr class="total">');
   document.getElementById("cumul").onchange = ev => { cumul = Number(ev.target.value); rendreBilan(); };
-  document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain</th><th>ROI</th><th>CLV</th></tr>` +
+  document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     (D.tranches || []).map(t => ligne(`<b>${e(t)}</b>`, (D.bilan_tranches || {})[t + "|" + refBilan])).join("");
 }
 rendreBilan();

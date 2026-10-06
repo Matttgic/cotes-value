@@ -23,7 +23,7 @@ SIMULATIONS = {     # écart dans [ecart, ecart_max[, cote dans [cote_min, cote_
     "C": {"ecart": 0.04, "ecart_max": 0.05, "cote_min": 1.0, "cote_max": 10.0, "nom": "4 à 5 %"},
     "D": {"ecart": 0.05, "ecart_max": 0.07, "cote_min": 1.0, "cote_max": 10.0, "nom": "5 à 7 %"},
     "E": {"ecart": 0.07, "ecart_max": INF, "cote_min": 1.0, "cote_max": 10.0, "nom": "7 % et plus"},
-    "X": {"ecart": 0.03, "ecart_max": INF, "cote_min": 10.0001, "cote_max": INF, "nom": "Cotes > 10 (≥ 3 %)"},
+    "X": {"ecart": 0.03, "ecart_max": INF, "cote_min": 10.0001, "cote_max": INF, "nom": "cotes > 10, ≥ 3 %"},
 }
 
 
