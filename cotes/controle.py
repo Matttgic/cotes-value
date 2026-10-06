@@ -22,6 +22,7 @@ import math
 import re
 import statistics
 import unicodedata
+from datetime import datetime, timedelta
 
 from .marches import cle
 from .pulsescore import PERIODE_VERIFIEE
@@ -136,6 +137,15 @@ def mettre_a_jour(etat: dict, mesures: list[tuple[dict, str, float, float]], mom
             g["exemples"].append({"libelle": l.get("libelle"), "match": f'{l["domicile"]} – {l["exterieur"]}',
                                   "ligne": l.get("ligne"), "issue": l["issue"], "cote": l["cote"],
                                   "reference": nom, "cote_juste": round(juste, 3)})
+    # groupes plus mesurés depuis 30 jours (intitulé disparu, ou période corrigée) : retirés. Les marchés
+    # rares (NFL : une journée par semaine) gardent ainsi leurs mesures ; le site n'affiche que les groupes
+    # mesurés dans les dernières 6 heures
+    try:
+        limite = (datetime.fromisoformat(moment) - timedelta(days=30)).isoformat()
+    except ValueError:
+        limite = ""
+    for k in [k for k, g in groupes.items() if (g.get("maj") or "") < limite]:
+        del groupes[k]
     for g in groupes.values():
         g["rapports"] = g["rapports"][-GARDER:]
         if "paires_alt" in g:

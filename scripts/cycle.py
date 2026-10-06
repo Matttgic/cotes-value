@@ -137,7 +137,7 @@ def main() -> int:
         resultats = {}
         for p in paris:
             if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
-                r = resultats_mod.consensus(p, enregistrements)
+                r = resultats_mod.consensus(p, enregistrements, maintenant)
                 if r:
                     resultats[p["match_id"]] = r
         # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)

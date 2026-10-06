@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -61,7 +62,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
                + [f for f in fiches if f["a_regler"]])
     gardees.sort(key=recents("detecte"), reverse=True)
     valeurs = {f: sorted({str(p.get(c)) for p in paris if p.get(c) is not None}) for f, c in CHAMPS_FILTRES.items()}
-    return gardees, len(fiches), valeurs
+    return gardees, sum(f["reference"] != TEMOIN for f in fiches), valeurs
 
 
 def construire(donnees: Path, sortie: Path) -> Path:
@@ -70,8 +71,15 @@ def construire(donnees: Path, sortie: Path) -> Path:
     actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", [])
                  if not o.get("suspect") and o.get("reference") != "Pinnacle brut"]
     ctl = _lire(donnees / "controle.json", {})
+    # seulement les groupes mesurés dans les 6 dernières heures (les anciens restent dans controle.json)
+    dernier = (etat.get("dernier_cycle") or {}).get("debut") or ""
+    try:
+        recent = (datetime.fromisoformat(dernier) - timedelta(hours=6)).isoformat()
+    except ValueError:
+        recent = ""
     groupes = [{k: g.get(k) for k in ("bookmaker", "sport", "marche", "periode", "type", "n", "mediane",
-                                      "part_haute", "statut", "exemples", "dispersion", "dispersion_autre_periode")} for g in ctl.get("groupes", {}).values()]
+                                      "part_haute", "statut", "exemples", "dispersion", "dispersion_autre_periode")} for g in ctl.get("groupes", {}).values()
+               if (g.get("maj") or "") >= recent]
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     liste, fiches_total, valeurs = selection_paris(paris)
@@ -293,8 +301,9 @@ document.getElementById("infos").innerHTML = [
 // --- Paris : fiches déjà regroupées (un même pari pris par plusieurs simulations = une seule fiche)
 const fiches = D.paris;
 document.getElementById("nb-paris").textContent = fiches.filter(f => f.reference !== "Pinnacle brut").length || "";
-if (D.fiches_total > fiches.length) document.getElementById("paris").insertAdjacentHTML("beforebegin",
-  `<p class="aide">${fiches.length} paris affichés sur ${D.fiches_total} : les 400 derniers en cours, les 600 derniers réglés et
+const affiches = fiches.filter(f => f.reference !== "Pinnacle brut").length;
+if (D.fiches_total > affiches) document.getElementById("paris").insertAdjacentHTML("beforebegin",
+  `<p class="aide">${affiches} paris affichés sur ${D.fiches_total} : les 400 derniers en cours, les 600 derniers réglés et
   ceux à régler (le bilan compte tous les paris). Filtre « Statuts » pour ne voir que les gagnés, perdus… ; le témoin
   « Pinnacle brut » s'affiche en le choisissant dans « Références ».</p>`);
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],

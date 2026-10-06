@@ -27,9 +27,14 @@ ECART_HEURE_MIN = 45
 RESSEMBLANCE_MIN = 0.75
 PAGES_MAX = 15
 SOURCES_MIN = 2
+# une seule source suffit si elle est très fiable et que le match a commencé depuis au moins 6 heures
+# (tennis : ESPN est souvent la seule à donner les sets)
+SOURCES_FIABLES = {"espn", "orbitxch", "draftkings"}
+DELAI_SOURCE_UNIQUE_H = 6
 ESPN = "https://site.api.espn.com/apis/site/v2/sports"
 ESPN_LIGUES = {"football": ["soccer/all"], "hockey": ["hockey/nhl"], "basket": ["basketball/nba", "basketball/wnba"],
-               "football_americain": ["football/nfl", "football/college-football"], "baseball": ["baseball/mlb"]}
+               "football_americain": ["football/nfl", "football/college-football"], "baseball": ["baseball/mlb"],
+               "tennis": ["tennis/atp", "tennis/wta"]}
 # terminés dans le temps réglementaire au football (une prolongation fausserait le score « match ») ;
 # prolongation et tirs au but compris ailleurs
 ESPN_FINAUX = {"STATUS_FULL_TIME", "STATUS_FINAL"}
@@ -120,25 +125,44 @@ def lire_espn(sport: str, depuis: datetime, maintenant: datetime, lire_json=_esp
         for ligue in ESPN_LIGUES.get(sport, []):
             d = lire_json(f"{ligue}/scoreboard", {"dates": f"{jour:%Y%m%d}", "limit": 1000}) or {}
             for e in d.get("events") or []:
-                c = (e.get("competitions") or [{}])[0]
-                if e.get("id") in vus or ((c.get("status") or {}).get("type") or {}).get("name") not in ESPN_FINAUX:
-                    continue
-                eq = {x.get("homeAway"): x for x in c.get("competitors") or []}
-                try:
-                    score = (int(eq["home"]["score"]), int(eq["away"]["score"]))
-                except (KeyError, TypeError, ValueError):
-                    continue
-                vus.add(e.get("id"))
-                lignes = [[l.get("value") for l in eq[c_].get("linescores") or []] for c_ in ("home", "away")]
-                periodes = [(int(a), int(b)) for a, b in zip(*lignes) if a is not None and b is not None]
-                out.append({"source": "espn", "sport": sport, "domicile": eq["home"]["team"].get("displayName"),
-                            "exterieur": eq["away"]["team"].get("displayName"), "debut": _heure(e.get("date")),
-                            "score": score, "periodes": periodes,
-                            "libelles": libelles_periodes(sport, None, len(periodes)), "corners": None,
-                            "espn": f"{ligue.split('/')[0]}/all/summary" if sport == "football" else None,
-                            "espn_id": e.get("id")})
+                # tennis : un tournoi par « event », ses matchs dans groupings[].competitions
+                comps = [c for g in e.get("groupings") or [] for c in g.get("competitions") or []] \
+                    or e.get("competitions") or []
+                for c in comps:
+                    cid = c.get("id") or e.get("id")
+                    if cid in vus or ((c.get("status") or {}).get("type") or {}).get("name") not in ESPN_FINAUX:
+                        continue
+                    r = _espn_match(sport, c, e, ligue)
+                    if r:
+                        vus.add(cid)
+                        out.append(r)
         jour += timedelta(days=1)
     return out
+
+
+def _espn_match(sport: str, c: dict, e: dict, ligue: str) -> dict | None:
+    comp = c.get("competitors") or []
+    if len(comp) != 2:
+        return None
+    eq = {x.get("homeAway"): x for x in comp}
+    dom, ext = (eq["home"], eq["away"]) if {"home", "away"} <= set(eq) else (comp[0], comp[1])
+    nom = lambda x: ((x.get("team") or {}).get("displayName") or (x.get("athlete") or {}).get("displayName"))  # noqa: E731
+    lignes = [[l.get("value") for l in x.get("linescores") or []] for x in (dom, ext)]
+    periodes = [(int(a), int(b)) for a, b in zip(*lignes) if a is not None and b is not None]
+    try:
+        if sport == "tennis":                      # score = sets gagnés
+            score = (sum(a > b for a, b in periodes), sum(b > a for a, b in periodes))
+        else:
+            score = (int(dom["score"]), int(ext["score"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not nom(dom) or not nom(ext):
+        return None
+    return {"source": "espn", "sport": sport, "domicile": nom(dom), "exterieur": nom(ext),
+            "debut": _heure(c.get("date") or e.get("date")), "score": score, "periodes": periodes,
+            "libelles": libelles_periodes(sport, None, len(periodes)), "corners": None,
+            "espn": f"{ligue.split('/')[0]}/all/summary" if sport == "football" else None,
+            "espn_id": c.get("id") or e.get("id")}
 
 
 def periodes_espn(r: dict, lire_json=_espn_json) -> list[tuple[int, int]]:
@@ -201,6 +225,8 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
 def _periodes_coherentes(sport: str, r: dict) -> bool:
     if not r["periodes"]:
         return False
+    if sport == "tennis":                          # jeux par set : le score en sets doit s'en déduire
+        return (sum(a > b for a, b in r["periodes"]), sum(b > a for a, b in r["periodes"])) == r["score"]
     d, e = sum(x[0] for x in r["periodes"]), sum(x[1] for x in r["periodes"])
     if (d, e) == r["score"]:
         return True
@@ -208,11 +234,17 @@ def _periodes_coherentes(sport: str, r: dict) -> bool:
     return sport == "hockey" and abs(d - r["score"][0]) + abs(e - r["score"][1]) == 1
 
 
-def consensus(p: dict, enregistrements: list[dict]) -> dict | None:
+def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None = None) -> dict | None:
     """Résultat validé du match d'un pari, ou None (pas encore terminé chez un validateur, ou désaccord)."""
     trouves = retrouver(p, enregistrements)
-    if len(trouves) < SOURCES_MIN or len({r["score"] for r in trouves}) > 1:
+    if not trouves or len({r["score"] for r in trouves}) > 1:
         return None
+    if len(trouves) < SOURCES_MIN:
+        debut = _heure(p.get("debut"))
+        seule_fiable = trouves[0]["source"] in SOURCES_FIABLES and maintenant and debut and \
+            maintenant - debut >= timedelta(hours=DELAI_SOURCE_UNIQUE_H)
+        if not seule_fiable:
+            return None
     score = trouves[0]["score"]
     avec_periodes = [r for r in trouves if _periodes_coherentes(p["sport"], r)]
     if len({tuple(r["periodes"]) for r in avec_periodes}) > 1:

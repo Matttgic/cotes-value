@@ -62,3 +62,12 @@ def test_equipes_inversees_vues_sur_les_marches_orientes():
     mesures = [(ligne(match="m7"), "Pinnacle", 2.0, 0.93, None) for _ in range(20)]
     mesures += [(ligne(match="m7", marche="HANDICAP"), "Pinnacle", 2.0, 1.3, None) for _ in range(8)]
     assert "m7" in CT.matchs_suspects(mesures)
+
+
+
+def test_groupes_plus_mesures_retires():
+    etat = {"groupes": {"vieux": {"bookmaker": "unibet-fr", "sport": "hockey", "marche": "TOTAL", "periode": "MATCH",
+                                  "type": "x", "n": 20, "rapports": [0.9] * 20, "exemples": [],
+                                  "maj": "2026-09-03T10:00:00+00:00"}}}
+    CT.mettre_a_jour(etat, [(ligne(), "Pinnacle", 2.0, 0.93, None)], "2026-10-06T10:00:00+00:00")
+    assert "vieux" not in etat["groupes"] and len(etat["groupes"]) == 1

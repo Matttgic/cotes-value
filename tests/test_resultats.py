@@ -58,3 +58,22 @@ def test_espn_validateur_et_mi_temps():
     r = R.consensus(pari, E)
     assert r["score"] == (1, 1) and r["sources"] == ["betmgm", "espn"] and r["periodes"] == []
     assert R.completer_periodes(pari, r, E, lire)["periodes"] == [(1, 0), (0, 1)]
+
+
+def test_source_unique_fiable_apres_6_heures():
+    seul = [enr("espn", "Honduras", "Jamaica", (1, 1))]
+    assert R.consensus(PARI, seul, datetime(2026, 10, 6, 4, tzinfo=timezone.utc)) is None        # 2 h après
+    assert R.consensus(PARI, seul, datetime(2026, 10, 6, 9, tzinfo=timezone.utc))["score"] == (1, 1)
+    assert R.consensus(PARI, [enr("betmgm", "Honduras", "Jamaica", (1, 1))],
+                       datetime(2026, 10, 6, 9, tzinfo=timezone.utc)) is None                     # pas assez fiable seul
+
+
+def test_tennis_sets_espn():
+    from cotes.reglement import scores_par_periode, regler
+    pari = {"sport": "tennis", "domicile": "K.Muchova", "exterieur": "N.Osaka", "debut": "2026-10-06T07:00:00Z"}
+    e = enr("espn", "Karolina Muchova", "Naomi Osaka", (2, 1), periodes=[(7, 5), (1, 6), (7, 6)], sport="tennis")
+    e["debut"] = datetime(2026, 10, 6, 7, 10, tzinfo=timezone.utc)
+    r = R.consensus(pari, [e], datetime(2026, 10, 6, 14, tzinfo=timezone.utc))
+    sc = scores_par_periode("tennis", r["score"], r["periodes"], r["libelles"])
+    assert regler({**pari, "marche": "JEUX_TOTAL", "periode": "SET1", "ligne": 8.5, "issue": "PLUS"}, sc) == "gagne"
+    assert regler({**pari, "marche": "JEUX_TOTAL", "periode": "SET1", "ligne": 12.5, "issue": "PLUS"}, sc) == "perdu"
