@@ -53,3 +53,12 @@ def test_noms_ecrits_autrement_et_periode_douteuse():
     assert CT.statut([a for a, _ in paires], "TOTAL", paires) == "non_conforme"
     assert CT.statut([b for _, b in paires], "TOTAL", [(b, a) for a, b in paires]) == "conforme"
     assert CT.statut([0.65] * 20, "CORRECT_SCORE") == "conforme"           # marge forte sur le score exact
+
+
+
+def test_equipes_inversees_vues_sur_les_marches_orientes():
+    # 20 totaux normaux (symétriques) + 8 cotes de handicap aberrantes : la médiane globale reste normale,
+    # mais les marchés orientés trahissent l'inversion
+    mesures = [(ligne(match="m7"), "Pinnacle", 2.0, 0.93, None) for _ in range(20)]
+    mesures += [(ligne(match="m7", marche="HANDICAP"), "Pinnacle", 2.0, 1.3, None) for _ in range(8)]
+    assert "m7" in CT.matchs_suspects(mesures)

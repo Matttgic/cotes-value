@@ -151,18 +151,29 @@ def mettre_a_jour(etat: dict, mesures: list[tuple[dict, str, float, float]], mom
     return etat
 
 
-def matchs_suspects(mesures: list[tuple[dict, str, float, float]]) -> dict[str, float]:
-    """Matchs (identifiant français) dont l'ensemble des cotes s'écarte de la référence : mauvaise
-    association probable. -> {match_id: rapport médian}."""
-    par_match: dict[str, list[float]] = {}
+# marchés où domicile et extérieur ne jouent pas le même rôle : une inversion des équipes s'y voit
+MARCHES_ORIENTES = {"RESULTAT_1N2", "VAINQUEUR", "DRAW_NO_BET", "HANDICAP", "HANDICAP_3", "TOTAL_DOM", "TOTAL_EXT",
+                    "DOUBLE_CHANCE", "JEUX_HANDICAP", "SETS_HANDICAP", "JEUX_TOTAL_DOM", "JEUX_TOTAL_EXT"}
+
+
+def matchs_suspects(mesures: list[tuple]) -> dict[str, float]:
+    """Matchs (identifiant français) dont les cotes s'écartent de la référence : mauvaise association
+    probable. Contrôlé sur tous les marchés, puis sur les seuls marchés orientés (équipes inversées : les
+    totaux, symétriques, masqueraient l'erreur). -> {match_id: rapport médian}."""
+    tous: dict[str, list[float]] = {}
+    orientes: dict[str, list[float]] = {}
     for l, _, _, rapport, *_ in mesures:
-        par_match.setdefault(l["match_id"], []).append(rapport)
+        tous.setdefault(l["match_id"], []).append(rapport)
+        if l["marche"] in MARCHES_ORIENTES:
+            orientes.setdefault(l["match_id"], []).append(rapport)
     out = {}
-    for mid, rs in par_match.items():
-        if len(rs) >= MATCH_MESURES_MIN:
-            med = statistics.median(rs)
-            if not (MATCH_MEDIANE_MIN <= med <= MATCH_MEDIANE_MAX):
-                out[mid] = round(med, 3)
+    for groupe in (tous, orientes):
+        for mid, rs in groupe.items():
+            if len(rs) >= MATCH_MESURES_MIN and mid not in out:
+                med = statistics.median(rs)
+                haute = sum(r > HAUT for r in rs) / len(rs)
+                if not (MATCH_MEDIANE_MIN <= med <= MATCH_MEDIANE_MAX) or haute > 0.25:
+                    out[mid] = round(med, 3)
     return out
 
 

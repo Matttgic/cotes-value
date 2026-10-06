@@ -155,11 +155,12 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
                 ecart = abs((r["debut"] - f["debut"]).total_seconds()) / 60
                 if ecart > 300:
                     continue
-                paires = [((ressemblance(f["domicile"], r["domicile"]), ressemblance(f["exterieur"], r["exterieur"])), False)]
-                if r["ordre_incertain"]:
-                    paires.append(((ressemblance(f["domicile"], r["exterieur"]),
-                                    ressemblance(f["exterieur"], r["domicile"])), True))
-                (s1, s2), inverse = max(paires, key=lambda p: min(p[0]))
+                # les deux ordres sont toujours essayés : un bookmaker peut inverser domicile et extérieur
+                # (Islanders – Rangers chez NetBet, Rangers – Islanders chez Pinnacle) et deux équipes de la
+                # même ville se ressemblent assez (0,82) pour que l'ordre direct passe à tort
+                paires = [((ressemblance(f["domicile"], r["domicile"]), ressemblance(f["exterieur"], r["exterieur"])), False),
+                          ((ressemblance(f["domicile"], r["exterieur"]), ressemblance(f["exterieur"], r["domicile"])), True)]
+                (s1, s2), inverse = max(paires, key=lambda p: (min(p[0]), sum(p[0]), not p[1]))
                 score = min(s1, s2)
                 # tolérance sur l'heure : 20 min ; plus large si les deux noms sont très proches
                 # (heures approximatives : Kalshi, ordre de passage au tennis, erreurs d'horaire)

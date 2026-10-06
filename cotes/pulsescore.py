@@ -204,6 +204,11 @@ PERIODE_VERIFIEE = {
     ("winamax", "hockey"): {"TOTAL": "MATCH", "TOTAL_DOM": "TEMPS_REG", "TOTAL_EXT": "TEMPS_REG", "VAINQUEUR": "MATCH"},
     ("unibet-fr", "hockey"): {"TOTAL_DOM": "TEMPS_REG", "TOTAL_EXT": "TEMPS_REG"},
 }
+# Périodes constatées sur les cotes par le contrôle de conformité (que le contrôle continue de vérifier) :
+# - Unibet, hockey, total du match « Plus / Moins x But(s) » : suit la version temps réglementaire de
+#   Pinnacle 10 fois plus étroitement que la version prolongation incluse (0,0065 contre 0,070 sur 3 476
+#   cotes, nuit du 5 au 6/10/2026), comme le prévoit le règlement Unibet par défaut.
+PERIODE_CONSTATEE = {("unibet-fr", "hockey"): {"TOTAL": "TEMPS_REG"}}
 # marchés où le nul existe : forcément sur le temps réglementaire
 MARCHES_AVEC_NUL = {"RESULTAT_1N2", "DOUBLE_CHANCE", "DRAW_NO_BET", "HANDICAP_3", "HALF_TIME_FULL_TIME"}
 
@@ -239,8 +244,9 @@ def periode_match(bookmaker: str, sport: str, marche: str, libelle: str, ligne=N
         return "TEMPS_REG"
     if _prolongation_incluse(libelle):
         return "MATCH"
-    if marche in PERIODE_VERIFIEE.get((bookmaker, sport), {}):
-        return PERIODE_VERIFIEE[(bookmaker, sport)][marche]
+    for table in (PERIODE_VERIFIEE, PERIODE_CONSTATEE):
+        if marche in table.get((bookmaker, sport), {}):
+            return table[(bookmaker, sport)][marche]
     return REGLE_PAR_DEFAUT.get((bookmaker, sport)) or REGLE_PAR_SPORT.get(sport) or "MATCH?"
 
 

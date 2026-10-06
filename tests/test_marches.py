@@ -63,7 +63,7 @@ def test_hockey_prolongation():
     # Unibet : « Temps réglementaire » écrit dans l'intitulé, sinon prolongation incluse
     tot4 = {**tot, "rawName": "Nombre total de buts - Temps Réglementaire"}
     assert {l["periode"] for l in traduire(ev([tot4]), "unibet-fr", "hockey", "t")} == {"TEMPS_REG"}
-    assert {l["periode"] for l in traduire(ev([tot2]), "unibet-fr", "hockey", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([tot2]), "unibet-fr", "hockey", "t")} == {"TEMPS_REG"}   # constaté sur les cotes
     # Unibet et Winamax : total par équipe sur le temps réglementaire même sans mention (vérifié dans l'appli)
     eq = {"canonicalMarket": "HOME_OVER_UNDER", "period": "FULL_TIME", "rawName": "Plus / Moins But(s) - Lens 2.5",
           "selections": [sel("OVER", "Plus de 2.5", 2.1, 2.5), sel("UNDER", "Moins de 2.5", 1.7, 2.5)]}
@@ -152,3 +152,15 @@ def test_marqueur_u21_de_la_ligue_pinnacle():
     pin = avec_marqueurs_ligue("France", "UEFA - U21 Euro Championship Qualifiers")
     assert ressemblance("France U21", pin) == 1.0
     assert ressemblance("France", pin) < 1.0
+
+
+
+def test_ordre_inverse_face_a_pinnacle():
+    from datetime import datetime, timezone
+    from cotes.correspondance import associer
+    t = datetime(2026, 10, 6, 23, 0, tzinfo=timezone.utc)
+    fr = {"n1": {"match_id": "n1", "sport": "hockey", "domicile": "New York Islanders", "exterieur": "New York Rangers",
+                 "debut": t, "approx": False, "ordre_incertain": False}}
+    ref = {"p1": {"match_id": "p1", "sport": "hockey", "domicile": "New York Rangers", "exterieur": "New York Islanders",
+                  "debut": t, "approx": False, "ordre_incertain": False}}
+    assert associer(fr, ref)["n1"][:2] == ("p1", True)
