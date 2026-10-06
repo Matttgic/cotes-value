@@ -223,7 +223,7 @@ function rendreBilan() {
     Object.entries(D.simulations).map(([s, nom]) => {
       const b = D.bilan[s + "|" + refBilan];
       if (!b) return `<tr><td><b>${s}</b> <small>${e(nom)}</small></td><td>0</td><td>—</td><td>—</td><td>—</td></tr>`;
-      return `<tr><td><b>${s}</b> <small>${e(nom)}</small></td><td>${b.regles}<small>${b.en_cours ? "+" + b.en_cours + " en cours" : ""}</small></td>
+      return `<tr><td><b>${s}</b> <small>${e(nom)}</small></td><td>${b.regles}<small>${b.regles ? b.gagnes + " gagnés" : ""}${b.en_cours ? (b.regles ? " · " : "") + b.en_cours + " en cours" : ""}</small></td>
 <td class="${signe(b.gains)}">${eur(b.gains)}</td><td class="${signe(b.roi)}"><b>${pct(b.roi)}</b></td><td class="${signe(b.clv_moyenne)}">${pct(b.clv_moyenne)}</td></tr>`;
     }).join("");
 }

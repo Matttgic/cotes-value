@@ -143,3 +143,10 @@ def test_reference_pinnacle_brut():
     o = {x["reference"]: x for x in comparer([{**base, "source": "winamax", "match_id": "w1", "cote": 1.98}],
                                              {"Pinnacle": ref}, ecart_min=0.01)}
     assert set(o) == {"Pinnacle brut"} and o["Pinnacle brut"]["cote_juste"] == 1.95
+
+
+def test_bilan_toutes_sans_le_temoin():
+    from cotes.simulation import bilan
+    p = {"simulation": "A", "statut": "gagne", "mise": 10, "gain": 10.0, "clv": 0.02}
+    b = bilan([{**p, "reference": "Pinnacle"}, {**p, "reference": "Pinnacle brut", "statut": "perdu", "gain": -10.0}])
+    assert b["A|Toutes"]["gains"] == 10.0 and b["A|Toutes"]["gagnes"] == 1 and b["A|Pinnacle brut"]["gains"] == -10.0

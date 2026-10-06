@@ -84,7 +84,11 @@ def bilan(paris: list[dict]) -> dict:
     """Résumé par simulation et par référence : nombre, mises, gains, ROI, CLV moyenne."""
     out: dict[str, dict] = {}
     for p in paris:
-        for clef in (f'{p["simulation"]}|{p["reference"]}', f'{p["simulation"]}|Toutes'):
+        # « Toutes » = les vraies références ; le témoin « Pinnacle brut » n'a que sa propre ligne
+        clefs = [f'{p["simulation"]}|{p["reference"]}']
+        if p["reference"] != "Pinnacle brut":
+            clefs.append(f'{p["simulation"]}|Toutes')
+        for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
                                       "clv_somme": 0.0, "clv_n": 0, "gagnes": 0})
             b["paris"] += 1
