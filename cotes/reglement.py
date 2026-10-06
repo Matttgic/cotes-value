@@ -259,6 +259,9 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
             m = manuels.get(p["match_id"])
             if isinstance(m, dict) and m.get("score"):
                 sc = {"MATCH": tuple(m["score"])}
+                if m.get("periodes"):                 # score de chaque période réglementaire (ex. manches)
+                    ps = [tuple(x) for x in m["periodes"]]
+                    sc = {**scores_par_periode(p["sport"], sc["MATCH"], ps, [str(i + 1) for i in range(len(ps))]), **sc}
                 if m.get("mi_temps"):
                     sc["MT1"] = tuple(m["mi_temps"])
                     sc["MT2"] = (sc["MATCH"][0] - sc["MT1"][0], sc["MATCH"][1] - sc["MT1"][1])

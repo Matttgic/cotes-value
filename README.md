@@ -70,7 +70,8 @@ Betfair toutes les 15 min : offre PRO nécessaire ; l'offre gratuite ne sert qu'
 - `opportunites/AAAA-MM-JJ.jsonl.gz` : toutes les erreurs de cote détectées ;
 - `etat.json` : dernier cycle, requêtes PulseScore par mois ;
 - `resultats_manuels.json` : règlements à la main, par exemple
-  `{"winamax|72036146": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3]}}`.
+  `{"winamax|72036146": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3]}}` ; `periodes` donne le
+  score de chaque période (manches de baseball pour les marchés « 5 manches »).
 
 ## Développement
 

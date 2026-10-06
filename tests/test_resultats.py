@@ -77,3 +77,42 @@ def test_tennis_sets_espn():
     sc = scores_par_periode("tennis", r["score"], r["periodes"], r["libelles"])
     assert regler({**pari, "marche": "JEUX_TOTAL", "periode": "SET1", "ligne": 8.5, "issue": "PLUS"}, sc) == "gagne"
     assert regler({**pari, "marche": "JEUX_TOTAL", "periode": "SET1", "ligne": 12.5, "issue": "PLUS"}, sc) == "perdu"
+
+
+def test_tennis_scores_en_cours_de_betfair_et_pmu_ignores():
+    # cas réel : Betfair figé à 1-1 et PMU à 0-0 alors qu'ESPN et Unibet UK donnent le match fini 2-1
+    pari = {"sport": "tennis", "domicile": "K.Muchova", "exterieur": "N.Osaka", "debut": "2026-10-06T07:00:00Z"}
+    E = [enr("orbitxch", "Karolina Muchova", "Naomi Osaka", (1, 1), sport="tennis"),
+         enr("pmu", "Karolina Muchova", "Naomi Osaka", (30, 40), sport="tennis"),
+         enr("unibet-uk", "Karolina Muchova", "Naomi Osaka", (2, 1), sport="tennis"),
+         enr("espn", "Karolina Muchova", "Naomi Osaka", (2, 1), periodes=[(7, 5), (1, 6), (7, 6)], sport="tennis")]
+    for e in E:
+        e["debut"] = datetime(2026, 10, 6, 7, 10, tzinfo=timezone.utc)
+    r = R.consensus(pari, E)
+    assert r["score"] == (2, 1) and r["periodes"] == [(7, 5), (1, 6), (7, 6)]
+    assert r["sources"] == ["espn", "unibet-uk"]
+    # Betfair seul ne suffit jamais au tennis
+    assert R.consensus(pari, [enr("orbitxch", "Karolina Muchova", "Naomi Osaka", (2, 0), sport="tennis")],
+                       datetime(2026, 10, 6, 20, tzinfo=timezone.utc)) is None
+
+
+def test_baseball_neuvieme_manche_non_jouee():
+    # cas réel KBO : DraftKings liste la 9e manche à 0-0 (non jouée), Interwetten ne la liste pas
+    pari = {"sport": "baseball", "domicile": "Hanwha Eagles", "exterieur": "SSG Landers", "debut": "2026-10-06T02:00:00Z"}
+    m = [(0, 1), (3, 1), (0, 0), (0, 0), (5, 0), (0, 0), (1, 0), (0, 0)]
+    E = [enr("draftkings", "Hanwha Eagles", "SSG Landers", (9, 2), periodes=m + [(0, 0)], sport="baseball"),
+         enr("interwetten-de", "Hanwha Eagles", "SSG Landers", (9, 2), periodes=m, sport="baseball")]
+    r = R.consensus(pari, E)
+    assert r["periodes"][:5] == m[:5]
+    from cotes.reglement import scores_par_periode, regler
+    sc = scores_par_periode("baseball", r["score"], r["periodes"], r["libelles"])
+    assert regler({**pari, "marche": "HANDICAP", "periode": "5_MANCHES", "ligne": -0.5, "issue": "DOM"}, sc) == "gagne"
+
+
+def test_manuel_par_manches_baseball():
+    from cotes.reglement import appliquer
+    p = {"id": "x", "match_id": "pmu|1", "sport": "baseball", "statut": "a_regler", "marche": "HANDICAP",
+         "periode": "5_MANCHES", "issue": "EXT", "ligne": -0.5, "mise": 10, "cote": 2.0, "debut": "2026-10-06T09:30:00Z"}
+    m = {"pmu|1": {"score": [1, 3], "periodes": [[0, 0], [0, 0], [0, 0], [0, 1], [0, 0], [1, 0], [0, 0], [0, 0], [0, 2]]}}
+    appliquer([p], {}, m)
+    assert p["statut"] == "gagne"

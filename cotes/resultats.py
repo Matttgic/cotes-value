@@ -30,6 +30,9 @@ SOURCES_MIN = 2
 # une seule source suffit si elle est très fiable et que le match a commencé depuis au moins 6 heures
 # (tennis : ESPN est souvent la seule à donner les sets)
 SOURCES_FIABLES = {"espn", "orbitxch", "draftkings"}
+# tennis : Betfair et PMU gardent un score en cours de match (sets, voire points) sur des matchs finis
+TENNIS_EXCLUES = {"orbitxch", "pmu"}
+TENNIS_FIABLES = {"espn"}                         # seule source unique acceptée (Betfair : score figé)
 DELAI_SOURCE_UNIQUE_H = 6
 ESPN = "https://site.api.espn.com/apis/site/v2/sports"
 ESPN_LIGUES = {"football": ["soccer/all"], "hockey": ["hockey/nhl"], "basket": ["basketball/nba", "basketball/wnba"],
@@ -234,20 +237,40 @@ def _periodes_coherentes(sport: str, r: dict) -> bool:
     return sport == "hockey" and abs(d - r["score"][0]) + abs(e - r["score"][1]) == 1
 
 
+def _retenus(p: dict, enregistrements: list[dict]) -> list[dict]:
+    """Les sources du match retenues pour le valider (au tennis : score final plausible, en sets)."""
+    trouves = retrouver(p, enregistrements)
+    if p["sport"] == "tennis":
+        trouves = [r for r in trouves if r["source"] not in TENNIS_EXCLUES
+                   and max(r["score"]) in (2, 3) and min(r["score"]) < max(r["score"])]
+    return trouves
+
+
+def _sans_zeros_finaux(periodes: list) -> tuple:
+    """Périodes sans les 0-0 de fin (manche non jouée au baseball, prolongation blanche) : certaines sources
+    les listent, d'autres non, sans que ce soit un désaccord."""
+    out = list(periodes)
+    while out and tuple(out[-1]) == (0, 0):
+        out.pop()
+    return tuple(tuple(x) for x in out)
+
+
 def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None = None) -> dict | None:
     """Résultat validé du match d'un pari, ou None (pas encore terminé chez un validateur, ou désaccord)."""
-    trouves = retrouver(p, enregistrements)
+    trouves = _retenus(p, enregistrements)
     if not trouves or len({r["score"] for r in trouves}) > 1:
         return None
     if len(trouves) < SOURCES_MIN:
         debut = _heure(p.get("debut"))
-        seule_fiable = trouves[0]["source"] in SOURCES_FIABLES and maintenant and debut and \
+        fiables = TENNIS_FIABLES if p["sport"] == "tennis" else SOURCES_FIABLES
+        seule_fiable = trouves[0]["source"] in fiables and maintenant and debut and \
             maintenant - debut >= timedelta(hours=DELAI_SOURCE_UNIQUE_H)
         if not seule_fiable:
             return None
     score = trouves[0]["score"]
-    avec_periodes = [r for r in trouves if _periodes_coherentes(p["sport"], r)]
-    if len({tuple(r["periodes"]) for r in avec_periodes}) > 1:
+    avec_periodes = sorted((r for r in trouves if _periodes_coherentes(p["sport"], r)),
+                           key=lambda r: -len(r["periodes"]))
+    if len({_sans_zeros_finaux(r["periodes"]) for r in avec_periodes}) > 1:
         avec_periodes = []                           # sources en désaccord sur les périodes : on s'en passe
     corners = [r["corners"] for r in trouves if r["corners"] is not None and r["corners"] != (0, 0)]
     base = avec_periodes[0] if avec_periodes else None
@@ -271,8 +294,9 @@ def a_lire(paris: list[dict], maintenant: datetime, apres_debut_h: float = 2) ->
 
 def diagnostic(p: dict, enregistrements: list[dict]) -> dict:
     """Pourquoi le match d'un pari n'est pas (encore) réglé : sources trouvées et leurs scores."""
-    trouves = retrouver(p, enregistrements)
+    trouves, retenus = retrouver(p, enregistrements), _retenus(p, enregistrements)
     return {"match": f'{p["domicile"]} – {p["exterieur"]}', "sport": p["sport"], "debut": p.get("debut"),
             "sources": {r["source"]: {"score": r["score"], "periodes": r["periodes"]} for r in trouves},
-            "raison": "aucune source" if not trouves else
-            ("sources en désaccord" if len({r["score"] for r in trouves}) > 1 else "pas assez de sources ou de périodes")}
+            "retenues": sorted(r["source"] for r in retenus),
+            "raison": "aucune source" if not retenus else
+            ("sources en désaccord" if len({r["score"] for r in retenus}) > 1 else "pas assez de sources ou de périodes")}
