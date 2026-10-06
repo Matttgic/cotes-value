@@ -173,3 +173,19 @@ def test_tranches_d_ecart_un_pari_une_fois():
     assert [p["simulation"] for p in placer([o], paris)] == ["A"]
     # plus tard l'écart passe à 6 % : même pari, pas repris dans D
     assert placer([{**o, "detecte": "t2", "cote": 2.2, "ecart": 0.06}], paris) == [] and len(paris) == 1
+
+
+def test_deduction_sans_score_a_la_mi_temps():
+    from cotes.reglement import regler
+    pari = lambda **k: {"sport": "football", "periode": "MATCH", "ligne": None, **k}   # noqa: E731
+    nul00, nul11 = {"MATCH": (0, 0)}, {"MATCH": (1, 1)}
+    assert regler(pari(marche="HALF_TIME_FULL_TIME", issue="EXT/DOM"), nul00) == "perdu"
+    assert regler(pari(marche="HALF_TIME_FULL_TIME", issue="NUL/NUL"), nul00) == "gagne"
+    assert regler(pari(marche="HALF_TIME_FULL_TIME", issue="EXT/DOM"), nul11) == "perdu"
+    assert regler(pari(marche="HALF_TIME_FULL_TIME", issue="DOM/NUL"), nul11) is None      # dépend de la mi-temps
+    assert regler(pari(marche="CORRECT_SCORE", periode="MT1", issue="2-1"), nul11) == "perdu"
+    assert regler(pari(marche="CORRECT_SCORE", periode="MT1", issue="1-0"), nul11) is None
+    assert regler(pari(marche="TOTAL", periode="MT1", ligne=2.5, issue="PLUS"), nul11) == "perdu"
+    assert regler(pari(marche="TOTAL", periode="MT1", ligne=2.5, issue="MOINS"), nul11) == "gagne"
+    assert regler(pari(marche="TOTAL", periode="MT1", ligne=1.5, issue="MOINS"), nul11) is None
+    assert regler(pari(marche="RESULTAT_1N2", periode="MT1", issue="NUL"), nul00) == "gagne"

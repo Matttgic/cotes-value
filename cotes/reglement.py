@@ -144,8 +144,52 @@ def _regler_abandon(p: dict, scores: dict) -> str:
     return "rembourse"
 
 
+SOUS_PERIODES = {"MT1", "MT2", "P1", "P2", "P3", "QT1", "QT2", "QT3", "QT4"}
+
+
 def regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     """Statut du pari, ou None si les scores ne suffisent pas."""
+    statut = _regler(p, scores)
+    if statut is None and p.get("sport") != "tennis":
+        statut = _deduire_sans_periode(p, scores)
+    return statut
+
+
+def _deduire_sans_periode(p: dict, scores: dict) -> str | None:
+    """Quand le score d'une période manque, certains paris sont quand même tranchés par le score final :
+    une équipe ne marque jamais plus dans une période que dans tout le match. Exemples : match fini 0-0 ->
+    toutes les périodes à 0-0 ; « mi-temps/fin : X / Y » perdu si Y n'a pas gagné le match ; « score exact
+    2-1 à la mi-temps » perdu si le match a fini 1-1 ; « plus de 2,5 buts en 1re mi-temps » perdu s'il y a
+    eu 2 buts dans le match."""
+    fin = scores.get("MATCH")
+    m, per, i, ligne = p["marche"], p["periode"], p["issue"], p.get("ligne")
+    if not fin or m.startswith(("CORNERS_", "CARTONS_", "JEUX_", "SETS_")):
+        return None
+    d, e = fin
+    if m == "HALF_TIME_FULL_TIME" and per == "MATCH":
+        if (d, e) == (0, 0):
+            return _regler(p, {**scores, "MT1": (0, 0)})
+        r = "DOM" if d > e else "EXT" if e > d else "NUL"
+        return "perdu" if i.split("/")[-1] != r else None
+    if per not in SOUS_PERIODES:
+        return None
+    if (d, e) == (0, 0):
+        return _regler(p, {**scores, per: (0, 0)})
+    if m == "CORRECT_SCORE" and "-" in i:
+        a, b = (int(x) for x in i.split("-"))
+        return "perdu" if a > d or b > e else None
+    if m == "BOTH_TEAMS_TO_SCORE" and (d == 0 or e == 0):
+        return "perdu" if i == "YES" else "gagne"
+    if m in ("TOTAL", "TOTAL_DOM", "TOTAL_EXT") and ligne is not None:
+        maxi = {"TOTAL": d + e, "TOTAL_DOM": d, "TOTAL_EXT": e}[m]
+        if maxi == 0:
+            return _regler(p, {**scores, per: (0, 0)})
+        if maxi <= ligne - 0.5:                       # même en marquant tout dans la période, sous la ligne
+            return "perdu" if i == "PLUS" else "gagne"
+    return None
+
+
+def _regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     if scores.get("ABANDON"):
         return _regler_abandon(p, scores)
     m, per, i, ligne = p["marche"], p["periode"], p["issue"], p.get("ligne")
