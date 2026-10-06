@@ -130,7 +130,7 @@ def main() -> int:
             report["requetes"].append(meta)
             if data is None:
                 continue
-            save_raw(f"{bm}_results_{sp}", data)
+            save_raw(f"{bm.replace('/', '-')}_results_{sp}", data)
             items = (data.get("results") or []) if isinstance(data, dict) else []
             report["resultats"][f"{bm}/{sp}"] = {
                 "total": data.get("total") if isinstance(data, dict) else None,
