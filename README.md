@@ -37,9 +37,9 @@ Toutes les 15 minutes (`scripts/cycle.py`) :
 4. **Comparaison** (`cotes/comparaison.py`) : écart = cote française × probabilité juste − 1, pour
    chaque référence fiable lue à moins de 15 minutes d'intervalle ; plus un **consensus** (moyenne
    des références disponibles).
-5. **Paris simulés** (`cotes/simulation.py`) : 10 € à la première détection, par simulation et par
-   référence. **A** ≥ 2 %, **B** ≥ 3 %, **C** ≥ 4 %, **D** ≥ 5 %, **E** ≥ 7 % (cotes ≤ 10),
-   **X** cotes > 10 (≥ 3 %). La cote juste est suivie jusqu'au coup d'envoi (**CLV**). Référence témoin
+5. **Paris simulés** (`cotes/simulation.py`) : 10 € à la première détection, un pari par référence,
+   bookmaker et sélection, rangé dans la tranche de son écart : **A** 2 à 3 %, **B** 3 à 4 %, **C** 4 à 5 %,
+   **D** 5 à 7 %, **E** 7 % et plus (cotes ≤ 10), **X** cotes > 10 (≥ 3 %). La cote juste est suivie jusqu'au coup d'envoi (**CLV**). Référence témoin
    **Pinnacle brut** : la cote affichée par Pinnacle, marge comprise, pour mesurer ce que change le retrait
    de la marge.
 6. **Règlement** (`cotes/reglement.py`) avec les résultats PulseScore du bookmaker du pari, selon son

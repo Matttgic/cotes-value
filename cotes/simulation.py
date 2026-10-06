@@ -1,12 +1,12 @@
-"""Paris simulés : 10 € misés à la première détection d'une erreur de cote, par simulation et par référence.
+"""Paris simulés : 10 € misés à la première détection d'une erreur de cote, par référence.
 
-Simulations (écart = cote française × probabilité juste − 1) :
-    A ≥ 2 %, B ≥ 3 %, C ≥ 4 %, D ≥ 5 %, E ≥ 7 %   (cotes jusqu'à 10)
-    X « cotes > 10 » ≥ 3 %                          (à part : cote juste imprécise, gros aléa)
-Chaque simulation est jouée séparément pour chaque référence (Pinnacle, Betfair, Polymarket, Kalshi,
-Consensus) : on voit ainsi quel seuil et quelle référence gagnent vraiment.
-Un pari n'est pris qu'une fois par simulation, référence, bookmaker et sélection, à la cote vue
-au moment où l'écart atteint le seuil de la simulation.
+Simulations = tranches d'écart qui ne se chevauchent pas (écart = cote française × probabilité juste − 1),
+à la première détection :
+    A 2 à 3 %, B 3 à 4 %, C 4 à 5 %, D 5 à 7 %, E 7 % et plus   (cotes jusqu'à 10)
+    X « cotes > 10 », écart ≥ 3 %                               (à part : cote juste imprécise, gros aléa)
+Un pari n'est pris qu'une fois par référence, bookmaker et sélection (à la cote vue à la première
+détection) et appartient à une seule simulation : « A+B » = les paris de 2 à 4 %, chacun compté une fois.
+Chaque référence (Pinnacle, Betfair, Polymarket, Kalshi, Consensus, témoin Pinnacle brut) a ses paris.
 """
 from __future__ import annotations
 
@@ -16,14 +16,23 @@ from datetime import datetime, timezone
 from .marches import cle
 
 MISE = 10.0
-SIMULATIONS = {
-    "A": {"ecart": 0.02, "cote_max": 10.0, "cote_min": 1.0, "nom": "≥ 2 %"},
-    "B": {"ecart": 0.03, "cote_max": 10.0, "cote_min": 1.0, "nom": "≥ 3 %"},
-    "C": {"ecart": 0.04, "cote_max": 10.0, "cote_min": 1.0, "nom": "≥ 4 %"},
-    "D": {"ecart": 0.05, "cote_max": 10.0, "cote_min": 1.0, "nom": "≥ 5 %"},
-    "E": {"ecart": 0.07, "cote_max": 10.0, "cote_min": 1.0, "nom": "≥ 7 %"},
-    "X": {"ecart": 0.03, "cote_max": 1e9, "cote_min": 10.0001, "nom": "Cotes > 10 (≥ 3 %)"},
+INF = float("inf")
+SIMULATIONS = {     # écart dans [ecart, ecart_max[, cote dans [cote_min, cote_max]
+    "A": {"ecart": 0.02, "ecart_max": 0.03, "cote_min": 1.0, "cote_max": 10.0, "nom": "2 à 3 %"},
+    "B": {"ecart": 0.03, "ecart_max": 0.04, "cote_min": 1.0, "cote_max": 10.0, "nom": "3 à 4 %"},
+    "C": {"ecart": 0.04, "ecart_max": 0.05, "cote_min": 1.0, "cote_max": 10.0, "nom": "4 à 5 %"},
+    "D": {"ecart": 0.05, "ecart_max": 0.07, "cote_min": 1.0, "cote_max": 10.0, "nom": "5 à 7 %"},
+    "E": {"ecart": 0.07, "ecart_max": INF, "cote_min": 1.0, "cote_max": 10.0, "nom": "7 % et plus"},
+    "X": {"ecart": 0.03, "ecart_max": INF, "cote_min": 10.0001, "cote_max": INF, "nom": "Cotes > 10 (≥ 3 %)"},
 }
+
+
+def simulation_de(ecart: float, cote: float) -> str | None:
+    """La simulation (une seule) d'une opportunité, ou None."""
+    for code, s in SIMULATIONS.items():
+        if s["ecart"] <= ecart < s["ecart_max"] and s["cote_min"] <= cote <= s["cote_max"]:
+            return code
+    return None
 REFERENCES = ["Pinnacle", "Betfair", "Polymarket", "Kalshi", "Consensus", "Pinnacle brut"]
 
 
@@ -32,32 +41,32 @@ def _id(*parts) -> str:
 
 
 def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
-    """Ajoute les nouveaux paris (modifie `paris`) et renvoie ceux qui viennent d'être pris."""
+    """Ajoute les nouveaux paris (modifie `paris`) et renvoie ceux qui viennent d'être pris. Un pari par
+    référence, bookmaker et sélection, à la première détection, rangé dans la tranche de son écart. Un même
+    pari vu chez plusieurs bookmakers = paris distincts (on sait ainsi lequel se trompe le plus souvent)."""
     deja = {p["id"] for p in paris}
     nouveaux = []
-    # à écart égal, la meilleure cote d'abord ; un même pari peut être vu chez plusieurs bookmakers :
-    # chaque bookmaker est un pari distinct (on sait ainsi lequel se trompe le plus souvent)
     for o in sorted(opportunites, key=lambda o: -o["ecart"]):
         if o.get("suspect"):
             continue
-        for code, s in SIMULATIONS.items():
-            if o["ecart"] < s["ecart"] or not (s["cote_min"] <= o["cote"] <= s["cote_max"]):
-                continue
-            pid = _id(code, o["reference"], o["match_id"], *cle(o))
-            if pid in deja:
-                continue
-            deja.add(pid)
-            p = {"id": pid, "simulation": code, "reference": o["reference"], "detecte": o["detecte"],
-                 "bookmaker": o["bookmaker"], "sport": o["sport"], "ligue": o.get("ligue"),
-                 "match_id": o["match_id"], "domicile": o["domicile"], "exterieur": o["exterieur"],
-                 "debut": o["debut"], "marche": o["marche"], "periode": o["periode"], "ligne": o.get("ligne"),
-                 "issue": o["issue"], "pari": o["pari"], "libelle_bookmaker": o.get("libelle_bookmaker"),
-                 "cote": o["cote"], "cote_juste": o["cote_juste"], "cote_reference": o.get("cote_reference"),
-                 "lu_reference": o.get("lu_reference"), "ecart": o["ecart"], "mise": MISE,
-                 "statut": "en_cours", "gain": None, "cote_juste_cloture": o["cote_juste"], "clv": None,
-                 "match_reference": o.get("match_reference"), "lien": o.get("lien")}
-            paris.append(p)
-            nouveaux.append(p)
+        code = simulation_de(o["ecart"], o["cote"])
+        if code is None:
+            continue
+        pid = _id(o["reference"], o["match_id"], *cle(o))
+        if pid in deja:
+            continue
+        deja.add(pid)
+        p = {"id": pid, "simulation": code, "reference": o["reference"], "detecte": o["detecte"],
+             "bookmaker": o["bookmaker"], "sport": o["sport"], "ligue": o.get("ligue"),
+             "match_id": o["match_id"], "domicile": o["domicile"], "exterieur": o["exterieur"],
+             "debut": o["debut"], "marche": o["marche"], "periode": o["periode"], "ligne": o.get("ligne"),
+             "issue": o["issue"], "pari": o["pari"], "libelle_bookmaker": o.get("libelle_bookmaker"),
+             "cote": o["cote"], "cote_juste": o["cote_juste"], "cote_reference": o.get("cote_reference"),
+             "lu_reference": o.get("lu_reference"), "ecart": o["ecart"], "mise": MISE,
+             "statut": "en_cours", "gain": None, "cote_juste_cloture": o["cote_juste"], "clv": None,
+             "match_reference": o.get("match_reference"), "lien": o.get("lien")}
+        paris.append(p)
+        nouveaux.append(p)
     return nouveaux
 
 
@@ -125,7 +134,5 @@ def bilan(paris: list[dict]) -> dict:
 
 
 def bilan_tranches(paris: list[dict]) -> dict:
-    """Par tranche de cote (« 1,51 – 2,00|Pinnacle »…). Chaque pari compte une seule fois : ceux de la
-    simulation A (écart ≥ 2 %, cotes ≤ 10) et de X (cotes > 10, écart ≥ 3 %), qui contiennent tous les
-    paris de B à E."""
-    return _cumuler([p for p in paris if p["simulation"] in ("A", "X")], lambda p: tranche(p["cote"]))
+    """Par tranche de cote (« 1,51 – 2,00|Pinnacle »…) ; chaque pari n'appartient qu'à une simulation."""
+    return _cumuler(paris, lambda p: tranche(p["cote"]))

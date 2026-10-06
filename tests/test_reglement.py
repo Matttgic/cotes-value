@@ -157,6 +157,19 @@ def test_bilan_par_tranche_de_cote():
     assert tranche(1.5) == "1,01 – 1,50" and tranche(1.51) == "1,51 – 2,00" and tranche(25) == "plus de 10"
     p = {"reference": "Pinnacle", "statut": "gagne", "mise": 10, "clv": None}
     b = bilan_tranches([{**p, "simulation": "A", "cote": 1.8, "gain": 8.0},
-                        {**p, "simulation": "B", "cote": 1.8, "gain": 8.0},       # même pari, déjà compté via A
                         {**p, "simulation": "X", "cote": 15.0, "gain": 140.0}])
     assert b["1,51 – 2,00|Toutes"]["paris"] == 1 and b["plus de 10|Pinnacle"]["gains"] == 140.0
+
+
+def test_tranches_d_ecart_un_pari_une_fois():
+    from cotes.simulation import placer, simulation_de
+    assert [simulation_de(e, 2.0) for e in (0.019, 0.02, 0.029, 0.03, 0.045, 0.06, 0.07, 0.30)] == \
+        [None, "A", "A", "B", "C", "D", "E", "E"]
+    assert simulation_de(0.025, 12.0) is None and simulation_de(0.05, 12.0) == "X"
+    o = {"reference": "Pinnacle", "detecte": "t1", "bookmaker": "Winamax", "sport": "football", "match_id": "w1",
+         "domicile": "A", "exterieur": "B", "debut": "d", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5,
+         "issue": "PLUS", "pari": "x", "cote": 2.1, "cote_juste": 2.05, "ecart": 0.025}
+    paris = []
+    assert [p["simulation"] for p in placer([o], paris)] == ["A"]
+    # plus tard l'écart passe à 6 % : même pari, pas repris dans D
+    assert placer([{**o, "detecte": "t2", "cote": 2.2, "ecart": 0.06}], paris) == [] and len(paris) == 1

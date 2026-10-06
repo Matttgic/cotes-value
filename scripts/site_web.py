@@ -155,15 +155,15 @@ select.cumul{display:block;margin-top:4px;padding:3px 4px;font-size:12px;max-wid
   <section class="onglet" id="o-bilan">
     <div class="puces" id="puces-ref"></div>
     <table id="bilan"></table>
-    <p class="aide" style="margin-top:8px">10 € par pari. ROI sur les paris réglés. Total : cumul des simulations choisies (un même pari pris
-    par A et B compte deux fois, comme si les deux simulations étaient jouées). CLV : écart entre la cote prise et la cote
+    <p class="aide" style="margin-top:8px">10 € par pari. ROI sur les paris réglés. Simulations = tranches d'écart à la première détection : un pari
+    n'appartient qu'à une seule. Total : somme des simulations choisies, chaque pari compté une fois. CLV : écart entre la cote prise et la cote
     juste juste avant le match (positive = on a battu le marché ; c'est l'indicateur le plus rapide à devenir fiable).
     « Pinnacle brut » : témoin, comparé à la cote affichée par Pinnacle sans retirer sa marge (sa CLV est mesurée
     contre la cote juste).</p>
     <h2 class="sous-titre">Par tranche de cote</h2>
     <table id="bilan-tranches"></table>
-    <p class="aide" style="margin-top:8px">Chaque pari compté une seule fois : tous les paris à au moins 2 % d'écart
-    (au moins 3 % au-dessus de 10), classés selon la cote prise.</p>
+    <p class="aide" style="margin-top:8px">Tous les paris (au moins 2 % d'écart, au moins 3 % au-dessus de 10),
+    chacun compté une fois, classés selon la cote prise.</p>
 
     <div class="infos" id="infos"></div>
   </section>
