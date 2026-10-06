@@ -29,20 +29,23 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: collecte
-  cancel-in-progress: false
-
+# Trois tâches : le cycle (collecte, paris, règlement, données), la publication du site, et la relance du
+# cycle suivant. La publication a sa propre file : si GitHub Pages bloque (environnement « en attente »,
+# constaté le 6/10/2026 pendant 2 heures), la collecte et la chaîne des cycles continuent.
 jobs:
   cycle:
     if: github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment:
-      name: github-pages
+    timeout-minutes: 20
+    concurrency:
+      group: collecte
+      cancel-in-progress: false
+    outputs:
+      debut: ${{ steps.debut.outputs.debut }}
     steps:
       - name: Heure de début
-        run: echo "DEBUT=$(date +%s)" >> "$GITHUB_ENV"
+        id: debut
+        run: echo "debut=$(date +%s)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -77,16 +80,40 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+
+  publier:
+    needs: cycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: pages
+      cancel-in-progress: true        # seule la dernière version du site compte
+    environment:
+      name: github-pages
+    steps:
       - name: Publier le site (GitHub Pages)
         uses: actions/deploy-pages@v4
-        continue-on-error: true      # tant que Pages n'est pas activé, la collecte continue quand même
 
+  relancer:
+    needs: cycle
+    if: always() && vars.COLLECTE_AUTO == 'oui' && needs.cycle.result != 'cancelled' && needs.cycle.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
       - name: Relancer le cycle suivant (15 minutes après le début de celui-ci)
-        if: always() && vars.COLLECTE_AUTO == 'oui'
         env:
           GH_TOKEN: ${{ github.token }}
+          DEBUT: ${{ needs.cycle.outputs.debut }}
+          DEPOT: ${{ github.repository }}
         run: |
-          reste=$(( DEBUT + 900 - $(date +%s) - 30 ))
+          debut=${DEBUT:-$(date +%s)}
+          reste=$(( debut + 900 - $(date +%s) - 30 ))
           if [ "$reste" -gt 0 ]; then sleep "$reste"; fi
-          gh workflow run collecte.yml --repo "${{ github.repository }}" --ref "${{ github.ref_name }}" \
+          # une seule chaîne : c'est le lancement le plus récent qui relance le suivant
+          cree=$(gh api "repos/$DEPOT/actions/runs/${{ github.run_id }}" --jq .created_at)
+          plus_recents=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 20 \
+            --json createdAt,conclusion \
+            --jq "[.[] | select(.createdAt > \"$cree\") | select(.conclusion != \"cancelled\" and .conclusion != \"skipped\")] | length")
+          if [ "$plus_recents" -gt 0 ]; then echo "Un lancement plus récent continue la chaîne."; exit 0; fi
+          gh workflow run collecte.yml --repo "$DEPOT" --ref "${{ github.ref_name }}" \
             -f mode="${{ vars.MODE_COLLECTE || 'complet' }}"
