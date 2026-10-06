@@ -1,6 +1,6 @@
 # Cotes Value
 
-Compare **toutes les cotes** des bookmakers français (Winamax, Betclic, Unibet, PMU, NetBet) à la
+Compare **toutes les cotes** des bookmakers français (Winamax, Betclic, Unibet, PMU) à la
 **cote juste** de plusieurs références « sharp », et simule les paris qu'on prendrait à chaque erreur
 de cote : 10 € par pari, plusieurs seuils, pour savoir lesquels gagnent vraiment.
 
@@ -15,7 +15,10 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 | Polymarket | Référence | API officielle gamma (`cotes/polymarket.py`) | Gratuit |
 | Kalshi | Référence (vainqueur) | API officielle (`cotes/kalshi.py`) | Gratuit |
 | Betfair Exchange | Référence | PulseScore, via Orbit Exchange | Offre PulseScore |
-| Winamax, Betclic, Unibet, PMU, NetBet | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
+| Winamax, Betclic, Unibet, PMU | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
+
+NetBet n'est pas suivi : le flux « netbet » de PulseScore est celui du site international (netbet.com), pas
+de netbet.fr (intitulés anglais, corners, handicaps asiatiques en quart, compétitions hors liste ANJ).
 
 Vérifications faites (workflow « Vérifications des sources ») :
 - Pinnacle lu directement = PS3838 de PulseScore : 98 % des 4 161 cotes à moins de 1 % d'écart ;

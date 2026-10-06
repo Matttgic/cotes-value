@@ -27,7 +27,9 @@ from cotes import (comparaison, controle, kalshi, pinnacle, polymarket, pulsesco
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
-FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu", "netbet"]
+# NetBet retiré le 6/10/2026 : le flux « netbet » de PulseScore est le site international (netbet.com :
+# intitulés anglais, corners, handicaps asiatiques en quart, compétitions hors liste ANJ), pas netbet.fr.
+FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu"]
 SPORTS_FR = ["soccer", "basketball", "tennis", "ice-hockey", "handball", "volleyball", "rugby-union",
              "american-football", "baseball"]
 SPORTS_BETFAIR = ["soccer", "tennis"]
