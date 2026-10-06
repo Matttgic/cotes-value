@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import REFERENCES, SIMULATIONS, TEMOIN, TRANCHES, bilan, bilan_tranches  # noqa: E402
+from cotes.stockage import lire_archives  # noqa: E402
 
 
 def _lire(chemin: Path, defaut):
@@ -64,7 +65,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
 
 
 def construire(donnees: Path, sortie: Path) -> Path:
-    paris = _lire(donnees / "paris.json", [])
+    paris = _lire(donnees / "paris.json", []) + lire_archives(donnees)     # bilan sur TOUS les paris
     etat = _lire(donnees / "etat.json", {})
     actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", [])
                  if not o.get("suspect") and o.get("reference") != "Pinnacle brut"]

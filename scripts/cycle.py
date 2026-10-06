@@ -22,7 +22,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes import comparaison, controle, kalshi, pinnacle, polymarket, pulsescore, reglement, simulation  # noqa: E402
+from cotes import (comparaison, controle, kalshi, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
+                   simulation, stockage)
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
 FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu", "netbet"]
@@ -135,6 +136,7 @@ def main() -> int:
         reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant)
 
     # 5. sauvegarde
+    paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
     ecrire_json(donnees / "paris.json", paris)
     ecrire_json(donnees / "controle.json", etat_controle)
     ecrire_json(donnees / "opportunites_actuelles.json", sorted(opportunites, key=lambda o: -o["ecart"]))
