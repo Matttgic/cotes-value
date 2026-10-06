@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes.simulation import REFERENCES, SIMULATIONS, TRANCHES, bilan, bilan_tranches  # noqa: E402
+from cotes.simulation import REFERENCES, SIMULATIONS, TEMOIN, TRANCHES, bilan, bilan_tranches  # noqa: E402
 
 
 def _lire(chemin: Path, defaut):
@@ -16,7 +16,8 @@ def _lire(chemin: Path, defaut):
         return defaut
 
 
-FICHES_AFFICHEES = 600
+EN_COURS_AFFICHES = 400        # paris en cours les plus récents
+REGLES_AFFICHES = 600          # paris réglés les plus récemment (+ tous ceux à régler à la main)
 CHAMPS_FILTRES = {"sims": "simulation", "reference": "reference", "statut": "statut", "bookmaker": "bookmaker",
                   "sport": "sport"}
 
@@ -28,14 +29,16 @@ def cle_fiche(p: dict) -> tuple:
 
 CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
-                "ligue")
+                "ligue", "regle_le")
 
 
-def selection_paris(paris: list[dict], n: int = FICHES_AFFICHEES) -> tuple[list[dict], int, dict]:
+def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
+                    regles: int = REGLES_AFFICHES) -> tuple[list[dict], int, dict]:
     """Page légère : un même pari pris par plusieurs simulations = une fiche (celle de la première
-    détection, avec la liste des simulations). Garde les n fiches les plus récentes et toutes celles qui ont
-    un pari à régler à la main. Renvoie (fiches de la plus récente à la plus ancienne, nombre total de
-    fiches, valeurs des filtres calculées sur TOUS les paris)."""
+    détection, avec la liste des simulations). Garde les `en_cours` fiches en cours les plus récentes, les
+    `regles` fiches réglées le plus récemment et toutes celles à régler à la main. Renvoie (fiches de la
+    plus récente à la plus ancienne, nombre total de fiches, valeurs des filtres calculées sur TOUS les
+    paris)."""
     groupes: dict[tuple, list[dict]] = {}
     for p in paris:
         groupes.setdefault(cle_fiche(p), []).append(p)
@@ -46,8 +49,16 @@ def selection_paris(paris: list[dict], n: int = FICHES_AFFICHEES) -> tuple[list[
         f["sims"] = sorted({r.get("simulation") for r in lignes})
         f["a_regler"] = any(r.get("statut") == "a_regler" for r in lignes)
         fiches.append(f)
-    fiches.sort(key=lambda f: f["detecte"] or "", reverse=True)
-    gardees = fiches[:n] + [f for f in fiches[n:] if f["a_regler"]]
+    recents = lambda champ: lambda f: f.get(champ) or ""      # noqa: E731
+    ouverts = sorted((f for f in fiches if f["statut"] == "en_cours"), key=recents("detecte"), reverse=True)
+    finis = sorted((f for f in fiches if f["statut"] not in ("en_cours", "a_regler")), key=recents("regle_le"),
+                   reverse=True)
+    # le témoin « Pinnacle brut » (des centaines de paris par cycle) a sa propre part, plus petite
+    temoin = lambda f: f["reference"] == TEMOIN                 # noqa: E731
+    gardees = ([f for f in ouverts if not temoin(f)][:en_cours] + [f for f in finis if not temoin(f)][:regles]
+               + [f for f in ouverts if temoin(f)][:en_cours // 4] + [f for f in finis if temoin(f)][:regles // 4]
+               + [f for f in fiches if f["a_regler"]])
+    gardees.sort(key=recents("detecte"), reverse=True)
     valeurs = {f: sorted({str(p.get(c)) for p in paris if p.get(c) is not None}) for f, c in CHAMPS_FILTRES.items()}
     return gardees, len(fiches), valeurs
 
@@ -280,9 +291,11 @@ document.getElementById("infos").innerHTML = [
 
 // --- Paris : fiches déjà regroupées (un même pari pris par plusieurs simulations = une seule fiche)
 const fiches = D.paris;
-document.getElementById("nb-paris").textContent = fiches.length || "";
+document.getElementById("nb-paris").textContent = fiches.filter(f => f.reference !== "Pinnacle brut").length || "";
 if (D.fiches_total > fiches.length) document.getElementById("paris").insertAdjacentHTML("beforebegin",
-  `<p class="aide">${fiches.length} paris affichés sur ${D.fiches_total} : les plus récents et ceux à régler (le bilan compte tous les paris).</p>`);
+  `<p class="aide">${fiches.length} paris affichés sur ${D.fiches_total} : les 400 derniers en cours, les 600 derniers réglés et
+  ceux à régler (le bilan compte tous les paris). Filtre « Statuts » pour ne voir que les gagnés, perdus… ; le témoin
+  « Pinnacle brut » s'affiche en le choisissant dans « Références ».</p>`);
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
   book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
@@ -304,7 +317,9 @@ ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
 </article>`;
 function rendreParis() {
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
-  const L = fiches.filter(p => Object.entries(f).every(([k,v]) => !v || (k==="sims" ? p.sims.includes(v) : p[k]===v)));
+  // le témoin « Pinnacle brut » n'apparaît que si on le choisit dans « Références »
+  const L = fiches.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
+    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? p.sims.includes(v) : p[k]===v)));
   document.getElementById("paris").innerHTML = L.length ? L.slice(0, limite).map(carteParis).join("")
     : `<div class="vide">Aucun pari pour ces filtres.</div>`;
   const plus = document.getElementById("plus");

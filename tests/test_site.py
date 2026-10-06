@@ -12,18 +12,27 @@ def pari(sim, match, quand, statut="en_cours", cote=2.0, bm="Winamax"):
             "cote": cote, "bookmaker": bm, "sport": "football", "mise": 10, "gain": None, "clv": None}
 
 
-def test_selection_par_fiches(monkeypatch):
-    monkeypatch.setattr(site_web, "FICHES_AFFICHEES", 2)
+def test_selection_par_fiches():
     paris = [pari("A", "m1", "2026-10-01T10:00", cote=2.10), pari("C", "m1", "2026-10-03T11:00", cote=2.25),
              pari("A", "m2", "2026-10-02T10:00"), pari("A", "m3", "2026-10-04T10:00"),
-             pari("A", "m0", "2026-09-01T10:00", statut="a_regler", bm="NetBet")]
-    fiches, total, valeurs = site_web.selection_paris(paris, 2)
-    # les 2 fiches les plus récentes (m3, m1 vue d'abord le 01/10 mais m2 le 02/10 -> m3, m2) + celle à régler
-    assert [f["match_id"] for f in fiches] == ["m3", "m2", "m0"] and total == 4 and fiches[2]["a_regler"]
+             pari("A", "m0", "2026-09-01T10:00", statut="a_regler", bm="NetBet"),
+             {**pari("A", "m8", "2026-09-02T10:00", statut="gagne"), "regle_le": "2026-09-03T10:00"},
+             {**pari("A", "m9", "2026-09-01T09:00", statut="perdu"), "regle_le": "2026-09-01T12:00"}]
+    fiches, total, valeurs = site_web.selection_paris(paris, en_cours=2, regles=1)
+    # 2 en cours les plus récents (m3, m2) + le réglé le plus récent (m8) + celui à régler (m0)
+    assert [f["match_id"] for f in fiches] == ["m3", "m2", "m8", "m0"] and total == 6 and fiches[3]["a_regler"]
     assert valeurs["bookmaker"] == ["NetBet", "Winamax"] and valeurs["sims"] == ["A", "C"]  # filtres sur tout
-    fiches, _, _ = site_web.selection_paris(paris, 10)
+    fiches, _, _ = site_web.selection_paris(paris)
     m1 = next(f for f in fiches if f["match_id"] == "m1")
     assert m1["sims"] == ["A", "C"] and m1["cote"] == 2.10 and m1["detecte"] == "2026-10-01T10:00"   # 1re détection
+
+
+def test_temoin_a_sa_propre_part():
+    paris = [{**pari("A", f"t{i}", f"2026-10-05T10:{i:02d}"), "reference": "Pinnacle brut"} for i in range(50)]
+    paris += [pari("A", f"v{i}", f"2026-10-01T10:{i:02d}") for i in range(5)]
+    fiches, _, _ = site_web.selection_paris(paris, en_cours=8, regles=4)
+    assert sum(f["reference"] == "Pinnacle" for f in fiches) == 5          # pas évincés par le témoin
+    assert sum(f["reference"] == "Pinnacle brut" for f in fiches) == 2     # 8 // 4
 
 
 def test_construire_bilan_sur_tous_les_paris(tmp_path):
