@@ -132,12 +132,20 @@ def main() -> int:
             for bm in resultats_mod.VALIDATEURS:
                 enregistrements += etape(f"resultats_{bm}_{sport}", journal, resultats_mod.lire,
                                          client, bm, API[sport], sport, depuis) or []
+            enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
+                                     sport, depuis, maintenant) or []
         resultats = {}
         for p in paris:
             if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
                 r = resultats_mod.consensus(p, enregistrements)
                 if r:
                     resultats[p["match_id"]] = r
+        # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)
+        for p in paris:
+            r = resultats.get(p["match_id"])
+            if r and p["statut"] in ("en_cours", "a_regler") and (
+                    p["periode"] in reglement.SOUS_PERIODES or p["marche"] == "HALF_TIME_FULL_TIME"):
+                resultats[p["match_id"]] = resultats_mod.completer_periodes(p, r, enregistrements)
         journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
         requetes["resultats"] = client.requetes
         reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant)

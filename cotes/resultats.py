@@ -6,6 +6,9 @@ On règle donc avec des « validateurs », des bookmakers dont le flux marque ex
 terminés (sonde du 6/10/2026) : Betfair (Orbit, terminé quand tous ses marchés sont réglés), DraftKings,
 Unibet UK, Interwetten, BetMGM (« Finished ») et PMU quand il marque le match terminé.
 
+ESPN (API publique, sans clé) est un validateur de plus et la source des scores par période (mi-temps au
+football : fiche du match ouverte seulement quand un pari en a besoin ; quart-temps NFL, tiers-temps NHL…).
+
 Un match est retrouvé chez chaque validateur par les noms d'équipes (dans un sens ou l'autre) et l'heure
 de début. Le score n'est retenu que si au moins SOURCES_MIN validateurs ont le match terminé et que TOUS
 donnent le même score ; les corners, seulement si au moins SOURCES_MIN sources les donnent identiques
@@ -15,6 +18,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+import requests
+
 from .correspondance import ressemblance
 
 VALIDATEURS = ["orbitxch", "draftkings", "unibet-uk", "interwetten-de", "betmgm", "pmu"]
@@ -22,6 +27,12 @@ ECART_HEURE_MIN = 45
 RESSEMBLANCE_MIN = 0.75
 PAGES_MAX = 15
 SOURCES_MIN = 2
+ESPN = "https://site.api.espn.com/apis/site/v2/sports"
+ESPN_LIGUES = {"football": ["soccer/all"], "hockey": ["hockey/nhl"], "basket": ["basketball/nba", "basketball/wnba"],
+               "football_americain": ["football/nfl", "football/college-football"], "baseball": ["baseball/mlb"]}
+# terminés dans le temps réglementaire au football (une prolongation fausserait le score « match ») ;
+# prolongation et tirs au but compris ailleurs
+ESPN_FINAUX = {"STATUS_FULL_TIME", "STATUS_FINAL"}
 
 
 def _heure(s) -> datetime | None:
@@ -91,6 +102,73 @@ def lire(client, bookmaker: str, sport_api: str, sport: str, depuis: datetime) -
         if not d.get("hasNextPage") or (dernier and dernier < depuis):
             break
     return out
+
+
+def _espn_json(chemin: str, params: dict | None = None) -> dict | None:
+    try:
+        r = requests.get(f"{ESPN}/{chemin}", params=params, timeout=20)
+        return r.json() if r.ok else None
+    except (requests.RequestException, ValueError):
+        return None
+
+
+def lire_espn(sport: str, depuis: datetime, maintenant: datetime, lire_json=_espn_json) -> list[dict]:
+    """Matchs terminés chez ESPN (calendrier jour par jour, dates américaines : un jour de marge)."""
+    out, vus = [], set()
+    jour = (depuis - timedelta(days=1)).date()
+    while jour <= maintenant.date():
+        for ligue in ESPN_LIGUES.get(sport, []):
+            d = lire_json(f"{ligue}/scoreboard", {"dates": f"{jour:%Y%m%d}", "limit": 1000}) or {}
+            for e in d.get("events") or []:
+                c = (e.get("competitions") or [{}])[0]
+                if e.get("id") in vus or ((c.get("status") or {}).get("type") or {}).get("name") not in ESPN_FINAUX:
+                    continue
+                eq = {x.get("homeAway"): x for x in c.get("competitors") or []}
+                try:
+                    score = (int(eq["home"]["score"]), int(eq["away"]["score"]))
+                except (KeyError, TypeError, ValueError):
+                    continue
+                vus.add(e.get("id"))
+                lignes = [[l.get("value") for l in eq[c_].get("linescores") or []] for c_ in ("home", "away")]
+                periodes = [(int(a), int(b)) for a, b in zip(*lignes) if a is not None and b is not None]
+                out.append({"source": "espn", "sport": sport, "domicile": eq["home"]["team"].get("displayName"),
+                            "exterieur": eq["away"]["team"].get("displayName"), "debut": _heure(e.get("date")),
+                            "score": score, "periodes": periodes,
+                            "libelles": libelles_periodes(sport, None, len(periodes)), "corners": None,
+                            "espn": f"{ligue.split('/')[0]}/all/summary" if sport == "football" else None,
+                            "espn_id": e.get("id")})
+        jour += timedelta(days=1)
+    return out
+
+
+def periodes_espn(r: dict, lire_json=_espn_json) -> list[tuple[int, int]]:
+    """Mi-temps d'un match de football ESPN (fiche du match)."""
+    if not r.get("espn"):
+        return []
+    d = lire_json(r["espn"], {"event": r["espn_id"]}) or {}
+    c = ((d.get("header") or {}).get("competitions") or [{}])[0]
+    eq = {x.get("homeAway"): x for x in c.get("competitors") or []}
+    try:
+        lignes = [[int(l.get("displayValue")) for l in eq[k].get("linescores") or []] for k in ("home", "away")]
+    except (KeyError, TypeError, ValueError):
+        return []
+    return list(zip(*lignes))
+
+
+def completer_periodes(p: dict, resultat: dict, enregistrements: list[dict], lire_json=_espn_json) -> dict:
+    """Ajoute les mi-temps ESPN à un résultat validé qui n'en a pas, quand un pari en a besoin et que leur
+    somme redonne bien le score validé."""
+    if resultat.get("periodes") or p["sport"] != "football":
+        return resultat
+    for r in retrouver(p, [e for e in enregistrements if e["source"] == "espn"]):
+        inverse = r["domicile"] != next((e["domicile"] for e in enregistrements if e.get("espn_id") == r["espn_id"]), None)
+        periodes = periodes_espn(r, lire_json)
+        if inverse:
+            periodes = [(b, a) for a, b in periodes]
+        cand = {**r, "score": resultat["score"], "periodes": periodes}
+        if len(periodes) == 2 and _periodes_coherentes(p["sport"], cand):
+            return {**resultat, "periodes": periodes, "libelles": libelles_periodes("football", None, 2)}
+    return resultat
 
 
 def _oriente(r: dict, inverse: bool) -> dict:
