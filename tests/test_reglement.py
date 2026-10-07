@@ -261,3 +261,18 @@ def test_clv_du_bilan_seulement_pres_du_coup_d_envoi():
     assert clv_finale(loin) is None and clv_finale(pres) == 0.02 and clv_finale(ouvert) is None
     b = bilan([loin, pres, ouvert])["A|Pinnacle"]
     assert b["clv_moyenne"] == 0.02 and b["clv_n"] == 1 and b["regles"] == 2
+
+
+def test_paris_uniques_une_mise_par_cote():
+    # une même cote Winamax repérée par Pinnacle puis Betfair : 2 paris par référence, 1 pari unique
+    from cotes.simulation import bilan
+    base = {"simulation": "A", "mise": 10, "gain": 11, "statut": "gagne", "match_id": "winamax|1",
+            "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM", "joueur": None}
+    paris = [{**base, "reference": "Betfair", "detecte": "2026-10-07T10:15:00"},
+             {**base, "reference": "Pinnacle", "detecte": "2026-10-07T10:00:00"},
+             {**base, "reference": "Pinnacle brut", "detecte": "2026-10-07T09:45:00"},
+             {**base, "reference": "Pinnacle", "issue": "EXT", "gain": -10, "statut": "perdu",
+              "detecte": "2026-10-07T10:00:00"}]
+    b = bilan(paris)
+    assert b["A|Toutes"]["paris"] == 3 and b["A|Uniques"]["paris"] == 2
+    assert b["A|Uniques"]["gains"] == 1 and b["A|Uniques"]["gagnes"] == 1      # le témoin n'y entre pas

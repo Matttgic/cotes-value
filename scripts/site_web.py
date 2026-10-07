@@ -121,6 +121,7 @@ nav button.actif{background:var(--accent);border-color:var(--accent);color:#fff}
 nav .nb{font-size:12px;opacity:.75;margin-left:3px}
 main{max-width:760px;margin:auto;padding:12px 16px 40px}
 .onglet{display:none}.onglet.actif{display:block}
+summary{cursor:pointer;font-weight:600}
 .aide{color:var(--doux);font-size:13px;margin:0 0 10px}
 .carte{background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .l1{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--doux)}
@@ -178,26 +179,25 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
 </div>
 <main>
   <section class="onglet" id="o-jouer">
-    <p class="aide">Cotes françaises au-dessus de la cote juste d'une référence, au dernier passage.</p>
+    <p class="aide">Cotes françaises au-dessus de la cote juste, au dernier passage. <span id="jouer-quand"></span></p>
     <div id="jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
     <div class="puces" id="puces-ref"></div>
+    <p class="aide" id="bilan-quoi"></p>
     <div class="tableau"><table id="bilan"></table></div>
-    <p class="aide" style="margin-top:8px">10 € par pari. ROI sur les paris réglés. Simulations = tranches d'écart à la première détection : un pari
-    n'appartient qu'à une seule. Total : somme des simulations choisies, chaque pari compté une fois. CLV : écart entre la cote prise et la cote
-    juste juste avant le match (positive = on a battu le marché ; c'est l'indicateur le plus rapide à devenir fiable).
-    Moyenne sur les paris réglés dont la cote juste a été relevée moins de 30 min avant le coup d'envoi (sous la CLV :
-    paris mesurés / paris réglés). « Toutes réf. » : un même pari repéré par plusieurs références compte une fois par
-    référence.
-    « Pinnacle brut » : témoin, comparé à la cote affichée par Pinnacle sans retirer sa marge (sa CLV est mesurée
-    contre la cote juste).</p>
     <h2 class="sous-titre">Par tranche de cote</h2>
     <div class="tableau"><table id="bilan-tranches"></table></div>
-    <p class="aide" style="margin-top:8px">Tous les paris (au moins 2 % d'écart, au moins 3 % au-dessus de 10),
-    chacun compté une fois, classés selon la cote prise.</p>
-
-    <div class="infos" id="infos"></div>
+    <details class="aide" style="margin-top:12px"><summary>Comment lire ces tableaux</summary>
+    <p>10 € par pari. <b>Gain</b> et <b>ROI</b> : sur les paris réglés. <b>A à E, X</b> : tranches d'écart entre la
+    cote française et la cote juste, au moment où l'erreur est repérée (X : cotes au-dessus de 10).</p>
+    <p><b>CLV</b> : la cote prise comparée à la cote juste relevée juste avant le match (moins de 30 min). Positive =
+    on a pris un meilleur prix que le marché final ; c'est le signe le plus rapide qu'une méthode marche. Sous la
+    CLV : paris mesurés / paris réglés.</p>
+    <p><b>Paris uniques</b> : chaque cote française comptée une fois, même si plusieurs références l'ont signalée.
+    <b>Pinnacle, Betfair…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
+    <b>Toutes réf.</b> : la somme des références (une même cote peut y compter plusieurs fois).
+    <b>Pinnacle brut</b> : témoin, cote Pinnacle avec sa marge.</p></details>
   </section>
   <section class="onglet" id="o-paris">
     <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
@@ -218,6 +218,8 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <div class="infos" id="ctl-resume" style="margin:0 0 12px"></div>
     <div class="puces" id="ctl-puces"></div>
     <div id="ctl-liste"></div>
+    <h2 class="sous-titre">Dernier passage</h2>
+    <div class="infos" id="infos" style="margin-top:0"></div>
   </section>
 </main>
 <script>
@@ -249,18 +251,36 @@ function ouvrir(o) {
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => ouvrir(b.dataset.o));
 
 // --- À jouer
+// une carte par cote française (bookmaker, match, pari), avec les références qui la signalent
+const parCote = new Map();
+for (const o of D.actuelles) {
+  const k = o.bookmaker + "|" + o.match_id + "|" + o.pari;
+  if (!parCote.has(k)) parCote.set(k, {...o, refs: []});
+  const c = parCote.get(k);
+  c.refs.push(o);
+  c.ecart = Math.max(c.ecart, o.ecart);
+}
+const cotesJouer = [...parCote.values()].sort((a, b) => b.ecart - a.ecart);
+const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 60000)) : null;
 const carteActuelle = o => `<article class="carte">
 <div class="l1"><span class="match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="quand">${quand(o.debut)}</span></div>
 <div class="l2">${e(o.pari)}</div>
-<div class="l3"><span><b>${e(o.bookmaker)} ${cote(o.cote)}</b> <i>${hm(o.detecte)}</i></span>
-<span>${e(o.reference)} ${cote(o.cote_juste)} <i>${hm(o.lu_reference || o.detecte)}</i></span><span class="ecart">${pct(o.ecart)}</span></div>
+<div class="l3"><span><b>${e(o.bookmaker)} ${cote(o.cote)}</b></span><span class="ecart">${pct(o.ecart)}</span></div>
+<div class="l4">cote juste : ${o.refs.map(r => `${e(r.reference)} ${cote(r.cote_juste)}`).join(" · ")}</div>
 </article>`;
-document.getElementById("jouer").innerHTML = D.actuelles.length ? D.actuelles.map(carteActuelle).join("")
+const age = minutes(dc.debut);
+document.getElementById("jouer-quand").textContent = dc.debut ? `Relevé à ${hm(dc.debut)}` +
+  (age != null ? ` (il y a ${age} min)` : "") + `. La cote a pu bouger depuis : vérifie-la avant de jouer.` : "";
+document.getElementById("jouer").innerHTML = cotesJouer.length ? cotesJouer.map(carteActuelle).join("")
   : `<div class="vide">Aucune erreur de cote au dernier passage.</div>`;
-document.getElementById("nb-jouer").textContent = D.actuelles.length || "";
+document.getElementById("nb-jouer").textContent = cotesJouer.length || "";
 
 // --- Bilan
-let refBilan = "Toutes";
+let refBilan = "Uniques";
+const NOMS_REF = {Uniques: "Paris uniques", Toutes: "Toutes réf."};
+const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée une seule fois (10 € par pari).",
+  Toutes: "Somme des références : une même cote repérée par plusieurs références compte plusieurs fois.",
+  "Pinnacle brut": "Témoin : cotes comparées à la cote Pinnacle affichée, marge comprise."};
 // ligne « Total » : cumul des simulations choisies (A, A+B, A+B+C…), par défaut toutes
 const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
@@ -281,8 +301,10 @@ function additionner(sims) {
   return t;
 }
 function rendreBilan() {
-  document.getElementById("puces-ref").innerHTML = ["Toutes", ...D.references].map(r =>
-    `<button data-r="${r}" class="${r===refBilan?"actif":""}">${r==="Toutes"?"Toutes réf.":r}</button>`).join("");
+  const refs = ["Uniques", ...D.references.filter(r => r !== "Pinnacle brut"), "Toutes", "Pinnacle brut"];
+  document.getElementById("puces-ref").innerHTML = refs.map(r =>
+    `<button data-r="${r}" class="${r===refBilan?"actif":""}">${NOMS_REF[r] || r}</button>`).join("");
+  document.getElementById("bilan-quoi").textContent = QUOI[refBilan] || `Paris repérés par ${refBilan}.`;
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
     : `<tr><td>${titre}</td><td>${b.regles}${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""}</small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
@@ -332,7 +354,7 @@ const carteParis = p => `<article class="carte">
 <span class="ecart">${pct(p.ecart)}</span></div>
 <div class="l4"><span class="badge ${p.statut}">${STATUTS[p.statut]||p.statut}</span>
 ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
-<span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span><span>Sim. ${p.sims.join(" ")}</span><span>vu ${quand(p.detecte)}</span></div>
+<span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span></div>
 </article>`;
 function rendreParis() {
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));

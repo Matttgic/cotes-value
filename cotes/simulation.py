@@ -138,14 +138,35 @@ def tranche(cote: float) -> str:
     return next(nom for bas, haut, nom in TRANCHES if bas < cote <= haut)
 
 
+def premiers_par_selection(paris: list[dict]) -> set[int]:
+    """Les « paris uniques » (repérés par id() de leur dict) : pour chaque cote française (bookmaker, match, marché, issue), le
+    pari de sa première détection, quelle que soit la référence qui l'a repérée (le témoin exclu). C'est ce
+    qu'on aurait réellement joué : une seule mise par cote, même si plusieurs références l'ont signalée."""
+    ordre = {r: i for i, r in enumerate(REFERENCES)}
+    premiers: dict[tuple, dict] = {}
+    for p in paris:
+        if p.get("reference") == TEMOIN:
+            continue
+        k = tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur")) \
+            if p.get("match_id") else (id(p),)
+        rang = (p.get("detecte") or "", ordre.get(p.get("reference"), 99))
+        if k not in premiers or rang < premiers[k][0]:
+            premiers[k] = (rang, p)
+    return {id(p) for _, p in premiers.values()}
+
+
 def _cumuler(paris: list[dict], groupe) -> dict:
-    """Résumé par (groupe, référence) et (groupe, « Toutes ») : nombre, mises, gains, ROI, CLV moyenne.
-    « Toutes » = les vraies références ; le témoin « Pinnacle brut » n'a que sa propre ligne."""
+    """Résumé par (groupe, référence), (groupe, « Toutes ») et (groupe, « Uniques ») : nombre, mises, gains,
+    ROI, CLV moyenne. « Toutes » = les vraies références, un pari par référence ; « Uniques » = un pari par
+    cote française ; le témoin « Pinnacle brut » n'a que sa propre ligne."""
     out: dict[str, dict] = {}
+    uniques = premiers_par_selection(paris)
     for p in paris:
         clefs = [f'{groupe(p)}|{p["reference"]}']
         if p["reference"] != TEMOIN:
             clefs.append(f'{groupe(p)}|Toutes')
+        if id(p) in uniques:
+            clefs.append(f'{groupe(p)}|Uniques')
         for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
                                       "clv_somme": 0.0, "clv_n": 0, "gagnes": 0})
