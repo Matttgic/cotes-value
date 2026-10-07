@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
+from . import VERSION
 from .marches import cle
 
 MISE = 10.0
@@ -64,7 +65,13 @@ def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
              "cote": o["cote"], "cote_juste": o["cote_juste"], "cote_reference": o.get("cote_reference"),
              "lu_reference": o.get("lu_reference"), "ecart": o["ecart"], "mise": MISE,
              "statut": "en_cours", "gain": None, "cote_juste_cloture": o["cote_juste"], "clv": None,
-             "match_reference": o.get("match_reference"), "lien": o.get("lien")}
+             "match_reference": o.get("match_reference"), "lien": o.get("lien"),
+             # trace de la prise : de quoi revérifier le pari après coup
+             "preuve_prise": {"match_id_reference": o.get("match_id_reference"),
+                              "equipes_inversees": o.get("reference_inversee"),
+                              "ressemblance_noms": o.get("score_association"),
+                              "composantes": o.get("composantes"), "controle": o.get("controle"),
+                              "version": VERSION}}
         paris.append(p)
         nouveaux.append(p)
     return nouveaux

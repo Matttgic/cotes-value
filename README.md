@@ -66,7 +66,10 @@ Betfair toutes les 15 min : offre PRO nécessaire ; l'offre gratuite ne sert qu'
 
 ## Données (branche `donnees`)
 
-- `paris.json` : tous les paris simulés (statut, gain, CLV) ;
+- `paris.json` : tous les paris simulés (statut, gain, CLV), avec leur trace depuis le 7/10/2026 :
+  `preuve_prise` (match de référence, équipes inversées ou non, références d'un consensus, état du contrôle
+  de l'intitulé, version du moteur) et `preuve_reglement` (score retenu, ses sources ou la saisie manuelle,
+  scores par période comparés à la ligne) ;
 - `opportunites/AAAA-MM-JJ.jsonl.gz` : toutes les erreurs de cote détectées ;
 - `etat.json` : dernier cycle, requêtes PulseScore par mois ;
 - `resultats_manuels.json` : règlements à la main, par exemple

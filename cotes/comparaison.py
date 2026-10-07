@@ -108,7 +108,8 @@ def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str
         assoc = C.associer(matchs_fr, C.matchs_de(lignes))
         index[nom] = {}
         for mid_fr, (mid_ref, inverse, score) in assoc.items():
-            index[nom][mid_fr] = {cle(inverser(l) if inverse else l): {**l, "score_association": round(score, 2)}
+            index[nom][mid_fr] = {cle(inverser(l) if inverse else l): {**l, "score_association": round(score, 2),
+                                                                        "inverse": inverse}
                                   for l in par_match.get(mid_ref, [])}
     return index
 
@@ -143,7 +144,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             p = sum(r["proba_juste"] for r in trouvees.values()) / len(trouvees)
             trouvees["Consensus"] = {"proba_juste": p, "cote_juste": 1 / p, "collecte": l["collecte"],
                                      "domicile": l["domicile"], "exterieur": l["exterieur"],
-                                     "sources": "+".join(sorted(trouvees))}
+                                     "sources": "+".join(sorted(trouvees)),
+                                     "composantes": {n: round(1 / r["proba_juste"], 3) for n, r in trouvees.items()}}
         # simulation témoin : la cote AFFICHÉE par Pinnacle, marge comprise (sans retrait de la marge)
         pin = trouvees.get("Pinnacle")
         if pin and pin.get("cote"):
@@ -167,8 +169,18 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "ecart": round(ecart, 4), "lu_reference": r.get("collecte"),
                 "match_reference": f'{r.get("domicile")} - {r.get("exterieur")}',
                 "score_association": r.get("score_association"), "sources": r.get("sources"),
+                "match_id_reference": r.get("match_id"), "reference_inversee": r.get("inverse"),
+                "composantes": r.get("composantes"), "controle": _controle_du_groupe(l, controle),
                 "lien": l.get("lien"), "suspect": suspect})
     return opportunites
+
+
+def _controle_du_groupe(l: dict, controle: tuple[dict, dict] | None) -> dict | None:
+    """État du contrôle de conformité de l'intitulé au moment de la détection (trace du pari)."""
+    if not controle:
+        return None
+    g = (controle[0] or {}).get("groupes", {}).get(CT.cle_groupe(l)) or {}
+    return {k: g.get(k) for k in ("statut", "n", "mediane")} if g else None
 
 
 def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) -> dict[tuple, dict[str, tuple]]:

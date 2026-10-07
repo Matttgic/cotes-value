@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+from . import VERSION
+
 GAIN = {"gagne": 1.0, "demi_gagne": 0.5, "rembourse": 0.0, "demi_perdu": -0.5, "perdu": -1.0}
 
 
@@ -260,6 +262,7 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
         if p["statut"] not in ("en_cours", "a_regler"):
             continue
         statut = manuels.get(p["id"]) if isinstance(manuels.get(p["id"]), str) else None
+        preuve = {"origine": "statut saisi à la main"} if statut else None
         if statut is None:
             r = resultats.get(p["match_id"])
             m = manuels.get(p["match_id"])
@@ -278,15 +281,20 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
                 if m.get("corners_mi_temps"):
                     sc["CORNERS_MT1"] = tuple(m["corners_mi_temps"])
                 statut = regler(p, sc)
+                preuve = {"origine": "résultat saisi à la main", "source": m.get("source"), "scores": sc}
             elif r and r.get("final"):
                 sc = scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"])
                 if r.get("corners"):
                     sc["CORNERS"] = tuple(r["corners"])
                 statut = regler(p, sc)
+                preuve = {"origine": "automatique", "sources": r.get("sources"), "score": r["score"],
+                          "periodes": r["periodes"], "scores": sc}
         if statut in GAIN:
             p["statut"] = statut
             p["gain"] = gain(statut, p["mise"], p["cote"])
             p["regle_le"] = maintenant.isoformat(timespec="seconds")
+            # trace du règlement : score retenu, ses sources, ce qui a été comparé à la ligne du pari
+            p["preuve_reglement"] = {**(preuve or {}), "periode_utilisee": p.get("periode"), "version": VERSION}
             continue
         try:
             debut = datetime.fromisoformat(p["debut"].replace("Z", "+00:00"))

@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import sys
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -37,6 +38,66 @@ CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", 
                 "ligue", "regle_le")
 
 
+PARIS_TZ = ZoneInfo("Europe/Paris")
+PERIODES_TRACE = {"MT1": "1re mi-temps", "MT2": "2e mi-temps", "TEMPS_REG": "temps réglementaire",
+                  "P1": "1re période", "P2": "2e période", "P3": "3e période", "SET1": "1er set", "SET2": "2e set",
+                  "5_MANCHES": "5 manches", "JEUX": "jeux"}
+
+
+def _h(s, jour: bool = False) -> str:
+    try:
+        t = datetime.fromisoformat(str(s).replace("Z", "+00:00")).astimezone(PARIS_TZ)
+    except (TypeError, ValueError):
+        return "?"
+    return t.strftime("%d/%m à %H:%M" if jour else "%H:%M")
+
+
+def _c(x) -> str:
+    return f"{x:.2f}".replace(".", ",") if isinstance(x, (int, float)) else "—"
+
+
+def _score(x) -> str:
+    return f"{x[0]}-{x[1]}" if isinstance(x, (list, tuple)) and len(x) == 2 else str(x)
+
+
+def trace(p: dict) -> list[str]:
+    """Le parcours d'un pari en quelques phrases : où et quand il a été repéré, contre quelle cote juste,
+    la cote juste avant le match, le résultat et d'où il vient. Les paris d'avant le 7/10/2026 n'ont qu'une
+    partie de ces informations."""
+    out = [f"Repéré le {_h(p.get('detecte'), True)} chez {p.get('bookmaker')}"
+           + (f" (« {p['libelle_bookmaker']} »)" if p.get("libelle_bookmaker") else "") + f" à {_c(p.get('cote'))}."]
+    prise = p.get("preuve_prise") or {}
+    ref = f"Cote juste {p.get('reference')} : {_c(p.get('cote_juste'))}"
+    if prise.get("composantes"):
+        ref += " (moyenne de " + " · ".join(f"{n} {_c(c)}" for n, c in prise["composantes"].items()) + ")"
+    if p.get("match_reference"):
+        ref += f", match « {p['match_reference']} »"
+    if p.get("lu_reference"):
+        ref += f", lue à {_h(p['lu_reference'])}"
+    out.append(ref + ".")
+    ctl = prise.get("controle") or {}
+    if ctl.get("statut") == "conforme":
+        out.append(f"Intitulé contrôlé conforme ({ctl.get('n')} comparaisons).")
+    if p.get("cloture_lue") and p.get("cote_juste_cloture"):
+        try:
+            avant = (datetime.fromisoformat(p["debut"].replace("Z", "+00:00"))
+                     - datetime.fromisoformat(p["cloture_lue"].replace("Z", "+00:00"))).total_seconds() / 60
+            quand = f"{round(avant)} min avant le début" if avant >= 0 else "après le début"
+        except (AttributeError, ValueError):
+            quand = _h(p["cloture_lue"], True)
+        out.append(f"Cote juste avant le match : {_c(p['cote_juste_cloture'])} (relevée {quand}).")
+    r = p.get("preuve_reglement") or {}
+    if r.get("origine") == "automatique":
+        txt = f"Résultat {_score(r.get('score'))}"
+        per = PERIODES_TRACE.get(p.get("periode"))
+        if per and (r.get("scores") or {}).get(p.get("periode")):
+            txt += f", {per} {_score(r['scores'][p['periode']])}"
+        out.append(txt + " · sources : " + ", ".join(r.get("sources") or []) + ".")
+    elif r.get("origine"):
+        out.append("Réglé à la main" + (f" : {r['source']}" if r.get("source") else "") + ".")
+    return out
+
+
 def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
                     regles: int = REGLES_AFFICHES) -> tuple[list[dict], int, dict]:
     """Page légère : un même pari pris par plusieurs simulations = une fiche (celle de la première
@@ -51,6 +112,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     for lignes in groupes.values():
         lignes.sort(key=lambda r: r.get("detecte") or "")
         f = {c: lignes[0].get(c) for c in CHAMPS_FICHE}
+        f["trace"] = trace(lignes[0])
         f["sims"] = sorted({r.get("simulation") for r in lignes})
         f["a_regler"] = any(r.get("statut") == "a_regler" for r in lignes)
         fiches.append(f)
@@ -122,6 +184,7 @@ nav .nb{font-size:12px;opacity:.75;margin-left:3px}
 main{max-width:760px;margin:auto;padding:12px 16px 40px}
 .onglet{display:none}.onglet.actif{display:block}
 summary{cursor:pointer;font-weight:600}
+.trace{margin-top:6px;font-size:12.5px;color:var(--doux)}.trace summary{font-weight:500}.trace p{margin:4px 0}
 .aide{color:var(--doux);font-size:13px;margin:0 0 10px}
 .carte{background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .l1{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--doux)}
@@ -355,6 +418,7 @@ const carteParis = p => `<article class="carte">
 <div class="l4"><span class="badge ${p.statut}">${STATUTS[p.statut]||p.statut}</span>
 ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
 <span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span></div>
+${(p.trace||[]).length ? `<details class="trace"><summary>Détails</summary>${p.trace.map(t => `<p>${e(t)}</p>`).join("")}</details>` : ""}
 </article>`;
 function rendreParis() {
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));

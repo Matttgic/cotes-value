@@ -276,3 +276,24 @@ def test_paris_uniques_une_mise_par_cote():
     b = bilan(paris)
     assert b["A|Toutes"]["paris"] == 3 and b["A|Uniques"]["paris"] == 2
     assert b["A|Uniques"]["gains"] == 1 and b["A|Uniques"]["gagnes"] == 1      # le témoin n'y entre pas
+
+
+def test_trace_du_pari_de_la_prise_au_reglement():
+    from cotes import VERSION
+    from cotes.reglement import appliquer
+    from cotes.simulation import placer
+    o = {"ecart": 0.05, "cote": 2.1, "reference": "Consensus", "match_id": "winamax|1", "detecte": "2026-10-07T10:00:00+00:00",
+         "bookmaker": "Winamax", "sport": "football", "domicile": "Lens", "exterieur": "Lille",
+         "debut": "2026-10-07T18:00:00+00:00", "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM",
+         "pari": "Lens", "cote_juste": 2.0, "match_id_reference": "p9", "reference_inversee": False,
+         "score_association": 0.95, "composantes": {"Pinnacle": 2.01, "Betfair": 1.99},
+         "controle": {"statut": "conforme", "n": 40, "mediane": 0.93}}
+    paris = []
+    p = placer([o], paris)[0]
+    assert p["preuve_prise"]["composantes"] == {"Pinnacle": 2.01, "Betfair": 1.99}
+    assert p["preuve_prise"]["controle"]["statut"] == "conforme" and p["preuve_prise"]["version"] == VERSION
+    appliquer(paris, {"winamax|1": {"sport": "football", "score": (2, 1), "periodes": [(1, 0), (1, 1)],
+                                    "libelles": ["1", "2"], "final": True, "sources": ["draftkings", "espn"]}}, {})
+    pr = p["preuve_reglement"]
+    assert p["statut"] == "gagne" and pr["origine"] == "automatique" and pr["sources"] == ["draftkings", "espn"]
+    assert pr["scores"]["MATCH"] == (2, 1) and pr["scores"]["MT1"] == (1, 0)
