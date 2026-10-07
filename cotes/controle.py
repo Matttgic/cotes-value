@@ -27,6 +27,24 @@ from datetime import datetime, timedelta
 from .marches import cle
 from .pulsescore import PERIODE_VERIFIEE
 
+# une cote de référence ne vaut comparaison que lue à moins de FENETRE_MIN minutes de la cote française
+# (au-delà, un mouvement de prix passerait pour une erreur de cote ou de traduction)
+FENETRE_MIN = 15
+
+
+def _lue(s) -> datetime | None:
+    try:
+        return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
+def contemporaines(l: dict, r: dict) -> bool:
+    """Cote française et cote de référence lues à moins de FENETRE_MIN minutes d'écart (vrai si une heure
+    manque, comme avant). Règle commune à la comparaison et au contrôle de conformité."""
+    t_fr, t_ref = _lue(l.get("collecte")), _lue(r.get("collecte"))
+    return not (t_fr and t_ref) or abs((t_fr - t_ref).total_seconds()) <= FENETRE_MIN * 60
+
 MESURES_MIN = 8
 MEDIANE_MIN, MEDIANE_MAX = 0.70, 1.02
 # marchés à beaucoup d'issues : les bookmakers français y prennent 25 à 40 % de marge
@@ -78,19 +96,22 @@ def cle_groupe(l: dict) -> str:
 def mesurer(francais: list[dict], index: dict[str, dict]) -> list[tuple]:
     """(ligne française, référence, cote juste, rapport cote / cote juste, rapport avec l'autre version
     temps réglementaire / prolongation de Pinnacle ou None) pour chaque cote française qui a une cote juste
-    en face (Pinnacle de préférence)."""
+    en face (Pinnacle de préférence), lue au même moment (même règle de fraîcheur que la comparaison)."""
     out = []
     for l in francais:
         if l["periode"].endswith("?") or not l.get("cote"):
             continue
+        t_fr, debut = _lue(l.get("collecte")), _lue(l.get("debut"))
+        if t_fr and debut and debut <= t_fr:           # match commencé : pas une cote d'avant-match
+            continue
         k = cle(l)
-        for nom in ORDRE_REFERENCES:
+        for nom in ORDRE_REFERENCES:                   # la première référence lue au même moment
             r = index.get(nom, {}).get(l["match_id"], {}).get(k)
-            if r and r.get("proba_juste"):
+            if r and r.get("proba_juste") and contemporaines(l, r):
                 alt = None
                 if nom == "Pinnacle" and l["periode"] in AUTRE_PERIODE:
                     ra = index[nom][l["match_id"]].get((k[0], AUTRE_PERIODE[l["periode"]], *k[2:]))
-                    if ra and ra.get("proba_juste"):
+                    if ra and ra.get("proba_juste") and contemporaines(l, ra):
                         alt = l["cote"] * ra["proba_juste"]
                 out.append((l, nom, 1 / r["proba_juste"], l["cote"] * r["proba_juste"], alt))
                 break

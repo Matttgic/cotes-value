@@ -79,7 +79,8 @@ def scores_par_periode(sport: str, score: tuple[int, int], periodes: list[tuple[
             d, e = somme(reg[:3] + prol)
             if tab and tab[0][0] != tab[0][1]:
                 d, e = (d + 1, e) if tab[0][0] > tab[0][1] else (d, e + 1)   # un but au vainqueur des tirs au but
-            out["MATCH"] = (d, e)
+            # score final validé (but des tirs au but compris) quand le détail de la séance manque
+            out["MATCH"] = tuple(score) if score and not tab else (d, e)
         else:
             out["MATCH"] = score
     elif sport in ("basket", "football_americain"):

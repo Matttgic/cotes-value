@@ -54,9 +54,22 @@ def series_matchs() -> list[tuple[str, str]]:
     return out
 
 
-def _evenements(serie: str) -> list[dict]:
-    d = _get("/events", {"series_ticker": serie, "status": "open", "with_nested_markets": "true", "limit": 200})
-    return (d or {}).get("events") or []
+def _evenements(serie: str, pages_max: int = 10) -> list[dict]:
+    """Événements ouverts d'une série, toutes pages (200 par page ; le football universitaire en a plus)."""
+    out, vus, curseur = [], set(), None
+    for _ in range(pages_max):
+        params = {"series_ticker": serie, "status": "open", "with_nested_markets": "true", "limit": 200}
+        if curseur:
+            params["cursor"] = curseur
+        d = _get("/events", params) or {}
+        for e in d.get("events") or []:
+            if e.get("event_ticker") not in vus:
+                vus.add(e.get("event_ticker"))
+                out.append(e)
+        curseur = d.get("cursor")
+        if not curseur or not d.get("events"):
+            break
+    return out
 
 
 def collecter(heures: int = 48) -> list[dict]:

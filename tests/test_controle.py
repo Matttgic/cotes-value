@@ -71,3 +71,16 @@ def test_groupes_plus_mesures_retires():
                                   "maj": "2026-09-03T10:00:00+00:00"}}}
     CT.mettre_a_jour(etat, [(ligne(), "Pinnacle", 2.0, 0.93, None)], "2026-10-06T10:00:00+00:00")
     assert "vieux" not in etat["groupes"] and len(etat["groupes"]) == 1
+
+
+def test_mesure_seulement_avec_une_reference_lue_au_meme_moment():
+    # revue externe (R1) : une cote Pinnacle lue 30 min avant la cote française ne mesure pas l'intitulé ;
+    # on se rabat sur une autre référence lue au même moment
+    fr = ligne(cote=2.0, collecte="2030-01-01T17:50:00+00:00")
+    vieux = {**ligne(), "proba_juste": 0.8, "collecte": "2030-01-01T17:20:00+00:00"}
+    frais = {**ligne(), "proba_juste": 0.47, "collecte": "2030-01-01T17:48:00+00:00"}
+    k = CT.cle(fr)
+    assert CT.mesurer([fr], {"Pinnacle": {"m1": {k: vieux}}}) == []
+    m = CT.mesurer([fr], {"Pinnacle": {"m1": {k: vieux}}, "Betfair": {"m1": {k: frais}}})
+    assert [(nom, round(r, 2)) for _, nom, _, r, _ in m] == [("Betfair", 0.94)]
+    assert CT.mesurer([fr], {"Pinnacle": {"m1": {k: frais}}})[0][1] == "Pinnacle"

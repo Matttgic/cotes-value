@@ -71,6 +71,11 @@ def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
 
 
 FRAICHEUR_CLOTURE_MIN = 15
+TOLERANCE_HORLOGE_S = 60
+# CLV « de clôture » : dernière observation à moins de CLOTURE_MAX_MIN minutes du coup d'envoi. Une
+# observation plus ancienne (marché retiré tôt, référence absente ensuite) reste affichée sur le pari mais
+# n'entre pas dans la CLV moyenne du bilan.
+CLOTURE_MAX_MIN = 30
 
 
 def _heure(s) -> datetime | None:
@@ -78,6 +83,18 @@ def _heure(s) -> datetime | None:
         return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
     except (TypeError, ValueError):
         return None
+
+
+def clv_finale(p: dict) -> float | None:
+    """CLV du pari si elle est mesurée près du coup d'envoi et que le match est joué (pari réglé), sinon None.
+    Pour les paris d'avant le 7/10/2026, `cloture_lue` est l'heure du cycle (à quelques minutes près celle
+    de la cote, toutes les références étant relues à chaque cycle)."""
+    if p.get("clv") is None or p.get("statut") in ("en_cours", "a_regler"):
+        return None
+    t, debut = _heure(p.get("cloture_lue")), _heure(p.get("debut"))
+    if not t or not debut or t.tzinfo is None or debut.tzinfo is None:
+        return None
+    return p["clv"] if 0 < (debut - t).total_seconds() <= CLOTURE_MAX_MIN * 60 else None
 
 
 def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], maintenant: datetime | None = None):
@@ -98,7 +115,13 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], mai
             continue
         proba, lue = justes.get((p["match_id"], cle(p)), {}).get(p["reference"]) or (None, None)
         t = _heure(lue)
-        if not proba or not t or t >= debut or abs((maintenant - t).total_seconds()) > FRAICHEUR_CLOTURE_MIN * 60:
+        if not proba or not t or t.tzinfo is None or t >= debut:
+            continue
+        age = (maintenant - t).total_seconds()
+        if not -TOLERANCE_HORLOGE_S <= age <= FRAICHEUR_CLOTURE_MIN * 60:      # périmée, ou dans le futur
+            continue
+        avant = _heure(p.get("cloture_lue"))
+        if avant and avant.tzinfo and t < avant:        # jamais revenir à une observation plus ancienne
             continue
         p["cote_juste_cloture"] = round(1 / proba, 4)
         p["clv"] = round(p["cote"] * proba - 1, 4)
@@ -134,8 +157,9 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                 b["mises"] += p["mise"]
                 b["gains"] += p["gain"] or 0
                 b["gagnes"] += p["statut"] in ("gagne", "demi_gagne")
-            if p.get("clv") is not None:
-                b["clv_somme"] += p["clv"]
+            clv = clv_finale(p)
+            if clv is not None:
+                b["clv_somme"] += clv
                 b["clv_n"] += 1
     for b in out.values():
         b["roi"] = round(b["gains"] / b["mises"], 4) if b["mises"] else None

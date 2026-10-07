@@ -139,3 +139,66 @@ def test_nette_majorite_contre_une_source_isolee():
     assert r["score"] == (1, 1) and "unibet-uk" not in r["sources"]
     assert R.consensus(PARI, E[:2] + E[3:]) is None                   # 2 contre 1 : pas assez net
     assert R.consensus(PARI, E + [enr("betmgm", "Honduras", "Jamaica", (0, 0))]) is None   # 3 contre 2
+
+
+def test_hockey_tirs_au_but_sans_detail_de_la_seance():
+    # revue externe (R2) : final 2-3 validé, périodes 1-0, 1-1, 0-1, prolongation 0-0, séance non détaillée :
+    # le but des tirs au but ne doit pas disparaître du score « prolongation incluse »
+    from cotes.reglement import scores_par_periode, regler
+    pari = {"sport": "hockey", "domicile": "Rangers", "exterieur": "Bruins", "debut": "2026-10-06T02:00:00Z"}
+    ps = [(1, 0), (1, 1), (0, 1), (0, 0)]
+    E = [enr(s, "Rangers", "Bruins", (2, 3), periodes=ps, sport="hockey") for s in ("draftkings", "betmgm")]
+    r = R.consensus(pari, E)
+    sc = scores_par_periode("hockey", r["score"], r["periodes"], r["libelles"])
+    assert sc["TEMPS_REG"] == (2, 2) and sc["MATCH"] == (2, 3)
+    m = lambda marche, issue, ligne=None, periode="MATCH": {**pari, "marche": marche, "issue": issue,  # noqa: E731
+                                                           "ligne": ligne, "periode": periode}
+    assert regler(m("VAINQUEUR", "EXT"), sc) == "gagne"
+    assert regler(m("TOTAL", "PLUS", 4.5), sc) == "gagne"
+    assert regler(m("RESULTAT_1N2", "NUL", periode="TEMPS_REG"), sc) == "gagne"
+    # un but d'écart sans égalité dans le temps réglementaire n'est pas une séance de tirs au but
+    faux = [enr(s, "Rangers", "Bruins", (2, 3), periodes=[(1, 0), (1, 1), (0, 0)], sport="hockey")
+            for s in ("draftkings", "betmgm")]
+    assert R.consensus(pari, faux)["periodes"] == []
+
+
+def test_resultat_a_l_heure_la_plus_proche():
+    # revue externe (R5) : même affiche deux fois dans la fenêtre de 45 min, l'ordre de la liste ne décide plus
+    from datetime import timedelta
+    pari = {**PARI, "debut": "2026-10-06T02:30:00Z"}
+    for sens in (1, -1):
+        E = []
+        for s in ("draftkings", "betmgm"):
+            a, b = enr(s, "Honduras", "Jamaica", (0, 1)), enr(s, "Honduras", "Jamaica", (1, 0))
+            b["debut"] = T + timedelta(minutes=30)
+            E += [a, b][::sens]
+        assert R.consensus(pari, E)["score"] == (1, 0)
+
+
+def test_panne_d_un_validateur_visible_dans_le_journal(monkeypatch):
+    # revue externe (R6) : un HTTP 500 sur draftkings/results apparaissait comme une lecture saine et vide
+    import sys
+    from pathlib import Path
+    from cotes import pulsescore as P
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import cycle
+    monkeypatch.setattr(P.time, "sleep", lambda s: None)
+
+    class Rep:
+        def __init__(self, code, corps=None):
+            self.status_code, self.headers, self.corps = code, {}, corps
+
+        def json(self):
+            return self.corps
+
+    c = P.Client("cle", pause=0)
+    reponses = [Rep(500), Rep(200, {"results": []})]
+    monkeypatch.setattr(c.s, "get", lambda *a, **k: reponses.pop(0))
+    journal = {"etapes": {}}
+    for bm in ("draftkings", "betmgm"):
+        n = len(c.erreurs)
+        assert cycle.etape(f"resultats_{bm}_football", journal, R.lire, c, bm, "soccer", "football", T) == []
+        cycle.signaler(journal, f"resultats_{bm}_football", c.erreurs[n:])
+    assert journal["etapes"]["resultats_draftkings_football"]["degrade"]
+    assert "HTTP 500" in journal["etapes"]["resultats_draftkings_football"]["erreurs"][0]
+    assert "degrade" not in journal["etapes"]["resultats_betmgm_football"]        # vraie liste vide : saine

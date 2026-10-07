@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -51,6 +52,8 @@ def archiver(donnees: Path, paris: list[dict], maintenant: datetime) -> list[dic
             with gzip.open(f, "rt", encoding="utf-8") as g:
                 anciens = json.load(g)
         fusion = {p["id"]: p for p in anciens} | {p["id"]: p for p in nouveaux}
-        with gzip.open(f, "wt", encoding="utf-8") as g:
+        tmp = f.with_name(f.name + ".tmp")           # écriture atomique : jamais d'archive à moitié écrite
+        with gzip.open(tmp, "wt", encoding="utf-8") as g:
             json.dump(sorted(fusion.values(), key=lambda p: p.get("detecte") or ""), g, ensure_ascii=False)
+        os.replace(tmp, f)
     return restent

@@ -23,7 +23,7 @@ from . import correspondance as C
 from .marches import cle, deriver_double_chance, inverser
 from .marge import proba_justes
 
-FENETRE_MIN = 15
+FENETRE_MIN = CT.FENETRE_MIN
 MARGE_MAX_PINNACLE = 0.12
 ECART_ACHAT_VENTE_MAX = 0.05
 ECART_RELATIF_MAX = 0.25       # écart achat/vente rapporté au prix : 0,01/0,03 n'est pas un prix fiable
@@ -132,8 +132,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             r = index[nom].get(l["match_id"], {}).get(k)
             if not r:
                 continue
-            t_ref = _t(r.get("collecte"))
-            if t_fr and t_ref and abs((t_fr - t_ref).total_seconds()) > FENETRE_MIN * 60:
+            if not CT.contemporaines(l, r):
                 continue
             trouvees[nom] = r
         controle_raison = CT.raison(l, *controle) if controle and trouvees else None
@@ -189,7 +188,9 @@ def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) 
                 out.setdefault((mid_fr, cle(inverser(l) if inverse else l)), {})[nom] = (l["proba_juste"], l.get("collecte"))
     for v in out.values():
         if len(v) >= 2:                  # lu à l'heure de la plus ancienne des références qui le composent
-            v["Consensus"] = (sum(p for p, _ in v.values()) / len(v), min((str(t) for _, t in v.values()), default=None))
+            heures = [_t(t) for _, t in v.values()]
+            v["Consensus"] = (sum(p for p, _ in v.values()) / len(v),
+                              min(heures).isoformat(timespec="seconds") if all(h and h.tzinfo for h in heures) else None)
         if "Pinnacle" in v:
             v[BRUT] = v["Pinnacle"]      # CLV des paris « brut » mesurée contre la cote juste : la vraie valeur
     return out

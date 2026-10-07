@@ -12,10 +12,13 @@ from cotes.stockage import lire_archives  # noqa: E402
 
 
 def _lire(chemin: Path, defaut):
+    """Fichier absent : `defaut`. Fichier illisible : erreur (une page aux bilans vides passerait pour un
+    état valable)."""
     try:
-        return json.loads(chemin.read_text(encoding="utf-8"))
-    except (FileNotFoundError, ValueError):
+        texte = chemin.read_text(encoding="utf-8")
+    except FileNotFoundError:
         return defaut
+    return json.loads(texte)
 
 
 EN_COURS_AFFICHES = 400        # paris en cours les plus récents
@@ -184,6 +187,9 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p class="aide" style="margin-top:8px">10 € par pari. ROI sur les paris réglés. Simulations = tranches d'écart à la première détection : un pari
     n'appartient qu'à une seule. Total : somme des simulations choisies, chaque pari compté une fois. CLV : écart entre la cote prise et la cote
     juste juste avant le match (positive = on a battu le marché ; c'est l'indicateur le plus rapide à devenir fiable).
+    Moyenne sur les paris réglés dont la cote juste a été relevée moins de 30 min avant le coup d'envoi (sous la CLV :
+    paris mesurés / paris réglés). « Toutes réf. » : un même pari repéré par plusieurs références compte une fois par
+    référence.
     « Pinnacle brut » : témoin, comparé à la cote affichée par Pinnacle sans retirer sa marge (sa CLV est mesurée
     contre la cote juste).</p>
     <h2 class="sous-titre">Par tranche de cote</h2>
@@ -281,7 +287,7 @@ function rendreBilan() {
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
     : `<tr><td>${titre}</td><td>${b.regles}${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""}</small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
-<td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}</td></tr>`;
+<td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles}</small>` : ""}</td></tr>`;
   document.getElementById("bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     Object.entries(D.simulations).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
@@ -295,7 +301,10 @@ rendreBilan();
 const mois = new Date().toISOString().slice(0,7);
 document.getElementById("infos").innerHTML = [
   ["Cotes françaises lues", (dc.cotes||{}).francaises], ["Matchs comparés", dc.matchs_francais],
-  ["Erreurs au dernier passage", dc.opportunites], ["Requêtes PulseScore ce mois", ((D.etat||{}).requetes_par_mois||{})[mois] || 0]
+  ["Erreurs au dernier passage", dc.opportunites], ["Requêtes PulseScore ce mois", ((D.etat||{}).requetes_par_mois||{})[mois] || 0],
+  // sources en panne ou incomplètes au dernier passage (une absence de résultat n'est pas toujours normale)
+  ["Sources en panne", Object.entries(dc.etapes || {}).filter(([k, v]) => !v.ok || v.degrade)
+    .map(([k]) => e(k.replace(/^resultats_/, ""))).join(", ") || "aucune"]
 ].map(([a,b]) => `<div>${a}<b>${b ?? "—"}</b></div>`).join("");
 
 // --- Paris : fiches déjà regroupées (un même pari pris par plusieurs simulations = une seule fiche)

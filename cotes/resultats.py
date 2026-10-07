@@ -117,12 +117,18 @@ def lire(client, bookmaker: str, sport_api: str, sport: str, depuis: datetime) -
     return out
 
 
+ERREURS_ESPN: list[str] = []          # lectures ESPN en échec (pour le journal du cycle)
+
+
 def _espn_json(chemin: str, params: dict | None = None) -> dict | None:
     try:
         r = requests.get(f"{ESPN}/{chemin}", params=params, timeout=20)
-        return r.json() if r.ok else None
-    except (requests.RequestException, ValueError):
-        return None
+        if r.ok:
+            return r.json()
+        ERREURS_ESPN.append(f"{chemin} : HTTP {r.status_code}")
+    except (requests.RequestException, ValueError) as e:
+        ERREURS_ESPN.append(f"{chemin} : {repr(e)[:150]}")
+    return None
 
 
 def lire_espn(sport: str, depuis: datetime, maintenant: datetime, lire_json=_espn_json) -> list[dict]:
@@ -247,18 +253,20 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
         # espoirs / féminines : le marqueur doit être le même des deux côtés (sinon équipe A ou masculine)
         return max((ressemblance(n, x) for n in noms if normaliser(n)[1:] == normaliser(x)[1:]), default=0.0)
 
-    meilleurs: dict[str, tuple[float, dict]] = {}
+    meilleurs: dict[str, tuple[float, float, dict]] = {}
     for r in enregistrements:
-        if r["sport"] != p["sport"] or not r["debut"] or abs((r["debut"] - debut).total_seconds()) > ECART_HEURE_MIN * 60:
+        ecart = abs((r["debut"] - debut).total_seconds()) if r["sport"] == p["sport"] and r["debut"] else None
+        if ecart is None or ecart > ECART_HEURE_MIN * 60:
             continue
         direct = min(proche(dom, r["domicile"]), proche(ext, r["exterieur"]))
         inverse = min(proche(dom, r["exterieur"]), proche(ext, r["domicile"]))
         score = max(direct, inverse)
         if score < RESSEMBLANCE_MIN:
             continue
-        if r["source"] not in meilleurs or score > meilleurs[r["source"]][0]:
-            meilleurs[r["source"]] = (score, _oriente(r, inverse > direct))
-    return [r for _, r in meilleurs.values()]
+        # à ressemblance égale, l'heure la plus proche (même affiche deux fois dans la fenêtre)
+        if r["source"] not in meilleurs or (score, -ecart) > meilleurs[r["source"]][:2]:
+            meilleurs[r["source"]] = (score, -ecart, _oriente(r, inverse > direct))
+    return [r for _, _, r in meilleurs.values()]
 
 
 def _periodes_coherentes(sport: str, r: dict) -> bool:
@@ -269,8 +277,12 @@ def _periodes_coherentes(sport: str, r: dict) -> bool:
     d, e = sum(x[0] for x in r["periodes"]), sum(x[1] for x in r["periodes"])
     if (d, e) == r["score"]:
         return True
-    # hockey : le vainqueur des tirs au but peut être crédité d'un but dans le score final
-    return sport == "hockey" and abs(d - r["score"][0]) + abs(e - r["score"][1]) == 1
+    # hockey : le vainqueur des tirs au but est crédité d'un but dans le score final ; seulement si le temps
+    # réglementaire est à égalité et que personne n'a marqué en prolongation
+    if sport != "hockey" or abs(d - r["score"][0]) + abs(e - r["score"][1]) != 1 or len(r["periodes"]) < 3:
+        return False
+    reg = r["periodes"][:3]
+    return sum(x[0] for x in reg) == sum(x[1] for x in reg) and all(a == b == 0 for a, b in r["periodes"][3:])
 
 
 def _retenus(p: dict, enregistrements: list[dict]) -> list[dict]:

@@ -69,6 +69,13 @@ def etape(nom: str, journal: dict, fonction, *args, **kwargs):
         return None
 
 
+def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
+    """Une étape qui a perdu des lectures (HTTP 500, coupure…) est marquée dégradée, pas « ok » muette :
+    sinon « aucune source » pour un pari ne dit pas qu'une source était en panne."""
+    if erreurs and nom in journal["etapes"]:
+        journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:3]}
+
+
 def main() -> int:
     a = argparse.ArgumentParser()
     a.add_argument("--mode", choices=["complet", "test"], default=os.environ.get("MODE_COLLECTE", "complet"))
@@ -137,10 +144,14 @@ def main() -> int:
     for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
         # résultats validés par des bookmakers dont le flux marque les matchs terminés (cotes/resultats.py)
         for bm in (resultats_mod.VALIDATEURS if client and sport in API else []):
+            n = len(client.erreurs)
             enregistrements += etape(f"resultats_{bm}_{sport}", journal, resultats_mod.lire,
                                      client, bm, API[sport], sport, depuis) or []
+            signaler(journal, f"resultats_{bm}_{sport}", client.erreurs[n:])
+        n = len(resultats_mod.ERREURS_ESPN)
         enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
                                  sport, depuis, datetime.now(timezone.utc)) or []
+        signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
     resultats = {}
     for p in paris:
         if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:

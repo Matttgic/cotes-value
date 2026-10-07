@@ -230,3 +230,34 @@ def test_clv_seulement_avec_une_reference_fraiche_et_avant_le_match():
     assert pari["clv"] == -0.2                                                # nouvelle valeur périmée : on garde
     suivre_cloture([pari], {k: {"Pinnacle": (0.60, "2026-10-07T18:01:00+00:00")}}, a(17, 59))
     assert pari["clv"] == -0.2                                                # lue après le coup d'envoi
+
+
+def test_clv_heure_future_refusee_et_jamais_de_retour_en_arriere():
+    # revue externe (R4)
+    from datetime import datetime, timezone
+    from cotes.marches import cle
+    from cotes.simulation import suivre_cloture
+    pari = {"statut": "en_cours", "debut": "2026-10-07T18:00:00+00:00", "match_id": "m", "reference": "Pinnacle",
+            "cote": 2.0, "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM", "joueur": None}
+    k = ("m", cle(pari))
+    a = datetime(2026, 10, 7, 17, 50, tzinfo=timezone.utc)
+    suivre_cloture([pari], {k: {"Pinnacle": (0.55, "2026-10-07T17:52:00+00:00")}}, a)
+    assert "clv" not in pari                                                  # heure dans le futur
+    suivre_cloture([pari], {k: {"Pinnacle": (0.55, "2026-10-07T17:45:00+00:00")}}, a)
+    suivre_cloture([pari], {k: {"Pinnacle": (0.40, "2026-10-07T17:40:00+00:00")}}, a)
+    assert pari["clv"] == 0.1 and pari["cloture_lue"] == "2026-10-07T17:45:00+00:00"
+    suivre_cloture([pari], {k: {"Pinnacle": (0.55, "2026-10-07T17:45:00")}}, a)  # sans fuseau : ignorée, pas d'erreur
+    assert pari["cloture_lue"] == "2026-10-07T17:45:00+00:00"
+
+
+def test_clv_du_bilan_seulement_pres_du_coup_d_envoi():
+    # revue externe (R3) : une CLV relevée 1 h avant le match reste sur le pari mais pas dans la moyenne
+    from cotes.simulation import bilan, clv_finale
+    base = {"simulation": "A", "reference": "Pinnacle", "mise": 10, "gain": -10, "statut": "perdu",
+            "debut": "2026-10-07T18:00:00+00:00"}
+    loin = {**base, "clv": 0.10, "cloture_lue": "2026-10-07T17:00:00+00:00"}
+    pres = {**base, "clv": 0.02, "cloture_lue": "2026-10-07T17:55:00+00:00"}
+    ouvert = {**pres, "statut": "en_cours", "gain": None}
+    assert clv_finale(loin) is None and clv_finale(pres) == 0.02 and clv_finale(ouvert) is None
+    b = bilan([loin, pres, ouvert])["A|Pinnacle"]
+    assert b["clv_moyenne"] == 0.02 and b["clv_n"] == 1 and b["regles"] == 2
