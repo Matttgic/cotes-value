@@ -213,3 +213,25 @@ def test_tennis_heure_annoncee_tres_differente():
     autre = enr("espn", "Alina Charaeva", "Sonay Kartal", (2, 0), periodes=[(6, 4), (6, 1)], sport="tennis")
     autre["debut"] = T + timedelta(hours=3)
     assert R.retrouver(pari, [autre]) == []                    # un seul joueur commun : pas pris de loin
+
+
+def test_tennis_abandon_et_match_reporte():
+    from datetime import timedelta
+    from cotes.reglement import appliquer
+    # abandon chez ESPN (6-3, 2-2) : réglé selon les règles d'abandon (vainqueur remboursé)
+    pari = {"id": "a", "sport": "tennis", "domicile": "Adrian Mannarino", "exterieur": "Nikoloz Basilashvili",
+            "debut": "2026-10-06T05:10:00Z", "match_id": "pmu|1", "statut": "a_regler", "marche": "VAINQUEUR",
+            "periode": "MATCH", "issue": "DOM", "ligne": None, "mise": 10, "cote": 2.1, "bookmaker": "PMU"}
+    ab = enr("espn", "Nikoloz Basilashvili", "Adrian Mannarino", (0, 1), periodes=[(3, 6), (2, 2)], sport="tennis")
+    ab["debut"], ab["abandon"] = T + timedelta(hours=3, minutes=40), True
+    r = R.consensus(pari, [ab], T + timedelta(hours=12))
+    appliquer([pari], {"pmu|1": r}, {})
+    assert pari["statut"] == "rembourse"
+    # match annoncé ce matin, reprogrammé demain : reste en cours, n'est jamais réglé avec ce rendez-vous
+    p2 = {**pari, "id": "b", "domicile": "Hubert Hurkacz", "exterieur": "James Duckworth", "statut": "en_cours"}
+    plus_tard = enr("espn", "James Duckworth", "Hubert Hurkacz", (0, 0), sport="tennis")
+    plus_tard["debut"], plus_tard["a_venir"] = T + timedelta(days=1, hours=1), True
+    assert R.consensus(p2, [plus_tard], T + timedelta(hours=20)) is None
+    d = R.reporte(p2, [plus_tard])
+    appliquer([p2], {}, {}, T + timedelta(hours=20), {"pmu|1": d})
+    assert p2["statut"] == "en_cours" and p2["reporte_au"].startswith("2026-10-07")

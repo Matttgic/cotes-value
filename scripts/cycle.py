@@ -167,7 +167,12 @@ def main() -> int:
     journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
     if client:
         requetes["resultats"] = client.requetes
-    reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant)
+    # matchs reportés (vus « à venir » chez ESPN à une date plus tardive) : ils restent en cours
+    reportes = {p["match_id"]: d for p in paris
+                if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats
+                and (d := resultats_mod.reporte(p, enregistrements))}
+    journal["resultats"]["reportes"] = len(reportes)
+    reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant, reportes)
     # pourquoi les paris « à régler » ne se règlent pas (pour le diagnostic)
     vus = set()
     journal["resultats"]["non_regles"] = [

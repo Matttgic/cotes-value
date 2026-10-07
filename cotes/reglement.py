@@ -255,9 +255,12 @@ def _regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     return None
 
 
-def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, maintenant: datetime | None = None):
-    """Règle les paris en cours. `resultats` : match_id -> {"sport", "score", "periodes", "libelles", "final"}."""
+def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, maintenant: datetime | None = None,
+              reportes: dict[str, datetime] | None = None):
+    """Règle les paris en cours. `resultats` : match_id -> {"sport", "score", "periodes", "libelles", "final"}.
+    `reportes` : match_id -> nouvelle date des matchs reportés (ils restent en cours)."""
     maintenant = maintenant or datetime.now(timezone.utc)
+    reportes = reportes or {}
     for p in paris:
         if p["statut"] not in ("en_cours", "a_regler"):
             continue
@@ -300,7 +303,10 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
             debut = datetime.fromisoformat(p["debut"].replace("Z", "+00:00"))
         except (AttributeError, ValueError):
             continue
-        if maintenant - debut > timedelta(hours=12):
+        if p["match_id"] in reportes:              # match reporté, pas encore joué : on attend
+            p["statut"] = "en_cours"
+            p["reporte_au"] = reportes[p["match_id"]].isoformat(timespec="seconds")
+        elif maintenant - debut > timedelta(hours=12):
             p["statut"] = "a_regler"              # résultat introuvable : à régler à la main
 
 

@@ -50,6 +50,9 @@ ESPN_LIGUES = {"football": ["soccer/all"], "hockey": ["hockey/nhl"], "basket": [
 # terminés dans le temps réglementaire au football (une prolongation fausserait le score « match ») ;
 # prolongation et tirs au but compris ailleurs
 ESPN_FINAUX = {"STATUS_FULL_TIME", "STATUS_FINAL"}
+# tennis : abandon en cours de match (règles d'abandon de chaque bookmaker, cotes/reglement.py)
+ESPN_ABANDONS = {"STATUS_RETIRED"}
+REPORT_MAX_J = 7
 
 
 def _heure(s) -> datetime | None:
@@ -136,10 +139,12 @@ def _espn_json(chemin: str, params: dict | None = None) -> dict | None:
 
 
 def lire_espn(sport: str, depuis: datetime, maintenant: datetime, lire_json=_espn_json) -> list[dict]:
-    """Matchs terminés chez ESPN (calendrier jour par jour, dates américaines : un jour de marge)."""
+    """Matchs ESPN (calendrier jour par jour, dates américaines : un jour de marge de chaque côté). Terminés,
+    abandons au tennis (« abandon »), et pas encore joués (« a_venir » : pour reconnaître un match reporté,
+    jamais pour régler)."""
     out, vus = [], set()
     jour = (depuis - timedelta(days=1)).date()
-    while jour <= maintenant.date():
+    while jour <= maintenant.date() + timedelta(days=1):
         for ligue in ESPN_LIGUES.get(sport, []):
             d = lire_json(f"{ligue}/scoreboard", {"dates": f"{jour:%Y%m%d}", "limit": 1000}) or {}
             for e in d.get("events") or []:
@@ -148,11 +153,14 @@ def lire_espn(sport: str, depuis: datetime, maintenant: datetime, lire_json=_esp
                     or e.get("competitions") or []
                 for c in comps:
                     cid = c.get("id") or e.get("id")
-                    if cid in vus or ((c.get("status") or {}).get("type") or {}).get("name") not in ESPN_FINAUX:
+                    etat = ((c.get("status") or {}).get("type") or {}).get("name")
+                    if cid in vus:
                         continue
                     r = _espn_match(sport, c, e, ligue)
                     if r:
                         vus.add(cid)
+                        r["abandon"] = sport == "tennis" and etat in ESPN_ABANDONS
+                        r["a_venir"] = etat not in ESPN_FINAUX and not r["abandon"]
                         out.append(r)
         jour += timedelta(days=1)
     return out
@@ -259,6 +267,8 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
 
     meilleurs: dict[str, tuple[float, float, dict]] = {}
     for r in enregistrements:
+        if r.get("a_venir"):
+            continue
         ecart = abs((r["debut"] - debut).total_seconds()) if r["sport"] == p["sport"] and r["debut"] else None
         tennis_large = p["sport"] == "tennis" and ecart is not None and ecart <= ECART_TENNIS_H * 3600
         if ecart is None or (ecart > ECART_HEURE_MIN * 60 and not tennis_large):
@@ -295,8 +305,27 @@ def _retenus(p: dict, enregistrements: list[dict]) -> list[dict]:
     trouves = retrouver(p, enregistrements)
     if p["sport"] == "tennis":
         trouves = [r for r in trouves if r["source"] not in TENNIS_EXCLUES
-                   and max(r["score"]) in (2, 3) and min(r["score"]) < max(r["score"])]
+                   and (r.get("abandon") or (max(r["score"]) in (2, 3) and min(r["score"]) < max(r["score"])))]
     return trouves
+
+
+def reporte(p: dict, enregistrements: list[dict]) -> datetime | None:
+    """Nouvelle date du match d'un pari s'il a été reporté (même affiche pas encore jouée, programmée plus
+    tard dans les REPORT_MAX_J jours) : le pari reste en cours au lieu de passer « à régler »."""
+    debut = _heure(p.get("debut"))
+    if not debut:
+        return None
+    dom, ext = _noms(p)
+    proche = lambda noms, x: max(ressemblance(n, x) for n in noms)  # noqa: E731
+    for r in enregistrements:
+        if not r.get("a_venir") or r["sport"] != p["sport"] or not r["debut"]:
+            continue
+        if not timedelta(hours=1) < r["debut"] - debut <= timedelta(days=REPORT_MAX_J):
+            continue
+        if max(min(proche(dom, r["domicile"]), proche(ext, r["exterieur"])),
+               min(proche(dom, r["exterieur"]), proche(ext, r["domicile"]))) >= RESSEMBLANCE_TENNIS_LOIN:
+            return r["debut"]
+    return None
 
 
 def _majoritaires(trouves: list[dict]) -> list[dict]:

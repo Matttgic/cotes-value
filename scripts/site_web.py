@@ -36,7 +36,7 @@ def cle_fiche(p: dict) -> tuple:
 
 CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
-                "ligue", "regle_le")
+                "ligue", "regle_le", "reporte_au")
 
 
 PARIS_TZ = ZoneInfo("Europe/Paris")
@@ -496,7 +496,8 @@ for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
 }
 let limite = 50;
 const carteParis = p => `<article class="carte">
-<div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${quand(p.debut)}</span></div>
+<div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${p.reporte_au && p.statut === "en_cours"
+  ? "reporté au " + quand(p.reporte_au) : quand(p.debut)}</span></div>
 <div class="l2">${e(p.pari)}</div>
 <div class="l3"><span><b>${e(p.bookmaker)} ${cote(p.cote)}</b></span><span>${e(p.reference)} ${cote(p.cote_juste)}</span>
 <span class="ecart">${pct(p.ecart)}</span></div>
