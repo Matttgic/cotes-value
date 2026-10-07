@@ -8,7 +8,8 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes.simulation import REFERENCES, SIMULATIONS, TEMOIN, TRANCHES, bilan, bilan_tranches  # noqa: E402
+from cotes.simulation import (REFERENCES, SIMULATIONS, TEMOIN, TRANCHES, bilan, bilan_tranches,  # noqa: E402
+                              premiers_par_selection)
 from cotes.stockage import lire_archives  # noqa: E402
 
 
@@ -130,6 +131,26 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     return gardees, sum(f["reference"] != TEMOIN for f in fiches), valeurs
 
 
+def courbes(paris: list[dict]) -> dict[str, list]:
+    """Pour le graphique du gain cumulé : par vue du bilan (Uniques, chaque référence, Toutes), les paris
+    réglés dans l'ordre du règlement, chacun en [minute du règlement, gain, simulation] (la page fait le
+    cumul selon les simulations choisies)."""
+    uniques = premiers_par_selection(paris)
+    out: dict[str, list] = {}
+    regles = [p for p in paris if p.get("statut") not in ("en_cours", "a_regler") and p.get("regle_le")]
+    regles.sort(key=lambda p: (p["regle_le"], p.get("debut") or ""))
+    for p in regles:
+        try:
+            t = int(datetime.fromisoformat(p["regle_le"].replace("Z", "+00:00")).timestamp() // 60)
+        except ValueError:
+            continue
+        point = [t, round(p.get("gain") or 0, 2), p.get("simulation")]
+        vues = [p["reference"]] + ([] if p["reference"] == TEMOIN else ["Toutes"]) + (["Uniques"] if id(p) in uniques else [])
+        for v in vues:
+            out.setdefault(v, []).append(point)
+    return out
+
+
 def construire(donnees: Path, sortie: Path) -> Path:
     paris = _lire(donnees / "paris.json", []) + lire_archives(donnees)     # bilan sur TOUS les paris
     etat = _lire(donnees / "etat.json", {})
@@ -149,7 +170,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     liste, fiches_total, valeurs = selection_paris(paris)
     data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
-            "bilan_tranches": bilan_tranches(paris), "tranches": [t[2] for t in TRANCHES], "controle": controle,
+            "bilan_tranches": bilan_tranches(paris), "courbes": courbes(paris), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
@@ -165,9 +186,9 @@ MODELE = r"""<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value</title>
 <style>
-:root{--fond:#f5f6f8;--carte:#fff;--texte:#1b2130;--doux:#677084;--ligne:#e4e7ec;--accent:#2457d6;
+:root{--serie:#2a78d6;--fond:#f5f6f8;--carte:#fff;--texte:#1b2130;--doux:#677084;--ligne:#e4e7ec;--accent:#2457d6;
 --accent-f:#e8eefc;--vert:#0f8a4b;--vert-f:#e2f4e9;--rouge:#c23434;--rouge-f:#fbe6e6;--jaune:#8f6200;--jaune-f:#fff3d1}
-@media (prefers-color-scheme:dark){:root{--fond:#111419;--carte:#1a1e26;--texte:#e6e9ef;--doux:#9aa2b1;
+@media (prefers-color-scheme:dark){:root{--serie:#3987e5;--fond:#111419;--carte:#1a1e26;--texte:#e6e9ef;--doux:#9aa2b1;
 --ligne:#2a303b;--accent:#7ea4ff;--accent-f:#1f2a44;--vert:#4ec88a;--vert-f:#16321f;--rouge:#ff8080;
 --rouge-f:#3a1c1e;--jaune:#f0c35a;--jaune-f:#36301b}}
 *{box-sizing:border-box}
@@ -184,6 +205,13 @@ nav .nb{font-size:12px;opacity:.75;margin-left:3px}
 main{max-width:760px;margin:auto;padding:12px 16px 40px}
 .onglet{display:none}.onglet.actif{display:block}
 summary{cursor:pointer;font-weight:600}
+.courbe{position:relative;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:10px 12px 6px;margin-bottom:12px}
+.courbe-tete{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--doux)}
+.courbe-tete b{font-size:18px}
+.courbe svg{display:block;width:100%;height:170px;touch-action:pan-y}
+.courbe text{fill:var(--doux);font-size:11px;font-variant-numeric:tabular-nums}
+.bulle{position:absolute;pointer-events:none;background:var(--texte);color:var(--carte);font-size:12px;line-height:1.35;
+padding:5px 8px;border-radius:8px;white-space:nowrap;display:none}
 .trace{margin-top:6px;font-size:12.5px;color:var(--doux)}.trace summary{font-weight:500}.trace p{margin:4px 0}
 .aide{color:var(--doux);font-size:13px;margin:0 0 10px}
 .carte{background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;margin-bottom:8px}
@@ -248,6 +276,9 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
   <section class="onglet" id="o-bilan">
     <div class="puces" id="puces-ref"></div>
     <p class="aide" id="bilan-quoi"></p>
+    <div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
+    <b id="courbe-total"></b></div><svg id="courbe-svg" role="img" aria-label="Gain cumulé au fil des paris réglés"></svg>
+    <div class="bulle" id="bulle"></div></div>
     <div class="tableau"><table id="bilan"></table></div>
     <h2 class="sous-titre">Par tranche de cote</h2>
     <div class="tableau"><table id="bilan-tranches"></table></div>
@@ -379,9 +410,63 @@ function rendreBilan() {
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
       additionner(CUMULS[cumul])).replace("<tr>", '<tr class="total">');
   document.getElementById("cumul").onchange = ev => { cumul = Number(ev.target.value); rendreBilan(); };
+  rendreCourbe();
   document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     (D.tranches || []).map(t => ligne(`<b>${e(t)}</b>`, (D.bilan_tranches || {})[t + "|" + refBilan])).join("");
 }
+// --- graphique : gain cumulé au fil des paris réglés (référence et simulations choisies dans le bilan)
+function pas(etendue) {               // pas « rond » pour 3 à 5 graduations
+  const brut = etendue / 4, p = Math.pow(10, Math.floor(Math.log10(brut || 1)));
+  return [1, 2, 2.5, 5, 10].map(m => m * p).find(v => v >= brut) || 10 * p;
+}
+function rendreCourbe() {
+  const sims = CUMULS[cumul];
+  const pts = ((D.courbes || {})[refBilan] || []).filter(p => sims.includes(p[2]));
+  const svg = document.getElementById("courbe-svg"), bulle = document.getElementById("bulle");
+  document.getElementById("courbe-quoi").textContent = "· " + (NOMS_REF[refBilan] || refBilan) +
+    (sims.length === SIMS.length ? "" : " · " + nomCumul(sims));
+  const cum = [0];
+  for (const p of pts) cum.push(cum[cum.length - 1] + p[1]);
+  const total = cum[cum.length - 1];
+  const tot = document.getElementById("courbe-total");
+  tot.textContent = pts.length ? eurC(total) : ""; tot.className = signe(total);
+  if (pts.length < 2) { svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle">Pas encore assez de paris réglés.</text>`; return; }
+  const W = svg.clientWidth || 340, H = 170, g = 46, d = 8, h = 8, b = 20;
+  let lo = Math.min(0, ...cum), hi = Math.max(0, ...cum);
+  const st = pas(hi - lo || 10); lo = Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st;
+  const X = i => g + (W - g - d) * i / (cum.length - 1), Y = v => h + (H - h - b) * (hi - v) / (hi - lo || 1);
+  let grille = "";
+  for (let v = lo; v <= hi + 1e-9; v += st)
+    grille += `<line x1="${g}" x2="${W - d}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--ligne)" stroke-width="${v === 0 ? 1.5 : 1}"/>
+<text x="${g - 6}" y="${Y(v) + 4}" text-anchor="end">${eurC(v)}</text>`;
+  const jour = t => new Date(t * 60000).toLocaleDateString("fr-FR", {day: "numeric", month: "numeric"});
+  const axe = `<text x="${g}" y="${H - 4}">${jour(pts[0][0])}</text><text x="${W - d}" y="${H - 4}" text-anchor="end">${jour(pts[pts.length - 1][0])}</text>
+<text x="${(g + W - d) / 2}" y="${H - 4}" text-anchor="middle">${pts.length} paris réglés</text>`;
+  const ligne = cum.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  svg.innerHTML = grille + axe + `<path d="${ligne}" fill="none" stroke="var(--serie)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<line id="viseur" y1="${h}" y2="${H - b}" stroke="var(--doux)" stroke-width="1" visibility="hidden"/>
+<circle id="point" r="4.5" fill="var(--serie)" stroke="var(--carte)" stroke-width="2" visibility="hidden"/>
+<rect x="${g}" y="0" width="${W - g - d}" height="${H}" fill="transparent" id="zone"/>`;
+  const zone = svg.querySelector("#zone"), viseur = svg.querySelector("#viseur"), point = svg.querySelector("#point");
+  const montrer = ev => {
+    const r = svg.getBoundingClientRect();
+    const i = Math.max(1, Math.min(cum.length - 1, Math.round((ev.clientX - r.left - g) / (W - g - d) * (cum.length - 1))));
+    const p = pts[i - 1], x = X(i), y = Y(cum[i]);
+    viseur.setAttribute("x1", x); viseur.setAttribute("x2", x); viseur.setAttribute("visibility", "visible");
+    point.setAttribute("cx", x); point.setAttribute("cy", y); point.setAttribute("visibility", "visible");
+    bulle.innerHTML = `Pari ${i} · réglé le ${quand(new Date(p[0] * 60000).toISOString())}<br>Ce pari ${eur(p[1])} · cumul <b>${eurC(cum[i])}</b>`;
+    bulle.style.display = "block";
+    // à droite du point, ou à gauche s'il n'y a pas la place ; positions relatives à la carte
+    const gauche = x + 12 + bulle.offsetWidth > W ? x - 12 - bulle.offsetWidth : x + 12;
+    const c = document.getElementById("courbe").getBoundingClientRect();     // (un <svg> n'a pas d'offsetTop)
+    bulle.style.left = (r.left - c.left + Math.max(0, gauche)) + "px";
+    bulle.style.top = (r.top - c.top + Math.max(0, Math.min(y - 20, H - 50))) + "px";
+  };
+  const cacher = () => { viseur.setAttribute("visibility", "hidden"); point.setAttribute("visibility", "hidden"); bulle.style.display = "none"; };
+  zone.addEventListener("pointermove", montrer); zone.addEventListener("pointerdown", montrer);
+  zone.addEventListener("pointerleave", cacher);
+}
+window.addEventListener("resize", () => rendreCourbe());
 rendreBilan();
 const mois = new Date().toISOString().slice(0,7);
 document.getElementById("infos").innerHTML = [

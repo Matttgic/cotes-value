@@ -42,3 +42,16 @@ def test_construire_bilan_sur_tous_les_paris(tmp_path):
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
     d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
     assert d["fiches_total"] == 5 and d["bilan"]["A|Toutes"]["en_cours"] == 5
+
+
+def test_courbes_du_gain_cumule():
+    base = {"simulation": "A", "mise": 10, "match_id": "w|1", "marche": "VAINQUEUR", "periode": "MATCH",
+            "ligne": None, "issue": "DOM", "joueur": None, "statut": "gagne", "gain": 11.0}
+    paris = [{**base, "reference": "Pinnacle", "regle_le": "2026-10-07T12:00:00+00:00", "detecte": "1"},
+             {**base, "reference": "Betfair", "regle_le": "2026-10-07T12:00:00+00:00", "detecte": "2"},
+             {**base, "reference": "Pinnacle", "issue": "EXT", "statut": "perdu", "gain": -10.0,
+              "regle_le": "2026-10-07T11:00:00+00:00", "detecte": "1"},
+             {**base, "reference": "Pinnacle", "issue": "NUL", "statut": "en_cours", "gain": None, "detecte": "1"}]
+    c = site_web.courbes(paris)
+    assert [p[1] for p in c["Pinnacle"]] == [-10.0, 11.0]               # dans l'ordre du règlement
+    assert len(c["Toutes"]) == 3 and len(c["Uniques"]) == 2              # la même cote ne compte qu'une fois
