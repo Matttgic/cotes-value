@@ -26,6 +26,10 @@ from .correspondance import normaliser, ressemblance
 VALIDATEURS = ["orbitxch", "draftkings", "unibet-uk", "interwetten-de", "betmgm", "pmu"]
 ECART_HEURE_MIN = 45
 RESSEMBLANCE_MIN = 0.75
+# tennis : l'heure annoncée n'est qu'une estimation (ordre de passage, pluie) ; jusqu'à 12 h d'écart si les
+# deux joueurs sont clairement les mêmes (cas réel : Charaeva – Zheng annoncé 02:00, joué à 11:05)
+ECART_TENNIS_H = 12
+RESSEMBLANCE_TENNIS_LOIN = 0.9
 PAGES_MAX = 15
 SOURCES_MIN = 2
 # sources en désaccord : le score majoritaire l'emporte s'il est donné par au moins MAJORITE_MIN sources et
@@ -256,12 +260,13 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
     meilleurs: dict[str, tuple[float, float, dict]] = {}
     for r in enregistrements:
         ecart = abs((r["debut"] - debut).total_seconds()) if r["sport"] == p["sport"] and r["debut"] else None
-        if ecart is None or ecart > ECART_HEURE_MIN * 60:
+        tennis_large = p["sport"] == "tennis" and ecart is not None and ecart <= ECART_TENNIS_H * 3600
+        if ecart is None or (ecart > ECART_HEURE_MIN * 60 and not tennis_large):
             continue
         direct = min(proche(dom, r["domicile"]), proche(ext, r["exterieur"]))
         inverse = min(proche(dom, r["exterieur"]), proche(ext, r["domicile"]))
         score = max(direct, inverse)
-        if score < RESSEMBLANCE_MIN:
+        if score < (RESSEMBLANCE_TENNIS_LOIN if ecart > ECART_HEURE_MIN * 60 else RESSEMBLANCE_MIN):
             continue
         # à ressemblance égale, l'heure la plus proche (même affiche deux fois dans la fenêtre)
         if r["source"] not in meilleurs or (score, -ecart) > meilleurs[r["source"]][:2]:

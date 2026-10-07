@@ -202,3 +202,14 @@ def test_panne_d_un_validateur_visible_dans_le_journal(monkeypatch):
     assert journal["etapes"]["resultats_draftkings_football"]["degrade"]
     assert "HTTP 500" in journal["etapes"]["resultats_draftkings_football"]["erreurs"][0]
     assert "degrade" not in journal["etapes"]["resultats_betmgm_football"]        # vraie liste vide : saine
+
+
+def test_tennis_heure_annoncee_tres_differente():
+    from datetime import timedelta
+    pari = {"sport": "tennis", "domicile": "Alina Charaeva", "exterieur": "Qinwen Zheng", "debut": "2026-10-06T02:00:00Z"}
+    e = enr("espn", "Alina Charaeva", "Zheng Qinwen", (1, 2), periodes=[(1, 6), (6, 2), (4, 6)], sport="tennis")
+    e["debut"] = T + timedelta(hours=9, minutes=5)
+    assert R.consensus(pari, [e], T + timedelta(hours=16))["score"] == (1, 2)
+    autre = enr("espn", "Alina Charaeva", "Sonay Kartal", (2, 0), periodes=[(6, 4), (6, 1)], sport="tennis")
+    autre["debut"] = T + timedelta(hours=3)
+    assert R.retrouver(pari, [autre]) == []                    # un seul joueur commun : pas pris de loin
