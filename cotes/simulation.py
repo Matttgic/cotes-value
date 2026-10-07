@@ -70,8 +70,22 @@ def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
     return nouveaux
 
 
-def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, float]], maintenant: datetime | None = None):
-    """Met à jour la cote juste « de clôture » des paris dont le match n'a pas commencé (pour la CLV)."""
+FRAICHEUR_CLOTURE_MIN = 15
+
+
+def _heure(s) -> datetime | None:
+    try:
+        return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
+def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], maintenant: datetime | None = None):
+    """Met à jour la cote juste « de clôture » des paris dont le match n'a pas commencé (pour la CLV).
+
+    Seule une cote de référence lue avant le coup d'envoi et depuis moins de FRAICHEUR_CLOTURE_MIN minutes
+    est retenue ; sinon la dernière valeur valide est gardée. `cloture_lue` est l'heure de lecture de la
+    référence (et non celle du traitement)."""
     maintenant = maintenant or datetime.now(timezone.utc)
     for p in paris:
         if p["statut"] != "en_cours":
@@ -82,11 +96,13 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, float]], mai
             continue
         if debut <= maintenant:
             continue
-        proba = justes.get((p["match_id"], cle(p)), {}).get(p["reference"])
-        if proba:
-            p["cote_juste_cloture"] = round(1 / proba, 4)
-            p["clv"] = round(p["cote"] * proba - 1, 4)
-            p["cloture_lue"] = maintenant.isoformat(timespec="seconds")
+        proba, lue = justes.get((p["match_id"], cle(p)), {}).get(p["reference"]) or (None, None)
+        t = _heure(lue)
+        if not proba or not t or t >= debut or abs((maintenant - t).total_seconds()) > FRAICHEUR_CLOTURE_MIN * 60:
+            continue
+        p["cote_juste_cloture"] = round(1 / proba, 4)
+        p["clv"] = round(p["cote"] * proba - 1, 4)
+        p["cloture_lue"] = t.isoformat(timespec="seconds")
 
 
 TEMOIN = "Pinnacle brut"

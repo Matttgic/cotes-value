@@ -33,3 +33,19 @@ def test_site_compte_les_archives(tmp_path):
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
     d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
     assert d["bilan"]["A|Toutes"]["paris"] == 2 and d["bilan"]["A|Toutes"]["gains"] == 10.0
+
+
+def test_fichier_de_donnees_corrompu_arrete_le_cycle(tmp_path):
+    # revue externe (8.1) : un paris.json illisible était lu comme une liste vide, puis écrasé
+    import sys
+    from pathlib import Path
+    import pytest
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    import cycle
+    f = tmp_path / "paris.json"
+    f.write_text('[{"id": ', encoding="utf-8")
+    with pytest.raises(ValueError):
+        cycle.lire_json(f, [])
+    assert cycle.lire_json(tmp_path / "absent.json", []) == []
+    cycle.ecrire_json(f, [{"id": 1}])
+    assert cycle.lire_json(f, []) == [{"id": 1}] and not list(tmp_path.glob("*.tmp"))

@@ -14,14 +14,10 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "complet = 5 bookmakers + Betfair sur 36 h ; test = Winamax + Betclic, foot, 1 page (≈ 4 requêtes)"
+        description: "complet = 4 bookmakers français + Betfair sur 36 h ; test = Winamax + Betclic, foot, 1 page (≈ 4 requêtes)"
         type: choice
         options: [test, complet]
         default: test
-      regler:
-        description: "Forcer le règlement des paris terminés"
-        type: boolean
-        default: false
 
 permissions:
   actions: write
@@ -66,7 +62,7 @@ jobs:
         env:
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
-        run: python scripts/cycle.py --donnees donnees --site site ${{ inputs.regler && '--regler' || '' }}
+        run: python scripts/cycle.py --donnees donnees --site site
 
       - name: Enregistrer les données
         run: |

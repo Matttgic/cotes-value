@@ -80,6 +80,25 @@ def test_tennis():
     assert regler(p("JEUX_HANDICAP", "EXT", 1.5, "SET1"), s) == "perdu"
 
 
+def test_tennis_score_final_sans_detail_des_sets():
+    # revue externe (B1) : sans le détail des sets, le score 2-0 devenait 0-0 (vainqueur remboursé,
+    # « plus de 20,5 jeux » perdu sur 0 jeu)
+    s = scores_par_periode("tennis", (2, 0), [], [])
+    assert s == {"MATCH": (2, 0)}
+    t = {"sport": "tennis"}
+    assert regler({**t, **p("VAINQUEUR", "DOM")}, s) == "gagne"
+    assert regler({**t, **p("VAINQUEUR", "EXT")}, s) == "perdu"
+    assert regler({**t, **p("SETS_HANDICAP", "DOM", -1.5)}, s) == "gagne"
+    assert regler({**t, **p("SETS_TOTAL", "PLUS", 2.5)}, s) == "perdu"
+    assert regler({**t, **p("JEUX_TOTAL", "PLUS", 20.5)}, s) is None           # jeux inconnus : on attend
+    assert regler({**t, **p("JEUX_HANDICAP", "DOM", -3.5)}, s) is None
+    assert regler({**t, **p("VAINQUEUR", "DOM", periode="SET1")}, s) is None
+    # 2-1 sans détail : sets réglables, jeux non
+    s = scores_par_periode("tennis", (2, 1), [], [])
+    assert regler({**t, **p("SETS_TOTAL", "PLUS", 2.5)}, s) == "gagne"
+    assert regler({**t, **p("JEUX_TOTAL", "MOINS", 30.5)}, s) is None
+
+
 def test_tennis_super_tie_break():
     s = scores_par_periode("tennis", (2, 1), [(6, 4), (3, 6), (10, 8)], ["1", "2", "3"])
     assert s["JEUX"] == (10, 10) and "ABANDON" not in s                   # super tie-break = 1 jeu
@@ -189,3 +208,25 @@ def test_deduction_sans_score_a_la_mi_temps():
     assert regler(pari(marche="TOTAL", periode="MT1", ligne=2.5, issue="MOINS"), nul11) == "gagne"
     assert regler(pari(marche="TOTAL", periode="MT1", ligne=1.5, issue="MOINS"), nul11) is None
     assert regler(pari(marche="RESULTAT_1N2", periode="MT1", issue="NUL"), nul00) == "gagne"
+
+
+def test_clv_seulement_avec_une_reference_fraiche_et_avant_le_match():
+    # revue externe (B2) : la CLV ne doit pas être mise à jour avec une référence périmée ou lue après le
+    # coup d'envoi, et `cloture_lue` doit être l'heure de lecture de la référence
+    from datetime import datetime, timezone
+    from cotes.marches import cle
+    from cotes.simulation import suivre_cloture
+    pari = {"statut": "en_cours", "debut": "2026-10-07T18:00:00+00:00", "match_id": "m", "reference": "Pinnacle",
+            "cote": 2.0, "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM", "joueur": None}
+    k = ("m", cle(pari))
+    a = lambda h, m: datetime(2026, 10, 7, h, m, tzinfo=timezone.utc)  # noqa: E731
+    suivre_cloture([pari], {k: {"Pinnacle": (0.55, "2026-10-07T17:20:00+00:00")}}, a(17, 50))
+    assert "clv" not in pari                                                  # 30 min : périmée
+    suivre_cloture([pari], {k: {"Pinnacle": (0.55, "2026-10-07T17:45:00+00:00")}}, a(17, 50))
+    assert pari["clv"] == 0.1 and pari["cloture_lue"] == "2026-10-07T17:45:00+00:00"
+    suivre_cloture([pari], {k: {"Pinnacle": (0.40, "2026-10-07T17:49:00+00:00")}}, a(17, 50))
+    assert pari["clv"] == -0.2
+    suivre_cloture([pari], {k: {"Pinnacle": (0.60, "2026-10-07T17:30:00+00:00")}}, a(17, 50))
+    assert pari["clv"] == -0.2                                                # nouvelle valeur périmée : on garde
+    suivre_cloture([pari], {k: {"Pinnacle": (0.60, "2026-10-07T18:01:00+00:00")}}, a(17, 59))
+    assert pari["clv"] == -0.2                                                # lue après le coup d'envoi

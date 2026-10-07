@@ -2,9 +2,10 @@
 
 Lancé toutes les 15 minutes par GitHub Actions (.github/workflows/collecte.yml).
 
-    python scripts/cycle.py                 # cycle complet (5 bookmakers français + Betfair, 36 h)
-    python scripts/cycle.py --mode test     # cycle réduit : Winamax + Betclic, foot, 1 page (≈ 4 requêtes)
-    python scripts/cycle.py --regler        # force le règlement (sinon : une fois par heure)
+    python scripts/cycle.py                 # cycle complet (4 bookmakers français + Betfair, 36 h)
+    python scripts/cycle.py --mode test     # cycle réduit : Winamax + Betclic, foot, 1 page
+
+Le règlement des paris a lieu à chaque cycle.
 
 Données (branche « donnees ») : paris.json, etat.json, opportunites/AAAA-MM-JJ.jsonl,
 resultats_manuels.json (règlements faits à la main). Site : dossier site/.
@@ -38,15 +39,21 @@ API = {v: k for k, v in pulsescore.SPORTS.items()}          # « football » -> 
 
 
 def lire_json(chemin: Path, defaut):
+    """Contenu d'un fichier de données, ou `defaut` s'il n'existe pas encore. Un fichier illisible arrête le
+    cycle (erreur JSON) : le traiter comme vide écraserait, par exemple, tous les paris à la sauvegarde."""
     try:
-        return json.loads(chemin.read_text(encoding="utf-8"))
-    except (FileNotFoundError, ValueError):
+        texte = chemin.read_text(encoding="utf-8")
+    except FileNotFoundError:
         return defaut
+    return json.loads(texte)
 
 
 def ecrire_json(chemin: Path, donnees) -> None:
+    """Écriture atomique : un cycle interrompu ne laisse jamais un fichier à moitié écrit."""
     chemin.parent.mkdir(parents=True, exist_ok=True)
-    chemin.write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp = chemin.with_name(chemin.name + ".tmp")
+    tmp.write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
+    os.replace(tmp, chemin)
 
 
 def etape(nom: str, journal: dict, fonction, *args, **kwargs):
@@ -67,7 +74,6 @@ def main() -> int:
     a.add_argument("--mode", choices=["complet", "test"], default=os.environ.get("MODE_COLLECTE", "complet"))
     a.add_argument("--donnees", default="donnees")
     a.add_argument("--site", default="site")
-    a.add_argument("--regler", action="store_true")
     args = a.parse_args()
     cle = os.environ.get("PULSESCORE_KEY", "").strip()
     donnees = Path(args.donnees)
@@ -94,7 +100,10 @@ def main() -> int:
     if cle:
         r = etape("pulsescore", journal, pulsescore.collecter, cle, plan, horizon, pages_max)
         if r:
-            lignes_ps, requetes = r
+            lignes_ps, requetes, erreurs_ps = r
+            if erreurs_ps:                       # fonctionnement dégradé : visible dans le journal (etat.json)
+                journal["etapes"]["pulsescore"] |= {"degrade": True,
+                                                    "erreurs": {bm: e[:5] for bm, e in erreurs_ps.items()}}
     else:
         journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
     francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
@@ -119,41 +128,40 @@ def main() -> int:
     paris = lire_json(donnees / "paris.json", [])
     nouveaux = simulation.placer(opportunites, paris)
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
-    simulation.suivre_cloture(paris, justes, maintenant)
+    simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
 
-    # 4. règlement, à chaque cycle (offre PulseScore PRO : requêtes illimitées)
-    if cle:
+    # 4. règlement, à chaque cycle (offre PulseScore PRO : requêtes illimitées). Sans clé PulseScore, ESPN
+    #    et les résultats saisis à la main règlent quand même ce qu'ils peuvent.
+    enregistrements = []
+    client = pulsescore.Client(cle) if cle else None
+    for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
         # résultats validés par des bookmakers dont le flux marque les matchs terminés (cotes/resultats.py)
-        enregistrements = []
-        client = pulsescore.Client(cle)
-        for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
-            if sport not in API:
-                continue
-            for bm in resultats_mod.VALIDATEURS:
-                enregistrements += etape(f"resultats_{bm}_{sport}", journal, resultats_mod.lire,
-                                         client, bm, API[sport], sport, depuis) or []
-            enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
-                                     sport, depuis, maintenant) or []
-        resultats = {}
-        for p in paris:
-            if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
-                r = resultats_mod.consensus(p, enregistrements, maintenant)
-                if r:
-                    resultats[p["match_id"]] = r
-        # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)
-        for p in paris:
-            r = resultats.get(p["match_id"])
-            if r and p["statut"] in ("en_cours", "a_regler") and (
-                    p["periode"] in reglement.SOUS_PERIODES or p["marche"] == "HALF_TIME_FULL_TIME"):
-                resultats[p["match_id"]] = resultats_mod.completer_periodes(p, r, enregistrements)
-        journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
+        for bm in (resultats_mod.VALIDATEURS if client and sport in API else []):
+            enregistrements += etape(f"resultats_{bm}_{sport}", journal, resultats_mod.lire,
+                                     client, bm, API[sport], sport, depuis) or []
+        enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
+                                 sport, depuis, datetime.now(timezone.utc)) or []
+    resultats = {}
+    for p in paris:
+        if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
+            r = resultats_mod.consensus(p, enregistrements, maintenant)
+            if r:
+                resultats[p["match_id"]] = r
+    # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)
+    for p in paris:
+        r = resultats.get(p["match_id"])
+        if r and p["statut"] in ("en_cours", "a_regler") and (
+                p["periode"] in reglement.SOUS_PERIODES or p["marche"] == "HALF_TIME_FULL_TIME"):
+            resultats[p["match_id"]] = resultats_mod.completer_periodes(p, r, enregistrements)
+    journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
+    if client:
         requetes["resultats"] = client.requetes
-        reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant)
-        # pourquoi les paris « à régler » ne se règlent pas (pour le diagnostic)
-        vus = set()
-        journal["resultats"]["non_regles"] = [
-            resultats_mod.diagnostic(p, enregistrements) for p in paris
-            if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])][:80]
+    reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant)
+    # pourquoi les paris « à régler » ne se règlent pas (pour le diagnostic)
+    vus = set()
+    journal["resultats"]["non_regles"] = [
+        resultats_mod.diagnostic(p, enregistrements) for p in paris
+        if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])][:80]
 
     # 5. sauvegarde
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives

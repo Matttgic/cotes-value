@@ -164,3 +164,62 @@ def test_ordre_inverse_face_a_pinnacle():
     ref = {"p1": {"match_id": "p1", "sport": "hockey", "domicile": "New York Rangers", "exterieur": "New York Islanders",
                   "debut": t, "approx": False, "ordre_incertain": False}}
     assert associer(fr, ref)["n1"][:2] == ("p1", True)
+
+
+def test_panne_d_un_bookmaker_n_efface_pas_les_autres(monkeypatch):
+    # revue externe (B3) : un timeout chez Betclic faisait perdre toute la collecte PulseScore
+    from cotes import pulsescore as P
+
+    def matchs(self, bm, sport, heures, pages_max=40):
+        self.requetes += 1
+        if bm == "betclic":
+            raise TimeoutError("lecture trop longue")
+        return []
+
+    monkeypatch.setattr(P.Client, "matchs", matchs)
+    monkeypatch.setattr(P, "traduire", lambda e, bm, sp, moment: [])
+    lignes, requetes, erreurs = P.collecter("cle", {"winamax": ["soccer", "tennis"], "betclic": ["soccer"]})
+    assert requetes == {"winamax": 2, "betclic": 1}
+    assert list(erreurs) == ["betclic"] and "TimeoutError" in erreurs["betclic"][0]
+
+
+def test_client_reessaie_les_erreurs_reseau(monkeypatch):
+    import requests
+    from cotes import pulsescore as P
+    monkeypatch.setattr(P.time, "sleep", lambda s: None)
+
+    class Rep:
+        status_code = 200
+        headers = {}
+
+        def __init__(self, corps):
+            self.corps = corps
+
+        def json(self):
+            if self.corps is None:
+                raise ValueError("pas du JSON")
+            return self.corps
+
+    reponses = [requests.ConnectionError("coupure"), Rep({"events": []}), Rep(None)]
+
+    def get(*a, **k):
+        r = reponses.pop(0)
+        if isinstance(r, Exception):
+            raise r
+        return r
+
+    c = P.Client("cle", pause=0)
+    monkeypatch.setattr(c.s, "get", get)
+    assert c.get("winamax/soccer/events") == {"events": []} and c.requetes == 2
+    assert c.get("winamax/soccer/events") is None and c.erreurs == ["winamax/soccer/events : JSON invalide"]
+
+
+def test_double_rencontre_le_meme_jour():
+    # revue externe (8.6) : deux matchs des mêmes équipes le même jour (baseball) ; à noms égaux, l'heure
+    # la plus proche l'emporte, pas le premier match rencontré
+    from cotes.correspondance import associer, matchs_de
+    m = lambda mid, src, h: {"match_id": mid, "source": src, "sport": "baseball", "domicile": "Yankees",  # noqa: E731
+                             "exterieur": "Red Sox", "debut": f"2026-10-07T{h}:05:00+00:00"}
+    fr = matchs_de([m("fr2", "winamax", "21")])
+    ref = matchs_de([m("p1", "pinnacle", "20"), m("p2", "pinnacle", "21")])
+    assert associer(fr, ref)["fr2"][0] == "p2"

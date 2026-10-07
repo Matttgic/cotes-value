@@ -172,10 +172,10 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
     return opportunites
 
 
-def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) -> dict[tuple, dict[str, float]]:
-    """(match français, clé) -> {référence: probabilité juste} : sert à suivre la cote juste jusqu'au coup
-    d'envoi (CLV) des paris déjà pris, même quand l'écart a disparu."""
-    out: dict[tuple, dict[str, float]] = {}
+def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) -> dict[tuple, dict[str, tuple]]:
+    """(match français, clé) -> {référence: (probabilité juste, heure de lecture)} : sert à suivre la cote
+    juste jusqu'au coup d'envoi (CLV) des paris déjà pris, même quand l'écart a disparu."""
+    out: dict[tuple, dict[str, tuple]] = {}
     matchs_fr = C.matchs_de(francais)
     for nom, lignes in references.items():
         if nom == "Kalshi":
@@ -186,10 +186,10 @@ def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) 
             par_match.setdefault(l["match_id"], []).append(l)
         for mid_fr, (mid_ref, inverse, _) in C.associer(matchs_fr, C.matchs_de(lignes)).items():
             for l in par_match.get(mid_ref, []):
-                out.setdefault((mid_fr, cle(inverser(l) if inverse else l)), {})[nom] = l["proba_juste"]
+                out.setdefault((mid_fr, cle(inverser(l) if inverse else l)), {})[nom] = (l["proba_juste"], l.get("collecte"))
     for v in out.values():
-        if len(v) >= 2:
-            v["Consensus"] = sum(v.values()) / len(v)
+        if len(v) >= 2:                  # lu à l'heure de la plus ancienne des références qui le composent
+            v["Consensus"] = (sum(p for p, _ in v.values()) / len(v), min((str(t) for _, t in v.values()), default=None))
         if "Pinnacle" in v:
             v[BRUT] = v["Pinnacle"]      # CLV des paris « brut » mesurée contre la cote juste : la vraie valeur
     return out

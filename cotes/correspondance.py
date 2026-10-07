@@ -173,8 +173,9 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
                         score = 0.7
                     else:
                         continue
-                if meilleur is None or score > meilleur[2]:
-                    meilleur = (r["match_id"], inverse, score)
+                # à ressemblance égale, l'heure la plus proche (deux matchs des mêmes équipes le même jour)
+                if meilleur is None or (score, -ecart) > (meilleur[2], -meilleur[3]):
+                    meilleur = (r["match_id"], inverse, score, ecart)
         if meilleur:
-            res[mid] = meilleur
+            res[mid] = meilleur[:3]
     return res

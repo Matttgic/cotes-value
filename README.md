@@ -61,7 +61,7 @@ Toutes les 15 minutes (`scripts/cycle.py`) :
    planifiées) ; la tâche planifiée horaire redémarre la chaîne si elle s'arrête. Pour arrêter :
    `COLLECTE_AUTO` ≠ `oui`.
 
-Coût en requêtes : `python scripts/simulation_appels.py` (≈ 415 000/mois pour les 5 bookmakers +
+Coût en requêtes : `python scripts/simulation_appels.py` (≈ 337 000/mois pour les 4 bookmakers +
 Betfair toutes les 15 min : offre PRO nécessaire ; l'offre gratuite ne sert qu'aux tests).
 
 ## Données (branche `donnees`)

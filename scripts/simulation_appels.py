@@ -27,7 +27,7 @@ JOURNEES = {
 # part des matchs Pinnacle que chaque bookmaker propose (NetBet liste plus de matchs que les autres)
 COUVERTURE = {"winamax": 1.0, "betclic": 1.0, "unibet-fr": 1.0, "pmu": 0.8, "netbet": 1.3,
               "orbitxch": 1.0, "polymarket": 1.0}
-FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu", "netbet"]
+FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu"]   # NetBet retiré : flux netbet.com, pas netbet.fr
 SHARPS = ["orbitxch", "polymarket"]
 SPORTS_SHARPS = {"soccer", "tennis", "basketball"}      # ailleurs ils n'apportent presque rien
 
@@ -65,8 +65,8 @@ def scenario(books: list[str], journee: dict, frequence_min: int, proche_min: in
 
 def main() -> None:
     cas = [("Winamax + Betclic", ["winamax", "betclic"]),
-           ("5 bookmakers français", FRANCAIS),
-           ("5 français + Betfair + Polymarket", FRANCAIS + SHARPS)]
+           ("4 bookmakers français", FRANCAIS),
+           ("4 français + Betfair + Polymarket", FRANCAIS + SHARPS)]
     frequences = [(15, None), (30, None), (60, None), (120, None), (120, 30)]
     print("Requêtes par photo complète (36 h) :")
     for nom, books in cas:

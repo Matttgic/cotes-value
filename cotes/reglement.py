@@ -97,6 +97,11 @@ def scores_par_periode(sport: str, score: tuple[int, int], periodes: list[tuple[
         if len(reg) >= 5:
             out["5_MANCHES"] = somme(reg[:5])
         out["MATCH"] = score                       # manches supplémentaires incluses
+    elif sport == "tennis" and not periodes:
+        # score final en sets sans le détail des sets : seuls les marchés sur les sets gagnés sont réglables
+        # (jeux et sets précis inconnus, et rien ne permet de conclure à un abandon)
+        if score:
+            out["MATCH"] = tuple(score)
     elif sport == "tennis":
         sets = []
         for i, (a, b) in enumerate(periodes):

@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 BASE = "https://api.pulsescore.net/api"
-FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu", "netbet"]
+FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu"]   # NetBet retiré : flux netbet.com, pas netbet.fr
 NOMS = {"winamax": "Winamax", "betclic": "Betclic", "unibet-fr": "Unibet", "pmu": "PMU", "netbet": "NetBet",
         "orbitxch": "Betfair"}
 SPORTS = {"soccer": "football", "basketball": "basket", "tennis": "tennis", "ice-hockey": "hockey",
@@ -36,16 +36,35 @@ class Client:
         self.s.headers.update({"X-Secret": cle, "Accept-Encoding": "gzip", "Accept": "application/json"})
         self.pause = float(os.environ.get("PULSESCORE_PAUSE", "1.1")) if pause is None else pause
         self.requetes = 0
+        self.erreurs: list[str] = []
 
     def get(self, chemin: str, params: dict | None = None):
+        """Réponse JSON, ou None (page absente, erreur). Les erreurs réseau et 429 sont réessayées ;
+        chaque échec est noté dans `erreurs` pour être visible dans le journal du cycle."""
+        derniere = "429 répétés"
         for essai in range(4):
-            r = self.s.get(f"{BASE}/{chemin}", params=params, timeout=90)
+            try:
+                r = self.s.get(f"{BASE}/{chemin}", params=params, timeout=90)
+            except requests.RequestException as e:
+                self.requetes += 1                 # tentative émise (sa facturation n'est pas connue)
+                derniere = repr(e)[:150]
+                time.sleep(2 * (essai + 1) + self.pause)
+                continue
             self.requetes += 1
             if r.status_code == 429:
                 time.sleep(float(r.headers.get("Retry-After") or 2 * (essai + 1)) + self.pause)
                 continue
             time.sleep(self.pause)
-            return r.json() if r.status_code == 200 else None
+            if r.status_code != 200:
+                if r.status_code != 404:
+                    self.erreurs.append(f"{chemin} : HTTP {r.status_code}")
+                return None
+            try:
+                return r.json()
+            except ValueError:
+                self.erreurs.append(f"{chemin} : JSON invalide")
+                return None
+        self.erreurs.append(f"{chemin} : {derniere}")
         return None
 
     def matchs(self, bookmaker: str, sport: str, heures: float, pages_max: int = 40) -> list[dict]:
@@ -68,21 +87,26 @@ class Client:
 
 
 def collecter(cle: str, plan: dict[str, list[str]], heures: float = 36,
-              pages_max: int = 40) -> tuple[list[dict], dict[str, int]]:
+              pages_max: int = 40) -> tuple[list[dict], dict[str, int], dict[str, list[str]]]:
     """plan : bookmaker -> sports (noms PulseScore). Les bookmakers sont lus en parallèle (la limite de
-    débit est par bookmaker). Renvoie (lignes, requêtes par bookmaker)."""
+    débit est par bookmaker). Renvoie (lignes, requêtes par bookmaker, erreurs par bookmaker) : une panne
+    sur un bookmaker ou un sport n'efface pas ce qui a été lu ailleurs."""
     def un_bookmaker(bm: str):
         c = Client(cle)
         lignes = []
         for sp in plan[bm]:
-            moment = datetime.now(timezone.utc).isoformat(timespec="seconds")
-            for e in c.matchs(bm, sp, heures, pages_max):
-                lignes += traduire(e, bm, SPORTS.get(sp, sp), moment)
-        return bm, lignes, c.requetes
+            try:
+                moment = datetime.now(timezone.utc).isoformat(timespec="seconds")
+                for e in c.matchs(bm, sp, heures, pages_max):
+                    lignes += traduire(e, bm, SPORTS.get(sp, sp), moment)
+            except Exception as e:                                   # noqa: BLE001
+                c.erreurs.append(f"{sp} : {repr(e)[:150]}")
+        return bm, lignes, c.requetes, c.erreurs
 
     with ThreadPoolExecutor(max_workers=max(1, len(plan))) as pool:
         res = list(pool.map(un_bookmaker, list(plan)))
-    return [l for _, r, _ in res for l in r], {bm: n for bm, _, n in res}
+    return ([l for _, r, _, _ in res for l in r], {bm: n for bm, _, n, _ in res},
+            {bm: err for bm, _, _, err in res if err})
 
 
 # --------------------------------------------------------------------------- traduction
