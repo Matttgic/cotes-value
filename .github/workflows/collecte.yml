@@ -94,7 +94,7 @@ jobs:
     needs: cycle
     if: always() && vars.COLLECTE_AUTO == 'oui' && needs.cycle.result != 'cancelled' && needs.cycle.result != 'skipped'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Relancer le cycle suivant (15 minutes après le début de celui-ci)
         env:
@@ -105,11 +105,23 @@ jobs:
           debut=${DEBUT:-$(date +%s)}
           reste=$(( debut + 900 - $(date +%s) - 30 ))
           if [ "$reste" -gt 0 ]; then sleep "$reste"; fi
-          # une seule chaîne : c'est le lancement le plus récent qui relance le suivant
-          cree=$(gh api "repos/$DEPOT/actions/runs/${{ github.run_id }}" --jq .created_at)
-          plus_recents=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 20 \
-            --json createdAt,conclusion \
-            --jq "[.[] | select(.createdAt > \"$cree\") | select(.conclusion != \"cancelled\" and .conclusion != \"skipped\")] | length")
-          if [ "$plus_recents" -gt 0 ]; then echo "Un lancement plus récent continue la chaîne."; exit 0; fi
-          gh workflow run collecte.yml --repo "$DEPOT" --ref "${{ github.ref_name }}" \
-            -f mode="${{ vars.MODE_COLLECTE || 'complet' }}"
+          # une seule chaîne : c'est le lancement le plus récent qui relance le suivant.
+          # L'API GitHub renvoie parfois une erreur passagère (HTTP 500 le 7/10/2026 à 16:59, chaîne
+          # arrêtée 2 h) : jusqu'à 6 essais espacés, en revérifiant à chaque fois qu'aucun lancement plus
+          # récent n'existe (une erreur 500 peut quand même avoir créé le lancement).
+          for essai in 1 2 3 4 5 6; do
+            cree=$(gh api "repos/$DEPOT/actions/runs/${{ github.run_id }}" --jq .created_at || true)
+            plus_recents=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 20 \
+              --json createdAt,conclusion \
+              --jq "[.[] | select(.createdAt > \"$cree\") | select(.conclusion != \"cancelled\" and .conclusion != \"skipped\")] | length" || echo erreur)
+            if [ -n "$cree" ] && [ "$plus_recents" != erreur ]; then
+              if [ "$plus_recents" -gt 0 ]; then echo "Un lancement plus récent continue la chaîne."; exit 0; fi
+              if gh workflow run collecte.yml --repo "$DEPOT" --ref "${{ github.ref_name }}" \
+                  -f mode="${{ vars.MODE_COLLECTE || 'complet' }}"; then
+                echo "Cycle suivant lancé."; exit 0
+              fi
+            fi
+            echo "API GitHub indisponible (essai $essai), nouvel essai dans $((essai * 20)) s"
+            sleep $((essai * 20))
+          done
+          exit 1
