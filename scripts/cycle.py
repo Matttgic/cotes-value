@@ -153,7 +153,7 @@ def main() -> int:
         vus = set()
         journal["resultats"]["non_regles"] = [
             resultats_mod.diagnostic(p, enregistrements) for p in paris
-            if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])][:40]
+            if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])][:80]
 
     # 5. sauvegarde
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives

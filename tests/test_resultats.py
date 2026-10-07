@@ -116,3 +116,26 @@ def test_manuel_par_manches_baseball():
     m = {"pmu|1": {"score": [1, 3], "periodes": [[0, 0], [0, 0], [0, 0], [0, 1], [0, 0], [1, 0], [0, 0], [0, 0], [0, 2]]}}
     appliquer([p], {}, m)
     assert p["statut"] == "gagne"
+
+
+def test_noms_francais_retrouves_par_la_reference():
+    # cas réel : « Angleterre – Rép.Tchèque » chez Unibet, « England – Czechia » chez ESPN et Pinnacle
+    pari = {"sport": "football", "domicile": "Angleterre", "exterieur": "Rép.Tchèque", "debut": "2026-10-06T02:00:00Z",
+            "match_reference": "England - Czechia"}
+    assert R.retrouver(pari, [enr("espn", "England", "Czechia", (3, 0))])[0]["score"] == (3, 0)
+    # référence dans l'autre sens que le bookmaker : le score reste orienté comme le pari
+    pari_inv = {**pari, "match_reference": "Czechia - England"}
+    assert R.retrouver(pari_inv, [enr("espn", "England", "Czechia", (3, 0))])[0]["score"] == (3, 0)
+    # espoirs : le marqueur U21 du bookmaker est reporté sur le nom Pinnacle, l'équipe A n'est pas prise
+    u21 = {**pari, "domicile": "Portugal (U21)", "exterieur": "Rép. Tchèque (U21)", "match_reference": "Portugal - Czechia"}
+    E = [enr("espn", "Portugal", "Czechia", (1, 0)), enr("orbitxch", "Portugal U21", "Czechia U21", (2, 0))]
+    assert [r["source"] for r in R.retrouver(u21, E)] == ["orbitxch"]
+
+
+def test_nette_majorite_contre_une_source_isolee():
+    E = [enr("orbitxch", "Honduras", "Jamaica", (1, 1)), enr("draftkings", "Honduras", "Jamaica", (1, 1)),
+         enr("espn", "Honduras", "Jamaica", (1, 1)), enr("unibet-uk", "Honduras", "Jamaica", (0, 0))]
+    r = R.consensus(PARI, E)
+    assert r["score"] == (1, 1) and "unibet-uk" not in r["sources"]
+    assert R.consensus(PARI, E[:2] + E[3:]) is None                   # 2 contre 1 : pas assez net
+    assert R.consensus(PARI, E + [enr("betmgm", "Honduras", "Jamaica", (0, 0))]) is None   # 3 contre 2

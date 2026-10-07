@@ -10,23 +10,28 @@ ESPN (API publique, sans clé) est un validateur de plus et la source des scores
 football : fiche du match ouverte seulement quand un pari en a besoin ; quart-temps NFL, tiers-temps NHL…).
 
 Un match est retrouvé chez chaque validateur par les noms d'équipes (dans un sens ou l'autre) et l'heure
-de début. Le score n'est retenu que si au moins SOURCES_MIN validateurs ont le match terminé et que TOUS
-donnent le même score ; les corners, seulement si au moins SOURCES_MIN sources les donnent identiques
+de début. Le score n'est retenu que si au moins SOURCES_MIN validateurs ont le match terminé et qu'ils
+donnent tous le même score (ou une nette majorité d'entre eux, voir MAJORITE_MIN) ; les corners, seulement si au moins SOURCES_MIN sources les donnent identiques
 (Betfair renvoie 0-0 quand il ne les compte pas). Sinon le pari attend, puis passe « à régler à la main ».
 """
 from __future__ import annotations
 
+from collections import Counter
 from datetime import datetime, timedelta
 
 import requests
 
-from .correspondance import ressemblance
+from .correspondance import normaliser, ressemblance
 
 VALIDATEURS = ["orbitxch", "draftkings", "unibet-uk", "interwetten-de", "betmgm", "pmu"]
 ECART_HEURE_MIN = 45
 RESSEMBLANCE_MIN = 0.75
 PAGES_MAX = 15
 SOURCES_MIN = 2
+# sources en désaccord : le score majoritaire l'emporte s'il est donné par au moins MAJORITE_MIN sources et
+# au moins 3 fois plus de sources que les autres scores (une source isolée se trompe : Unibet UK 0-0 au lieu
+# de 1-1, Interwetten 29-28 au lieu de 30-28 ou le score du temps réglementaire au hockey)
+MAJORITE_MIN = 3
 # une seule source suffit si elle est très fiable et que le match a commencé depuis au moins 6 heures
 # (tennis : ESPN est souvent la seule à donner les sets)
 SOURCES_FIABLES = {"espn", "orbitxch", "draftkings"}
@@ -206,17 +211,48 @@ def _oriente(r: dict, inverse: bool) -> dict:
             "periodes": [sw(p) for p in r["periodes"]], "corners": sw(r["corners"])}
 
 
+def _avec_marqueurs(nom: str, modele: str) -> str:
+    """Reporte sur `nom` les marqueurs U21 / Women du nom `modele` (Pinnacle ne les écrit pas dans le nom)."""
+    _, fem, jeunes = normaliser(modele)
+    _, fem_n, jeunes_n = normaliser(nom)
+    for j in sorted(jeunes - jeunes_n):
+        nom = f"{nom} {j.upper()}"
+    return f"{nom} Women" if fem and not fem_n else nom
+
+
+def _noms(p: dict) -> tuple[list[str], list[str]]:
+    """Noms possibles de chaque équipe du pari : ceux du bookmaker et ceux de la référence (Pinnacle, en
+    anglais : « England », « Czechia », là où le bookmaker écrit « Angleterre », « Rép.Tchèque »)."""
+    dom, ext = [p["domicile"]], [p["exterieur"]]
+    ref = str(p.get("match_reference") or "")
+    if ref.count(" - ") == 1:
+        a, b = (_avec_marqueurs(x.strip(), m) for x, m in zip(ref.split(" - "), (p["domicile"], p["exterieur"])))
+        # la référence peut être dans l'autre sens que le bookmaker
+        direct = (ressemblance(p["domicile"], a), ressemblance(p["exterieur"], b))
+        inverse = (ressemblance(p["domicile"], b), ressemblance(p["exterieur"], a))
+        if (min(inverse), sum(inverse)) > (min(direct), sum(direct)):
+            a, b = (_avec_marqueurs(x.strip(), m) for x, m in zip(ref.split(" - ")[::-1], (p["domicile"], p["exterieur"])))
+        dom.append(a)
+        ext.append(b)
+    return dom, ext
+
+
 def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
     """Le match du pari chez chaque validateur (le meilleur par source), orienté comme le pari."""
     debut = _heure(p.get("debut"))
     if not debut:
         return []
+    dom, ext = _noms(p)
+    def proche(noms: list[str], x: str) -> float:
+        # espoirs / féminines : le marqueur doit être le même des deux côtés (sinon équipe A ou masculine)
+        return max((ressemblance(n, x) for n in noms if normaliser(n)[1:] == normaliser(x)[1:]), default=0.0)
+
     meilleurs: dict[str, tuple[float, dict]] = {}
     for r in enregistrements:
         if r["sport"] != p["sport"] or not r["debut"] or abs((r["debut"] - debut).total_seconds()) > ECART_HEURE_MIN * 60:
             continue
-        direct = min(ressemblance(p["domicile"], r["domicile"]), ressemblance(p["exterieur"], r["exterieur"]))
-        inverse = min(ressemblance(p["domicile"], r["exterieur"]), ressemblance(p["exterieur"], r["domicile"]))
+        direct = min(proche(dom, r["domicile"]), proche(ext, r["exterieur"]))
+        inverse = min(proche(dom, r["exterieur"]), proche(ext, r["domicile"]))
         score = max(direct, inverse)
         if score < RESSEMBLANCE_MIN:
             continue
@@ -246,6 +282,18 @@ def _retenus(p: dict, enregistrements: list[dict]) -> list[dict]:
     return trouves
 
 
+def _majoritaires(trouves: list[dict]) -> list[dict]:
+    """Les sources qui donnent le score retenu : toutes d'accord, ou une nette majorité (MAJORITE_MIN)."""
+    compte = Counter(r["score"] for r in trouves)
+    if not compte:
+        return []
+    score, n = compte.most_common(1)[0]
+    autres = len(trouves) - n
+    if autres and (n < MAJORITE_MIN or n < 3 * autres):
+        return []
+    return [r for r in trouves if r["score"] == score]
+
+
 def _sans_zeros_finaux(periodes: list) -> tuple:
     """Périodes sans les 0-0 de fin (manche non jouée au baseball, prolongation blanche) : certaines sources
     les listent, d'autres non, sans que ce soit un désaccord."""
@@ -257,8 +305,8 @@ def _sans_zeros_finaux(periodes: list) -> tuple:
 
 def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None = None) -> dict | None:
     """Résultat validé du match d'un pari, ou None (pas encore terminé chez un validateur, ou désaccord)."""
-    trouves = _retenus(p, enregistrements)
-    if not trouves or len({r["score"] for r in trouves}) > 1:
+    trouves = _majoritaires(_retenus(p, enregistrements))
+    if not trouves:
         return None
     if len(trouves) < SOURCES_MIN:
         debut = _heure(p.get("debut"))
@@ -299,4 +347,4 @@ def diagnostic(p: dict, enregistrements: list[dict]) -> dict:
             "sources": {r["source"]: {"score": r["score"], "periodes": r["periodes"]} for r in trouves},
             "retenues": sorted(r["source"] for r in retenus),
             "raison": "aucune source" if not retenus else
-            ("sources en désaccord" if len({r["score"] for r in retenus}) > 1 else "pas assez de sources ou de périodes")}
+            ("sources en désaccord" if not _majoritaires(retenus) else "pas assez de sources ou de périodes")}
