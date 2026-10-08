@@ -38,7 +38,7 @@ SOURCES_MIN = 2
 MAJORITE_MIN = 3
 # une seule source suffit si elle est très fiable et que le match a commencé depuis au moins 6 heures
 # (tennis : ESPN est souvent la seule à donner les sets)
-SOURCES_FIABLES = {"espn", "orbitxch", "draftkings"}
+SOURCES_FIABLES = {"espn", "orbitxch", "draftkings", "apisports"}
 # tennis : Betfair et PMU gardent un score en cours de match (sets, voire points) sur des matchs finis
 TENNIS_EXCLUES = {"orbitxch", "pmu"}
 TENNIS_FIABLES = {"espn"}                         # seule source unique acceptée (Betfair : score figé)
@@ -137,6 +137,123 @@ def _espn_json(chemin: str, params: dict | None = None) -> dict | None:
     except (requests.RequestException, ValueError) as e:
         ERREURS_ESPN.append(f"{chemin} : {repr(e)[:150]}")
     return None
+
+
+# API-Sports (clé gratuite API_SPORTS_KEY, 100 requêtes par jour et par sport) : résultats du monde entier
+# avec le score par période (basket européen, handball, KHL, championnats féminins…). Une requête = tous les
+# matchs d'un jour ; lue seulement pour les paris que les autres sources n'ont pas réglés, et gardée en
+# cache (donnees/apisports.json) pour tenir dans le quota.
+APISPORTS = {"football": "https://v3.football.api-sports.io/fixtures",
+             "basket": "https://v1.basketball.api-sports.io/games",
+             "hockey": "https://v1.hockey.api-sports.io/games",
+             "handball": "https://v1.handball.api-sports.io/games"}
+APISPORTS_FINAUX = {"FT", "AOT", "AET", "AP", "PEN"}
+APISPORTS_FRAIS_MIN = 60           # jour courant ou veille : relu au plus toutes les heures
+APISPORTS_ANCIEN_H = 6             # jours plus anciens : toutes les 6 heures
+ERREURS_APISPORTS: list[str] = []
+
+
+def _ap_paire(x) -> tuple[int, int] | None:
+    """« 2-1 », {"home": 2, "away": 1} -> (2, 1)."""
+    try:
+        if isinstance(x, str):
+            a, b = x.split("-")
+            return int(a), int(b)
+        if isinstance(x, dict) and x.get("home") is not None and x.get("away") is not None:
+            return int(x["home"]), int(x["away"])
+    except (TypeError, ValueError):
+        pass
+    return None
+
+
+def apisports_match(sport: str, g: dict) -> dict | None:
+    """Un match terminé d'API-Sports au format des validateurs (score final, périodes réglementaires puis
+    prolongation ; tirs au but non détaillés : le score final, qui compte le but du vainqueur, suffit)."""
+    fx = g.get("fixture") or g
+    if ((fx.get("status") or {}).get("short")) not in APISPORTS_FINAUX:
+        return None
+    t = g.get("teams") or {}
+    dom, ext = (t.get("home") or {}).get("name"), (t.get("away") or {}).get("name")
+    sc = g.get("scores") or {}
+    periodes, libelles = [], []
+    if sport == "football":
+        score = _ap_paire(g.get("goals"))
+        mt, ft, prol = (_ap_paire(sc.get(k)) for k in ("halftime", "fulltime", "extratime"))
+        if mt and ft:
+            periodes, libelles = [mt, (ft[0] - mt[0], ft[1] - mt[1])], ["1", "2"]
+            if prol:
+                periodes.append(prol)
+                libelles.append("ET")
+    elif sport == "basket":
+        h, a = sc.get("home") or {}, sc.get("away") or {}
+        score = _ap_paire({"home": h.get("total"), "away": a.get("total")})
+        for k, lib in (("quarter_1", "1"), ("quarter_2", "2"), ("quarter_3", "3"), ("quarter_4", "4"), ("over_time", "OT")):
+            q = _ap_paire({"home": h.get(k), "away": a.get(k)})
+            if q:
+                periodes.append(q)
+                libelles.append(lib)
+    else:                                          # hockey, handball
+        score = _ap_paire(sc)
+        per = g.get("periods") or {}
+        for k, lib in (("first", "1"), ("second", "2"), ("third", "3"), ("overtime", "OT")):
+            q = _ap_paire(per.get(k))
+            if q:
+                periodes.append(q)
+                libelles.append(lib)
+    if not score or not dom or not ext:
+        return None
+    return {"source": "apisports", "sport": sport, "domicile": dom, "exterieur": ext,
+            "debut": _heure(fx.get("date")), "score": score, "periodes": periodes, "libelles": libelles,
+            "corners": None}
+
+
+def lire_apisports(cle: str, sport: str, jours: list[str], cache: dict, maintenant: datetime,
+                   http=requests) -> tuple[list[dict], dict]:
+    """Matchs terminés d'API-Sports pour ces jours (AAAA-MM-JJ, UTC). `cache` (modifié) : « sport|jour » ->
+    {"lu": heure, "matchs": [...]}, relu seulement s'il est trop vieux. Renvoie (matchs, quota restant)."""
+    out, quota = [], {}
+    for jour in sorted(set(jours)):
+        k = f"{sport}|{jour}"
+        entree = cache.get(k) or {}
+        lu = _heure(entree.get("lu"))
+        recent = jour >= (maintenant - timedelta(days=1)).strftime("%Y-%m-%d")
+        limite = timedelta(minutes=APISPORTS_FRAIS_MIN) if recent else timedelta(hours=APISPORTS_ANCIEN_H)
+        if not lu or maintenant - lu > limite:
+            try:
+                r = http.get(APISPORTS[sport], params={"date": jour, "timezone": "UTC"},
+                             headers={"x-apisports-key": cle}, timeout=60)
+                d = r.json()
+                quota[sport] = r.headers.get("x-ratelimit-requests-remaining")
+                if d.get("errors"):
+                    ERREURS_APISPORTS.append(f"{sport} {jour} : {str(d['errors'])[:150]}")
+                else:
+                    matchs = [m for m in (apisports_match(sport, g) for g in d.get("response") or []) if m]
+                    entree = {"lu": maintenant.isoformat(timespec="seconds"),
+                              "matchs": [{**m, "debut": m["debut"].isoformat() if m["debut"] else None} for m in matchs]}
+                    cache[k] = entree
+            except (requests.RequestException, ValueError) as e:
+                ERREURS_APISPORTS.append(f"{sport} {jour} : {repr(e)[:150]}")
+        for m in entree.get("matchs") or []:
+            out.append({**m, "debut": _heure(m["debut"]), "score": tuple(m["score"]),
+                        "periodes": [tuple(x) for x in m["periodes"]]})
+    return out, quota
+
+
+def jours_a_lire(paris: list[dict], regles: set[str], maintenant: datetime) -> dict[str, list[str]]:
+    """Sport -> jours (UTC) des paris pas encore réglés par les autres sources, commencés depuis 2 h."""
+    out: dict[str, set[str]] = {}
+    for p in paris:
+        if p["statut"] not in ("en_cours", "a_regler") or p["match_id"] in regles or p["sport"] not in APISPORTS:
+            continue
+        debut = _heure(p.get("reporte_au") or p.get("debut"))
+        if debut and timedelta(hours=2) < maintenant - debut < timedelta(days=7):
+            out.setdefault(p["sport"], set()).add(debut.strftime("%Y-%m-%d"))
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def elaguer_cache_apisports(cache: dict, maintenant: datetime) -> dict:
+    garde = (maintenant - timedelta(days=8)).strftime("%Y-%m-%d")
+    return {k: v for k, v in cache.items() if k.split("|")[-1] >= garde}
 
 
 def lire_espn(sport: str, depuis: datetime, maintenant: datetime, lire_json=_espn_json) -> list[dict]:
@@ -333,13 +450,15 @@ def reporte(p: dict, enregistrements: list[dict]) -> datetime | None:
 
 
 def _majoritaires(trouves: list[dict]) -> list[dict]:
-    """Les sources qui donnent le score retenu : toutes d'accord, ou une nette majorité (MAJORITE_MIN)."""
+    """Les sources qui donnent le score retenu : toutes d'accord, une nette majorité (MAJORITE_MIN), ou au
+    moins deux sources dont une fiable (ESPN, API-Sports…) contre une seule source isolée."""
     compte = Counter(r["score"] for r in trouves)
     if not compte:
         return []
     score, n = compte.most_common(1)[0]
     autres = len(trouves) - n
-    if autres and (n < MAJORITE_MIN or n < 3 * autres):
+    avec_fiable = any(r["source"] in SOURCES_FIABLES for r in trouves if r["score"] == score)
+    if autres and (n < MAJORITE_MIN or n < 3 * autres) and not (n >= 2 and autres == 1 and avec_fiable):
         return []
     return [r for r in trouves if r["score"] == score]
 

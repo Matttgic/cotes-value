@@ -158,6 +158,27 @@ def main() -> int:
             r = resultats_mod.consensus(p, enregistrements, maintenant)
             if r:
                 resultats[p["match_id"]] = r
+    # API-Sports, pour les paris que les autres sources n'ont pas réglés (quota gratuit : 100 requêtes par
+    # jour et par sport ; réponses gardées en cache dans donnees/apisports.json)
+    cle_ap = os.environ.get("API_SPORTS_KEY", "").strip()
+    if cle_ap:
+        cache_ap = resultats_mod.elaguer_cache_apisports(lire_json(donnees / "apisports.json", {}), maintenant)
+        quota_ap = {}
+        for sport, jours in resultats_mod.jours_a_lire(paris, set(resultats), maintenant).items():
+            n = len(resultats_mod.ERREURS_APISPORTS)
+            lu = etape(f"resultats_apisports_{sport}", journal, resultats_mod.lire_apisports,
+                       cle_ap, sport, jours, cache_ap, datetime.now(timezone.utc))
+            signaler(journal, f"resultats_apisports_{sport}", resultats_mod.ERREURS_APISPORTS[n:])
+            if lu:
+                enregistrements += lu[0]
+                quota_ap |= lu[1]
+        ecrire_json(donnees / "apisports.json", cache_ap)
+        for p in paris:
+            if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
+                r = resultats_mod.consensus(p, enregistrements, maintenant)
+                if r:
+                    resultats[p["match_id"]] = r
+        journal["apisports_quota_restant"] = quota_ap
     # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)
     for p in paris:
         r = resultats.get(p["match_id"])

@@ -61,6 +61,7 @@ jobs:
       - name: Cycle (collecte, comparaison, paris, règlement, site)
         env:
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
+          API_SPORTS_KEY: ${{ secrets.API_SPORTS_KEY }}
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
         run: python scripts/cycle.py --donnees donnees --site site
 

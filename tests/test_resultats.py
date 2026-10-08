@@ -137,7 +137,10 @@ def test_nette_majorite_contre_une_source_isolee():
          enr("espn", "Honduras", "Jamaica", (1, 1)), enr("unibet-uk", "Honduras", "Jamaica", (0, 0))]
     r = R.consensus(PARI, E)
     assert r["score"] == (1, 1) and "unibet-uk" not in r["sources"]
-    assert R.consensus(PARI, E[:2] + E[3:]) is None                   # 2 contre 1 : pas assez net
+    assert R.consensus(PARI, E[:2] + E[3:])["score"] == (1, 1)        # 2 dont une fiable contre 1 : retenu
+    peu_fiables = [enr("betmgm", "Honduras", "Jamaica", (1, 1)), enr("pmu", "Honduras", "Jamaica", (1, 1)),
+                   enr("unibet-uk", "Honduras", "Jamaica", (0, 0))]
+    assert R.consensus(PARI, peu_fiables) is None                       # 2 peu fiables contre 1 : on attend
     assert R.consensus(PARI, E + [enr("betmgm", "Honduras", "Jamaica", (0, 0))]) is None   # 3 contre 2
 
 
@@ -252,3 +255,53 @@ def test_match_reporte_regle_a_sa_nouvelle_date_et_wnba():
     r = R._espn_match("basket", c, {}, "basketball/wnba")
     w = {"sport": "basket", "domicile": "Atlanta Dream (W)", "exterieur": "New York Liberty (W)", "debut": "2026-10-06T02:00:00Z"}
     assert R.retrouver(w, [r])[0]["score"] == (101, 98)
+
+
+def test_apisports_lecture_cache_et_reglement():
+    from datetime import timedelta
+    from cotes.reglement import scores_par_periode, regler
+    basket = {"date": "2026-10-06T02:00:00+00:00", "status": {"short": "AOT"},
+              "teams": {"home": {"name": "Charnay Bourgogne Sud W"}, "away": {"name": "Lyon W"}},
+              "scores": {"home": {"quarter_1": 17, "quarter_2": 19, "quarter_3": 18, "quarter_4": 9, "over_time": 11, "total": 74},
+                         "away": {"quarter_1": 8, "quarter_2": 11, "quarter_3": 22, "quarter_4": 22, "over_time": 6, "total": 69}}}
+    hockey = {"date": "2026-10-06T02:00:00+00:00", "status": {"short": "AP"},
+              "teams": {"home": {"name": "Koprivnice"}, "away": {"name": "Technika Brno"}},
+              "scores": {"home": 5, "away": 6}, "periods": {"first": "2-1", "second": "1-2", "third": "2-2",
+                                                             "overtime": "0-0", "penalties": "1-2"}}
+    pas_fini = {**hockey, "status": {"short": "P2"}}
+
+    class Rep:
+        headers = {"x-ratelimit-requests-remaining": "97"}
+
+        def __init__(self, d):
+            self.d = d
+
+        def json(self):
+            return self.d
+
+    appels = []
+
+    class Http:
+        @staticmethod
+        def get(url, params, headers, timeout):
+            appels.append(url)
+            return Rep({"errors": [], "response": [basket] if "basketball" in url else [hockey, pas_fini]})
+
+    cache, m = {}, T + timedelta(hours=8)
+    b, quota = R.lire_apisports("cle", "basket", ["2026-10-06"], cache, m, Http)
+    h, _ = R.lire_apisports("cle", "hockey", ["2026-10-06"], cache, m, Http)
+    assert quota == {"basket": "97"} and len(h) == 1                      # match en cours ignoré
+    R.lire_apisports("cle", "basket", ["2026-10-06"], cache, m + timedelta(minutes=10), Http)
+    assert len(appels) == 2                                               # relu depuis le cache
+    # basket après prolongation : MATCH 74-69, temps réglementaire 63-63
+    p = {"sport": "basket", "domicile": "Charnay Basket Bourgogne Sud (F)", "exterieur": "Lyon ASVEL (F)",
+         "debut": "2026-10-06T02:00:00Z", "match_reference": "Charnay - Lyon"}
+    r = R.consensus(p, b, m)                                              # source fiable seule, 8 h après
+    sc = scores_par_periode("basket", r["score"], r["periodes"], r["libelles"])
+    assert sc["MATCH"] == (74, 69) and sc["TEMPS_REG"] == (63, 63) and sc["MT1"] == (36, 19)
+    # hockey aux tirs au but : score final 5-6 gardé, temps réglementaire 5-5
+    ph = {"sport": "hockey", "domicile": "Koprivnice", "exterieur": "Technika Brno", "debut": "2026-10-06T02:00:00Z"}
+    rh = R.consensus(ph, h, m)
+    sh = scores_par_periode("hockey", rh["score"], rh["periodes"], rh["libelles"])
+    assert sh["MATCH"] == (5, 6) and sh["TEMPS_REG"] == (5, 5)
+    assert regler({**ph, "marche": "RESULTAT_1N2", "periode": "TEMPS_REG", "issue": "NUL", "ligne": None}, sh) == "gagne"
