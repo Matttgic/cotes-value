@@ -319,7 +319,8 @@ def test_cas_reels_du_7_octobre():
     m = {"sport": "basket", "domicile": "Manresa", "exterieur": "Ratiopharm Ulm", "debut": "2026-10-06T02:00:00Z"}
     E = [enr("unibet-uk", "Manresa", "Ulm", (40, 26), sport="basket"),
          enr("apisports", "Manresa", "Ulm", (101, 89), periodes=[(31, 24), (31, 21), (20, 24), (19, 20)], sport="basket")]
-    assert R.consensus(m, E)["score"] == (101, 89)
+    from datetime import timedelta
+    assert R.consensus(m, E, T + timedelta(hours=8))["score"] == (101, 89)     # source fiable seule, 8 h après
     # détail des périodes différent selon les sources : celui de la source fiable
     b = {"sport": "basket", "domicile": "Balkan Botevgrad", "exterieur": "Bahcesehir Koleji", "debut": "2026-10-06T02:00:00Z"}
     E = [enr("apisports", "Balkan", "Bahcesehir Kol.", (60, 101), periodes=[(16, 24), (5, 29), (20, 29), (19, 19)], sport="basket"),
