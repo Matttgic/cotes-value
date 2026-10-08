@@ -55,3 +55,16 @@ def test_courbes_du_gain_cumule():
     c = site_web.courbes(paris)
     assert [p[1] for p in c["Pinnacle"]] == [-10.0, 11.0]               # dans l'ordre du règlement
     assert len(c["Toutes"]) == 3 and len(c["Uniques"]) == 2              # la même cote ne compte qu'une fois
+
+
+def test_gain_attendu_et_bilan_par_bookmaker():
+    from cotes.simulation import bilan_bookmakers
+    base = {"simulation": "A", "mise": 10, "match_id": "w|1", "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None,
+            "issue": "DOM", "joueur": None, "statut": "perdu", "gain": -10.0, "cote": 2.2, "cote_juste": 2.0,
+            "regle_le": "2026-10-07T12:00:00+00:00", "detecte": "1", "bookmaker": "PMU"}
+    c = site_web.courbes([{**base, "reference": "Pinnacle"}, {**base, "reference": "Pinnacle brut", "issue": "EXT"}])
+    assert c["Uniques"][0][3] == 1.0                     # 10 × (2,2 / 2,0 − 1)
+    assert c["Pinnacle brut"][0][3] is None              # témoin : pas de gain attendu
+    b = bilan_bookmakers([{**base, "reference": "Pinnacle"}, {**base, "reference": "Pinnacle", "simulation": "X",
+                                                             "issue": "EXT", "bookmaker": "Winamax"}])
+    assert b["PMU·A|Uniques"]["regles"] == 1 and b["Winamax·X|Uniques"]["regles"] == 1

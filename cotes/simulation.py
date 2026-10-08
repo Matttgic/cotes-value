@@ -201,6 +201,11 @@ def bilan(paris: list[dict]) -> dict:
     return _cumuler(paris, lambda p: p["simulation"])
 
 
+def bilan_bookmakers(paris: list[dict]) -> dict:
+    """Par bookmaker et simulation (« PMU·A|Uniques »…) : la page additionne les simulations choisies."""
+    return _cumuler(paris, lambda p: f'{p.get("bookmaker")}·{p.get("simulation")}')
+
+
 def bilan_tranches(paris: list[dict]) -> dict:
     """Par tranche de cote (« 1,51 – 2,00|Pinnacle »…) ; chaque pari n'appartient qu'à une simulation."""
     return _cumuler(paris, lambda p: tranche(p["cote"]))
