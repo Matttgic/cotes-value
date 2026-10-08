@@ -50,6 +50,7 @@ ESPN_LIGUES = {"football": ["soccer/all"], "hockey": ["hockey/nhl"], "basket": [
 # terminés dans le temps réglementaire au football (une prolongation fausserait le score « match ») ;
 # prolongation et tirs au but compris ailleurs
 ESPN_FINAUX = {"STATUS_FULL_TIME", "STATUS_FINAL"}
+ESPN_FEMININES = {"basketball/wnba"}           # ligues féminines dont ESPN ne marque pas les noms
 # tennis : abandon en cours de match (règles d'abandon de chaque bookmaker, cotes/reglement.py)
 ESPN_ABANDONS = {"STATUS_RETIRED"}
 REPORT_MAX_J = 7
@@ -184,6 +185,8 @@ def _espn_match(sport: str, c: dict, e: dict, ligue: str) -> dict | None:
         return None
     if not nom(dom) or not nom(ext):
         return None
+    if ligue in ESPN_FEMININES:                    # ESPN n'écrit pas « Women », les bookmakers si (« (W) »)
+        nom = (lambda f: lambda x: f(x) and f"{f(x)} Women")(nom)
     return {"source": "espn", "sport": sport, "domicile": nom(dom), "exterieur": nom(ext),
             "debut": _heure(c.get("date") or e.get("date")), "score": score, "periodes": periodes,
             "libelles": libelles_periodes(sport, None, len(periodes)), "corners": None,
@@ -256,8 +259,9 @@ def _noms(p: dict) -> tuple[list[str], list[str]]:
 
 
 def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
-    """Le match du pari chez chaque validateur (le meilleur par source), orienté comme le pari."""
-    debut = _heure(p.get("debut"))
+    """Le match du pari chez chaque validateur (le meilleur par source), orienté comme le pari. Un match
+    reporté est cherché à sa nouvelle date (`reporte_au`)."""
+    debut = _heure(p.get("reporte_au") or p.get("debut"))
     if not debut:
         return []
     dom, ext = _noms(p)
@@ -355,7 +359,7 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
     if not trouves:
         return None
     if len(trouves) < SOURCES_MIN:
-        debut = _heure(p.get("debut"))
+        debut = _heure(p.get("reporte_au") or p.get("debut"))
         fiables = TENNIS_FIABLES if p["sport"] == "tennis" else SOURCES_FIABLES
         seule_fiable = trouves[0]["source"] in fiables and maintenant and debut and \
             maintenant - debut >= timedelta(hours=DELAI_SOURCE_UNIQUE_H)

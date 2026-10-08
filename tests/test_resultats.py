@@ -235,3 +235,20 @@ def test_tennis_abandon_et_match_reporte():
     d = R.reporte(p2, [plus_tard])
     appliquer([p2], {}, {}, T + timedelta(hours=20), {"pmu|1": d})
     assert p2["statut"] == "en_cours" and p2["reporte_au"].startswith("2026-10-07")
+
+
+def test_match_reporte_regle_a_sa_nouvelle_date_et_wnba():
+    from datetime import timedelta
+    # reporté au lendemain : cherché à la nouvelle date une fois joué
+    p = {"sport": "tennis", "domicile": "Nuno Borges", "exterieur": "Facundo Diaz Acosta",
+         "debut": "2026-10-06T02:00:00Z", "reporte_au": "2026-10-07T02:05:00+00:00"}
+    e = enr("espn", "Facundo Diaz Acosta", "Nuno Borges", (0, 2), periodes=[(6, 7), (2, 6)], sport="tennis")
+    e["debut"] = T + timedelta(days=1, minutes=5)
+    assert R.consensus(p, [e], T + timedelta(days=1, hours=8))["score"] == (2, 0)
+    # WNBA : ESPN « Atlanta Dream », bookmaker « Atlanta Dream (W) »
+    c = {"id": "1", "date": "2026-10-06T02:00Z", "competitors": [
+        {"homeAway": "home", "score": "101", "team": {"displayName": "Atlanta Dream"}, "linescores": [{"value": 26}]},
+        {"homeAway": "away", "score": "98", "team": {"displayName": "New York Liberty"}, "linescores": [{"value": 26}]}]}
+    r = R._espn_match("basket", c, {}, "basketball/wnba")
+    w = {"sport": "basket", "domicile": "Atlanta Dream (W)", "exterieur": "New York Liberty (W)", "debut": "2026-10-06T02:00:00Z"}
+    assert R.retrouver(w, [r])[0]["score"] == (101, 98)
