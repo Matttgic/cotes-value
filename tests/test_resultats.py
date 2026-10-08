@@ -305,3 +305,23 @@ def test_apisports_lecture_cache_et_reglement():
     sh = scores_par_periode("hockey", rh["score"], rh["periodes"], rh["libelles"])
     assert sh["MATCH"] == (5, 6) and sh["TEMPS_REG"] == (5, 5)
     assert regler({**ph, "marche": "RESULTAT_1N2", "periode": "TEMPS_REG", "issue": "NUL", "ligne": None}, sh) == "gagne"
+
+
+def test_cas_reels_du_7_octobre():
+    from cotes.correspondance import normaliser
+    # « AEK B.C. » : club de basket, pas l'équipe B
+    assert normaliser("AEK B.C.")[2] == frozenset() and normaliser("Barcelona B")[2] == {"b"}
+    # match féminin quand une seule équipe est marquée chez le bookmaker
+    p = {"sport": "basket", "domicile": "BC La Tronche Meylan", "exterieur": "Toulouse (F)", "debut": "2026-10-06T02:00:00Z"}
+    assert R.retrouver(p, [enr("apisports", "Tronche Meylan W", "Toulouse W", (62, 53), sport="basket")])
+    assert not R.retrouver(p, [enr("apisports", "Tronche Meylan", "Toulouse", (62, 53), sport="basket")])
+    # score figé en cours de match (Unibet UK 40-26) contre le final d'une source fiable (101-89)
+    m = {"sport": "basket", "domicile": "Manresa", "exterieur": "Ratiopharm Ulm", "debut": "2026-10-06T02:00:00Z"}
+    E = [enr("unibet-uk", "Manresa", "Ulm", (40, 26), sport="basket"),
+         enr("apisports", "Manresa", "Ulm", (101, 89), periodes=[(31, 24), (31, 21), (20, 24), (19, 20)], sport="basket")]
+    assert R.consensus(m, E)["score"] == (101, 89)
+    # détail des périodes différent selon les sources : celui de la source fiable
+    b = {"sport": "basket", "domicile": "Balkan Botevgrad", "exterieur": "Bahcesehir Koleji", "debut": "2026-10-06T02:00:00Z"}
+    E = [enr("apisports", "Balkan", "Bahcesehir Kol.", (60, 101), periodes=[(16, 24), (5, 29), (20, 29), (19, 19)], sport="basket"),
+         enr("interwetten-de", "Balkan Botevgrad", "Bahcesehir Koleji", (60, 101), periodes=[(21, 53), (39, 48)], sport="basket")]
+    assert R.consensus(b, E)["periodes"][0] == (16, 24)

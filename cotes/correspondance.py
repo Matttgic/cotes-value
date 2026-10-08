@@ -56,6 +56,7 @@ def normaliser(nom: str | None) -> tuple[tuple[str, ...], bool, frozenset]:
     """(mots significatifs, féminin, marqueurs jeunes/réserve)."""
     s = unicodedata.normalize("NFKD", nom or "").encode("ascii", "ignore").decode().lower().strip()
     s = re.sub(r"\bf\.\s?c\.?", "fc", s)                 # « F.C. » -> fc
+    s = re.sub(r"\bb\.\s?c\.?", "bc", s)                 # « AEK B.C. » (club de basket) -> bc, pas l'équipe B
     s = re.sub(r"\((\d{2})\)", r" u\1", s)                 # « Italie(21) » -> italie u21
     fem = bool(FEMININ.search(s))
     s = FEMININ.sub(" ", s)

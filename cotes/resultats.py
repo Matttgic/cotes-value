@@ -382,13 +382,21 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
     if not debut:
         return []
     dom, ext = _noms(p)
+    # féminin : au niveau du match (« BC La Tronche Meylan – Toulouse (F) » : une seule équipe marquée)
+    feminin = lambda noms: any(normaliser(n)[1] for n in noms)  # noqa: E731
+    fem_pari = feminin(dom + ext)
+    en_femmes = lambda n: n if normaliser(n)[1] else f"{n} Women"  # noqa: E731
+    if fem_pari:
+        dom, ext = [en_femmes(n) for n in dom], [en_femmes(n) for n in ext]
+
     def proche(noms: list[str], x: str) -> float:
-        # espoirs / féminines : le marqueur doit être le même des deux côtés (sinon équipe A ou masculine)
-        return max((ressemblance(n, x) for n in noms if normaliser(n)[1:] == normaliser(x)[1:]), default=0.0)
+        # espoirs / réserve : le marqueur doit être le même des deux côtés (sinon équipe A)
+        x = en_femmes(x) if fem_pari else x
+        return max((ressemblance(n, x) for n in noms if normaliser(n)[2] == normaliser(x)[2]), default=0.0)
 
     meilleurs: dict[str, tuple[float, float, dict]] = {}
     for r in enregistrements:
-        if r.get("a_venir"):
+        if r.get("a_venir") or feminin([r["domicile"], r["exterieur"]]) != fem_pari:
             continue
         ecart = abs((r["debut"] - debut).total_seconds()) if r["sport"] == p["sport"] and r["debut"] else None
         tennis_large = p["sport"] == "tennis" and ecart is not None and ecart <= ECART_TENNIS_H * 3600
@@ -422,8 +430,14 @@ def _periodes_coherentes(sport: str, r: dict) -> bool:
 
 
 def _retenus(p: dict, enregistrements: list[dict]) -> list[dict]:
-    """Les sources du match retenues pour le valider (au tennis : score final plausible, en sets)."""
+    """Les sources du match retenues pour le valider (au tennis : score final plausible, en sets). Un score
+    plus petit des deux côtés que celui d'une source fiable est un score en cours de match figé (Unibet UK
+    40-26 au lieu de 101-89) : écarté s'il est seul à le donner."""
     trouves = retrouver(p, enregistrements)
+    fiables = [r["score"] for r in trouves if r["source"] in SOURCES_FIABLES]
+    nb = Counter(r["score"] for r in trouves)          # un score donné par deux sources n'est pas un accident
+    trouves = [r for r in trouves if nb[r["score"]] > 1 or not any(
+        r["score"] != f and r["score"][0] <= f[0] and r["score"][1] <= f[1] for f in fiables)]
     if p["sport"] == "tennis":
         trouves = [r for r in trouves if r["source"] not in TENNIS_EXCLUES
                    and (r.get("abandon") or (max(r["score"]) in (2, 3) and min(r["score"]) < max(r["score"])))]
@@ -488,7 +502,9 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
     avec_periodes = sorted((r for r in trouves if _periodes_coherentes(p["sport"], r)),
                            key=lambda r: -len(r["periodes"]))
     if len({_sans_zeros_finaux(r["periodes"]) for r in avec_periodes}) > 1:
-        avec_periodes = []                           # sources en désaccord sur les périodes : on s'en passe
+        # sources en désaccord sur les périodes (détail différent, quart-temps ou mi-temps…) : celles d'une
+        # source fiable (ESPN, API-Sports), sinon on s'en passe
+        avec_periodes = [r for r in avec_periodes if r["source"] in ("espn", "apisports")][:1]
     corners = [r["corners"] for r in trouves if r["corners"] is not None and r["corners"] != (0, 0)]
     base = avec_periodes[0] if avec_periodes else None
     return {"sport": p["sport"], "score": score, "final": True,

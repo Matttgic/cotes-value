@@ -164,7 +164,11 @@ def main() -> int:
     if cle_ap:
         cache_ap = resultats_mod.elaguer_cache_apisports(lire_json(donnees / "apisports.json", {}), maintenant)
         quota_ap = {}
-        for sport, jours in resultats_mod.jours_a_lire(paris, set(resultats), maintenant).items():
+        # matchs déjà validés ailleurs mais sans le détail des périodes dont un pari a besoin (mi-temps…)
+        besoin = {p["match_id"] for p in paris if p["statut"] in ("en_cours", "a_regler")
+                  and (p["periode"] != "MATCH" or p["marche"] == "HALF_TIME_FULL_TIME")}
+        complets = {m for m, r in resultats.items() if r.get("periodes") or m not in besoin}
+        for sport, jours in resultats_mod.jours_a_lire(paris, complets, maintenant).items():
             n = len(resultats_mod.ERREURS_APISPORTS)
             lu = etape(f"resultats_apisports_{sport}", journal, resultats_mod.lire_apisports,
                        cle_ap, sport, jours, cache_ap, datetime.now(timezone.utc))
@@ -174,7 +178,7 @@ def main() -> int:
                 quota_ap |= lu[1]
         ecrire_json(donnees / "apisports.json", cache_ap)
         for p in paris:
-            if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
+            if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in complets:
                 r = resultats_mod.consensus(p, enregistrements, maintenant)
                 if r:
                     resultats[p["match_id"]] = r
