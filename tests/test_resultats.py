@@ -378,3 +378,11 @@ def test_espn_football_feminin_reconnu_par_la_competition():
     # un match masculin du même nom n'est pas confondu
     homme = {**pari, "domicile": "Croatie", "exterieur": "Islande"}
     assert R.consensus(homme, E) is None
+
+
+def test_feminin_note_f_point_chez_betclic():
+    # Betclic : « Malawi F. », « Bnei Herzilya W. » ; les validateurs : « (W) »
+    pari = {"sport": "football", "domicile": "Malawi F.", "exterieur": "Zimbabwe F.", "debut": PARI["debut"]}
+    E = [enr("unibet-uk", "Malawi (W)", "Zimbabwe (W)", (1, 1)), enr("pmu", "Malawi Women", "Zimbabwe Women", (1, 1)),
+         enr("betmgm", "Malawi", "Zimbabwe", (3, 0))]                      # match masculin : écarté
+    assert R.consensus(pari, E)["sources"] == ["pmu", "unibet-uk"]

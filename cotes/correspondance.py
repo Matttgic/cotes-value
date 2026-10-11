@@ -48,7 +48,7 @@ MOTS = {"cordoue": "cordoba", "barbade": "barbados", "bermudes": "bermuda", "val
         "st": "saint", "lucie": "lucia", "cologne": "koln", "mayence": "mainz", "brunswick": "braunschweig"}
 VIDES = {"fc", "cf", "sc", "ac", "afc", "cd", "ca", "club", "de", "del", "la", "le", "les", "the", "sk", "fk",
          "bk", "ud", "sd", "rc", "cs", "ss", "ssc", "calcio", "un", "1907", "1909", "y", "et", "and"}
-FEMININ = re.compile(r"\((f|w|wom|women|fem|feminin)\)|\b(women|womens|wom|feminin|feminine|femmes|ladies)\b|\s(f|w)$")
+FEMININ = re.compile(r"\((f|w|wom|women|fem|feminin)\)|\b(women|womens|wom|feminin|feminine|femmes|ladies)\b|\s(f|w)\.?$")
 JEUNES = re.compile(r"^(u\d{2}|ii|b|reserves?|youth)$")
 
 
