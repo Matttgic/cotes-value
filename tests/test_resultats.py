@@ -326,3 +326,11 @@ def test_cas_reels_du_7_octobre():
     E = [enr("apisports", "Balkan", "Bahcesehir Kol.", (60, 101), periodes=[(16, 24), (5, 29), (20, 29), (19, 19)], sport="basket"),
          enr("interwetten-de", "Balkan Botevgrad", "Bahcesehir Koleji", (60, 101), periodes=[(21, 53), (39, 48)], sport="basket")]
     assert R.consensus(b, E)["periodes"][0] == (16, 24)
+
+
+def test_apisports_seulement_dans_la_fenetre_du_plan_gratuit():
+    maintenant = datetime(2026, 10, 11, 12, tzinfo=timezone.utc)
+    p = lambda m, debut: {"statut": "en_cours", "match_id": m, "sport": "football", "debut": debut}
+    paris = [p("a", "2026-10-08T18:00:00Z"), p("b", "2026-10-10T18:00:00Z"),
+             p("c", "2026-10-11T09:00:00Z"), p("d", "2026-10-11T11:00:00Z")]
+    assert R.jours_a_lire(paris, set(), maintenant) == {"football": ["2026-10-10", "2026-10-11"]}

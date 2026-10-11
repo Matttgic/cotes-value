@@ -239,14 +239,20 @@ def lire_apisports(cle: str, sport: str, jours: list[str], cache: dict, maintena
     return out, quota
 
 
+# plan gratuit : seuls hier, aujourd'hui et demain sont lisibles (les jours plus anciens sont refusés)
+APISPORTS_JOURS_PASSES = 1
+
+
 def jours_a_lire(paris: list[dict], regles: set[str], maintenant: datetime) -> dict[str, list[str]]:
-    """Sport -> jours (UTC) des paris pas encore réglés par les autres sources, commencés depuis 2 h."""
+    """Sport -> jours (UTC) des paris pas encore réglés par les autres sources, commencés depuis 2 h,
+    dans la fenêtre que le plan API-Sports permet de lire."""
+    premier = (maintenant - timedelta(days=APISPORTS_JOURS_PASSES)).strftime("%Y-%m-%d")
     out: dict[str, set[str]] = {}
     for p in paris:
         if p["statut"] not in ("en_cours", "a_regler") or p["match_id"] in regles or p["sport"] not in APISPORTS:
             continue
         debut = _heure(p.get("reporte_au") or p.get("debut"))
-        if debut and timedelta(hours=2) < maintenant - debut < timedelta(days=7):
+        if debut and maintenant - debut > timedelta(hours=2) and debut.strftime("%Y-%m-%d") >= premier:
             out.setdefault(p["sport"], set()).add(debut.strftime("%Y-%m-%d"))
     return {k: sorted(v) for k, v in out.items()}
 
