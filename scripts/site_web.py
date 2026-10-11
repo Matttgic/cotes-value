@@ -8,9 +8,9 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes.simulation import (REFERENCES, SIMULATIONS, TEMOIN, TRANCHES, bilan, bilan_bookmakers,  # noqa: E402
-                              bilan_tranches,
-                              premiers_par_selection)
+from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCHES, bilan,  # noqa: E402
+                              bilan_bookmakers, bilan_tranches, paris_strategie, premiers_par_selection,
+                              tranche)
 from cotes.stockage import lire_archives  # noqa: E402
 
 
@@ -108,6 +108,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     plus récente à la plus ancienne, nombre total de fiches, valeurs des filtres calculées sur TOUS les
     paris)."""
     groupes: dict[tuple, list[dict]] = {}
+    strategie = paris_strategie(paris)
     for p in paris:
         groupes.setdefault(cle_fiche(p), []).append(p)
     fiches = []
@@ -117,6 +118,8 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
         f["trace"] = trace(lignes[0])
         f["sims"] = sorted({r.get("simulation") for r in lignes})
         f["a_regler"] = any(r.get("statut") == "a_regler" for r in lignes)
+        f["strategie"] = any(id(r) in strategie for r in lignes)
+        f["tranche"] = tranche(f["cote"]) if f.get("cote") else None
         fiches.append(f)
     recents = lambda champ: lambda f: f.get(champ) or ""      # noqa: E731
     ouverts = sorted((f for f in fiches if f["statut"] == "en_cours"), key=recents("detecte"), reverse=True)
@@ -138,7 +141,7 @@ def courbes(paris: list[dict]) -> dict[str, list]:
     page fait le cumul selon les simulations choisies). Gain attendu = mise × (cote / cote juste − 1) : ce que
     le pari rapporte en moyenne si la cote juste est exacte (absent pour le témoin, comparé à une cote avec
     marge)."""
-    uniques = premiers_par_selection(paris)
+    uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
     out: dict[str, list] = {}
     regles = [p for p in paris if p.get("statut") not in ("en_cours", "a_regler") and p.get("regle_le")]
     regles.sort(key=lambda p: (p["regle_le"], p.get("debut") or ""))
@@ -150,7 +153,8 @@ def courbes(paris: list[dict]) -> dict[str, list]:
         attendu = (round(p["mise"] * (p["cote"] / p["cote_juste"] - 1), 2)
                    if p["reference"] != TEMOIN and p.get("cote_juste") else None)
         point = [t, round(p.get("gain") or 0, 2), p.get("simulation"), attendu]
-        vues = [p["reference"]] + ([] if p["reference"] == TEMOIN else ["Toutes"]) + (["Uniques"] if id(p) in uniques else [])
+        vues = [p["reference"]] + ([] if p["reference"] == TEMOIN else ["Toutes"]) + (["Uniques"] if id(p) in uniques else []) \
+            + ([STRATEGIE["nom"]] if id(p) in strategie else [])
         for v in vues:
             out.setdefault(v, []).append(point)
     return out
@@ -177,6 +181,8 @@ def construire(donnees: Path, sortie: Path) -> Path:
     data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
             "bilan_tranches": bilan_tranches(paris), "courbes": courbes(paris),
             "bilan_bookmakers": bilan_bookmakers(paris), "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
+            "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
+                          "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
@@ -303,11 +309,13 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p><b>Paris uniques</b> : chaque cote française comptée une fois, même si plusieurs références l'ont signalée.
     <b>Pinnacle, Betfair…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
     <b>Toutes réf.</b> : la somme des références (une même cote peut y compter plusieurs fois).
-    <b>Pinnacle brut</b> : témoin, cote Pinnacle avec sa marge.</p></details>
+    <b>Pinnacle brut</b> : témoin, cote Pinnacle avec sa marge.
+    <b>Stratégie</b> : les paris qui suivent les critères choisis le 11/10 (voir le texte au-dessus du graphique),
+    comptés seulement depuis cette date.</p></details>
   </section>
   <section class="onglet" id="o-paris">
     <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
-    <select id="f-book"></select><select id="f-sport"></select></div>
+    <select id="f-cote"></select><select id="f-book"></select><select id="f-sport"></select></div>
     <div id="paris"></div>
     <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
   </section>
@@ -384,9 +392,14 @@ document.getElementById("nb-jouer").textContent = cotesJouer.length || "";
 // --- Bilan
 let refBilan = "Uniques";
 const NOMS_REF = {Uniques: "Paris uniques", Toutes: "Toutes réf."};
+const ST = D.strategie || {};
 const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée une seule fois (10 € par pari).",
   Toutes: "Somme des références : une même cote repérée par plusieurs références compte plusieurs fois.",
-  "Pinnacle brut": "Témoin : cotes comparées à la cote Pinnacle affichée, marge comprise."};
+  "Pinnacle brut": "Témoin : cotes comparées à la cote Pinnacle affichée, marge comprise.",
+  "Stratégie": `Stratégie testée depuis le ${ST.debut ? new Date(ST.debut).toLocaleString("fr-FR", {day: "numeric",
+    month: "numeric", hour: "2-digit", minute: "2-digit"}) : "11/10"} : référence ${(ST.references || []).join(", ")},
+    écart ≥ 2 %, cote < ${String(ST.cote_max).replace(".", ",")}, repéré moins de ${ST.avance_max_h} h avant le match,
+    hommes seniors. Critères figés : seule la CLV des prochains paris dira si elle marche (environ 300 paris).`};
 // ligne « Total » : cumul des simulations choisies (A, A+B, A+B+C…), par défaut toutes
 const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
@@ -407,7 +420,7 @@ function additionner(sims, source = D.bilan, prefixe = "") {
   return t;
 }
 function rendreBilan() {
-  const refs = ["Uniques", ...D.references.filter(r => r !== "Pinnacle brut"), "Toutes", "Pinnacle brut"];
+  const refs = ["Uniques", "Stratégie", ...D.references.filter(r => r !== "Pinnacle brut"), "Toutes", "Pinnacle brut"];
   document.getElementById("puces-ref").innerHTML = refs.map(r =>
     `<button data-r="${r}" class="${r===refBilan?"actif":""}">${NOMS_REF[r] || r}</button>`).join("");
   document.getElementById("bilan-quoi").textContent = QUOI[refBilan] || `Paris repérés par ${refBilan}.`;
@@ -417,7 +430,7 @@ function rendreBilan() {
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
 <td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles}</small>` : ""}</td></tr>`;
   document.getElementById("bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
-    Object.entries(D.simulations).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
+    Object.entries(D.simulations).filter(([s]) => !(refBilan === "Stratégie" && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
       additionner(CUMULS[cumul])).replace("<tr>", '<tr class="total">');
@@ -507,12 +520,14 @@ if (D.fiches_total > affiches) document.getElementById("paris").insertAdjacentHT
   ceux à régler (le bilan compte tous les paris). Filtre « Statuts » pour ne voir que les gagnés, perdus… ; le témoin
   « Pinnacle brut » s'affiche en le choisissant dans « Références ».</p>`);
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
-  book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
+  cote:["tranche","Cotes"], book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
-  const vals = (D.valeurs_filtres || {})[champ] || [];
+  // cotes : les tranches du bilan ; simulations : + « Stratégie »
+  const vals = champ === "tranche" ? D.tranches || [] : [...((D.valeurs_filtres || {})[champ] || []),
+    ...(champ === "sims" ? ["Stratégie"] : [])];
   const sel = document.getElementById("f-" + id);
   sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
-    champ==="statut" ? STATUTS[v]||v : champ==="sims" ? v + " " + (D.simulations[v]||"") : v)}</option>`).join("");
+    champ==="statut" ? STATUTS[v]||v : champ==="sims" && D.simulations[v] ? v + " " + D.simulations[v] : v)}</option>`).join("");
   sel.onchange = () => { limite = 50; rendreParis(); };
 }
 let limite = 50;
@@ -531,7 +546,7 @@ function rendreParis() {
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
   // le témoin « Pinnacle brut » n'apparaît que si on le choisit dans « Références »
   const L = fiches.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
-    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? p.sims.includes(v) : p[k]===v)));
+    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : p.sims.includes(v)) : p[k]===v)));
   document.getElementById("paris").innerHTML = L.length ? L.slice(0, limite).map(carteParis).join("")
     : `<div class="vide">Aucun pari pour ces filtres.</div>`;
   const plus = document.getElementById("plus");

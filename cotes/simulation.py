@@ -11,9 +11,10 @@ Chaque référence (Pinnacle, Betfair, Polymarket, Kalshi, Consensus, témoin Pi
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from . import VERSION
+from .correspondance import normaliser
 from .marches import cle
 
 MISE = 10.0
@@ -145,6 +146,44 @@ def tranche(cote: float) -> str:
     return next(nom for bas, haut, nom in TRANCHES if bas < cote <= haut)
 
 
+# Stratégie du 11/10/2026 : critères tirés des paris du 5 au 11/10 (meilleure CLV), puis FIGÉS. Elle n'est
+# jugée que sur les paris repérés après sa création, pour ne pas mesurer la chance qui a servi à la trouver.
+STRATEGIE = {"nom": "Stratégie", "debut": "2026-10-11T10:30:00+00:00",
+             "references": ("Pinnacle", "Betfair", "Polymarket"),     # pas Kalshi (CLV −6 %)
+             "simulations": ("A", "B", "C", "D", "E"),                 # écart ≥ 2 %, pas les cotes > 10
+             "cote_max": 2.5,                                          # cote < 2,5
+             "avance_max_h": 12}                                       # repéré moins de 12 h avant le match
+
+
+def dans_strategie(p: dict) -> bool:
+    """Pari qui suit la stratégie : référence, écart, cote < 2,5, repéré moins de 12 h avant le match, et
+    hommes seniors (pas de compétition féminine ni de jeunes)."""
+    if p.get("reference") not in STRATEGIE["references"] or p.get("simulation") not in STRATEGIE["simulations"]:
+        return False
+    if not (p.get("cote") or 99) < STRATEGIE["cote_max"]:
+        return False
+    detecte, debut = _heure(p.get("detecte")), _heure(p.get("debut"))
+    if not detecte or not debut or not detecte.tzinfo or not debut.tzinfo or detecte < _heure(STRATEGIE["debut"]):
+        return False
+    if not timedelta(0) < debut - detecte < timedelta(hours=STRATEGIE["avance_max_h"]):
+        return False
+    noms = [normaliser(str(p.get(c) or "")) for c in ("domicile", "exterieur", "ligue")]
+    return not any(n[1] for n in noms) and not any(n[2] for n in noms[:2])
+
+
+def paris_strategie(paris: list[dict]) -> set[int]:
+    """Les paris de la stratégie (id() de leur dict) : une mise par cote française, à sa première détection
+    qui suit la stratégie."""
+    premiers: dict[tuple, dict] = {}
+    for p in paris:
+        if not dans_strategie(p):
+            continue
+        k = tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur"))
+        if k not in premiers or (p.get("detecte") or "") < (premiers[k].get("detecte") or ""):
+            premiers[k] = p
+    return {id(p) for p in premiers.values()}
+
+
 def premiers_par_selection(paris: list[dict]) -> set[int]:
     """Les « paris uniques » (repérés par id() de leur dict) : pour chaque cote française (bookmaker, match, marché, issue), le
     pari de sa première détection, quelle que soit la référence qui l'a repérée (le témoin exclu). C'est ce
@@ -163,17 +202,19 @@ def premiers_par_selection(paris: list[dict]) -> set[int]:
 
 
 def _cumuler(paris: list[dict], groupe) -> dict:
-    """Résumé par (groupe, référence), (groupe, « Toutes ») et (groupe, « Uniques ») : nombre, mises, gains,
-    ROI, CLV moyenne. « Toutes » = les vraies références, un pari par référence ; « Uniques » = un pari par
+    """Résumé par (groupe, référence), (groupe, « Toutes »), (groupe, « Uniques ») et (groupe, « Stratégie ») :
+    nombre, mises, gains, ROI, CLV moyenne. « Toutes » = les vraies références, un pari par référence ; « Uniques » = un pari par
     cote française ; le témoin « Pinnacle brut » n'a que sa propre ligne."""
     out: dict[str, dict] = {}
-    uniques = premiers_par_selection(paris)
+    uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
     for p in paris:
         clefs = [f'{groupe(p)}|{p["reference"]}']
         if p["reference"] != TEMOIN:
             clefs.append(f'{groupe(p)}|Toutes')
         if id(p) in uniques:
             clefs.append(f'{groupe(p)}|Uniques')
+        if id(p) in strategie:
+            clefs.append(f'{groupe(p)}|{STRATEGIE["nom"]}')
         for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
                                       "clv_somme": 0.0, "clv_n": 0, "gagnes": 0})

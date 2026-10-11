@@ -297,3 +297,24 @@ def test_trace_du_pari_de_la_prise_au_reglement():
     pr = p["preuve_reglement"]
     assert p["statut"] == "gagne" and pr["origine"] == "automatique" and pr["sources"] == ["draftkings", "espn"]
     assert pr["scores"]["MATCH"] == (2, 1) and pr["scores"]["MT1"] == (1, 0)
+
+
+def test_strategie_criteres_figes_et_seulement_apres_sa_creation():
+    from cotes.simulation import STRATEGIE, bilan, dans_strategie, paris_strategie
+    base = {"simulation": "B", "mise": 10, "gain": 9, "statut": "gagne", "match_id": "pmu|1", "reference": "Pinnacle",
+            "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "joueur": None, "cote": 1.9,
+            "domicile": "Lens", "exterieur": "Lille", "ligue": "Ligue 1",
+            "detecte": "2026-10-12T15:00:00+00:00", "debut": "2026-10-12T19:00:00+00:00"}
+    assert dans_strategie(base)
+    assert not dans_strategie({**base, "detecte": "2026-10-10T15:00:00+00:00", "debut": "2026-10-10T19:00:00+00:00"})
+    assert not dans_strategie({**base, "reference": "Kalshi"})
+    assert not dans_strategie({**base, "cote": 2.6})
+    assert not dans_strategie({**base, "simulation": "X"})
+    assert not dans_strategie({**base, "detecte": "2026-10-12T05:00:00+00:00"})          # 14 h avant
+    assert not dans_strategie({**base, "domicile": "Lens (F)", "exterieur": "Lille (F)"})
+    assert not dans_strategie({**base, "ligue": "CDM Qualif. Europe (F)"})
+    assert not dans_strategie({**base, "domicile": "Lens U21", "exterieur": "Lille U21"})
+    # même cote repérée par Pinnacle puis Betfair : une seule mise dans la stratégie
+    deux = [base, {**base, "reference": "Betfair", "detecte": "2026-10-12T16:00:00+00:00"}]
+    assert len(paris_strategie(deux)) == 1
+    assert bilan(deux)[f'B|{STRATEGIE["nom"]}']["paris"] == 1
