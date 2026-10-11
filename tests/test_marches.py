@@ -223,3 +223,18 @@ def test_double_rencontre_le_meme_jour():
     fr = matchs_de([m("fr2", "winamax", "21")])
     ref = matchs_de([m("p1", "pinnacle", "20"), m("p2", "pinnacle", "21")])
     assert associer(fr, ref)["fr2"][0] == "p2"
+
+
+def test_equipe_au_nom_partiel_pas_confondue():
+    # cas réel du 10/10/2026 : Dungannon – Carrick Rangers (Irlande du Nord) associé à Rangers – Kilmarnock
+    # (Écosse), même heure ; le règlement avait pris le score de Rangers – Kilmarnock
+    from cotes.correspondance import associer, matchs_de
+    m = lambda mid, src, d, e: {"match_id": mid, "source": src, "sport": "football", "domicile": d,  # noqa: E731
+                                "exterieur": e, "debut": "2026-10-10T14:00:00+00:00"}
+    fr = matchs_de([m("w1", "winamax", "Dungannon", "Carrick Rangers"), m("w2", "winamax", "Olymp.Nicosie", "Aris Limassol"),
+                    m("w3", "winamax", "Pays d'Aix UC", "Saran")])
+    ref = matchs_de([m("p1", "pinnacle", "Rangers", "Kilmarnock"), m("p2", "pinnacle", "Aris", "NFC Volos"),
+                     m("p3", "pinnacle", "PAUC Handball", "Saran Loiret Handball")])
+    a = associer(fr, ref)
+    assert "w1" not in a and "w2" not in a
+    assert a["w3"][0] == "p3"                             # nom du bookmaker inclus dans celui de Pinnacle : gardé

@@ -169,8 +169,14 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
                 if ecart > limite:
                     continue
                 if score < 0.75 and not (score >= 0.6 and ecart <= 5):
-                    # une équipe identique, même heure, l'autre approchante (noms tronqués ou sponsors)
-                    if max(s1, s2) >= 0.9 and score >= 0.3 and ecart <= 10:
+                    # une équipe identique, même heure, l'autre approchante (noms tronqués ou sponsors).
+                    # « Identique » à 0,9 seulement si le nom du bookmaker n'a pas de mot en plus : « Carrick
+                    # Rangers » n'est pas « Rangers », « Aris Limassol » n'est pas « Aris » (cas réels du
+                    # 10/10/2026 : Dungannon – Carrick Rangers associé à Rangers – Kilmarnock)
+                    fr_fort, ref_fort = ((f["domicile"], r["exterieur" if inverse else "domicile"]) if s1 >= s2
+                                         else (f["exterieur"], r["domicile" if inverse else "exterieur"]))
+                    inclus = set(normaliser(fr_fort)[0]) <= set(normaliser(ref_fort)[0])
+                    if max(s1, s2) >= 0.9 and score >= 0.3 and ecart <= 10 and (max(s1, s2) >= 0.99 or inclus or score >= 0.45):
                         score = 0.7
                     else:
                         continue
