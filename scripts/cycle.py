@@ -8,7 +8,7 @@ Lancé toutes les 15 minutes par GitHub Actions (.github/workflows/collecte.yml)
 Le règlement des paris a lieu à chaque cycle.
 
 Données (branche « donnees ») : paris.json, etat.json, opportunites/AAAA-MM-JJ.jsonl,
-resultats_manuels.json (règlements faits à la main). Site : dossier site/.
+resultats_manuels.json (règlements faits à la main ; « supprime » retire un pari). Site : dossier site/.
 """
 from __future__ import annotations
 
@@ -133,6 +133,9 @@ def main() -> int:
     opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
                          index=index, controle=(etat_controle, suspects)) or []
     paris = lire_json(donnees / "paris.json", [])
+    # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
+    manuels = lire_json(donnees / "resultats_manuels.json", {})
+    paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
     nouveaux = simulation.placer(opportunites, paris)
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
