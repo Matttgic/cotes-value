@@ -1,11 +1,13 @@
 """Un cycle complet : collecte -> comparaison -> paris simulés -> suivi de la clôture -> règlement -> site.
 
-Lancé toutes les 15 minutes par GitHub Actions (.github/workflows/collecte.yml).
+Lancé toutes les 5 minutes par GitHub Actions (.github/workflows/collecte.yml).
 
     python scripts/cycle.py                 # cycle complet (4 bookmakers français + Betfair, 36 h)
     python scripts/cycle.py --mode test     # cycle réduit : Winamax + Betclic, foot, 1 page
+    python scripts/cycle.py --reglement oui # forcer le règlement des paris à ce cycle
 
-Le règlement des paris a lieu à chaque cycle.
+Le règlement des paris (lecture des résultats : environ 6 minutes, 220 requêtes) n'a lieu qu'une fois par
+heure (REGLEMENT_MINUTES, 55 par défaut) : les cotes, elles, sont lues à chaque cycle.
 
 Données (branche « donnees ») : paris.json, etat.json, opportunites/AAAA-MM-JJ.jsonl,
 resultats_manuels.json (règlements faits à la main ; « supprime » retire un pari). Site : dossier site/.
@@ -35,7 +37,9 @@ SPORTS_FR = ["soccer", "basketball", "tennis", "ice-hockey", "handball", "volley
              "american-football", "baseball"]
 SPORTS_BETFAIR = ["soccer", "tennis"]
 HORIZON_H = 36
-API = {v: k for k, v in pulsescore.SPORTS.items()}          # « football » -> « soccer »
+# minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
+REGLEMENT_MINUTES = float(os.environ.get("REGLEMENT_MINUTES", "55"))
+API ={v: k for k, v in pulsescore.SPORTS.items()}          # « football » -> « soccer »
 
 
 def lire_json(chemin: Path, defaut):
@@ -81,6 +85,8 @@ def main() -> int:
     a.add_argument("--mode", choices=["complet", "test"], default=os.environ.get("MODE_COLLECTE", "complet"))
     a.add_argument("--donnees", default="donnees")
     a.add_argument("--site", default="site")
+    a.add_argument("--reglement", choices=["auto", "oui", "non"], default=os.environ.get("REGLEMENT", "auto"),
+                   help="auto = si le dernier règlement date d'au moins REGLEMENT_MINUTES")
     args = a.parse_args()
     cle = os.environ.get("PULSESCORE_KEY", "").strip()
     donnees = Path(args.donnees)
@@ -140,72 +146,82 @@ def main() -> int:
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
 
-    # 4. règlement, à chaque cycle (offre PulseScore PRO : requêtes illimitées). Sans clé PulseScore, ESPN
+    # 4. règlement (offre PulseScore PRO : requêtes illimitées). Sans clé PulseScore, ESPN
     #    et les résultats saisis à la main règlent quand même ce qu'ils peuvent.
-    enregistrements = []
-    client = pulsescore.Client(cle) if cle else None
-    for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
-        # résultats validés par des bookmakers dont le flux marque les matchs terminés (cotes/resultats.py)
-        for bm in (resultats_mod.VALIDATEURS if client and sport in API else []):
-            n = len(client.erreurs)
-            enregistrements += etape(f"resultats_{bm}_{sport}", journal, resultats_mod.lire,
-                                     client, bm, API[sport], sport, depuis) or []
-            signaler(journal, f"resultats_{bm}_{sport}", client.erreurs[n:])
-        n = len(resultats_mod.ERREURS_ESPN)
-        enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
-                                 sport, depuis, datetime.now(timezone.utc)) or []
-        signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
-    resultats = {}
-    for p in paris:
-        if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
-            r = resultats_mod.consensus(p, enregistrements, maintenant)
-            if r:
-                resultats[p["match_id"]] = r
-    # API-Sports, pour les paris que les autres sources n'ont pas réglés (quota gratuit : 100 requêtes par
-    # jour et par sport ; réponses gardées en cache dans donnees/apisports.json)
-    cle_ap = os.environ.get("API_SPORTS_KEY", "").strip()
-    if cle_ap:
-        cache_ap = resultats_mod.elaguer_cache_apisports(lire_json(donnees / "apisports.json", {}), maintenant)
-        quota_ap = {}
-        # matchs déjà validés ailleurs mais sans le détail des périodes dont un pari a besoin (mi-temps…)
-        besoin = {p["match_id"] for p in paris if p["statut"] in ("en_cours", "a_regler")
-                  and (p["periode"] != "MATCH" or p["marche"] == "HALF_TIME_FULL_TIME")}
-        complets = {m for m, r in resultats.items() if r.get("periodes") or m not in besoin}
-        for sport, jours in resultats_mod.jours_a_lire(paris, complets, maintenant).items():
-            n = len(resultats_mod.ERREURS_APISPORTS)
-            lu = etape(f"resultats_apisports_{sport}", journal, resultats_mod.lire_apisports,
-                       cle_ap, sport, jours, cache_ap, datetime.now(timezone.utc))
-            signaler(journal, f"resultats_apisports_{sport}", resultats_mod.ERREURS_APISPORTS[n:])
-            if lu:
-                enregistrements += lu[0]
-                quota_ap |= lu[1]
-        ecrire_json(donnees / "apisports.json", cache_ap)
+    #    Une fois par heure seulement (environ 6 minutes de lectures) : voir REGLEMENT_MINUTES.
+    etat_avant = lire_json(donnees / "etat.json", {})
+    dernier_reglement = etat_avant.get("dernier_reglement")
+    regler = args.reglement == "oui" or (args.reglement == "auto" and (
+        not dernier_reglement
+        or maintenant - datetime.fromisoformat(dernier_reglement) >= timedelta(minutes=REGLEMENT_MINUTES)))
+    journal["reglement"] = regler
+    if regler:
+        enregistrements = []
+        client = pulsescore.Client(cle) if cle else None
+        for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
+            # résultats validés par des bookmakers dont le flux marque les matchs terminés (cotes/resultats.py)
+            for bm in (resultats_mod.VALIDATEURS if client and sport in API else []):
+                n = len(client.erreurs)
+                enregistrements += etape(f"resultats_{bm}_{sport}", journal, resultats_mod.lire,
+                                         client, bm, API[sport], sport, depuis) or []
+                signaler(journal, f"resultats_{bm}_{sport}", client.erreurs[n:])
+            n = len(resultats_mod.ERREURS_ESPN)
+            enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
+                                     sport, depuis, datetime.now(timezone.utc)) or []
+            signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
+        resultats = {}
         for p in paris:
-            if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in complets:
+            if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
                 r = resultats_mod.consensus(p, enregistrements, maintenant)
                 if r:
                     resultats[p["match_id"]] = r
-        journal["apisports_quota_restant"] = quota_ap
-    # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)
-    for p in paris:
-        r = resultats.get(p["match_id"])
-        if r and p["statut"] in ("en_cours", "a_regler") and (
-                p["periode"] in reglement.SOUS_PERIODES or p["marche"] == "HALF_TIME_FULL_TIME"):
-            resultats[p["match_id"]] = resultats_mod.completer_periodes(p, r, enregistrements)
-    journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
-    if client:
-        requetes["resultats"] = client.requetes
-    # matchs reportés (vus « à venir » chez ESPN à une date plus tardive) : ils restent en cours
-    reportes = {p["match_id"]: d for p in paris
-                if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats
-                and (d := resultats_mod.reporte(p, enregistrements))}
-    journal["resultats"]["reportes"] = len(reportes)
-    reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant, reportes)
-    # pourquoi les paris « à régler » ne se règlent pas (pour le diagnostic)
-    vus = set()
-    journal["resultats"]["non_regles"] = [
-        resultats_mod.diagnostic(p, enregistrements) for p in paris
-        if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])][:80]
+        # API-Sports, pour les paris que les autres sources n'ont pas réglés (quota gratuit : 100 requêtes par
+        # jour et par sport ; réponses gardées en cache dans donnees/apisports.json)
+        cle_ap = os.environ.get("API_SPORTS_KEY", "").strip()
+        if cle_ap:
+            cache_ap = resultats_mod.elaguer_cache_apisports(lire_json(donnees / "apisports.json", {}), maintenant)
+            quota_ap = {}
+            # matchs déjà validés ailleurs mais sans le détail des périodes dont un pari a besoin (mi-temps…)
+            besoin = {p["match_id"] for p in paris if p["statut"] in ("en_cours", "a_regler")
+                      and (p["periode"] != "MATCH" or p["marche"] == "HALF_TIME_FULL_TIME")}
+            complets = {m for m, r in resultats.items() if r.get("periodes") or m not in besoin}
+            for sport, jours in resultats_mod.jours_a_lire(paris, complets, maintenant).items():
+                n = len(resultats_mod.ERREURS_APISPORTS)
+                lu = etape(f"resultats_apisports_{sport}", journal, resultats_mod.lire_apisports,
+                           cle_ap, sport, jours, cache_ap, datetime.now(timezone.utc))
+                signaler(journal, f"resultats_apisports_{sport}", resultats_mod.ERREURS_APISPORTS[n:])
+                if lu:
+                    enregistrements += lu[0]
+                    quota_ap |= lu[1]
+            ecrire_json(donnees / "apisports.json", cache_ap)
+            for p in paris:
+                if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in complets:
+                    r = resultats_mod.consensus(p, enregistrements, maintenant)
+                    if r:
+                        resultats[p["match_id"]] = r
+            journal["apisports_quota_restant"] = quota_ap
+        # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)
+        for p in paris:
+            r = resultats.get(p["match_id"])
+            if r and p["statut"] in ("en_cours", "a_regler") and (
+                    p["periode"] in reglement.SOUS_PERIODES or p["marche"] == "HALF_TIME_FULL_TIME"):
+                resultats[p["match_id"]] = resultats_mod.completer_periodes(p, r, enregistrements)
+        journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
+        if client:
+            requetes["resultats"] = client.requetes
+        # matchs reportés (vus « à venir » chez ESPN à une date plus tardive) : ils restent en cours
+        reportes = {p["match_id"]: d for p in paris
+                    if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats
+                    and (d := resultats_mod.reporte(p, enregistrements))}
+        journal["resultats"]["reportes"] = len(reportes)
+        reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant, reportes)
+        # pourquoi les paris « à régler » ne se règlent pas (pour le diagnostic)
+        vus = set()
+        journal["resultats"]["non_regles"] = [
+            resultats_mod.diagnostic(p, enregistrements) for p in paris
+            if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])][:80]
+    else:
+        journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
 
     # 5. sauvegarde
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
@@ -232,6 +248,8 @@ def main() -> int:
         "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),
         "nouveaux_paris": len(nouveaux)})
     etat.update({"dernier_cycle": journal, "requetes_par_mois": compteur})
+    if regler:
+        etat["dernier_reglement"] = journal["debut"]
     historique = etat.get("historique", [])[-200:] + [{k: journal[k] for k in ("debut", "mode", "opportunites",
                                                                                 "nouveaux_paris", "requetes_pulsescore")}]
     etat["historique"] = historique

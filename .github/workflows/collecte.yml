@@ -1,11 +1,11 @@
 name: Collecte et comparaison
 
-# Toutes les 15 minutes, seulement si la variable de dépôt COLLECTE_AUTO vaut « oui »
+# Toutes les 5 minutes (règlement des paris : une fois par heure, voir scripts/cycle.py), seulement si la variable de dépôt COLLECTE_AUTO vaut « oui »
 # (Settings → Secrets and variables → Actions → Variables). À activer avec l'offre PulseScore PRO :
-# l'offre gratuite (500 requêtes/mois) ne tient pas un cycle complet toutes les 15 minutes.
+# l'offre gratuite (500 requêtes/mois) ne tient pas un cycle complet toutes les 5 minutes.
 #
 # GitHub saute ou retarde souvent les tâches planifiées (2 lancements en 16 h constatés) : chaque cycle
-# relance donc lui-même le suivant, 15 minutes après son début. La tâche planifiée (toutes les heures) ne
+# relance donc lui-même le suivant, 5 minutes après son début (tout de suite s'il a duré plus). La tâche planifiée (toutes les heures) ne
 # sert qu'à redémarrer la chaîne si elle s'arrête. Une seule chaîne à la fois : le groupe « collecte » ne
 # garde qu'un lancement en attente. Pour arrêter : passer COLLECTE_AUTO à autre chose que « oui ».
 on:
@@ -102,14 +102,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Relancer le cycle suivant (15 minutes après le début de celui-ci)
+      - name: Relancer le cycle suivant (5 minutes après le début de celui-ci)
         env:
           GH_TOKEN: ${{ github.token }}
           DEBUT: ${{ needs.cycle.outputs.debut }}
           DEPOT: ${{ github.repository }}
         run: |
           debut=${DEBUT:-$(date +%s)}
-          reste=$(( debut + 900 - $(date +%s) - 30 ))
+          reste=$(( debut + 300 - $(date +%s) - 30 ))
           if [ "$reste" -gt 0 ]; then sleep "$reste"; fi
           # une seule chaîne : c'est le lancement le plus récent qui relance le suivant.
           # L'API GitHub renvoie parfois une erreur passagère (HTTP 500 le 7/10/2026 à 16:59, chaîne
