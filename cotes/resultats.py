@@ -12,10 +12,13 @@ football : fiche du match ouverte seulement quand un pari en a besoin ; quart-te
 Un match est retrouvé chez chaque validateur par les noms d'équipes (dans un sens ou l'autre) et l'heure
 de début. Le score n'est retenu que si au moins SOURCES_MIN validateurs ont le match terminé et qu'ils
 donnent tous le même score (ou une nette majorité d'entre eux, voir MAJORITE_MIN) ; les corners, seulement si au moins SOURCES_MIN sources les donnent identiques
-(Betfair renvoie 0-0 quand il ne les compte pas). Sinon le pari attend, puis passe « à régler à la main ».
+(Betfair renvoie 0-0 quand il ne les compte pas). Une source seule suffit 6 h après le début si elle est
+fiable (ESPN, Betfair…), 24 h après pour la plupart des validateurs si le score est plausible (pas au tennis ni au hockey).
+Sinon le pari attend, puis passe « à régler à la main ».
 """
 from __future__ import annotations
 
+import re
 from collections import Counter
 from datetime import datetime, timedelta
 
@@ -43,6 +46,14 @@ SOURCES_FIABLES = {"espn", "orbitxch", "draftkings", "apisports"}
 TENNIS_EXCLUES = {"orbitxch", "pmu"}
 TENNIS_FIABLES = {"espn"}                         # seule source unique acceptée (Betfair : score figé)
 DELAI_SOURCE_UNIQUE_H = 6
+# n'importe quel validateur seul (PulseScore ne liste que les matchs marqués terminés), 24 h après le début :
+# un score figé en cours de match aurait été corrigé depuis. Vérifié sur les résultats cherchés à la main
+# des 8-10/10 : PMU 28/28, Unibet UK 20/20, API-Sports 24/24 justes ; jamais au tennis (scores figés de
+# Betfair, PMU), ni au hockey (score du temps réglementaire, 2-2, donné pour un 2-3 après prolongation),
+# ni Interwetten seul (1-0 figé pour un 3-0)
+DELAI_SOURCE_QUELCONQUE_H = 24
+SEULES_SPORTS_EXCLUS = {"tennis", "hockey"}
+SEULES_SOURCES_EXCLUES = {"interwetten-de"}
 ESPN = "https://site.api.espn.com/apis/site/v2/sports"
 ESPN_LIGUES = {"football": ["soccer/all"], "hockey": ["hockey/nhl"], "basket": ["basketball/nba", "basketball/wnba"],
                "football_americain": ["football/nfl", "football/college-football"], "baseball": ["baseball/mlb"],
@@ -51,6 +62,9 @@ ESPN_LIGUES = {"football": ["soccer/all"], "hockey": ["hockey/nhl"], "basket": [
 # prolongation et tirs au but compris ailleurs
 ESPN_FINAUX = {"STATUS_FULL_TIME", "STATUS_FINAL"}
 ESPN_FEMININES = {"basketball/wnba"}           # ligues féminines dont ESPN ne marque pas les noms
+# football : ESPN n'écrit pas non plus « Women » dans les noms ; la compétition le dit (« WWCQ - UEFA »,
+# « Women's International Friendly », « NCAAW Soccer »…)
+ESPN_NOTES_FEMININES = re.compile(r"women|^wwc|ncaaw|nwsl|usl super league|liga f\b|frauen", re.I)
 # tennis : abandon en cours de match (règles d'abandon de chaque bookmaker, cotes/reglement.py)
 ESPN_ABANDONS = {"STATUS_RETIRED"}
 REPORT_MAX_J = 7
@@ -308,7 +322,8 @@ def _espn_match(sport: str, c: dict, e: dict, ligue: str) -> dict | None:
         return None
     if not nom(dom) or not nom(ext):
         return None
-    if ligue in ESPN_FEMININES:                    # ESPN n'écrit pas « Women », les bookmakers si (« (W) »)
+    if ligue in ESPN_FEMININES or ESPN_NOTES_FEMININES.search(c.get("altGameNote") or ""):
+        # ESPN n'écrit pas « Women », les bookmakers si (« (W) »)
         nom = (lambda f: lambda x: f(x) and f"{f(x)} Women")(nom)
     return {"source": "espn", "sport": sport, "domicile": nom(dom), "exterieur": nom(ext),
             "debut": _heure(c.get("date") or e.get("date")), "score": score, "periodes": periodes,
@@ -483,6 +498,23 @@ def _majoritaires(trouves: list[dict]) -> list[dict]:
     return [r for r in trouves if r["score"] == score]
 
 
+def plausible(sport: str, score: tuple[int, int]) -> bool:
+    """Score final possible pour le sport (écarte un 0-0 de volley ou un 12-9 de basket figé en cours de
+    match), pour accepter une source seule."""
+    a, b = score
+    if sport == "volley":                          # en sets
+        return max(a, b) in (2, 3) and min(a, b) < max(a, b)
+    if sport == "basket":
+        return min(a, b) >= 30 and a != b
+    if sport == "handball":
+        return min(a, b) >= 8
+    if sport == "baseball":                        # pas de match nul
+        return a != b
+    if sport == "rugby":
+        return a + b > 0
+    return True
+
+
 def _sans_zeros_finaux(periodes: list) -> tuple:
     """Périodes sans les 0-0 de fin (manche non jouée au baseball, prolongation blanche) : certaines sources
     les listent, d'autres non, sans que ce soit un désaccord."""
@@ -500,9 +532,12 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
     if len(trouves) < SOURCES_MIN:
         debut = _heure(p.get("reporte_au") or p.get("debut"))
         fiables = TENNIS_FIABLES if p["sport"] == "tennis" else SOURCES_FIABLES
-        seule_fiable = trouves[0]["source"] in fiables and maintenant and debut and \
-            maintenant - debut >= timedelta(hours=DELAI_SOURCE_UNIQUE_H)
-        if not seule_fiable:
+        depuis = maintenant - debut if maintenant and debut else timedelta(0)
+        seule_fiable = trouves[0]["source"] in fiables and depuis >= timedelta(hours=DELAI_SOURCE_UNIQUE_H)
+        seule_ancienne = p["sport"] not in SEULES_SPORTS_EXCLUS \
+            and trouves[0]["source"] not in SEULES_SOURCES_EXCLUES \
+            and depuis >= timedelta(hours=DELAI_SOURCE_QUELCONQUE_H) and plausible(p["sport"], trouves[0]["score"])
+        if not (seule_fiable or seule_ancienne):
             return None
     score = trouves[0]["score"]
     avec_periodes = sorted((r for r in trouves if _periodes_coherentes(p["sport"], r)),

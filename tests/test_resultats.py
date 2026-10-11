@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from cotes import resultats as R
 
@@ -334,3 +334,47 @@ def test_apisports_seulement_dans_la_fenetre_du_plan_gratuit():
     paris = [p("a", "2026-10-08T18:00:00Z"), p("b", "2026-10-10T18:00:00Z"),
              p("c", "2026-10-11T09:00:00Z"), p("d", "2026-10-11T11:00:00Z")]
     assert R.jours_a_lire(paris, set(), maintenant) == {"football": ["2026-10-10", "2026-10-11"]}
+
+
+def test_source_quelconque_seule_apres_24_heures():
+    h = lambda n: T + timedelta(hours=n)  # noqa: E731
+    seul = [enr("unibet-uk", "Honduras", "Jamaica", (2, 1))]
+    assert R.consensus(PARI, seul, h(10)) is None                       # pas fiable, 10 h après : on attend
+    assert R.consensus(PARI, seul, h(25))["sources"] == ["unibet-uk"]   # 24 h après : accepté
+    volley = {"sport": "volley", "domicile": "Stal Mielec", "exterieur": "Palac Bydgoszcz",
+              "debut": PARI["debut"]}
+    zero = [enr("pmu", "Stal Mielec", "Palac Bydgoszcz", (0, 0), sport="volley")]
+    assert R.consensus(volley, zero, h(25)) is None                     # 0-0 au volley : pas un score final
+    sets = [enr("unibet-uk", "Stal Mielec", "Palac Bydgoszcz", (0, 3), sport="volley")]
+    assert R.consensus(volley, sets, h(25))["score"] == (0, 3)
+    tennis = {"sport": "tennis", "domicile": "A. Rublev", "exterieur": "J. Sinner", "debut": PARI["debut"]}
+    assert R.consensus(tennis, [enr("unibet-uk", "A. Rublev", "J. Sinner", (0, 2), sport="tennis")], h(30)) is None
+    # hockey : score du temps réglementaire (2-2) donné pour un 2-3 après prolongation ; Interwetten : 1-0 figé
+    hockey = {"sport": "hockey", "domicile": "HC Lugano", "exterieur": "ZSC Lions", "debut": PARI["debut"]}
+    assert R.consensus(hockey, [enr("pmu", "HC Lugano", "ZSC Lions", (2, 2), sport="hockey")], h(30)) is None
+    assert R.consensus(PARI, [enr("interwetten-de", "Honduras", "Jamaica", (1, 0))], h(30)) is None
+
+
+def test_espn_football_feminin_reconnu_par_la_competition():
+    tableau = {"events": [{"id": "7", "date": "2026-10-09T16:45Z", "competitions": [{
+        "id": "7", "altGameNote": "WWCQ - UEFA, Playoff Phase - First Round",
+        "status": {"type": {"name": "STATUS_FULL_TIME"}},
+        "competitors": [{"homeAway": "home", "score": "0", "team": {"displayName": "Croatia"}},
+                        {"homeAway": "away", "score": "4", "team": {"displayName": "Iceland"}}]}]}]}
+    fiche = {"header": {"competitions": [{"competitors": [
+        {"homeAway": "home", "linescores": [{"displayValue": "0"}, {"displayValue": "0"}]},
+        {"homeAway": "away", "linescores": [{"displayValue": "1"}, {"displayValue": "3"}]}]}]}}
+    lire = lambda chemin, params=None: fiche if chemin.endswith("summary") else (    # noqa: E731
+        tableau if params["dates"] == "20261009" else {})
+    E = R.lire_espn("football", datetime(2026, 10, 9, 16, tzinfo=timezone.utc),
+                    datetime(2026, 10, 10, 2, tzinfo=timezone.utc), lire)
+    assert E[0]["domicile"] == "Croatia Women"
+    pari = {"sport": "football", "domicile": "Croatie (F)", "exterieur": "Islande (F)",
+            "debut": "2026-10-09T16:45:00Z", "match_reference": "Croatia - Iceland"}
+    E.append({**E[0], "source": "pmu", "domicile": "Croatia (W)", "exterieur": "Iceland (W)", "espn": None})
+    r = R.consensus(pari, E)
+    assert r["score"] == (0, 4) and r["sources"] == ["espn", "pmu"]
+    assert R.completer_periodes(pari, r, E, lire)["periodes"] == [(0, 1), (0, 3)]
+    # un match masculin du même nom n'est pas confondu
+    homme = {**pari, "domicile": "Croatie", "exterieur": "Islande"}
+    assert R.consensus(homme, E) is None
