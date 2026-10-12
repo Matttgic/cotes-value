@@ -68,3 +68,16 @@ def test_gain_attendu_et_bilan_par_bookmaker():
     b = bilan_bookmakers([{**base, "reference": "Pinnacle"}, {**base, "reference": "Pinnacle", "simulation": "X",
                                                              "issue": "EXT", "bookmaker": "Winamax"}])
     assert b["PMU·A|Uniques"]["regles"] == 1 and b["Winamax·X|Uniques"]["regles"] == 1
+
+
+def test_bilan_reel_contre_espere_selon_la_clv():
+    from cotes.simulation import bilan
+    base = {"simulation": "A", "mise": 10, "reference": "Pinnacle", "marche": "VAINQUEUR", "periode": "MATCH",
+            "ligne": None, "joueur": None, "cote": 2.0, "detecte": "1", "debut": "2026-10-07T18:00:00+00:00"}
+    avec = {**base, "match_id": "w|1", "issue": "DOM", "statut": "gagne", "gain": 10.0, "clv": 0.05,
+            "cloture_lue": "2026-10-07T17:50:00+00:00"}
+    sans = {**base, "match_id": "w|2", "issue": "DOM", "statut": "perdu", "gain": -10.0}       # pas de clôture
+    ouvert = {**base, "match_id": "w|3", "issue": "DOM", "statut": "en_cours", "gain": None}
+    b = bilan([avec, sans, ouvert])["A|Pinnacle"]
+    assert b["gains_avec_clv"] == 10.0 and b["espere_clv"] == 0.5
+    assert b["regles_sans_clv"] == 1 and b["gains_sans_clv"] == -10.0

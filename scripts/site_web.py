@@ -295,6 +295,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
     <div class="bulle" id="bulle"></div></div>
     <div class="tableau"><table id="bilan"></table></div>
+    <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
     <h2 class="sous-titre">Par bookmaker</h2>
     <div class="tableau"><table id="bilan-books"></table></div>
     <p class="aide" style="margin-top:8px">Selon la sélection du Total (A, A+B…).</p>
@@ -304,6 +305,9 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p>10 € par pari. <b>Gain</b> et <b>ROI</b> : sur les paris réglés. Sous le nombre de paris : les gagnés et le
     <b>% de réussite</b> (gagnés / réglés ; à comparer avec la cote : à 2,00 il faut plus de 50 % pour gagner de l'argent). <b>A à E, X</b> : tranches d'écart entre la
     cote française et la cote juste, au moment où l'erreur est repérée (X : cotes au-dessus de 10).</p>
+    <p><b>Selon la CLV</b> : pour les paris dont la CLV est mesurée, le gain réel comparé au gain <b>espéré</b>
+    (10 € × CLV) ; un réel sous l'espéré peut n'être que de la malchance, surtout avec des grosses cotes. <b>Sans
+    CLV</b> : la cote de référence a disparu avant le match ; si ces paris perdent toujours, il faut les éviter.</p>
     <p><b>CLV</b> : la cote prise comparée à la cote juste relevée juste avant le match (moins de 30 min). Positive =
     on a pris un meilleur prix que le marché final ; c'est le signe le plus rapide qu'une méthode marche. Sous la
     CLV : paris mesurés / paris réglés.</p>
@@ -407,7 +411,8 @@ const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1
 let cumul = CUMULS.length - 1;
 const nomCumul = l => l.length === SIMS.length ? "Toutes" : l.join("+");
 function additionner(sims, source = D.bilan, prefixe = "") {
-  const t = {paris: 0, regles: 0, en_cours: 0, mises: 0, gains: 0, clv_somme: 0, clv_n: 0, gagnes: 0};
+  const t = {paris: 0, regles: 0, en_cours: 0, mises: 0, gains: 0, clv_somme: 0, clv_n: 0, gagnes: 0,
+    gains_avec_clv: 0, espere_clv: 0, gains_sans_clv: 0, regles_sans_clv: 0};
   let vu = false;
   for (const s of sims) {
     const b = (source || {})[prefixe + s + "|" + refBilan];
@@ -436,6 +441,14 @@ function rendreBilan() {
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
       additionner(CUMULS[cumul])).replace("<tr>", '<tr class="total">');
   document.getElementById("cumul").onchange = ev => { cumul = Number(ev.target.value); rendreBilan(); };
+  // réel contre espéré d'après la CLV, et paris dont la CLV n'a pas pu être mesurée (selon la sélection du Total)
+  const tc = additionner(CUMULS[cumul]);
+  document.getElementById("bilan-clv").innerHTML = !tc ? "" :
+    `<tr><th>Selon la CLV</th><th>Paris</th><th>Réel</th><th>Espéré</th></tr>
+<tr><td><b>CLV mesurée</b><small>${pctC(tc.clv_moyenne)} en moyenne</small></td><td>${tc.clv_n}</td>
+<td class="${signe(tc.gains_avec_clv)}">${eurC(tc.gains_avec_clv)}</td><td class="${signe(tc.espere_clv)}">${eurC(tc.espere_clv)}</td></tr>
+<tr><td><b>Sans CLV</b><small>référence absente avant le match</small></td><td>${tc.regles_sans_clv}</td>
+<td class="${signe(tc.gains_sans_clv)}">${eurC(tc.gains_sans_clv)}</td><td>—</td></tr>`;
   document.getElementById("bilan-books").innerHTML = `<tr><th>Bookmaker</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     (D.bookmakers || []).map(bm => ligne(`<b>${e(bm)}</b>`, additionner(CUMULS[cumul], D.bilan_bookmakers, bm + "·"))).join("");
   rendreCourbe();

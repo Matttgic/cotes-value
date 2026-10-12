@@ -217,7 +217,11 @@ def _cumuler(paris: list[dict], groupe) -> dict:
             clefs.append(f'{groupe(p)}|{STRATEGIE["nom"]}')
         for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
-                                      "clv_somme": 0.0, "clv_n": 0, "gagnes": 0})
+                                      "clv_somme": 0.0, "clv_n": 0, "gagnes": 0,
+                                      # paris réglés avec / sans CLV mesurée : gain réel, et gain espéré d'après
+                                      # la CLV (mise × CLV) pour ceux qui en ont une
+                                      "gains_avec_clv": 0.0, "espere_clv": 0.0, "gains_sans_clv": 0.0,
+                                      "regles_sans_clv": 0})
             b["paris"] += 1
             if p["statut"] in ("en_cours", "a_regler"):
                 b["en_cours"] += 1
@@ -230,10 +234,16 @@ def _cumuler(paris: list[dict], groupe) -> dict:
             if clv is not None:
                 b["clv_somme"] += clv
                 b["clv_n"] += 1
+                b["gains_avec_clv"] += p["gain"] or 0
+                b["espere_clv"] += p["mise"] * clv
+            elif p["statut"] not in ("en_cours", "a_regler"):
+                b["regles_sans_clv"] += 1
+                b["gains_sans_clv"] += p["gain"] or 0
     for b in out.values():
         b["roi"] = round(b["gains"] / b["mises"], 4) if b["mises"] else None
         b["clv_moyenne"] = round(b["clv_somme"] / b["clv_n"], 4) if b["clv_n"] else None
-        b["gains"] = round(b["gains"], 2)
+        for k in ("gains", "gains_avec_clv", "espere_clv", "gains_sans_clv"):
+            b[k] = round(b[k], 2)
     return out
 
 
