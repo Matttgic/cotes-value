@@ -33,7 +33,7 @@ RESSEMBLANCE_MIN = 0.75
 # deux joueurs sont clairement les mêmes (cas réel : Charaeva – Zheng annoncé 02:00, joué à 11:05)
 ECART_TENNIS_H = 12
 RESSEMBLANCE_TENNIS_LOIN = 0.9
-PAGES_MAX = 15
+PAGES_MAX = 30          # 30 résultats par page : 15 ne couvraient pas une journée de football ; +2 min par règlement (cycle limité à 20 min)
 SOURCES_MIN = 2
 # sources en désaccord : le score majoritaire l'emporte s'il est donné par au moins MAJORITE_MIN sources et
 # au moins 3 fois plus de sources que les autres scores (une source isolée se trompe : Unibet UK 0-0 au lieu
@@ -454,7 +454,8 @@ def _retenus(p: dict, enregistrements: list[dict]) -> list[dict]:
     """Les sources du match retenues pour le valider (au tennis : score final plausible, en sets). Un score
     plus petit des deux côtés que celui d'une source fiable est un score en cours de match figé (Unibet UK
     40-26 au lieu de 101-89) : écarté s'il est seul à le donner."""
-    trouves = retrouver(p, enregistrements)
+    # score impossible pour le sport (PMU : 0-0 pour un match de volley terminé) : ignoré, pas un désaccord
+    trouves = [r for r in retrouver(p, enregistrements) if r.get("abandon") or plausible(p["sport"], r["score"])]
     fiables = [r["score"] for r in trouves if r["source"] in SOURCES_FIABLES]
     nb = Counter(r["score"] for r in trouves)          # un score donné par deux sources n'est pas un accident
     trouves = [r for r in trouves if nb[r["score"]] > 1 or not any(

@@ -386,3 +386,14 @@ def test_feminin_note_f_point_chez_betclic():
     E = [enr("unibet-uk", "Malawi (W)", "Zimbabwe (W)", (1, 1)), enr("pmu", "Malawi Women", "Zimbabwe Women", (1, 1)),
          enr("betmgm", "Malawi", "Zimbabwe", (3, 0))]                      # match masculin : écarté
     assert R.consensus(pari, E)["sources"] == ["pmu", "unibet-uk"]
+
+
+def test_score_impossible_ignore_volley_zero_zero_de_pmu():
+    pari = {"sport": "volley", "domicile": "Uni Opole (W)", "exterieur": "BKS Bielsko-Biala (W)", "debut": PARI["debut"]}
+    E = [enr("unibet-uk", "Uni Opole (W)", "BKS Bielsko-Biala (W)", (3, 0), sport="volley"),
+         enr("interwetten-de", "Uni Opole Women", "BKS Bielsko-Biala Women", (3, 0), sport="volley"),
+         enr("pmu", "Uni Opole (W)", "BKS Bielsko-Biala (W)", (0, 0), sport="volley")]
+    assert R.consensus(pari, E)["sources"] == ["interwetten-de", "unibet-uk"]       # plus de « désaccord »
+    seul = [E[0], E[2]]
+    assert R.consensus(pari, seul) is None                                          # une seule source, tôt
+    assert R.consensus(pari, seul, T + timedelta(hours=25))["score"] == (3, 0)      # 24 h après
