@@ -301,7 +301,8 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <h2 class="sous-titre">Par tranche de cote</h2>
     <div class="tableau"><table id="bilan-tranches"></table></div>
     <details class="aide" style="margin-top:12px"><summary>Comment lire ces tableaux</summary>
-    <p>10 € par pari. <b>Gain</b> et <b>ROI</b> : sur les paris réglés. <b>A à E, X</b> : tranches d'écart entre la
+    <p>10 € par pari. <b>Gain</b> et <b>ROI</b> : sur les paris réglés. Sous le nombre de paris : les gagnés et le
+    <b>% de réussite</b> (gagnés / réglés ; à comparer avec la cote : à 2,00 il faut plus de 50 % pour gagner de l'argent). <b>A à E, X</b> : tranches d'écart entre la
     cote française et la cote juste, au moment où l'erreur est repérée (X : cotes au-dessus de 10).</p>
     <p><b>CLV</b> : la cote prise comparée à la cote juste relevée juste avant le match (moins de 30 min). Positive =
     on a pris un meilleur prix que le marché final ; c'est le signe le plus rapide qu'une méthode marche. Sous la
@@ -426,7 +427,7 @@ function rendreBilan() {
   document.getElementById("bilan-quoi").textContent = QUOI[refBilan] || `Paris repérés par ${refBilan}.`;
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
-    : `<tr><td>${titre}</td><td>${b.regles}${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""}</small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
+    : `<tr><td>${titre}</td><td>${b.regles}${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""} · <b>${Math.round(100 * b.gagnes / b.regles)} %</b></small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
 <td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles}</small>` : ""}</td></tr>`;
   document.getElementById("bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
