@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCHES, bilan,  # noqa: E402
                               bilan_bookmakers, bilan_tranches, paris_strategie, premiers_par_selection,
-                              tranche)
+                              segments, tranche)
 from cotes.stockage import lire_archives  # noqa: E402
 
 
@@ -179,7 +179,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     liste, fiches_total, valeurs = selection_paris(paris)
     data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
-            "bilan_tranches": bilan_tranches(paris), "courbes": courbes(paris),
+            "bilan_tranches": bilan_tranches(paris), "courbes": courbes(paris), "segments": segments(paris),
             "bilan_bookmakers": bilan_bookmakers(paris), "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
@@ -244,6 +244,7 @@ padding:5px 8px;border-radius:8px;white-space:nowrap;display:none}
 .a_regler{background:var(--jaune-f);color:var(--jaune)}
 .pos{color:var(--vert)}.neg{color:var(--rouge)}
 .vide{color:var(--doux);text-align:center;padding:30px 10px}
+.seg{cursor:pointer}.seg .l1 .badge{flex:none}
 .puces{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
 .puces button,select,.btn{flex:none;font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--ligne);
 background:var(--carte);color:var(--texte);cursor:pointer}
@@ -277,6 +278,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
   <nav id="onglets">
     <button data-o="jouer">À jouer<span class="nb" id="nb-jouer"></span></button>
     <button data-o="bilan">Bilan</button>
+    <button data-o="segments">Segments</button>
     <button data-o="paris">Paris<span class="nb" id="nb-paris"></span></button>
     <button data-o="regler">À régler<span class="nb" id="nb-regler"></span></button>
     <button data-o="controle">Contrôle<span class="nb" id="nb-controle"></span></button>
@@ -317,6 +319,19 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <b>Pinnacle brut</b> : témoin, cote Pinnacle avec sa marge.
     <b>Stratégie</b> : les paris qui suivent les critères choisis le 11/10 (voir le texte au-dessus du graphique),
     comptés seulement depuis cette date.</p></details>
+  </section>
+  <section class="onglet" id="o-segments">
+    <div class="puces" id="puces-seg"></div>
+    <p class="aide" id="seg-quoi"></p>
+    <div id="segments"></div>
+    <details class="aide"><summary>Comment lire</summary>
+    <p>Un segment = les paris uniques réglés d'une tranche de cote, d'un bookmaker, d'un sport, ou d'un croisement
+    (au moins 10 paris). <b>Attendu</b> : la réussite prévue par la cote juste ; à 1,30, gagner 77 % est normal.
+    <b>Écart</b> : réussite réelle moins attendue, en écarts-types ; moins de 2, c'est dans la marge du hasard.</p>
+    <p><b>Solide</b> : au moins 30 paris, réussite nettement au-dessus de l'attendu et CLV positive.
+    <b>Piste</b> : ROI et CLV positifs, à confirmer. <b>Chance ?</b> : ROI positif mais CLV nulle ou négative
+    (on n'a pas battu le marché : sans doute de la chance). Avec près de 100 segments, quelques-uns brillent forcément par hasard.</p>
+    <p>Toucher un segment ouvre l'onglet Paris avec les filtres correspondants.</p></details>
   </section>
   <section class="onglet" id="o-paris">
     <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
@@ -569,6 +584,42 @@ function rendreParis() {
 }
 rendreParis();
 
+// --- Segments : les groupes de paris qui marchent, avec ce qui relève de la chance
+let triSeg = "roi";
+const TRIS = {roi: "Meilleur ROI", reussite: "Réussite au-dessus de l'attendu"};
+const verdict = s => (s.n >= 30 && s.ecart_sigma >= 2 && (s.clv_moyenne || 0) > 0.01) ? ["Solide", "gagne"]
+  : (s.roi > 0 && (s.clv_moyenne || 0) > 0) ? ["Piste", "en_cours"]
+  : s.roi > 0 ? ["Chance ?", "a_regler"] : ["Perdant", "perdu"];
+const nomSeg = s => [s.tranche && "Cotes " + s.tranche, s.bookmaker, s.sport && s.sport.replace("_", " ")]
+  .filter(Boolean).join(" · ");
+function rendreSegments() {
+  document.getElementById("puces-seg").innerHTML = Object.entries(TRIS).map(([k, v]) =>
+    `<button data-t="${k}" class="${k===triSeg?"actif":""}">${v}</button>`).join("");
+  document.querySelectorAll("#puces-seg button").forEach(b => b.onclick = () => { triSeg = b.dataset.t; rendreSegments(); });
+  const L = (D.segments || []).filter(s => triSeg === "roi" ? s.roi > 0 : s.ecart_sigma > 0)
+    .sort((a, b) => triSeg === "roi" ? b.roi - a.roi : b.ecart_sigma - a.ecart_sigma).slice(0, 40);
+  document.getElementById("seg-quoi").textContent = triSeg === "roi"
+    ? "Segments au ROI positif (paris uniques réglés), du meilleur au moins bon."
+    : "Segments qui gagnent plus souvent que la cote ne le prévoit, du plus net au moins net.";
+  document.getElementById("segments").innerHTML = L.length ? L.map((s, i) => {
+    const [v, c] = verdict(s);
+    return `<article class="carte seg" data-i="${D.segments.indexOf(s)}">
+<div class="l1"><span class="match">${e(nomSeg(s))}</span><span class="badge ${c}">${v}</span></div>
+<div class="l3"><span>${s.n} paris · <b>${s.gagnes} gagnés = ${Math.round(100 * s.gagnes / s.n)} %</b></span>
+<span><i>attendu</i> ${Math.round(100 * s.attendus / s.n)} %</span>
+<span><i>écart</i> <span class="${signe(s.ecart_sigma)}">${s.ecart_sigma > 0 ? "+" : ""}${String(s.ecart_sigma).replace(".", ",")}</span></span></div>
+<div class="l4"><span>ROI <b class="${signe(s.roi)}">${pctC(s.roi)}</b> (${eurC(s.gains)})</span>
+<span>CLV <span class="${signe(s.clv_moyenne)}">${pctC(s.clv_moyenne)}</span> <i>${s.clv_n}/${s.n}</i></span></div></article>`;
+  }).join("") : `<div class="vide">Aucun segment pour l'instant.</div>`;
+  document.querySelectorAll("#segments .seg").forEach(a => a.onclick = () => {
+    const s = D.segments[Number(a.dataset.i)];
+    for (const [id, v] of [["f-sim", ""], ["f-ref", ""], ["f-statut", ""], ["f-cote", s.tranche || ""],
+                           ["f-book", s.bookmaker || ""], ["f-sport", s.sport || ""]]) document.getElementById(id).value = v;
+    limite = 50; rendreParis(); ouvrir("paris"); window.scrollTo(0, 0);
+  });
+}
+rendreSegments();
+
 // --- À régler
 const vus = new Set(), man = D.paris.filter(p => p.a_regler && !vus.has(p.match_id+p.pari) && vus.add(p.match_id+p.pari));
 document.getElementById("nb-regler").textContent = man.length || "";
@@ -620,7 +671,7 @@ rendreControle();
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
 const depart = location.hash.slice(1) || lire("onglet") || "jouer";
-const ONGLETS = ["jouer","bilan","paris","regler","controle"];
+const ONGLETS = ["jouer","bilan","segments","paris","regler","controle"];
 ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 </script>

@@ -260,3 +260,44 @@ def bilan_bookmakers(paris: list[dict]) -> dict:
 def bilan_tranches(paris: list[dict]) -> dict:
     """Par tranche de cote (« 1,51 – 2,00|Pinnacle »…) ; chaque pari n'appartient qu'à une simulation."""
     return _cumuler(paris, lambda p: tranche(p["cote"]))
+
+
+SEGMENT_MIN = 10       # paris réglés minimum pour afficher un segment
+REGLES = ("gagne", "perdu", "demi_gagne", "demi_perdu", "rembourse")
+
+
+def segments(paris: list[dict]) -> list[dict]:
+    """Bilan par segment (tranche de cote, bookmaker, sport et leurs croisements) sur les paris uniques réglés :
+    réussite réelle contre réussite attendue (somme des probabilités justes à la prise), écart en écarts-types,
+    ROI et CLV. Un segment qui « marche » par chance a une réussite proche de l'attendu et une CLV nulle."""
+    uniques = premiers_par_selection(paris)
+    regles = [p for p in paris if id(p) in uniques and p.get("statut") in REGLES and p.get("cote_juste")]
+    dims = (("tranche",), ("bookmaker",), ("sport",), ("tranche", "bookmaker"), ("tranche", "sport"),
+            ("bookmaker", "sport"), ("tranche", "bookmaker", "sport"))
+    valeur = {"tranche": lambda p: tranche(p["cote"]), "bookmaker": lambda p: p.get("bookmaker"),
+              "sport": lambda p: p.get("sport")}
+    groupes: dict[tuple, list[dict]] = {}
+    for p in regles:
+        for d in dims:
+            groupes.setdefault(tuple((k, valeur[k](p)) for k in d), []).append(p)
+    out, vus = [], set()
+    # du plus général au plus précis : un croisement qui contient exactement les mêmes paris qu'un segment plus
+    # général (« plus de 10 · Winamax » = « plus de 10 · Winamax · football ») n'est pas répété
+    for cle_seg, rows in sorted(groupes.items(), key=lambda kv: len(kv[0])):
+        contenu = frozenset(id(p) for p in rows)
+        if len(rows) < SEGMENT_MIN or contenu in vus:
+            continue
+        vus.add(contenu)
+        probas = [1 / p["cote_juste"] for p in rows]
+        gagnes = sum(p["statut"] in ("gagne", "demi_gagne") for p in rows)
+        attendus = sum(probas)
+        sd = sum(q * (1 - q) for q in probas) ** 0.5 or 1
+        mises = sum(p["mise"] for p in rows)
+        gains = sum(p.get("gain") or 0 for p in rows)
+        clvs = [c for c in (clv_finale(p) for p in rows) if c is not None]
+        out.append({**dict(cle_seg), "n": len(rows), "gagnes": gagnes, "attendus": round(attendus, 1),
+                    "ecart_sigma": round((gagnes - attendus) / sd, 2), "gains": round(gains, 2),
+                    "roi": round(gains / mises, 4) if mises else None,
+                    "clv_moyenne": round(sum(clvs) / len(clvs), 4) if clvs else None, "clv_n": len(clvs)})
+    return out
+

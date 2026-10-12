@@ -81,3 +81,17 @@ def test_bilan_reel_contre_espere_selon_la_clv():
     b = bilan([avec, sans, ouvert])["A|Pinnacle"]
     assert b["gains_avec_clv"] == 10.0 and b["espere_clv"] == 0.5
     assert b["regles_sans_clv"] == 1 and b["gains_sans_clv"] == -10.0
+
+
+def test_segments_reussite_contre_attendu_sans_doublon():
+    from cotes.simulation import segments
+    base = {"simulation": "A", "mise": 10, "reference": "Pinnacle", "marche": "VAINQUEUR", "periode": "MATCH",
+            "ligne": None, "joueur": None, "cote": 1.3, "cote_juste": 1.25, "detecte": "1", "bookmaker": "Betclic",
+            "sport": "hockey", "issue": "DOM"}
+    paris = [{**base, "match_id": f"b|{i}", "statut": "gagne" if i < 11 else "perdu", "gain": 3.0 if i < 11 else -10.0}
+             for i in range(12)]
+    s = segments(paris)
+    assert len(s) == 1                          # tranche, bookmaker, sport et croisements : les mêmes 12 paris
+    seg = s[0]
+    assert seg == {**seg, "tranche": "1,01 – 1,50", "n": 12, "gagnes": 11, "attendus": 9.6}
+    assert seg["ecart_sigma"] > 0 and seg["roi"] == round((33 - 10) / 120, 4)
