@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCHES, bilan,  # noqa: E402
                               bilan_bookmakers, bilan_tranches, paris_strategie, premiers_par_selection,
-                              segments, tranche)
+                              REGLES, clv_finale, segments, tranche)
 from cotes.stockage import lire_archives  # noqa: E402
 
 
@@ -160,6 +160,18 @@ def courbes(paris: list[dict]) -> dict[str, list]:
     return out
 
 
+def paris_des_segments(paris: list[dict]) -> list[list]:
+    """Les paris uniques réglés (ceux que comptent les segments), en lignes compactes pour l'onglet Segments :
+    [match, pari, bookmaker, cote, cote juste, statut, gain, CLV, début, tranche, sport], du plus récent au plus
+    ancien."""
+    uniques = premiers_par_selection(paris)
+    regles = [p for p in paris if id(p) in uniques and p.get("statut") in REGLES and p.get("cote_juste")]
+    regles.sort(key=lambda p: (p.get("debut") or "", p.get("regle_le") or ""), reverse=True)
+    return [[f'{p.get("domicile")} – {p.get("exterieur")}', p.get("pari"), p.get("bookmaker"), p["cote"],
+             p["cote_juste"], p["statut"], p.get("gain"), clv_finale(p), p.get("debut"), tranche(p["cote"]),
+             p.get("sport")] for p in regles]
+
+
 def construire(donnees: Path, sortie: Path) -> Path:
     paris = _lire(donnees / "paris.json", []) + lire_archives(donnees)     # bilan sur TOUS les paris
     etat = _lire(donnees / "etat.json", {})
@@ -180,6 +192,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     liste, fiches_total, valeurs = selection_paris(paris)
     data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
             "bilan_tranches": bilan_tranches(paris), "courbes": courbes(paris), "segments": segments(paris),
+            "paris_segments": paris_des_segments(paris),
             "bilan_bookmakers": bilan_bookmakers(paris), "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
@@ -245,6 +258,9 @@ padding:5px 8px;border-radius:8px;white-space:nowrap;display:none}
 .pos{color:var(--vert)}.neg{color:var(--rouge)}
 .vide{color:var(--doux);text-align:center;padding:30px 10px}
 .seg{cursor:pointer}.seg .l1 .badge{flex:none}
+.seg-paris{margin-top:8px;border-top:1px solid var(--ligne);cursor:default}
+.seg-paris .sp{padding:7px 0;border-bottom:1px solid var(--ligne)}.seg-paris .sp:last-child{border-bottom:0}
+.seg-paris .l3{font-size:12.5px}
 .puces{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
 .puces button,select,.btn{flex:none;font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--ligne);
 background:var(--carte);color:var(--texte);cursor:pointer}
@@ -331,7 +347,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p><b>Solide</b> : au moins 30 paris, réussite nettement au-dessus de l'attendu et CLV positive.
     <b>Piste</b> : ROI et CLV positifs, à confirmer. <b>Chance ?</b> : ROI positif mais CLV nulle ou négative
     (on n'a pas battu le marché : sans doute de la chance). Avec près de 100 segments, quelques-uns brillent forcément par hasard.</p>
-    <p>Toucher un segment ouvre l'onglet Paris avec les filtres correspondants.</p></details>
+    <p>Toucher un segment affiche ses paris ; le toucher à nouveau les replie.</p></details>
   </section>
   <section class="onglet" id="o-paris">
     <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
@@ -611,11 +627,19 @@ function rendreSegments() {
 <div class="l4"><span>ROI <b class="${signe(s.roi)}">${pctC(s.roi)}</b> (${eurC(s.gains)})</span>
 <span>CLV <span class="${signe(s.clv_moyenne)}">${pctC(s.clv_moyenne)}</span> <i>${s.clv_n}/${s.n}</i></span></div></article>`;
   }).join("") : `<div class="vide">Aucun segment pour l'instant.</div>`;
-  document.querySelectorAll("#segments .seg").forEach(a => a.onclick = () => {
+  // toucher un segment déroule ses paris (les mêmes que ceux qu'il compte), du plus récent au plus ancien
+  document.querySelectorAll("#segments .seg").forEach(a => a.onclick = ev => {
+    if (ev.target.closest(".seg-paris")) return;
+    const ouvert = a.querySelector(".seg-paris");
+    if (ouvert) { ouvert.remove(); return; }
     const s = D.segments[Number(a.dataset.i)];
-    for (const [id, v] of [["f-sim", ""], ["f-ref", ""], ["f-statut", ""], ["f-cote", s.tranche || ""],
-                           ["f-book", s.bookmaker || ""], ["f-sport", s.sport || ""]]) document.getElementById(id).value = v;
-    limite = 50; rendreParis(); ouvrir("paris"); window.scrollTo(0, 0);
+    const L = (D.paris_segments || []).filter(x => (!s.tranche || x[9] === s.tranche) &&
+      (!s.bookmaker || x[2] === s.bookmaker) && (!s.sport || x[10] === s.sport));
+    a.insertAdjacentHTML("beforeend", `<div class="seg-paris">${L.map(x => `<div class="sp">
+<div class="l1"><span class="match">${e(x[0])}</span><span class="quand">${quand(x[8])}</span></div>
+<div class="l3"><span>${e(x[1])}</span><span><b>${e(x[2])} ${cote(x[3])}</b> <i>juste ${cote(x[4])}</i></span>
+<span class="badge ${x[5]}">${STATUTS[x[5]] || x[5]}</span><b class="${signe(x[6])}">${eur(x[6])}</b>
+<span>CLV <span class="${signe(x[7])}">${pct(x[7])}</span></span></div></div>`).join("")}</div>`);
   });
 }
 rendreSegments();
