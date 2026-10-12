@@ -172,6 +172,26 @@ def paris_des_segments(paris: list[dict]) -> list[list]:
              p.get("sport")] for p in regles]
 
 
+def paris_a_venir_des_segments(paris: list[dict], maintenant: datetime | None = None) -> list[list]:
+    """Les paris uniques pas encore commencés, aux mêmes positions que paris_des_segments pour le filtrage (bookmaker 2,
+    tranche 9, sport 10) : [match, pari, bookmaker, cote, cote juste, écart, référence, CLV du moment, début,
+    tranche, sport], du plus proche au plus lointain."""
+    maintenant = (maintenant or datetime.now(ZoneInfo("UTC"))).isoformat()
+    uniques = premiers_par_selection(paris)
+
+    def debut(p):
+        try:
+            return datetime.fromisoformat(p["debut"].replace("Z", "+00:00")).isoformat()
+        except (KeyError, AttributeError, ValueError):
+            return ""
+    venir = [p for p in paris if id(p) in uniques and p.get("statut") == "en_cours" and p.get("cote_juste")
+             and debut(p) > maintenant]
+    venir.sort(key=debut)
+    return [[f'{p.get("domicile")} – {p.get("exterieur")}', p.get("pari"), p.get("bookmaker"), p["cote"],
+             p["cote_juste"], p.get("ecart"), p.get("reference"), p.get("clv"), p.get("debut"), tranche(p["cote"]),
+             p.get("sport")] for p in venir]
+
+
 def construire(donnees: Path, sortie: Path) -> Path:
     paris = _lire(donnees / "paris.json", []) + lire_archives(donnees)     # bilan sur TOUS les paris
     etat = _lire(donnees / "etat.json", {})
@@ -192,7 +212,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     liste, fiches_total, valeurs = selection_paris(paris)
     data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
             "bilan_tranches": bilan_tranches(paris), "courbes": courbes(paris), "segments": segments(paris),
-            "paris_segments": paris_des_segments(paris),
+            "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
             "bilan_bookmakers": bilan_bookmakers(paris), "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
@@ -261,6 +281,7 @@ padding:5px 8px;border-radius:8px;white-space:nowrap;display:none}
 .seg-paris{margin-top:8px;border-top:1px solid var(--ligne);cursor:default}
 .seg-paris .sp{padding:7px 0;border-bottom:1px solid var(--ligne)}.seg-paris .sp:last-child{border-bottom:0}
 .seg-paris .l3{font-size:12.5px}
+.seg-paris .sp-titre{font-weight:700;font-size:13px;padding:9px 0 2px;color:var(--doux)}
 .puces{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
 .puces button,select,.btn{flex:none;font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--ligne);
 background:var(--carte);color:var(--texte);cursor:pointer}
@@ -347,7 +368,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p><b>Solide</b> : au moins 30 paris, réussite nettement au-dessus de l'attendu et CLV positive.
     <b>Piste</b> : ROI et CLV positifs, à confirmer. <b>Chance ?</b> : ROI positif mais CLV nulle ou négative
     (on n'a pas battu le marché : sans doute de la chance). Avec près de 100 segments, quelques-uns brillent forcément par hasard.</p>
-    <p>Toucher un segment affiche ses paris ; le toucher à nouveau les replie.</p></details>
+    <p>Toucher un segment affiche ses paris : d'abord ceux à venir (pas encore commencés, du plus proche au plus lointain), puis ceux déjà réglés. Le toucher à nouveau les replie. Un pari à venir n'entre dans les chiffres du segment qu'une fois réglé.</p></details>
   </section>
   <section class="onglet" id="o-paris">
     <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
@@ -608,6 +629,8 @@ const verdict = s => (s.n >= 30 && s.ecart_sigma >= 2 && (s.clv_moyenne || 0) > 
   : s.roi > 0 ? ["Chance ?", "a_regler"] : ["Perdant", "perdu"];
 const nomSeg = s => [s.tranche && "Cotes " + s.tranche, s.bookmaker, s.sport && s.sport.replace("_", " ")]
   .filter(Boolean).join(" · ");
+const dansSeg = s => x => (!s.tranche || x[9] === s.tranche) && (!s.bookmaker || x[2] === s.bookmaker) && (!s.sport || x[10] === s.sport);
+const aVenir = s => (D.paris_a_venir_segments || []).filter(x => new Date(x[8]) > Date.now()).filter(dansSeg(s));
 function rendreSegments() {
   document.getElementById("puces-seg").innerHTML = Object.entries(TRIS).map(([k, v]) =>
     `<button data-t="${k}" class="${k===triSeg?"actif":""}">${v}</button>`).join("");
@@ -625,17 +648,24 @@ function rendreSegments() {
 <span><i>attendu</i> ${Math.round(100 * s.attendus / s.n)} %</span>
 <span><i>écart</i> <span class="${signe(s.ecart_sigma)}">${s.ecart_sigma > 0 ? "+" : ""}${String(s.ecart_sigma).replace(".", ",")}</span></span></div>
 <div class="l4"><span>ROI <b class="${signe(s.roi)}">${pctC(s.roi)}</b> (${eurC(s.gains)})</span>
-<span>CLV <span class="${signe(s.clv_moyenne)}">${pctC(s.clv_moyenne)}</span> <i>${s.clv_n}/${s.n}</i></span></div></article>`;
+<span>CLV <span class="${signe(s.clv_moyenne)}">${pctC(s.clv_moyenne)}</span> <i>${s.clv_n}/${s.n}</i></span>
+${(n => n ? `<span class="badge en_cours">${n} à venir</span>` : "")(aVenir(s).length)}</div></article>`;
   }).join("") : `<div class="vide">Aucun segment pour l'instant.</div>`;
-  // toucher un segment déroule ses paris (les mêmes que ceux qu'il compte), du plus récent au plus ancien
+  // toucher un segment déroule ses paris à venir, puis ses paris réglés (ceux qu'il compte), du plus récent au plus ancien
   document.querySelectorAll("#segments .seg").forEach(a => a.onclick = ev => {
     if (ev.target.closest(".seg-paris")) return;
     const ouvert = a.querySelector(".seg-paris");
     if (ouvert) { ouvert.remove(); return; }
     const s = D.segments[Number(a.dataset.i)];
-    const L = (D.paris_segments || []).filter(x => (!s.tranche || x[9] === s.tranche) &&
-      (!s.bookmaker || x[2] === s.bookmaker) && (!s.sport || x[10] === s.sport));
-    a.insertAdjacentHTML("beforeend", `<div class="seg-paris">${L.map(x => `<div class="sp">
+    const L = (D.paris_segments || []).filter(dansSeg(s)), V = aVenir(s);
+    a.insertAdjacentHTML("beforeend", `<div class="seg-paris">
+<div class="sp-titre">À venir (${V.length})</div>${V.length ? V.map(x => `<div class="sp">
+<div class="l1"><span class="match">${e(x[0])}</span><span class="quand">${quand(x[8])}</span></div>
+<div class="l3"><span>${e(x[1])}</span><span><b>${e(x[2])} ${cote(x[3])}</b> <i>juste ${cote(x[4])}</i></span>
+<span><i>écart</i> <span class="${signe(x[5])}">${pct(x[5])}</span></span>
+<span>CLV <span class="${signe(x[7])}">${pct(x[7])}</span> <i>pour l'instant</i></span></div></div>`).join("")
+  : `<div class="sp"><i>Aucun pari à venir dans ce segment pour l'instant.</i></div>`}
+<div class="sp-titre">Réglés (${L.length})</div>${L.map(x => `<div class="sp">
 <div class="l1"><span class="match">${e(x[0])}</span><span class="quand">${quand(x[8])}</span></div>
 <div class="l3"><span>${e(x[1])}</span><span><b>${e(x[2])} ${cote(x[3])}</b> <i>juste ${cote(x[4])}</i></span>
 <span class="badge ${x[5]}">${STATUTS[x[5]] || x[5]}</span><b class="${signe(x[6])}">${eur(x[6])}</b>

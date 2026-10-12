@@ -95,3 +95,18 @@ def test_segments_reussite_contre_attendu_sans_doublon():
     seg = s[0]
     assert seg == {**seg, "tranche": "1,01 – 1,50", "n": 12, "gagnes": 11, "attendus": 9.6}
     assert seg["ecart_sigma"] > 0 and seg["roi"] == round((33 - 10) / 120, 4)
+
+
+def test_paris_a_venir_des_segments_uniques_et_pas_commences():
+    from datetime import datetime, timezone
+    base = {"simulation": "A", "mise": 10, "reference": "Pinnacle", "marche": "VAINQUEUR", "periode": "MATCH",
+            "ligne": None, "joueur": None, "cote": 1.3, "cote_juste": 1.25, "bookmaker": "Betclic", "sport": "hockey",
+            "issue": "DOM", "statut": "en_cours", "ecart": 0.04, "domicile": "A", "exterieur": "B"}
+    paris = [{**base, "match_id": "b|1", "detecte": "1", "debut": "2026-10-12T20:00:00.000Z"},
+             {**base, "match_id": "b|1", "detecte": "2", "reference": "Betfair", "debut": "2026-10-12T20:00:00.000Z"},
+             {**base, "match_id": "b|2", "detecte": "1", "debut": "2026-10-12T09:00:00Z"},     # déjà commencé
+             {**base, "match_id": "b|3", "detecte": "1", "debut": "2026-10-12T15:00:00+00:00"},
+             {**base, "match_id": "b|4", "detecte": "1", "debut": "2026-10-13T15:00:00Z", "statut": "gagne"}]
+    L = site_web.paris_a_venir_des_segments(paris, datetime(2026, 10, 12, 12, tzinfo=timezone.utc))
+    assert [x[8] for x in L] == ["2026-10-12T15:00:00+00:00", "2026-10-12T20:00:00.000Z"]   # un seul pari par cote
+    assert L[0][2] == "Betclic" and L[0][9] == "1,01 – 1,50" and L[0][10] == "hockey" and L[0][5] == 0.04
