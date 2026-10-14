@@ -224,6 +224,7 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
     passe = [p for p in paris if heure(p.get("detecte")) and heure(p.get("debut"))
              and debut_historique <= heure(p["debut"]) < fin_historique
              and heure(p["detecte"]) <= releve]
+    passe_ids = {id(p) for p in passe}
     futur = [p for p in paris if heure(p.get("detecte"))
              and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)]
     selection = {}
@@ -240,7 +241,7 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
     for resultat, regle in zip(laboratoire.get("resultats", []), REGLES_LABO):
         assert resultat["regle"]["id"] == regle.id
         historique = [index[x] for x in resultat.get("ids_selections", []) if x in index
-                      and index[x] in passe]
+                      and id(index[x]) in passe_ids]
         enregistrer(regle.id, historique, selectionner(futur, regle, DEBUT_SUIVI))
 
     # Le rejeu historique commence avant le lancement officiel de ces stratégies.
@@ -416,6 +417,12 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
 .strategies-table th:first-child,.strategies-table td:first-child{position:sticky;left:0;background:var(--carte);z-index:1;min-width:180px;max-width:220px;white-space:normal;border-right:1px solid var(--ligne)}
 .strategies-table th:first-child{z-index:2}
 .strategies-table td:first-child small{max-width:200px;line-height:1.5}
+.strategies-table tbody tr{cursor:pointer}
+.strategies-table tbody tr:hover td{background:var(--accent-f)}
+.strategies-table tbody tr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#paris-strategie-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+#paris-strategie-banner[hidden]{display:none}
+.groupe-paris{font-size:14px;margin:16px 0 8px;color:var(--doux)}
 .strat-bar-row{display:grid;grid-template-columns:155px minmax(50px,1fr) 80px;gap:8px;align-items:center;min-height:40px;border-bottom:1px solid var(--ligne)}
 .strat-bar-row:last-child{border-bottom:0}
 .strat-bar-label{font-size:12px;line-height:1.3}
@@ -524,6 +531,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p>Toucher un segment affiche ses paris : d'abord ceux à venir (pas encore commencés, du plus proche au plus lointain), puis ceux déjà réglés. Le toucher à nouveau les replie. Un pari à venir n'entre dans les chiffres du segment qu'une fois réglé.</p></details>
   </section>
   <section class="onglet" id="o-paris">
+    <div id="paris-strategie-banner" class="carte" hidden></div>
     <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
     <select id="f-cote"></select><select id="f-book"></select><select id="f-sport"></select></div>
     <div id="paris"></div>
@@ -759,6 +767,7 @@ for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
   sel.onchange = () => { limite = 50; rendreParis(); };
 }
 let limite = 50;
+let strategieChoisie = null;
 const carteParis = p => `<article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${p.reporte_au && p.statut === "en_cours"
   ? "reporté au " + quand(p.reporte_au) : quand(p.debut)}</span></div>
@@ -773,12 +782,46 @@ ${(p.trace||[]).length ? `<details class="trace"><summary>Détails</summary>${p.
 </article>`;
 function rendreParis() {
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
-  // le témoin « Pinnacle brut » n'apparaît que si on le choisit dans « Références »
-  const L = fiches.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
-    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : p.sims.includes(v)) : p[k]===v)));
-  document.getElementById("paris").innerHTML = L.length ? L.slice(0, limite).map(carteParis).join("")
-    : `<div class="vide">Aucun pari pour ces filtres.</div>`;
+  const navigation = D.laboratoire?.navigation;
+  const ids = strategieChoisie ? (navigation?.selections?.[strategieChoisie.id]?.[strategieChoisie.periode] || []) : null;
+  // Les stratégies ont leurs propres paris exacts : pas uniquement les 400/600
+  // dernières fiches fusionnées, qui pourraient masquer des sélections anciennes.
+  const source = ids ? ids.map(id => navigation.paris[id]).filter(Boolean) : fiches;
+  const L = source.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
+    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : (p.sims||[]).includes(v)) : p[k]===v)));
+  const banner = document.getElementById("paris-strategie-banner");
   const plus = document.getElementById("plus");
+  banner.hidden = !strategieChoisie;
+  if (strategieChoisie) {
+    banner.innerHTML = `<div><b>${e(strategieChoisie.nom)}</b><div class="aide">${e(STRAT_PERIODES[strategieChoisie.periode])}
+      · ${L.length} pari(s) · cotes simulées à la détection. Les statistiques historiques restent figées au relevé.</div></div>
+      <button class="btn" id="paris-tout">Tous les paris</button>`;
+    document.getElementById("paris-tout").onclick = () => {
+      strategieChoisie = null;
+      for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value = "";
+      limite = 50;
+      rendreParis();
+    };
+    const now = Date.now();
+    const aVenir = L.filter(p => p.statut === "en_cours" && new Date(p.debut).getTime() > now)
+      .sort((a,b) => new Date(a.debut)-new Date(b.debut));
+    const enCours = L.filter(p => p.statut === "a_regler" ||
+      (p.statut === "en_cours" && !(new Date(p.debut).getTime() > now)))
+      .sort((a,b) => new Date(b.debut)-new Date(a.debut));
+    const termines = L.filter(p => !["en_cours","a_regler"].includes(p.statut))
+      .sort((a,b) => new Date(b.debut)-new Date(a.debut));
+    const parties = [["À venir",aVenir],["En cours ou à régler",enCours],["Terminés",termines]];
+    let compteur = 0;
+    document.getElementById("paris").innerHTML = L.length ? parties.map(([titre,paris]) => {
+      const restant = Math.max(0, limite-compteur), visibles = paris.slice(0,restant);
+      compteur += visibles.length;
+      return `<h3 class="groupe-paris">${titre} (${paris.length})</h3>` +
+        (visibles.length ? visibles.map(carteParis).join("") : (paris.length ? "" : '<p class="aide">Aucun pour le moment.</p>'));
+    }).join("") : '<div class="vide">Aucun pari pour cette stratégie et ces filtres.</div>';
+  } else {
+    document.getElementById("paris").innerHTML = L.length ? L.slice(0,limite).map(carteParis).join("")
+      : '<div class="vide">Aucun pari pour ces filtres.</div>';
+  }
   plus.style.display = L.length > limite ? "" : "none";
   plus.onclick = () => { limite += 50; rendreParis(); };
 }
@@ -956,6 +999,27 @@ function rendreStrategies() {
       <td class="pos">${s.regles ? eur(s.gains_bruts) : "—"}</td><td class="neg">${s.regles ? eur(-s.pertes_brutes) : "—"}</td>
       <td class="${signe(s.gain)}"><b>${s.regles ? eur(s.gain) : "—"}</b></td></tr>`;
   }).join("") + `</tbody>`;
+  // Une ligne = une navigation vers tous les paris de cette stratégie et de la
+  // période choisie, y compris les terminés et ceux absents des fiches récentes.
+  document.querySelectorAll("#strategies-table tbody tr").forEach(tr => {
+    const ligne = rows.find(r => r.id === tr.dataset.strategie);
+    if (!ligne) return;
+    tr.tabIndex = 0;
+    tr.setAttribute("role", "link");
+    tr.setAttribute("aria-label", "Voir les paris de " + ligne.nom + " : " + ligne.detail);
+    const aller = () => {
+      strategieChoisie = {id:ligne.id, nom:ligne.nom + " · " + ligne.detail, periode:periodeStrategies};
+      for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value = "";
+      limite = 50;
+      rendreParis();
+      ouvrir("paris");
+      window.scrollTo({top:0,behavior:"instant"});
+    };
+    tr.onclick = aller;
+    tr.onkeydown = ev => {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); aller(); }
+    };
+  });
   const graph = document.getElementById("strategies-graph");
   if (!reglees.length) {
     graph.innerHTML = `<p class="aide">Le graphique apparaîtra après les premiers règlements de cette période. Choisis « Historique 7–13 oct. » pour voir les gains déjà observés.</p>`;
