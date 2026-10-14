@@ -1,0 +1,72 @@
+name: Reglement des paris
+
+# Le reglement fonctionne independamment du scan des cotes.
+# Les donnees sont mises a jour sur la meme branche, sans ecriture concurrente.
+on:
+  schedule:
+    - cron: "27 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  reglement:
+    if: github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    concurrency:
+      group: donnees
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Charger les donnees actuelles
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"
+          git clone -q --depth 1 --branch donnees "$url" donnees
+
+      - name: Regler les paris sans scanner les cotes
+        env:
+          PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
+          API_SPORTS_KEY: ${{ secrets.API_SPORTS_KEY }}
+        run: python scripts/cycle.py --seulement-reglement --donnees donnees --site site
+
+      - name: Enregistrer les paris regles
+        run: |
+          cd donnees
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -qm "Reglement $(date -u +%FT%TZ)"
+          for i in 1 2 3; do
+            git push -q origin donnees && exit 0
+            git pull -q --rebase origin donnees
+          done
+          exit 1
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publier:
+    needs: reglement
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/deploy-pages@v4
