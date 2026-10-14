@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (comparaison, controle, kalshi, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, stockage)
 from cotes import resultats as resultats_mod  # noqa: E402
+from cotes import theodds  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
 # NetBet retiré le 6/10/2026 : le flux « netbet » de PulseScore est le site international (netbet.com :
@@ -142,6 +143,19 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
             if r and p["statut"] in ("en_cours", "a_regler") and (
                     p["periode"] in reglement.SOUS_PERIODES or p["marche"] == "HALF_TIME_FULL_TIME"):
                 resultats[p["match_id"]] = resultats_mod.completer_periodes(p, r, enregistrements)
+        # Secours The Odds API uniquement pour les résultats encore manquants.
+        # Les quatre comptes partagent le cache, jamais quatre voix au consensus.
+        cles_odds = [os.environ.get(f"THE_ODDS_API_KEY_{i}", "").strip() for i in range(1, 5)]
+        journal["theodds"] = {"cles_configurees": sum(bool(c) for c in set(cles_odds))}
+        if any(cles_odds):
+            cache_odds = lire_json(donnees / "theodds.json", {})
+            secours = etape("resultats_theodds", journal, theodds.collecter,
+                           paris, resultats, enregistrements, cles_odds, cache_odds, datetime.now(timezone.utc))
+            ecrire_json(donnees / "theodds.json", cache_odds)
+            if secours:
+                resultats.update(secours[0])
+                journal["theodds"] = secours[1]
+                signaler(journal, "resultats_theodds", secours[1]["erreurs"])
         journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
         if client:
             requetes["resultats"] = client.requetes
@@ -199,7 +213,7 @@ def main() -> int:
         ecrire_json(donnees / "etat.json", etat)
         from site_web import construire
         construire(donnees, Path(args.site))
-        print(json.dumps({"mode": "reglement", "resultats": journal.get("resultats"),
+        print(json.dumps({"mode": "reglement", "resultats": journal.get("resultats"), "theodds": journal.get("theodds"),
                           "etapes": journal.get("etapes", {})}, ensure_ascii=False))
         return 0
 

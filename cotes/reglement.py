@@ -285,13 +285,15 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
                     sc["CORNERS_MT1"] = tuple(m["corners_mi_temps"])
                 statut = regler(p, sc)
                 preuve = {"origine": "résultat saisi à la main", "source": m.get("source"), "scores": sc}
-            elif r and r.get("final"):
+            elif r and r.get("final") and ("id_paris_autorises" not in r or p["id"] in r["id_paris_autorises"]):
                 sc = scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"])
                 if r.get("corners"):
                     sc["CORNERS"] = tuple(r["corners"])
                 statut = regler(p, sc)
                 preuve = {"origine": "automatique", "sources": r.get("sources"), "score": r["score"],
                           "periodes": r["periodes"], "scores": sc}
+                if r.get("preuve_source"):
+                    preuve["preuve_source"] = r["preuve_source"]
         if statut in GAIN:
             p["statut"] = statut
             p["gain"] = gain(statut, p["mise"], p["cote"])

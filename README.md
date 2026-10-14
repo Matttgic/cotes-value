@@ -107,6 +107,16 @@ Les simulations se recoupent et leurs mises ne s'additionnent pas.
 Coût en requêtes : `python scripts/simulation_appels.py` (≈ 337 000/mois pour les 4 bookmakers +
 Betfair toutes les 5 min : offre PRO nécessaire ; l'offre gratuite ne sert qu'aux tests).
 
+Le workflow horaire **Règlement des paris** utilise aussi les secrets optionnels
+`THE_ODDS_API_KEY_1` à `THE_ODDS_API_KEY_4` pour les scores manquants, après PulseScore,
+ESPN et API-Sports. Chaque compte est vérifié par `/sports` (gratuit), puis les scores
+sont lus uniquement pour les compétitions identifiées et les paris compatibles.
+Cache partagé `theodds.json`, lecture au plus toutes les 3 heures par compétition,
+16 crédits/jour et 500/mois par compte, au plus 4 appels scores par cycle.
+Un appel scores coûte 2 crédits et retourne les résultats des 3 derniers jours.
+Les doublons de clés n'augmentent pas le quota et les comptes restent une seule source.
+[Couverture, règles et diagnostic](docs/theodds.md).
+
 ## Données (branche `donnees`)
 
 - `paris.json` : tous les paris simulés (statut, gain, CLV), avec leur trace depuis le 7/10/2026 :
@@ -115,6 +125,7 @@ Betfair toutes les 5 min : offre PRO nécessaire ; l'offre gratuite ne sert qu'a
   scores par période comparés à la ligne) ;
 - `opportunites/AAAA-MM-JJ.jsonl.gz` : toutes les erreurs de cote détectées ;
 - `etat.json` : dernier cycle, requêtes PulseScore par mois ;
+- `theodds.json` : scores de secours en cache et compteurs de crédits, sans clés API ;
 - `resultats_manuels.json` : règlements à la main, par exemple
   `{"winamax|72036146": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3]}}` ; `periodes` donne le
   score de chaque période (manches de baseball pour les marchés « 5 manches »).

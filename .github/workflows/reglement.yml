@@ -2,7 +2,7 @@ name: Reglement des paris
 
 # Le reglement fonctionne independamment du scan des cotes.
 # Les donnees sont mises a jour sur la meme branche, sans ecriture concurrente.
-# Relance du 14/10/2026 : appliquer les scores et mi-temps nouvellement sourcés.
+# Secours de scores The Odds API, avec cache et quotas des comptes gratuits.
 on:
   schedule:
     - cron: "27 * * * *"
@@ -45,6 +45,10 @@ jobs:
         env:
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           API_SPORTS_KEY: ${{ secrets.API_SPORTS_KEY }}
+          THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
+          THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
+          THE_ODDS_API_KEY_3: ${{ secrets.THE_ODDS_API_KEY_3 }}
+          THE_ODDS_API_KEY_4: ${{ secrets.THE_ODDS_API_KEY_4 }}
         run: python scripts/cycle.py --seulement-reglement --donnees donnees --site site
 
       - name: Enregistrer les paris regles
