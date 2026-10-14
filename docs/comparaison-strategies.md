@@ -109,7 +109,21 @@ Ses seuils initiaux ne doivent pas être présentés comme optimisés ou validé
 
 ## Suivi indépendant à venir
 
-Le laboratoire dans Bilan conserve les règles et l’historique figés. Il calcule
+L’onglet **Stratégies** conserve les règles et l’historique figés. Son tableau
+présente les 36 règles et les deux comparateurs, sans devoir les ouvrir une à une.
+Il affiche sélections, réglés/en attente, gagnés, perdus, réussite, ROI, gains
+cumulés, pertes cumulées et gain net. Le graphique compare les gains nets.
+Les tris et le filtre de référence s’appliquent aux deux vues.
+
+Le bouton « Historique 7–13 oct. » est un total descriptif au relevé : il inclut
+les règlements tardifs alors disponibles. Ce total ne remplace pas les coupures
+utilisées pour la décision initiale et n’est pas la somme des trois bilans de
+période. Les comparateurs y restent des rejeux hypothétiques.
+
+Le bouton « Depuis le lancement » affiche seulement les nouvelles prises du
+14/10 à partir de 14 h, pour les 36 règles et les deux comparateurs. Claude et
+ChatGPT V1 conservent leur sélection officielle ; leurs prises précédentes
+restent dans leurs bilans de Bilan et n’entrent pas dans ce tableau futur. Il calcule
 séparément les sélections détectées à partir du 14/10 à 14 h (Paris) à chaque
 construction du site : effectifs, attentes, gains, ROI et CLV. Les 30 dernières
 sélections de chaque règle sont consultables ; les totaux portent sur toutes.

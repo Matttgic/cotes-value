@@ -14,7 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.correspondance import normaliser  # noqa: E402
-from cotes.laboratoire import REGLES, DEBUT_ETUDE, audit, classer, evaluer, heure, selectionner  # noqa: E402
+from cotes.laboratoire import (REGLES, DEBUT_ETUDE, PERIODES, audit, classer, evaluer,  # noqa: E402
+                               heure, resume, selectionner)
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import paris_chatgpt  # noqa: E402
 
@@ -48,20 +49,29 @@ def comparer(paris: list[dict], releve: str) -> dict:
     if (qualite["ids_dupliques"] or qualite["gains_incoherents"] or qualite["dates_reglement_invalides"]
             or qualite["conflits_reglement_meme_selection"]):
         raise ValueError("Audit bloquant : " + json.dumps(qualite, ensure_ascii=False))
+    def ensemble(rows):
+        # Total descriptif au relevé, avec les règlements tardifs disponibles.
+        # Il ne remplace jamais les coupures utilisées pour la décision.
+        partie = [p for p in rows if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
+        return resume(partie, releve, incertitude=False)
+
     resultats = []
     for r in REGLES:
         rows = selectionner(paris, r)
         resultats.append({"regle": r.dict(), **evaluer(rows, releve),
+                          "ensemble": ensemble(rows),
                           "ids_selections": [p["id"] for p in rows]})
     v1 = paris_chatgpt(paris, depuis=DEBUT_ETUDE)
-    claude = evaluer(claude_rejouee(paris), releve)
+    v1_rows = [p for p in paris if id(p) in v1]
+    claude_rows = claude_rejouee(paris)
+    claude = {**evaluer(claude_rows, releve), "ensemble": ensemble(claude_rows)}
     # Plusieurs paris corrélés par rencontre : ne pas présenter un bootstrap par
     # pari comme un intervalle par événement pour ce comparateur descriptif.
     for periode in claude.values():
         periode["ic95"] = None
     return {"schema": 1, "releve": releve, "audit": qualite, "resultats": resultats,
             "decision": classer(resultats),
-            "comparateurs": {"ChatGPT v1 (rejeu)": evaluer([p for p in paris if id(p) in v1], releve),
+            "comparateurs": {"ChatGPT v1 (rejeu)": {**evaluer(v1_rows, releve), "ensemble": ensemble(v1_rows)},
                              "Claude (rejeu)": claude}}
 
 

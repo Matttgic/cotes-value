@@ -109,3 +109,47 @@ def test_bootstrap_reproductible_et_une_observation_non_estimable():
     a = intervalle_roi([1.1, -1, 0, .4], repetitions=500)
     assert a == intervalle_roi([1.1, -1, 0, .4], repetitions=500)
     assert a[0] < 0 < a[1]
+
+
+def test_gains_pertes_et_net_excluent_les_attentes():
+    s = resume([pari(), pari("b", statut="perdu", gain=-10),
+                pari("c", statut="demi_gagne", gain=5.5),
+                pari("d", statut="en_cours", gain=None, regle_le=None)], "2026-10-12T00:00:00Z")
+    assert (s["gains_bruts"], s["pertes_brutes"], s["gain"]) == (16.5, 10, 6.5)
+    assert s["gains_bruts"] - s["pertes_brutes"] == s["gain"]
+    assert (s["paris"], s["regles"], s["attente"], s["gagnes"]) == (4, 3, 1, 2)
+
+
+def test_ensemble_inclut_reglements_tardifs_sans_changer_decision():
+    from scripts.comparer_strategies import comparer
+    p = pari(regle_le="2026-10-11T01:00:00Z")
+    r = comparer([p], "2026-10-14T10:09:28Z")
+    x = next(r for r in r["resultats"] if r["regle"]["id"] == "PIN-1.5-3-e2-h36")
+    assert x["construction"]["regles"] == 0 and x["construction"]["attente"] == 1
+    assert x["ensemble"]["regles"] == 1 and x["ensemble"]["gain"] == 11
+    assert r["decision"]["candidate"] is None
+
+
+def test_site_strategies_et_comparateurs_meme_date(tmp_path, monkeypatch):
+    import json
+    import re
+    from datetime import datetime, timezone
+    from scripts import site_web
+
+    class Horloge(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 10, 14, 18, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(site_web, "datetime", Horloge)
+    rows = [pari("ancien", simulation="D"), pari("nouveau", simulation="D",
+            detecte="2026-10-14T12:01:00Z", lu_reference="2026-10-14T12:00:00Z",
+            debut="2026-10-14T15:00:00Z", regle_le="2026-10-14T17:00:00Z")]
+    (tmp_path / "paris.json").write_text(json.dumps(rows))
+    html = site_web.construire(tmp_path, tmp_path / "site").read_text()
+    data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    assert 'data-o="strategies"' in html and 'id="o-strategies"' in html
+    assert len(data["laboratoire"]["resultats"]) == 36
+    for nom, s in data["laboratoire"]["comparateurs_futur"].items():
+        assert s["paris"] == s["regles"] == 1
+        assert s["gain"] == s["gains_bruts"] == 11 and s["pertes_brutes"] == 0

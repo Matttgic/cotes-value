@@ -177,6 +177,8 @@ def resume(rows: list[dict], connu_avant: str, incertitude: bool = True) -> dict
             "perdus": sum(p["statut"] in ("perdu", "demi_perdu") for p in regles),
             "rembourses": sum(p["statut"] == "rembourse" for p in regles),
             "gain": round(total, 2), "mise": mises, "roi": round(100*total/mises, 2) if n else None,
+            "gains_bruts": round(sum(g for g in gains if g > 0), 2),
+            "pertes_brutes": round(-sum(g for g in gains if g < 0), 2),
             "ic95": intervalle_roi([g/MISE for g in gains]) if incertitude else None,
             "clv": round(100*mean(cs), 2) if cs else None, "clv_n": len(cs),
             "couverture_clv": round(100*len(cs)/n, 1) if n else None,

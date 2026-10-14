@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from pathlib import Path
 
@@ -13,7 +13,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCH
                               REGLES, clv_finale, segments, tranche)
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
-from cotes.laboratoire import DEBUT_SUIVI, suivi_futur  # noqa: E402
+from cotes.laboratoire import DEBUT_SUIVI, heure, resume, suivi_futur  # noqa: E402
 
 
 def _lire(chemin: Path, defaut):
@@ -223,7 +223,13 @@ def construire(donnees: Path, sortie: Path) -> Path:
     if laboratoire:
         laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
                                     for r in laboratoire["resultats"]]
-        laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI))
+        maintenant = datetime.now(timezone.utc).isoformat()
+        laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
+        officiels = {"Claude (rejeu)": paris_strategie(paris), "ChatGPT v1 (rejeu)": paris_chatgpt(paris)}
+        laboratoire["comparateurs_futur"] = {
+            nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
+                         and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
+                        maintenant, incertitude=False) for nom, ids in officiels.items()}
         ids_labo = {i for r in laboratoire["futur"] for i in r["ids_recents"]}
         laboratoire["paris_recents"] = [{k: p.get(k) for k in (
             "id", "domicile", "exterieur", "bookmaker", "pari", "cote", "ecart",
@@ -327,6 +333,24 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
 .infos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
 .infos div{background:var(--carte);border:1px solid var(--ligne);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--doux)}
 .infos b{display:block;color:var(--texte);font-size:16px}
+/* Tableau complet : nom de la stratégie visible pendant le défilement mobile. */
+.strategies-table{min-width:950px}
+.strategies-table th:first-child,.strategies-table td:first-child{position:sticky;left:0;background:var(--carte);z-index:1;min-width:180px;max-width:220px;white-space:normal;border-right:1px solid var(--ligne)}
+.strategies-table th:first-child{z-index:2}
+.strategies-table td:first-child small{max-width:200px;line-height:1.5}
+.strat-bar-row{display:grid;grid-template-columns:155px minmax(50px,1fr) 80px;gap:8px;align-items:center;min-height:40px;border-bottom:1px solid var(--ligne)}
+.strat-bar-row:last-child{border-bottom:0}
+.strat-bar-label{font-size:12px;line-height:1.3}
+.strat-bar-label small{display:block;font-size:10.5px;color:var(--doux)}
+.strat-bar-track{position:relative;height:22px;background:var(--fond)}
+.strat-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--doux)}
+.strat-bar{position:absolute;top:4px;height:14px;border-radius:2px}
+.strat-bar.pos{background:var(--vert)}.strat-bar.neg{background:var(--rouge)}
+.strat-bar-value{text-align:right;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.strat-axe{display:flex;justify-content:space-between;margin:0 88px 5px 163px;color:var(--doux);font-size:11px}
+@media(max-width:480px){.strategies-table th:first-child,.strategies-table td:first-child{min-width:150px;max-width:160px}
+.strat-bar-row{grid-template-columns:112px minmax(45px,1fr) 66px;gap:5px}.strat-bar-value{font-size:11px}.strat-bar-label{font-size:11px}.strat-bar-label small{font-size:9px}
+.strat-axe{margin-left:117px;margin-right:71px}}
 </style>
 </head>
 <body>
@@ -335,6 +359,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
   <nav id="onglets">
     <button data-o="jouer">À jouer<span class="nb" id="nb-jouer"></span></button>
     <button data-o="bilan">Bilan</button>
+    <button data-o="strategies">Stratégies</button>
     <button data-o="segments">Segments</button>
     <button data-o="paris">Paris<span class="nb" id="nb-paris"></span></button>
     <button data-o="regler">À régler<span class="nb" id="nb-regler"></span></button>
@@ -347,7 +372,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <div id="jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
-    <div class="carte" id="laboratoire"></div>
+    <p class="aide"><a href="#strategies">Comparer les 36 stratégies, Claude et ChatGPT V1</a></p>
     <div class="puces" id="puces-ref"></div>
     <p class="aide" id="bilan-quoi"></p>
     <button id="voir-chatgpt" hidden>Voir les paris ChatGPT</button>
@@ -380,6 +405,26 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     comptés seulement depuis cette date. <b>ChatGPT</b> : stratégie indépendante, règles figées le 14/10,
     une seule mise par match et cinq nouvelles mises maximum par jour (heure de Paris). Son historique
     de conception n'entre pas dans son bilan. Les deux stratégies ont des dates de départ différentes.</p></details>
+  </section>
+  <section class="onglet" id="o-strategies">
+    <h2 class="sous-titre" style="margin-top:0">Toutes les stratégies</h2>
+    <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
+    <p class="aide" id="strategies-quoi"></p>
+    <div class="filtres">
+      <label for="strategies-ref">Référence</label>
+      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs">Claude / ChatGPT V1</option></select>
+      <label for="strategies-tri">Tri</label>
+      <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select>
+    </div>
+    <p class="aide" id="strategies-total"></p>
+    <div class="tableau" tabindex="0" aria-label="Comparaison des stratégies, défilement horizontal sur mobile"><table class="strategies-table" id="strategies-table"></table></div>
+    <p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
+      ROI sur mises réglées. Gains et pertes : résultats nets des paris gagnants et perdants ; net = gains − pertes.
+      Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p>
+    <h2 class="sous-titre">Gain net par stratégie</h2>
+    <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
+    <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
+    <div class="carte" id="laboratoire"></div>
   </section>
   <section class="onglet" id="o-segments">
     <div class="puces" id="puces-seg"></div>
@@ -765,6 +810,78 @@ ${(g.exemples||[]).map(x => `<div class="l4"><span>${e(x.match)}</span><span>${e
 rendreControle();
 
 // Famille publiée une fois : aucun nouveau classement choisi selon le test final.
+// Comparaison complète : même ligne de données pour le tableau et le graphique.
+const STRAT_PERIODES = {futur:"Depuis le lancement", ensemble:"Historique 7–13 oct.",
+  construction:"7–10 oct.", validation:"11–12 oct.", test:"13 oct."};
+let periodeStrategies = "futur";
+function rendreStrategies() {
+  const L = D.laboratoire;
+  if (!L?.resultats?.length) {
+    document.getElementById("strategies-quoi").textContent = "Aucune comparaison disponible.";
+    return;
+  }
+  const pp = n => n == null ? "—" : pct(n/100);
+  const bornes = n => String(n).replace(".",",");
+  const futur = new Map((L.futur || []).map(r => [r.id,r]));
+  let rows = L.resultats.map(r => ({id:r.regle.id, nom:r.regle.reference, reference:r.regle.reference,
+    detail:`Cotes ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · edge ≥ ${r.regle.edge_min*100} % · ≤ ${r.regle.avance_max_h} h`,
+    graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
+    stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
+  for (const [id,per] of Object.entries(L.comparateurs || {})) {
+    rows.push({id,nom:id.startsWith("Claude") ? "Claude" : "ChatGPT V1", reference:"comparateurs",
+      detail:periodeStrategies === "futur" ? "Nouvelles prises officielles depuis le 14/10 à 14 h" : "Rejeu hypothétique · mêmes dates que la famille",
+      graphe:"Comparateur", stats:periodeStrategies === "futur" ? L.comparateurs_futur?.[id] : per[periodeStrategies]});
+  }
+  rows = rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
+  const ref = document.getElementById("strategies-ref").value;
+  if (ref) rows = rows.filter(r => r.reference === ref);
+  const tri = document.getElementById("strategies-tri").value;
+  rows.sort((a,b) => {
+    if (tri === "nom") return a.nom.localeCompare(b.nom,"fr") || a.id.localeCompare(b.id);
+    const av = tri === "reussite" ? a.reussite : a.stats[tri], bv = tri === "reussite" ? b.reussite : b.stats[tri];
+    return (bv ?? -Infinity) - (av ?? -Infinity) || a.id.localeCompare(b.id);
+  });
+  document.getElementById("strategies-periodes").innerHTML = Object.entries(STRAT_PERIODES).map(([id,nom]) =>
+    `<button data-p="${id}" class="${periodeStrategies===id ? "actif" : ""}" aria-pressed="${periodeStrategies===id}">${nom}</button>`).join("");
+  for (const b of document.querySelectorAll("#strategies-periodes button")) b.onclick = () => { periodeStrategies=b.dataset.p; rendreStrategies(); };
+  const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
+  document.getElementById("strategies-total").textContent = `${rows.length} stratégies affichées · ${active.length} avec des sélections · ${reglees.length} avec des paris réglés. Glisse le tableau vers la gauche pour voir toutes les colonnes.`;
+  const descriptions = {
+    futur:"Suivi sur les nouvelles détections depuis le 14 octobre 2026 à 14 h (Paris). Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
+    ensemble:"Historique figé : matchs du 7 au 13 octobre, règlements disponibles au relevé du 14/10 à 12 h 09 (Paris), y compris les règlements tardifs. Rejeu rétrospectif, distinct du suivi depuis lancement.",
+    construction:"Construction : matchs du 7 au 10 octobre ; seuls les règlements connus avant le 11 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
+    validation:"Validation : matchs des 11 et 12 octobre ; seuls les règlements connus avant le 13 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
+    test:"Test final : matchs du 13 octobre ; règlements disponibles au relevé du 14/10 à 12 h 09 (Paris). Les paris non réglés restent en attente."
+  };
+  document.getElementById("strategies-quoi").textContent = descriptions[periodeStrategies] +
+    (periodeStrategies === "futur" && !active.length ? " Aucune nouvelle sélection enregistrée : la dernière collecte disponible précède ce lancement. Le bouton Historique affiche la comparaison existante." : "") +
+    " 36 règles et 2 comparateurs ; aucune stratégie retenue par le protocole initial.";
+  document.getElementById("strategies-table").innerHTML = `<thead><tr><th>Stratégie</th><th>Paris</th><th>Gagnés</th><th>Perdus</th><th>Réussite</th><th>ROI</th><th>Gains</th><th>Pertes</th><th>Gain net</th></tr></thead><tbody>` + rows.map(r => {
+    const s=r.stats;
+    return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nom)}</b><small>${e(r.detail)}</small></td>
+      <td>${s.paris}<small>${s.regles} réglés · ${s.attente} en attente</small></td><td>${s.gagnes}</td><td>${s.perdus}</td>
+      <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}</td>
+      <td class="pos">${s.regles ? eur(s.gains_bruts) : "—"}</td><td class="neg">${s.regles ? eur(-s.pertes_brutes) : "—"}</td>
+      <td class="${signe(s.gain)}"><b>${s.regles ? eur(s.gain) : "—"}</b></td></tr>`;
+  }).join("") + `</tbody>`;
+  const graph = document.getElementById("strategies-graph");
+  if (!reglees.length) {
+    graph.innerHTML = `<p class="aide">Le graphique apparaîtra après les premiers règlements de cette période. Choisis « Historique 7–13 oct. » pour voir les gains déjà observés.</p>`;
+    return;
+  }
+  const min = Math.min(0,...reglees.map(r => r.stats.gain)), max = Math.max(0,...reglees.map(r => r.stats.gain));
+  const span = max-min || 1, zero = -min/span*100;
+  graph.innerHTML = `<div class="strat-axe"><span>${eur(min)}</span><span>${eur(max)}</span></div>` + rows.map(r => {
+    const g = r.stats.gain, left = (Math.min(0,g)-min)/span*100, width = Math.abs(g)/span*100;
+    return `<div class="strat-bar-row" title="${e(r.nom+" · "+r.detail)}"><div class="strat-bar-label">${e(r.nom)}<small>${e(r.graphe)}</small></div>
+      <div class="strat-bar-track"><i class="strat-zero" style="left:${zero}%"></i>${r.stats.regles ? `<i class="strat-bar ${signe(g)}" style="left:${left}%;width:${width}%"></i>` : ""}</div>
+      <span class="strat-bar-value ${signe(g)}">${r.stats.regles ? eur(g) : "—"}</span></div>`;
+  }).join("");
+}
+document.getElementById("strategies-ref").onchange = rendreStrategies;
+document.getElementById("strategies-tri").onchange = rendreStrategies;
+rendreStrategies();
+
 function rendreLaboratoire() {
   const L = D.laboratoire;
   const box = document.getElementById("laboratoire");
@@ -774,10 +891,10 @@ function rendreLaboratoire() {
   const deja = new Date() >= new Date(L.debut_suivi);
   const source = `https://github.com/Matttgic/cotes-value/tree/${encodeURIComponent(L.source.commit)}`;
   const rapport = "https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/comparaison-strategies.md";
-  box.innerHTML = `<h2 style="font-size:16px;margin:0 0 6px">Laboratoire · 36 stratégies</h2>
+  box.innerHTML = `<h2 style="font-size:16px;margin:0 0 6px">Règles et contrôle du laboratoire</h2>
     <p style="margin:0 0 8px"><b>${L.decision.candidate ? "Candidate expérimentale : " + e(L.decision.candidate) : "Aucune stratégie retenue par le protocole"}.</b>
     Rentabilité future non estimable avec cet historique.</p>
-    <details><summary>Comparer les règles et suivre les nouveaux paris</summary>
+    <details><summary>Examiner une règle en détail</summary>
     <p class="aide" style="margin-top:10px">Trois références, trois plages de cotes, deux seuils d’edge et deux délais.
     10 € fictifs par sélection, un pari par match dans chaque règle. Les règles se recoupent : ne pas additionner leurs mises ou leurs gains.</p>
     <p class="aide">Historique figé : matchs du 7 au 13 octobre 2026, heure de Paris.
@@ -837,7 +954,7 @@ rendreLaboratoire();
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
 const depart = location.hash.slice(1) || lire("onglet") || "jouer";
-const ONGLETS = ["jouer","bilan","segments","paris","regler","controle"];
+const ONGLETS = ["jouer","bilan","strategies","segments","paris","regler","controle"];
 ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 </script>
