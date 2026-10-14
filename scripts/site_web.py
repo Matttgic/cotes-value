@@ -1102,7 +1102,7 @@ function rendreStrategies() {
   graph.innerHTML = `<div class="strat-axe"><span>${eur(min)}</span><span>${eur(max)}</span></div>` + rows.map(r => {
     const g = r.stats.gain, left = (Math.min(0,g)-min)/span*100, width = Math.abs(g)/span*100;
     return `<div class="strat-bar-row" title="${e(r.nom+" · "+r.detail)}"><div class="strat-bar-label">${e(r.nom)}<small>${e(r.graphe)}</small></div>
-      <div class="strat-bar-track"><i class="strat-zero" style="left:${zero}%"></i>${r.stats.regles ? `<i class="strat-bar ${signe(g)}" style="left:${left}\%;width:${width}%"></i>` : ""}</div>
+      <div class="strat-bar-track"><i class="strat-zero" style="left:${zero}%"></i>${r.stats.regles ? `<i class="strat-bar ${signe(g)}" style="left:${left}%;width:${width}%"></i>` : ""}</div>
       <span class="strat-bar-value ${signe(g)}">${r.stats.regles ? eur(g) : "—"}</span></div>`;
   }).join("");
 }
@@ -1172,7 +1172,7 @@ function rendreLaboratoire() {
         const p = L.paris_recents.find(p => p.id === id);
         if (!p) return "";
         return `<div class="carte"><b>${e(p.domicile)} — ${e(p.exterieur)}</b><div>${e(p.pari)} · ${e(p.bookmaker)} ·${cote(p.cote)}</div>
-        <small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] \vert{}\vert{} p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
+        <small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] || p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
       }).join("")}</details>`;
   }
   document.getElementById("labo-regle").onchange = detail;
