@@ -1,0 +1,52 @@
+name: Publier le site depuis les données enregistrées
+
+on:
+  push:
+    branches: [ccr-148b8ccc-phitmr]
+    paths:
+      - scripts/site_web.py
+      - cotes/laboratoire.py
+      - docs/comparaison-strategies.json
+      - .github/workflows/site.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# La publication d'une évolution du site ne relance pas les API de collecte.
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: donnees
+          path: donnees
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Construire avec les données existantes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.site_web import construire
+          construire(Path('donnees'), Path('site'))
+          PY
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  publier:
+    needs: construire
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/deploy-pages@v4

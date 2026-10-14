@@ -98,3 +98,9 @@ remboursements, baisse maximale et stabilité dans le temps. Même 300 paris ne
 prouvent pas à eux seuls la rentabilité. Toute modification créera une **v2 avec
 une nouvelle date**, sans réécrire le bilan v1. Pour comparer Claude et ChatGPT,
 utiliser ensuite la même période à partir du 14/10 à 05:15 Paris.
+
+## Mise à jour du 14 octobre : comparaison systématique
+
+La V1 reste inchangée pour conserver son suivi. Elle n’est pas retenue comme
+stratégie supérieure : voir la [comparaison de 36 règles](comparaison-strategies.md).
+Le laboratoire démarre séparément à 14 h (Paris), sans réécrire ses résultats.

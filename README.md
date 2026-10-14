@@ -62,6 +62,18 @@ ses sélections. Aucun appel API supplémentaire.
 [Règles, audit historique défavorable et limites](docs/strategie-chatgpt.md).
 Le backtest de conception est exclu du bilan prospectif : rentabilité non démontrée.
 
+### Laboratoire de comparaison
+
+**Bilan → Laboratoire** compare 36 règles avec un découpage chronologique et
+suit leurs nouvelles sélections à partir du 14/10/2026 à 14 h (Paris).
+Aucune candidate ne satisfait le protocole initial : aucune rentabilité future
+n'est annoncée. La V1 reste un témoin expérimental, pas une stratégie validée.
+Les simulations se recoupent et leurs mises ne s'additionnent pas.
+
+[Résultats et limites](docs/comparaison-strategies.md) ·
+[Protocole figé](docs/protocole-comparaison.md) ·
+[Notebook exécuté](notebooks/comparaison-strategies.ipynb).
+
 ## Mise en route
 
 1. Secret `PULSESCORE_KEY` (Settings → Secrets and variables → Actions → Secrets).

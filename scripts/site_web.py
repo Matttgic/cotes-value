@@ -13,6 +13,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCH
                               REGLES, clv_finale, segments, tranche)
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
+from cotes.laboratoire import DEBUT_SUIVI, suivi_futur  # noqa: E402
 
 
 def _lire(chemin: Path, defaut):
@@ -218,6 +219,15 @@ def construire(donnees: Path, sortie: Path) -> Path:
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     liste, fiches_total, valeurs = selection_paris(paris)
+    laboratoire = _lire(Path(__file__).resolve().parent.parent / "docs/comparaison-strategies.json", {})
+    if laboratoire:
+        laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
+                                    for r in laboratoire["resultats"]]
+        laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI))
+        ids_labo = {i for r in laboratoire["futur"] for i in r["ids_recents"]}
+        laboratoire["paris_recents"] = [{k: p.get(k) for k in (
+            "id", "domicile", "exterieur", "bookmaker", "pari", "cote", "ecart",
+            "detecte", "debut", "statut", "gain")} for p in paris if p["id"] in ids_labo]
     data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
             "bilan_tranches": bilan_tranches(paris), "courbes": courbes(paris), "segments": segments(paris),
             "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
@@ -225,6 +235,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
             "chatgpt": CHATGPT,
+            "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
@@ -336,6 +347,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <div id="jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
+    <div class="carte" id="laboratoire"></div>
     <div class="puces" id="puces-ref"></div>
     <p class="aide" id="bilan-quoi"></p>
     <button id="voir-chatgpt" hidden>Voir les paris ChatGPT</button>
@@ -358,7 +370,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     (10 € × CLV) ; un réel sous l'espéré peut n'être que de la malchance, surtout avec des grosses cotes. <b>Sans
     CLV</b> : la cote de référence a disparu avant le match ; si ces paris perdent toujours, il faut les éviter.</p>
     <p><b>CLV</b> : la cote prise comparée à la cote juste relevée juste avant le match (moins de 30 min). Positive =
-    on a pris un meilleur prix que le marché final ; c'est le signe le plus rapide qu'une méthode marche. Sous la
+    on a pris un meilleur prix que le marché final ; c’est un indice favorable, sans garantie de rentabilité. Sous la
     CLV : paris mesurés / paris réglés.</p>
     <p><b>Paris uniques</b> : chaque cote française comptée une fois, même si plusieurs références l'ont signalée.
     <b>Pinnacle, Betfair…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
@@ -751,6 +763,77 @@ ${(g.exemples||[]).map(x => `<div class="l4"><span>${e(x.match)}</span><span>${e
   document.getElementById("ctl-liste").innerHTML = html;
 }
 rendreControle();
+
+// Famille publiée une fois : aucun nouveau classement choisi selon le test final.
+function rendreLaboratoire() {
+  const L = D.laboratoire;
+  const box = document.getElementById("laboratoire");
+  if (!L?.resultats?.length) { box.hidden = true; return; }
+  const pp = n => n == null ? "—" : pct(n / 100);
+  const metrique = s => `<b class="${signe(s.roi)}">${pp(s.roi)}</b><small>${s.regles} réglés · ${s.attente} en attente</small>`;
+  const deja = new Date() >= new Date(L.debut_suivi);
+  const source = `https://github.com/Matttgic/cotes-value/tree/${encodeURIComponent(L.source.commit)}`;
+  const rapport = "https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/comparaison-strategies.md";
+  box.innerHTML = `<h2 style="font-size:16px;margin:0 0 6px">Laboratoire · 36 stratégies</h2>
+    <p style="margin:0 0 8px"><b>${L.decision.candidate ? "Candidate expérimentale : " + e(L.decision.candidate) : "Aucune stratégie retenue par le protocole"}.</b>
+    Rentabilité future non estimable avec cet historique.</p>
+    <details><summary>Comparer les règles et suivre les nouveaux paris</summary>
+    <p class="aide" style="margin-top:10px">Trois références, trois plages de cotes, deux seuils d’edge et deux délais.
+    10 € fictifs par sélection, un pari par match dans chaque règle. Les règles se recoupent : ne pas additionner leurs mises ou leurs gains.</p>
+    <p class="aide">Historique figé : matchs du 7 au 13 octobre 2026, heure de Paris.
+    Il a déjà été consulté ; ce n’est pas une validation indépendante. Les seuils restent inchangés malgré les résultats.
+    <a href="${rapport}" target="_blank" rel="noopener">Méthode et résultats</a> · <a href="${source}" target="_blank" rel="noopener">Données du relevé</a>.</p>
+    <label for="labo-regle">Règle à examiner</label><br>
+    <select id="labo-regle" style="max-width:100%;margin:6px 0 10px">${L.resultats.map(r => `<option value="${e(r.regle.id)}">${e(r.regle.nom)}</option>`).join("")}</select>
+    <div id="labo-detail"></div>
+    <details style="margin-top:12px"><summary>Les 36 résultats historiques</summary>
+    <p class="aide">Chaque cellule affiche le ROI sur mises réglées, puis les effectifs. Ordre fixe, sans tri selon la période de test.</p>
+    <div class="tableau"><table><tr><th>Règle</th><th>7–10 oct.</th><th>11–12 oct.</th><th>13 oct.</th></tr>
+    ${L.resultats.map(r => `<tr><td>${e(r.regle.id)}</td>${["construction","validation","test"].map(p => `<td>${metrique(r[p])}</td>`).join("")}</tr>`).join("")}</table></div></details>
+    <details style="margin-top:12px"><summary>Comparateurs : Claude et ChatGPT V1</summary>
+    <p class="aide">Rejeux hypothétiques avant leurs lancements, distincts des bilans officiels ci-dessous.
+    Claude peut sélectionner plusieurs paris par match ; l’exposition diffère. Aucun comparateur ne participe au classement.</p>
+    <div class="tableau"><table><tr><th>Rejeu</th><th>7–10 oct.</th><th>11–12 oct.</th><th>13 oct.</th></tr>
+    ${Object.entries(L.comparateurs).map(([nom,r]) => `<tr><td>${e(nom)}</td>${["construction","validation","test"].map(p => `<td>${metrique(r[p])}</td>`).join("")}</tr>`).join("")}</table></div></details>
+    <details style="margin-top:12px"><summary>Suivi futur des 36 règles</summary>
+    <p class="aide">${deja ? "Depuis le" : "Début le"} ${e(new Date(L.debut_suivi).toLocaleString("fr-FR", {timeZone:"Europe/Paris"}))} (Paris).
+    Actualisé à chaque collecte. Un gain positif provisoire ne déclenche aucun changement automatique.</p>
+    <div class="tableau"><table><tr><th>Règle</th><th>ROI / effectif</th><th>Gain net</th><th>CLV</th></tr>
+    ${L.futur.map(s => `<tr><td>${e(s.id)}</td><td>${metrique(s)}</td><td>${s.regles ? eur(s.gain) : "—"}</td><td>${pp(s.clv)}<small>${s.clv_n} mesures</small></td></tr>`).join("")}</table></div></details>
+    </details>`;
+  function detail() {
+    const id = document.getElementById("labo-regle").value;
+    const r = L.resultats.find(r => r.regle.id === id), f = L.futur.find(r => r.id === id);
+    const intervalle = s => s.ic95 ? `${pp(s.ic95[0])} à ${pp(s.ic95[1])}` : "Non estimable";
+    const fail = [];
+    if (r.construction.regles < 20) fail.push("moins de 20 paris réglés en construction");
+    if (!(r.construction.roi > 0)) fail.push("ROI de construction non positif");
+    if (!(r.construction.clv > 0)) fail.push("CLV de construction non positive ou absente");
+    if (!(r.construction.couverture_clv >= 50)) fail.push("couverture de CLV inférieure à 50 %");
+    document.getElementById("labo-detail").innerHTML = `<p class="aide">${fail.length ? "Non retenue : " + fail.join(" ; ") + "." : "Seuils de construction satisfaits ; voir le protocole pour le classement et la validation."}</p>
+      <div class="tableau"><table><tr><th>Période</th><th>ROI / effectif</th><th>Gain net</th><th>CLV</th></tr>
+      ${[["Construction",r.construction],["Validation",r.validation],["Test final",r.test],["Suivi futur",f]].map(([nom,s]) => `<tr><td>${nom}</td><td>${metrique(s)}</td><td>${s.regles ? eur(s.gain) : "—"}</td><td>${pp(s.clv)}<small>${s.clv_n}/${s.regles} mesurés</small></td></tr>`).join("")}</table></div>
+      <p class="aide" style="margin-top:8px">Seuil d’edge ${pp(r.regle.edge_min*100)}, plafond 12 %. Cotes de référence âgées de 15 min au maximum.
+      Suivi futur ${deja ? "depuis le" : "à partir du"} 14 octobre à 14 h (Paris), uniquement sur les nouvelles détections.</p>
+      <details><summary>Incertitude et résistance aux pertes</summary>
+      <div class="tableau"><table><tr><th>Période</th><th>IC 95 % du ROI</th><th>Gain sans<br>meilleur pari</th><th>ROI si cotes<br>−1 %</th><th>Baisse max.</th></tr>
+      ${[["Construction",r.construction],["Validation",r.validation],["Test final",r.test]].map(([nom,s]) => `<tr><td>${nom}</td><td>${intervalle(s)}</td><td>${s.regles ? eur(s.gain_sans_meilleur) : "—"}</td><td>${pp(s.roi_cote_moins_1pct)}</td><td>${s.regles ? cote(s.drawdown)+" €" : "—"}</td></tr>`).join("")}</table></div>
+      <p class="aide">Bootstrap par match, conditionnel à chaque règle ; aucune correction des 36 essais ni des corrélations entre matchs.
+      Avec très peu de paris ou des résultats identiques, l’intervalle peut être trompeusement étroit. Il ne prédit pas la rentabilité future.
+      Les cotes simulées ne prouvent pas une prise réelle disponible.</p></details>
+      <details style="margin-top:8px"><summary>Paris sélectionnés depuis le lancement (${f.paris})</summary>
+      <p class="aide">Les 30 dernières sélections de cette règle. Statistiques ci-dessus sur toutes ses sélections.</p>
+      ${!f.paris ? '<p class="aide">Aucune sélection depuis le début du suivi.</p>' : f.ids_recents.slice().reverse().map(id => {
+        const p = L.paris_recents.find(p => p.id === id);
+        if (!p) return "";
+        return `<div class="carte"><b>${e(p.domicile)} — ${e(p.exterieur)}</b><div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div>
+        <small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] || p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
+      }).join("")}</details>`;
+  }
+  document.getElementById("labo-regle").onchange = detail;
+  detail();
+}
+rendreLaboratoire();
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
 const depart = location.hash.slice(1) || lire("onglet") || "jouer";

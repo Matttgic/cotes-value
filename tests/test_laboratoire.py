@@ -1,0 +1,111 @@
+"""Sélection causale, limites temporelles, règlements et décision figée."""
+from copy import deepcopy
+
+import pytest
+
+from cotes.laboratoire import (REGLES, Regle, audit, classer, evaluer, intervalle_roi,
+                               resume, selectionner, suivi_futur)
+
+R = Regle("test", "Pinnacle", 1.3, 3, .02, 36)
+
+
+def pari(id="a", **changes):
+    return {"id": id, "match_id": "book|"+id, "reference": "Pinnacle", "bookmaker": "Winamax",
+            "sport": "football", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS",
+            "detecte": "2026-10-10T18:00:00Z", "debut": "2026-10-10T20:00:00Z",
+            "lu_reference": "2026-10-10T17:59:00Z", "cote": 2.1, "cote_juste": 2.0, "ecart": .05,
+            "statut": "gagne", "gain": 11, "mise": 10, "regle_le": "2026-10-10T21:59:00Z",
+            "preuve_prise": {"match_id_reference": id, "ressemblance_noms": .9,
+                              "controle": {"statut": "conforme"}}, **changes}
+
+
+def test_famille_figee_et_selection_sans_resultat():
+    assert len(REGLES) == len({r.id for r in REGLES}) == 36
+    p = pari()
+    later = {**p, "id": "b", "detecte": "2026-10-10T18:01:00Z", "ecart": .10, "cote": 2.2}
+    assert [p["id"] for p in selectionner([later, p], R)] == ["a"]
+    p.update(statut="perdu", gain=-10, clv=-.9, regle_le=None)
+    later.update(statut="gagne", gain=12, clv=.9)
+    assert [p["id"] for p in selectionner([later, p], R)] == ["a"]
+
+
+def test_un_match_plusieurs_books_et_egalite_deterministe():
+    a = pari()
+    b = {**a, "id": "b", "bookmaker": "PMU", "ecart": .06, "cote": 2.12}
+    assert selectionner([a, b], R) == selectionner([b, a], R) == [b]
+
+
+@pytest.mark.parametrize("changes", [
+    {"ecart": float("nan")}, {"cote": float("inf")}, {"ligne": 2.25},
+    {"lu_reference": "2026-10-10T17:44:59Z"}, {"lu_reference": "2026-10-10T18:00:01Z"},
+    {"detecte": "2026-10-10T18:00:00"}, {"preuve_prise": {}}, {"cote_juste": 3},
+    {"issue": "YES"}, {"periode": "MT1"}, {"sport": "tennis"}, {"reference": "Pinnacle brut"},
+])
+def test_qualite_avant_resultat(changes):
+    assert not selectionner([pari(**changes)], R)
+
+
+def test_reglement_a_la_coupure_reste_en_attente_et_roi_denominateur():
+    a = pari()
+    b = pari("b", statut="perdu", gain=-10, regle_le="2026-10-10T22:00:00Z")
+    s = resume([a, b], "2026-10-11T00:00:00+02:00")
+    assert (s["regles"], s["attente"], s["mise"], s["gain"], s["roi"]) == (1, 1, 10, 11, 110)
+    assert s["roi_attente_pessimiste"] == 5
+    assert s["roi_attente_optimiste"] == 110
+
+
+def test_clv_absente_ne_devient_pas_zero_et_limite_30_minutes():
+    a = pari(clv=.04, cloture_lue="2026-10-10T19:30:00Z")
+    b = pari("b", clv=.9, cloture_lue="2026-10-10T19:29:59Z")
+    s = resume([a, b], "2026-10-12T00:00:00Z")
+    assert (s["clv"], s["clv_n"], s["couverture_clv"]) == (4, 1, 50)
+    assert resume([pari()], "2026-10-12T00:00:00Z")["clv"] is None
+
+
+def test_coupure_paris_et_aucun_resultat_futur_pour_construction():
+    a = pari(regle_le="2026-10-11T01:00:00Z")
+    b = pari("b", debut="2026-10-10T22:00:00Z", regle_le="2026-10-11T01:00:00Z")
+    s = evaluer([a, b], "2026-10-14T10:09:28Z")
+    assert s["construction"]["paris"] == s["construction"]["attente"] == 1
+    assert s["validation"]["paris"] == s["validation"]["regles"] == 1
+
+
+def test_resultat_test_ne_choisit_jamais_la_candidate():
+    def score(roi=5, n=20, borne=-10):
+        return {"roi": roi, "regles": n, "clv": 1, "couverture_clv": 60, "ic95": [borne, 20]}
+    rows = [{"regle": {"id": id}, "construction": score(), "validation": score(borne=borne), "test": score()}
+            for id, borne in (("a", -1), ("b", -5))]
+    assert classer(rows)["candidate"] == "a"
+    rows[0]["test"] = score(-99)
+    rows[1]["test"] = score(200)
+    d = classer(rows)
+    assert d["candidate"] == "a" and not d["test_reussi"]
+    assert not d["rentabilite_demontree"]
+    for row in rows:
+        row["construction"] = score(n=19)
+    assert classer(rows)["candidate"] is None
+
+
+def test_suivi_futur_exclut_ancien_et_futur_et_ne_modifie_pas_source():
+    rows = [pari(), pari("b", detecte="2026-10-10T18:01:00Z"),
+            pari("c", detecte="2026-10-10T18:02:00Z")]
+    avant = deepcopy(rows)
+    result = suivi_futur(rows, "2026-10-10T18:01:00Z", "2026-10-10T18:02:00Z")
+    r = next(r for r in result if r["id"] == "PIN-1.5-3-e2-h36")
+    assert r["paris"] == r["attente"] == 1 and r["ids_recents"] == ["b"]
+    assert rows == avant
+
+
+def test_audit_bloque_incoherence_et_geres_dates_invalides():
+    from scripts.comparer_strategies import comparer
+    with pytest.raises(ValueError, match="Audit bloquant"):
+        comparer([pari(gain=99)], "2026-10-14T10:00:00Z")
+    assert audit([pari(detecte="invalide")])["dates_reglement_invalides"] == ["a"]
+    assert audit([])["lignes"] == 0
+
+
+def test_bootstrap_reproductible_et_une_observation_non_estimable():
+    assert intervalle_roi([1]) is None
+    a = intervalle_roi([1.1, -1, 0, .4], repetitions=500)
+    assert a == intervalle_roi([1.1, -1, 0, .4], repetitions=500)
+    assert a[0] < 0 < a[1]
