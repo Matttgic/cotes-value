@@ -14,7 +14,8 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCH
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
-from cotes.laboratoire import DEBUT_SUIVI, heure, resume, suivi_futur  # noqa: E402
+from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
+                              heure, resume, selectionner, suivi_futur)  # noqa: E402
 
 
 def _lire(chemin: Path, defaut):
@@ -202,6 +203,68 @@ def paris_a_venir_des_segments(paris: list[dict], maintenant: datetime | None = 
              p.get("sport")] for p in venir]
 
 
+def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str) -> dict:
+    """Relie les lignes du laboratoire aux paris exacts, sans perdre les anciens paris.
+
+    Les IDs historiques des 36 règles viennent du relevé *figé* ; les sélections
+    prospectives sont recalculées sur les prises, jamais sur les résultats.
+    Les comparateurs historiques sont des rejeux et restent distingués de leurs
+    sélections officielles. Le dictionnaire envoyé au mobile ne contient que les
+    paris appartenant à au moins une stratégie, sans limitation aux 600 fiches.
+    """
+    from scripts.comparer_strategies import claude_rejouee
+
+    index = {p["id"]: p for p in paris if p.get("id")}
+    def ids(lignes):
+        return list(dict.fromkeys(p["id"] for p in lignes if p.get("id") in index))
+
+    dates = [(nom, heure(debut), heure(fin)) for nom, debut, fin in PERIODES]
+    debut_historique, fin_historique = dates[0][1], dates[-1][2]
+    releve = heure(laboratoire.get("releve")) or heure(maintenant)
+    passe = [p for p in paris if heure(p.get("detecte")) and heure(p.get("debut"))
+             and debut_historique <= heure(p["debut"]) < fin_historique
+             and heure(p["detecte"]) <= releve]
+    futur = [p for p in paris if heure(p.get("detecte"))
+             and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)]
+    selection = {}
+    toutes = set()
+
+    def enregistrer(nom: str, historique: list[dict], futur_lignes: list[dict]):
+        repartition = {"ensemble": ids(historique), "futur": ids(futur_lignes)}
+        for periode, debut, fin in dates:
+            repartition[periode] = ids(p for p in historique
+                                      if heure(p.get("debut")) and debut <= heure(p["debut"]) < fin)
+        selection[nom] = repartition
+        toutes.update(id_pari for li in repartition.values() for id_pari in li)
+
+    for resultat, regle in zip(laboratoire.get("resultats", []), REGLES_LABO):
+        assert resultat["regle"]["id"] == regle.id
+        historique = [index[x] for x in resultat.get("ids_selections", []) if x in index
+                      and index[x] in passe]
+        enregistrer(regle.id, historique, selectionner(futur, regle, DEBUT_SUIVI))
+
+    # Le rejeu historique commence avant le lancement officiel de ces stratégies.
+    for nom, historique, a_venir in (
+        ("Claude (rejeu)", claude_rejouee(passe),
+         [p for p in futur if id(p) in paris_strategie(paris)]),
+        ("ChatGPT v1 (rejeu)", [p for p in passe if id(p) in paris_chatgpt(passe, depuis=DEBUT_ETUDE)],
+         [p for p in futur if id(p) in paris_chatgpt(paris)]),
+        ("M3 (rejeu)", [p for p in passe if id(p) in paris_m3(passe, depuis=DEBUT_ETUDE)],
+         [p for p in futur if id(p) in paris_m3(paris)]),
+    ):
+        if nom in laboratoire.get("comparateurs", {}):
+            enregistrer(nom, historique, a_venir)
+
+    champs = CHAMPS_FICHE + ("simulation", "id")
+    return {
+        "selections": selection,
+        "paris": {pid: {**{k: index[pid].get(k) for k in champs},
+                        "sims": [index[pid].get("simulation")],
+                        "strategie": False, "chatgpt": False, "trace": []}
+                 for pid in toutes if pid in index},
+    }
+
+
 def construire(donnees: Path, sortie: Path) -> Path:
     paris = _lire(donnees / "paris.json", []) + lire_archives(donnees)     # bilan sur TOUS les paris
     etat = _lire(donnees / "etat.json", {})
@@ -222,9 +285,10 @@ def construire(donnees: Path, sortie: Path) -> Path:
     liste, fiches_total, valeurs = selection_paris(paris)
     laboratoire = _lire(Path(__file__).resolve().parent.parent / "docs/comparaison-strategies.json", {})
     if laboratoire:
+        maintenant = datetime.now(timezone.utc).isoformat()
+        laboratoire["navigation"] = navigation_strategies(paris, laboratoire, maintenant)
         laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
                                     for r in laboratoire["resultats"]]
-        maintenant = datetime.now(timezone.utc).isoformat()
         laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
         m3_rapport = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-m3.json", {})
         m3_ids = paris_m3(paris)
