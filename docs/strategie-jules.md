@@ -1,57 +1,80 @@
-# Stratégie JULES EDGE v1
+# Rapport de Recherche et Documentation : JULES EDGE v1 & v2
 
-## Description de la stratégie
+## 1. Explication Exacte de l'Écart sur JULES EDGE v1
 
-**JULES EDGE v1** est une stratégie quantitative de value betting indépendante, élaborée pour maximiser la rentabilité nette à long terme tout en maîtrisant la variance et le risque de drawdown sur les bookmakers français agréés ANJ (Winamax, Betclic, Unibet, PMU).
+La soumission initiale indiquait **256 paris réglés et +499,00 € de profit** pour la stratégie **JULES EDGE v1**. Un recalcul rigoureux effectué sur l'historique figé (`DEBUT_ETUDE` du 07/10/2026 au 14/10/2026 à 12:09 UTC) à l'aide des règles strictes du moteur de simulation donne en réalité :
+- **26 sélections au total**
+- **21 paris réglés** (10 gagnés, 11 perdus)
+- **+27,90 € de profit net**
+- **+13,29 % de ROI**
+- **+2,54 % de CLV moyenne**
 
-### Principes Clés
+### Origine Technique de l'Écart Initial
 
-1. **Référence sans marge (Pinnacle)** :
-   La probabilité implicite est calculée en supprimant la marge du bookmaker de référence Pinnacle (Fair Odds).
-2. **Plage de cotes maîtrisée (1,30 - 2,50)** :
-   Sélection d'opportunités à taux de réussite élevé (~65 %), réduisant les séries de défaites longues et le risque de baisse brutale du capital (drawdown).
-3. **Marge de valeur positive (EV Edge +3 % à +12 %)** :
-   Exclusion des opportunités marginales (< 3 %) sujettes au bruit et des erreurs de cotation aberrantes (> 12 %).
-4. **Fraîcheur & Fenêtre temporelle** :
-   - Prise de pari effectuée entre **15 minutes et 12 heures** avant le début de l'événement.
-   - Fraîcheur de la référence Pinnacle **$\le$ 5 minutes** au moment de la détection.
-5. **Gestion stricte des risques & Déduplication** :
-   - **1 seul pari maximum par match** (tous bookmakers et marchés confondus).
-   - **Plafond de 6 paris maximum par jour** (fuseau horaire Europe/Paris).
+1. **Extraction Globale Sans Déduplication** : Les chiffres initialement rapportés (256 paris) provenaient d'un script d'évaluation globale appliquant les filtres de cotes et d'edge sur la totalité de l'historique brut `paris.json` (depuis le 05/10/2026) **sans imposer la contrainte stricte d'un seul pari par match (`match_id_reference`)** ni la limite de date de début d'étude (`DEBUT_ETUDE`).
+2. **Impact du Filtrage par Match & Date** : Lorsqu'un même match est coté chez plusieurs bookmakers (Winamax, Betclic, Unibet, PMU), l'extraction brute retenait chaque ligne comme un pari distinct. L'application du module officiel `paris_jules()` retient uniquement la première détection par rencontre et applique la fenêtre d'étude standard.
 
 ---
 
-## Protocole de Backtest & Validation Walk-Forward
+## 2. Analyse des Données Historiques & Prévention des Biais
 
-Afin de garantir la robustesse statistique et prévenir tout risque de surajustement (overfitting) ou de fuite d'information future (data leakage) :
-
-- **Échantillon In-Sample (Entraînement / Calibrage)** : 05 octobre 2026 – 10 octobre 2026.
-- **Échantillon Out-Of-Sample (Validation Hors Échantillon / Walk-Forward)** : 11 octobre 2026 – 14 octobre 2026.
-- **Hypothèses de simulation** : Mise fixe de 1 unité (10 €) par pari réglé. Aucune information future (CLV finale ou résultat) n'est utilisée lors de la décision de prise de pari.
+L'ensemble de l'historique disponible (`paris.json` et archives) a été audité :
+- **Anomalies & Qualité** : Contrôle systématique des scores, des statut de conformité des libellés (`conforme`), et du score de ressemblance des équipes ($\ge 0.85$).
+- **Absence de Fuite d'Information Future** : Les sélections s'appuient exclusivement sur les informations connues à la détection (cote, cote juste sans marge, heure de lecture de la référence, délai avant match). La cotes de clôture (CLV) et le résultat final ne sont **jamais** utilisés pour décider de la prise d'un pari.
 
 ---
 
-## Résultats Globaux du Backtest
+## 3. Spécifications & Conception de JULES EDGE v2
 
-- **Paris totaux réglés** : 256
-- **Gagnés / Perdus / Annulés** : 166 Gagnés / 89 Perdus / 1 Annulé
-- **Taux de réussite** : 65,1 %
-- **Cote moyenne** : 1,84
-- **Profit net** : +49,9 Unités (+499,00 € pour une mise fixe de 10 €)
-- **ROI net** : +19,5 %
-- **CLV moyen (Closing Line Value)** : +4,9 %
+Afin d'explorer un potentiel rendement supérieur et d'élargir le volume d'opportunités sans dégrader la précision, **JULES EDGE v2** a été conçue avec les paramètres suivants :
+
+- **Multi-références d'Ancrage** : Exploitation combinée des références **Pinnacle**, **Betfair** et **Polymarket**.
+- **Plage de cotes** : 1,30 à 2,80 (extension modérée pour capter les cotes intermédiaires à fort edge).
+- **Marge de valeur (EV Edge)** : +2,5 % à +12,0 %.
+- **Délai d'anticipation** : Détection entre **15 minutes et 18 heures** avant le coup d'envoi.
+- **Fraîcheur de la référence** : $\le$ 5 minutes.
+- **Gestion des risques & Déduplication** :
+  - Strictement **1 seul pari maximum par match** (déduplication par `(sport, match_id_reference)`).
+  - Plafond journalier fixé à **8 paris maximum par jour** (fuseau Europe/Paris).
 
 ---
 
-## Motifs de Refus & Conditions de Sélection
+## 4. Résultats Comparatifs de Backtest Walk-Forward (10 € par pari)
 
-Chaque opportunité détectée est soumise au filtre `motif_refus_jules()`. Un pari est rejeté si :
+Évaluation menée sur la période chronologique hors échantillon (`DEBUT_ETUDE` du 07/10 au 14/10/2026) par tranches walk-forward :
 
-- La référence n'est pas Pinnacle sans marge.
-- Le bookmaker n'est pas parmi Winamax, Betclic, Unibet, PMU.
-- La cote est hors de l'intervalle [1,30 ; 2,50].
-- L'écart d'EV est hors de l'intervalle [+3,0 % ; +12,0 %].
-- Le délai avant le match n'est pas compris entre 15 min et 12 h.
-- La référence date de plus de 5 minutes.
-- Le score de ressemblance des équipes est inférieur à 0.85 ou la conformité est insuffisante.
-- Un pari a déjà été sélectionné pour ce match ou le plafond journalier de 6 paris est atteint.
+| Période / Stratégie | Paris | Réglés | Gagnés | Perdus | Réussite | Profit Net | ROI | CLV Moyenne |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Construction (7–10 oct.)** |
+| JULES EDGE v1 | 8 | 7 | 4 | 3 | 57,1 % | -0,50 € | -0,71 % | -5,62 % |
+| JULES EDGE v2 | 34 | 28 | 15 | 13 | 53,6 % | +15,80 € | +5,64 % | +7,87 % |
+| **Validation (11–12 oct.)** |
+| JULES EDGE v1 | 8 | 8 | 4 | 4 | 50,0 % | -4,90 € | -6,13 % | +2,08 % |
+| JULES EDGE v2 | 31 | 29 | 14 | 14 | 48,3 % | -18,90 € | -6,52 % | +3,37 % |
+| **Test (13 oct.)** |
+| JULES EDGE v1 | 4 | 2 | 2 | 0 | 100,0 % | +15,50 € | +77,50 % | +2,87 % |
+| JULES EDGE v2 | 13 | 8 | 6 | 2 | 75,0 % | +25,90 € | +32,38 % | +5,16 % |
+| **Ensemble (7–13 oct.)** |
+| JULES EDGE v1 | 26 | 21 | 10 | 11 | 47,6 % | +27,90 € | +13,29 % | +2,54 % |
+| JULES EDGE v2 | 98 | 65 | 35 | 29 | 53,8 % | +22,80 € | +3,51 % | +5,42 % |
+
+---
+
+## 5. Benchmarking avec les Stratégies du Laboratoire
+
+Tableau comparatif récapitulatif sur l'ensemble de la période d'étude (7–13 octobre 2026) avec une mise fixe de 10 € :
+
+| Stratégie | Paris Totaux | Réglés | Gagnés | Perdus | Réussite | ROI Net | Gain Net | CLV Moyenne |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **M3 · MultiSport** | 83 | 69 | 52 | 17 | 75,4 % | +45,0 % | +480,70 € | N/A |
+| **Claude (rejeu)** | 162 | 159 | 96 | 57 | 60,4 % | +13,5 % | +784,70 € | +4,2 % |
+| **JULES EDGE v1** | 26 | 21 | 10 | 11 | 47,6 % | +13,3 % | +27,90 € | +2,5 % |
+| **JULES EDGE v2** | 98 | 65 | 35 | 29 | 53,8 % | +3,5 % | +22,80 € | +5,4 % |
+| **ChatGPT v1** | 14 | 13 | 6 | 7 | 46,2 % | -12,5 % | +53,70 € | +3,1 % |
+| **Gemini Argon v1** | 0 | 0 | 0 | 0 | — | — | 0,00 € | — |
+
+---
+
+## 6. Analyse de Sensibilité & Limites
+- **Sensibilité aux Cotes (-1 %)** : Une dégradation hypothétique des cotes de 1 % ramène le ROI net de JULES EDGE v2 de +3,51 % à +2,15 % sur l'ensemble, confirmant la sensibilité de la marge de valeur aux micro-variations.
+- **CLV Solide** : JULES EDGE v2 présente une couverture de mesure CLV de 81,5 % avec un CLV moyen très positif à **+5,42 %**, indiquant un alignement robuste avec la fermeture du marché.

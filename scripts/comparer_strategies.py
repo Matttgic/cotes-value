@@ -19,7 +19,7 @@ from cotes.laboratoire import (REGLES, DEBUT_ETUDE, PERIODES, audit, classer, ev
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import paris_gemini  # noqa: E402
-from cotes.strategie_jules import paris_jules  # noqa: E402
+from cotes.strategie_jules import paris_jules, paris_jules_v2  # noqa: E402
 
 
 def claude_rejouee(paris: list[dict]) -> list[dict]:
@@ -69,6 +69,8 @@ def comparer(paris: list[dict], releve: str) -> dict:
     gemini_rows = [p for p in paris if id(p) in gemini_ids]
     jules_ids = paris_jules(paris, depuis=DEBUT_ETUDE)
     jules_rows = [p for p in paris if id(p) in jules_ids]
+    jules_v2_ids = paris_jules_v2(paris, depuis=DEBUT_ETUDE)
+    jules_v2_rows = [p for p in paris if id(p) in jules_v2_ids]
     claude_rows = claude_rejouee(paris)
     claude = {**evaluer(claude_rows, releve), "ensemble": ensemble(claude_rows)}
     # Plusieurs paris corrélés par rencontre : ne pas présenter un bootstrap par
@@ -77,7 +79,8 @@ def comparer(paris: list[dict], releve: str) -> dict:
         periode["ic95"] = None
     return {"schema": 1, "releve": releve, "audit": qualite, "resultats": resultats,
             "decision": classer(resultats),
-            "comparateurs": {"JULES EDGE v1 (rejeu)": {**evaluer(jules_rows, releve), "ensemble": ensemble(jules_rows)},
+            "comparateurs": {"JULES EDGE v2 (rejeu)": {**evaluer(jules_v2_rows, releve), "ensemble": ensemble(jules_v2_rows)},
+                             "JULES EDGE v1 (rejeu)": {**evaluer(jules_rows, releve), "ensemble": ensemble(jules_rows)},
                              "ChatGPT v1 (rejeu)": {**evaluer(v1_rows, releve), "ensemble": ensemble(v1_rows)},
                              "Gemini Argon v1 (rejeu)": {**evaluer(gemini_rows, releve), "ensemble": ensemble(gemini_rows)},
                              "Claude (rejeu)": claude}}
