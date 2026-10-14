@@ -14,6 +14,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCH
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
+from cotes.strategie_jules import JULES, paris_jules  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
                               evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
@@ -116,6 +117,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     strategie = paris_strategie(paris)
     chatgpt = paris_chatgpt(paris)
     gemini = paris_gemini(paris)
+    jules = paris_jules(paris)
     for p in paris:
         groupes.setdefault(cle_fiche(p), []).append(p)
     fiches = []
@@ -128,6 +130,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
         f["strategie"] = any(id(r) in strategie for r in lignes)
         f["chatgpt"] = any(id(r) in chatgpt for r in lignes)
         f["gemini"] = any(id(r) in gemini for r in lignes)
+        f["jules"] = any(id(r) in jules for r in lignes)
         f["tranche"] = tranche(f["cote"]) if f.get("cote") else None
         fiches.append(f)
     recents = lambda champ: lambda f: f.get(champ) or ""      # noqa: E731
@@ -142,7 +145,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     # Les filtres ChatGPT et Gemini donnent accès à l'ensemble de leurs paris, même si les
     # simulations très volumineuses ont repoussé une fiche hors des plus récentes.
     deja = {id(f) for f in gardees}
-    gardees += [f for f in fiches if (f["chatgpt"] or f["gemini"]) and id(f) not in deja]
+    gardees += [f for f in fiches if (f["chatgpt"] or f["gemini"] or f["jules"]) and id(f) not in deja]
     gardees.sort(key=recents("detecte"), reverse=True)
     valeurs = {f: sorted({str(p.get(c)) for p in paris if p.get(c) is not None}) for f, c in CHAMPS_FILTRES.items()}
     return gardees, sum(f["reference"] != TEMOIN for f in fiches), valeurs
@@ -157,6 +160,7 @@ def courbes(paris: list[dict]) -> dict[str, list]:
     uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
     chatgpt = paris_chatgpt(paris)
     gemini = paris_gemini(paris)
+    jules = paris_jules(paris)
     out: dict[str, list] = {}
     regles = [p for p in paris if p.get("statut") not in ("en_cours", "a_regler") and p.get("regle_le")]
     regles.sort(key=lambda p: (p["regle_le"], p.get("debut") or ""))
@@ -172,7 +176,8 @@ def courbes(paris: list[dict]) -> dict[str, list]:
                 + (["Uniques"] if id(p) in uniques else [])
                 + ([STRATEGIE["nom"]] if id(p) in strategie else [])
                 + ([CHATGPT["nom"]] if id(p) in chatgpt else [])
-                + ([GEMINI["nom"]] if id(p) in gemini else []))
+                + ([GEMINI["nom"]] if id(p) in gemini else [])
+                + ([JULES["nom"]] if id(p) in jules else []))
         for v in vues:
             out.setdefault(v, []).append(point)
     return out
@@ -257,12 +262,14 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         "Claude (rejeu)": {id(p) for p in claude_rejouee(observes)},
         "ChatGPT v1 (rejeu)": paris_chatgpt(observes, depuis=DEBUT_ETUDE),
         "Gemini Argon v1 (rejeu)": paris_gemini(observes, depuis=DEBUT_ETUDE),
+        "JULES EDGE v1 (rejeu)": paris_jules(observes, depuis=DEBUT_ETUDE),
         "M3 (rejeu)": paris_m3(observes, depuis=DEBUT_ETUDE),
     }
     officiels = {
         "Claude (rejeu)": paris_strategie(paris),
         "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
         "Gemini Argon v1 (rejeu)": paris_gemini(paris),
+        "JULES EDGE v1 (rejeu)": paris_jules(paris),
         "M3 (rejeu)": paris_m3(paris),
     }
     for nom, historique_ids in historiques.items():
@@ -275,7 +282,8 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         "selections": selection,
         "paris": {pid: {**{k: index[pid].get(k) for k in champs},
                         "sims": [index[pid].get("simulation")],
-                        "strategie": False, "chatgpt": False, "gemini": False, "trace": []}
+                        "strategie": False, "chatgpt": False, "gemini": False,
+                        "jules": id(index[pid]) in officiels["JULES EDGE v1 (rejeu)"], "trace": []}
                  for pid in toutes if pid in index},
     }
 
@@ -308,9 +316,9 @@ def construire(donnees: Path, sortie: Path) -> Path:
             laboratoire.setdefault("comparateurs", {})["M3 (rejeu)"] = {
                 k: m3_rapport[k] for k in ("construction", "validation", "test", "ensemble")
             }
-        # Calcul dynamique du rejeu Gemini Argon v1 s'il n'est pas encore dans comparaison-strategies.json
+        # Calcul dynamique du rejeu Gemini Argon v1 et JULES EDGE v1 s'ils ne sont pas encore dans comparaison-strategies.json
+        releve_dt = heure(releve_str) or heure(maintenant)
         if "Gemini Argon v1 (rejeu)" not in laboratoire.get("comparateurs", {}):
-            releve_dt = heure(releve_str) or heure(maintenant)
             passe_gem = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
             gem_rejeu_ids = paris_gemini(passe_gem, depuis=DEBUT_ETUDE)
             gem_rows = [p for p in passe_gem if id(p) in gem_rejeu_ids]
@@ -319,15 +327,26 @@ def construire(donnees: Path, sortie: Path) -> Path:
                 **evaluer(gem_rows, releve_str),
                 "ensemble": resume(gem_ens, releve_str, incertitude=False),
             }
+        if "JULES EDGE v1 (rejeu)" not in laboratoire.get("comparateurs", {}):
+            passe_jules = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
+            jules_rejeu_ids = paris_jules(passe_jules, depuis=DEBUT_ETUDE)
+            jules_rows = [p for p in passe_jules if id(p) in jules_rejeu_ids]
+            jules_ens = [p for p in jules_rows if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
+            laboratoire.setdefault("comparateurs", {})["JULES EDGE v1 (rejeu)"] = {
+                **evaluer(jules_rows, releve_str),
+                "ensemble": resume(jules_ens, releve_str, incertitude=False),
+            }
         laboratoire["navigation"] = navigation_strategies(paris, laboratoire, maintenant)
         laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
                                     for r in laboratoire["resultats"]]
         laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
         gemini_ids = paris_gemini(paris)
+        jules_ids = paris_jules(paris)
         officiels = {
             "Claude (rejeu)": paris_strategie(paris),
             "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
             "Gemini Argon v1 (rejeu)": gemini_ids,
+            "JULES EDGE v1 (rejeu)": jules_ids,
             "M3 (rejeu)": m3_ids,
         }
         laboratoire["m3_paris"] = [{k: p.get(k) for k in
@@ -339,6 +358,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
             ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
              "reference", "ecart", "detecte", "debut", "statut", "gain")}
             for p in sorted((p for p in paris if id(p) in gemini_ids),
+                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+        laboratoire["jules_paris"] = [{k: p.get(k) for k in
+            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+            for p in sorted((p for p in paris if id(p) in jules_ids),
                             key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
         laboratoire["comparateurs_futur"] = {
             nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
@@ -356,6 +380,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
             "chatgpt": CHATGPT,
             "gemini": GEMINI,
+            "jules": JULES,
             "m3": M3,
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
@@ -494,11 +519,12 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <div id="jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
-    <p class="aide"><a href="#strategies">Comparer les 36 stratégies, Claude, ChatGPT V1, Gemini Argon et M3</a></p>
+    <p class="aide"><a href="#strategies">Comparer les 36 stratégies, Claude, ChatGPT V1, Gemini Argon, Jules et M3</a></p>
     <div class="puces" id="puces-ref"></div>
     <p class="aide" id="bilan-quoi"></p>
     <button id="voir-chatgpt" hidden>Voir les paris ChatGPT</button>
     <button id="voir-gemini" hidden>Voir les paris Gemini Argon</button>
+    <button id="voir-jules" hidden>Voir les paris JULES EDGE</button>
     <div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
     </div><div class="legende" id="legende"></div>
     <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
@@ -528,7 +554,9 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     comptés seulement depuis cette date. <b>ChatGPT</b> : stratégie indépendante, règles figées le 14/10,
     une seule mise par match et cinq nouvelles mises maximum par jour (heure de Paris).
     <b>Gemini Argon</b> : stratégie multi-références à plafond de cote adaptatif (2,15 Pinnacle / 2,60 Betfair & Polymarket),
-    un seul pari par match et huit par jour maximum.</p></details>
+    un seul pari par match et huit par jour maximum.
+    <b>JULES EDGE</b> : Pinnacle, cotes 1,30–2,50, edge 3–12 %, six paris par jour maximum.
+    Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.</p></details>
   </section>
   <section class="onglet" id="o-strategies">
     <h2 class="sous-titre" style="margin-top:0">Toutes les stratégies</h2>
@@ -536,7 +564,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p class="aide" id="strategies-quoi"></p>
     <div class="filtres">
       <label for="strategies-ref">Référence</label>
-      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs">Claude / ChatGPT V1 / Gemini Argon / M3</option></select>
+      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs">Claude / ChatGPT V1 / Gemini Argon / Jules / M3</option></select>
       <label for="strategies-tri">Tri</label>
       <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select>
     </div>
@@ -552,6 +580,13 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
       <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement</summary>
       <p class="aide">Pinnacle (1,30–2,15), Betfair & Polymarket (1,30–2,60) · edge 2,5–12 % · 30 min à 24 h · 1 pari/match · max 8/jour · mise fictive 10 €.</p>
       <div id="gemini-picks-list"></div>
+    </details>
+    <details class="carte" id="jules-picks">
+      <summary><b>JULES EDGE v1</b> — voir les paris depuis le lancement</summary>
+      <p class="aide">Pinnacle · cotes 1,30–2,50 · edge 3–12 % · 15 min à 12 h · 1 pari/match · max 6/jour · 10 € fictifs.
+      Suivi depuis le 14/10 à 23 h 04 (Paris). Rejeu historique séparé, rentabilité future non démontrée.
+      <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-jules.md" target="_blank" rel="noopener">Règles et audit reproductible</a>.</p>
+      <div id="jules-picks-list"></div>
     </details>
     <details class="carte" id="m3-picks">
       <summary><b>M3 · MultiSport Value</b> — voir les paris depuis le lancement</summary>
@@ -657,6 +692,7 @@ const NOMS_REF = {Uniques: "Paris uniques", Toutes: "Toutes réf."};
 const ST = D.strategie || {};
 const CG = D.chatgpt || {};
 const GM = D.gemini || {};
+const JL = D.jules || {};
 const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée une seule fois (10 € par pari).",
   Toutes: "Somme des références : une même cote repérée par plusieurs références compte plusieurs fois.",
   "Pinnacle brut": "Témoin : cotes comparées à la cote Pinnacle affichée, marge comprise.",
@@ -675,7 +711,12 @@ const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée 
     timeZone: "Europe/Paris", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit"}) : "14/10"} (Paris).
     Multi-références (Pinnacle 1,30–2,15 ; Betfair & Polymarket 1,30–2,60) ; edge 2,5 à 12 %.
     Détection entre ${GM.avance_min_minutes || 30} min et ${GM.avance_max_h || 24} h avant le match ; fraîcheur ≤ ${GM.fraicheur_max_minutes || 10} min.
-    10 € fictifs par pari, strictement 1 seul pari par match, ${GM.paris_max_jour || 8} par jour maximum.`};
+    10 € fictifs par pari, strictement 1 seul pari par match, ${GM.paris_max_jour || 8} par jour maximum.`,
+  "JULES EDGE": `JULES EDGE v${JL.version || 1} — suivi depuis le ${new Date(JL.debut).toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit"})} (Paris).
+    Pinnacle sans marge ; cotes 1,30–2,50 ; edge 3–12 % ; 15 min à 12 h avant le match ; référence fraîche de 5 min maximum.
+    Un seul pari par match et ${JL.paris_max_jour || 6} par jour maximum, à 10 € fictifs.
+    Le passé reste un rejeu descriptif dans Stratégies → Historique. Rentabilité future non démontrée.`};
 // ligne « Total » : cumul des simulations choisies (A, A+B, A+B+C…), par défaut toutes
 const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
@@ -697,19 +738,20 @@ function additionner(sims, source = D.bilan, prefixe = "") {
   return t;
 }
 function rendreBilan() {
-  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", ...D.references.filter(r => r !== "Pinnacle brut"), "Toutes", "Pinnacle brut"];
+  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", ...D.references.filter(r => r !== "Pinnacle brut"), "Toutes", "Pinnacle brut"];
   document.getElementById("puces-ref").innerHTML = refs.map(r =>
     `<button data-r="${r}" class="${r===refBilan?"actif":""}">${NOMS_REF[r] || r}</button>`).join("");
   document.getElementById("bilan-quoi").textContent = QUOI[refBilan] || `Paris repérés par ${refBilan}.`;
   document.getElementById("voir-chatgpt").hidden = refBilan !== "ChatGPT";
   document.getElementById("voir-gemini").hidden = refBilan !== "Gemini Argon";
+  document.getElementById("voir-jules").hidden = refBilan !== "JULES EDGE";
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
     : `<tr><td>${titre}</td><td>${b.regles}${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""} · <b>${Math.round(100 * b.gagnes / b.regles)} %</b></small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
 <td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles}</small>` : ""}</td></tr>`;
   document.getElementById("bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
-    Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
+    Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
       additionner(CUMULS[cumul])).replace("<tr>", '<tr class="total">');
@@ -811,7 +853,7 @@ const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], s
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
   // cotes : les tranches du bilan ; simulations : + « Stratégie », « ChatGPT », « Gemini Argon »
   const vals = champ === "tranche" ? D.tranches || [] : [...((D.valeurs_filtres || {})[champ] || []),
-    ...(champ === "sims" ? ["Stratégie", "ChatGPT", "Gemini Argon"] : [])];
+    ...(champ === "sims" ? ["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE"] : [])];
   const sel = document.getElementById("f-" + id);
   sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
     champ==="statut" ? STATUTS[v]||v : champ==="sims" && D.simulations[v] ? v + " " + D.simulations[v] : v)}</option>`).join("");
@@ -828,6 +870,7 @@ const carteParis = p => `<article class="carte">
 <div class="l4"><span class="badge ${p.statut}">${STATUTS[p.statut]||p.statut}</span>
 ${p.chatgpt ? `<span class="badge">ChatGPT v1</span>` : ""}
 ${p.gemini ? `<span class="badge">Gemini Argon v1</span>` : ""}
+${p.jules ? `<span class="badge">JULES EDGE v1</span>` : ""}
 ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
 <span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span></div>
 ${(p.trace||[]).length ? `<details class="trace"><summary>Détails</summary>${p.trace.map(t => `<p>${e(t)}</p>`).join("")}</details>` : ""}
@@ -835,12 +878,13 @@ ${(p.trace||[]).length ? `<details class="trace"><summary>Détails</summary>${p.
 function rendreParis() {
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
   const navigation = D.laboratoire?.navigation;
-  const ids = strategieChoisie ? (navigation?.selections?.[strategieChoisie.id]?.[strategieChoisie.periode] || []) : null;
+  const ids = strategieChoisie ? (navigation?.selections?.[strategieChoisie.id]?.[strategieChoisie.periode] || [])
+    : f.sims === "JULES EDGE" ? (navigation?.selections?.["JULES EDGE v1 (rejeu)"]?.futur || []) : null;
   // Les stratégies ont leurs propres paris exacts : pas uniquement les 400/600
   // dernières fiches fusionnées, qui pourraient masquer des sélections anciennes.
   const source = ids ? ids.map(id => navigation.paris[id]).filter(Boolean) : fiches;
   const L = source.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
-    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : (p.sims||[]).includes(v)) : p[k]===v)));
+    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : (p.sims||[]).includes(v)) : p[k]===v)));
   const banner = document.getElementById("paris-strategie-banner");
   const plus = document.getElementById("plus");
   banner.hidden = !strategieChoisie;
@@ -890,6 +934,14 @@ document.getElementById("voir-gemini").onclick = () => {
   strategieChoisie = null;
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
   document.getElementById("f-sim").value = "Gemini Argon";
+  limite = 50;
+  rendreParis();
+  ouvrir("paris");
+};
+document.getElementById("voir-jules").onclick = () => {
+  strategieChoisie = null;
+  for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
+  document.getElementById("f-sim").value = "JULES EDGE";
   limite = 50;
   rendreParis();
   ouvrir("paris");
@@ -1016,15 +1068,18 @@ function rendreStrategies() {
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
     stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
   for (const [id,per] of Object.entries(L.comparateurs || {})) {
-    const nomComp = id.startsWith("Claude") ? "Claude"
+    const nomComp = id.startsWith("JULES") ? "JULES EDGE V1"
+    : id.startsWith("Claude") ? "Claude"
       : id.startsWith("M3") ? "M3 · MultiSport"
       : id.startsWith("Gemini") ? "Gemini Argon V1"
       : "ChatGPT V1";
     const detailComp = periodeStrategies === "futur"
-      ? (id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection"
+      ? (id.startsWith("JULES") ? "Depuis le 14/10 à 23 h 04 · 1 pari/match · max 6/j"
+         : id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection"
          : id.startsWith("Gemini") ? "Multi-réf. adaptative · 1 pari/match · max 8/j"
          : "Nouvelles prises officielles depuis le 14/10 à 14 h")
-      : (id.startsWith("M3") ? "Optimisation a posteriori · 3 sports · 1,30–3,00 · 2–12 % d’edge"
+      : (id.startsWith("JULES") ? "Rejeu a posteriori · Pinnacle · 1,30–2,50 · edge 3–12 % · max 6/j"
+         : id.startsWith("M3") ? "Optimisation a posteriori · 3 sports · 1,30–3,00 · 2–12 % d’edge"
          : id.startsWith("Gemini") ? "Rejeu hypothétique · Pin ≤ 2,15 / Bet+Poly ≤ 2,60 · edge ≥ 2,5 %"
          : "Rejeu hypothétique · mêmes dates que la famille");
     rows.push({id, nom:nomComp, reference:"comparateurs", detail:detailComp,
@@ -1050,6 +1105,14 @@ function rendreStrategies() {
        <small>${quand(p.debut)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection Gemini Argon depuis son démarrage prospectif.</p>';
+  const julesPicks = L.jules_paris || [];
+  document.getElementById("jules-picks-list").innerHTML = julesPicks.length
+    ? julesPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
+       <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
+       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
+       <small>${quand(p.debut)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       </article>`).join("")
+    : '<p class="aide">Aucune nouvelle sélection JULES EDGE depuis sa publication du 14/10 à 23 h 04.</p>';
   const picks = L.m3_paris || [];
   document.getElementById("m3-picks-list").innerHTML = picks.length
     ? picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
@@ -1061,7 +1124,7 @@ function rendreStrategies() {
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
   document.getElementById("strategies-total").textContent = `${rows.length} stratégies affichées · ${active.length} avec des sélections · ${reglees.length} avec des paris réglés. Glisse le tableau vers la gauche pour voir toutes les colonnes.`;
   const descriptions = {
-    futur:"Suivi sur les nouvelles détections depuis le 14 octobre 2026 à 14 h (Paris). Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
+    futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules à 23 h 04 et M3 le 15/10 à 0 h (Paris). Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
     ensemble:"Historique figé : matchs du 7 au 13 octobre, règlements disponibles au relevé du 14/10 à 12 h 09 (Paris), y compris les règlements tardifs. Rejeu rétrospectif, distinct du suivi depuis lancement.",
     construction:"Construction : matchs du 7 au 10 octobre ; seuls les règlements connus avant le 11 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
     validation:"Validation : matchs des 11 et 12 octobre ; seuls les règlements connus avant le 13 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
@@ -1069,7 +1132,7 @@ function rendreStrategies() {
   };
   document.getElementById("strategies-quoi").textContent = descriptions[periodeStrategies] +
     (periodeStrategies === "futur" && !active.length ? " Aucune nouvelle sélection enregistrée : la dernière collecte disponible précède ce lancement. Le bouton Historique affiche la comparaison existante." : "") +
-    " 36 règles et 4 comparateurs (Claude, ChatGPT V1, Gemini Argon V1, M3) ; aucune rentabilité future démontrée.";
+    " 36 règles et 5 comparateurs (Claude, ChatGPT V1, Gemini Argon V1, JULES EDGE V1, M3) ; aucune rentabilité future démontrée.";
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th>Stratégie</th><th>Paris</th><th>Gagnés</th><th>Perdus</th><th>Réussite</th><th>ROI</th><th>Gains</th><th>Pertes</th><th>Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
     return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nom)}</b><small>${e(r.detail)}</small></td>
@@ -1142,7 +1205,7 @@ function rendreLaboratoire() {
     <p class="aide">Chaque cellule affiche le ROI sur mises réglées, puis les effectifs. Ordre fixe, sans tri selon la période de test.</p>
     <div class="tableau"><table><tr><th>Règle</th><th>7–10 oct.</th><th>11–12 oct.</th><th>13 oct.</th></tr>
     ${L.resultats.map(r => `<tr><td>${e(r.regle.id)}</td>${["construction","validation","test"].map(p => `<td>${metrique(r[p])}</td>`).join("")}</tr>`).join("")}</table></div></details>
-    <details style="margin-top:12px"><summary>Comparateurs : Claude, ChatGPT V1, Gemini Argon V1 et M3</summary>
+    <details style="margin-top:12px"><summary>Comparateurs : Claude, ChatGPT V1, Gemini Argon V1, JULES EDGE V1 et M3</summary>
     <p class="aide">Rejeux hypothétiques avant leurs lancements, distincts des bilans officiels ci-dessous.
     Claude et M3 peuvent sélectionner plusieurs paris par match ; l’exposition diffère. Aucun comparateur ne participe au classement.</p>
     <div class="tableau"><table><tr><th>Rejeu</th><th>7–10 oct.</th><th>11–12 oct.</th><th>13 oct.</th></tr>

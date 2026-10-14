@@ -62,6 +62,20 @@ ses sélections. Aucun appel API supplémentaire.
 [Règles, audit historique défavorable et limites](docs/strategie-chatgpt.md).
 Le backtest de conception est exclu du bilan prospectif : rentabilité non démontrée.
 
+### JULES EDGE v1
+
+**Bilan → JULES EDGE** et **Stratégies → JULES EDGE V1** suivent les nouvelles
+détections depuis la première publication du code de Jules, le **14/10/2026 à
+23:04:13 (Paris)**. Pinnacle, cotes 1,30–2,50, edge 3–12 %, 15 min à 12 h avant
+le match, référence de 5 min maximum, une sélection par match et six par jour.
+Mise fictive de 10 € ; les lignes du tableau ouvrent les paris sélectionnés.
+
+Le rejeu complet au relevé du 14/10 à 23:03:59 compte **26 sélections, 21 réglées,
++27,90 € et +13,29 % de ROI**. Ce passé est exclu du suivi après lancement.
+Les anciens chiffres annoncés par Jules ne correspondent pas au code livré.
+Voir [audit et limites](docs/strategie-jules.md), [rapport figé](docs/strategie-jules.json)
+et `scripts/verifier_strategie_jules.py`. Aucune rentabilité future démontrée.
+
 ### M3 MultiSport Value (analyse historique)
 
 **Stratégies → M3 · MultiSport** présente un nouveau comparateur expérimental :
