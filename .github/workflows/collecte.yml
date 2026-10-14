@@ -1,13 +1,13 @@
 name: Collecte et comparaison
 
-# Toutes les 5 minutes (règlement des paris : une fois par heure, voir scripts/cycle.py), seulement si la variable de dépôt COLLECTE_AUTO vaut « oui »
+# Toutes les 5 minutes (règlement des paris dans un workflow horaire séparé), seulement si la variable de dépôt COLLECTE_AUTO vaut « oui »
 # (Settings → Secrets and variables → Actions → Variables). À activer avec l'offre PulseScore PRO :
 # l'offre gratuite (500 requêtes/mois) ne tient pas un cycle complet toutes les 5 minutes.
 #
 # GitHub saute ou retarde souvent les tâches planifiées (2 lancements en 16 h constatés) : chaque cycle
 # relance donc lui-même le suivant, 5 minutes après son début (tout de suite s'il a duré plus). La tâche planifiée (toutes les heures) ne
-# sert qu'à redémarrer la chaîne si elle s'arrête. Une seule chaîne à la fois : le groupe « collecte » ne
-# garde qu'un lancement en attente. Pour arrêter : passer COLLECTE_AUTO à autre chose que « oui ».
+# sert qu'à redémarrer la chaîne si elle s'arrête. Le groupe « donnees » sérialise collecte et règlement
+# afin d'éviter les écritures concurrentes sur la branche « donnees ». Pour arrêter : passer COLLECTE_AUTO à autre chose que « oui ».
 on:
   schedule:
     - cron: "7 * * * *"
@@ -30,7 +30,7 @@ permissions:
   pages: write
   id-token: write
 
-# Trois tâches : le cycle (collecte, paris, règlement, données), la publication du site, et la relance du
+# Trois tâches : le cycle (collecte, comparaison, paris, données), la publication du site, et la relance du
 # cycle suivant. La publication a sa propre file : si GitHub Pages bloque (environnement « en attente »,
 # constaté le 6/10/2026 pendant 2 heures), la collecte et la chaîne des cycles continuent.
 jobs:
@@ -39,7 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     concurrency:
-      group: collecte
+      group: donnees
+      queue: max
       cancel-in-progress: false
     outputs:
       debut: ${{ steps.debut.outputs.debut }}
@@ -63,10 +64,11 @@ jobs:
             mkdir donnees && cd donnees && git init -q -b donnees && git remote add origin "$url"
           fi
 
-      - name: Cycle (collecte, comparaison, paris, règlement, site)
+      - name: Cycle (collecte, comparaison, paris, site)
         env:
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           API_SPORTS_KEY: ${{ secrets.API_SPORTS_KEY }}
+          REGLEMENT: non
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
         run: python scripts/cycle.py --donnees donnees --site site
 
