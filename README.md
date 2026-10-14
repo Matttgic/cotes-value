@@ -126,3 +126,8 @@ pip install -r requirements-dev.txt
 python -m pytest -q tests
 python scripts/cycle.py --mode test     # nécessite PULSESCORE_KEY ; sans clé : références seules
 ```
+
+### Gemini Argon
+
+[Critères et audit de Gemini Argon V1](docs/strategie-gemini.md), suivie depuis
+le 14 octobre à 20 h (Paris), dans Bilan, Stratégies et Paris. Rentabilité non démontrée.

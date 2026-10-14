@@ -16,7 +16,7 @@ Principe :
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from math import isfinite
 from zoneinfo import ZoneInfo
 
@@ -155,21 +155,39 @@ def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
             str(p.get("id") or p.get("match_id") or ""),
         )
     )
-    matchs_fr, matchs_ref, selection, par_jour = set(), set(), set(), Counter()
+    # Un alias rencontré sur un pari déjà écarté doit aussi être mémorisé.
+    # Sinon W/Pinnacle → W/Polymarket (écarté) → PMU/Polymarket reprend le match.
+    parents, utilises, selection, par_jour = {}, {}, set(), Counter()
+
+    def racine(cle):
+        parents.setdefault(cle, cle)
+        if parents[cle] != cle:
+            parents[cle] = racine(parents[cle])
+        return parents[cle]
+
+    def associer(cles):
+        root = racine(cles[0])
+        for cle in cles[1:]:
+            autre = racine(cle)
+            if autre != root:
+                parents[autre] = root
+                utilises[root] = utilises.get(root, False) or utilises.get(autre, False)
+        return root
+
     for p in candidats:
-         sport = p.get("sport")
-         cle_fr = (sport, str(p.get("match_id") or ""))
-         cle_ref = (sport, p.get("reference"), str(p["preuve_prise"]["match_id_reference"]))
-         jour = _heure(p["detecte"]).astimezone(PARIS).date()
-
-         if (cle_fr[1] and cle_fr in matchs_fr) or cle_ref in matchs_ref:
-             continue
-         if par_jour[jour] >= GEMINI["paris_max_jour"]:
-             continue
-
-         if cle_fr[1]:
-             matchs_fr.add(cle_fr)
-         matchs_ref.add(cle_ref)
-         par_jour[jour] += 1
-         selection.add(id(p))
+        sport = p.get("sport")
+        cles = [("reference", sport, p["reference"], str(p["preuve_prise"]["match_id_reference"]))]
+        if p.get("match_id"):
+            cles.append(("bookmaker", sport, str(p["match_id"])))
+        if p.get("domicile") and p.get("exterieur"):
+            noms = tuple(sorted(normaliser(p[k])[0] for k in ("domicile", "exterieur")))
+            if all(noms):
+                cles.append(("equipes", sport, _heure(p["debut"]).astimezone(timezone.utc), noms))
+        root = associer(cles)
+        jour = _heure(p["detecte"]).astimezone(PARIS).date()
+        if utilises.get(root) or par_jour[jour] >= GEMINI["paris_max_jour"]:
+            continue
+        utilises[root] = True
+        par_jour[jour] += 1
+        selection.add(id(p))
     return selection

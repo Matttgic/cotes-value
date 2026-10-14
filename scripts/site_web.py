@@ -228,9 +228,9 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
     dates = [(nom, heure(debut), heure(fin)) for nom, debut, fin in PERIODES]
     debut_historique, fin_historique = dates[0][1], dates[-1][2]
     releve = heure(laboratoire.get("releve")) or heure(maintenant)
-    passe = [p for p in paris if heure(p.get("detecte")) and heure(p.get("debut"))
-             and debut_historique <= heure(p["debut"]) < fin_historique
-             and heure(p["detecte"]) <= releve]
+    observes = [p for p in paris if heure(p.get("detecte")) and heure(p.get("debut"))
+                and heure(p["detecte"]) <= releve]
+    passe = [p for p in observes if debut_historique <= heure(p["debut"]) < fin_historique]
     passe_ids = {id(p) for p in passe}
     futur = [p for p in paris if heure(p.get("detecte"))
              and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)]
@@ -251,19 +251,24 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
                       and id(index[x]) in passe_ids]
         enregistrer(regle.id, historique, selectionner(futur, regle, DEBUT_SUIVI))
 
-    # Le rejeu historique commence avant le lancement officiel de ces stratégies.
-    for nom, historique, a_venir in (
-        ("Claude (rejeu)", claude_rejouee(passe),
-         [p for p in futur if id(p) in paris_strategie(paris)]),
-        ("ChatGPT v1 (rejeu)", [p for p in passe if id(p) in paris_chatgpt(passe, depuis=DEBUT_ETUDE)],
-         [p for p in futur if id(p) in paris_chatgpt(paris)]),
-        ("Gemini Argon v1 (rejeu)", [p for p in passe if id(p) in paris_gemini(passe, depuis=DEBUT_ETUDE)],
-         [p for p in futur if id(p) in paris_gemini(paris)]),
-        ("M3 (rejeu)", [p for p in passe if id(p) in paris_m3(passe, depuis=DEBUT_ETUDE)],
-         [p for p in futur if id(p) in paris_m3(paris)]),
-    ):
+    # Une sélection calculée une fois, pas une fois par fiche. Les paris observés
+    # hors période gardent leur place dans les plafonds journaliers des rejeux.
+    historiques = {
+        "Claude (rejeu)": {id(p) for p in claude_rejouee(observes)},
+        "ChatGPT v1 (rejeu)": paris_chatgpt(observes, depuis=DEBUT_ETUDE),
+        "Gemini Argon v1 (rejeu)": paris_gemini(observes, depuis=DEBUT_ETUDE),
+        "M3 (rejeu)": paris_m3(observes, depuis=DEBUT_ETUDE),
+    }
+    officiels = {
+        "Claude (rejeu)": paris_strategie(paris),
+        "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
+        "Gemini Argon v1 (rejeu)": paris_gemini(paris),
+        "M3 (rejeu)": paris_m3(paris),
+    }
+    for nom, historique_ids in historiques.items():
         if nom in laboratoire.get("comparateurs", {}):
-            enregistrer(nom, historique, a_venir)
+            enregistrer(nom, [p for p in passe if id(p) in historique_ids],
+                        [p for p in futur if id(p) in officiels[nom]])
 
     champs = CHAMPS_FICHE + ("simulation", "id")
     return {
@@ -874,6 +879,7 @@ function rendreParis() {
 }
 rendreParis();
 document.getElementById("voir-chatgpt").onclick = () => {
+  strategieChoisie = null;
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
   document.getElementById("f-sim").value = "ChatGPT";
   limite = 50;
@@ -881,6 +887,7 @@ document.getElementById("voir-chatgpt").onclick = () => {
   ouvrir("paris");
 };
 document.getElementById("voir-gemini").onclick = () => {
+  strategieChoisie = null;
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
   document.getElementById("f-sim").value = "Gemini Argon";
   limite = 50;
