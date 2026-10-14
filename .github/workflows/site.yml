@@ -36,6 +36,18 @@ jobs:
           from scripts.site_web import construire
           construire(Path('donnees'), Path('site'))
           PY
+      - name: Vérifier la syntaxe JavaScript du site
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("site/index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\s[^>]*)?>([\s\S]*?)</script>", html)
+          if len(scripts) != 1:
+              raise SystemExit(f"Nombre de scripts inattendu : {len(scripts)}")
+          Path("/tmp/cotes-value-site.js").write_text(scripts[0], encoding="utf-8")
+          PY
+          node --check /tmp/cotes-value-site.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
