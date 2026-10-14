@@ -32,7 +32,7 @@ jobs:
   cycle:
     if: github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     concurrency:
       group: collecte
       cancel-in-progress: false
@@ -98,7 +98,9 @@ jobs:
 
   relancer:
     needs: cycle
-    if: always() && vars.COLLECTE_AUTO == 'oui' && needs.cycle.result != 'cancelled' && needs.cycle.result != 'skipped'
+    # Une expiration du job cycle doit pouvoir relancer la chaîne ; le watchdog indépendant
+    # couvre aussi les annulations du workflow qui empêchent ce job de s'exécuter.
+    if: always() && vars.COLLECTE_AUTO == 'oui' && needs.cycle.result != 'skipped'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
