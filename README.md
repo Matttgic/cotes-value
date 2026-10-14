@@ -62,6 +62,23 @@ ses sélections. Aucun appel API supplémentaire.
 [Règles, audit historique défavorable et limites](docs/strategie-chatgpt.md).
 Le backtest de conception est exclu du bilan prospectif : rentabilité non démontrée.
 
+### M3 MultiSport Value (analyse historique)
+
+**Stratégies → M3 · MultiSport** présente un nouveau comparateur expérimental :
+basket, baseball et handball ; Pinnacle/Betfair/Polymarket ; vainqueur,
+handicap, total du match et total équipe extérieure ; cotes 1,30–3,00,
+edge 2–12 %, contrôle conforme et référence fraîche. Sur le relevé figé
+du 7 au 13/10, **69 paris réglés, +310,70 € à 10 € fictifs** (ROI +45,03 %),
+contre +214,70 € pour le rejeu Claude. **Les règles M3 ont été choisies
+après avoir vu les résultats : ce n'est pas une validation indépendante.**
+Plusieurs sélections du même match sont corrélées ; aucune rentabilité future
+ne peut être déduite de ce chiffre.
+
+Les nouvelles sélections M3 sont suivies uniquement à partir du **15/10/2026**
+sur le site, avec un panneau qui affiche les matchs et les paris sélectionnés.
+Voir [règles et limites](docs/strategie-m3.md) et
+[rapport chiffré](docs/strategie-m3.json).
+
 ### Laboratoire de comparaison
 
 **Stratégies** affiche les 36 règles, Claude et ChatGPT V1 dans un tableau triable
