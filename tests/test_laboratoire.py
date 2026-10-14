@@ -150,6 +150,11 @@ def test_site_strategies_et_comparateurs_meme_date(tmp_path, monkeypatch):
     data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
     assert 'data-o="strategies"' in html and 'id="o-strategies"' in html
     assert len(data["laboratoire"]["resultats"]) == 36
-    for nom, s in data["laboratoire"]["comparateurs_futur"].items():
+    for nom in ("Claude (rejeu)", "ChatGPT v1 (rejeu)"):
+        s = data["laboratoire"]["comparateurs_futur"][nom]
         assert s["paris"] == s["regles"] == 1
         assert s["gain"] == s["gains_bruts"] == 11 and s["pertes_brutes"] == 0
+    # M3 démarre le 15/10 : aucun pari du 14/10 ne doit être rétroactivement inclus.
+    m3 = data["laboratoire"]["comparateurs_futur"]["M3 (rejeu)"]
+    assert m3["paris"] == m3["regles"] == 0
+    assert data["laboratoire"]["m3_paris"] == []
