@@ -76,6 +76,20 @@ Les anciens chiffres annoncés par Jules ne correspondent pas au code livré.
 Voir [audit et limites](docs/strategie-jules.md), [rapport figé](docs/strategie-jules.json)
 et `scripts/verifier_strategie_jules.py`. Aucune rentabilité future démontrée.
 
+### Jules v2 reconstruite
+
+**Bilan → JULES EDGE v2** et **Stratégies → JULES EDGE V2** reprennent l'intention
+de Jules avec une identité des matchs reliée entre Pinnacle, Betfair et Polymarket.
+Cotes 1,30–2,80, edge 2,5–12 %, 15 min à 18 h avant le match, référence de 5 min
+maximum, une mise par événement identifiable et huit par jour au plus.
+Mise fictive de 10 €. Suivi à partir du **15/10/2026 à 00:30 (Paris)**.
+
+Sur le relevé commun 7–13 octobre : **34 sélections, 30 réglées, +38,30 €,
+ROI +12,77 %**, contre +13,50 % pour Claude. Résultat exploratoire, sans
+supériorité démontrée ; le suivi exclut ces gains passés. La v1 reste inchangée.
+[Protocole](docs/protocole-jules-v2.md), [audit et limites](docs/strategie-jules-v2.md),
+[rapport reproductible](docs/strategie-jules-v2.json).
+
 ### M3 MultiSport Value (analyse historique)
 
 **Stratégies → M3 · MultiSport** présente un nouveau comparateur expérimental :
