@@ -1,0 +1,52 @@
+name: Surveillance et reprise de la collecte
+
+# La chaine normale se relance toutes les 5 minutes. Ce garde-fou
+# n'interroge PAS les API de cotes si la collecte fonctionne deja.
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  verifier:
+    if: vars.COLLECTE_AUTO == 'oui'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: surveillance-collecte
+      cancel-in-progress: false
+    steps:
+      - name: Redemarrer uniquement si la collecte est arretee
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPOT: ${{ github.repository }}
+          BRANCHE: ${{ github.event.repository.default_branch }}
+          MODE: ${{ vars.MODE_COLLECTE || 'complet' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          executions=$(gh run list --repo "$DEPOT" --workflow collecte.yml \
+            --limit 30 --json createdAt,status,conclusion)
+          actives=$(jq '[.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length' <<<"$executions")
+          if [ "$actives" -gt 0 ]; then
+            echo "Collecte en cours ou dans la file : aucune relance."
+            exit 0
+          fi
+
+          derniere=$(jq -r '[.[].createdAt] | max // empty' <<<"$executions")
+          if [ -n "$derniere" ]; then
+            maintenant=$(date -u +%s)
+            lancement=$(date -u -d "$derniere" +%s)
+            age=$((maintenant - lancement))
+            if [ "$age" -lt 900 ]; then
+              echo "Derniere collecte lancee il y a ${age}s : delai normal."
+              exit 0
+            fi
+          fi
+
+          echo "Aucune collecte active et aucun lancement depuis 15 minutes : relance."
+          gh workflow run collecte.yml --repo "$DEPOT" --ref "$BRANCHE" -f mode="$MODE"
