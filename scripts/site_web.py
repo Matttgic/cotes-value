@@ -532,6 +532,8 @@ padding:5px 8px;border-radius:8px;white-space:nowrap;display:none}
 .seg-paris .l3{font-size:12.5px}
 .seg-paris .sp-titre{font-weight:700;font-size:13px;padding:9px 0 2px;color:var(--doux)}
 .puces{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
+#strategies-legende{flex-wrap:wrap;gap:6px;overflow:visible}
+#strategies-legende button{font-size:12px;padding:4px 8px}
 .puces button,select,.btn{flex:none;font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--ligne);
 background:var(--carte);color:var(--texte);cursor:pointer}
 .puces button.actif{border-color:var(--accent);color:var(--accent);font-weight:600}
@@ -1230,13 +1232,25 @@ const COULEURS_COMPARATEURS = {"Claude (rejeu)":"#2675ce", "ChatGPT v1 (rejeu)":
   "JULES EDGE v2 (rejeu)":"#865fe0", "M3 (rejeu)":"#16838b", "Convergence ≥ 2":"#c44862"};
 function rendreCourbesStrategies(rows) {
   const legend = document.getElementById("strategies-legende"), svg = document.getElementById("strategies-courbes");
-  legend.innerHTML = rows.map(r => `<button data-courbe="${e(r.id)}" aria-pressed="${!courbesMasquees.has(r.id)}" class="${courbesMasquees.has(r.id) ? "" : "actif"}"><span style="color:${COULEURS_COMPARATEURS[r.id] || "var(--texte)"}">●</span> ${e(r.nom)}</button>`).join("");
-  for (const b of legend.querySelectorAll("button")) b.onclick = () => {
+  const toutes = rows.map(r => ({...r, points:D.laboratoire.navigation?.courbes?.[r.id]?.[periodeStrategies] || []}));
+  const nomsCourts = {"M3 (rejeu)":"M3", "Convergence ≥ 2":"Conv. ≥ 2",
+    "JULES EDGE v1 (rejeu)":"Jules v1", "JULES EDGE v2 (rejeu)":"Jules v2",
+    "ChatGPT v1 (rejeu)":"ChatGPT v1", "Gemini Argon v1 (rejeu)":"Gemini v1"};
+  legend.innerHTML = toutes.map(r => {
+    const gain = r.points.length ? r.points.at(-1)[1] : (r.stats?.regles ? r.stats.gain : null);
+    return `<button data-courbe="${e(r.id)}" aria-label="${e(r.nom)} : ${e(eurC(gain))}" aria-pressed="${!courbesMasquees.has(r.id)}" class="${courbesMasquees.has(r.id) ? "" : "actif"}"><span style="color:${COULEURS_COMPARATEURS[r.id] || "var(--texte)"}">●</span> ${e(nomsCourts[r.id] || r.nom)} ${e(eurC(gain))}</button>`;
+  }).join("");
+  const masquerTout = rows.some(r => !courbesMasquees.has(r.id));
+  if (rows.length) legend.innerHTML += `<button id="strategies-tout">${masquerTout ? "Tout masquer" : "Tout afficher"}</button>`;
+  for (const b of legend.querySelectorAll("button[data-courbe]")) b.onclick = () => {
     courbesMasquees.has(b.dataset.courbe) ? courbesMasquees.delete(b.dataset.courbe) : courbesMasquees.add(b.dataset.courbe);
     rendreCourbesStrategies(rows);
   };
-  const series = rows.filter(r => !courbesMasquees.has(r.id)).map(r => ({...r,
-    points:D.laboratoire.navigation?.courbes?.[r.id]?.[periodeStrategies] || []}));
+  if (rows.length) document.getElementById("strategies-tout").onclick = () => {
+    for (const r of rows) masquerTout ? courbesMasquees.add(r.id) : courbesMasquees.delete(r.id);
+    rendreCourbesStrategies(rows);
+  };
+  const series = toutes.filter(r => !courbesMasquees.has(r.id));
   const points = series.flatMap(r => r.points);
   const vide = document.getElementById("strategies-courbes-vide");
   vide.textContent = !rows.length ? "Choisis toutes les références ou les comparateurs pour afficher leurs courbes."
@@ -1247,13 +1261,21 @@ function rendreCourbesStrategies(rows) {
   const W=640,H=290,left=78,right=18,top=22,bottom=40;
   const debut=Math.min(...points.map(p => p[0]))-60, fin=Math.max(...points.map(p => p[0]))+60;
   const min=Math.min(0,...points.map(p => p[1])), max=Math.max(0,...points.map(p => p[1]));
-  const marge=(max-min || 10)*.08, lo=min-marge, hi=max+marge;
+  const st=Math.max(1,Math.ceil(pas(max-min || 10)));
+  const lo=Math.floor(min/st)*st, hi=Math.max(lo+st,Math.ceil(max/st)*st);
   const x=t => left+(t-debut)/(fin-debut)*(W-left-right), y=g => top+(hi-g)/(hi-lo)*(H-top-bottom);
-  const date=t => new Date(t*1000).toLocaleDateString("fr-FR",{timeZone:"Europe/Paris",day:"2-digit",month:"2-digit"});
-  const graduations=[lo,0,hi].map(g => `<line x1="${left}" y1="${y(g)}" x2="${W-right}" y2="${y(g)}" stroke="var(--ligne)"/><text x="${left-8}" y="${y(g)+6}" text-anchor="end" fill="var(--doux)" font-size="17">${e(eur(g))}</text>`).join("");
+  const court = fin-debut-120 < 48*3600;
+  const date=t => {
+    const d=new Date(t*1000), jour=d.toLocaleDateString("fr-FR",{timeZone:"Europe/Paris",day:"2-digit",month:"2-digit"});
+    if (!court) return jour;
+    const heure=d.toLocaleTimeString("fr-FR",{timeZone:"Europe/Paris",hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+    return jour+" "+heure.replace(":","h");
+  };
+  const niveaux=Array.from({length:Math.round((hi-lo)/st)+1},(_,i) => lo+i*st);
+  const graduations=niveaux.map(g => `<line x1="${left}" y1="${y(g)}" x2="${W-right}" y2="${y(g)}" stroke="var(--ligne)"/><text x="${left-8}" y="${y(g)+6}" text-anchor="end" fill="var(--doux)" font-size="17">${e(eurC(g))}</text>`).join("");
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   svg.innerHTML = `<title>Gains cumulés — ${e(STRAT_PERIODES[periodeStrategies])}, 10 € fictifs par pari</title>${graduations}`+
-    [debut,(debut+fin)/2,fin].map(t => `<text x="${x(t)}" y="${H-9}" text-anchor="middle" fill="var(--doux)" font-size="17">${date(t)}</text>`).join("")+
+    [debut,(debut+fin)/2,fin].map(t => `<text x="${x(t)}" y="${H-9}" text-anchor="${t===debut ? "start" : t===fin ? "end" : "middle"}" fill="var(--doux)" font-size="17">${date(t)}</text>`).join("")+
     series.filter(r => r.points.length).map((r,i) => {
       let path=`M ${x(debut)} ${y(0)}`;
       for (const [t,g] of r.points) path+=` H ${x(t)} V ${y(g)}`;

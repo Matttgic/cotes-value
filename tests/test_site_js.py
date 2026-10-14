@@ -60,8 +60,10 @@ assert.equal(normaliserRecherche("CONFÉRENCE"),"conference");
 
 
 def test_js_courbes_legend_masquage_et_periode_vide():
+    outils = MODELE[MODELE.index("const eurC ="):MODELE.index("\n", MODELE.index("const eurC ="))] + "\n"
+    outils += MODELE[MODELE.index("function pas("):MODELE.index("function rendreCourbe()")]
     section=MODELE[MODELE.index("const courbesMasquees ="):MODELE.index('let periodeStrategies = "futur";')]
-    executer(DOM+'''
+    executer(DOM+outils+'''
 const D={laboratoire:{navigation:{courbes:{"Claude (rejeu)":{ensemble:[[1,10],[2,-5]]}}}}};
 let periodeStrategies="ensemble";
 '''+section+'''
@@ -69,9 +71,19 @@ const rows=[{id:"Claude (rejeu)",nom:"Claude"}];
 rendreCourbesStrategies(rows);
 assert.ok(document.getElementById("strategies-courbes").innerHTML.includes('data-serie="Claude (rejeu)"'));
 assert.ok(!document.getElementById("strategies-courbes").innerHTML.includes("NaN"));
-courbesMasquees.add("Claude (rejeu)"); rendreCourbesStrategies(rows);
+assert.ok(document.getElementById("strategies-legende").innerHTML.includes("Claude -5 €"));
+assert.ok(document.getElementById("strategies-courbes").innerHTML.includes("01/01 01h"));
+document.getElementById("strategies-tout").onclick();
 assert.equal(document.getElementById("strategies-courbes").style.display,"none");
 assert.ok(document.getElementById("strategies-courbes-vide").textContent.includes("masquées"));
-courbesMasquees.clear(); periodeStrategies="futur"; rendreCourbesStrategies(rows);
+assert.ok(document.getElementById("strategies-legende").innerHTML.includes("Tout afficher"));
+document.getElementById("strategies-tout").onclick();
+assert.ok(document.getElementById("strategies-courbes").innerHTML.includes('data-serie="Claude (rejeu)"'));
+D.laboratoire.navigation.courbes["Claude (rejeu)"].ensemble=[[1,-96.46],[4*86400,340.86]];
+rendreCourbesStrategies(rows);
+const axes=document.getElementById("strategies-courbes").innerHTML.match(/<text[^>]*>[^<]*<\\/text>/g).join(" ").replace(/<[^>]+>/g,"");
+assert.ok(axes.includes("+400 €") && axes.includes("-200 €") && axes.includes("0 €"));
+assert.ok(!axes.includes("h") && !axes.includes(","));
+periodeStrategies="futur"; rendreCourbesStrategies(rows);
 assert.ok(document.getElementById("strategies-courbes-vide").textContent.includes("Aucun pari réglé"));
 ''')
