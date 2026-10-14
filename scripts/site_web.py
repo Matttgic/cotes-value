@@ -14,6 +14,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCH
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
+from cotes.strategie_jules import JULES, paris_jules  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
                               evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
@@ -116,6 +117,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     strategie = paris_strategie(paris)
     chatgpt = paris_chatgpt(paris)
     gemini = paris_gemini(paris)
+    jules = paris_jules(paris)
     for p in paris:
         groupes.setdefault(cle_fiche(p), []).append(p)
     fiches = []
@@ -128,6 +130,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
         f["strategie"] = any(id(r) in strategie for r in lignes)
         f["chatgpt"] = any(id(r) in chatgpt for r in lignes)
         f["gemini"] = any(id(r) in gemini for r in lignes)
+        f["jules"] = any(id(r) in jules for r in lignes)
         f["tranche"] = tranche(f["cote"]) if f.get("cote") else None
         fiches.append(f)
     recents = lambda champ: lambda f: f.get(champ) or ""      # noqa: E731
@@ -142,7 +145,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     # Les filtres ChatGPT et Gemini donnent accès à l'ensemble de leurs paris, même si les
     # simulations très volumineuses ont repoussé une fiche hors des plus récentes.
     deja = {id(f) for f in gardees}
-    gardees += [f for f in fiches if (f["chatgpt"] or f["gemini"]) and id(f) not in deja]
+    gardees += [f for f in fiches if (f["chatgpt"] or f["gemini"] or f["jules"]) and id(f) not in deja]
     gardees.sort(key=recents("detecte"), reverse=True)
     valeurs = {f: sorted({str(p.get(c)) for p in paris if p.get(c) is not None}) for f, c in CHAMPS_FILTRES.items()}
     return gardees, sum(f["reference"] != TEMOIN for f in fiches), valeurs
@@ -157,6 +160,7 @@ def courbes(paris: list[dict]) -> dict[str, list]:
     uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
     chatgpt = paris_chatgpt(paris)
     gemini = paris_gemini(paris)
+    jules = paris_jules(paris)
     out: dict[str, list] = {}
     regles = [p for p in paris if p.get("statut") not in ("en_cours", "a_regler") and p.get("regle_le")]
     regles.sort(key=lambda p: (p["regle_le"], p.get("debut") or ""))
@@ -172,7 +176,8 @@ def courbes(paris: list[dict]) -> dict[str, list]:
                 + (["Uniques"] if id(p) in uniques else [])
                 + ([STRATEGIE["nom"]] if id(p) in strategie else [])
                 + ([CHATGPT["nom"]] if id(p) in chatgpt else [])
-                + ([GEMINI["nom"]] if id(p) in gemini else []))
+                + ([GEMINI["nom"]] if id(p) in gemini else [])
+                + ([JULES["nom"]] if id(p) in jules else []))
         for v in vues:
             out.setdefault(v, []).append(point)
     return out
@@ -257,12 +262,14 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         "Claude (rejeu)": {id(p) for p in claude_rejouee(observes)},
         "ChatGPT v1 (rejeu)": paris_chatgpt(observes, depuis=DEBUT_ETUDE),
         "Gemini Argon v1 (rejeu)": paris_gemini(observes, depuis=DEBUT_ETUDE),
+        "JULES EDGE v1 (rejeu)": paris_jules(observes, depuis=DEBUT_ETUDE),
         "M3 (rejeu)": paris_m3(observes, depuis=DEBUT_ETUDE),
     }
     officiels = {
         "Claude (rejeu)": paris_strategie(paris),
         "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
         "Gemini Argon v1 (rejeu)": paris_gemini(paris),
+        "JULES EDGE v1 (rejeu)": paris_jules(paris),
         "M3 (rejeu)": paris_m3(paris),
     }
     for nom, historique_ids in historiques.items():
@@ -275,7 +282,7 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         "selections": selection,
         "paris": {pid: {**{k: index[pid].get(k) for k in champs},
                         "sims": [index[pid].get("simulation")],
-                        "strategie": False, "chatgpt": False, "gemini": False, "trace": []}
+                        "strategie": False, "chatgpt": False, "gemini": False, "jules": False, "trace": []}
                  for pid in toutes if pid in index},
     }
 
@@ -308,9 +315,9 @@ def construire(donnees: Path, sortie: Path) -> Path:
             laboratoire.setdefault("comparateurs", {})["M3 (rejeu)"] = {
                 k: m3_rapport[k] for k in ("construction", "validation", "test", "ensemble")
             }
-        # Calcul dynamique du rejeu Gemini Argon v1 s'il n'est pas encore dans comparaison-strategies.json
+        # Calcul dynamique du rejeu Gemini Argon v1 et JULES EDGE v1 s'ils ne sont pas encore dans comparaison-strategies.json
+        releve_dt = heure(releve_str) or heure(maintenant)
         if "Gemini Argon v1 (rejeu)" not in laboratoire.get("comparateurs", {}):
-            releve_dt = heure(releve_str) or heure(maintenant)
             passe_gem = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
             gem_rejeu_ids = paris_gemini(passe_gem, depuis=DEBUT_ETUDE)
             gem_rows = [p for p in passe_gem if id(p) in gem_rejeu_ids]
@@ -319,15 +326,26 @@ def construire(donnees: Path, sortie: Path) -> Path:
                 **evaluer(gem_rows, releve_str),
                 "ensemble": resume(gem_ens, releve_str, incertitude=False),
             }
+        if "JULES EDGE v1 (rejeu)" not in laboratoire.get("comparateurs", {}):
+            passe_jules = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
+            jules_rejeu_ids = paris_jules(passe_jules, depuis=DEBUT_ETUDE)
+            jules_rows = [p for p in passe_jules if id(p) in jules_rejeu_ids]
+            jules_ens = [p for p in jules_rows if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
+            laboratoire.setdefault("comparateurs", {})["JULES EDGE v1 (rejeu)"] = {
+                **evaluer(jules_rows, releve_str),
+                "ensemble": resume(jules_ens, releve_str, incertitude=False),
+            }
         laboratoire["navigation"] = navigation_strategies(paris, laboratoire, maintenant)
         laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
                                     for r in laboratoire["resultats"]]
         laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
         gemini_ids = paris_gemini(paris)
+        jules_ids = paris_jules(paris)
         officiels = {
             "Claude (rejeu)": paris_strategie(paris),
             "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
             "Gemini Argon v1 (rejeu)": gemini_ids,
+            "JULES EDGE v1 (rejeu)": jules_ids,
             "M3 (rejeu)": m3_ids,
         }
         laboratoire["m3_paris"] = [{k: p.get(k) for k in
@@ -339,6 +357,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
             ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
              "reference", "ecart", "detecte", "debut", "statut", "gain")}
             for p in sorted((p for p in paris if id(p) in gemini_ids),
+                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+        laboratoire["jules_paris"] = [{k: p.get(k) for k in
+            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+            for p in sorted((p for p in paris if id(p) in jules_ids),
                             key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
         laboratoire["comparateurs_futur"] = {
             nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
@@ -356,6 +379,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
             "chatgpt": CHATGPT,
             "gemini": GEMINI,
+            "jules": JULES,
             "m3": M3,
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
@@ -1016,7 +1040,8 @@ function rendreStrategies() {
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
     stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
   for (const [id,per] of Object.entries(L.comparateurs || {})) {
-    const nomComp = id.startsWith("Claude") ? "Claude"
+  const nomComp = id.startsWith("JULES") ? "JULES EDGE V1"
+    : id.startsWith("Claude") ? "Claude"
       : id.startsWith("M3") ? "M3 · MultiSport"
       : id.startsWith("Gemini") ? "Gemini Argon V1"
       : "ChatGPT V1";

@@ -18,6 +18,7 @@ from .correspondance import normaliser
 from .marches import cle
 from .strategie_chatgpt import CHATGPT, paris_chatgpt
 from .strategie_gemini import GEMINI, paris_gemini
+from .strategie_jules import JULES, paris_jules
 
 MISE = 10.0
 INF = float("inf")
@@ -211,6 +212,7 @@ def _cumuler(paris: list[dict], groupe) -> dict:
     uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
     chatgpt = paris_chatgpt(paris)
     gemini = paris_gemini(paris)
+    jules = paris_jules(paris)
     for p in paris:
         clefs = [f'{groupe(p)}|{p["reference"]}']
         if p["reference"] != TEMOIN:
@@ -223,6 +225,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
             clefs.append(f'{groupe(p)}|{CHATGPT["nom"]}')
         if id(p) in gemini:
             clefs.append(f'{groupe(p)}|{GEMINI["nom"]}')
+        if id(p) in jules:
+            clefs.append(f'{groupe(p)}|{JULES["nom"]}')
         for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
                                       "clv_somme": 0.0, "clv_n": 0, "gagnes": 0,
