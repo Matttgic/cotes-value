@@ -218,4 +218,130 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
     Les comparateurs historiques sont des rejeux et restent distingués de leurs
     sélections officielles. Le dictionnaire envoyé au mobile ne contient que les
     paris appartenant à au moins une stratégie, sans limitation aux 600 fiches.
-    
+    """
+    from scripts.comparer_strategies import claude_rejouee
+
+    index = {p["id"]: p for p in paris if p.get("id")}
+    def ids(lignes):
+        return list(dict.fromkeys(p["id"] for p in lignes if p.get("id") in index))
+
+    dates = [(nom, heure(debut), heure(fin)) for nom, debut, fin in PERIODES]
+    debut_historique, fin_historique = dates[0][1], dates[-1][2]
+    releve = heure(laboratoire.get("releve")) or heure(maintenant)
+    passe = [p for p in paris if heure(p.get("detecte")) and heure(p.get("debut"))
+             and debut_historique <= heure(p["debut"]) < fin_historique
+             and heure(p["detecte"]) <= releve]
+    passe_ids = {id(p) for p in passe}
+    futur = [p for p in paris if heure(p.get("detecte"))
+             and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)]
+    selection = {}
+    toutes = set()
+
+    def enregistrer(nom: str, historique: list[dict], futur_lignes: list[dict]):
+        repartition = {"ensemble": ids(historique), "futur": ids(futur_lignes)}
+        for periode, debut, fin in dates:
+            repartition[periode] = ids(p for p in historique
+                                      if heure(p.get("debut")) and debut <= heure(p["debut"]) < fin)
+        selection[nom] = repartition
+        toutes.update(id_pari for li in repartition.values() for id_pari in li)
+
+    for resultat, regle in zip(laboratoire.get("resultats", []), REGLES_LABO):
+        assert resultat["regle"]["id"] == regle.id
+        historique = [index[x] for x in resultat.get("ids_selections", []) if x in index
+                      and id(index[x]) in passe_ids]
+        enregistrer(regle.id, historique, selectionner(futur, regle, DEBUT_SUIVI))
+
+    # Le rejeu historique commence avant le lancement officiel de ces stratégies.
+    for nom, historique, a_venir in (
+        ("Claude (rejeu)", claude_rejouee(passe),
+         [p for p in futur if id(p) in paris_strategie(paris)]),
+        ("ChatGPT v1 (rejeu)", [p for p in passe if id(p) in paris_chatgpt(passe, depuis=DEBUT_ETUDE)],
+         [p for p in futur if id(p) in paris_chatgpt(paris)]),
+        ("Gemini Argon v1 (rejeu)", [p for p in passe if id(p) in paris_gemini(passe, depuis=DEBUT_ETUDE)],
+         [p for p in futur if id(p) in paris_gemini(paris)]),
+        ("M3 (rejeu)", [p for p in passe if id(p) in paris_m3(passe, depuis=DEBUT_ETUDE)],
+         [p for p in futur if id(p) in paris_m3(paris)]),
+    ):
+        if nom in laboratoire.get("comparateurs", {}):
+            enregistrer(nom, historique, a_venir)
+
+    champs = CHAMPS_FICHE + ("simulation", "id")
+    return {
+        "selections": selection,
+        "paris": {pid: {**{k: index[pid].get(k) for k in champs},
+                        "sims": [index[pid].get("simulation")],
+                        "strategie": False, "chatgpt": False, "gemini": False, "trace": []}
+                 for pid in toutes if pid in index},
+    }
+
+
+def construire(donnees: Path, sortie: Path) -> Path:
+    paris = _lire(donnees / "paris.json", []) + lire_archives(donnees)     # bilan sur TOUS les paris
+    etat = _lire(donnees / "etat.json", {})
+    actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", [])
+                 if not o.get("suspect") and o.get("reference") != "Pinnacle brut"]
+    ctl = _lire(donnees / "controle.json", {})
+    # seulement les groupes mesurés dans les 6 dernières heures (les anciens restent dans controle.json)
+    dernier = (etat.get("dernier_cycle") or {}).get("debut") or ""
+    try:
+        recent = (datetime.fromisoformat(dernier) - timedelta(hours=6)).isoformat()
+    except ValueError:
+        recent = ""
+    groupes = [{k: g.get(k) for k in ("bookmaker", "sport", "marche", "periode", "type", "n", "mediane",
+                                      "part_haute", "statut", "exemples", "dispersion", "dispersion_autre_periode")} for g in ctl.get("groupes", {}).values()
+               if (g.get("maj") or "") >= recent]
+    controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
+    # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
+    liste, fiches_total, valeurs = selection_paris(paris)
+    laboratoire = _lire(Path(__file__).resolve().parent.parent / "docs/comparaison-strategies.json", {})
+    if laboratoire:
+        maintenant = datetime.now(timezone.utc).isoformat()
+        releve_str = laboratoire.get("releve") or maintenant
+        m3_rapport = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-m3.json", {})
+        m3_ids = paris_m3(paris)
+        if m3_rapport:
+            laboratoire.setdefault("comparateurs", {})["M3 (rejeu)"] = {
+                k: m3_rapport[k] for k in ("construction", "validation", "test", "ensemble")
+            }
+        # Calcul dynamique du rejeu Gemini Argon v1 s'il n'est pas encore dans comparaison-strategies.json
+        if "Gemini Argon v1 (rejeu)" not in laboratoire.get("comparateurs", {}):
+            releve_dt = heure(releve_str) or heure(maintenant)
+            passe_gem = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
+            gem_rejeu_ids = paris_gemini(passe_gem, depuis=DEBUT_ETUDE)
+            gem_rows = [p for p in passe_gem if id(p) in gem_rejeu_ids]
+            gem_ens = [p for p in gem_rows if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
+            laboratoire.setdefault("comparateurs", {})["Gemini Argon v1 (rejeu)"] = {
+                **evaluer(gem_rows, releve_str),
+                "ensemble": resume(gem_ens, releve_str, incertitude=False),
+            }
+        laboratoire["navigation"] = navigation_strategies(paris, laboratoire, maintenant)
+        laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
+                                    for r in laboratoire["resultats"]]
+        laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
+        gemini_ids = paris_gemini(paris)
+        officiels = {
+            "Claude (rejeu)": paris_strategie(paris),
+            "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
+            "Gemini Argon v1 (rejeu)": gemini_ids,
+            "M3 (rejeu)": m3_ids,
+        }
+        laboratoire["m3_paris"] = [{k: p.get(k) for k in
+            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+            for p in sorted((p for p in paris if id(p) in m3_ids),
+                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+        laboratoire["gemini_paris"] = [{k: p.get(k) for k in
+            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+            for p in sorted((p for p in paris if id(p) in gemini_ids),
+                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+        laboratoire["comparateurs_futur"] = {
+            nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
+                         and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
+                        maintenant, incertitude=False) for nom, ids in officiels.items()}
+        ids_labo = {i for r in laboratoire["futur"] for i in r["ids_recents"]}
+        laboratoire["paris_recents"] = [{k: p.get(k) for k in (
+            "id", "domicile", "exterieur", "bookmaker", "pari", "cote", "ecart",
+            "detecte", "debut", "statut", "gain")} for p in paris if p["id"] in ids_labo]
+    data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
+            "bilan_tranches": bilan_tranches(paris), "courbes": courbes
