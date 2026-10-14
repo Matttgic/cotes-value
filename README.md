@@ -50,6 +50,18 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
 7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages, en onglets : À jouer, Bilan, Paris, À régler.
 
+### Deux stratégies suivies séparément
+
+**Bilan → Stratégie** conserve la stratégie de Claude du 11/10.
+**Bilan → ChatGPT** suit une stratégie expérimentale indépendante à compter du
+14/10/2026 à 05:15 (Paris) : Pinnacle sans marge, cotes 1,50–3,00, edge 3–12 %,
+première détection entre 15 min et 6 h du match, une mise fictive de 10 € par match,
+cinq nouvelles mises maximum par jour. Le bouton « Voir les paris ChatGPT » donne
+ses sélections. Aucun appel API supplémentaire.
+
+[Règles, audit historique défavorable et limites](docs/strategie-chatgpt.md).
+Le backtest de conception est exclu du bilan prospectif : rentabilité non démontrée.
+
 ## Mise en route
 
 1. Secret `PULSESCORE_KEY` (Settings → Secrets and variables → Actions → Secrets).

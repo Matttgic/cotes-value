@@ -16,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 from . import VERSION
 from .correspondance import normaliser
 from .marches import cle
+from .strategie_chatgpt import CHATGPT, paris_chatgpt
 
 MISE = 10.0
 INF = float("inf")
@@ -207,6 +208,7 @@ def _cumuler(paris: list[dict], groupe) -> dict:
     cote française ; le témoin « Pinnacle brut » n'a que sa propre ligne."""
     out: dict[str, dict] = {}
     uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
+    chatgpt = paris_chatgpt(paris)
     for p in paris:
         clefs = [f'{groupe(p)}|{p["reference"]}']
         if p["reference"] != TEMOIN:
@@ -215,6 +217,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
             clefs.append(f'{groupe(p)}|Uniques')
         if id(p) in strategie:
             clefs.append(f'{groupe(p)}|{STRATEGIE["nom"]}')
+        if id(p) in chatgpt:
+            clefs.append(f'{groupe(p)}|{CHATGPT["nom"]}')
         for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
                                       "clv_somme": 0.0, "clv_n": 0, "gagnes": 0,
