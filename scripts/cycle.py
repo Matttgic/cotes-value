@@ -1,4 +1,4 @@
-"""Un cycle complet : collecte -> comparaison -> paris simulés -> suivi de la clôture -> règlement -> site.
+"""Collecte et comparaison des cotes ; le règlement fonctionne aussi en cycle indépendant.
 
 Lancé toutes les 5 minutes par GitHub Actions (.github/workflows/collecte.yml).
 
@@ -80,78 +80,14 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
         journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:3]}
 
 
-def main() -> int:
-    a = argparse.ArgumentParser()
-    a.add_argument("--mode", choices=["complet", "test"], default=os.environ.get("MODE_COLLECTE", "complet"))
-    a.add_argument("--donnees", default="donnees")
-    a.add_argument("--site", default="site")
-    a.add_argument("--reglement", choices=["auto", "oui", "non"], default=os.environ.get("REGLEMENT", "auto"),
-                   help="auto = si le dernier règlement date d'au moins REGLEMENT_MINUTES")
-    args = a.parse_args()
-    cle = os.environ.get("PULSESCORE_KEY", "").strip()
-    donnees = Path(args.donnees)
-    maintenant = datetime.now(timezone.utc)
-    journal = {"debut": maintenant.isoformat(timespec="seconds"), "mode": args.mode, "etapes": {}}
-
-    # 1. références (gratuites)
-    pin = etape("pinnacle", journal, lambda: harmoniser_pinnacle(pinnacle.collecter())) or []
-    poly = etape("polymarket", journal, polymarket.collecter, HORIZON_H) or []
-    kal = etape("kalshi", journal, kalshi.collecter, HORIZON_H) or []
-
-    # 2. bookmakers français + Betfair (PulseScore) : seulement les sports où une référence a des matchs
-    limite = maintenant + timedelta(hours=HORIZON_H)
-    sports_ref = {l["sport"] for l in pin + poly + kal
-                  if l.get("debut") and comparaison._t(l["debut"]) and comparaison._t(l["debut"]) <= limite}
-    if args.mode == "test":
-        plan = {"winamax": ["soccer"], "betclic": ["soccer"], "orbitxch": ["soccer"]}
-        pages_max, horizon = 1, 12
-    else:
-        sports = [s for s in SPORTS_FR if pulsescore.SPORTS[s] in sports_ref]
-        plan = {bm: sports for bm in FRANCAIS} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in sports]}
-        pages_max, horizon = 40, HORIZON_H
-    lignes_ps, requetes = [], {}
-    if cle:
-        r = etape("pulsescore", journal, pulsescore.collecter, cle, plan, horizon, pages_max)
-        if r:
-            lignes_ps, requetes, erreurs_ps = r
-            if erreurs_ps:                       # fonctionnement dégradé : visible dans le journal (etat.json)
-                journal["etapes"]["pulsescore"] |= {"degrade": True,
-                                                    "erreurs": {bm: e[:5] for bm, e in erreurs_ps.items()}}
-    else:
-        journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
-    francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
-    betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])
-    references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly, "Kalshi": kal}
-
-    # 3. contrôle de conformité des marchés (cumulé d'un cycle à l'autre), comparaison et paris simulés :
-    #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari
-    index = etape("association", journal, comparaison.indexer, francais, references) or {}
-    mesures = controle.mesurer(francais, index)
-    etat_controle = controle.mettre_a_jour(lire_json(donnees / "controle.json", {}), mesures,
-                                           journal["debut"])
-    suspects = controle.matchs_suspects(mesures)
-    etat_controle["matchs_suspects"] = [
-        {"match_id": l["match_id"], "bookmaker": l["source"], "match": f'{l["domicile"]} – {l["exterieur"]}',
-         "rapport_median": suspects[l["match_id"]]}
-        for l in {l["match_id"]: l for l, *_ in mesures if l["match_id"] in suspects}.values()]
-    journal["controle"] = controle.resume(etat_controle) | {"mesures": len(mesures),
-                                                            "matchs_suspects": len(suspects)}
-    opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
-                         index=index, controle=(etat_controle, suspects)) or []
-    paris = lire_json(donnees / "paris.json", [])
-    # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
-    manuels = lire_json(donnees / "resultats_manuels.json", {})
-    paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
-    nouveaux = simulation.placer(opportunites, paris)
-    justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
-    simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
-
+def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
+                        journal: dict, requetes: dict, mode_reglement: str) -> bool:
     # 4. règlement (offre PulseScore PRO : requêtes illimitées). Sans clé PulseScore, ESPN
     #    et les résultats saisis à la main règlent quand même ce qu'ils peuvent.
     #    Une fois par heure seulement (environ 6 minutes de lectures) : voir REGLEMENT_MINUTES.
     etat_avant = lire_json(donnees / "etat.json", {})
     dernier_reglement = etat_avant.get("dernier_reglement")
-    regler = args.reglement == "oui" or (args.reglement == "auto" and (
+    regler = mode_reglement == "oui" or (mode_reglement == "auto" and (
         not dernier_reglement
         or maintenant - datetime.fromisoformat(dernier_reglement) >= timedelta(minutes=REGLEMENT_MINUTES)))
     journal["reglement"] = regler
@@ -222,6 +158,106 @@ def main() -> int:
             if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])][:80]
     else:
         journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
+
+    return regler
+
+
+def main() -> int:
+    a = argparse.ArgumentParser()
+    a.add_argument("--mode", choices=["complet", "test"], default=os.environ.get("MODE_COLLECTE", "complet"))
+    a.add_argument("--donnees", default="donnees")
+    a.add_argument("--site", default="site")
+    a.add_argument("--reglement", choices=["auto", "oui", "non"], default=os.environ.get("REGLEMENT", "auto"),
+                   help="auto = si le dernier règlement date d'au moins REGLEMENT_MINUTES")
+    a.add_argument("--seulement-reglement", action="store_true",
+                   help="Régler les paris sans interroger les cotes ni créer de nouveaux paris")
+    args = a.parse_args()
+    cle = os.environ.get("PULSESCORE_KEY", "").strip()
+    donnees = Path(args.donnees)
+    maintenant = datetime.now(timezone.utc)
+    journal = {"debut": maintenant.isoformat(timespec="seconds"), "mode": args.mode, "etapes": {}}
+
+    if args.seulement_reglement:
+        # Cycle indépendant : aucune collecte ni placement de paris.
+        paris = lire_json(donnees / "paris.json", [])
+        manuels = lire_json(donnees / "resultats_manuels.json", {})
+        paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
+        requetes = {}
+        journal["mode"] = "reglement"
+        regler = effectuer_reglement(paris, donnees, maintenant, cle, journal, requetes, "oui")
+        paris = stockage.archiver(donnees, paris, maintenant)
+        ecrire_json(donnees / "paris.json", paris)
+        etat = lire_json(donnees / "etat.json", {})
+        if regler:
+            etat["dernier_reglement"] = journal["debut"]
+        compteur = etat.get("requetes_par_mois", {})
+        mois = f"{maintenant:%Y-%m}"
+        compteur[mois] = compteur.get(mois, 0) + sum(requetes.values())
+        etat["requetes_par_mois"] = compteur
+        journal["fin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        etat["dernier_cycle_reglement"] = journal
+        ecrire_json(donnees / "etat.json", etat)
+        from site_web import construire
+        construire(donnees, Path(args.site))
+        print(json.dumps({"mode": "reglement", "resultats": journal.get("resultats"),
+                          "etapes": journal.get("etapes", {})}, ensure_ascii=False))
+        return 0
+
+    # 1. références (gratuites)
+    pin = etape("pinnacle", journal, lambda: harmoniser_pinnacle(pinnacle.collecter())) or []
+    poly = etape("polymarket", journal, polymarket.collecter, HORIZON_H) or []
+    kal = etape("kalshi", journal, kalshi.collecter, HORIZON_H) or []
+
+    # 2. bookmakers français + Betfair (PulseScore) : seulement les sports où une référence a des matchs
+    limite = maintenant + timedelta(hours=HORIZON_H)
+    sports_ref = {l["sport"] for l in pin + poly + kal
+                  if l.get("debut") and comparaison._t(l["debut"]) and comparaison._t(l["debut"]) <= limite}
+    if args.mode == "test":
+        plan = {"winamax": ["soccer"], "betclic": ["soccer"], "orbitxch": ["soccer"]}
+        pages_max, horizon = 1, 12
+    else:
+        sports = [s for s in SPORTS_FR if pulsescore.SPORTS[s] in sports_ref]
+        plan = {bm: sports for bm in FRANCAIS} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in sports]}
+        pages_max, horizon = 40, HORIZON_H
+    lignes_ps, requetes = [], {}
+    if cle:
+        r = etape("pulsescore", journal, pulsescore.collecter, cle, plan, horizon, pages_max)
+        if r:
+            lignes_ps, requetes, erreurs_ps = r
+            if erreurs_ps:                       # fonctionnement dégradé : visible dans le journal (etat.json)
+                journal["etapes"]["pulsescore"] |= {"degrade": True,
+                                                    "erreurs": {bm: e[:5] for bm, e in erreurs_ps.items()}}
+    else:
+        journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
+    francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
+    betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])
+    references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly, "Kalshi": kal}
+
+    # 3. contrôle de conformité des marchés (cumulé d'un cycle à l'autre), comparaison et paris simulés :
+    #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari
+    index = etape("association", journal, comparaison.indexer, francais, references) or {}
+    mesures = controle.mesurer(francais, index)
+    etat_controle = controle.mettre_a_jour(lire_json(donnees / "controle.json", {}), mesures,
+                                           journal["debut"])
+    suspects = controle.matchs_suspects(mesures)
+    etat_controle["matchs_suspects"] = [
+        {"match_id": l["match_id"], "bookmaker": l["source"], "match": f'{l["domicile"]} – {l["exterieur"]}',
+         "rapport_median": suspects[l["match_id"]]}
+        for l in {l["match_id"]: l for l, *_ in mesures if l["match_id"] in suspects}.values()]
+    journal["controle"] = controle.resume(etat_controle) | {"mesures": len(mesures),
+                                                            "matchs_suspects": len(suspects)}
+    opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
+                         index=index, controle=(etat_controle, suspects)) or []
+    paris = lire_json(donnees / "paris.json", [])
+    # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
+    manuels = lire_json(donnees / "resultats_manuels.json", {})
+    paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
+    nouveaux = simulation.placer(opportunites, paris)
+    justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
+    simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
+
+    # Les résultats sont traités dans leur propre workflow horaire.
+    regler = effectuer_reglement(paris, donnees, maintenant, cle, journal, requetes, args.reglement)
 
     # 5. sauvegarde
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
