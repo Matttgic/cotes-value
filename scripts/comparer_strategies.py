@@ -18,6 +18,7 @@ from cotes.laboratoire import (REGLES, DEBUT_ETUDE, PERIODES, audit, classer, ev
                                heure, resume, selectionner)
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import paris_chatgpt  # noqa: E402
+from cotes.strategie_gemini import paris_gemini  # noqa: E402
 
 
 def claude_rejouee(paris: list[dict]) -> list[dict]:
@@ -63,6 +64,8 @@ def comparer(paris: list[dict], releve: str) -> dict:
                           "ids_selections": [p["id"] for p in rows]})
     v1 = paris_chatgpt(paris, depuis=DEBUT_ETUDE)
     v1_rows = [p for p in paris if id(p) in v1]
+    gemini_ids = paris_gemini(paris, depuis=DEBUT_ETUDE)
+    gemini_rows = [p for p in paris if id(p) in gemini_ids]
     claude_rows = claude_rejouee(paris)
     claude = {**evaluer(claude_rows, releve), "ensemble": ensemble(claude_rows)}
     # Plusieurs paris corrélés par rencontre : ne pas présenter un bootstrap par
@@ -72,6 +75,7 @@ def comparer(paris: list[dict], releve: str) -> dict:
     return {"schema": 1, "releve": releve, "audit": qualite, "resultats": resultats,
             "decision": classer(resultats),
             "comparateurs": {"ChatGPT v1 (rejeu)": {**evaluer(v1_rows, releve), "ensemble": ensemble(v1_rows)},
+                             "Gemini Argon v1 (rejeu)": {**evaluer(gemini_rows, releve), "ensemble": ensemble(gemini_rows)},
                              "Claude (rejeu)": claude}}
 
 
@@ -101,3 +105,4 @@ if __name__ == "__main__":
     r = produire(args.donnees, args.sortie)
     print(json.dumps({"source": r["source"], "audit": r["audit"], "decision": r["decision"],
                       "comparateurs": r["comparateurs"]}, ensure_ascii=False, indent=2))
+  
