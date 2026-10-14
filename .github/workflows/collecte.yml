@@ -11,6 +11,11 @@ name: Collecte et comparaison
 on:
   schedule:
     - cron: "7 * * * *"
+  # Relance aussi un cycle si le workflow de collecte est corrige sur la branche principale.
+  push:
+    branches: [ccr-148b8ccc-phitmr]
+    paths:
+      - .github/workflows/collecte.yml
   workflow_dispatch:
     inputs:
       mode:
