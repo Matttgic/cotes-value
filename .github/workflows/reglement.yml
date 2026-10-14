@@ -5,6 +5,10 @@ name: Reglement des paris
 on:
   schedule:
     - cron: "27 * * * *"
+  push:
+    branches: [ccr-148b8ccc-phitmr]
+    paths:
+      - .github/workflows/reglement.yml
   workflow_dispatch:
 
 permissions:
