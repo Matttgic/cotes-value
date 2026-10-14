@@ -39,6 +39,20 @@ La méthode de Claude, rejouée sur le même relevé dans
 soit **+13,50 %** de ROI. M3 dépasse ce total historique de **96 €**,
 avec seulement 69 paris réglés.
 
+### Contrôle de corrélation
+
+Les 69 paris réglés concernent plusieurs sélections de rencontres identiques.
+En ne gardant que la première détection **par identifiant de match du bookmaker**,
+le gain tombe à **+173,20 € sur 38 paris réglés**.
+En ne gardant que la première détection **par identifiant de match de référence**,
+il tombe à **+106,20 € sur 31 paris réglés**.
+
+Ces deux scénarios ne sont pas les règles M3 officielles ; ils révèlent que
+le gain de +310,70 € vient en partie de mises multiples sur les mêmes rencontres.
+Avec le second scénario, le gain est **inférieur** à celui de Claude.
+Les identifiants ne fusionnent pas nécessairement toutes les rencontres similaires
+entre références, donc l'indépendance est encore imparfaite.
+
 **Cette comparaison est descriptive, pas une preuve de supériorité.**
 La stratégie M3 a été choisie sur toute la période, **y compris le 13 octobre** :
 les colonnes 11–12 et 13 octobre ne sont pas des tests indépendants.
