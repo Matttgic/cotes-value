@@ -11,6 +11,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCHES, bilan,  # noqa: E402
                               bilan_bookmakers, bilan_tranches, paris_strategie, premiers_par_selection,
                               REGLES, clv_finale, segments, tranche)
+from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
+                               valider_actuelles)  # noqa: E402
+from cotes.reglement import gain as gain_reglement, GAIN  # noqa: E402
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
@@ -39,12 +42,12 @@ CHAMPS_FILTRES = {"sims": "simulation", "reference": "reference", "statut": "sta
 
 def cle_fiche(p: dict) -> tuple:
     """Un même pari pris par plusieurs simulations = une seule fiche (même clé que la page)."""
-    return (p.get("reference"), p.get("match_id"), p.get("marche"), p.get("periode"), p.get("ligne"), p.get("issue"))
+    return (p.get("reference"), p.get("match_id"), p.get("marche"), p.get("periode"), p.get("ligne"), p.get("issue"), p.get("joueur"))
 
 
 CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
-                "ligue", "regle_le", "reporte_au")
+                "ligue", "regle_le", "reporte_au", "id", "joueur")
 
 
 PARIS_TZ = ZoneInfo("Europe/Paris")
@@ -197,7 +200,7 @@ def paris_des_segments(paris: list[dict]) -> list[list]:
     regles.sort(key=lambda p: (p.get("debut") or "", p.get("regle_le") or ""), reverse=True)
     return [[f'{p.get("domicile")} – {p.get("exterieur")}', p.get("pari"), p.get("bookmaker"), p["cote"],
              p["cote_juste"], p["statut"], p.get("gain"), clv_finale(p), p.get("debut"), tranche(p["cote"]),
-             p.get("sport")] for p in regles]
+             p.get("sport"), p.get("reference")] for p in regles]
 
 
 def paris_a_venir_des_segments(paris: list[dict], maintenant: datetime | None = None) -> list[list]:
@@ -217,7 +220,57 @@ def paris_a_venir_des_segments(paris: list[dict], maintenant: datetime | None = 
     venir.sort(key=debut)
     return [[f'{p.get("domicile")} – {p.get("exterieur")}', p.get("pari"), p.get("bookmaker"), p["cote"],
              p["cote_juste"], p.get("ecart"), p.get("reference"), p.get("clv"), p.get("debut"), tranche(p["cote"]),
-             p.get("sport")] for p in venir]
+             p.get("sport"), p.get("reference")] for p in venir]
+
+
+def enrichir_comparateurs(paris: list[dict], laboratoire: dict, maintenant: str) -> None:
+    """Les nouveaux comparateurs fonctionnent aussi avec l'ancien JSON figé."""
+    releve = laboratoire.get("releve") or maintenant
+    observes = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= heure(releve)]
+    historiques = selections(observes, depuis=DEBUT_ETUDE)
+    historiques["convergence"] = paris_convergence(observes, historiques, depuis=DEBUT_ETUDE)
+    comparateurs = laboratoire.setdefault("comparateurs", {})
+    for cle, nom in [(cle, nom) for cle, _, _, nom, _ in STRATEGIES] + [("convergence", CONVERGENCE["nom"])]:
+        if nom in comparateurs and nom != "M3 (rejeu)":
+            continue
+        rows = [p for p in observes if id(p) in historiques[cle]]
+        commun = [p for p in rows if heure(p.get("debut"))
+                  and heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
+        # Pas d'intervalle prétendant ces paris corrélés indépendants.
+        stats = {}
+        for periode, debut, fin in PERIODES:
+            partie = [p for p in rows if heure(debut) <= heure(p["debut"]) < heure(fin)]
+            stats[periode] = resume(partie, fin if periode != "test" else releve, incertitude=False)
+        comparateurs[nom] = {**stats, "ensemble": resume(commun, releve, incertitude=False)}
+
+
+def courbe_comparateur(rows: list[dict], cutoff: str) -> list[list]:
+    """Même mise de 10 € et même coupure de règlement que resume()."""
+    connus = [p for p in rows if p.get("statut") in GAIN and heure(p.get("detecte"))
+              and heure(p.get("regle_le")) and heure(p["detecte"]) <= heure(p["regle_le"]) < heure(cutoff)]
+    total = 0.0
+    points = []
+    for p in sorted(connus, key=lambda p: (heure(p["regle_le"]), p["id"])):
+        total += gain_reglement(p["statut"], 10, p["cote"])
+        points.append([int(heure(p["regle_le"]).timestamp()), round(total, 2)])
+    return points
+
+
+def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]]) -> dict:
+    """Toutes les prises, en colonnes compactes ; le navigateur ne rend que 50 cartes.
+
+    Une ligne = une prise enregistrée (référence comprise), prix/date exacts.
+    La CLV exportée est uniquement celle de clôture validée, comme dans le bilan.
+    """
+    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence"]
+    convergents = paris_convergence(paris, retenus)
+    rows = []
+    for p in sorted(paris, key=lambda p: p.get("detecte") or "", reverse=True):
+        f = {k: p.get(k) for k in CHAMPS_FICHE}
+        f.update(simulation=p.get("simulation"), clv=clv_finale(p), tranche=tranche(p["cote"]) if p.get("cote") else None,
+                 strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents)
+        rows.append([f[k] for k in champs])
+    return {"champs": champs, "lignes": rows}
 
 
 def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str) -> dict:
@@ -279,19 +332,38 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         "JULES EDGE v2 (rejeu)": paris_jules_v2(paris),
         "M3 (rejeu)": paris_m3(paris),
     }
+    cles = {nom: cle for cle, _, _, nom, _ in STRATEGIES}
+    historiques[CONVERGENCE["nom"]] = paris_convergence(
+        observes, {cles[nom]: ids for nom, ids in historiques.items()}, depuis=DEBUT_ETUDE)
+    officiels[CONVERGENCE["nom"]] = paris_convergence(
+        paris, {cles[nom]: ids for nom, ids in officiels.items()})
     for nom, historique_ids in historiques.items():
         if nom in laboratoire.get("comparateurs", {}):
             enregistrer(nom, [p for p in passe if id(p) in historique_ids],
                         [p for p in futur if id(p) in officiels[nom]])
 
-    champs = CHAMPS_FICHE + ("simulation", "id")
+    champs = CHAMPS_FICHE + ("simulation",)
+    courbes_comparateurs = {}
+    for nom in laboratoire.get("comparateurs", {}):
+        repartition = selection.get(nom, {})
+        courbes_comparateurs[nom] = {}
+        for periode, pids in repartition.items():
+            cutoff = maintenant if periode == "futur" else (
+                next((fin for n, _, fin in PERIODES if n == periode and n != "test"), None) or releve.isoformat())
+            courbes_comparateurs[nom][periode] = courbe_comparateur([index[pid] for pid in pids], cutoff)
     return {
         "selections": selection,
+        "courbes": courbes_comparateurs,
         "paris": {pid: {**{k: index[pid].get(k) for k in champs},
                         "sims": [index[pid].get("simulation")],
-                        "strategie": False, "chatgpt": False, "gemini": False,
-                        "jules": id(index[pid]) in officiels["JULES EDGE v1 (rejeu)"],
-                        "jules_v2": id(index[pid]) in officiels["JULES EDGE v2 (rejeu)"], "trace": []}
+                        "tranche": tranche(index[pid]["cote"]) if index[pid].get("cote") else None,
+                        "clv": clv_finale(index[pid]),
+                        **{cle: id(index[pid]) in officiels[nom] for cle, _, _, nom, _ in STRATEGIES},
+                        "strategies": [cle for cle, _, _, nom, _ in STRATEGIES if id(index[pid]) in officiels[nom]],
+                        "convergence": id(index[pid]) in officiels[CONVERGENCE["nom"]],
+                        "strategies_historiques": [cle for cle, _, _, nom, _ in STRATEGIES if id(index[pid]) in historiques[nom]],
+                        "convergence_historique": id(index[pid]) in historiques[CONVERGENCE["nom"]],
+                        "trace": []}
                  for pid in toutes if pid in index},
     }
 
@@ -318,32 +390,8 @@ def construire(donnees: Path, sortie: Path) -> Path:
     if laboratoire:
         maintenant = datetime.now(timezone.utc).isoformat()
         releve_str = laboratoire.get("releve") or maintenant
-        m3_rapport = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-m3.json", {})
         m3_ids = paris_m3(paris)
-        if m3_rapport:
-            laboratoire.setdefault("comparateurs", {})["M3 (rejeu)"] = {
-                k: m3_rapport[k] for k in ("construction", "validation", "test", "ensemble")
-            }
-        # Calcul dynamique du rejeu Gemini Argon v1 et JULES EDGE v1 s'ils ne sont pas encore dans comparaison-strategies.json
         releve_dt = heure(releve_str) or heure(maintenant)
-        if "Gemini Argon v1 (rejeu)" not in laboratoire.get("comparateurs", {}):
-            passe_gem = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
-            gem_rejeu_ids = paris_gemini(passe_gem, depuis=DEBUT_ETUDE)
-            gem_rows = [p for p in passe_gem if id(p) in gem_rejeu_ids]
-            gem_ens = [p for p in gem_rows if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
-            laboratoire.setdefault("comparateurs", {})["Gemini Argon v1 (rejeu)"] = {
-                **evaluer(gem_rows, releve_str),
-                "ensemble": resume(gem_ens, releve_str, incertitude=False),
-            }
-        if "JULES EDGE v1 (rejeu)" not in laboratoire.get("comparateurs", {}):
-            passe_jules = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
-            jules_rejeu_ids = paris_jules(passe_jules, depuis=DEBUT_ETUDE)
-            jules_rows = [p for p in passe_jules if id(p) in jules_rejeu_ids]
-            jules_ens = [p for p in jules_rows if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
-            laboratoire.setdefault("comparateurs", {})["JULES EDGE v1 (rejeu)"] = {
-                **evaluer(jules_rows, releve_str),
-                "ensemble": resume(jules_ens, releve_str, incertitude=False),
-            }
         rapport_v2 = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-jules-v2.json", {})
         v2_historique = rapport_v2.get("comparateurs", {}).get("JULES EDGE v2 reconstruite")
         if v2_historique and heure(rapport_v2.get("releve")) == releve_dt:
@@ -356,9 +404,10 @@ def construire(donnees: Path, sortie: Path) -> Path:
             commun_v2 = [p for p in lignes_v2 if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
             laboratoire.setdefault("comparateurs", {})["JULES EDGE v2 (rejeu)"] = {
                 **evaluer(lignes_v2, releve_str), "ensemble": resume(commun_v2, releve_str, incertitude=False)}
+        enrichir_comparateurs(paris, laboratoire, maintenant)
         laboratoire["navigation"] = navigation_strategies(paris, laboratoire, maintenant)
         laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
-                                    for r in laboratoire["resultats"]]
+                                    for r in laboratoire.get("resultats", [])]
         laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
         gemini_ids = paris_gemini(paris)
         jules_ids = paris_jules(paris)
@@ -391,6 +440,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
              "reference", "ecart", "detecte", "debut", "statut", "gain")}
             for p in sorted((p for p in paris if id(p) in jules_v2_ids),
                             key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+        officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
         laboratoire["comparateurs_futur"] = {
             nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
                          and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
@@ -399,7 +449,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
         laboratoire["paris_recents"] = [{k: p.get(k) for k in (
             "id", "domicile", "exterieur", "bookmaker", "pari", "cote", "ecart",
             "detecte", "debut", "statut", "gain")} for p in paris if p["id"] in ids_labo]
-    data = {"paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles[:300], "bilan": bilan(paris),
+    retenus = selections(paris)
+    actuelles = valider_actuelles(actuelles, paris, retenus)
+    data = {"catalogue": catalogue_paris(paris, retenus),
+            "strategies_badges": {cle: nom for cle, _, nom, _, _ in STRATEGIES},
+            "convergence": CONVERGENCE, "paris": liste, "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles, "bilan": bilan(paris),
             "bilan_tranches": bilan_tranches(paris), "courbes": courbes(paris), "segments": segments(paris),
             "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
             "bilan_bookmakers": bilan_bookmakers(paris), "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
@@ -413,7 +467,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
-    html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
+    html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/"))
     (sortie / "index.html").write_text(html, encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
     return sortie / "index.html"
@@ -493,6 +547,7 @@ tr:last-child td{border-bottom:0}
 td{vertical-align:top}
 td small{display:block;color:var(--doux);font-size:11.5px;white-space:nowrap}
 td:first-child small{white-space:normal}
+.filtres input{min-width:0;flex:1;padding:10px;border:1px solid var(--ligne);border-radius:8px;background:var(--carte);color:var(--texte);font:inherit}
 .filtres{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
 .sous-titre{font-size:15px;margin:18px 0 8px}
 .tableau{overflow-x:auto;border-radius:12px}
@@ -544,6 +599,9 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
 <main>
   <section class="onglet" id="o-jouer">
     <p class="aide">Cotes françaises au-dessus de la cote juste, au dernier passage. <span id="jouer-quand"></span></p>
+    <div class="puces" id="jouer-filtres" aria-label="Filtrer les opportunités par stratégie"></div>
+    <p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
+    Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille.</p>
     <div id="jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
@@ -602,6 +660,13 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
       ROI sur mises réglées. Gains et pertes : résultats nets des paris gagnants et perdants ; net = gains − pertes.
       Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p>
+    <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
+    <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
+    Jules v1/v2 représentent une seule famille pour la convergence ; cet accord ne prouve pas la rentabilité.</p>
+    <div class="carte"><div class="puces" id="strategies-legende"></div>
+      <div id="strategies-courbes-vide" class="aide"></div>
+      <svg id="strategies-courbes" viewBox="0 0 760 300" role="img" aria-label="Courbes comparées des gains cumulés en euros" style="width:100%;height:auto"></svg>
+    </div>
     <h2 class="sous-titre">Gain net par stratégie</h2>
     <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
     <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
@@ -637,16 +702,19 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p class="aide" id="seg-quoi"></p>
     <div id="segments"></div>
     <details class="aide"><summary>Comment lire</summary>
-    <p>Un segment = les paris uniques réglés d'une tranche de cote, d'un bookmaker, d'un sport, ou d'un croisement
-    (au moins 10 paris). <b>Attendu</b> : la réussite prévue par la cote juste ; à 1,30, gagner 77 % est normal.
+    <p>Un segment = les paris uniques réglés d'une tranche de cote, d'un bookmaker, d'un sport, d'une référence, ou d'un croisement
+    (au moins 10 paris). La référence est celle de la première détection du pari unique. <b>Attendu</b> : la réussite prévue par la cote juste ; à 1,30, gagner 77 % est normal.
     <b>Écart</b> : réussite réelle moins attendue, en écarts-types ; moins de 2, c'est dans la marge du hasard.</p>
     <p><b>Solide</b> : au moins 30 paris, réussite nettement au-dessus de l'attendu et CLV positive.
     <b>Piste</b> : ROI et CLV positifs, à confirmer. <b>Chance ?</b> : ROI positif mais CLV nulle ou négative
-    (on n'a pas battu le marché : sans doute de la chance). Avec près de 100 segments, quelques-uns brillent forcément par hasard.</p>
+    (on n'a pas battu le marché : sans doute de la chance). Avec de nombreux segments, quelques-uns brillent forcément par hasard.</p>
     <p>Toucher un segment affiche ses paris : d'abord ceux à venir (pas encore commencés, du plus proche au plus lointain), puis ceux déjà réglés. Le toucher à nouveau les replie. Un pari à venir n'entre dans les chiffres du segment qu'une fois réglé.</p></details>
   </section>
   <section class="onglet" id="o-paris">
     <div id="paris-strategie-banner" class="carte" hidden></div>
+    <div class="filtres"><input type="search" id="f-q" placeholder="Rechercher équipe, ligue, pari…" aria-label="Rechercher équipe, ligue ou pari">
+      <button class="btn" id="export-csv">Exporter CSV</button></div>
+    <p class="aide" id="paris-compte" aria-live="polite"></p>
     <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
     <select id="f-cote"></select><select id="f-book"></select><select id="f-sport"></select></div>
     <div id="paris"></div>
@@ -701,25 +769,42 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => ouvrir(b.
 // une carte par cote française (bookmaker, match, pari), avec les références qui la signalent
 const parCote = new Map();
 for (const o of D.actuelles) {
-  const k = o.bookmaker + "|" + o.match_id + "|" + o.pari;
-  if (!parCote.has(k)) parCote.set(k, {...o, refs: []});
+  const k = JSON.stringify([o.bookmaker,o.match_id,o.marche,o.periode,o.ligne,o.issue,o.joueur,o.cote]);
+  if (!parCote.has(k)) parCote.set(k, {...o, refs: [], strategies: new Set()});
   const c = parCote.get(k);
   c.refs.push(o);
+  for (const cle of o.strategies || []) c.strategies.add(cle);
+  c.convergence ||= o.convergence;
   c.ecart = Math.max(c.ecart, o.ecart);
 }
-const cotesJouer = [...parCote.values()].sort((a, b) => b.ecart - a.ecart);
+const cotesJouer = [...parCote.values()].map(o => ({...o,strategies:[...o.strategies]})).sort((a, b) => b.ecart - a.ecart);
 const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 60000)) : null;
+const badgeStrategies = p => (p.strategies || []).map(cle =>
+  `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
+  (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
 const carteActuelle = o => `<article class="carte">
 <div class="l1"><span class="match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="quand">${quand(o.debut)}</span></div>
 <div class="l2">${e(o.pari)}</div>
 <div class="l3"><span><b>${e(o.bookmaker)} ${cote(o.cote)}</b></span><span class="ecart">${pct(o.ecart)}</span></div>
+<div class="l4">${badgeStrategies(o)}</div>
+${o.strategies.length ? `<div class="aide">Prise enregistrée le ${quand(o.validation_detecte)}</div>` : ""}
 <div class="l4">cote juste : ${o.refs.map(r => `${e(r.reference)} ${cote(r.cote_juste)}`).join(" · ")}</div>
 </article>`;
 const age = minutes(dc.debut);
 document.getElementById("jouer-quand").textContent = dc.debut ? `Relevé à ${hm(dc.debut)}` +
   (age != null ? ` (il y a ${age} min)` : "") + `. La cote a pu bouger depuis : vérifie-la avant de jouer.` : "";
-document.getElementById("jouer").innerHTML = cotesJouer.length ? cotesJouer.map(carteActuelle).join("")
-  : `<div class="vide">Aucune erreur de cote au dernier passage.</div>`;
+let filtreJouer = "tous";
+function rendreJouer() {
+  const choix = [["tous","Tous"],["valide","Validés par une stratégie (≥ 1)"],["convergence","Convergence (≥ 2 stratégies)"],
+    ...Object.entries(D.strategies_badges || {}).filter(([cle]) => cotesJouer.some(o => o.strategies.includes(cle)))];
+  const accepte = (o,cle) => cle === "tous" || (cle === "valide" ? o.strategies.length > 0 : cle === "convergence" ? o.convergence : o.strategies.includes(cle));
+  document.getElementById("jouer-filtres").innerHTML = choix.map(([cle,nom]) =>
+    `<button data-filtre="${e(cle)}" class="${filtreJouer===cle ? "actif" : ""}" aria-pressed="${filtreJouer===cle}">${e(nom)} (${cotesJouer.filter(o => accepte(o,cle)).length})</button>`).join("");
+  for (const b of document.querySelectorAll("#jouer-filtres button")) b.onclick = () => { filtreJouer=b.dataset.filtre; rendreJouer(); };
+  const liste = cotesJouer.filter(o => accepte(o,filtreJouer));
+  document.getElementById("jouer").innerHTML = liste.length ? liste.map(carteActuelle).join("") : '<div class="vide">Aucune opportunité pour ce filtre au dernier passage.</div>';
+}
+rendreJouer();
 document.getElementById("nb-jouer").textContent = cotesJouer.length || "";
 
 // --- Bilan
@@ -793,7 +878,7 @@ function rendreBilan() {
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
 <td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles}</small>` : ""}</td></tr>`;
   document.getElementById("bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
-    Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
+    Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "M3", "Convergence ≥ 2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
       additionner(CUMULS[cumul])).replace("<tr>", '<tr class="total">');
@@ -883,19 +968,21 @@ document.getElementById("infos").innerHTML = [
 ].map(([a,b]) => `<div>${a}<b>${b ?? "—"}</b></div>`).join("");
 
 // --- Paris : fiches déjà regroupées (un même pari pris par plusieurs simulations = une seule fiche)
-const fiches = D.paris;
+const recentes = new Map(D.paris.map(p => [p.id,p]));
+const fiches = D.catalogue ? D.catalogue.lignes.map(ligne => {
+  const p = Object.fromEntries(D.catalogue.champs.map((cle,i) => [cle,ligne[i]]));
+  for (const cle of Object.keys(D.strategies_badges || {})) p[cle] = p.strategies.includes(cle);
+  return {...p, sims:[p.simulation], trace:recentes.get(p.id)?.trace || []};
+}) : D.paris;
 document.getElementById("nb-paris").textContent = fiches.filter(f => f.reference !== "Pinnacle brut").length || "";
-const affiches = fiches.filter(f => f.reference !== "Pinnacle brut").length;
-if (D.fiches_total > affiches) document.getElementById("paris").insertAdjacentHTML("beforebegin",
-  `<p class="aide">${affiches} paris affichés sur ${D.fiches_total} : les 400 derniers en cours, les 600 derniers réglés et
-  ceux à régler (le bilan compte tous les paris). Filtre « Statuts » pour ne voir que les gagnés, perdus… ; le témoin
-  « Pinnacle brut » s'affiche en le choisissant dans « Références ».</p>`);
+const normaliserRecherche = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr");
+let parisFiltres = [];
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
   cote:["tranche","Cotes"], book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
   // cotes : les tranches du bilan ; simulations : + « Stratégie », « ChatGPT », « Gemini Argon »
   const vals = champ === "tranche" ? D.tranches || [] : [...((D.valeurs_filtres || {})[champ] || []),
-    ...(champ === "sims" ? ["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2"] : [])];
+    ...(champ === "sims" ? ["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "M3", "Convergence ≥ 2"] : [])];
   const sel = document.getElementById("f-" + id);
   sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
     champ==="statut" ? STATUTS[v]||v : champ==="sims" && D.simulations[v] ? v + " " + D.simulations[v] : v)}</option>`).join("");
@@ -903,6 +990,31 @@ for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
 }
 let limite = 50;
 let strategieChoisie = null;
+document.getElementById("f-q").oninput = () => { limite=50; rendreParis(); };
+const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","clv","statut","gain","strategies"];
+// Les cellules texte ne doivent pas devenir des formules à l'ouverture dans un tableur.
+const celluleCSV = valeur => {
+  if (valeur == null) return '""';
+  let texte = String(valeur);
+  if (typeof valeur === "string" && /^[\s\u0000-\u001f]*[=+@-]/.test(texte)) texte = "'"+texte;
+  return '"'+texte.replace(/"/g,'""')+'"';
+};
+function csvParis(liste) {
+  const lignes = liste.map(p => {
+    const noms = (p.strategies || []).map(cle => D.strategies_badges?.[cle] || cle);
+    if (p.convergence) noms.push("Convergence ≥ 2");
+    const row = {...p,date_detecte:p.detecte,strategies:noms.join(" | ")};
+    return COLONNES_CSV.map(cle => celluleCSV(row[cle])).join(";");
+  });
+  return "\ufeff"+[COLONNES_CSV.join(";"),...lignes].join("\r\n")+"\r\n";
+}
+document.getElementById("export-csv").onclick = () => {
+  const blob = new Blob([csvParis(parisFiltres)], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href=url; a.download="cotes-value-paris-"+new Date().toISOString().slice(0,10)+".csv";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url),1000);
+};
 const carteParis = p => `<article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${p.reporte_au && p.statut === "en_cours"
   ? "reporté au " + quand(p.reporte_au) : quand(p.debut)}</span></div>
@@ -910,10 +1022,7 @@ const carteParis = p => `<article class="carte">
 <div class="l3"><span><b>${e(p.bookmaker)} ${cote(p.cote)}</b></span><span>${e(p.reference)} ${cote(p.cote_juste)}</span>
 <span class="ecart">${pct(p.ecart)}</span></div>
 <div class="l4"><span class="badge ${p.statut}">${STATUTS[p.statut]||p.statut}</span>
-${p.chatgpt ? `<span class="badge">ChatGPT v1</span>` : ""}
-${p.gemini ? `<span class="badge">Gemini Argon v1</span>` : ""}
-${p.jules ? `<span class="badge">JULES EDGE v1</span>` : ""}
-${p.jules_v2 ? `<span class="badge">JULES EDGE v2</span>` : ""}
+${badgeStrategies(p)}
 ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
 <span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span></div>
 ${(p.trace||[]).length ? `<details class="trace"><summary>Détails</summary>${p.trace.map(t => `<p>${e(t)}</p>`).join("")}</details>` : ""}
@@ -921,14 +1030,19 @@ ${(p.trace||[]).length ? `<details class="trace"><summary>Détails</summary>${p.
 function rendreParis() {
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
   const navigation = D.laboratoire?.navigation;
-  const ids = strategieChoisie ? (navigation?.selections?.[strategieChoisie.id]?.[strategieChoisie.periode] || [])
-    : f.sims === "JULES EDGE" ? (navigation?.selections?.["JULES EDGE v1 (rejeu)"]?.futur || [])
-    : f.sims === "JULES EDGE v2" ? (navigation?.selections?.["JULES EDGE v2 (rejeu)"]?.futur || []) : null;
-  // Les stratégies ont leurs propres paris exacts : pas uniquement les 400/600
-  // dernières fiches fusionnées, qui pourraient masquer des sélections anciennes.
-  const source = ids ? ids.map(id => navigation.paris[id]).filter(Boolean) : fiches;
+  const ids = strategieChoisie ? (navigation?.selections?.[strategieChoisie.id]?.[strategieChoisie.periode] || []) : null;
+  const source = ids ? ids.map(id => navigation.paris[id]).filter(Boolean).map(p => {
+    if (strategieChoisie.periode === "futur") return p;
+    const badges = p.strategies_historiques || [];
+    return {...p, ...Object.fromEntries(Object.keys(D.strategies_badges || {}).map(cle => [cle,badges.includes(cle)])),
+      strategies:badges, convergence:p.convergence_historique || false};
+  }) : fiches;
+  const q = normaliserRecherche(document.getElementById("f-q").value).trim();
   const L = source.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
-    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : (p.sims||[]).includes(v)) : p[k]===v)));
+    (!q || normaliserRecherche([p.domicile,p.exterieur,p.ligue,p.pari].join(" ")).includes(q)) &&
+    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : (p.sims||[]).includes(v)) : p[k]===v)));
+  parisFiltres = L;
+  document.getElementById("paris-compte").textContent = `${L.length} prise(s) correspondant aux filtres · ${Math.min(limite,L.length)} affichées · export complet des ${L.length}. Une prise par référence, au prix enregistré. CLV de clôture validée ; écarts et CLV en ratios dans le CSV.`;
   const banner = document.getElementById("paris-strategie-banner");
   const plus = document.getElementById("plus");
   banner.hidden = !strategieChoisie;
@@ -938,6 +1052,7 @@ function rendreParis() {
       <button class="btn" id="paris-tout">Tous les paris</button>`;
     document.getElementById("paris-tout").onclick = () => {
       strategieChoisie = null;
+      document.getElementById("f-q").value = "";
       for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value = "";
       limite = 50;
       rendreParis();
@@ -968,6 +1083,7 @@ function rendreParis() {
 rendreParis();
 document.getElementById("voir-chatgpt").onclick = () => {
   strategieChoisie = null;
+  document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
   document.getElementById("f-sim").value = "ChatGPT";
   limite = 50;
@@ -976,6 +1092,7 @@ document.getElementById("voir-chatgpt").onclick = () => {
 };
 document.getElementById("voir-gemini").onclick = () => {
   strategieChoisie = null;
+  document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
   document.getElementById("f-sim").value = "Gemini Argon";
   limite = 50;
@@ -984,6 +1101,7 @@ document.getElementById("voir-gemini").onclick = () => {
 };
 document.getElementById("voir-jules").onclick = () => {
   strategieChoisie = null;
+  document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
   document.getElementById("f-sim").value = "JULES EDGE";
   limite = 50;
@@ -992,6 +1110,7 @@ document.getElementById("voir-jules").onclick = () => {
 };
 document.getElementById("voir-jules-v2").onclick = () => {
   strategieChoisie = null;
+  document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
   document.getElementById("f-sim").value = "JULES EDGE v2";
   limite = 50;
@@ -1005,9 +1124,9 @@ const TRIS = {roi: "Meilleur ROI", reussite: "Réussite au-dessus de l'attendu"}
 const verdict = s => (s.n >= 30 && s.ecart_sigma >= 2 && (s.clv_moyenne || 0) > 0.01) ? ["Solide", "gagne"]
   : (s.roi > 0 && (s.clv_moyenne || 0) > 0) ? ["Piste", "en_cours"]
   : s.roi > 0 ? ["Chance ?", "a_regler"] : ["Perdant", "perdu"];
-const nomSeg = s => [s.tranche && "Cotes " + s.tranche, s.bookmaker, s.sport && s.sport.replace("_", " ")]
+const nomSeg = s => [s.tranche && "Cotes " + s.tranche, s.bookmaker, s.sport && s.sport.replace("_", " "), s.reference && "Réf. " + s.reference]
   .filter(Boolean).join(" · ");
-const dansSeg = s => x => (!s.tranche || x[9] === s.tranche) && (!s.bookmaker || x[2] === s.bookmaker) && (!s.sport || x[10] === s.sport);
+const dansSeg = s => x => (!s.tranche || x[9] === s.tranche) && (!s.bookmaker || x[2] === s.bookmaker) && (!s.sport || x[10] === s.sport) && (!s.reference || x[11] === s.reference);
 const aVenir = s => (D.paris_a_venir_segments || []).filter(x => new Date(x[8]) > Date.now()).filter(dansSeg(s));
 function rendreSegments() {
   document.getElementById("puces-seg").innerHTML = Object.entries(TRIS).map(([k, v]) =>
@@ -1105,34 +1224,75 @@ rendreControle();
 // Comparaison complète : même ligne de données pour le tableau et le graphique.
 const STRAT_PERIODES = {futur:"Depuis le lancement", ensemble:"Historique 7–13 oct.",
   construction:"7–10 oct.", validation:"11–12 oct.", test:"13 oct."};
+const courbesMasquees = new Set();
+const COULEURS_COMPARATEURS = {"Claude (rejeu)":"#2675ce", "ChatGPT v1 (rejeu)":"#d15b13",
+  "Gemini Argon v1 (rejeu)":"#16884c", "JULES EDGE v1 (rejeu)":"#b04baf",
+  "JULES EDGE v2 (rejeu)":"#865fe0", "M3 (rejeu)":"#16838b", "Convergence ≥ 2":"#c44862"};
+function rendreCourbesStrategies(rows) {
+  const legend = document.getElementById("strategies-legende"), svg = document.getElementById("strategies-courbes");
+  legend.innerHTML = rows.map(r => `<button data-courbe="${e(r.id)}" aria-pressed="${!courbesMasquees.has(r.id)}" class="${courbesMasquees.has(r.id) ? "" : "actif"}"><span style="color:${COULEURS_COMPARATEURS[r.id] || "var(--texte)"}">●</span> ${e(r.nom)}</button>`).join("");
+  for (const b of legend.querySelectorAll("button")) b.onclick = () => {
+    courbesMasquees.has(b.dataset.courbe) ? courbesMasquees.delete(b.dataset.courbe) : courbesMasquees.add(b.dataset.courbe);
+    rendreCourbesStrategies(rows);
+  };
+  const series = rows.filter(r => !courbesMasquees.has(r.id)).map(r => ({...r,
+    points:D.laboratoire.navigation?.courbes?.[r.id]?.[periodeStrategies] || []}));
+  const points = series.flatMap(r => r.points);
+  const vide = document.getElementById("strategies-courbes-vide");
+  vide.textContent = !rows.length ? "Choisis toutes les références ou les comparateurs pour afficher leurs courbes."
+    : !series.length ? "Toutes les courbes sont masquées. Touche une légende pour en afficher une."
+    : !points.length ? "Aucun pari réglé sur cette période pour les courbes affichées." : "";
+  svg.style.display = points.length ? "" : "none";
+  if (!points.length) { svg.innerHTML=""; return; }
+  const W=640,H=290,left=78,right=18,top=22,bottom=40;
+  const debut=Math.min(...points.map(p => p[0]))-60, fin=Math.max(...points.map(p => p[0]))+60;
+  const min=Math.min(0,...points.map(p => p[1])), max=Math.max(0,...points.map(p => p[1]));
+  const marge=(max-min || 10)*.08, lo=min-marge, hi=max+marge;
+  const x=t => left+(t-debut)/(fin-debut)*(W-left-right), y=g => top+(hi-g)/(hi-lo)*(H-top-bottom);
+  const date=t => new Date(t*1000).toLocaleDateString("fr-FR",{timeZone:"Europe/Paris",day:"2-digit",month:"2-digit"});
+  const graduations=[lo,0,hi].map(g => `<line x1="${left}" y1="${y(g)}" x2="${W-right}" y2="${y(g)}" stroke="var(--ligne)"/><text x="${left-8}" y="${y(g)+6}" text-anchor="end" fill="var(--doux)" font-size="17">${e(eur(g))}</text>`).join("");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML = `<title>Gains cumulés — ${e(STRAT_PERIODES[periodeStrategies])}, 10 € fictifs par pari</title>${graduations}`+
+    [debut,(debut+fin)/2,fin].map(t => `<text x="${x(t)}" y="${H-9}" text-anchor="middle" fill="var(--doux)" font-size="17">${date(t)}</text>`).join("")+
+    series.filter(r => r.points.length).map((r,i) => {
+      let path=`M ${x(debut)} ${y(0)}`;
+      for (const [t,g] of r.points) path+=` H ${x(t)} V ${y(g)}`;
+      path+=` H ${x(fin)}`;
+      const dernier=r.points.at(-1)[1];
+      return `<path data-serie="${e(r.id)}" d="${path}" fill="none" stroke="${COULEURS_COMPARATEURS[r.id] || "var(--texte)"}" stroke-width="2.5" vector-effect="non-scaling-stroke" ${r.id.includes("v2") ? 'stroke-dasharray="7 4"' : ""}><title>${e(r.nom)} : ${e(eur(dernier))} · ${r.points.length} réglés</title></path>`;
+    }).join("");
+}
 let periodeStrategies = "futur";
 function rendreStrategies() {
   const L = D.laboratoire;
-  if (!L?.resultats?.length) {
+  if (!L || (!L.resultats?.length && !Object.keys(L.comparateurs || {}).length)) {
     document.getElementById("strategies-quoi").textContent = "Aucune comparaison disponible.";
     return;
   }
   const pp = n => n == null ? "—" : pct(n/100);
   const bornes = n => String(n).replace(".",",");
   const futur = new Map((L.futur || []).map(r => [r.id,r]));
-  let rows = L.resultats.map(r => ({id:r.regle.id, nom:r.regle.reference, reference:r.regle.reference,
+  let rows = (L.resultats || []).map(r => ({id:r.regle.id, nom:r.regle.reference, reference:r.regle.reference,
     detail:`Cotes ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · edge ≥ ${r.regle.edge_min*100} % · ≤ ${r.regle.avance_max_h} h`,
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
     stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
   for (const [id,per] of Object.entries(L.comparateurs || {})) {
-    const nomComp = id.startsWith("JULES EDGE v2") ? "JULES EDGE V2"
+    const nomComp = id.startsWith("Convergence") ? "Convergence ≥ 2 stratégies"
+    : id.startsWith("JULES EDGE v2") ? "JULES EDGE V2"
     : id.startsWith("JULES") ? "JULES EDGE V1"
     : id.startsWith("Claude") ? "Claude"
       : id.startsWith("M3") ? "M3 · MultiSport"
       : id.startsWith("Gemini") ? "Gemini Argon V1"
       : "ChatGPT V1";
     const detailComp = periodeStrategies === "futur"
-      ? (id.startsWith("JULES EDGE v2") ? "Depuis le 15/10 à 00 h 30 · multi-réf. · max 8/j"
+      ? (id.startsWith("Convergence") ? "Depuis le 15/10 à 01 h · 2 familles minimum"
+         : id.startsWith("JULES EDGE v2") ? "Depuis le 15/10 à 00 h 30 · multi-réf. · max 8/j"
          : id.startsWith("JULES") ? "Depuis le 14/10 à 23 h 04 · 1 pari/match · max 6/j"
          : id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection"
          : id.startsWith("Gemini") ? "Multi-réf. adaptative · 1 pari/match · max 8/j"
          : "Nouvelles prises officielles depuis le 14/10 à 14 h")
-      : (id.startsWith("JULES EDGE v2") ? "Rejeu a posteriori · multi-réf. · 1,30–2,80 · edge 2,5–12 % · max 8/j"
+      : (id.startsWith("Convergence") ? "Rejeu exploratoire · même prise, prix et instant · 2 familles minimum"
+         : id.startsWith("JULES EDGE v2") ? "Rejeu a posteriori · multi-réf. · 1,30–2,80 · edge 2,5–12 % · max 8/j"
          : id.startsWith("JULES") ? "Rejeu a posteriori · Pinnacle · 1,30–2,50 · edge 3–12 % · max 6/j"
          : id.startsWith("M3") ? "Optimisation a posteriori · 3 sports · 1,30–3,00 · 2–12 % d’edge"
          : id.startsWith("Gemini") ? "Rejeu hypothétique · Pin ≤ 2,15 / Bet+Poly ≤ 2,60 · edge ≥ 2,5 %"
@@ -1187,7 +1347,7 @@ function rendreStrategies() {
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
   document.getElementById("strategies-total").textContent = `${rows.length} stratégies affichées · ${active.length} avec des sélections · ${reglees.length} avec des paris réglés. Glisse le tableau vers la gauche pour voir toutes les colonnes.`;
   const descriptions = {
-    futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h et Jules v2 à 00 h 30 (Paris). Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
+    futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h Jules v2 à 00 h 30 et convergence à 01 h (Paris). Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
     ensemble:"Historique figé : matchs du 7 au 13 octobre, règlements disponibles au relevé du 14/10 à 12 h 09 (Paris), y compris les règlements tardifs. Rejeu rétrospectif, distinct du suivi depuis lancement.",
     construction:"Construction : matchs du 7 au 10 octobre ; seuls les règlements connus avant le 11 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
     validation:"Validation : matchs des 11 et 12 octobre ; seuls les règlements connus avant le 13 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
@@ -1195,7 +1355,7 @@ function rendreStrategies() {
   };
   document.getElementById("strategies-quoi").textContent = descriptions[periodeStrategies] +
     (periodeStrategies === "futur" && !active.length ? " Aucune nouvelle sélection enregistrée : la dernière collecte disponible précède ce lancement. Le bouton Historique affiche la comparaison existante." : "") +
-    " 36 règles et 6 comparateurs (Claude, ChatGPT V1, Gemini Argon V1, JULES EDGE V1 et V2, M3) ; aucune rentabilité future démontrée.";
+    ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, M3, convergence ≥ 2) ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th>Stratégie</th><th>Paris</th><th>Gagnés</th><th>Perdus</th><th>Réussite</th><th>ROI</th><th>Gains</th><th>Pertes</th><th>Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
     return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nom)}</b><small>${e(r.detail)}</small></td>
@@ -1214,6 +1374,7 @@ function rendreStrategies() {
     tr.setAttribute("aria-label", "Voir les paris de " + ligne.nom + " : " + ligne.detail);
     const aller = () => {
       strategieChoisie = {id:ligne.id, nom:ligne.nom + " · " + ligne.detail, periode:periodeStrategies};
+      document.getElementById("f-q").value = "";
       for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value = "";
       limite = 50;
       rendreParis();
@@ -1225,6 +1386,7 @@ function rendreStrategies() {
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); aller(); }
     };
   });
+  rendreCourbesStrategies(rows.filter(r => r.reference === "comparateurs"));
   const graph = document.getElementById("strategies-graph");
   if (!reglees.length) {
     graph.innerHTML = `<p class="aide">Le graphique apparaîtra après les premiers règlements de cette période. Choisis « Historique 7–13 oct. » pour voir les gains déjà observés.</p>`;
@@ -1246,7 +1408,7 @@ rendreStrategies();
 function rendreLaboratoire() {
   const L = D.laboratoire;
   const box = document.getElementById("laboratoire");
-  if (!L?.resultats?.length) { box.hidden = true; return; }
+  if (!L || (!L.resultats?.length && !Object.keys(L.comparateurs || {}).length)) { box.hidden = true; return; }
   const pp = n => n == null ? "—" : pct(n / 100);
   const metrique = s => `<b class="${signe(s.roi)}">${pp(s.roi)}</b><small>${s.regles} réglés · ${s.attente} en attente</small>`;
   const deja = new Date() >= new Date(L.debut_suivi);

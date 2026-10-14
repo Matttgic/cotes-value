@@ -159,7 +159,7 @@ STRATEGIE = {"nom": "Stratégie", "debut": "2026-10-11T10:30:00+00:00",
              "avance_max_h": 12}                                       # repéré moins de 12 h avant le match
 
 
-def dans_strategie(p: dict) -> bool:
+def dans_strategie(p: dict, depuis: str | None = None) -> bool:
     """Pari qui suit la stratégie : référence, écart, cote < 2,5, repéré moins de 12 h avant le match, et
     hommes seniors (pas de compétition féminine ni de jeunes)."""
     if p.get("reference") not in STRATEGIE["references"] or p.get("simulation") not in STRATEGIE["simulations"]:
@@ -167,7 +167,7 @@ def dans_strategie(p: dict) -> bool:
     if not (p.get("cote") or 99) < STRATEGIE["cote_max"]:
         return False
     detecte, debut = _heure(p.get("detecte")), _heure(p.get("debut"))
-    if not detecte or not debut or not detecte.tzinfo or not debut.tzinfo or detecte < _heure(STRATEGIE["debut"]):
+    if not detecte or not debut or not detecte.tzinfo or not debut.tzinfo or detecte < _heure(depuis or STRATEGIE["debut"]):
         return False
     if not timedelta(0) < debut - detecte < timedelta(hours=STRATEGIE["avance_max_h"]):
         return False
@@ -175,12 +175,12 @@ def dans_strategie(p: dict) -> bool:
     return not any(n[1] for n in noms) and not any(n[2] for n in noms[:2])
 
 
-def paris_strategie(paris: list[dict]) -> set[int]:
+def paris_strategie(paris: list[dict], depuis: str | None = None) -> set[int]:
     """Les paris de la stratégie (id() de leur dict) : une mise par cote française, à sa première détection
     qui suit la stratégie."""
     premiers: dict[tuple, dict] = {}
     for p in paris:
-        if not dans_strategie(p):
+        if not dans_strategie(p, depuis=depuis):
             continue
         k = tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur"))
         if k not in premiers or (p.get("detecte") or "") < (premiers[k].get("detecte") or ""):
@@ -283,15 +283,19 @@ REGLES = ("gagne", "perdu", "demi_gagne", "demi_perdu", "rembourse")
 
 
 def segments(paris: list[dict]) -> list[dict]:
-    """Bilan par segment (tranche de cote, bookmaker, sport et leurs croisements) sur les paris uniques réglés :
+    """Bilan par segment (tranche, bookmaker, sport, référence et leurs croisements) sur les paris uniques réglés :
     réussite réelle contre réussite attendue (somme des probabilités justes à la prise), écart en écarts-types,
     ROI et CLV. Un segment qui « marche » par chance a une réussite proche de l'attendu et une CLV nulle."""
+    # Référence de la première détection : une seule mise, même si plusieurs
+    # références ont signalé la même sélection.
     uniques = premiers_par_selection(paris)
     regles = [p for p in paris if id(p) in uniques and p.get("statut") in REGLES and p.get("cote_juste")]
-    dims = (("tranche",), ("bookmaker",), ("sport",), ("tranche", "bookmaker"), ("tranche", "sport"),
-            ("bookmaker", "sport"), ("tranche", "bookmaker", "sport"))
+    from itertools import combinations
+
+    dimensions = ("tranche", "bookmaker", "sport", "reference")
+    dims = [d for n in range(1, len(dimensions)+1) for d in combinations(dimensions, n)]
     valeur = {"tranche": lambda p: tranche(p["cote"]), "bookmaker": lambda p: p.get("bookmaker"),
-              "sport": lambda p: p.get("sport")}
+              "sport": lambda p: p.get("sport"), "reference": lambda p: p.get("reference")}
     groupes: dict[tuple, list[dict]] = {}
     for p in regles:
         for d in dims:

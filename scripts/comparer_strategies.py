@@ -9,11 +9,10 @@ import hashlib
 import json
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes.correspondance import normaliser  # noqa: E402
 from cotes.laboratoire import (REGLES, DEBUT_ETUDE, PERIODES, audit, classer, evaluer,  # noqa: E402
                                heure, resume, selectionner)
 from cotes.stockage import lire_archives  # noqa: E402
@@ -29,21 +28,10 @@ def claude_rejouee(paris: list[dict]) -> list[dict]:
     Dédoublonnage original par sélection/bookmaker, pas un seul pari par match.
     Comparateur descriptif : ne participe jamais au classement des 36 règles.
     """
-    premiers = {}
-    for p in paris:
-        t, debut = heure(p.get("detecte")), heure(p.get("debut"))
-        if (p.get("reference") not in ("Pinnacle", "Betfair", "Polymarket")
-                or p.get("simulation") not in ("A", "B", "C", "D", "E")
-                or not (p.get("cote") or 99) < 2.5 or not t or not debut
-                or t < heure(DEBUT_ETUDE) or not timedelta(0) < debut-t < timedelta(hours=12)):
-            continue
-        noms = [normaliser(str(p.get(k) or "")) for k in ("domicile", "exterieur", "ligue")]
-        if any(n[1] for n in noms) or any(n[2] for n in noms[:2]):
-            continue
-        key = tuple(p.get(k) for k in ("match_id", "marche", "periode", "ligne", "issue", "joueur"))
-        if key not in premiers or t < heure(premiers[key]["detecte"]):
-            premiers[key] = p
-    return list(premiers.values())
+    from cotes.simulation import paris_strategie
+
+    selection = paris_strategie(paris, depuis=DEBUT_ETUDE)
+    return [p for p in paris if id(p) in selection]
 
 
 def comparer(paris: list[dict], releve: str) -> dict:
