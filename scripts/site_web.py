@@ -13,6 +13,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCH
                               REGLES, clv_finale, segments, tranche)
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
+from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import DEBUT_SUIVI, heure, resume, suivi_futur  # noqa: E402
 
 
@@ -225,7 +226,19 @@ def construire(donnees: Path, sortie: Path) -> Path:
                                     for r in laboratoire["resultats"]]
         maintenant = datetime.now(timezone.utc).isoformat()
         laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
-        officiels = {"Claude (rejeu)": paris_strategie(paris), "ChatGPT v1 (rejeu)": paris_chatgpt(paris)}
+        m3_rapport = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-m3.json", {})
+        m3_ids = paris_m3(paris)
+        if m3_rapport:
+            laboratoire.setdefault("comparateurs", {})["M3 (rejeu)"] = {
+                k: m3_rapport[k] for k in ("construction", "validation", "test", "ensemble")
+            }
+        officiels = {"Claude (rejeu)": paris_strategie(paris), "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
+                     "M3 (rejeu)": m3_ids}
+        laboratoire["m3_paris"] = [{k: p.get(k) for k in
+            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+            for p in sorted((p for p in paris if id(p) in m3_ids),
+                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
         laboratoire["comparateurs_futur"] = {
             nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
                          and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
@@ -241,6 +254,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
             "chatgpt": CHATGPT,
+            "m3": M3,
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
@@ -372,7 +386,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <div id="jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
-    <p class="aide"><a href="#strategies">Comparer les 36 stratégies, Claude et ChatGPT V1</a></p>
+    <p class="aide"><a href="#strategies">Comparer les 36 stratégies, Claude, ChatGPT V1 et M3</a></p>
     <div class="puces" id="puces-ref"></div>
     <p class="aide" id="bilan-quoi"></p>
     <button id="voir-chatgpt" hidden>Voir les paris ChatGPT</button>
@@ -412,7 +426,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p class="aide" id="strategies-quoi"></p>
     <div class="filtres">
       <label for="strategies-ref">Référence</label>
-      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs">Claude / ChatGPT V1</option></select>
+      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs">Claude / ChatGPT V1 / M3</option></select>
       <label for="strategies-tri">Tri</label>
       <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select>
     </div>
@@ -424,6 +438,12 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <h2 class="sous-titre">Gain net par stratégie</h2>
     <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
     <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
+    <details class="carte" id="m3-picks">
+      <summary><b>M3 · MultiSport Value</b> — voir les paris depuis le lancement</summary>
+      <p class="aide">Basket, baseball, handball · cotes 1,30–3,00 · edge 2–12 % · mise fictive 10 €.
+      Optimisée sur le passé : aucune rentabilité future démontrée. Les sélections d'un même match peuvent être corrélées.</p>
+      <div id="m3-picks-list"></div>
+    </details>
     <div class="carte" id="laboratoire"></div>
   </section>
   <section class="onglet" id="o-segments">
@@ -828,8 +848,8 @@ function rendreStrategies() {
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
     stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
   for (const [id,per] of Object.entries(L.comparateurs || {})) {
-    rows.push({id,nom:id.startsWith("Claude") ? "Claude" : "ChatGPT V1", reference:"comparateurs",
-      detail:periodeStrategies === "futur" ? "Nouvelles prises officielles depuis le 14/10 à 14 h" : "Rejeu hypothétique · mêmes dates que la famille",
+    rows.push({id,nom:id.startsWith("Claude") ? "Claude" : id.startsWith("M3") ? "M3 · MultiSport" : "ChatGPT V1", reference:"comparateurs",
+      detail:periodeStrategies === "futur" ? (id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection" : "Nouvelles prises officielles depuis le 14/10 à 14 h") : (id.startsWith("M3") ? "Optimisation a posteriori · 3 sports · 1,30–3,00 · 2–12 % d’edge" : "Rejeu hypothétique · mêmes dates que la famille"),
       graphe:"Comparateur", stats:periodeStrategies === "futur" ? L.comparateurs_futur?.[id] : per[periodeStrategies]});
   }
   rows = rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
@@ -844,6 +864,14 @@ function rendreStrategies() {
   document.getElementById("strategies-periodes").innerHTML = Object.entries(STRAT_PERIODES).map(([id,nom]) =>
     `<button data-p="${id}" class="${periodeStrategies===id ? "actif" : ""}" aria-pressed="${periodeStrategies===id}">${nom}</button>`).join("");
   for (const b of document.querySelectorAll("#strategies-periodes button")) b.onclick = () => { periodeStrategies=b.dataset.p; rendreStrategies(); };
+  const picks = L.m3_paris || [];
+  document.getElementById("m3-picks-list").innerHTML = picks.length
+    ? picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
+       <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
+       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
+       <small>${quand(p.debut)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       </article>`).join("")
+    : '<p class="aide">Aucune nouvelle sélection M3 depuis son démarrage prospectif du 15 octobre.</p>';
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
   document.getElementById("strategies-total").textContent = `${rows.length} stratégies affichées · ${active.length} avec des sélections · ${reglees.length} avec des paris réglés. Glisse le tableau vers la gauche pour voir toutes les colonnes.`;
   const descriptions = {
@@ -855,7 +883,7 @@ function rendreStrategies() {
   };
   document.getElementById("strategies-quoi").textContent = descriptions[periodeStrategies] +
     (periodeStrategies === "futur" && !active.length ? " Aucune nouvelle sélection enregistrée : la dernière collecte disponible précède ce lancement. Le bouton Historique affiche la comparaison existante." : "") +
-    " 36 règles et 2 comparateurs ; aucune stratégie retenue par le protocole initial.";
+    " 36 règles et 3 comparateurs ; M3 est optimisée rétrospectivement, aucune rentabilité future démontrée.";
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th>Stratégie</th><th>Paris</th><th>Gagnés</th><th>Perdus</th><th>Réussite</th><th>ROI</th><th>Gains</th><th>Pertes</th><th>Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
     return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nom)}</b><small>${e(r.detail)}</small></td>
