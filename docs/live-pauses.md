@@ -200,6 +200,11 @@ fait au plus **11 GET** sans réessai, décrit schémas et états, ne révèle p
 clés et ne produit aucun signal. Une première page n'établit pas la couverture
 complète d'un bookmaker. Le script ne change pas le mode des clients existants.
 
+Le workflow `sonde-live.yml` permet la même lecture avec les secrets déjà
+configurés dans Actions : lancement manuel ou lors d'une modification de ce
+workflow, **aucun cron**. Permissions dépôt en lecture seule, délai max 5 min,
+rapport sans secrets conservé comme artefact pendant 7 jours.
+
 Avant tout live opérationnel : sonder les 4 bookmakers + Orbit avec les secrets
 déjà configurés dans Actions, observer au moins des pauses/reprises réelles,
 établir les horodatages source et règles par marché, puis bâtir l'adaptateur
