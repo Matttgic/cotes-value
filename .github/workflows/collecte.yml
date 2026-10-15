@@ -43,6 +43,7 @@ jobs:
       queue: max
       cancel-in-progress: false
     outputs:
+      artefact: github-pages-${{ github.run_attempt }}
       debut: ${{ steps.debut.outputs.debut }}
     steps:
       - name: Heure de début
@@ -89,6 +90,7 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+          name: github-pages-${{ github.run_attempt }}
 
   publier:
     needs: cycle
@@ -102,6 +104,8 @@ jobs:
     steps:
       - name: Publier le site (GitHub Pages)
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.cycle.outputs.artefact }}
 
   relancer:
     needs: cycle

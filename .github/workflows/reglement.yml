@@ -19,6 +19,8 @@ permissions:
 
 jobs:
   reglement:
+    outputs:
+      artefact: github-pages-${{ github.run_attempt }}
     if: github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui'
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -67,6 +69,7 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+          name: github-pages-${{ github.run_attempt }}
 
   publier:
     needs: reglement
@@ -79,3 +82,5 @@ jobs:
       name: github-pages
     steps:
       - uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.reglement.outputs.artefact }}

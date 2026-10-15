@@ -25,6 +25,8 @@ permissions:
 # La publication d'une évolution du site ne relance pas les API de collecte.
 jobs:
   construire:
+    outputs:
+      artefact: github-pages-${{ github.run_attempt }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -58,6 +60,7 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+          name: github-pages-${{ github.run_attempt }}
   publier:
     needs: construire
     runs-on: ubuntu-latest
@@ -69,3 +72,5 @@ jobs:
       name: github-pages
     steps:
       - uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.construire.outputs.artefact }}
