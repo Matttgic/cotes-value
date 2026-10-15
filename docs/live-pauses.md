@@ -9,15 +9,15 @@ automatique. `cotes/live_pauses.py` ne fait ni requête réseau ni écriture dis
 | Source | Chemin et comportement actuels | Live accessible ? | Ce qui manque pour une pause exploitable |
 | --- | --- | --- | --- |
 | Pinnacle guest | `cotes/pinnacle.py`, `/sports/{id}/matchups` et `/markets/straight` ; rejet explicite de `isLive` | **Oui observé**, voir la sonde ci-dessous | Normaliser `state`/`periods`, règles de règlement, heure de mise à jour du prix et score associé ; le traducteur jette ces états |
-| Winamax, Betclic, Unibet FR, PMU via PulseScore | `Client.matchs()` lit `/{book}/{sport}/events`, exige `not live`, `not suspended`, début futur | `/api/{book}/live-events` **documenté**, pas sondé avec les clés de ce dépôt | Adaptateur dédié et pagination live ; ne pas seulement changer le filtre de début |
-| Betfair via Orbit/PulseScore | Même client pré-match ; actuellement **football et tennis seulement** dans `SPORTS_BETFAIR` | Endpoint live PulseScore documenté pour les bookmakers ; couverture réelle Orbit à vérifier | Score/pause, carnet back/lay à jour, liquidité, format et règles ; aucune garantie live multisports sur notre compte |
+| Winamax, Betclic, Unibet FR, PMU via PulseScore | `Client.matchs()` lit `/{book}/{sport}/events`, exige `not live`, `not suspended`, début futur | `/api/{book}/live-events` **documenté et observé HTTP 200** sur les 4 bookmakers | Adaptateur dédié et pagination live ; ne pas seulement changer le filtre de début |
+| Betfair via Orbit/PulseScore | Même client pré-match ; actuellement **football et tennis seulement** dans `SPORTS_BETFAIR` | Live observé sur 7 catégories dans la première page, dont tennis/basket/hockey/baseball | Score/pause, carnet back/lay à jour, liquidité, format et règles ; aucune garantie de couverture exhaustive |
 | Polymarket Gamma | Événements actifs non clos ; fenêtre `endDate` et `gameStartTime`, midpoint bid/ask | Certains événements en cours peuvent être retournés | Aucun état de pause ni score normalisé ; prix Gamma horodaté à la collecte, pas preuve d'âge du carnet. Pas de référence L1 V1 |
 | Kalshi | Événements ouverts ; début **estimé** à partir de la clôture moins une durée par sport | Chevauchement possible avec le live | Pas de chronomètre/pause fiable ; heure estimée insuffisante. Exclu L1/L2 V1 |
 | Résultats PulseScore | `/{book}/results`, `resultats.lire()` rejette les résultats non terminés | Les résultats historiques contiennent parfois des scores intermédiaires | Ce n'est pas un flux de détection de pause ; certains scores tennis Betfair/PMU sont connus comme figés |
 | ESPN | Scoreboards football, ATP/WTA, NBA/WNBA, NHL, NFL/NCAAF, MLB | Le flux brut peut contenir des états en cours | `_espn_match()` ne conserve ni état de pause ni horloge ; `a_venir` signifie ici « non final », pas une preuve de pré-match. Pas de handball/volley/rugby dans `ESPN_LIGUES` |
 | NHL officielle | Calendrier puis `/gamecenter/{id}/landing`, uniquement après 6 h et états `OFF`/`FINAL` | Le calendrier peut exposer horloge/période, adaptateur live à faire | Ne pas réutiliser le validateur final en le faisant passer pour du live multisports |
 | The Odds API | Secours résultats ; `_capture()` exige `completed`, cache par ligue | Scores en cours possibles côté fournisseur | Aucun état inter-période conservé ; clés gratuites destinées au règlement, pas à un polling live massif |
-| PropLine | Secours résultats ; `status=final`, `live != true`, période vide, attente 6 h | `/scores` gratuit documenté ; statut/score, richesse réelle à sonder | Le connecteur rejette volontairement le live. Le paramètre `period` des **marchés** n'est pas une preuve de pause actuelle |
+| PropLine | Secours résultats ; `status=final`, `live != true`, période vide, attente 6 h | `/scores` gratuit documenté et observé HTTP 200 pour NHL | Le connecteur rejette volontairement le live. Aucun exemple de pause validé. Le paramètre `period` des **marchés** n'est pas une preuve de pause actuelle |
 | API-Sports | Secours scores finaux uniquement ; clé retirée par l'utilisateur | Non utilisable actuellement dans ce projet | Ne pas bâtir le live dessus sans rétablir une source opérationnelle |
 
 ### Sonde effectivement exécutée
@@ -45,6 +45,48 @@ Le 15/10 à **19:41 UTC (21:41 Paris)**, 5 GET publics, sans réessai :
 
 Une source accessible ne signifie pas qu'une paire de prix exécutable pendant
 une pause a été vérifiée. Il manque encore cette validation **de bout en bout**.
+
+### Vérification authentifiée dans GitHub Actions
+
+La sonde ponctuelle a ensuite été exécutée avec les secrets existants, **11 GET
+environ 11 secondes**, sans écriture sur la branche de données ni notification.
+[Run réussi du 15/10 à 19:47 UTC / 21:47 Paris](https://github.com/Matttgic/cotes-value/actions/runs/38796746483).
+
+| Flux | HTTP | Événements sur la page | Sports effectivement observés | État disponible |
+| --- | --- | --- | --- | --- |
+| Winamax | 200 | 29/29 | 18 foot, 5 basket, 3 handball, 2 hockey, 1 volley | score, horloge et scores par période sur 29 |
+| Betclic | 200 | 29/29 | mêmes volumes par sport | score et horloge sur 29 ; pas de `periodScores` |
+| Unibet FR | 200 | 29/29 | mêmes volumes par sport | score et horloge sur 29 ; `periodScores` sur 1 |
+| PMU | 200 | 29/29 | mêmes volumes par sport | score et horloge sur 29 ; pas de `periodScores` |
+| Orbit/Betfair | 200 | 30/52, page suivante non lue | tennis 7, foot 10, basket 5, hockey 1, baseball 1, cricket 4, esport 2 | score sur 21, horloge sur 14 ; carnets back/lay et `updatedAt` dans les champs de marché |
+| PropLine NHL | 200 | 78 lignes | NHL seulement, aucun autre sport sondé | `live`, `status`, `period` ; les 5 premiers exemples sont `upcoming`, période nulle |
+
+L'absence de tennis/rugby dans les 29 événements FR à cet instant **ne prouve
+pas leur absence de couverture**. Cricket/esport retournés par Orbit restent
+hors des 9 sports de ce moteur.
+
+Points bloquants constatés :
+
+- Aucun des champs événement `updatedAt`, `lastUpdated`, `last_update` sur ces
+  pages PulseScore. Le `updatedAt` de marché existe chez Orbit ; les marchés
+  FR observés n'en exposent pas dans leurs champs. Heure de réception HTTP et
+  fraîcheur de confirmation chez le bookmaker ne sont pas interchangeables.
+- Unibet hockey : un exemple donne `score=1–0` et `info="OR 1:1"`, un autre
+  `score=0–0` et `info="OR 2:0"`. Basket : `score=23–29`, `info="OR 53:70"`.
+  Il faut identifier le score de match avant de comparer, pas choisir un champ
+  parce qu'il s'appelle `score`.
+- PMU volley : `score=9–9`, horloge sans numéro de set dans l'exemple. Winamax
+  expose un score en sets et les points de chaque set. **Ne pas les confondre**.
+- Unibet et PMU : `running=false` sur des libellés de troisième quart/tiers ;
+  cela ne prouve ni une pause réglementaire ni la fin de la période.
+- Orbit tennis : des exemples n'ont pas de `matchClock` et donnent des chaînes
+  telles que `Set 3-5 (0-0)` ou `Set 5-5 (30-15)`. Impossible d'en déduire une
+  pause entre sets sans une règle provider vérifiée.
+
+**Verdict** : les flux live existent réellement avec les accès du dépôt. Les
+contrats normalisés et leur fraîcheur ne sont pas encore assez vérifiés pour
+brancher automatiquement L1/L2. Le module livré refuse justement ces états
+ambigus au lieu de produire de faux edges.
 
 ### Fréquence, durée et budgets
 
@@ -205,8 +247,8 @@ configurés dans Actions : lancement manuel ou lors d'une modification de ce
 workflow, **aucun cron**. Permissions dépôt en lecture seule, délai max 5 min,
 rapport sans secrets conservé comme artefact pendant 7 jours.
 
-Avant tout live opérationnel : sonder les 4 bookmakers + Orbit avec les secrets
-déjà configurés dans Actions, observer au moins des pauses/reprises réelles,
+Avant tout live opérationnel : compléter la sonde des 4 bookmakers + Orbit par
+des pauses/reprises réelles et des exemples par sport,
 établir les horodatages source et règles par marché, puis bâtir l'adaptateur
 et un petit journal papier **football HT/hockey d'abord**. Mesurer ensuite
 fraîcheur, fausses pauses, disponibilité des prix, calibration (Brier/log loss)

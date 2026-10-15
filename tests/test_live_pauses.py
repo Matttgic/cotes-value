@@ -303,6 +303,12 @@ def test_l2_aucun_poisson_de_secours_sur_rugby_nfl_baseball():
         assert not evaluate_l2(q, PoissonModel(closing(sport), 3, 2), NOW).accepted
 
 
+def test_points_du_set_volley_ne_sont_pas_un_score_en_sets():
+    # Ambiguïté observée dans la sonde PMU : 9–9 sont des points, pas des sets.
+    q = quote("volley", "SET3", "SETS", (9, 9), name="VAINQUEUR", unit="sets")
+    assert evaluate_l1(q, reference(q), NOW).reason == "set_boundary_mismatch"
+
+
 def test_outcome_push_fair_odds_et_ev():
     o = Outcome(.4, .2, .4)
     assert o.fair_odds == 2
