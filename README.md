@@ -191,3 +191,7 @@ L’audit des flux et l’architecture sont décrits dans [docs/live-pauses.md](
 Le module `cotes/live_pauses.py` calcule L1/L2 uniquement sur des observations vérifiées, en mode papier.
 Il n’est relié ni au cycle de production, ni aux mises, ni aux notifications.
 Une sonde ponctuelle est disponible dans `scripts/sonde_live_pauses.py`.
+
+Le [journal papier Live](docs/journal-live-papier.md) observe les pauses longues
+dans un fichier isolé de la branche données, avec délais réels et prix revus à
++15/+30 s. Les données non vérifiées restent des observations refusées.

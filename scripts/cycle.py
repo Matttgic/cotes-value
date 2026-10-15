@@ -240,6 +240,16 @@ def main() -> int:
                           "etapes": journal.get("etapes", {})}, ensure_ascii=False))
         return 0
 
+    # Rafale live isolée AVANT les sources lentes. Les mesures +15/+30 s se font
+    # pendant les lectures pré-match, sans changer leur sélection ni les bilans.
+    terminer_live = None
+    if cle and os.environ.get("LIVE_PAPIER") == "oui" and args.mode == "complet":
+        try:
+            from cotes.live_papier import lancer
+            terminer_live = lancer(donnees, cle)
+        except Exception:  # un échec live ne bloque jamais le scanner pré-match
+            journal["live_papier"] = {"erreur": "initialisation_indisponible", "mode": "papier"}
+
     # 1. références (gratuites)
     pin = etape("pinnacle", journal, lambda: harmoniser_pinnacle(pinnacle.collecter())) or []
     poly = etape("polymarket", journal, polymarket.collecter, HORIZON_H) or []
@@ -297,6 +307,13 @@ def main() -> int:
     regler = effectuer_reglement(paris, donnees, maintenant, cle, journal, requetes, args.reglement)
 
     # 5. sauvegarde
+    if terminer_live:
+        try:
+            journal["live_papier"] = terminer_live()
+            for bm, n in journal["live_papier"].get("requetes_pulsescore", {}).items():
+                requetes[bm] = requetes.get(bm, 0) + n
+        except Exception:
+            journal["live_papier"] = {"erreur": "suivi_indisponible", "mode": "papier"}
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
     ecrire_json(donnees / "paris.json", paris)
     ecrire_json(donnees / "controle.json", etat_controle)

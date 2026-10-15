@@ -20,6 +20,7 @@ from cotes.strategie_chatgpt import paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import paris_gemini  # noqa: E402
 from cotes.strategie_jules import paris_jules  # noqa: E402
 from cotes.strategie_jules_v2 import paris_jules_v2  # noqa: E402
+from cotes.strategies_prudentes import suivis_prudents  # noqa: E402
 
 
 def claude_rejouee(paris: list[dict]) -> list[dict]:
@@ -72,6 +73,7 @@ def comparer(paris: list[dict], releve: str) -> dict:
     for periode in jules_v2.values():
         periode["ic95"] = None
     return {"schema": 1, "releve": releve, "audit": qualite, "resultats": resultats,
+            "suivis_prudents": suivis_prudents(paris, releve),
             "decision": classer(resultats),
             "comparateurs": {"JULES EDGE v2 (rejeu)": jules_v2,
                              "JULES EDGE v1 (rejeu)": {**evaluer(jules_rows, releve), "ensemble": ensemble(jules_rows)},

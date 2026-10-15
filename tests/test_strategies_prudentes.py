@@ -18,6 +18,24 @@ def test_lancement_nouveau_pas_de_retroactivite():
     assert selections_prudentes([old],depuis='2026-10-07T00:00:00+02:00')['claude_prudent']=={id(old)}
 
 
+def test_export_prospectif_et_reconstitution_14_restent_separes():
+    from cotes.strategies_prudentes import suivis_prudents
+    old=pari('avant',detecte='2026-10-14T19:00:00Z',lu_reference='2026-10-14T19:00:00Z',debut='2026-10-14T21:00:00Z')
+    new=pari('apres',detecte=DEBUT_VARIANTES,lu_reference='2026-10-15T03:59:00Z',debut='2026-10-15T06:00:00Z')
+    r=suivis_prudents([old,new], '2026-10-16T00:00:00Z')
+    assert r['officiel']['claude_prudent']['ids']==['apres']
+    assert r['reconstitution_exploratoire']['claude_prudent']['ids']==['avant','apres']
+    assert r['debut_prospectif']==DEBUT_VARIANTES
+
+
+def test_script_comparaison_exporte_les_deux_suivis_sans_changer_comparateurs_historiques():
+    from scripts.comparer_strategies import comparer
+    report=comparer([], '2026-10-16T00:00:00Z')
+    assert set(report['suivis_prudents']['officiel'])=={'claude_prudent','convergence_3'}
+    assert 'Claude (rejeu)' in report['comparateurs']
+    assert CLAUDE_PRUDENT['nom'] not in report['comparateurs']
+
+
 def test_un_match_multi_books_refs_marches_et_prix_sans_anticipation():
     p=pari('alpha')
     q=ref({**p,'id':'pmu','bookmaker':'PMU','match_id':'pmu|autre','marche':'TOTAL','issue':'PLUS','ligne':2.5,

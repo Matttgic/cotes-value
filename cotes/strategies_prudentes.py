@@ -139,3 +139,18 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
         candidats.add(id(p))
     convergence = selection_unique(paris, candidats, depart)["selection"]
     return {"claude_prudent": prudent, "convergence_3": convergence}
+
+
+def suivis_prudents(paris: list[dict], maintenant: str) -> dict:
+    """Export commun, sans réécrire les statistiques historiques ni antidater les règles."""
+    from .laboratoire import DEBUT_SUIVI, resume
+    fin = heure(maintenant)
+    observes = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) < fin]
+    officiel = selections_prudentes(observes)
+    rejoue = selections_prudentes(observes, depuis=DEBUT_SUIVI)
+    def lignes(selection):
+        return {v["cle"]: {"nom": v["nom"], "ids": [p["id"] for p in observes if id(p) in selection[v["cle"]]],
+                           "stats": resume([p for p in observes if id(p) in selection[v["cle"]]],
+                                           maintenant, incertitude=False)} for v in VARIANTES}
+    return {"debut_prospectif": DEBUT_VARIANTES, "officiel": lignes(officiel),
+            "reconstitution_depuis": DEBUT_SUIVI, "reconstitution_exploratoire": lignes(rejoue)}

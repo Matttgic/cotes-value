@@ -13,7 +13,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCH
                               REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
-from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
+from cotes.strategies_prudentes import VARIANTES, selections_prudentes, suivis_prudents  # noqa: E402
 from cotes.reglement import gain as gain_reglement, GAIN  # noqa: E402
 from cotes.stockage import lire_archives  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
@@ -458,6 +458,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
         officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
         prudentes = selections_prudentes(paris, bases={cle: officiels[nom] for cle, _, _, nom, _ in STRATEGIES})
         officiels.update({v["nom"]: prudentes[v["cle"]] for v in VARIANTES})
+        laboratoire["suivis_prudents"] = suivis_prudents(paris, maintenant)
         laboratoire["comparateurs_futur"] = {
             nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
                          and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
@@ -469,7 +470,13 @@ def construire(donnees: Path, sortie: Path) -> Path:
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     actuelles = valider_actuelles(actuelles, paris, retenus)
-    data = {"notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
+    live = _lire(donnees / "docs/live_papier.json", {"cycles": [], "observations": [], "signaux": []})
+    # Résumé léger ; le journal intégral reste disponible dans son propre JSON.
+    live_vue = {**live, "cycles": live.get("cycles", [])[-3:],
+                "total_signaux": len(live.get("signaux", [])),
+                "observations": live.get("observations", [])[-12:], "signaux": live.get("signaux", [])[-12:]}
+    data = {"live_papier": live_vue,
+            "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
             "catalogue": catalogue_paris(paris, retenus),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
@@ -493,6 +500,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     (sortie / "index.html").write_text(html, encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
+    (sortie / "live_papier.json").write_text(json.dumps(live, ensure_ascii=False), encoding="utf-8")
     (sortie / "notifications.json").write_text(json.dumps(notifications_mod.flux(actuelles, paris, retenus),
                                                         ensure_ascii=False), encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
@@ -700,6 +708,18 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
       <p class="aide">Mises fictives uniformes de 10 €. Le rejeu est exploratoire et ne valide pas leur rentabilité.
       Touche leur ligne dans le tableau pour voir les paris de la période choisie.
       <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/variantes-prudentes.md" target="_blank" rel="noopener">Règles figées</a>.</p>
+      <div id="prudentes-picks"></div>
+      <details><summary>Reconstitution exploratoire depuis le 14/10 à 14 h</summary>
+        <p class="aide">Ces règles ont été figées le 15/10. Cette reconstitution n'est pas un suivi prospectif et ne modifie aucun bilan officiel.</p>
+        <div id="prudentes-reconstitution"></div>
+      </details>
+    </details>
+    <details class="carte" id="live-papier">
+      <summary><b>Journal papier Live · pauses réglementaires</b></summary>
+      <p class="aide">Football, hockey, basket et handball. Simulation isolée, sans mise ni notification.
+        Les prix à +15/+30 s sont des observations, pas des preuves d'acceptation ou de liquidité.</p>
+      <div id="live-papier-contenu"></div>
+      <a href="live_papier.json" download>Télécharger le journal JSON</a>
     </details>
     <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
     <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
@@ -1374,6 +1394,7 @@ function rendreCourbesStrategies(rows) {
 }
 let periodeStrategies = "futur";
 function rendreStrategies() {
+  rendreLivePapier();
   const L = D.laboratoire;
   if (!L || (!L.resultats?.length && !Object.keys(L.comparateurs || {}).length)) {
     document.getElementById("strategies-quoi").textContent = "Aucune comparaison disponible.";
@@ -1426,6 +1447,17 @@ function rendreStrategies() {
     `<button data-p="${id}" class="${periodeStrategies===id ? "actif" : ""}" aria-pressed="${periodeStrategies===id}">${nom}</button>`).join("");
   for (const b of document.querySelectorAll("#strategies-periodes button")) b.onclick = () => { periodeStrategies=b.dataset.p; rendreStrategies(); };
   const gemPicks = L.gemini_paris || [];
+  const suivis = L.suivis_prudents || {};
+  const navPrudent = L.navigation?.paris || {};
+  document.getElementById("prudentes-picks").innerHTML = Object.values(suivis.officiel || {}).map(v => {
+    const picks = (v.ids || []).map(id => navPrudent[id]).filter(Boolean).slice(-20).reverse();
+    return `<details><summary>${e(v.nom)} · ${v.stats.paris} prises · ${v.stats.regles} réglées</summary>` +
+      (picks.length ? picks.map(p => `<article class="carte"><b>${e(p.domicile)} – ${e(p.exterieur)}</b>
+       <div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div><small>${quand(p.detecte)} · ${e(p.statut)}</small></article>`).join("")
+       : '<p class="aide">Aucune prise depuis le lancement de cette variante.</p>') + '</details>';
+  }).join("");
+  document.getElementById("prudentes-reconstitution").innerHTML = Object.values(suivis.reconstitution_exploratoire || {}).map(v =>
+    `<p><b>${e(v.nom)}</b> : ${v.stats.paris} prises, ${v.stats.regles} réglées, ${eur(v.stats.gain)} · ROI ${pct(v.stats.roi == null ? null : v.stats.roi/100)}</p>`).join("");
   document.getElementById("gemini-picks-list").innerHTML = gemPicks.length
     ? gemPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
@@ -1517,6 +1549,32 @@ function rendreStrategies() {
 document.getElementById("strategies-ref").onchange = rendreStrategies;
 document.getElementById("strategies-tri").onchange = rendreStrategies;
 rendreStrategies();
+
+function rendreLivePapier() {
+  const j = D.live_papier || {}, last = (j.cycles || []).slice(-1)[0];
+  const host = document.getElementById("live-papier-contenu");
+  if (!last) { host.innerHTML = '<p class="aide">En attente du premier cycle papier Live.</p>'; return; }
+  const counts = last.compteurs || {};
+  host.innerHTML = `<p>Dernière observation : ${quand(last.fin)} · rafale ${Number(last.rafale_secondes).toFixed(1)} s
+    ${last.rafale_sous_20s ? "" : "· délai supérieur à 20 s : signaux refusés"}.</p>
+    <p>${counts.prix_lus || 0} prix lus · ${counts.prix_en_pause || 0} prix en pause reconnue ·
+      ${j.total_signaux || 0} signaux vérifiés conservés.</p>
+    <p class="aide">${counts.pause_non_confirmee || 0} prix sans pause confirmée ·
+      ${counts.references_non_verifiees || 0} marchés de référence non vérifiés.
+      Sans score, clôture ou fraîcheur vérifiés, aucun edge n'est annoncé.</p>`;
+  if ((last.erreurs || []).length) host.innerHTML += `<p class="aide">Lecture partielle : ${e(last.erreurs.join(" · "))}</p>`;
+  const rows = [...(j.observations || [])].reverse();
+  if (!rows.length) host.innerHTML += '<p class="aide">Aucune observation exploitable de pause lors des derniers cycles.</p>';
+  host.innerHTML += rows.map(o => {
+    const prix = target => { const p = o.prix_suivants?.[target];
+      return !p ? "non relevé" : `${p.cote == null ? "prix absent" : cote(p.cote)} à +${p.delai_reel_secondes} s${p.hors_fenetre ? " (retard)" : ""}`; };
+    return `<article class="carte"><b>${e(o.match)}</b> · ${e(o.sport)} · ${e(o.pause)}
+      <div>${e(o.pari)} · ${e(o.bookmaker)} · cote ${cote(o.cote)} · ${o.signal ? "signal papier" : "observation refusée"}</div>
+      <small>${quand(o.observe_le)} · edge ${pct(o.edge)} · +15 s : ${e(prix("15"))} · +30 s : ${e(prix("30"))}</small>
+      <p class="aide">${o.timestamp_source_verifie ? "" : "Fraîcheur source non vérifiée. "}
+        ${o.l1?.accepted ? "L1 retenu. " : "L1 non validé. "}${o.l2?.accepted ? "L2 retenu." : "L2 non validé : clôture, profil ou contexte insuffisant."}</p></article>`;
+  }).join("");
+}
 
 function rendreLaboratoire() {
   const L = D.laboratoire;

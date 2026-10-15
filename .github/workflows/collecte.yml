@@ -70,6 +70,7 @@ jobs:
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
           REGLEMENT: non
+          LIVE_PAPIER: oui
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
         run: python scripts/cycle.py --donnees donnees --site site
 
