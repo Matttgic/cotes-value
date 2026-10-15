@@ -9,6 +9,8 @@ on:
       - cotes/simulation.py
       - cotes/convergence.py
       - cotes/strategies_prudentes.py
+      - cotes/notifications.py
+      - web/**
       - cotes/strategie_*.py
       - docs/comparaison-strategies.json
       - docs/strategie-m3.json
@@ -57,6 +59,7 @@ jobs:
           Path("/tmp/cotes-value-site.js").write_text(scripts[0], encoding="utf-8")
           PY
           node --check /tmp/cotes-value-site.js
+          node --check site/sw.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

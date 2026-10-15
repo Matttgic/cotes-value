@@ -155,6 +155,12 @@ sur le quota communiqué par l'API. Aucun endpoint payant n'est appelé.
 
 ## Données (branche `donnees`)
 
+L'onglet **Notifications** permet de choisir ses stratégies et de recevoir leurs
+nouvelles sélections via Chrome sur Android, même lorsque l'onglet est fermé.
+Activer depuis le téléphone puis utiliser **Envoyer un test**. Les alertes
+suivent les scans et ne garantissent pas que la cote reste disponible.
+[Fonctionnement, confidentialité et vérifications](docs/notifications.md).
+
 - `paris.json` : tous les paris simulés (statut, gain, CLV), avec leur trace depuis le 7/10/2026 :
   `preuve_prise` (match de référence, équipes inversées ou non, références d'un consensus, état du contrôle
   de l'intitulé, version du moteur) et `preuve_reglement` (score retenu, ses sources ou la saisie manuelle,

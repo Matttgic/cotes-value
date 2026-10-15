@@ -87,6 +87,10 @@ jobs:
           done
           exit 1
 
+      - name: Envoyer les nouvelles alertes Chrome
+        continue-on-error: true
+        run: python scripts/envoyer_notifications.py --flux site/notifications.json
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

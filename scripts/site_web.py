@@ -23,6 +23,7 @@ from cotes.strategie_jules_v2 import JULES_V2, paris_jules_v2  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
                               evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
+from cotes import notifications as notifications_mod  # noqa: E402
 
 
 # Les variantes sont des comparateurs supplémentaires, jamais des votes de base.
@@ -468,7 +469,8 @@ def construire(donnees: Path, sortie: Path) -> Path:
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     actuelles = valider_actuelles(actuelles, paris, retenus)
-    data = {"catalogue": catalogue_paris(paris, retenus),
+    data = {"notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
+            "catalogue": catalogue_paris(paris, retenus),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
@@ -486,8 +488,13 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     sortie.mkdir(parents=True, exist_ok=True)
+    web = Path(__file__).resolve().parent.parent / "web"
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/"))
+    html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     (sortie / "index.html").write_text(html, encoding="utf-8")
+    (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
+    (sortie / "notifications.json").write_text(json.dumps(notifications_mod.flux(actuelles, paris, retenus),
+                                                        ensure_ascii=False), encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
     return sortie / "index.html"
 
@@ -557,6 +564,10 @@ padding:5px 8px;border-radius:8px;white-space:nowrap;display:none}
 background:var(--carte);color:var(--texte);cursor:pointer}
 .puces button.actif{border-color:var(--accent);color:var(--accent);font-weight:600}
 .btn{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.55;cursor:default}
+.notif-choix{display:flex;align-items:center;gap:10px;min-height:46px;cursor:pointer}
+.notif-choix input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+#notif-strategies{min-width:0}#notif-strategies legend{font-weight:600}
 table{width:100%;border-collapse:collapse;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;overflow:hidden;font-size:14px}
 th,td{padding:9px 10px;border-bottom:1px solid var(--ligne);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media (max-width:480px){th,td{padding:8px 4px;font-size:12.5px}td small{font-size:11px}
@@ -613,6 +624,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <button data-o="strategies">Stratégies</button>
     <button data-o="segments">Segments</button>
     <button data-o="paris">Paris<span class="nb" id="nb-paris"></span></button>
+    <button data-o="notifications">Notifications</button>
     <button data-o="regler">À régler<span class="nb" id="nb-regler"></span></button>
     <button data-o="controle">Contrôle<span class="nb" id="nb-controle"></span></button>
   </nav>
@@ -748,6 +760,27 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <select id="f-cote"></select><select id="f-book"></select><select id="f-sport"></select></div>
     <div id="paris"></div>
     <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
+  </section>
+  <section class="onglet" id="o-notifications">
+    <h2 class="sous-titre">Notifications Chrome</h2>
+    <p class="aide">Reçois les nouvelles sélections des stratégies choisies, même lorsque cet onglet est fermé.
+    Les alertes suivent les scans, environ toutes les 5 minutes. Vérifie la cote : elle peut changer avant ton clic.</p>
+    <p class="carte" id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
+    <fieldset class="carte" id="notif-strategies"><legend>Stratégies à suivre</legend></fieldset>
+    <div class="filtres"><button class="btn" id="notif-activer">Activer les notifications</button>
+      <button class="btn" id="notif-sauver" disabled>Enregistrer les stratégies</button>
+      <button class="btn" id="notif-test" disabled>Envoyer un test</button>
+      <button class="btn" id="notif-arreter" hidden>Désactiver</button></div>
+    <p class="aide" id="notif-message" role="status" aria-live="polite"></p>
+    <p class="aide">Une seule alerte si plusieurs stratégies retiennent le même pari au même prix.
+    Seules les nouvelles prises après activation ou changement de tes choix sont notifiées. Les plafonds des stratégies restent appliqués.</p>
+    <details class="aide"><summary>Si tu ne reçois rien</summary>
+      <p>Utilise Chrome sur Android et autorise les notifications du site et de Chrome dans les paramètres du téléphone.
+      L’économie de batterie, une coupure réseau ou un arrêt forcé de Chrome peuvent retarder les alertes.
+      Un plafond quotidien atteint ou aucune nouvelle sélection peuvent aussi expliquer l’absence d’alerte.</p>
+      <p>Les préférences concernent cet appareil. Elles sont conservées avec un identifiant aléatoire et son abonnement de notification ;
+      aucun compte ni adresse e-mail n’est demandé. Désactiver supprime l’abonnement du serveur.</p>
+    </details>
   </section>
   <section class="onglet" id="o-regler">
     <p class="aide">Les résultats sont recherchés automatiquement chaque heure. Une source unique peut demander
@@ -1557,7 +1590,8 @@ rendreLaboratoire();
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
 const depart = location.hash.slice(1) || lire("onglet") || "jouer";
-const ONGLETS = ["jouer","bilan","strategies","segments","paris","regler","controle"];
+__NOTIFICATIONS_JS__
+const ONGLETS = ["jouer","bilan","strategies","segments","paris","notifications","regler","controle"];
 ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 </script>
