@@ -266,15 +266,30 @@ def collecter(paris: list[dict], deja: dict, enregistrements: list[dict], cles: 
         if not entree["matchs"] and (not lu or maintenant - lu > GARDE):
             del ligues[cle]
     besoin = {}
+    couverture = {"marche_non_couvert": 0, "competition_non_couverte": 0,
+                  "deja_valide": 0, "trop_recent": 0, "hors_fenetre": 0, "eligibles": 0}
     for p in paris:
         debut = _heure(p.get("reporte_au") or p.get("debut"))
-        if p.get("statut") not in ("en_cours", "a_regler") or p["match_id"] in deja or not compatible(p):
+        if p.get("statut") not in ("en_cours", "a_regler") or not debut or debut > maintenant:
             continue
-        if not debut or not timedelta(hours=6) <= maintenant - debut < GARDE:
+        if p["match_id"] in deja:
+            couverture["deja_valide"] += 1
+            continue
+        if not compatible(p):
+            couverture["marche_non_couvert"] += 1
+            continue
+        if maintenant - debut < timedelta(hours=6):
+            couverture["trop_recent"] += 1
+            continue
+        if maintenant - debut >= GARDE:
+            couverture["hors_fenetre"] += 1
             continue
         cle = competition(p)
         if cle:
+            couverture["eligibles"] += 1
             besoin.setdefault(cle, []).append(p)
+        else:
+            couverture["competition_non_couverte"] += 1
     # La ligue la moins récemment interrogée passe d'abord, pour éviter qu'un
     # grand championnat monopolise le budget. Le cache sert aussi après 3 jours.
     for cle, ps in sorted(besoin.items(), key=lambda x: (ligues.get(x[0], {}).get("essai", ""), x[0])):
@@ -321,7 +336,7 @@ def collecter(paris: list[dict], deja: dict, enregistrements: list[dict], cles: 
     bilan = {"cles_configurees": len(client.comptes), "cles_valides": sum(bool(e.get("valide")) for _, e in client.comptes),
              "requetes_scores": client.appels, "competitions_manquantes": len(besoin),
              "matchs_valides": len(valides), "paris_compatibles": sum(len(r["id_paris_autorises"]) for r in valides.values()),
-             "conflits": conflits, "erreurs": client.erreurs,
+             "conflits": conflits, "erreurs": client.erreurs, "couverture": couverture,
              "comptes": [{k: e[k] for k in ("numero", "valide", "credits_jour", "credits_mois", "restant", "utilise_api")
                           if k in e} for _, e in client.comptes]}
     return valides, bilan

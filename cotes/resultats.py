@@ -41,7 +41,7 @@ SOURCES_MIN = 2
 MAJORITE_MIN = 3
 # une seule source suffit si elle est très fiable et que le match a commencé depuis au moins 6 heures
 # (tennis : ESPN est souvent la seule à donner les sets)
-SOURCES_FIABLES = {"espn", "orbitxch", "draftkings", "apisports"}
+SOURCES_FIABLES = {"espn", "orbitxch", "draftkings", "apisports", "nhl_officiel"}
 # tennis : Betfair et PMU gardent un score en cours de match (sets, voire points) sur des matchs finis
 TENNIS_EXCLUES = {"orbitxch", "pmu"}
 TENNIS_FIABLES = {"espn"}                         # seule source unique acceptée (Betfair : score figé)
@@ -491,6 +491,12 @@ def _majoritaires(trouves: list[dict]) -> list[dict]:
     compte = Counter(r["score"] for r in trouves)
     if not compte:
         return []
+    # La NHL distingue explicitement les tiers, OT et tirs au but. Le score
+    # officiel corroboré par ESPN/DraftKings prime sur des scores à 60 minutes
+    # publiés à tort comme finaux. Sans cette corroboration, règle habituelle.
+    officiel = next((r for r in trouves if r["source"] == "nhl_officiel"), None)
+    if officiel and any(r["source"] in ("espn", "draftkings") and r["score"] == officiel["score"] for r in trouves):
+        return [r for r in trouves if r["score"] == officiel["score"]]
     score, n = compte.most_common(1)[0]
     autres = len(trouves) - n
     avec_fiable = any(r["source"] in SOURCES_FIABLES for r in trouves if r["score"] == score)
@@ -546,13 +552,14 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
     if len({_sans_zeros_finaux(r["periodes"]) for r in avec_periodes}) > 1:
         # sources en désaccord sur les périodes (détail différent, quart-temps ou mi-temps…) : celles d'une
         # source fiable (ESPN, API-Sports), sinon on s'en passe
-        avec_periodes = [r for r in avec_periodes if r["source"] in ("espn", "apisports")][:1]
+        avec_periodes = [r for r in avec_periodes if r["source"] in ("nhl_officiel", "espn", "apisports")][:1]
     corners = [r["corners"] for r in trouves if r["corners"] is not None and r["corners"] != (0, 0)]
     base = avec_periodes[0] if avec_periodes else None
     return {"sport": p["sport"], "score": score, "final": True,
             "periodes": base["periodes"] if base else [], "libelles": base["libelles"] if base else [],
             "corners": corners[0] if len(corners) >= SOURCES_MIN and len(set(corners)) == 1 else None,
-            "sources": sorted(r["source"] for r in trouves)}
+            "sources": sorted(r["source"] for r in trouves),
+            **({"preuve_source": base["preuve_source"]} if base and base.get("preuve_source") else {})}
 
 
 def a_lire(paris: list[dict], maintenant: datetime, apres_debut_h: float = 2) -> dict[str, datetime]:
@@ -567,11 +574,24 @@ def a_lire(paris: list[dict], maintenant: datetime, apres_debut_h: float = 2) ->
     return out
 
 
-def diagnostic(p: dict, enregistrements: list[dict]) -> dict:
+def diagnostic(p: dict, enregistrements: list[dict], maintenant: datetime | None = None) -> dict:
     """Pourquoi le match d'un pari n'est pas (encore) réglé : sources trouvées et leurs scores."""
     trouves, retenus = retrouver(p, enregistrements), _retenus(p, enregistrements)
-    return {"match": f'{p["domicile"]} – {p["exterieur"]}', "sport": p["sport"], "debut": p.get("debut"),
+    raison = "aucune source" if not retenus else (
+        "sources en désaccord" if not _majoritaires(retenus) else "pas assez de sources ou de périodes")
+    validation = None
+    majoritaires = _majoritaires(retenus)
+    debut = _heure(p.get("reporte_au") or p.get("debut"))
+    if len(majoritaires) == 1 and debut and maintenant and not consensus(p, enregistrements, maintenant):
+        r = majoritaires[0]
+        if p["sport"] not in SEULES_SPORTS_EXCLUS and r["source"] not in SEULES_SOURCES_EXCLUES:
+            limite = debut + timedelta(hours=DELAI_SOURCE_QUELCONQUE_H)
+            if maintenant < limite:
+                raison = "source unique : délai de validation automatique"
+                validation = limite.isoformat(timespec="seconds")
+    if consensus(p, enregistrements, maintenant):
+        raison = "score validé, détail du marché ou de la période manquant"
+    return {"match_id": p.get("match_id"), "match": f'{p["domicile"]} – {p["exterieur"]}', "sport": p["sport"], "debut": p.get("debut"),
             "sources": {r["source"]: {"score": r["score"], "periodes": r["periodes"]} for r in trouves},
             "retenues": sorted(r["source"] for r in retenus),
-            "raison": "aucune source" if not retenus else
-            ("sources en désaccord" if not _majoritaires(retenus) else "pas assez de sources ou de périodes")}
+            "raison": raison, "validation_apres": validation}

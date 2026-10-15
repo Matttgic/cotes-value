@@ -283,8 +283,20 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
                     sc["CORNERS"] = tuple(m["corners"])
                 if m.get("corners_mi_temps"):
                     sc["CORNERS_MT1"] = tuple(m["corners_mi_temps"])
+                # Une correction du score final ne doit pas bloquer pour toujours
+                # un pari de mi-temps lorsque son détail arrive ensuite. Le score
+                # automatique doit confirmer exactement le final saisi, et être
+                # autorisé pour CE pari (les secours ne couvrent pas toute période).
+                ajoutes = {}
+                if r and r.get("final") and tuple(r.get("score") or ()) == tuple(m["score"]) and (
+                        "id_paris_autorises" not in r or p["id"] in r["id_paris_autorises"]):
+                    auto = scores_par_periode(p["sport"], r["score"], r.get("periodes", []), r.get("libelles", []))
+                    ajoutes = {k: v for k, v in auto.items() if k not in sc}
+                    sc = {**ajoutes, **sc}
                 statut = regler(p, sc)
                 preuve = {"origine": "résultat saisi à la main", "source": m.get("source"), "scores": sc}
+                if ajoutes:
+                    preuve["sources_detail"] = r.get("sources")
             elif r and r.get("final") and ("id_paris_autorises" not in r or p["id"] in r["id_paris_autorises"]):
                 sc = scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"])
                 if r.get("corners"):

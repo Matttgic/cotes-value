@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (comparaison, controle, kalshi, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, stockage)
 from cotes import resultats as resultats_mod  # noqa: E402
-from cotes import theodds  # noqa: E402
+from cotes import theodds, resultats_nhl  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
 # NetBet retiré le 6/10/2026 : le flux « netbet » de PulseScore est le site international (netbet.com :
@@ -93,6 +93,9 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
         or maintenant - datetime.fromisoformat(dernier_reglement) >= timedelta(minutes=REGLEMENT_MINUTES)))
     journal["reglement"] = regler
     if regler:
+        manuels = lire_json(donnees / "resultats_manuels.json", {})
+        # Les corrections vérifiées sont disponibles sans nouvelle requête réseau.
+        reglement.appliquer(paris, {}, manuels, maintenant)
         enregistrements = []
         client = pulsescore.Client(cle) if cle else None
         for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
@@ -106,6 +109,10 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
             enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
                                      sport, depuis, datetime.now(timezone.utc)) or []
             signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
+        nhl = etape("resultats_nhl_officiel", journal, resultats_nhl.collecter, paris, maintenant)
+        if nhl:
+            enregistrements += nhl[0]
+            signaler(journal, "resultats_nhl_officiel", nhl[1])
         resultats = {}
         for p in paris:
             if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
@@ -164,12 +171,15 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
                     if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats
                     and (d := resultats_mod.reporte(p, enregistrements))}
         journal["resultats"]["reportes"] = len(reportes)
-        reglement.appliquer(paris, resultats, lire_json(donnees / "resultats_manuels.json", {}), maintenant, reportes)
+        reglement.appliquer(paris, resultats, manuels, maintenant, reportes)
         # pourquoi les paris « à régler » ne se règlent pas (pour le diagnostic)
         vus = set()
         journal["resultats"]["non_regles"] = [
-            resultats_mod.diagnostic(p, enregistrements) for p in paris
-            if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])][:80]
+            resultats_mod.diagnostic(p, enregistrements, maintenant) for p in paris
+            if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])]
+        attente = [p for p in paris if p["statut"] == "a_regler"]
+        journal["resultats"]["paris_en_attente"] = len(attente)
+        journal["resultats"]["temoins_en_attente"] = sum(p.get("reference") == "Pinnacle brut" for p in attente)
     else:
         journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
 

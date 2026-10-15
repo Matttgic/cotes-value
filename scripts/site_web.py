@@ -750,8 +750,9 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
   </section>
   <section class="onglet" id="o-regler">
-    <p class="aide">Résultat introuvable automatiquement. Copiez la liste et collez-la à Claude : il cherchera les
-    résultats et les enregistrera.</p>
+    <p class="aide">Les résultats sont recherchés automatiquement chaque heure. Une source unique peut demander
+    24 h de validation : « À régler » ne signifie pas qu’une saisie manuelle est déjà nécessaire.</p>
+    <div id="reglement-etat" class="aide"></div>
     <p><button class="btn" id="copier">Copier la liste</button></p>
     <div id="regler"></div>
   </section>
@@ -1201,12 +1202,36 @@ ${(n => n ? `<span class="badge en_cours">${n} à venir</span>` : "")(aVenir(s).
 rendreSegments();
 
 // --- À régler
-const vus = new Set(), man = D.paris.filter(p => p.a_regler && !vus.has(p.match_id+p.pari) && vus.add(p.match_id+p.pari));
+const manUniques = new Map();
+D.paris.filter(p => p.a_regler).forEach(p => {
+  const cle = JSON.stringify([p.match_id,p.marche,p.periode,p.ligne,p.issue,p.joueur]);
+  const avant = manUniques.get(cle);
+  if (!avant || (avant.reference === "Pinnacle brut" && p.reference !== "Pinnacle brut")) manUniques.set(cle,p);
+});
+const man = [...manUniques.values()];
 document.getElementById("nb-regler").textContent = man.length || "";
-document.getElementById("regler").innerHTML = man.length ? man.map(p => `<article class="carte">
-<div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${quand(p.debut)}</span></div>
-<div class="l2">${e(p.pari)}</div><div class="l4"><span>${e(p.bookmaker)}</span><span>${e(p.ligue||"")}</span></div></article>`).join("")
-  : `<div class="vide">Rien à régler à la main.</div>`;
+const jr = (D.etat||{}).dernier_cycle_reglement || {}, diagnostics = ((jr.resultats||{}).non_regles||[]);
+const dr = new Map(diagnostics.map(x => [x.match+"|"+x.sport+"|"+x.debut,x]));
+const groupesReglement = new Map();
+man.forEach(p => {
+  const cle = p.sport+"|"+p.domicile+"|"+p.exterieur+"|"+p.debut;
+  if (!groupesReglement.has(cle)) groupesReglement.set(cle, []);
+  groupesReglement.get(cle).push(p);
+});
+const panneAP = Object.values(jr.etapes||{}).some(x => (x.erreurs||[]).some(t => /suspended/i.test(t)));
+const vraiMan = man.filter(p => p.reference !== "Pinnacle brut");
+document.getElementById("reglement-etat").innerHTML =
+  `<p>${man.length} sélections sur ${groupesReglement.size} affiches : ${vraiMan.length} avec référence calculée, ${man.length-vraiMan.length} témoins Pinnacle brut. Les témoins restent dans le suivi.</p>` +
+  (jr.debut ? `<p>Dernière recherche : ${quand(jr.debut)}.</p>` : "") +
+  (panneAP ? `<p>API-Sports : compte suspendu. Les autres sources continuent. Les quatre clés The Odds API partagent la même couverture ; elles ne couvrent pas toutes les compétitions ni les mi-temps.</p>` : "");
+document.getElementById("regler").innerHTML = man.length ? [...groupesReglement.values()].map(ps => {
+  const p = ps[0], d = dr.get(p.domicile+" – "+p.exterieur+"|"+p.sport+"|"+p.debut);
+  const validation = d && d.validation_apres;
+  return `<details class="carte"><summary>${e(p.domicile)} – ${e(p.exterieur)} · ${ps.length} sélection${ps.length>1?"s":""}</summary>
+<div class="l4"><span>${quand(p.debut)}</span><span>${e(p.ligue||"")}</span></div>
+<p class="aide">${e(d ? d.raison : "Recherche automatique en cours")}${validation ? " · nouvelle validation possible après "+quand(validation) : ""}.</p>
+${ps.map(x => `<div class="l4"><span>${e(x.bookmaker)} · ${e(x.pari)}</span><span>${e(x.reference)}</span></div>`).join("")}</details>`;
+}).join("") : `<div class="vide">Aucun résultat en attente.</div>`;
 document.getElementById("copier").style.display = man.length ? "" : "none";
 document.getElementById("copier").onclick = () => {
   const txt = "Paris à régler (cotes-value) :\n" + man.map(p =>
