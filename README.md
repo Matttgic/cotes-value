@@ -184,3 +184,10 @@ python scripts/cycle.py --mode test     # nécessite PULSESCORE_KEY ; sans clé 
 
 [Critères et audit de Gemini Argon V1](docs/strategie-gemini.md), suivie depuis
 le 14 octobre à 20 h (Paris), dans Bilan, Stratégies et Paris. Rentabilité non démontrée.
+
+### Recherche live pendant les pauses
+
+L’audit des flux et l’architecture sont décrits dans [docs/live-pauses.md](docs/live-pauses.md).
+Le module `cotes/live_pauses.py` calcule L1/L2 uniquement sur des observations vérifiées, en mode papier.
+Il n’est relié ni au cycle de production, ni aux mises, ni aux notifications.
+Une sonde ponctuelle est disponible dans `scripts/sonde_live_pauses.py`.
