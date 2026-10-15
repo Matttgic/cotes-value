@@ -137,13 +137,21 @@ Betfair toutes les 5 min : offre PRO nécessaire ; l'offre gratuite ne sert qu'a
 
 Le workflow horaire **Règlement des paris** utilise aussi les secrets optionnels
 `THE_ODDS_API_KEY_1` à `THE_ODDS_API_KEY_4` pour les scores manquants, après PulseScore,
-ESPN et API-Sports. Chaque compte est vérifié par `/sports` (gratuit), puis les scores
+ESPN et la source NHL officielle. Chaque compte est vérifié par `/sports` (gratuit), puis les scores
 sont lus uniquement pour les compétitions identifiées et les paris compatibles.
 Cache partagé `theodds.json`, lecture au plus toutes les 3 heures par compétition,
 16 crédits/jour et 500/mois par compte, au plus 4 appels scores par cycle.
 Un appel scores coûte 2 crédits et retourne les résultats des 3 derniers jours.
 Les doublons de clés n'augmentent pas le quota et les comptes restent une seule source.
 [Couverture, règles et diagnostic](docs/theodds.md).
+
+Depuis le 15/10, les workflows n'utilisent plus les comptes API-Sports suspendus.
+Le secret optionnel **`PROPLINE_API_KEY`** active un secours supplémentaire :
+scores gratuits Prop-Line, uniquement pour les marchés et compétitions compatibles.
+Cache `propline.json`, une lecture par compétition au plus chaque heure,
+24 appels maximum par cycle, plafond local de 800/jour et réserve de 100 appels
+sur le quota communiqué par l'API. Aucun endpoint payant n'est appelé.
+[Configuration, limites et diagnostic Prop-Line](docs/propline.md).
 
 ## Données (branche `donnees`)
 

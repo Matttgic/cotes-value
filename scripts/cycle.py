@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (comparaison, controle, kalshi, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, stockage)
 from cotes import resultats as resultats_mod  # noqa: E402
-from cotes import theodds, resultats_nhl  # noqa: E402
+from cotes import theodds, resultats_nhl, propline  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
 # NetBet retiré le 6/10/2026 : le flux « netbet » de PulseScore est le site international (netbet.com :
@@ -163,6 +163,19 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
                 resultats.update(secours[0])
                 journal["theodds"] = secours[1]
                 signaler(journal, "resultats_theodds", secours[1]["erreurs"])
+        # Scores gratuits Prop-Line : secours indépendant des clés The Odds API,
+        # sans compter ses données ESPN comme une voix supplémentaire au consensus.
+        cle_prop = os.environ.get("PROPLINE_API_KEY", "").strip()
+        journal["propline"] = {"configure": bool(cle_prop)}
+        if cle_prop:
+            cache_prop = lire_json(donnees / "propline.json", {})
+            secours = etape("resultats_propline", journal, propline.collecter,
+                           paris, resultats, enregistrements, cle_prop, cache_prop, datetime.now(timezone.utc))
+            ecrire_json(donnees / "propline.json", cache_prop)
+            if secours:
+                resultats.update(secours[0])
+                journal["propline"] = secours[1]
+                signaler(journal, "resultats_propline", secours[1]["erreurs"])
         journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
         if client:
             requetes["resultats"] = client.requetes

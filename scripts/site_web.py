@@ -1220,10 +1220,13 @@ man.forEach(p => {
 });
 const panneAP = Object.values(jr.etapes||{}).some(x => (x.erreurs||[]).some(t => /suspended/i.test(t)));
 const vraiMan = man.filter(p => p.reference !== "Pinnacle brut");
+const prop = jr.propline || {};
 document.getElementById("reglement-etat").innerHTML =
   `<p>${man.length} sélections sur ${groupesReglement.size} affiches : ${vraiMan.length} avec référence calculée, ${man.length-vraiMan.length} témoins Pinnacle brut. Les témoins restent dans le suivi.</p>` +
   (jr.debut ? `<p>Dernière recherche : ${quand(jr.debut)}.</p>` : "") +
-  (panneAP ? `<p>API-Sports : compte suspendu. Les autres sources continuent. Les quatre clés The Odds API partagent la même couverture ; elles ne couvrent pas toutes les compétitions ni les mi-temps.</p>` : "");
+  (panneAP ? `<p>API-Sports : compte suspendu. Les autres sources continuent. Les quatre clés The Odds API partagent la même couverture ; elles ne couvrent pas toutes les compétitions ni les mi-temps.</p>` : "") +
+  (prop.configure ? `<p>Prop-Line : ${prop.requetes_scores||0} appel(s) scores à ce passage, ${prop.matchs_valides||0} affiche(s) validée(s)${Number.isFinite(prop.quota_restant) ? " · "+prop.quota_restant+" requêtes restantes aujourd’hui" : ""}. ${(prop.erreurs||[]).length ? "Lecture dégradée : "+(prop.erreurs||[]).map(e).join(" ; ")+"." : "Les compétitions et périodes sans couverture restent en attente."}</p>` :
+    (Object.prototype.hasOwnProperty.call(jr,"propline") ? `<p>Prop-Line : clé absente. Les autres sources continuent.</p>` : ""));
 document.getElementById("regler").innerHTML = man.length ? [...groupesReglement.values()].map(ps => {
   const p = ps[0], d = dr.get(p.domicile+" – "+p.exterieur+"|"+p.sport+"|"+p.debut);
   const validation = d && d.validation_apres;
