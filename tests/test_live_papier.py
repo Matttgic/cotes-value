@@ -75,6 +75,7 @@ def test_rafale_lente_refuse_signaux_meme_si_cotes_sont_fraiches():
     assert rows and not any(o["signal"] for o in rows)
     assert not summary["rafale_sous_20s"]
     assert all(o["edge"] is None for o in rows)
+    assert all(not o['l1']['accepted'] and not o['l2']['accepted'] for o in rows)
 
 
 def test_prix_plus_15_plus_30_sont_observes_et_delai_reel_conserve():

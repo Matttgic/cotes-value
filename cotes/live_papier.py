@@ -20,6 +20,7 @@ import requests
 
 from . import pinnacle, pulsescore
 from .correspondance import avec_marqueurs_ligue, normaliser
+from .comparaison import libelle_pari
 from .live_pauses import (ClosingContext, GaussianModel, LiveQuote, Market, PauseState,
                           PoissonModel, _fresh, evaluate_l1, evaluate_l2, fair_reference)
 
@@ -133,7 +134,7 @@ def traduire_pulse(frame, cycle):
                 q = LiveQuote(contract, state, pulsescore.NOMS[book], heure(frame["received_at"]),
                               price_time, line["cote"], active, str(m.get("marketId") or ""))
                 out.append({"quote": q, "match": f'{e["home"]} – {e["away"]}',
-                            "pari": f'{line["marche"]} {line["issue"]} {line["ligne"] or ""}'.strip(),
+                            "pari": libelle_pari(line),
                             "back": line.get("achat"), "lay": line.get("vente"),
                             "timestamp_source": bool(price_time and state_time), "native": str(e.get("eventId"))})
     return out
@@ -298,6 +299,8 @@ def analyser(frames, now, cycle, models=None):
         counts["rafale_hors_delai"] += 1
         for o in observations:
             o.update(signal=False, edge=None, cote_juste=None, refus_rafale="ecart_reel_ge_20s")
+            for logic in ("l1", "l2"):
+                o[logic] = {**o[logic], "accepted": False, "reason": "burst_too_slow"}
     pulse_counts = Counter()
     for f in frames:
         if f["source"] != "Pinnacle":
