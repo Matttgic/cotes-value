@@ -46,7 +46,9 @@ def votes(paris: list[dict], retenus: dict[str, set[int]]) -> dict[tuple, dict]:
                 or not isfinite(p["cote"]) or p["cote"] <= 1 or not p.get("match_id")
                 or not p.get("bookmaker")):
             continue
-        cles = {cle for cle, ids in retenus.items() if id(p) in ids}
+        # Les variantes peuvent être présentes pour les badges. Elles ne
+        # modifient ni les votes ni la prise représentative des convergences.
+        cles = {cle for cle, *_ in STRATEGIES if id(p) in retenus.get(cle, set())}
         if not cles:
             continue
         key = (cle_selection(p), t, p["cote"])
@@ -79,10 +81,15 @@ def valider_actuelles(actuelles: list[dict], paris: list[dict], retenus: dict[st
     """
     par_prix = {}
     convergents = paris_convergence(paris, retenus)
-    for (cle, t, prix), groupe in votes(paris, retenus).items():
+    for p in paris:
+        t = heure(p.get("detecte"))
+        strategies = {cle for cle, ids in retenus.items() if id(p) in ids}
+        if t is None or not strategies:
+            continue
+        cle, prix = cle_selection(p), p.get("cote")
         item = par_prix.setdefault((cle, prix), {"strategies": set(), "convergence": False, "validation_detecte": t})
-        item["strategies"].update(groupe["strategies"])
-        item["convergence"] |= any(id(p) in convergents for p in groupe["paris"])
+        item["strategies"].update(strategies)
+        item["convergence"] |= id(p) in convergents
         item["validation_detecte"] = max(item["validation_detecte"], t)
     out = []
     for o in actuelles:
