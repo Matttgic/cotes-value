@@ -552,7 +552,7 @@ MODELE = r"""<!doctype html>
     <div class="puces" id="jouer-filtres" aria-label="Filtrer les opportunités par stratégie"></div>
     <details class="mode-emploi"><summary>Comment lire les sélections</summary><p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
     Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille. Les nouvelles variantes ne donnent pas de votes supplémentaires.</p></details>
-    <div id="jouer"></div>
+    <div id="liste-jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
     <div class="page-tete"><div><p class="surtitre">Résultats enregistrés</p><h2>Ton bilan</h2><p class="sous-texte">Gains, mises et qualité des prix pris.</p></div></div>
@@ -567,7 +567,7 @@ MODELE = r"""<!doctype html>
     </div><div class="legende" id="legende"></div>
     <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
     <div class="bulle" id="bulle"></div></div>
-    <div class="tableau"><table id="bilan"></table></div>
+    <div class="tableau"><table id="liste-bilan"></table></div>
     <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
     <h2 class="sous-titre">Par bookmaker</h2>
     <div class="tableau"><table id="bilan-books"></table></div>
@@ -673,7 +673,7 @@ MODELE = r"""<!doctype html>
     <div class="page-tete"><div><p class="surtitre">Explorer les résultats</p><h2>Les segments</h2><p class="sous-texte">Sport, bookmaker, référence : touche un groupe pour voir ses paris.</p></div></div>
     <div class="puces" id="puces-seg"></div>
     <p class="aide" id="seg-quoi"></p>
-    <div id="segments"></div>
+    <div id="liste-segments"></div>
     <details class="aide"><summary>Comment lire</summary>
     <p>Un segment = les paris uniques réglés d'une tranche de cote, d'un bookmaker, d'un sport, d'une référence, ou d'un croisement
     (au moins 10 paris). La référence est celle de la première détection du pari unique. <b>Attendu</b> : la réussite prévue par la cote juste ; à 1,30, gagner 77 % est normal.
@@ -699,7 +699,7 @@ MODELE = r"""<!doctype html>
     </div>
     <div class="outils-paris"><button class="btn secondaire" id="reinitialiser-filtres">Réinitialiser les filtres</button>
     <details class="mode-emploi"><summary>Comptage et export CSV</summary><p class="aide">Une prise par référence, au prix enregistré. L’export inclut tous les paris filtrés. Écarts et CLV en ratios dans le CSV.</p></details></div>
-    <div id="paris"></div>
+    <div id="liste-paris"></div>
     <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
   </section>
   <section class="onglet" id="o-notifications">
@@ -729,7 +729,7 @@ MODELE = r"""<!doctype html>
     24 h de validation : « À régler » ne signifie pas qu’une saisie manuelle est déjà nécessaire.</p>
     <div id="reglement-etat" class="aide"></div>
     <p><button class="btn" id="copier">Copier la liste</button></p>
-    <div id="regler"></div>
+    <div id="liste-regler"></div>
   </section>
   <section class="onglet" id="o-controle">
     <div class="page-tete"><div><p class="surtitre">Qualité des données</p><h2>Le contrôle des sources</h2></div></div>
@@ -820,7 +820,7 @@ function rendreJouer() {
     `<button data-filtre="${e(cle)}" class="${filtreJouer===cle ? "actif" : ""}" aria-pressed="${filtreJouer===cle}">${e(nom)} (${cotesJouer.filter(o => accepte(o,cle)).length})</button>`).join("");
   for (const b of document.querySelectorAll("#jouer-filtres button")) b.onclick = () => { filtreJouer=b.dataset.filtre; rendreJouer(); };
   const liste = cotesJouer.filter(o => accepte(o,filtreJouer));
-  document.getElementById("jouer").innerHTML = liste.length ? liste.map(carteActuelle).join("") : '<div class="vide">Aucune opportunité pour ce filtre au dernier passage.</div>';
+  document.getElementById("liste-jouer").innerHTML = liste.length ? liste.map(carteActuelle).join("") : '<div class="vide">Aucune opportunité pour ce filtre au dernier passage.</div>';
 }
 rendreJouer();
 document.getElementById("nb-jouer").textContent = cotesJouer.length || "";
@@ -895,7 +895,7 @@ function rendreBilan() {
     : `<tr><td>${titre}</td><td>${b.regles}${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""} · <b>${Math.round(100 * b.gagnes / b.regles)} %</b></small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
 <td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles}</small>` : ""}</td></tr>`;
-  document.getElementById("bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
+  document.getElementById("liste-bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "M3", "Convergence ≥ 2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
@@ -1092,14 +1092,14 @@ function rendreParis() {
       .sort((a,b) => new Date(b.debut)-new Date(a.debut));
     const parties = [["À venir",aVenir],["En cours ou à régler",enCours],["Terminés",termines]];
     let compteur = 0;
-    document.getElementById("paris").innerHTML = L.length ? parties.map(([titre,paris]) => {
+    document.getElementById("liste-paris").innerHTML = L.length ? parties.map(([titre,paris]) => {
       const restant = Math.max(0, limite-compteur), visibles = paris.slice(0,restant);
       compteur += visibles.length;
       return `<h3 class="groupe-paris">${titre} (${paris.length})</h3>` +
         (visibles.length ? visibles.map(carteParis).join("") : (paris.length ? "" : '<p class="aide">Aucun pour le moment.</p>'));
     }).join("") : '<div class="vide">Aucun pari pour cette stratégie et ces filtres.</div>';
   } else {
-    document.getElementById("paris").innerHTML = L.length ? L.slice(0,limite).map(carteParis).join("")
+    document.getElementById("liste-paris").innerHTML = L.length ? L.slice(0,limite).map(carteParis).join("")
       : '<div class="vide">Aucun pari pour ces filtres.</div>';
   }
   plus.style.display = L.length > limite ? "" : "none";
@@ -1162,7 +1162,7 @@ function rendreSegments() {
   document.getElementById("seg-quoi").textContent = triSeg === "roi"
     ? "Segments au ROI positif (paris uniques réglés), du meilleur au moins bon."
     : "Segments qui gagnent plus souvent que la cote ne le prévoit, du plus net au moins net.";
-  document.getElementById("segments").innerHTML = L.length ? L.map((s, i) => {
+  document.getElementById("liste-segments").innerHTML = L.length ? L.map((s, i) => {
     const [v, c] = verdict(s);
     return `<article class="carte seg" data-i="${D.segments.indexOf(s)}">
 <div class="l1"><span class="match">${e(nomSeg(s))}</span><span class="badge ${c}">${v}</span></div>
@@ -1222,7 +1222,7 @@ document.getElementById("reglement-etat").innerHTML =
   (panneAP ? `<p>API-Sports : compte suspendu. Les autres sources continuent. Les quatre clés The Odds API partagent la même couverture ; elles ne couvrent pas toutes les compétitions ni les mi-temps.</p>` : "") +
   (prop.configure ? `<p>Prop-Line : ${prop.requetes_scores||0} appel(s) scores à ce passage, ${prop.matchs_valides||0} affiche(s) validée(s)${Number.isFinite(prop.quota_restant) ? " · "+prop.quota_restant+" requêtes restantes aujourd’hui" : ""}. ${(prop.erreurs||[]).length ? "Lecture dégradée : "+(prop.erreurs||[]).map(e).join(" ; ")+"." : "Les compétitions et périodes sans couverture restent en attente."}</p>` :
     (Object.prototype.hasOwnProperty.call(jr,"propline") ? `<p>Prop-Line : clé absente. Les autres sources continuent.</p>` : ""));
-document.getElementById("regler").innerHTML = man.length ? [...groupesReglement.values()].map(ps => {
+document.getElementById("liste-regler").innerHTML = man.length ? [...groupesReglement.values()].map(ps => {
   const p = ps[0], d = dr.get(p.domicile+" – "+p.exterieur+"|"+p.sport+"|"+p.debut);
   const validation = d && d.validation_apres;
   return `<details class="carte"><summary>${e(p.domicile)} – ${e(p.exterieur)} · ${ps.length} sélection${ps.length>1?"s":""}</summary>
@@ -1277,9 +1277,9 @@ rendreControle();
 const STRAT_PERIODES = {futur:"Depuis le lancement", ensemble:"Historique 7–13 oct.",
   construction:"7–10 oct.", validation:"11–12 oct.", test:"13 oct."};
 const courbesMasquees = new Set();
-const COULEURS_COMPARATEURS = {"Claude (rejeu)":"#2675ce", "ChatGPT v1 (rejeu)":"#d15b13",
-  "Gemini Argon v1 (rejeu)":"#16884c", "JULES EDGE v1 (rejeu)":"#b04baf",
-  "JULES EDGE v2 (rejeu)":"#865fe0", "M3 (rejeu)":"#16838b", "Convergence ≥ 2":"#c44862", "Claude 1/match · max 10/j":"#b47b00", "Convergence ≥ 3 hors M3":"#d13f8c"};
+const COULEURS_COMPARATEURS = {"Claude (rejeu)":"var(--courbe-claude,#2675ce)", "ChatGPT v1 (rejeu)":"var(--courbe-chatgpt,#d15b13)",
+  "Gemini Argon v1 (rejeu)":"var(--courbe-gemini,#16884c)", "JULES EDGE v1 (rejeu)":"var(--courbe-jules1,#b04baf)",
+  "JULES EDGE v2 (rejeu)":"var(--courbe-jules2,#865fe0)", "M3 (rejeu)":"var(--courbe-m3,#16838b)", "Convergence ≥ 2":"var(--courbe-convergence2,#c44862)", "Claude 1/match · max 10/j":"var(--courbe-claudeprudent,#b47b00)", "Convergence ≥ 3 hors M3":"var(--courbe-convergence3,#d13f8c)"};
 function rendreCourbesStrategies(rows) {
   const legend = document.getElementById("strategies-legende"), svg = document.getElementById("strategies-courbes");
   const toutes = rows.map(r => ({...r, points:D.laboratoire.navigation?.courbes?.[r.id]?.[periodeStrategies] || []}));

@@ -71,7 +71,7 @@ def test_js_recherche_filtres_export_bom_echappement_et_archive_complete():
     section=MODELE[MODELE.index("const recentes ="):MODELE.index("// --- Segments")]
     js=DOM+"const D="+json.dumps(data)+";\nconst badgeStrategies=()=>'';\n"+section+'''
 assert.equal(parisFiltres.length,75);
-assert.equal((document.getElementById("paris").innerHTML.match(/<article/g)||[]).length,50);
+assert.equal((document.getElementById("liste-paris").innerHTML.match(/<article/g)||[]).length,50);
 document.getElementById("f-q").value="EQUIPE SAINT-ETIENNE";
 document.getElementById("f-q").oninput();
 assert.equal(parisFiltres.length,75);

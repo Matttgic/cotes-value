@@ -14,15 +14,18 @@ document.addEventListener('keydown', ev => {if (ev.key==='Escape') {fermerMenu()
 // Des libellés explicites permettent de lire chaque ligne des petits tableaux sur mobile.
 function adapterTableaux() {
   for (const table of document.querySelectorAll('main table:not(.strategies-table)')) {
+    table.setAttribute('role','table');
     const entete=table.querySelector('tr');
     if (!entete?.querySelector('th')) continue;
     entete.classList.add('entete-table');
     const noms=[...entete.querySelectorAll('th')].map(th => {
       th.setAttribute('scope','col');
+      th.setAttribute('role','columnheader');
       return [...th.childNodes].map(n=>n.textContent.trim()).filter(Boolean).join(' · ');
     });
     for (const tr of table.querySelectorAll('tr')) {
-      [...tr.querySelectorAll('td')].forEach((td,i) => td.dataset.label=noms[i] || 'Détail');
+      tr.setAttribute('role','row');
+      [...tr.querySelectorAll('td')].forEach((td,i) => {td.dataset.label=noms[i] || 'Détail';td.setAttribute('role','cell');});
     }
   }
 }

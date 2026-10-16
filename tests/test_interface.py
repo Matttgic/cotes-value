@@ -31,6 +31,8 @@ def test_document_autonome_navigation_unique_et_apercu(tmp_path):
     assert len(p.onglets) == 8
     assert {"nav-plus-toggle", "nav-secondaires", "strategies-mobile", "fraicheur"} <= set(p.ids)
     assert set(p.labels) <= set(p.ids)
+    # Les fragments servent au routeur, jamais à une ancre située sous les filtres.
+    assert not set(p.onglets) & set(p.ids)
     assert "__INTERFACE_" not in html
     assert "function installerActualisation" in html
     assert "function adapterTableaux" in html
