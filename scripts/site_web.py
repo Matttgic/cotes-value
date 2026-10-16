@@ -760,7 +760,7 @@ MODELE = r"""<!doctype html>
   </section>
   <section class="onglet" id="o-regler">
     <div class="page-tete"><div><p class="surtitre">Règlement automatique</p><h2>Les résultats en attente</h2></div></div>
-    <p class="aide">Les résultats sont recherchés automatiquement chaque heure. Une source unique peut demander
+    <p class="aide">Les résultats sont recherchés automatiquement environ une fois par heure. La collecte prend le relais si la tâche planifiée tarde. Une source unique peut demander
     24 h de validation : « À régler » ne signifie pas qu’une saisie manuelle est déjà nécessaire.</p>
     <div id="reglement-etat" class="aide"></div>
     <p><button class="btn" id="copier">Copier la liste</button></p>
@@ -1261,7 +1261,7 @@ const vraiMan = man.filter(p => p.reference !== "Pinnacle brut");
 const prop = jr.propline || {};
 document.getElementById("reglement-etat").innerHTML =
   `<p>${man.length} sélections sur ${groupesReglement.size} affiches : ${vraiMan.length} avec référence calculée, ${man.length-vraiMan.length} témoins Pinnacle brut. Les témoins restent dans le suivi.</p>` +
-  (jr.debut ? `<p>Dernière recherche : ${quand(jr.debut)}.</p>` : "") +
+  (jr.debut ? `<p>Dernière recherche : ${quand(jr.debut)}.${Number.isInteger(jr.resultats?.paris_regles) ? ` ${jr.resultats.paris_regles} enregistrements réglés à ce passage.` : ""}</p>` : "") +
   (panneAP ? `<p>API-Sports : compte suspendu. Les autres sources continuent. Les quatre clés The Odds API partagent la même couverture ; elles ne couvrent pas toutes les compétitions ni les mi-temps.</p>` : "") +
   (prop.configure ? `<p>Prop-Line : ${prop.requetes_scores||0} appel(s) scores à ce passage, ${prop.matchs_valides||0} affiche(s) validée(s)${Number.isFinite(prop.quota_restant) ? " · "+prop.quota_restant+" requêtes restantes aujourd’hui" : ""}. ${(prop.erreurs||[]).length ? "Lecture dégradée : "+(prop.erreurs||[]).map(e).join(" ; ")+"." : "Les compétitions et périodes sans couverture restent en attente."}</p>` :
     (Object.prototype.hasOwnProperty.call(jr,"propline") ? `<p>Prop-Line : clé absente. Les autres sources continuent.</p>` : ""));

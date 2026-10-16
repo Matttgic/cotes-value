@@ -1,6 +1,6 @@
 name: Collecte et comparaison
 
-# Toutes les 5 minutes (règlement des paris dans un workflow horaire séparé), seulement si la variable de dépôt COLLECTE_AUTO vaut « oui »
+# Toutes les 5 minutes (règlement horaire avec reprise automatique dans la collecte), seulement si la variable de dépôt COLLECTE_AUTO vaut « oui »
 # (Settings → Secrets and variables → Actions → Variables). À activer avec l'offre PulseScore PRO :
 # l'offre gratuite (500 requêtes/mois) ne tient pas un cycle complet toutes les 5 minutes.
 #
@@ -69,7 +69,13 @@ jobs:
         env:
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
-          REGLEMENT: non
+          THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
+          THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
+          THE_ODDS_API_KEY_3: ${{ secrets.THE_ODDS_API_KEY_3 }}
+          THE_ODDS_API_KEY_4: ${{ secrets.THE_ODDS_API_KEY_4 }}
+          # Le cron horaire peut être retardé de plusieurs heures : le cycle prend le relais
+          # si le dernier règlement date d'au moins 55 min. Même verrou « donnees ».
+          REGLEMENT: auto
           LIVE_PAPIER: oui
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
         run: python scripts/cycle.py --donnees donnees --site site

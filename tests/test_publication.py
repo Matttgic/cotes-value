@@ -6,7 +6,7 @@ import subprocess
 import pytest
 
 
-@pytest.mark.parametrize("workflow", ["site.yml", "collecte.yml"])
+@pytest.mark.parametrize("workflow", ["site.yml", "collecte.yml", "reglement.yml"])
 @pytest.mark.parametrize("commit,api_ok,autorise", [("recent", True, True), ("ancien", True, False), ("recent", False, False)])
 def test_garde_publication_execute_le_script_reel(tmp_path, workflow, commit, api_ok, autorise):
     texte = (Path(__file__).resolve().parents[1] / ".github/workflows" / workflow).read_text()

@@ -81,18 +81,41 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
         journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:3]}
 
 
+def reglement_echu(etat: dict, maintenant: datetime, mode: str) -> bool:
+    """Le cron et la collecte partagent le même délai et le même verrou de données.
+
+    Une date absente ou invalide ne doit pas arrêter le règlement indéfiniment.
+    Une petite dérive d'horloge reste tolérée ; une date très future est invalide.
+    """
+    if mode != "auto":
+        return mode == "oui"
+    try:
+        dernier = datetime.fromisoformat(str(etat.get("dernier_reglement")).replace("Z", "+00:00"))
+        if dernier.tzinfo is None or dernier > maintenant + timedelta(minutes=5):
+            return True
+        return maintenant - dernier >= timedelta(minutes=REGLEMENT_MINUTES)
+    except (TypeError, ValueError, OverflowError):
+        return True
+
+
+def conserver_journal_reglement(etat: dict, journal: dict, effectue: bool) -> None:
+    """Un cycle sans règlement conserve le dernier diagnostic réel affiché sur le site."""
+    if effectue:
+        etat["dernier_reglement"] = journal["debut"]
+        etat["dernier_cycle_reglement"] = dict(journal)
+
+
 def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
                         journal: dict, requetes: dict, mode_reglement: str) -> bool:
     # 4. règlement (offre PulseScore PRO : requêtes illimitées). Sans clé PulseScore, ESPN
     #    et les résultats saisis à la main règlent quand même ce qu'ils peuvent.
-    #    Une fois par heure seulement (environ 6 minutes de lectures) : voir REGLEMENT_MINUTES.
+    #    Environ une fois par heure, depuis le cron ou la collecte : voir REGLEMENT_MINUTES.
     etat_avant = lire_json(donnees / "etat.json", {})
     dernier_reglement = etat_avant.get("dernier_reglement")
-    regler = mode_reglement == "oui" or (mode_reglement == "auto" and (
-        not dernier_reglement
-        or maintenant - datetime.fromisoformat(dernier_reglement) >= timedelta(minutes=REGLEMENT_MINUTES)))
+    regler = reglement_echu(etat_avant, maintenant, mode_reglement)
     journal["reglement"] = regler
     if regler:
+        ouverts_avant = {id(p) for p in paris if p.get("statut") in ("en_cours", "a_regler")}
         manuels = lire_json(donnees / "resultats_manuels.json", {})
         # Les corrections vérifiées sont disponibles sans nouvelle requête réseau.
         reglement.appliquer(paris, {}, manuels, maintenant)
@@ -193,6 +216,15 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
         attente = [p for p in paris if p["statut"] == "a_regler"]
         journal["resultats"]["paris_en_attente"] = len(attente)
         journal["resultats"]["temoins_en_attente"] = sum(p.get("reference") == "Pinnacle brut" for p in attente)
+        journal["resultats"]["paris_regles"] = sum(id(p) in ouverts_avant and p.get("statut") in reglement.GAIN for p in paris)
+        # Même regroupement que le compteur « À régler » du site : une sélection
+        # commune aux références n'est comptée qu'une fois, témoin après les vraies références.
+        selections = {}
+        for p in attente:
+            k = tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur"))
+            selections[k] = selections.get(k, True) and p.get("reference") == "Pinnacle brut"
+        journal["resultats"]["selections_en_attente"] = len(selections)
+        journal["resultats"]["selections_temoins_en_attente"] = sum(selections.values())
     else:
         journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
 
@@ -221,18 +253,16 @@ def main() -> int:
         paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
         requetes = {}
         journal["mode"] = "reglement"
-        regler = effectuer_reglement(paris, donnees, maintenant, cle, journal, requetes, "oui")
+        regler = effectuer_reglement(paris, donnees, maintenant, cle, journal, requetes, args.reglement)
         paris = stockage.archiver(donnees, paris, maintenant)
         ecrire_json(donnees / "paris.json", paris)
         etat = lire_json(donnees / "etat.json", {})
-        if regler:
-            etat["dernier_reglement"] = journal["debut"]
         compteur = etat.get("requetes_par_mois", {})
         mois = f"{maintenant:%Y-%m}"
         compteur[mois] = compteur.get(mois, 0) + sum(requetes.values())
         etat["requetes_par_mois"] = compteur
         journal["fin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        etat["dernier_cycle_reglement"] = journal
+        conserver_journal_reglement(etat, journal, regler)
         ecrire_json(donnees / "etat.json", etat)
         from site_web import construire
         construire(donnees, Path(args.site))
@@ -303,7 +333,7 @@ def main() -> int:
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
 
-    # Les résultats sont traités dans leur propre workflow horaire.
+    # La collecte reprend le règlement si le workflow horaire a été retardé.
     regler = effectuer_reglement(paris, donnees, maintenant, cle, journal, requetes, args.reglement)
 
     # 5. sauvegarde
@@ -338,8 +368,7 @@ def main() -> int:
         "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),
         "nouveaux_paris": len(nouveaux)})
     etat.update({"dernier_cycle": journal, "requetes_par_mois": compteur})
-    if regler:
-        etat["dernier_reglement"] = journal["debut"]
+    conserver_journal_reglement(etat, journal, regler)
     historique = etat.get("historique", [])[-200:] + [{k: journal[k] for k in ("debut", "mode", "opportunites",
                                                                                 "nouveaux_paris", "requetes_pulsescore")}]
     etat["historique"] = historique
