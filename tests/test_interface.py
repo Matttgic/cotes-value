@@ -27,8 +27,8 @@ def test_document_autonome_navigation_unique_et_apercu(tmp_path):
     p = Elements()
     p.feed(html)
     assert not [k for k, n in Counter(p.ids).items() if n > 1]
-    assert set(p.onglets) == {"jouer", "strategies", "paris", "bilan", "segments", "notifications", "regler", "controle"}
-    assert len(p.onglets) == 8
+    assert set(p.onglets) == {"jouer", "strategies", "paris", "bilan", "segments", "notifications", "regler", "controle", "analyses"}
+    assert len(p.onglets) == 9
     assert {"nav-plus-toggle", "nav-secondaires", "strategies-mobile", "fraicheur"} <= set(p.ids)
     assert set(p.labels) <= set(p.ids)
     # Les fragments servent au routeur, jamais à une ancre située sous les filtres.
@@ -49,6 +49,7 @@ def test_lignes_compactes_et_toutes_les_references_par_defaut():
         debut = MODELE.index('const '+nom)
         bloc = MODELE[debut:MODELE.index('`;', debut)]
         assert '<details class="ligne-detail ligne-pari' in bloc
+        assert 'class="pari-selection"' in bloc.split('</summary>')[0]
         assert '</summary><div class="ligne-corps">' in bloc
     assert '"#liste-segments > details"' in MODELE
     assert 'd.ontoggle' in MODELE

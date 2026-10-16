@@ -21,7 +21,7 @@ def test_js_vue_restauree_apres_actualisation():
     executer('''
 const assert=require('node:assert/strict');
 const elements=new Map();
-for(const [id,value] of Object.entries({'f-q':'Équipe Lyon','f-book':'Winamax','strategies-ref':'comparateurs'}))
+for(const [id,value] of Object.entries({'f-q':'Équipe Lyon','f-book':'Winamax','strategies-ref':'comparateurs','analyse-selection':'uniques','analyse-periode':'ensemble','analyse-sport':'hockey','analyse-book':'Unibet'}))
   elements.set(id,{value,tagName:'INPUT'});
 const document={getElementById:id=>elements.get(id),querySelectorAll:()=>[]};
 const window={scrollY:320,scrollTo:(x,y)=>assert.equal(y,320)};
@@ -34,13 +34,15 @@ const courbesMasquees=new Set(['M3']);
 const rendus=[];
 const rendreJouer=()=>rendus.push(filtreJouer),rendreBilan=()=>rendus.push(refBilan),
  rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},
- rendreStrategies=()=>rendus.push(periodeStrategies);
+ rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{};
 function installerActualisation(config) {
   const etat=config.capturer();
   filtreJouer='tous';sportJouer='';refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
   courbesMasquees.clear();elements.get('f-q').value='';elements.get('f-book').value='';
   config.restaurer(JSON.parse(JSON.stringify(etat)));
   assert.equal(elements.get('f-book').value,'Winamax');
+  assert.equal(elements.get('analyse-sport').value,'hockey');
+  assert.equal(elements.get('analyse-periode').value,'ensemble');
   assert.equal(strategieChoisie.id,'Claude (rejeu)');assert.equal(limite,150);
   assert.equal(sportJouer,'tennis');
   assert.deepEqual([...courbesMasquees],['M3']);

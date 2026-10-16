@@ -92,3 +92,13 @@ def test_m3_archive_descriptive_est_alignee_sur_coupure_commune():
     comp=labo["comparateurs"]["M3 (rejeu)"]
     assert comp["construction"]["regles"] == 0 and comp["construction"]["attente"] == 1
     assert comp["ensemble"]["regles"] == 1 and comp["ensemble"]["gain"] == 11
+
+
+def test_analyses_reutilise_les_uniques_du_bilan_et_les_mises_enregistrees():
+    premier=pari('premier',match_id='meme-match',mise=20,detecte='2026-10-15T09:00:00Z')
+    autre=pari('autre-reference',match_id='meme-match',reference='Betfair',detecte='2026-10-15T09:01:00Z')
+    temoin=pari('temoin',match_id='meme-match',reference='Pinnacle brut',detecte='2026-10-15T08:00:00Z')
+    data=site_web.catalogue_paris([autre,temoin,premier],{})
+    rows=[dict(zip(data['champs'],r)) for r in data['lignes']]
+    assert [p['id'] for p in rows if p['unique_bilan']] == ['premier']
+    assert next(p['mise'] for p in rows if p['id']=='premier') == 20

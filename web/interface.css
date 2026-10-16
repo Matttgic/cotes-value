@@ -107,11 +107,11 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
 .strat-axe{margin-left:117px;margin-right:71px}}
 
 /* Interface : surfaces sobres, lecture des chiffres et navigation au pouce. */
-:root{color-scheme:light;--fond:#f3f5f7;--carte:#fff;--texte:#172b35;--doux:#576c78;--ligne:#dce4e8;
---accent:#096b65;--accent-f:#e4f2ee;--vert:#107349;--vert-f:#e5f3eb;--rouge:#b53c44;--rouge-f:#fae9eb;
+:root{color-scheme:light;--fond:#f4f5fa;--carte:#fff;--texte:#20263b;--doux:#646d85;--ligne:#dce1ed;
+--accent:#455ed0;--accent-f:#e9edff;--vert:#3759bd;--vert-f:#e9edff;--rouge:#ac4161;--rouge-f:#fbe9ef;--graph-neg:#ac4161;
 --jaune:#865b0c;--jaune-f:#fff2d7;--ombre:0 2px 8px #172b3505}
-@media(prefers-color-scheme:dark){:root{color-scheme:dark;--fond:#10191f;--carte:#18242c;--texte:#edf4f5;--doux:#a5b6c0;
---ligne:#2b3c46;--accent:#79d7c6;--accent-f:#203d3b;--vert:#82d6a7;--vert-f:#203e31;--rouge:#ffa1aa;--rouge-f:#422b32;
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--fond:#10131e;--carte:#191e2e;--texte:#eef1fb;--doux:#a8b1c9;
+--ligne:#30384d;--accent:#a4b5ff;--accent-f:#283354;--vert:#9fb8ff;--vert-f:#283354;--rouge:#f09ab5;--rouge-f:#45293b;--graph-neg:#d280a0;
 --jaune:#f2ca7e;--jaune-f:#3d3526;--ombre:none;
 --courbe-claude:#86b9fb;--courbe-chatgpt:#f3a16c;--courbe-gemini:#75d6a0;--courbe-jules1:#e19de1;
 --courbe-jules2:#b7a5ff;--courbe-m3:#6bcbd4;--courbe-convergence2:#f594a9;--courbe-claudeprudent:#e6c66d;--courbe-convergence3:#f371c1}}
@@ -309,3 +309,37 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .ligne-detail>summary::before,.filtres-depliables>summary::before{content:'';display:block;box-sizing:border-box;width:6px;height:6px;border:solid var(--doux);border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);margin:0 3px 0 0;flex:none}
 .ligne-detail[open]>summary::before,.filtres-depliables[open]>summary::before{transform:rotate(45deg)}
 .ligne-validee>summary::before{border-color:var(--accent)}
+
+/* Le pari reste entièrement lisible dans le résumé, même si son intitulé est long. */
+.ligne-pari>summary{display:grid;grid-template-columns:10px minmax(0,1fr) 68px;column-gap:8px;row-gap:3px;padding:10px 2px;white-space:normal}
+.ligne-pari>summary::before{grid-column:1;grid-row:1;align-self:center}
+.ligne-pari>summary>.pari-match{grid-column:2;grid-row:1;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;font-size:12px;font-weight:500;color:var(--doux)}
+.ligne-pari>summary>.pari-selection{grid-column:2;grid-row:2;font-size:13px;line-height:1.4;font-weight:650;overflow-wrap:anywhere;white-space:normal}
+.ligne-pari>summary>.pari-bookmaker{grid-column:2;grid-row:3;font-size:10px;color:var(--doux)}
+.ligne-pari>summary>.ligne-cote{grid-column:3;grid-row:1;justify-self:end;align-self:start;font-size:14px;color:var(--texte)}
+.ligne-pari>summary>.ligne-valeur{grid-column:3;grid-row:2;justify-self:end;align-self:start;padding-top:2px}
+.ligne-pari>summary>.ligne-book{display:none}
+.secondaire-pari>summary{display:grid;grid-template-columns:10px minmax(0,1fr) 68px;white-space:normal;row-gap:4px}
+.secondaire-pari>summary::before{grid-row:1}.secondaire-pari .ligne-nom{grid-column:2;grid-row:1;white-space:normal;overflow:visible;font-size:12px;color:var(--doux)}
+.secondaire-pari>summary>.ligne-valeur{grid-column:3;grid-row:1}.secondaire-pari .pari-selection{grid-column:2/-1;grid-row:2;font-size:13px;overflow-wrap:anywhere}
+.palette-label{display:flex;align-items:center;gap:5px;font-size:10px}.palette-label select{padding:2px 5px;min-height:28px;font-size:10px;border:0;background:transparent;color:var(--accent);max-width:90px}
+:root[data-palette=violet]{--accent:#7852b7;--accent-f:#f0eaff;--vert:#7852b7;--vert-f:#f0eaff}
+:root[data-palette=graphite]{--accent:#46566d;--accent-f:#e8edf4;--vert:#46566d;--vert-f:#e8edf4}
+@media(prefers-color-scheme:dark){:root[data-palette=violet]{--accent:#c9aeff;--accent-f:#382b52;--vert:#c9aeff;--vert-f:#382b52}:root[data-palette=graphite]{--accent:#c0cede;--accent-f:#2d3847;--vert:#c0cede;--vert-f:#2d3847}}
+.raccourci-analyses{text-align:right;margin:-3px 0 9px;font-size:12px}.raccourci-analyses a{text-decoration:none}
+.analyse-filtres{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 12px}
+.analyse-filtres label{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:11px;color:var(--doux)}.analyse-filtres select{width:100%;min-width:0;min-height:42px;font-size:12px}
+.analyse-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:14px 0 22px;border:1px solid var(--ligne);border-radius:12px;overflow:hidden;background:var(--carte)}
+.analyse-kpis>div{padding:14px 16px;min-width:0;border-bottom:1px solid var(--ligne)}.analyse-kpis>div:nth-child(-n+3){border-bottom:1px solid var(--ligne)}.analyse-kpis>div:nth-child(n+4){border-bottom:0}.analyse-kpis>div:not(:nth-child(3n)){border-right:1px solid var(--ligne)}
+.analyse-kpis span,.analyse-kpis small{display:block;color:var(--doux);font-size:11px}.analyse-kpis strong{display:block;color:var(--texte);font-size:25px;letter-spacing:-.7px;font-variant-numeric:tabular-nums;margin:2px 0}.analyse-kpis small{font-size:10px}
+.analyse-grille{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 28px}.analyse-large{grid-column:1/-1}
+.analyse-figure{margin:0;min-width:0;padding:18px 0 8px;border-top:1px solid var(--ligne)}.analyse-figure h3{margin:0 0 3px;font-size:16px;letter-spacing:-.3px}.analyse-figure figcaption p{margin:0 0 16px;color:var(--doux);font-size:11px;line-height:1.5}
+.analyse-graph-valeur{font-size:24px;font-weight:700;letter-spacing:-.5px;color:var(--accent);font-variant-numeric:tabular-nums}.analyse-graph-valeur small{display:block;color:var(--doux);font-size:11px;font-weight:400;letter-spacing:0}
+.analyse-courbe{display:block;width:100%;height:auto;max-height:290px;overflow:visible}.analyse-courbe text{font:11px system-ui;fill:var(--doux)}
+.analyse-anneau{display:grid;grid-template-columns:140px minmax(0,1fr);gap:16px;align-items:center;min-height:170px}.analyse-anneau svg{display:block;width:140px;max-width:100%;height:auto}.anneau-total{font:700 24px system-ui;fill:var(--texte)}.anneau-unite{font:10px system-ui;fill:var(--doux)}
+.analyse-legende{list-style:none;padding:0;margin:0;font-size:12px}.analyse-legende li{display:flex;gap:6px;align-items:center;margin:8px 0}.analyse-legende i{width:8px;height:8px;border-radius:50%;flex:none}.analyse-legende li>span{flex:1;min-width:0;overflow-wrap:anywhere}.analyse-legende b{font-variant-numeric:tabular-nums}.analyse-legende small{width:32px;text-align:right;color:var(--doux);font-size:10px}
+.analyse-barre{margin:0 0 14px}.analyse-barre-tete{display:flex;justify-content:space-between;gap:12px;font-size:12px}.analyse-barre-tete span{min-width:0;overflow-wrap:anywhere}.analyse-barre-tete b{white-space:nowrap;color:var(--accent);font-variant-numeric:tabular-nums}.analyse-barre-tete b.neg{color:var(--graph-neg)}
+.analyse-piste{position:relative;height:10px;margin:5px 0;background:var(--accent-f)}.analyse-piste:after{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--doux)}.analyse-piste i{position:absolute;top:0;bottom:0;min-width:0}.analyse-barre>small{font-size:10px;color:var(--doux)}
+.analyse-survol{display:block;font-size:11px;color:var(--doux);min-height:18px;overflow-wrap:anywhere;margin-top:5px}.analyse-absence{color:var(--doux);font-size:12px;min-height:100px;display:grid;place-items:center;text-align:center}
+.analyse-marque:focus-visible,.analyse-barre:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.analyse-valeurs{font-size:11px;color:var(--doux);margin:8px 0}.analyse-valeurs summary{min-height:30px;font-weight:500}.analyse-valeurs ul{list-style:none;padding:0;margin:0}.analyse-valeurs li{display:grid;grid-template-columns:1fr auto;gap:3px;padding:7px 0;border-bottom:1px solid var(--ligne)}.analyse-valeurs small{grid-column:1/-1}
+@media(max-width:760px){.analyse-filtres{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.analyse-filtres select{font-size:12px}.analyse-kpis{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:16px}.analyse-kpis>div{padding:12px;border-right:0!important;border-bottom:1px solid var(--ligne)!important}.analyse-kpis>div:nth-child(odd){border-right:1px solid var(--ligne)!important}.analyse-kpis>div:nth-last-child(-n+2){border-bottom:0!important}.analyse-kpis strong{font-size:23px}.analyse-kpis small{font-size:9px}.analyse-grille{grid-template-columns:minmax(0,1fr);gap:12px}.analyse-figure h3{font-size:16px}.analyse-anneau{grid-template-columns:130px minmax(0,1fr);gap:12px}.analyse-anneau svg{width:130px}.analyse-courbe{max-height:none}.analyse-large{grid-column:1}.analyse-figure figcaption p{font-size:11px}.palette-label{font-size:9px}.palette-label select{font-size:10px;min-height:25px}.titre{align-items:center}.analyse-graph-valeur{font-size:23px}}

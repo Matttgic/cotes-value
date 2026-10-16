@@ -271,13 +271,15 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]]) -> dict:
     Une ligne = une prise enregistrée (référence comprise), prix/date exacts.
     La CLV exportée est uniquement celle de clôture validée, comme dans le bilan.
     """
-    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence"]
+    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence", "mise", "unique_bilan"]
+    uniques = premiers_par_selection(paris)
     convergents = paris_convergence(paris, retenus)
     rows = []
     for p in sorted(paris, key=lambda p: p.get("detecte") or "", reverse=True):
         f = {k: p.get(k) for k in CHAMPS_FICHE}
         f.update(simulation=p.get("simulation"), clv=clv_finale(p), tranche=tranche(p["cote"]) if p.get("cote") else None,
-                 strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents)
+                 strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents,
+                 mise=p.get("mise"), unique_bilan=id(p) in uniques)
         rows.append([f[k] for k in champs])
     return {"champs": champs, "lignes": rows}
 
@@ -501,6 +503,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
     html = html.replace("__VISUELS_JS__", (web / "visuels.js").read_text(encoding="utf-8"))
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
+    html = html.replace("__ANALYSES_JS__", (web / "analyses.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
@@ -528,7 +531,7 @@ MODELE = r"""<!doctype html>
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
 <header class="haut">
-  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><span class="signature">Observer. Comparer. Suivre.</span></div></div>
+  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><label class="signature palette-label">Couleurs <select id="palette-site" aria-label="Couleurs du site"><option value="bleu">Bleu</option><option value="violet">Violet</option><option value="graphite">Graphite</option></select></label></div></div>
     <div class="mise-a-jour"><span class="maj" id="maj"></span><span id="fraicheur" class="fraicheur"></span></div></div>
   <nav id="onglets" aria-label="Navigation principale">
     <button data-o="jouer"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 15 9-15 9V3Z"/></svg><span>À jouer<span class="nb" id="nb-jouer"></span></span></button>
@@ -537,6 +540,7 @@ MODELE = r"""<!doctype html>
     <button data-o="bilan"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11l4 3 8-11M16 3h5v5M3 21h18"/></svg><span>Bilan</span></button>
     <button id="nav-plus-toggle" aria-expanded="false" aria-controls="nav-secondaires"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>Plus</span></button>
     <div class="nav-secondaires" id="nav-secondaires">
+    <button data-o="analyses"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9h9A9 9 0 1 1 12 3Z"/><path d="M15 3.5A8 8 0 0 1 20.5 9H15Z"/></svg><span>Analyses</span></button>
     <button data-o="segments"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>Segments</span></button>
     <button data-o="notifications"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Notifications</span></button>
     <button data-o="regler"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>À régler<span class="nb" id="nb-regler"></span></span></button>
@@ -599,6 +603,7 @@ MODELE = r"""<!doctype html>
     Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.</p></details>
   </section>
   <section class="onglet" id="o-strategies">
+    <div class="raccourci-analyses"><a href="#analyses">Analyses et graphiques <span aria-hidden="true">↗</span></a></div>
     <div class="page-tete tete-strategies"><div><h2>Stratégies</h2><p class="sous-texte">Suivi simulé · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
     <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
     <div class="filtres filtres-strategies">
@@ -713,6 +718,23 @@ MODELE = r"""<!doctype html>
     <div id="liste-paris"></div>
     <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
   </section>
+  <section class="onglet" id="o-analyses" aria-label="Analyses">
+    <div class="page-tete"><div><p class="surtitre">Données et tendances</p><h2>Analyses</h2><p class="sous-texte">Résultats, volume et qualité des cotes.</p></div><span class="periode-badge" id="analyse-periode-badge">Suivi prospectif</span></div>
+    <div class="analyse-filtres">
+      <label for="analyse-selection">Sélection<select id="analyse-selection"><option value="uniques">Paris uniques · Bilan</option></select></label>
+      <label for="analyse-periode">Période<select id="analyse-periode"><option value="futur">Suivi prospectif</option><option value="ensemble">Historique 7–13 oct.</option><option value="tout">Tout l’historique</option></select></label>
+      <label for="analyse-sport">Sport<select id="analyse-sport"><option value="">Tous les sports</option></select></label>
+      <label for="analyse-book">Bookmaker<select id="analyse-book"><option value="">Tous les bookmakers</option></select></label>
+    </div>
+    <p class="aide" id="analyse-contexte" aria-live="polite"></p>
+    <div id="analyse-kpis" class="analyse-kpis"></div>
+    <div id="analyse-vide" class="vide" hidden>Aucun pari pour cette sélection. Change la période, le sport ou le bookmaker.</div>
+    <div id="analyse-graphiques" class="analyse-grille"></div>
+    <details class="mode-emploi"><summary>Comptage, dates et limites</summary><p>Les paris uniques reprennent exactement la déduplication du Bilan, avant les filtres. Les stratégies utilisent leurs sélections enregistrées, sans votes supplémentaires. Leurs prises peuvent se recouper.</p>
+      <p>Gain et ROI portent sur les mises réglées. Les paris en attente restent hors du ROI ; les demi-gains et demi-pertes restent distingués dans la répartition. La CLV utilise seulement les clôtures validées et affiche sa couverture. La réussite compte les gagnés et demi-gagnés parmi tous les réglés, comme dans Stratégies.</p>
+      <p>L’historique 7–13 octobre utilise le relevé figé du laboratoire. Le suivi prospectif respecte le démarrage propre à chaque stratégie. « Tout l’historique » utilise les règlements actuels, y compris les règlements tardifs. Ces graphiques ne prédisent pas les gains futurs.</p>
+    </details>
+  </section>
   <section class="onglet" id="o-notifications">
     <div class="page-tete"><div><p class="surtitre">Tes stratégies, au bon moment</p><h2>Les notifications</h2><p class="sous-texte">Choisis les alertes à recevoir sur cet appareil.</p></div></div>
     <p class="aide">Reçois les nouvelles sélections des stratégies choisies, même lorsque cet onglet est fermé.
@@ -783,11 +805,12 @@ function ouvrir(o) {
     b.classList.toggle("actif", b.dataset.o===o);
     if (b.dataset.o===o) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
   });
-  menuPlus.classList.toggle("actif", ["segments","notifications","regler","controle"].includes(o));
+  menuPlus.classList.toggle("actif", ["analyses","segments","notifications","regler","controle"].includes(o));
   fermerMenu();
   document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+o));
   ecrire("onglet", o); history.replaceState(null, "", "#"+o);
   if (o === "strategies") requestAnimationFrame(() => rendreStrategies());
+  if (o === "analyses") requestAnimationFrame(() => rendreAnalyses());
   if (o === "bilan") requestAnimationFrame(() => rendreCourbe());
 }
 document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => {ouvrir(b.dataset.o);window.scrollTo(0,0);});
@@ -810,7 +833,7 @@ const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
 const carteActuelle = o => `<details class="ligne-detail ligne-pari ${o.strategies.length ? "ligne-validee" : ""}" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
-<span class="ligne-nom" title="${e(o.domicile+' – '+o.exterieur+' · '+o.pari)}">${e(o.domicile)} – ${e(o.exterieur)} <span class="ligne-selection">· ${e(o.pari)}</span></span>
+<span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>
 <span class="ligne-book" title="${e(o.bookmaker)}">${monogrammeBookmaker(o.bookmaker)}</span><b class="ligne-cote" aria-label="Cote ${cote(o.cote)}">${cote(o.cote)}</b><b class="ligne-valeur pos" aria-label="Edge ${pct(o.ecart)}">${pct(o.ecart)}</b></summary><div class="ligne-corps"><article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
 <div class="op-meta"><span class="sport-identite">${iconeSport(o.sport)}${e(nomsSports[o.sport] || o.sport || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
 <h3 class="op-match">${e(o.domicile)} – ${e(o.exterieur)}</h3>
@@ -1057,7 +1080,7 @@ document.getElementById("export-csv").onclick = () => {
   setTimeout(() => URL.revokeObjectURL(url),1000);
 };
 const carteParis = p => `<details class="ligne-detail ligne-pari" id="pari-${e(encodeURIComponent(JSON.stringify([p.id,p.bookmaker,p.match_id,p.pari,p.detecte,p.reference])))}"><summary>
-<span class="ligne-nom" title="${e(p.domicile+' – '+p.exterieur+' · '+p.pari)}">${e(p.domicile)} – ${e(p.exterieur)} <span class="ligne-selection">· ${e(p.pari)}</span></span>
+<span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span><span class="pari-bookmaker">${e(p.bookmaker)}</span>
 <span class="ligne-book" title="${e(p.bookmaker)}">${e((p.bookmaker || '?').slice(0,1))}</span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b>
 <span class="ligne-valeur ${signe(p.gain)}" title="${e(STATUTS[p.statut]||p.statut)}">${p.gain!=null?eur(p.gain):e(p.a_regler?'À régler':'En cours')}</span></summary><div class="ligne-corps"><article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${p.reporte_au && p.statut === "en_cours"
@@ -1619,13 +1642,15 @@ rendreLaboratoire();
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
 const depart = location.hash.slice(1) || lire("onglet") || "jouer";
 __NOTIFICATIONS_JS__
-const ONGLETS = ["jouer","bilan","strategies","segments","paris","notifications","regler","controle"];
+const ONGLETS = ["jouer","bilan","strategies","segments","paris","notifications","regler","controle","analyses"];
 ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 
+__ANALYSES_JS__
+initialiserAnalyses();
 initialiserInterface();
 __ACTUALISATION_JS__
-const champsVue = ["f-q", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle"];
+const champsVue = ["f-q", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
 const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +
   (d.querySelector("summary")?.textContent || "").replace(/\d+/g,"#").trim();
 installerActualisation({
@@ -1653,7 +1678,7 @@ installerActualisation({
     periodeStrategies = s.periodeStrategies in STRAT_PERIODES ? s.periodeStrategies : "futur";
     courbesMasquees.clear();
     for (const id of s.courbes || []) courbesMasquees.add(id);
-    rendreJouer(); rendreBilan(); rendreParis(); rendreSegments(); rendreControle(); rendreStrategies();
+    rendreJouer(); rendreBilan(); rendreParis(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
     document.getElementById("labo-regle")?.onchange?.();
     adapterTableaux();
     for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));
