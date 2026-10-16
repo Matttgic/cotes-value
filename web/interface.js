@@ -70,7 +70,7 @@ function adapterTableaux() {
         valeur.textContent=carte.querySelector('.badge,.pos,.neg')?.textContent || 'Détails';
         const corps=document.createElement('div');corps.className='ligne-corps';summary.append(nom,valeur);
         if(conteneur.id!=='ctl-liste') {
-          const texte=carte.querySelector('.l3 > span, :scope > div')?.textContent?.trim();
+          const texte=(carte.querySelector('.l3 > span') || carte.querySelector(':scope > div'))?.textContent?.trim();
           if(texte) {const pari=document.createElement('span');pari.className='pari-selection';pari.textContent=texte;summary.append(pari);d.classList.add('secondaire-pari');}
         }
         carte.before(d);corps.append(carte);d.append(summary,corps);

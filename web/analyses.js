@@ -173,10 +173,14 @@ function rendreAnalyses() {
 }
 function initialiserAnalyses() {
   const selection=document.getElementById('analyse-selection');
-  for(const [id] of Object.entries(D.laboratoire?.navigation?.selections || {})) {
+  const choix=Object.keys(D.laboratoire?.navigation?.selections || {}).map(id=>({id,regle:D.laboratoire.resultats?.find(r=>r.regle.id===id)?.regle}));
+  choix.sort((a,b)=>Number(Boolean(a.regle))-Number(Boolean(b.regle)));
+  const groupes=new Map();
+  for(const {id,regle} of choix) {
+    const nomGroupe=regle?regle.reference:'Comparateurs';
+    if(!groupes.has(nomGroupe)) {const groupe=document.createElement('optgroup');groupe.label=nomGroupe;groupes.set(nomGroupe,groupe);selection.append(groupe);}
     const option=document.createElement('option');option.value=id;
-    const regle=D.laboratoire.resultats?.find(r=>r.regle.id===id)?.regle;
-    option.textContent=D.variantes?.[id]?.nom || (regle?`${regle.reference} · ${id}`:id.replace(' (rejeu)',''));selection.append(option);
+    option.textContent=D.variantes?.[id]?.nom || (regle?`${regle.reference} · ${id}`:id.replace(' (rejeu)',''));groupes.get(nomGroupe).append(option);
   }
   for(const [id,champ] of [['analyse-sport','sport'],['analyse-book','bookmaker']]) {
     const sel=document.getElementById(id);for(const val of [...new Set(fiches.filter(p=>p.reference!=='Pinnacle brut').map(p=>p[champ]).filter(Boolean))].sort()) {const o=document.createElement('option');o.value=val;o.textContent=nomsSports[val] || val;sel.append(o);}
