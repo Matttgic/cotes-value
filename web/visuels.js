@@ -37,9 +37,10 @@ function repartitionResultats(s) {
   const n=s.regles || 0;
   if (!n) return '<div class="resultats-vides">Aucun pari réglé sur cette période</div>';
   const autres=Math.max(0,n-s.gagnes-s.perdus);
+  const libelleAutres=autres===1?'autre réglé':'autres réglés';
   const parts=[[s.gagnes,'gagnants'],[s.perdus,'perdants'],[autres,'autres']];
-  return `<div class="resultats-repartition" role="img" aria-label="${s.gagnes} gagnés, ${s.perdus} perdus, ${autres} autres réglés">${parts.filter(([n])=>n>0).map(([v,c])=>`<span class="${c}" style="width:${100*v/n}%"></span>`).join('')}</div>
-    <div class="resultats-legende"><span><i class="point-gagne"></i>${s.gagnes} gagnés</span><span><i class="point-perdu"></i>${s.perdus} perdus</span>${autres ? `<span>${autres} autres réglés</span>` : ''}</div>`;
+  return `<div class="resultats-repartition" role="img" aria-label="${s.gagnes} gagnés, ${s.perdus} perdus, ${autres} ${libelleAutres}">${parts.filter(([n])=>n>0).map(([v,c])=>`<span class="${c}" style="width:${100*v/n}%"></span>`).join('')}</div>
+    <div class="resultats-legende"><span><i class="point-gagne"></i>${s.gagnes} gagnés</span><span><i class="point-perdu"></i>${s.perdus} perdus</span>${autres ? `<span>${autres} ${libelleAutres}</span>` : ''}</div>`;
 }
 function couvertureCLV(s) {
   const n=s.clv_n || 0,total=s.regles || 0,largeur=total?Math.min(100,100*n/total):0;

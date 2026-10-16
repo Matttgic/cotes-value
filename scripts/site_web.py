@@ -603,7 +603,7 @@ MODELE = r"""<!doctype html>
     <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
     <div class="filtres filtres-strategies">
       <div class="champ"><label for="strategies-ref">Afficher</label>
-      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs" selected>Comparateurs + variantes</option></select></div>
+      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs" selected>Comparateurs</option></select></div>
       <div class="champ"><label for="strategies-tri">Classer par</label>
       <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
     </div>

@@ -21,7 +21,7 @@ test('les mini-courbes distinguent absence de données et gain nul',()=>{
 });
 test('les remboursements et autres règlements ne sont pas assimilés à des pertes',()=>{
   const html=fn('repartitionResultats')({regles:10,gagnes:6,perdus:3});
-  assert.ok(html.includes('6 gagnés, 3 perdus, 1 autres réglés'));
+  assert.ok(html.includes('6 gagnés, 3 perdus, 1 autre réglé'));
   assert.ok(html.includes('width:60%') && html.includes('width:30%') && html.includes('width:10%'));
   assert.ok(!fn('repartitionResultats')({regles:0}).includes('resultats-repartition'));
 });
