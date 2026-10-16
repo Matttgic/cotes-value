@@ -49,7 +49,10 @@ function couvertureCLV(s) {
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   const code=r.nom.startsWith('Convergence')?'CV':r.nom.startsWith('Claude')?'CL':r.nom.startsWith('Gemini')?'GA':r.nom.startsWith('JULES')?'JL':r.nom.startsWith('M3')?'M3':r.nom.startsWith('ChatGPT')?'GP':'RF';
-  return `<article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
+  return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nom)}</span><span class="ligne-volume" aria-label="${s.regles} paris réglés">${s.regles}</span>
+    <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
+    <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><span class="strategie-avatar" aria-hidden="true">${code}</span><h3>${e(r.nom)}</h3></div>
     <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button></div>
     <div class="strategie-apercu"><div><span class="libelle-gain">Gain net simulé</span><strong class="${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</strong></div>
@@ -61,5 +64,5 @@ function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
     </dl>${repartitionResultats(s)}
     <details><summary>Règles et détail des résultats</summary><p>${e(r.detail)}</p>
       <div class="strat-secondaires"><span>Gains bruts<b class="pos">${s.regles?eur(s.gains_bruts):'—'}</b></span>
-      <span>Pertes<b class="neg">${s.regles?eur(-s.pertes_brutes):'—'}</b></span></div></details></article>`;
+      <span>Pertes<b class="neg">${s.regles?eur(-s.pertes_brutes):'—'}</b></span></div></details></article></div></details>`;
 }

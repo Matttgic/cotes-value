@@ -256,3 +256,51 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
   .strategie-visuelle .strat-chiffres{grid-template-columns:repeat(3,minmax(0,1fr))}.strategie-visuelle .strat-chiffres dd{font-size:18px}.strategie-visuelle .strategie-entete h3{font-size:14px}.strategie-identite{gap:8px}.strategie-avatar{width:29px;height:29px;font-size:10px}.strategie-visuelle .strategie-entete .btn{font-size:10px;padding:8px 7px}.strategie-apercu strong{font-size:26px}
   .mode-emploi summary{font-size:11px}.strategie-visuelle details{font-size:11px}.infos div{font-size:11px}
 }
+
+/* Vue quotidienne dense : un résumé par ligne, détails ouverts sur place. */
+[hidden]{display:none!important}
+#liste-jouer,#liste-paris,#liste-regler{display:block}
+.strategies-mobile{display:block}.comparaison-bureau{display:none}
+.ligne-detail{margin:0;border:0;border-bottom:1px solid var(--ligne);background:transparent;border-radius:0;min-width:0}
+.ligne-detail>summary{display:flex;align-items:center;gap:8px;min-height:46px;padding:8px 2px;list-style:none;font-size:12px;line-height:1.35;font-weight:500;white-space:nowrap;cursor:pointer}
+.ligne-detail>summary::-webkit-details-marker{display:none}
+.ligne-detail>summary::before{content:'›';font-size:20px;color:var(--doux);width:10px;flex:none;line-height:1;transition:transform .15s}
+.ligne-detail[open]>summary::before{transform:rotate(90deg)}
+.ligne-detail>summary:hover{background:var(--accent-f)}
+.ligne-detail>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px}
+.ligne-nom{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.ligne-selection{font-weight:400;color:var(--doux)}
+.ligne-volume{width:28px;flex:none;text-align:right;color:var(--doux);font-variant-numeric:tabular-nums}
+.ligne-roi{width:53px;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+.ligne-valeur{width:68px;flex:none;text-align:right;font-size:11px;font-variant-numeric:tabular-nums}
+.ligne-cote{width:36px;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+.ligne-book{width:16px;flex:none;text-align:center;color:var(--doux);font-weight:700;text-transform:uppercase}
+.ligne-book .book-monogramme{display:block;font-size:11px;background:none;color:inherit}
+.ligne-corps{padding:8px 10px 14px;background:var(--carte);border-left:2px solid var(--accent);white-space:normal}
+.ligne-corps>.carte,.ligne-corps>.strategie-visuelle{margin:0;border:0!important;border-radius:0;box-shadow:none;padding:8px!important;background:transparent}
+.ligne-corps .match{white-space:normal;overflow:visible}.ligne-corps .op-match{overflow-wrap:anywhere}
+.ligne-colonnes{display:flex;gap:8px;padding:7px 2px 7px 20px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--doux);border-bottom:1px solid var(--ligne)}
+.ligne-colonnes>span:first-child{flex:1}.ligne-colonnes>span:nth-child(2){width:28px;text-align:right}.ligne-colonnes>span:nth-child(3){width:53px;text-align:right}.ligne-colonnes>span:last-child{width:68px;text-align:right}
+.ligne-mesure{flex:none;max-width:29%;overflow:hidden;text-overflow:ellipsis;text-align:right;font-size:10px;color:var(--doux);font-variant-numeric:tabular-nums}
+.bilan-champs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:13px}.bilan-champs>div{min-width:0;overflow-wrap:anywhere}.bilan-champs small{display:block;color:var(--doux);font-size:11px}.champ-libelle{display:block;color:var(--doux);font-size:10px;margin-bottom:3px}
+.bilan-champs select{max-width:100%}
+.ligne-corps .strategie-entete{display:flex;justify-content:space-between;gap:10px}.ligne-corps .strat-chiffres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.ligne-corps .strat-chiffres dd{margin:0}
+.ligne-corps .seg{cursor:default}.seg-paris .ligne-secondaire{padding:0}.seg-paris .sp{border:0}
+#liste-regler>details.carte{border-radius:0;margin:0;border-width:0 0 1px;padding:0;background:transparent}
+#liste-regler>details.carte>summary{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:46px;padding:12px 2px;margin:0;font-size:12px}
+#liste-regler>details.carte[open]{padding-bottom:12px}#liste-regler>details.carte[open]>summary{white-space:normal}
+.page-tete{margin-bottom:10px;gap:8px}.page-tete h2{font-size:24px}.sous-texte{margin:3px 0}.sous-titre{margin:18px 0 6px;font-size:16px}
+.mode-emploi{margin:6px 0 10px}.mode-emploi>summary{min-height:36px;display:flex;align-items:center;font-size:11px}.mode-emploi[open]>summary{margin-bottom:8px}
+.vue-strategies-toggle{margin:6px 0 8px;padding:2px}.vue-strategies-toggle button{min-height:36px}
+.resume-cotes{gap:6px}.resume-cotes svg{width:36px;height:36px}.resume-cotes b{font-size:12px}.resume-cotes>div>span{font-size:10px}
+.puces{gap:5px;margin-bottom:8px}.puces button{min-height:36px;font-size:11px;padding:6px 8px}
+.filtres-strategies{margin-bottom:6px}.filtres-strategies select{min-height:40px}.filtres-strategies .champ label{font-size:10px}
+.notif-choix{min-height:44px;padding:6px 0;font-size:12px}
+.infos{display:flex;gap:12px;flex-wrap:wrap}.infos div{display:flex;gap:6px;align-items:baseline;padding:4px 0;border:0;background:transparent;font-size:10px}.infos b{font-size:15px;margin:0}
+@media(min-width:761px){.ligne-detail>summary{font-size:13px;min-height:44px}.ligne-valeur{width:100px;font-size:13px}.ligne-roi{width:80px}.ligne-volume{width:50px}.ligne-colonnes>span:nth-child(2){width:50px}.ligne-colonnes>span:nth-child(3){width:80px}.ligne-colonnes>span:last-child{width:100px}.ligne-mesure{max-width:25%;font-size:12px}.bilan-champs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:760px){main{padding-top:16px;padding-left:12px;padding-right:12px}.page-tete.tete-strategies{flex-direction:row;align-items:center;margin-bottom:10px}.page-tete.tete-compacte{flex-direction:row;align-items:center}.tete-compacte .compteurs{width:auto}.resume-cotes svg{display:none}.resume-cotes>div>span{font-size:9px}.resume-cotes b{font-size:11px}.page-tete h2{font-size:23px}.grille-filtres{gap:8px;margin-top:8px}.outils-paris{margin-bottom:8px}#strategies-periodes{gap:5px}#strategies-periodes button{min-height:40px;font-size:11px}#strategies-total{font-size:10px}.tete-strategies .sous-texte{font-size:10px}.periode-badge{font-size:9px;padding:5px}.ligne-corps .strategie-entete h3{font-size:14px}}
+#o-strategies>details.carte{padding:0;border:0;border-bottom:1px solid var(--ligne);border-radius:0;background:transparent;margin:0}
+#o-strategies>details.carte>summary{min-height:44px;padding:12px 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:12px}
+#o-strategies>details.carte[open]{padding-bottom:12px}#o-strategies>details.carte[open]>summary{white-space:normal}
+.ligne-mesure.pos{color:var(--vert)}.ligne-mesure.neg{color:var(--rouge)}
+.filtres-depliables{border-bottom:1px solid var(--ligne)}.filtres-depliables>summary::before{content:'›';font-size:18px;margin-right:8px}.filtres-depliables[open]>summary::before{transform:rotate(90deg)}

@@ -37,3 +37,19 @@ def test_document_autonome_navigation_unique_et_apercu(tmp_path):
     assert "function installerActualisation" in html
     assert "function adapterTableaux" in html
     assert (tmp_path / "site/verification-responsive.html").exists()
+
+
+def test_lignes_compactes_et_toutes_les_references_par_defaut():
+    from scripts.site_web import MODELE
+    # Les références sont toujours consultables sans changer le filtre initial.
+    assert '<option value="" selected>Toutes</option>' in MODELE
+    assert '<option value="comparateurs" selected>' not in MODELE
+    # Les deux listes principales utilisent un dépliage natif, pas une modale.
+    for nom in ('carteActuelle', 'carteParis'):
+        debut = MODELE.index('const '+nom)
+        bloc = MODELE[debut:MODELE.index('`;', debut)]
+        assert '<details class="ligne-detail ligne-pari"' in bloc
+        assert '</summary><div class="ligne-corps">' in bloc
+    assert '"#liste-segments > details"' in MODELE
+    assert 'd.ontoggle' in MODELE
+    assert 's.presentation !== "lignes-v1"' in MODELE

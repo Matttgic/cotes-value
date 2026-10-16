@@ -26,6 +26,7 @@ for(const [id,value] of Object.entries({'f-q':'Équipe Lyon','f-book':'Winamax',
 const document={getElementById:id=>elements.get(id),querySelectorAll:()=>[]};
 const window={scrollY:320,scrollTo:(x,y)=>assert.equal(y,320)};
 const requestAnimationFrame=fn=>fn();
+const adapterTableaux=()=>{};
 const FILTRES={book:[]}, CUMULS=[[]], TRIS={roi:''}, STRAT_PERIODES={ensemble:''};
 let filtreJouer='claude_prudent',sportJouer='tennis',refBilan='Stratégie',cumul=0,limite=150,
     strategieChoisie={id:'Claude (rejeu)',nom:'Claude',periode:'ensemble'},triSeg='roi',ctlVue='conforme',periodeStrategies='ensemble';

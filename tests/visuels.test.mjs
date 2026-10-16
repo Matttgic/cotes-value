@@ -46,7 +46,19 @@ test('les deux vues graphiques / comparaison se remplacent et le choix est mémo
   const code=readFileSync(new URL('../web/interface.js',import.meta.url),'utf8');
   vm.runInContext(code.slice(code.indexOf('function choisirVueStrategies'),code.indexOf('function connexion')),ctx);
   ctx.choisirVueStrategies('graphiques');assert.equal(zones['strategies-vue-liste'].hidden,true);
-  assert.equal(etats.get('graphiques:aria-pressed'),'true');assert.equal(etats.get('cv-vue-strategies'),'graphiques');
+  assert.equal(etats.get('graphiques:aria-pressed'),'true');assert.equal(etats.get('cv-vue-strategies-lignes'),'graphiques');
   ctx.choisirVueStrategies('liste');assert.equal(zones['strategies-vue-graphiques'].hidden,true);
   assert.equal(etats.get('liste:aria-pressed'),'true');
+});
+test('une stratégie se déplie sur place, avec un bouton distinct pour ses paris',()=>{
+  const r={id:'Betfair <1>',nom:'Betfair · B01',detail:'Critères complets',reussite:60,
+    stats:{regles:10,paris:12,attente:2,gagnes:6,perdus:4,gain:12,roi:12,clv:2,clv_n:8,gains_bruts:52,pertes_brutes:40}};
+  const html=fn('carteStrategieVisuelle')(r,[[1,-10],[2,12]]);
+  assert.ok(html.startsWith('<details class="ligne-detail ligne-strategie"'));
+  const summary=html.slice(0,html.indexOf('</summary>'));
+  assert.ok(summary.includes('Betfair · B01') && summary.includes('10 paris réglés'));
+  assert.ok(!summary.includes('<button') && !summary.includes('<svg'));
+  assert.ok(html.includes('data-strategie="Betfair &lt;1>"'));
+  assert.ok(html.indexOf('mini-courbe')>html.indexOf('ligne-corps'));
+  assert.ok(html.includes('8/10 mesurés') && html.includes('6 gagnés, 4 perdus'));
 });

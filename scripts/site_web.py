@@ -565,10 +565,10 @@ MODELE = r"""<!doctype html>
     <button id="voir-gemini" hidden>Voir les paris Gemini Argon</button>
     <button id="voir-jules" hidden>Voir les paris JULES EDGE</button>
     <button id="voir-jules-v2" hidden>Voir les paris JULES EDGE v2</button>
-    <div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
+    <details id="bilan-evolution" class="mode-emploi"><summary>Évolution du bilan</summary><div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
     </div><div class="legende" id="legende"></div>
     <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
-    <div class="bulle" id="bulle"></div></div>
+    <div class="bulle" id="bulle"></div></div></details>
     <div class="tableau"><table id="liste-bilan"></table></div>
     <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
     <h2 class="sous-titre">Par bookmaker</h2>
@@ -603,7 +603,7 @@ MODELE = r"""<!doctype html>
     <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
     <div class="filtres filtres-strategies">
       <div class="champ"><label for="strategies-ref">Afficher</label>
-      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs" selected>Comparateurs</option></select></div>
+      <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option></select></div>
       <div class="champ"><label for="strategies-tri">Classer par</label>
       <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
     </div>
@@ -613,6 +613,7 @@ MODELE = r"""<!doctype html>
       <button data-vue-strategies="graphiques" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 6-6 4 3 8-10M3 21h18"/></svg>Graphiques</button>
     </div>
     <div id="strategies-vue-liste">
+    <div class="ligne-colonnes" aria-hidden="true"><span>Stratégie</span><span>Réglés</span><span>ROI</span><span>Net</span></div>
     <div id="strategies-mobile" class="strategies-mobile" aria-label="Comparaison des stratégies"></div>
     <div class="tableau comparaison-bureau" aria-label="Comparaison des stratégies"><table class="strategies-table" id="strategies-table"></table></div>
     <details class="mode-emploi"><summary>Comment lire les chiffres</summary><p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
@@ -637,7 +638,7 @@ MODELE = r"""<!doctype html>
       <p class="aide"><b>Claude 1/match · max 10/j</b> : critères Claude, première prise par événement, dix prises maximum par jour.</p>
       <p class="aide"><b>Convergence ≥3 hors M3</b> : accord d'au moins trois familles parmi Claude, ChatGPT, Gemini et Jules, puis un seul pari par match. Jules v1/v2 donnent un seul vote.</p>
       <p class="aide">Mises fictives uniformes de 10 €. Le rejeu est exploratoire et ne valide pas leur rentabilité.
-      Touche leur ligne dans le tableau pour voir les paris de la période choisie.
+      Déplie leur ligne, puis touche « Les paris » pour voir les prises de la période choisie.
       <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/variantes-prudentes.md" target="_blank" rel="noopener">Règles figées</a>.</p>
       <div id="prudentes-picks"></div>
       <details><summary>Reconstitution exploratoire depuis le 14/10 à 14 h</summary>
@@ -808,7 +809,9 @@ const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 600
 const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
-const carteActuelle = o => `<article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
+const carteActuelle = o => `<details class="ligne-detail ligne-pari" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
+<span class="ligne-nom" title="${e(o.domicile+' – '+o.exterieur+' · '+o.pari)}">${e(o.domicile)} – ${e(o.exterieur)} <span class="ligne-selection">· ${e(o.pari)}</span></span>
+<span class="ligne-book" title="${e(o.bookmaker)}">${monogrammeBookmaker(o.bookmaker)}</span><b class="ligne-cote" aria-label="Cote ${cote(o.cote)}">${cote(o.cote)}</b><b class="ligne-valeur pos" aria-label="Edge ${pct(o.ecart)}">${pct(o.ecart)}</b></summary><div class="ligne-corps"><article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
 <div class="op-meta"><span class="sport-identite">${iconeSport(o.sport)}${e(nomsSports[o.sport] || o.sport || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
 <h3 class="op-match">${e(o.domicile)} – ${e(o.exterieur)}</h3>
 <p class="op-pari">${e(o.pari)}</p>
@@ -818,7 +821,7 @@ const carteActuelle = o => `<article class="carte opportunite ${o.strategies.len
 ${o.strategies.length ? `<div class="op-validation">Prise enregistrée le ${quand(o.validation_detecte)}</div>` : ""}
 <div class="op-reference">${(() => { const r=o.refs.find(r=>r.ecart===o.ecart) || o.refs[0];
   return `Cote juste <b>${cote(r.cote_juste)}</b> · ${e(r.reference)}` + (o.refs.length>1 ? `<details><summary>Les ${o.refs.length} références</summary><p>${o.refs.map(r=>`${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join(" · ")}</p></details>` : "");})()}</div>
-</article>`;
+</article></div></details>`;
 const age = minutes(dc.debut);
 document.getElementById("jouer-quand").textContent = dc.debut ? `Relevé à ${hm(dc.debut)}` +
   (age != null ? ` (il y a ${age} min)` : "") + `. La cote a pu bouger depuis : vérifie-la avant de jouer.` : "";
@@ -1053,7 +1056,10 @@ document.getElementById("export-csv").onclick = () => {
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url),1000);
 };
-const carteParis = p => `<article class="carte">
+const carteParis = p => `<details class="ligne-detail ligne-pari" id="pari-${e(encodeURIComponent(JSON.stringify([p.id,p.bookmaker,p.match_id,p.pari,p.detecte,p.reference])))}"><summary>
+<span class="ligne-nom" title="${e(p.domicile+' – '+p.exterieur+' · '+p.pari)}">${e(p.domicile)} – ${e(p.exterieur)} <span class="ligne-selection">· ${e(p.pari)}</span></span>
+<span class="ligne-book" title="${e(p.bookmaker)}">${e((p.bookmaker || '?').slice(0,1))}</span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b>
+<span class="ligne-valeur ${signe(p.gain)}" title="${e(STATUTS[p.statut]||p.statut)}">${p.gain!=null?eur(p.gain):e(p.a_regler?'À régler':'En cours')}</span></summary><div class="ligne-corps"><article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${p.reporte_au && p.statut === "en_cours"
   ? "reporté au " + quand(p.reporte_au) : quand(p.debut)}</span></div>
 <div class="l2">${e(p.pari)}</div>
@@ -1064,7 +1070,7 @@ ${badgeStrategies(p)}
 ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
 <span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span></div>
 ${(p.trace||[]).length ? `<details class="trace"><summary>Détails</summary>${p.trace.map(t => `<p>${e(t)}</p>`).join("")}</details>` : ""}
-</article>`;
+</article></div></details>`;
 function rendreParis() {
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
   const navigation = D.laboratoire?.navigation;
@@ -1177,21 +1183,20 @@ function rendreSegments() {
     : "Segments qui gagnent plus souvent que la cote ne le prévoit, du plus net au moins net.";
   document.getElementById("liste-segments").innerHTML = L.length ? L.map((s, i) => {
     const [v, c] = verdict(s);
-    return `<article class="carte seg" data-i="${D.segments.indexOf(s)}">
+    return `<details class="ligne-detail ligne-segment" id="segment-${D.segments.indexOf(s)}" data-i="${D.segments.indexOf(s)}"><summary><span class="ligne-nom">${e(nomSeg(s))}</span><span class="ligne-volume">${s.n} p.</span><span class="ligne-roi ${signe(s.roi)}">${pctC(s.roi)}</span><b class="ligne-valeur ${signe(s.gains)}">${eurC(s.gains)}</b></summary><div class="ligne-corps"><article class="carte seg">
 <div class="l1"><span class="match">${e(nomSeg(s))}</span><span class="badge ${c}">${v}</span></div>
 <div class="l3"><span>${s.n} paris · <b>${s.gagnes} gagnés = ${Math.round(100 * s.gagnes / s.n)} %</b></span>
 <span><i>attendu</i> ${Math.round(100 * s.attendus / s.n)} %</span>
 <span><i>écart</i> <span class="${signe(s.ecart_sigma)}">${s.ecart_sigma > 0 ? "+" : ""}${String(s.ecart_sigma).replace(".", ",")}</span></span></div>
 <div class="l4"><span>ROI <b class="${signe(s.roi)}">${pctC(s.roi)}</b> (${eurC(s.gains)})</span>
 <span>CLV <span class="${signe(s.clv_moyenne)}">${pctC(s.clv_moyenne)}</span> <i>${s.clv_n}/${s.n}</i></span>
-${(n => n ? `<span class="badge en_cours">${n} à venir</span>` : "")(aVenir(s).length)}</div></article>`;
+${(n => n ? `<span class="badge en_cours">${n} à venir</span>` : "")(aVenir(s).length)}</div></article></div></details>`;
   }).join("") : `<div class="vide">Aucun segment pour l'instant.</div>`;
   // toucher un segment déroule ses paris à venir, puis ses paris réglés (ceux qu'il compte), du plus récent au plus ancien
-  document.querySelectorAll("#segments .seg").forEach(a => a.onclick = ev => {
-    if (ev.target.closest(".seg-paris")) return;
-    const ouvert = a.querySelector(".seg-paris");
-    if (ouvert) { ouvert.remove(); return; }
-    const s = D.segments[Number(a.dataset.i)];
+  document.querySelectorAll("#liste-segments > details").forEach(d => d.ontoggle = () => {
+    if (!d.open || d.querySelector(".seg-paris")) return;
+    const a = d.querySelector(".seg");
+    const s = D.segments[Number(d.dataset.i)];
     const L = (D.paris_segments || []).filter(dansSeg(s)), V = aVenir(s);
     a.insertAdjacentHTML("beforeend", `<div class="seg-paris">
 <div class="sp-titre">À venir (${V.length})</div>${V.length ? V.map(x => `<div class="sp">
@@ -1358,7 +1363,7 @@ function rendreStrategies() {
   const pp = n => n == null ? "—" : pct(n/100);
   const bornes = n => String(n).replace(".",",");
   const futur = new Map((L.futur || []).map(r => [r.id,r]));
-  let rows = (L.resultats || []).map(r => ({id:r.regle.id, nom:r.regle.reference, reference:r.regle.reference,
+  let rows = (L.resultats || []).map(r => ({id:r.regle.id, nom:r.regle.reference+" · "+r.regle.id, reference:r.regle.reference,
     detail:`Cotes ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · edge ≥ ${r.regle.edge_min*100} % · ≤ ${r.regle.avance_max_h} h`,
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
     stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
@@ -1472,8 +1477,7 @@ function rendreStrategies() {
   document.getElementById("strategies-mobile").innerHTML=rows.length ? rows.map(r =>
     carteStrategieVisuelle(r,L.navigation?.courbes?.[r.id]?.[periodeStrategies],COULEURS_COMPARATEURS[r.id] || "var(--accent)")).join("")
     : '<div class="vide">Aucune stratégie pour ces filtres. Choisis une autre référence.</div>';
-  // Une ligne = une navigation vers tous les paris de cette stratégie et de la
-  // période choisie, y compris les terminés et ceux absents des fiches récentes.
+  // Le résumé déplie la ligne ; seul le bouton explicite ouvre la liste des paris.
   document.querySelectorAll("#strategies-table tbody tr, #strategies-mobile button[data-strategie]").forEach(tr => {
     const ligne = rows.find(r => r.id === tr.dataset.strategie);
     if (!ligne) return;
@@ -1625,12 +1629,13 @@ installerActualisation({
   version:"__VERSION_SITE__",
   // Les choix de notification restent sous le contrôle de leur formulaire.
   protegee:() => document.getElementById("o-notifications").classList.contains("actif"),
-  capturer:() => ({filtreJouer, sportJouer, refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
+  capturer:() => ({presentation:"lignes-v1", filtreJouer, sportJouer, refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
     courbes:[...courbesMasquees], champs:Object.fromEntries(champsVue.map(id => [id,document.getElementById(id)?.value])),
     details:[...document.querySelectorAll("details[open]")].map(cleDetail), y:window.scrollY,
     defilements:[...document.querySelectorAll("[id]")].filter(x => x.scrollLeft > 0).map(x => [x.id,x.scrollLeft])}),
   restaurer:s => {
     for (const id of champsVue) {
+      if (id === "strategies-ref" && s.presentation !== "lignes-v1") continue;
       const el = document.getElementById(id), valeur = s.champs?.[id];
       if (el && typeof valeur === "string" && (el.tagName !== "SELECT" || [...el.options].some(o => o.value===valeur))) el.value = valeur;
     }
@@ -1647,6 +1652,7 @@ installerActualisation({
     for (const id of s.courbes || []) courbesMasquees.add(id);
     rendreJouer(); rendreBilan(); rendreParis(); rendreSegments(); rendreControle(); rendreStrategies();
     document.getElementById("labo-regle")?.onchange?.();
+    adapterTableaux();
     for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));
     requestAnimationFrame(() => {
       for (const [id,x] of s.defilements || []) {const el=document.getElementById(id); if(el) el.scrollLeft=x;}
