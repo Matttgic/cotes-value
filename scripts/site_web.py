@@ -1666,8 +1666,7 @@ const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +
 installerActualisation({
   version:"__VERSION_SITE__",
   // Les choix de notification restent sous le contrôle de leur formulaire.
-  protegee:() => document.getElementById("o-notifications").classList.contains("actif") ||
-    document.activeElement?.tagName === "SELECT",
+  protegee:() => document.getElementById("o-notifications").classList.contains("actif"),
   capturer:() => ({filtreJouer, refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
     courbes:[...courbesMasquees], champs:Object.fromEntries(champsVue.map(id => [id,document.getElementById(id)?.value])),
     details:[...document.querySelectorAll("details[open]")].map(cleDetail), y:window.scrollY,

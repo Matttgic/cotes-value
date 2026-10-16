@@ -18,6 +18,9 @@ function installerActualisation({version, capturer, restaurer, protegee}) {
   const ouverture = Date.now();
   let enCours = false, navigation = false, derniere = -Infinity, interaction = -Infinity;
   document.addEventListener('input', () => {interaction = Date.now();});
+  document.addEventListener('focusin', ev => {
+    if (['INPUT','SELECT','TEXTAREA'].includes(ev.target?.tagName)) interaction = Date.now();
+  });
   async function verifier() {
     if (document.visibilityState !== 'visible' || enCours || navigation || Date.now()-derniere < 10000) return;
     enCours = true; derniere = Date.now();

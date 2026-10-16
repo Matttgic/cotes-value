@@ -50,7 +50,7 @@ test('pas de rechargement pendant les réglages, la saisie ou une requête déj�
   await p.tic();assert.equal(p.appels.length,1);
   p.proteger(true);terminer({ok:true,json:async()=>({version:B})});await attendre();assert.equal(p.navigations.length,0);
   // Requête suivante résolue immédiatement, mais une saisie vient de commencer.
-  p.proteger(false);const t=p.tic();p.events.input();terminer({ok:true,json:async()=>({version:B})});await t;
+  p.proteger(false);const t=p.tic();p.events.focusin({target:{tagName:'SELECT'}});p.events.input();terminer({ok:true,json:async()=>({version:B})});await t;
   assert.equal(p.navigations.length,0);
   const u=p.tic();terminer({ok:true,json:async()=>({version:B})});await u;assert.equal(p.navigations.length,1);
 });
