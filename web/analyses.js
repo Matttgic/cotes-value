@@ -92,7 +92,7 @@ function barresAnalyse(items,champ,format) {
 }
 function ligneGraphiqueAnalyse(points,libelle) {
   if(!points.length) return videAnalyse('Le graphique apparaîtra après les premiers règlements datés.');
-  const W=380,H=210,g=48,d=12,h=12,b=30;
+  const W=380,H=210,g=60,d=12,h=12,b=30;
   const t0=points[0][0],t1=points.at(-1)[0],valeurs=points.map(p=>p[1]);
   let lo=Math.min(0,...valeurs),hi=Math.max(0,...valeurs);
   if(lo===hi) {lo-=10;hi+=10;}
@@ -108,7 +108,7 @@ function ligneGraphiqueAnalyse(points,libelle) {
 }
 function colonnesAnalyse(items,format,libelle) {
   if(!items.length) return videAnalyse();
-  const W=380,H=205,g=45,d=10,h=14,b=40,max=Math.max(...items.map(x=>Math.abs(x.valeur)),1),neg=items.some(x=>x.valeur<0);
+  const W=380,H=205,g=60,d=10,h=14,b=40,max=Math.max(...items.map(x=>Math.abs(x.valeur)),1),neg=items.some(x=>x.valeur<0);
   const lo=neg?-max:0,hi=max,y=v=>h+(hi-v)/(hi-lo)*(H-h-b),largeur=(W-g-d)/items.length;
   const ticks=neg?[-max,0,max]:[0,max/2,max];
   const axes=ticks.map(v=>`<line x1="${g}" x2="${W-d}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ligne)"/><text x="${g-6}" y="${y(v)+4}" text-anchor="end">${e(format(v))}</text>`).join('');
@@ -142,11 +142,13 @@ function rendreAnalyses() {
   const zone=document.getElementById('analyse-graphiques');if(!zone) return;
   const filtre={selection:document.getElementById('analyse-selection').value,periode:document.getElementById('analyse-periode').value,sport:document.getElementById('analyse-sport').value,book:document.getElementById('analyse-book').value};
   const rows=lignesAnalyse(D,fiches,filtre),s=statsAnalyse(rows);
+  const affiner=document.getElementById('analyse-affiner-titre');
+  if(affiner) affiner.textContent=[nomsSports[filtre.sport] || filtre.sport,filtre.book].filter(Boolean).join(' · ') || 'Sport et bookmaker';
   document.getElementById('analyse-periode-badge').textContent=filtre.periode==='futur'?'Suivi prospectif':filtre.periode==='ensemble'?'Historique figé':'Historique actualisé';
   document.getElementById('analyse-periode-badge').classList.toggle('historique',filtre.periode!=='futur');
   document.getElementById('analyse-contexte').textContent=`${entierAnalyse(s.n)} prises · ${s.regles} réglées · ${s.attente} en attente. `+(filtre.periode==='futur'?'Depuis le 14/10 à 14 h (Paris), ou le lancement propre à la stratégie.':filtre.periode==='ensemble'?`Matchs du 7 au 13/10 · règlements figés au ${quand(D.laboratoire?.releve)}.`:(filtre.selection==='uniques'?'Règlements actuels, archives comprises.':'Sélections historiques et prospectives disponibles, règlements actualisés.'))+(s.connus<s.regles?` ${s.regles-s.connus} gains indisponibles exclus du gain et du ROI.`:'');
   document.getElementById('analyse-vide').hidden=rows.length>0;zone.hidden=!rows.length;
-  const kpis=[['Gain net',argentAnalyse(s.gain),`${argentAnalyse(s.mises).replace(/^\+/, '')} de mises réglées`],['ROI',tauxAnalyse(s.roi),'Gain / mises réglées'],['Paris réglés',entierAnalyse(s.regles),`${s.attente} en attente`],['CLV moyenne',tauxAnalyse(s.clv),`${s.clv_n}/${s.regles} clôtures mesurées`],['Réussite',s.reussite==null?'—':(s.reussite*100).toFixed(1).replace('.',',')+' %','Gagnés et demi-gagnés / réglés'],['Repli maximal',argentAnalyse(s.drawdown),'Baisse depuis un sommet des gains']];
+  const kpis=[['Gain net',argentAnalyse(s.gain),`${argentAnalyse(s.mises).replace(/^\+/, '')} de mises réglées`],['ROI',tauxAnalyse(s.roi),'Gain / mises réglées'],['Paris réglés',entierAnalyse(s.regles),`${s.attente} en attente`],['CLV moyenne',tauxAnalyse(s.clv),`${s.clv_n}/${s.regles} clôtures mesurées`],['Réussite',s.reussite==null?'—':(s.reussite*100).toFixed(1).replace('.',',')+' %','Gagnés et demi-gagnés / réglés'],['Repli maximal',argentAnalyse(s.drawdown==null?null:-s.drawdown),'Baisse depuis un sommet des gains']];
   document.getElementById('analyse-kpis').innerHTML=kpis.map(([nom,val,detail])=>`<div><span>${e(nom)}</span><strong>${e(val)}</strong><small>${e(detail)}</small></div>`).join('');
   if(!rows.length) {zone.innerHTML='';return;}
   const resultats=[['gagne','Gagnés'],['demi_gagne','Demi-gagnés'],['perdu','Perdus'],['demi_perdu','Demi-perdus'],['rembourse','Remboursés']].map(([statut,nom])=>({nom,n:rows.filter(p=>p.statut===statut).length,couleur:({gagne:'var(--accent)',demi_gagne:'#8472bd',perdu:'var(--graph-neg)',demi_perdu:'#b27b24',rembourse:'#64748b'})[statut]}));
@@ -166,7 +168,7 @@ function rendreAnalyses() {
     cadreAnalyse('CLV par référence','Moyenne sur les clôtures validées · couverture sous chaque barre',barresAnalyse(refs,'clv',tauxAnalyse)),
     cadreAnalyse('Distribution des cotes',`${s.n} prises · nombre de paris par tranche`,colonnesAnalyse(cotes,v=>Number.isInteger(v)?entierAnalyse(v):String(v).replace('.',','),'Volume par tranche de cote')),
     cadreAnalyse(quotidien.some(x=>x.nom.length===7)?'Gains par mois':'Gains par jour','Date de règlement, à défaut début du match · heure de Paris',colonnesAnalyse(quotidien,argentAnalyse,'Gains au fil des règlements')),
-    cadreAnalyse('Replis depuis les sommets',`Repli maximal observé : ${argentAnalyse(s.drawdown)} · €`,ligneGraphiqueAnalyse(s.replis,'Repli en cours'),true)
+    cadreAnalyse('Replis depuis les sommets',`Repli maximal observé : ${argentAnalyse(s.drawdown==null?null:-s.drawdown)} · €`,ligneGraphiqueAnalyse(s.replis,'Repli en cours'),true)
   ].join('');
 }
 function initialiserAnalyses() {

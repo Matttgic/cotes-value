@@ -721,11 +721,13 @@ MODELE = r"""<!doctype html>
   <section class="onglet" id="o-analyses" aria-label="Analyses">
     <div class="page-tete"><div><p class="surtitre">Données et tendances</p><h2>Analyses</h2><p class="sous-texte">Résultats, volume et qualité des cotes.</p></div><span class="periode-badge" id="analyse-periode-badge">Suivi prospectif</span></div>
     <div class="analyse-filtres">
-      <label for="analyse-selection">Sélection<select id="analyse-selection"><option value="uniques">Paris uniques · Bilan</option></select></label>
+      <label for="analyse-selection">Sélection<select id="analyse-selection"><option value="uniques">Paris uniques</option></select></label>
       <label for="analyse-periode">Période<select id="analyse-periode"><option value="futur">Suivi prospectif</option><option value="ensemble">Historique 7–13 oct.</option><option value="tout">Tout l’historique</option></select></label>
+    </div>
+    <details class="mode-emploi analyse-affiner" id="analyse-affiner"><summary id="analyse-affiner-titre">Sport et bookmaker</summary><div class="analyse-filtres">
       <label for="analyse-sport">Sport<select id="analyse-sport"><option value="">Tous les sports</option></select></label>
       <label for="analyse-book">Bookmaker<select id="analyse-book"><option value="">Tous les bookmakers</option></select></label>
-    </div>
+    </div></details>
     <p class="aide" id="analyse-contexte" aria-live="polite"></p>
     <div id="analyse-kpis" class="analyse-kpis"></div>
     <div id="analyse-vide" class="vide" hidden>Aucun pari pour cette sélection. Change la période, le sport ou le bookmaker.</div>
