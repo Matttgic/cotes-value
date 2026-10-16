@@ -499,6 +499,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     web = Path(__file__).resolve().parent.parent / "web"
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/"))
     html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
+    html = html.replace("__VISUELS_JS__", (web / "visuels.js").read_text(encoding="utf-8"))
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
@@ -547,8 +548,9 @@ MODELE = r"""<!doctype html>
   <div class="message-reseau" id="hors-ligne" role="status" hidden>Connexion indisponible. Le dernier relevé reste consultable.</div>
   <noscript><p class="vide">Active JavaScript dans Chrome pour afficher les paris et les stratégies.</p></noscript>
   <section class="onglet" id="o-jouer" aria-label="À jouer">
-    <div class="page-tete"><div><p class="surtitre">Le dernier relevé</p><h2>Les opportunités</h2><p class="sous-texte">Les prix repérés, à vérifier chez ton bookmaker.</p></div><div class="compteurs" id="jouer-resume"></div></div>
-    <p class="aide">Cotes françaises au-dessus de la cote juste, au dernier passage. <span id="jouer-quand"></span></p>
+    <div class="page-tete tete-compacte"><h2>À jouer</h2><div class="compteurs" id="jouer-resume"></div></div>
+    <p class="aide releve-ligne"><span id="jouer-quand"></span></p>
+    <div class="puces sports-puces" id="jouer-sports" aria-label="Filtrer les opportunités par sport"></div>
     <div class="puces" id="jouer-filtres" aria-label="Filtrer les opportunités par stratégie"></div>
     <details class="mode-emploi"><summary>Comment lire les sélections</summary><p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
     Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille. Les nouvelles variantes ne donnent pas de votes supplémentaires.</p></details>
@@ -597,21 +599,27 @@ MODELE = r"""<!doctype html>
     Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.</p></details>
   </section>
   <section class="onglet" id="o-strategies">
-    <div class="page-tete"><div><p class="surtitre">Comparer sans mélanger les périodes</p><h2>Les stratégies</h2><p class="sous-texte">Performances simulées · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
+    <div class="page-tete tete-strategies"><div><h2>Stratégies</h2><p class="sous-texte">Suivi simulé · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
     <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
-    <details class="mode-emploi"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
     <div class="filtres filtres-strategies">
       <div class="champ"><label for="strategies-ref">Afficher</label>
-      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs" selected>Comparateurs et variantes prudentes</option></select></div>
+      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs" selected>Comparateurs + variantes</option></select></div>
       <div class="champ"><label for="strategies-tri">Classer par</label>
       <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
     </div>
     <p class="aide" id="strategies-total"></p>
+    <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
+      <button data-vue-strategies="liste" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Comparaison</button>
+      <button data-vue-strategies="graphiques" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 6-6 4 3 8-10M3 21h18"/></svg>Graphiques</button>
+    </div>
+    <div id="strategies-vue-liste">
     <div id="strategies-mobile" class="strategies-mobile" aria-label="Comparaison des stratégies"></div>
     <div class="tableau comparaison-bureau" aria-label="Comparaison des stratégies"><table class="strategies-table" id="strategies-table"></table></div>
     <details class="mode-emploi"><summary>Comment lire les chiffres</summary><p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
       ROI sur mises réglées. Gains et pertes : résultats nets des paris gagnants et perdants ; net = gains − pertes.
       Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p></details>
+    </div>
+    <div id="strategies-vue-graphiques" hidden>
     <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
     <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
     Jules v1/v2 représentent une seule famille pour la convergence ; cet accord ne prouve pas la rentabilité.</p>
@@ -622,6 +630,8 @@ MODELE = r"""<!doctype html>
     <h2 class="sous-titre">Gain net par stratégie</h2>
     <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
     <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
+    </div>
+    <details class="mode-emploi"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
     <details class="carte">
       <summary><b>Deux nouveaux suivis à partir du 15/10 à 06 h (Paris)</b></summary>
       <p class="aide"><b>Claude 1/match · max 10/j</b> : critères Claude, première prise par événement, dix prises maximum par jour.</p>
@@ -761,6 +771,7 @@ const STATUTS = {en_cours:"En cours",gagne:"Gagné",perdu:"Perdu",rembourse:"Rem
 const lire = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const ecrire = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
 
+__VISUELS_JS__
 __INTERFACE_JS__
 
 // --- en-tête et onglets
@@ -797,15 +808,16 @@ const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 600
 const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
-const carteActuelle = o => `<article class="carte opportunite">
-<div class="op-meta"><span>${e(o.sport?.replaceAll("_"," ") || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
+const carteActuelle = o => `<article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
+<div class="op-meta"><span class="sport-identite">${iconeSport(o.sport)}${e(nomsSports[o.sport] || o.sport || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
 <h3 class="op-match">${e(o.domicile)} – ${e(o.exterieur)}</h3>
 <p class="op-pari">${e(o.pari)}</p>
-<div class="op-offre"><div class="op-prix"><b>${cote(o.cote)}</b><span>${e(o.bookmaker)}<small>Cote proposée</small></span></div>
+<div class="op-offre"><div class="op-prix">${monogrammeBookmaker(o.bookmaker)}<span>${e(o.bookmaker)}<small>Cote proposée</small></span><b>${cote(o.cote)}</b></div>
 <div class="op-edge">${pct(o.ecart)}<small>Écart à la cote juste</small></div></div>
-<div class="l4">${badgeStrategies(o) || '<span>Aucune validation de stratégie</span>'}</div>
+<div class="l4">${badgeStrategies(o) || '<span class="signal-brut">Signal brut · aucune stratégie</span>'}</div>
 ${o.strategies.length ? `<div class="op-validation">Prise enregistrée le ${quand(o.validation_detecte)}</div>` : ""}
-<div class="op-reference">${o.refs.length > 1 ? `<details><summary>Cotes justes · ${o.refs.length} références</summary><p>${o.refs.map(r => `${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join(" · ")}</p></details>` : `Cote juste · ${o.refs.map(r => `${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join("")}`}</div>
+<div class="op-reference">${(() => { const r=o.refs.find(r=>r.ecart===o.ecart) || o.refs[0];
+  return `Cote juste <b>${cote(r.cote_juste)}</b> · ${e(r.reference)}` + (o.refs.length>1 ? `<details><summary>Les ${o.refs.length} références</summary><p>${o.refs.map(r=>`${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join(" · ")}</p></details>` : "");})()}</div>
 </article>`;
 const age = minutes(dc.debut);
 document.getElementById("jouer-quand").textContent = dc.debut ? `Relevé à ${hm(dc.debut)}` +
@@ -813,14 +825,15 @@ document.getElementById("jouer-quand").textContent = dc.debut ? `Relevé à ${hm
 let filtreJouer = "tous";
 function rendreJouer() {
   rendreResumeJouer(cotesJouer);
-  const choix = [["tous","Tous"],["valide","Validés par une stratégie (≥ 1)"],["convergence","Convergence (≥ 2 stratégies)"],
+  const sport=sportJouer;
+  const choix = [["tous","Tous"],["valide","Validés ≥ 1"],["convergence","Convergence ≥ 2"],
     ...Object.entries(D.strategies_badges || {}).filter(([cle]) => cotesJouer.some(o => o.strategies.includes(cle)))];
   const accepte = (o,cle) => cle === "tous" || (cle === "valide" ? o.strategies.length > 0 : cle === "convergence" ? o.convergence : o.strategies.includes(cle));
   document.getElementById("jouer-filtres").innerHTML = choix.map(([cle,nom]) =>
-    `<button data-filtre="${e(cle)}" class="${filtreJouer===cle ? "actif" : ""}" aria-pressed="${filtreJouer===cle}">${e(nom)} (${cotesJouer.filter(o => accepte(o,cle)).length})</button>`).join("");
+    `<button data-filtre="${e(cle)}" class="${filtreJouer===cle ? "actif" : ""}" aria-pressed="${filtreJouer===cle}">${e(nom)} (${cotesJouer.filter(o => accepte(o,cle) && (!sport || o.sport===sport)).length})</button>`).join("");
   for (const b of document.querySelectorAll("#jouer-filtres button")) b.onclick = () => { filtreJouer=b.dataset.filtre; rendreJouer(); };
-  const liste = cotesJouer.filter(o => accepte(o,filtreJouer));
-  document.getElementById("liste-jouer").innerHTML = liste.length ? liste.map(carteActuelle).join("") : '<div class="vide">Aucune opportunité pour ce filtre au dernier passage.</div>';
+  const liste = cotesJouer.filter(o => accepte(o,filtreJouer) && (!sport || o.sport===sport));
+  document.getElementById("liste-jouer").innerHTML = liste.length ? liste.map(carteActuelle).join("") : '<div class="vide">Aucune opportunité pour ces filtres. Essaie « Tous » et « Tous les sports ».</div>';
 }
 rendreJouer();
 document.getElementById("nb-jouer").textContent = cotesJouer.length || "";
@@ -1389,7 +1402,7 @@ function rendreStrategies() {
   document.getElementById("strategies-periodes").innerHTML = Object.entries(STRAT_PERIODES).slice(0,2).map(boutonPeriode).join("") +
     `<details class="periodes-detail"${!["futur","ensemble"].includes(periodeStrategies)?" open":""}><summary>Découper l’historique</summary><div>${Object.entries(STRAT_PERIODES).slice(2).map(boutonPeriode).join("")}</div></details>`;
   const contexte=document.getElementById("strategies-contexte");
-  contexte.textContent=periodeStrategies==="futur" ? "Suivi prospectif" : "Rejeu historique · "+STRAT_PERIODES[periodeStrategies];
+  contexte.textContent=periodeStrategies==="futur" ? "Suivi prospectif" : "Rejeu historique";
   contexte.classList.toggle("historique",periodeStrategies!=="futur");
   for (const b of document.querySelectorAll("#strategies-periodes button")) b.onclick = () => { periodeStrategies=b.dataset.p; rendreStrategies(); };
   const gemPicks = L.gemini_paris || [];
@@ -1436,7 +1449,7 @@ function rendreStrategies() {
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection M3 depuis son démarrage prospectif du 15 octobre.</p>';
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
-  document.getElementById("strategies-total").textContent = `${rows.length} stratégies affichées · ${active.length} avec des sélections · ${reglees.length} avec des paris réglés. Les résultats des stratégies se recoupent.`;
+  document.getElementById("strategies-total").textContent = `${rows.length} stratégies · ${reglees.length} avec des règlements · résultats non cumulables.`;
   const descriptions = {
     futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, nouvelles variantes à 06 h (Paris). Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
     ensemble:"Historique figé : matchs du 7 au 13 octobre, règlements disponibles au relevé du 14/10 à 12 h 09 (Paris), y compris les règlements tardifs. Rejeu rétrospectif, distinct du suivi depuis lancement.",
@@ -1449,29 +1462,16 @@ function rendreStrategies() {
     ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, M3, convergence ≥ 2 et deux variantes prudentes) ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
-    return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nom)}</b><small>${e(r.detail)}</small></td>
+    return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nom)}</b><span class="mini-courbe-table">${miniCourbe(L.navigation?.courbes?.[r.id]?.[periodeStrategies],COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
       <td>${s.paris}<small>${s.regles} réglés · ${s.attente} en attente</small></td><td>${s.gagnes}</td><td>${s.perdus}</td>
       <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}</td>
       <td class="${signe(s.clv)}">${pp(s.clv)}<small>${s.clv_n || 0}/${s.regles} mesurés</small></td>
       <td class="pos">${s.regles ? eur(s.gains_bruts) : "—"}</td><td class="neg">${s.regles ? eur(-s.pertes_brutes) : "—"}</td>
       <td class="${signe(s.gain)}"><b>${s.regles ? eur(s.gain) : "—"}</b></td></tr>`;
   }).join("") + `</tbody>`;
-  document.getElementById("strategies-mobile").innerHTML=rows.length ? rows.map(r => {
-    const s=r.stats;
-    return `<article class="strategie-ligne"><div class="strategie-entete"><h3>${e(r.nom)}</h3>
-      <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Voir les paris</button></div>
-      <dl class="strat-chiffres">
-        <div><dt>Gain net</dt><dd class="${signe(s.gain)}">${s.regles ? eur(s.gain) : "—"}</dd></div>
-        <div><dt>ROI</dt><dd class="${signe(s.roi)}">${pp(s.roi)}</dd></div>
-        <div><dt>CLV moyenne</dt><dd class="${signe(s.clv)}">${pp(s.clv)}<small>${s.clv_n || 0}/${s.regles} mesurés</small></dd></div>
-        <div><dt>Paris réglés</dt><dd>${s.regles}<small>${s.paris} prises au total</small></dd></div>
-        <div><dt>Réussite</dt><dd>${r.reussite==null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</dd></div>
-        <div><dt>En attente</dt><dd>${s.attente}</dd></div>
-      </dl><details><summary>Règles et détail des résultats</summary><p>${e(r.detail)}</p>
-      <div class="strat-secondaires"><span>Gagnés / perdus<b>${s.gagnes} / ${s.perdus}</b></span>
-      <span>Gains bruts<b class="pos">${s.regles ? eur(s.gains_bruts) : "—"}</b></span>
-      <span>Pertes<b class="neg">${s.regles ? eur(-s.pertes_brutes) : "—"}</b></span></div></details></article>`;
-  }).join("") : '<div class="vide">Aucune stratégie pour ces filtres. Choisis une autre référence.</div>';
+  document.getElementById("strategies-mobile").innerHTML=rows.length ? rows.map(r =>
+    carteStrategieVisuelle(r,L.navigation?.courbes?.[r.id]?.[periodeStrategies],COULEURS_COMPARATEURS[r.id] || "var(--accent)")).join("")
+    : '<div class="vide">Aucune stratégie pour ces filtres. Choisis une autre référence.</div>';
   // Une ligne = une navigation vers tous les paris de cette stratégie et de la
   // période choisie, y compris les terminés et ceux absents des fiches récentes.
   document.querySelectorAll("#strategies-table tbody tr, #strategies-mobile button[data-strategie]").forEach(tr => {
@@ -1625,7 +1625,7 @@ installerActualisation({
   version:"__VERSION_SITE__",
   // Les choix de notification restent sous le contrôle de leur formulaire.
   protegee:() => document.getElementById("o-notifications").classList.contains("actif"),
-  capturer:() => ({filtreJouer, refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
+  capturer:() => ({filtreJouer, sportJouer, refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
     courbes:[...courbesMasquees], champs:Object.fromEntries(champsVue.map(id => [id,document.getElementById(id)?.value])),
     details:[...document.querySelectorAll("details[open]")].map(cleDetail), y:window.scrollY,
     defilements:[...document.querySelectorAll("[id]")].filter(x => x.scrollLeft > 0).map(x => [x.id,x.scrollLeft])}),
@@ -1635,6 +1635,7 @@ installerActualisation({
       if (el && typeof valeur === "string" && (el.tagName !== "SELECT" || [...el.options].some(o => o.value===valeur))) el.value = valeur;
     }
     filtreJouer = typeof s.filtreJouer === "string" ? s.filtreJouer : "tous";
+    if (typeof s.sportJouer === "string") sportJouer = s.sportJouer;
     refBilan = typeof s.refBilan === "string" ? s.refBilan : "Uniques";
     cumul = Number.isInteger(s.cumul) && CUMULS[s.cumul] ? s.cumul : CUMULS.length-1;
     limite = Number.isInteger(s.limite) && s.limite >= 50 ? s.limite : 50;

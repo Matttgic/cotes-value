@@ -27,7 +27,7 @@ const document={getElementById:id=>elements.get(id),querySelectorAll:()=>[]};
 const window={scrollY:320,scrollTo:(x,y)=>assert.equal(y,320)};
 const requestAnimationFrame=fn=>fn();
 const FILTRES={book:[]}, CUMULS=[[]], TRIS={roi:''}, STRAT_PERIODES={ensemble:''};
-let filtreJouer='claude_prudent',refBilan='Stratégie',cumul=0,limite=150,
+let filtreJouer='claude_prudent',sportJouer='tennis',refBilan='Stratégie',cumul=0,limite=150,
     strategieChoisie={id:'Claude (rejeu)',nom:'Claude',periode:'ensemble'},triSeg='roi',ctlVue='conforme',periodeStrategies='ensemble';
 const courbesMasquees=new Set(['M3']);
 const rendus=[];
@@ -36,15 +36,30 @@ const rendreJouer=()=>rendus.push(filtreJouer),rendreBilan=()=>rendus.push(refBi
  rendreStrategies=()=>rendus.push(periodeStrategies);
 function installerActualisation(config) {
   const etat=config.capturer();
-  filtreJouer='tous';refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
+  filtreJouer='tous';sportJouer='';refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
   courbesMasquees.clear();elements.get('f-q').value='';elements.get('f-book').value='';
   config.restaurer(JSON.parse(JSON.stringify(etat)));
   assert.equal(elements.get('f-book').value,'Winamax');
   assert.equal(strategieChoisie.id,'Claude (rejeu)');assert.equal(limite,150);
+  assert.equal(sportJouer,'tennis');
   assert.deepEqual([...courbesMasquees],['M3']);
   assert.deepEqual(rendus,['claude_prudent','Stratégie','Équipe Lyon','ensemble']);
 }
 '''+section)
+
+
+def test_js_filtre_sport_se_combine_avec_la_strategie():
+    section=MODELE[MODELE.index('let filtreJouer = "tous";'):MODELE.index('rendreJouer();\ndocument.getElementById("nb-jouer")')]
+    executer(DOM+'''
+const D={strategies_badges:{claude:'Claude'}},rendreResumeJouer=()=>{};
+let sportJouer='tennis';
+const cotesJouer=[{sport:'tennis',pari:'A',strategies:['claude']},{sport:'football',pari:'B',strategies:['claude']},{sport:'tennis',pari:'C',strategies:[]}];
+const carteActuelle=o=>o.pari;
+'''+section+'''
+rendreJouer();assert.equal(document.getElementById('liste-jouer').innerHTML,'AC');
+filtreJouer='valide';rendreJouer();assert.equal(document.getElementById('liste-jouer').innerHTML,'A');
+sportJouer='';rendreJouer();assert.equal(document.getElementById('liste-jouer').innerHTML,'AB');
+''')
 
 
 DOM = '''

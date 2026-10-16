@@ -27,3 +27,16 @@ interrompue par une exécution arrivée après elle.
 une fenêtre de 360, 390, 430 ou 1200 px. Il permet de vérifier les deux thèmes et
 les interactions sans changer les préférences du téléphone. Ce cadre ne simule
 pas les permissions de notification ou le comportement de Chrome Android.
+
+## Passe visuelle
+
+La première refonte laissait trop de place aux titres sur téléphone et plaçait
+les graphiques après toute la liste. La seconde passe compacte les en-têtes et
+ajoute un choix direct Comparaison / Graphiques, mémorisé sur l'appareil.
+
+Les mini-courbes utilisent les règlements de la période choisie, avec leur propre
+échelle indiquée. La barre gagnés / perdus distingue les autres règlements ;
+la barre CLV mesure uniquement la couverture, jamais une probabilité de gain.
+Les icônes de sports et monogrammes sont des SVG / lettres locaux, sans images
+distantes. Le filtre sport s'ajoute au filtre stratégie et reste utilisable si
+le stockage local est indisponible.
