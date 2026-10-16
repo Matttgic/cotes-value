@@ -498,6 +498,8 @@ def construire(donnees: Path, sortie: Path) -> Path:
     sortie.mkdir(parents=True, exist_ok=True)
     web = Path(__file__).resolve().parent.parent / "web"
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/"))
+    html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
+    html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
@@ -505,6 +507,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__VERSION_SITE__", version)
     (sortie / "index.html").write_text(html, encoding="utf-8")
     (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
+    (sortie / "verification-responsive.html").write_text((web / "verification-responsive.html").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "live_papier.json").write_text(json.dumps(live, ensure_ascii=False), encoding="utf-8")
     (sortie / "notifications.json").write_text(json.dumps(notifications_mod.flux(actuelles, paris, retenus),
@@ -519,142 +522,43 @@ MODELE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value</title>
-<style>
-:root{--serie:#2a78d6;--attendu:#eb6834;--fond:#f5f6f8;--carte:#fff;--texte:#1b2130;--doux:#677084;--ligne:#e4e7ec;--accent:#2457d6;
---accent-f:#e8eefc;--vert:#0f8a4b;--vert-f:#e2f4e9;--rouge:#c23434;--rouge-f:#fbe6e6;--jaune:#8f6200;--jaune-f:#fff3d1}
-@media (prefers-color-scheme:dark){:root{--serie:#3987e5;--attendu:#d95926;--fond:#111419;--carte:#1a1e26;--texte:#e6e9ef;--doux:#9aa2b1;
---ligne:#2a303b;--accent:#7ea4ff;--accent-f:#1f2a44;--vert:#4ec88a;--vert-f:#16321f;--rouge:#ff8080;
---rouge-f:#3a1c1e;--jaune:#f0c35a;--jaune-f:#36301b}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--fond);color:var(--texte);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.haut{position:sticky;top:0;z-index:5;background:var(--fond);border-bottom:1px solid var(--ligne)}
-.titre{max-width:760px;margin:auto;padding:12px 16px 6px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-h1{font-size:18px;margin:0}
-.maj{color:var(--doux);font-size:12.5px}
-nav{max-width:760px;margin:auto;padding:0 12px 8px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
-nav button{flex:none;font:inherit;font-size:14px;padding:7px 12px;border-radius:999px;border:1px solid var(--ligne);
-background:var(--carte);color:var(--texte);cursor:pointer}
-nav button.actif{background:var(--accent);border-color:var(--accent);color:#fff}
-nav .nb{font-size:12px;opacity:.75;margin-left:3px}
-main{max-width:760px;margin:auto;padding:12px 16px 40px}
-.onglet{display:none}.onglet.actif{display:block}
-summary{cursor:pointer;font-weight:600}
-.courbe{position:relative;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:10px 12px 6px;margin-bottom:12px}
-.courbe-tete{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--doux)}
-.courbe-tete b{font-size:18px}
-.legende{display:flex;gap:14px;font-size:12.5px;color:var(--texte);margin:2px 0 4px}
-.legende i{display:inline-block;width:14px;height:2px;border-radius:1px;vertical-align:middle;margin-right:5px}
-.courbe svg{display:block;width:100%;height:170px;touch-action:pan-y}
-.courbe text{fill:var(--doux);font-size:11px;font-variant-numeric:tabular-nums}
-.bulle{position:absolute;pointer-events:none;background:var(--texte);color:var(--carte);font-size:12px;line-height:1.35;
-padding:5px 8px;border-radius:8px;white-space:nowrap;display:none}
-.trace{margin-top:6px;font-size:12.5px;color:var(--doux)}.trace summary{font-weight:500}.trace p{margin:4px 0}
-.aide{color:var(--doux);font-size:13px;margin:0 0 10px}
-.carte{background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;margin-bottom:8px}
-.l1{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--doux)}
-.l1 .match{color:var(--texte);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.l1 .quand{flex:none}
-.l2{margin:3px 0 6px;font-size:15px}
-.l3{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;font-size:13.5px}
-.l3 i{font-style:normal;color:var(--doux);font-size:12px}
-.ecart{margin-left:auto;font-weight:700;color:var(--vert)}
-.l4{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-size:12px;color:var(--doux);align-items:center}
-.badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:12px;font-weight:600;background:var(--accent-f);color:var(--accent)}
-.gagne,.demi_gagne{background:var(--vert-f);color:var(--vert)}
-.perdu,.demi_perdu{background:var(--rouge-f);color:var(--rouge)}
-.en_cours,.rembourse{background:var(--ligne);color:var(--doux)}
-.a_regler{background:var(--jaune-f);color:var(--jaune)}
-.pos{color:var(--vert)}.neg{color:var(--rouge)}
-.vide{color:var(--doux);text-align:center;padding:30px 10px}
-.seg{cursor:pointer}.seg .l1 .badge{flex:none}
-.seg-paris{margin-top:8px;border-top:1px solid var(--ligne);cursor:default}
-.seg-paris .sp{padding:7px 0;border-bottom:1px solid var(--ligne)}.seg-paris .sp:last-child{border-bottom:0}
-.seg-paris .l3{font-size:12.5px}
-.seg-paris .sp-titre{font-weight:700;font-size:13px;padding:9px 0 2px;color:var(--doux)}
-.puces{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
-#strategies-legende{flex-wrap:wrap;gap:6px;overflow:visible}
-#strategies-legende button{font-size:12px;padding:4px 8px}
-.puces button,select,.btn{flex:none;font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--ligne);
-background:var(--carte);color:var(--texte);cursor:pointer}
-.puces button.actif{border-color:var(--accent);color:var(--accent);font-weight:600}
-.btn{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn:disabled{opacity:.55;cursor:default}
-.notif-choix{display:flex;align-items:center;gap:10px;min-height:46px;cursor:pointer}
-.notif-choix input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
-#notif-strategies{min-width:0}#notif-strategies legend{font-weight:600}
-table{width:100%;border-collapse:collapse;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;overflow:hidden;font-size:14px}
-th,td{padding:9px 10px;border-bottom:1px solid var(--ligne);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-@media (max-width:480px){th,td{padding:8px 4px;font-size:12.5px}td small{font-size:11px}
-th:first-child,td:first-child{padding-left:8px}th:last-child,td:last-child{padding-right:8px}}
-th{font-size:12px;color:var(--doux);font-weight:600;vertical-align:bottom}
-th small{display:block;font-size:11px}
-th:first-child,td:first-child{text-align:left}
-tr:last-child td{border-bottom:0}
-td{vertical-align:top}
-td small{display:block;color:var(--doux);font-size:11.5px;white-space:nowrap}
-td:first-child small{white-space:normal}
-.filtres input{min-width:0;flex:1;padding:10px;border:1px solid var(--ligne);border-radius:8px;background:var(--carte);color:var(--texte);font:inherit}
-.filtres{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
-.sous-titre{font-size:15px;margin:18px 0 8px}
-.tableau{overflow-x:auto;border-radius:12px}
-tr.total td{border-top:2px solid var(--ligne);background:var(--accent-f)}
-select.cumul{display:block;margin-top:4px;padding:3px 4px;font-size:12px;max-width:70px}
-td small.roi{font-size:12px;font-weight:700;color:inherit}
-.infos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
-.infos div{background:var(--carte);border:1px solid var(--ligne);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--doux)}
-.infos b{display:block;color:var(--texte);font-size:16px}
-/* Tableau complet : nom de la stratégie visible pendant le défilement mobile. */
-.strategies-table{min-width:950px}
-.strategies-table th:first-child,.strategies-table td:first-child{position:sticky;left:0;background:var(--carte);z-index:1;min-width:180px;max-width:220px;white-space:normal;border-right:1px solid var(--ligne)}
-.strategies-table th:first-child{z-index:2}
-.strategies-table td:first-child small{max-width:200px;line-height:1.5}
-.strategies-table tbody tr{cursor:pointer}
-.strategies-table tbody tr:hover td{background:var(--accent-f)}
-.strategies-table tbody tr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-#paris-strategie-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-#paris-strategie-banner[hidden]{display:none}
-.groupe-paris{font-size:14px;margin:16px 0 8px;color:var(--doux)}
-.strat-bar-row{display:grid;grid-template-columns:155px minmax(50px,1fr) 80px;gap:8px;align-items:center;min-height:40px;border-bottom:1px solid var(--ligne)}
-.strat-bar-row:last-child{border-bottom:0}
-.strat-bar-label{font-size:12px;line-height:1.3}
-.strat-bar-label small{display:block;font-size:10.5px;color:var(--doux)}
-.strat-bar-track{position:relative;height:22px;background:var(--fond)}
-.strat-zero{position:absolute;top:0;bottom:0;width:1px;background:var(--doux)}
-.strat-bar{position:absolute;top:4px;height:14px;border-radius:2px}
-.strat-bar.pos{background:var(--vert)}.strat-bar.neg{background:var(--rouge)}
-.strat-bar-value{text-align:right;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.strat-axe{display:flex;justify-content:space-between;margin:0 88px 5px 163px;color:var(--doux);font-size:11px}
-@media(max-width:480px){.strategies-table th:first-child,.strategies-table td:first-child{min-width:150px;max-width:160px}
-.strat-bar-row{grid-template-columns:112px minmax(45px,1fr) 66px;gap:5px}.strat-bar-value{font-size:11px}.strat-bar-label{font-size:11px}.strat-bar-label small{font-size:9px}
-.strat-axe{margin-left:117px;margin-right:71px}}
-</style>
+<style>__INTERFACE_CSS__</style>
 </head>
 <body>
-<div class="haut">
-  <div class="titre"><h1>Cotes Value</h1><span class="maj" id="maj"></span></div>
-  <nav id="onglets">
-    <button data-o="jouer">À jouer<span class="nb" id="nb-jouer"></span></button>
-    <button data-o="bilan">Bilan</button>
-    <button data-o="strategies">Stratégies</button>
-    <button data-o="segments">Segments</button>
-    <button data-o="paris">Paris<span class="nb" id="nb-paris"></span></button>
-    <button data-o="notifications">Notifications</button>
-    <button data-o="regler">À régler<span class="nb" id="nb-regler"></span></button>
-    <button data-o="controle">Contrôle<span class="nb" id="nb-controle"></span></button>
+<a class="evitement" href="#contenu">Aller au contenu</a>
+<header class="haut">
+  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><span class="signature">Observer. Comparer. Suivre.</span></div></div>
+    <div class="mise-a-jour"><span class="maj" id="maj"></span><span id="fraicheur" class="fraicheur"></span></div></div>
+  <nav id="onglets" aria-label="Navigation principale">
+    <button data-o="jouer"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 15 9-15 9V3Z"/></svg><span>À jouer<span class="nb" id="nb-jouer"></span></span></button>
+    <button data-o="strategies"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9m8 10V4m8 15v-7"/><path d="M2 21h20"/></svg><span>Stratégies</span></button>
+    <button data-o="paris"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h4"/></svg><span>Paris<span class="nb" id="nb-paris"></span></span></button>
+    <button data-o="bilan"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11l4 3 8-11M16 3h5v5M3 21h18"/></svg><span>Bilan</span></button>
+    <button id="nav-plus-toggle" aria-expanded="false" aria-controls="nav-secondaires"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>Plus</span></button>
+    <div class="nav-secondaires" id="nav-secondaires">
+    <button data-o="segments"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>Segments</span></button>
+    <button data-o="notifications"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Notifications</span></button>
+    <button data-o="regler"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>À régler<span class="nb" id="nb-regler"></span></span></button>
+    <button data-o="controle"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/></svg><span>Contrôle<span class="nb" id="nb-controle"></span></span></button>
+    </div>
   </nav>
-</div>
-<main>
-  <section class="onglet" id="o-jouer">
+</header>
+<main id="contenu" tabindex="-1">
+  <div class="message-reseau" id="hors-ligne" role="status" hidden>Connexion indisponible. Le dernier relevé reste consultable.</div>
+  <noscript><p class="vide">Active JavaScript dans Chrome pour afficher les paris et les stratégies.</p></noscript>
+  <section class="onglet" id="o-jouer" aria-label="À jouer">
+    <div class="page-tete"><div><p class="surtitre">Le dernier relevé</p><h2>Les opportunités</h2><p class="sous-texte">Les prix repérés, à vérifier chez ton bookmaker.</p></div><div class="compteurs" id="jouer-resume"></div></div>
     <p class="aide">Cotes françaises au-dessus de la cote juste, au dernier passage. <span id="jouer-quand"></span></p>
     <div class="puces" id="jouer-filtres" aria-label="Filtrer les opportunités par stratégie"></div>
-    <p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
-    Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille. Les nouvelles variantes ne donnent pas de votes supplémentaires.</p>
+    <details class="mode-emploi"><summary>Comment lire les sélections</summary><p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
+    Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille. Les nouvelles variantes ne donnent pas de votes supplémentaires.</p></details>
     <div id="jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
+    <div class="page-tete"><div><p class="surtitre">Résultats enregistrés</p><h2>Ton bilan</h2><p class="sous-texte">Gains, mises et qualité des prix pris.</p></div></div>
     <p class="aide"><a href="#strategies">Comparer les 36 stratégies, Claude, ChatGPT V1, Gemini Argon, Jules v1/v2 et M3</a></p>
     <div class="puces" id="puces-ref"></div>
-    <p class="aide" id="bilan-quoi"></p>
+    <details class="mode-emploi"><summary>Comprendre cette sélection</summary><p class="aide" id="bilan-quoi"></p></details>
     <button id="voir-chatgpt" hidden>Voir les paris ChatGPT</button>
     <button id="voir-gemini" hidden>Voir les paris Gemini Argon</button>
     <button id="voir-jules" hidden>Voir les paris JULES EDGE</button>
@@ -693,20 +597,31 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.</p></details>
   </section>
   <section class="onglet" id="o-strategies">
-    <h2 class="sous-titre" style="margin-top:0">Toutes les stratégies</h2>
+    <div class="page-tete"><div><p class="surtitre">Comparer sans mélanger les périodes</p><h2>Les stratégies</h2><p class="sous-texte">Performances simulées · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
     <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
-    <p class="aide" id="strategies-quoi"></p>
-    <div class="filtres">
-      <label for="strategies-ref">Référence</label>
-      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs">Comparateurs et variantes prudentes</option></select>
-      <label for="strategies-tri">Tri</label>
-      <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select>
+    <details class="mode-emploi"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
+    <div class="filtres filtres-strategies">
+      <div class="champ"><label for="strategies-ref">Afficher</label>
+      <select id="strategies-ref"><option value="">Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs" selected>Comparateurs et variantes prudentes</option></select></div>
+      <div class="champ"><label for="strategies-tri">Classer par</label>
+      <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
     </div>
     <p class="aide" id="strategies-total"></p>
-    <div class="tableau" tabindex="0" aria-label="Comparaison des stratégies, défilement horizontal sur mobile"><table class="strategies-table" id="strategies-table"></table></div>
-    <p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
+    <div id="strategies-mobile" class="strategies-mobile" aria-label="Comparaison des stratégies"></div>
+    <div class="tableau comparaison-bureau" aria-label="Comparaison des stratégies"><table class="strategies-table" id="strategies-table"></table></div>
+    <details class="mode-emploi"><summary>Comment lire les chiffres</summary><p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
       ROI sur mises réglées. Gains et pertes : résultats nets des paris gagnants et perdants ; net = gains − pertes.
-      Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p>
+      Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p></details>
+    <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
+    <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
+    Jules v1/v2 représentent une seule famille pour la convergence ; cet accord ne prouve pas la rentabilité.</p>
+    <div class="carte"><div class="puces" id="strategies-legende"></div>
+      <div id="strategies-courbes-vide" class="aide"></div>
+      <svg id="strategies-courbes" viewBox="0 0 760 300" role="img" aria-label="Courbes comparées des gains cumulés en euros" style="width:100%;height:auto"></svg>
+    </div>
+    <h2 class="sous-titre">Gain net par stratégie</h2>
+    <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
+    <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
     <details class="carte">
       <summary><b>Deux nouveaux suivis à partir du 15/10 à 06 h (Paris)</b></summary>
       <p class="aide"><b>Claude 1/match · max 10/j</b> : critères Claude, première prise par événement, dix prises maximum par jour.</p>
@@ -727,16 +642,6 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
       <div id="live-papier-contenu"></div>
       <a href="live_papier.json" download>Télécharger le journal JSON</a>
     </details>
-    <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
-    <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
-    Jules v1/v2 représentent une seule famille pour la convergence ; cet accord ne prouve pas la rentabilité.</p>
-    <div class="carte"><div class="puces" id="strategies-legende"></div>
-      <div id="strategies-courbes-vide" class="aide"></div>
-      <svg id="strategies-courbes" viewBox="0 0 760 300" role="img" aria-label="Courbes comparées des gains cumulés en euros" style="width:100%;height:auto"></svg>
-    </div>
-    <h2 class="sous-titre">Gain net par stratégie</h2>
-    <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
-    <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
     <details class="carte" id="gemini-picks">
       <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement</summary>
       <p class="aide">Pinnacle (1,30–2,15), Betfair & Polymarket (1,30–2,60) · edge 2,5–12 % · 30 min à 24 h · 1 pari/match · max 8/jour · mise fictive 10 €.</p>
@@ -765,6 +670,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <div class="carte" id="laboratoire"></div>
   </section>
   <section class="onglet" id="o-segments">
+    <div class="page-tete"><div><p class="surtitre">Explorer les résultats</p><h2>Les segments</h2><p class="sous-texte">Sport, bookmaker, référence : touche un groupe pour voir ses paris.</p></div></div>
     <div class="puces" id="puces-seg"></div>
     <p class="aide" id="seg-quoi"></p>
     <div id="segments"></div>
@@ -778,17 +684,26 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <p>Toucher un segment affiche ses paris : d'abord ceux à venir (pas encore commencés, du plus proche au plus lointain), puis ceux déjà réglés. Le toucher à nouveau les replie. Un pari à venir n'entre dans les chiffres du segment qu'une fois réglé.</p></details>
   </section>
   <section class="onglet" id="o-paris">
+    <div class="page-tete"><div><p class="surtitre">Toutes les prises enregistrées</p><h2>Le journal des paris</h2><p class="sous-texte">Retrouve un pari et suis son règlement.</p></div></div>
     <div id="paris-strategie-banner" class="carte" hidden></div>
-    <div class="filtres"><input type="search" id="f-q" placeholder="Rechercher équipe, ligue, pari…" aria-label="Rechercher équipe, ligue ou pari">
+    <div class="filtres recherche"><input type="search" id="f-q" placeholder="Rechercher équipe, ligue, pari…" aria-label="Rechercher équipe, ligue ou pari">
       <button class="btn" id="export-csv">Exporter CSV</button></div>
     <p class="aide" id="paris-compte" aria-live="polite"></p>
-    <div class="filtres"><select id="f-sim"></select><select id="f-ref"></select><select id="f-statut"></select>
-    <select id="f-cote"></select><select id="f-book"></select><select id="f-sport"></select></div>
+    <div class="filtres grille-filtres">
+      <label>Stratégie / simulation<select id="f-sim"></select></label>
+      <label>Référence<select id="f-ref"></select></label>
+      <label>Statut<select id="f-statut"></select></label>
+      <label>Cote<select id="f-cote"></select></label>
+      <label>Bookmaker<select id="f-book"></select></label>
+      <label>Sport<select id="f-sport"></select></label>
+    </div>
+    <div class="outils-paris"><button class="btn secondaire" id="reinitialiser-filtres">Réinitialiser les filtres</button>
+    <details class="mode-emploi"><summary>Comptage et export CSV</summary><p class="aide">Une prise par référence, au prix enregistré. L’export inclut tous les paris filtrés. Écarts et CLV en ratios dans le CSV.</p></details></div>
     <div id="paris"></div>
     <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
   </section>
   <section class="onglet" id="o-notifications">
-    <h2 class="sous-titre">Notifications Chrome</h2>
+    <div class="page-tete"><div><p class="surtitre">Tes stratégies, au bon moment</p><h2>Les notifications</h2><p class="sous-texte">Choisis les alertes à recevoir sur cet appareil.</p></div></div>
     <p class="aide">Reçois les nouvelles sélections des stratégies choisies, même lorsque cet onglet est fermé.
     Les alertes suivent les scans, environ toutes les 5 minutes. Vérifie la cote : elle peut changer avant ton clic.</p>
     <p class="carte" id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
@@ -809,6 +724,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     </details>
   </section>
   <section class="onglet" id="o-regler">
+    <div class="page-tete"><div><p class="surtitre">Règlement automatique</p><h2>Les résultats en attente</h2></div></div>
     <p class="aide">Les résultats sont recherchés automatiquement chaque heure. Une source unique peut demander
     24 h de validation : « À régler » ne signifie pas qu’une saisie manuelle est déjà nécessaire.</p>
     <div id="reglement-etat" class="aide"></div>
@@ -816,6 +732,7 @@ td small.roi{font-size:12px;font-weight:700;color:inherit}
     <div id="regler"></div>
   </section>
   <section class="onglet" id="o-controle">
+    <div class="page-tete"><div><p class="surtitre">Qualité des données</p><h2>Le contrôle des sources</h2></div></div>
     <p class="aide">Chaque type d'intitulé de chaque bookmaker est comparé à la référence à chaque passage. Bien
     traduit, un marché est en général un peu sous la cote juste (marge) : rapport médian cote / cote juste entre
     0,70 et 1,02, et moins de 10 % des cotes au-dessus de 1,12. Seuls les intitulés <b>conformes</b> donnent des paris.</p>
@@ -844,15 +761,24 @@ const STATUTS = {en_cours:"En cours",gagne:"Gagné",perdu:"Perdu",rembourse:"Rem
 const lire = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const ecrire = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
 
+__INTERFACE_JS__
+
 // --- en-tête et onglets
 const dc = (D.etat||{}).dernier_cycle || {};
 document.getElementById("maj").textContent = dc.debut ? "mis à jour " + quand(dc.debut) + (dc.mode==="test" ? " · test" : "") : "pas encore de données";
 function ouvrir(o) {
-  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("actif", b.dataset.o===o));
+  document.querySelectorAll("nav button[data-o]").forEach(b => {
+    b.classList.toggle("actif", b.dataset.o===o);
+    if (b.dataset.o===o) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+  });
+  menuPlus.classList.toggle("actif", ["segments","notifications","regler","controle"].includes(o));
+  fermerMenu();
   document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+o));
   ecrire("onglet", o); history.replaceState(null, "", "#"+o);
+  if (o === "strategies") requestAnimationFrame(() => rendreStrategies());
+  if (o === "bilan") requestAnimationFrame(() => rendreCourbe());
 }
-document.querySelectorAll("nav button").forEach(b => b.onclick = () => ouvrir(b.dataset.o));
+document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => {ouvrir(b.dataset.o);window.scrollTo(0,0);});
 
 // --- À jouer
 // une carte par cote française (bookmaker, match, pari), avec les références qui la signalent
@@ -871,19 +797,22 @@ const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 600
 const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
-const carteActuelle = o => `<article class="carte">
-<div class="l1"><span class="match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="quand">${quand(o.debut)}</span></div>
-<div class="l2">${e(o.pari)}</div>
-<div class="l3"><span><b>${e(o.bookmaker)} ${cote(o.cote)}</b></span><span class="ecart">${pct(o.ecart)}</span></div>
-<div class="l4">${badgeStrategies(o)}</div>
-${o.strategies.length ? `<div class="aide">Prise enregistrée le ${quand(o.validation_detecte)}</div>` : ""}
-<div class="l4">cote juste : ${o.refs.map(r => `${e(r.reference)} ${cote(r.cote_juste)}`).join(" · ")}</div>
+const carteActuelle = o => `<article class="carte opportunite">
+<div class="op-meta"><span>${e(o.sport?.replaceAll("_"," ") || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
+<h3 class="op-match">${e(o.domicile)} – ${e(o.exterieur)}</h3>
+<p class="op-pari">${e(o.pari)}</p>
+<div class="op-offre"><div class="op-prix"><b>${cote(o.cote)}</b><span>${e(o.bookmaker)}<small>Cote proposée</small></span></div>
+<div class="op-edge">${pct(o.ecart)}<small>Écart à la cote juste</small></div></div>
+<div class="l4">${badgeStrategies(o) || '<span>Aucune validation de stratégie</span>'}</div>
+${o.strategies.length ? `<div class="op-validation">Prise enregistrée le ${quand(o.validation_detecte)}</div>` : ""}
+<div class="op-reference">${o.refs.length > 1 ? `<details><summary>Cotes justes · ${o.refs.length} références</summary><p>${o.refs.map(r => `${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join(" · ")}</p></details>` : `Cote juste · ${o.refs.map(r => `${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join("")}`}</div>
 </article>`;
 const age = minutes(dc.debut);
 document.getElementById("jouer-quand").textContent = dc.debut ? `Relevé à ${hm(dc.debut)}` +
   (age != null ? ` (il y a ${age} min)` : "") + `. La cote a pu bouger depuis : vérifie-la avant de jouer.` : "";
 let filtreJouer = "tous";
 function rendreJouer() {
+  rendreResumeJouer(cotesJouer);
   const choix = [["tous","Tous"],["valide","Validés par une stratégie (≥ 1)"],["convergence","Convergence (≥ 2 stratégies)"],
     ...Object.entries(D.strategies_badges || {}).filter(([cle]) => cotesJouer.some(o => o.strategies.includes(cle)))];
   const accepte = (o,cle) => cle === "tous" || (cle === "valide" ? o.strategies.length > 0 : cle === "convergence" ? o.convergence : o.strategies.includes(cle));
@@ -1045,7 +974,7 @@ function rendreCourbe() {
   zone.addEventListener("pointermove", montrer); zone.addEventListener("pointerdown", montrer);
   zone.addEventListener("pointerleave", cacher);
 }
-window.addEventListener("resize", () => rendreCourbe());
+window.addEventListener("resize", () => { rendreCourbe(); if (document.getElementById("o-strategies").classList.contains("actif")) rendreStrategies(); });
 rendreBilan();
 const mois = new Date().toISOString().slice(0,7);
 document.getElementById("infos").innerHTML = [
@@ -1075,11 +1004,18 @@ for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
   const sel = document.getElementById("f-" + id);
   sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
     champ==="statut" ? STATUTS[v]||v : champ==="sims" && D.simulations[v] ? v + " " + D.simulations[v] : v)}</option>`).join("");
+  sel.setAttribute("aria-label", tous);
   sel.onchange = () => { limite = 50; rendreParis(); };
 }
 let limite = 50;
 let strategieChoisie = null;
 document.getElementById("f-q").oninput = () => { limite=50; rendreParis(); };
+document.getElementById("reinitialiser-filtres").onclick = () => {
+  strategieChoisie=null; limite=50;
+  document.getElementById("f-q").value="";
+  for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value="";
+  rendreParis();
+};
 const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","clv","statut","gain","strategies"];
 // Les cellules texte ne doivent pas devenir des formules à l'ouverture dans un tableur.
 const celluleCSV = valeur => {
@@ -1131,7 +1067,7 @@ function rendreParis() {
     (!q || normaliserRecherche([p.domicile,p.exterieur,p.ligue,p.pari].join(" ")).includes(q)) &&
     Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v)) : p[k]===v)));
   parisFiltres = L;
-  document.getElementById("paris-compte").textContent = `${L.length} prise(s) correspondant aux filtres · ${Math.min(limite,L.length)} affichées · export complet des ${L.length}. Une prise par référence, au prix enregistré. CLV de clôture validée ; écarts et CLV en ratios dans le CSV.`;
+  document.getElementById("paris-compte").textContent = `${L.length} prise(s) · ${Math.min(limite,L.length)} affichées · export des ${L.length} prises filtrées.`;
   const banner = document.getElementById("paris-strategie-banner");
   const plus = document.getElementById("plus");
   banner.hidden = !strategieChoisie;
@@ -1372,7 +1308,7 @@ function rendreCourbesStrategies(rows) {
     : !points.length ? "Aucun pari réglé sur cette période pour les courbes affichées." : "";
   svg.style.display = points.length ? "" : "none";
   if (!points.length) { svg.innerHTML=""; return; }
-  const W=640,H=290,left=78,right=18,top=22,bottom=40;
+  const W=Math.max(320,Math.min(1100,svg.getBoundingClientRect?.().width || 640)),H=W<500?260:300,left=65,right=16,top=22,bottom=40;
   const debut=Math.min(...points.map(p => p[0]))-60, fin=Math.max(...points.map(p => p[0]))+60;
   const min=Math.min(0,...points.map(p => p[1])), max=Math.max(0,...points.map(p => p[1]));
   const st=Math.max(1,Math.ceil(pas(max-min || 10)));
@@ -1386,10 +1322,10 @@ function rendreCourbesStrategies(rows) {
     return jour+" "+heure.replace(":","h");
   };
   const niveaux=Array.from({length:Math.round((hi-lo)/st)+1},(_,i) => lo+i*st);
-  const graduations=niveaux.map(g => `<line x1="${left}" y1="${y(g)}" x2="${W-right}" y2="${y(g)}" stroke="var(--ligne)"/><text x="${left-8}" y="${y(g)+6}" text-anchor="end" fill="var(--doux)" font-size="17">${e(eurC(g))}</text>`).join("");
+  const graduations=niveaux.map(g => `<line x1="${left}" y1="${y(g)}" x2="${W-right}" y2="${y(g)}" stroke="var(--ligne)"/><text x="${left-8}" y="${y(g)+6}" text-anchor="end" fill="var(--doux)" font-size="12">${e(eurC(g))}</text>`).join("");
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   svg.innerHTML = `<title>Gains cumulés — ${e(STRAT_PERIODES[periodeStrategies])}, 10 € fictifs par pari</title>${graduations}`+
-    [debut,(debut+fin)/2,fin].map(t => `<text x="${x(t)}" y="${H-9}" text-anchor="${t===debut ? "start" : t===fin ? "end" : "middle"}" fill="var(--doux)" font-size="17">${date(t)}</text>`).join("")+
+    [debut,(debut+fin)/2,fin].map(t => `<text x="${x(t)}" y="${H-9}" text-anchor="${t===debut ? "start" : t===fin ? "end" : "middle"}" fill="var(--doux)" font-size="12">${date(t)}</text>`).join("")+
     series.filter(r => r.points.length).map((r,i) => {
       let path=`M ${x(debut)} ${y(0)}`;
       for (const [t,g] of r.points) path+=` H ${x(t)} V ${y(g)}`;
@@ -1449,8 +1385,12 @@ function rendreStrategies() {
     const av = tri === "reussite" ? a.reussite : a.stats[tri], bv = tri === "reussite" ? b.reussite : b.stats[tri];
     return (bv ?? -Infinity) - (av ?? -Infinity) || a.id.localeCompare(b.id);
   });
-  document.getElementById("strategies-periodes").innerHTML = Object.entries(STRAT_PERIODES).map(([id,nom]) =>
-    `<button data-p="${id}" class="${periodeStrategies===id ? "actif" : ""}" aria-pressed="${periodeStrategies===id}">${nom}</button>`).join("");
+  const boutonPeriode = ([id,nom]) => `<button data-p="${id}" class="${periodeStrategies===id ? "actif" : ""}" aria-pressed="${periodeStrategies===id}">${id==="futur" ? "Suivi prospectif" : nom}</button>`;
+  document.getElementById("strategies-periodes").innerHTML = Object.entries(STRAT_PERIODES).slice(0,2).map(boutonPeriode).join("") +
+    `<details class="periodes-detail"${!["futur","ensemble"].includes(periodeStrategies)?" open":""}><summary>Découper l’historique</summary><div>${Object.entries(STRAT_PERIODES).slice(2).map(boutonPeriode).join("")}</div></details>`;
+  const contexte=document.getElementById("strategies-contexte");
+  contexte.textContent=periodeStrategies==="futur" ? "Suivi prospectif" : "Rejeu historique · "+STRAT_PERIODES[periodeStrategies];
+  contexte.classList.toggle("historique",periodeStrategies!=="futur");
   for (const b of document.querySelectorAll("#strategies-periodes button")) b.onclick = () => { periodeStrategies=b.dataset.p; rendreStrategies(); };
   const gemPicks = L.gemini_paris || [];
   const suivis = L.suivis_prudents || {};
@@ -1496,7 +1436,7 @@ function rendreStrategies() {
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection M3 depuis son démarrage prospectif du 15 octobre.</p>';
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
-  document.getElementById("strategies-total").textContent = `${rows.length} stratégies affichées · ${active.length} avec des sélections · ${reglees.length} avec des paris réglés. Glisse le tableau vers la gauche pour voir toutes les colonnes.`;
+  document.getElementById("strategies-total").textContent = `${rows.length} stratégies affichées · ${active.length} avec des sélections · ${reglees.length} avec des paris réglés. Les résultats des stratégies se recoupent.`;
   const descriptions = {
     futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, nouvelles variantes à 06 h (Paris). Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
     ensemble:"Historique figé : matchs du 7 au 13 octobre, règlements disponibles au relevé du 14/10 à 12 h 09 (Paris), y compris les règlements tardifs. Rejeu rétrospectif, distinct du suivi depuis lancement.",
@@ -1507,21 +1447,38 @@ function rendreStrategies() {
   document.getElementById("strategies-quoi").textContent = descriptions[periodeStrategies] +
     (periodeStrategies === "futur" && !active.length ? " Aucune nouvelle sélection enregistrée : la dernière collecte disponible précède ce lancement. Le bouton Historique affiche la comparaison existante." : "") +
     ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, M3, convergence ≥ 2 et deux variantes prudentes) ; aucune rentabilité future démontrée.`;
-  document.getElementById("strategies-table").innerHTML = `<thead><tr><th>Stratégie</th><th>Paris</th><th>Gagnés</th><th>Perdus</th><th>Réussite</th><th>ROI</th><th>Gains</th><th>Pertes</th><th>Gain net</th></tr></thead><tbody>` + rows.map(r => {
+  document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
     return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nom)}</b><small>${e(r.detail)}</small></td>
       <td>${s.paris}<small>${s.regles} réglés · ${s.attente} en attente</small></td><td>${s.gagnes}</td><td>${s.perdus}</td>
-      <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}<small>CLV <span class="${signe(s.clv)}">${pp(s.clv)}</span> · ${s.clv_n || 0}/${s.regles}</small></td>
+      <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}</td>
+      <td class="${signe(s.clv)}">${pp(s.clv)}<small>${s.clv_n || 0}/${s.regles} mesurés</small></td>
       <td class="pos">${s.regles ? eur(s.gains_bruts) : "—"}</td><td class="neg">${s.regles ? eur(-s.pertes_brutes) : "—"}</td>
       <td class="${signe(s.gain)}"><b>${s.regles ? eur(s.gain) : "—"}</b></td></tr>`;
   }).join("") + `</tbody>`;
+  document.getElementById("strategies-mobile").innerHTML=rows.length ? rows.map(r => {
+    const s=r.stats;
+    return `<article class="strategie-ligne"><div class="strategie-entete"><h3>${e(r.nom)}</h3>
+      <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Voir les paris</button></div>
+      <dl class="strat-chiffres">
+        <div><dt>Gain net</dt><dd class="${signe(s.gain)}">${s.regles ? eur(s.gain) : "—"}</dd></div>
+        <div><dt>ROI</dt><dd class="${signe(s.roi)}">${pp(s.roi)}</dd></div>
+        <div><dt>CLV moyenne</dt><dd class="${signe(s.clv)}">${pp(s.clv)}<small>${s.clv_n || 0}/${s.regles} mesurés</small></dd></div>
+        <div><dt>Paris réglés</dt><dd>${s.regles}<small>${s.paris} prises au total</small></dd></div>
+        <div><dt>Réussite</dt><dd>${r.reussite==null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</dd></div>
+        <div><dt>En attente</dt><dd>${s.attente}</dd></div>
+      </dl><details><summary>Règles et détail des résultats</summary><p>${e(r.detail)}</p>
+      <div class="strat-secondaires"><span>Gagnés / perdus<b>${s.gagnes} / ${s.perdus}</b></span>
+      <span>Gains bruts<b class="pos">${s.regles ? eur(s.gains_bruts) : "—"}</b></span>
+      <span>Pertes<b class="neg">${s.regles ? eur(-s.pertes_brutes) : "—"}</b></span></div></details></article>`;
+  }).join("") : '<div class="vide">Aucune stratégie pour ces filtres. Choisis une autre référence.</div>';
   // Une ligne = une navigation vers tous les paris de cette stratégie et de la
   // période choisie, y compris les terminés et ceux absents des fiches récentes.
-  document.querySelectorAll("#strategies-table tbody tr").forEach(tr => {
+  document.querySelectorAll("#strategies-table tbody tr, #strategies-mobile button[data-strategie]").forEach(tr => {
     const ligne = rows.find(r => r.id === tr.dataset.strategie);
     if (!ligne) return;
     tr.tabIndex = 0;
-    tr.setAttribute("role", "link");
+    if (tr.tagName !== "BUTTON") tr.setAttribute("role", "link");
     tr.setAttribute("aria-label", "Voir les paris de " + ligne.nom + " : " + ligne.detail);
     const aller = () => {
       strategieChoisie = {id:ligne.id, nom:ligne.nom + " · " + ligne.detail, periode:periodeStrategies};
@@ -1659,6 +1616,7 @@ const ONGLETS = ["jouer","bilan","strategies","segments","paris","notifications"
 ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 
+initialiserInterface();
 __ACTUALISATION_JS__
 const champsVue = ["f-q", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle"];
 const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +

@@ -1,0 +1,37 @@
+"""Contrats du document autonome : navigation, étiquettes et absence d'identifiants dupliqués."""
+from collections import Counter
+from html.parser import HTMLParser
+
+from scripts.site_web import construire
+
+
+class Elements(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.ids = []
+        self.onglets = []
+        self.labels = []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if a.get("id"):
+            self.ids.append(a["id"])
+        if tag == "button" and a.get("data-o"):
+            self.onglets.append(a["data-o"])
+        if tag == "label" and a.get("for"):
+            self.labels.append(a["for"])
+
+
+def test_document_autonome_navigation_unique_et_apercu(tmp_path):
+    html = construire(tmp_path, tmp_path / "site").read_text()
+    p = Elements()
+    p.feed(html)
+    assert not [k for k, n in Counter(p.ids).items() if n > 1]
+    assert set(p.onglets) == {"jouer", "strategies", "paris", "bilan", "segments", "notifications", "regler", "controle"}
+    assert len(p.onglets) == 8
+    assert {"nav-plus-toggle", "nav-secondaires", "strategies-mobile", "fraicheur"} <= set(p.ids)
+    assert set(p.labels) <= set(p.ids)
+    assert "__INTERFACE_" not in html
+    assert "function installerActualisation" in html
+    assert "function adapterTableaux" in html
+    assert (tmp_path / "site/verification-responsive.html").exists()
