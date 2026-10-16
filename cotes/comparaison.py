@@ -115,7 +115,8 @@ def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str
 
 
 def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min: float = ECART_MIN,
-             index: dict | None = None, controle: tuple[dict, dict] | None = None) -> list[dict]:
+             index: dict | None = None, controle: tuple[dict, dict] | None = None,
+             temoin_brut: bool = True) -> list[dict]:
     """Opportunités (cote française × probabilité juste − 1 ≥ ecart_min). `controle` = (état du contrôle
     de conformité, matchs suspects) : une cote dont l'intitulé n'est pas contrôlé conforme est marquée
     suspecte (pas de pari)."""
@@ -148,7 +149,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                                      "composantes": {n: round(1 / r["proba_juste"], 3) for n, r in trouvees.items()}}
         # simulation témoin : la cote AFFICHÉE par Pinnacle, marge comprise (sans retrait de la marge)
         pin = trouvees.get("Pinnacle")
-        if pin and pin.get("cote"):
+        if temoin_brut and pin and pin.get("cote"):
             trouvees[BRUT] = {**pin, "proba_juste": 1 / pin["cote"]}
         for nom, r in trouvees.items():
             ecart = l["cote"] * r["proba_juste"] - 1

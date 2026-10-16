@@ -353,3 +353,29 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
   .analyse-kpis>div:nth-child(n+4){border-bottom:0!important}.analyse-kpis strong{font-size:clamp(17px,5vw,22px);letter-spacing:-.6px}.analyse-kpis span{font-size:10px}.analyse-kpis small{font-size:9px;line-height:1.4}
   #analyse-contexte{font-size:10px;margin-bottom:10px}#o-analyses>.analyse-filtres{margin-top:8px;margin-bottom:8px}
 }
+
+/* Horaires civils de Paris : visibles avant toute ouverture d'une ligne. */
+.outils-horaires{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.outils-horaires label{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:10px;color:var(--doux)}
+.outils-horaires select{width:100%;min-width:0;min-height:42px;font-size:12px;padding:8px}
+.pari-horaire{display:inline-block;color:var(--texte);font-size:11px;font-weight:600;line-height:1.5;white-space:normal;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pari-horaire.imminent{color:var(--accent);background:var(--accent-f);border-radius:4px;padding:1px 5px}
+.pari-horaire.lointain,.pari-horaire.passe,.pari-horaire.inconnu{color:var(--doux)}
+.ligne-pari>summary>.pari-horaire{grid-column:2/-1;grid-row:4;justify-self:start}
+.secondaire-pari>summary>.pari-horaire{grid-column:2/-1;grid-row:3;justify-self:start}
+.groupe-match{margin:16px 0 24px;border-top:2px solid var(--ligne);min-width:0}
+.groupe-match>header{padding:10px 0 8px}.groupe-match h3{font-size:15px;line-height:1.4;margin:3px 0;overflow-wrap:anywhere}
+.groupe-sport{display:flex;align-items:center;gap:5px;color:var(--doux);font-size:10px;overflow-wrap:anywhere}
+.groupe-sport .icone{width:13px;height:13px;flex:none}.groupe-horaire{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;justify-content:space-between}
+.groupe-horaire>span{color:var(--doux);font-size:10px}
+.groupe-match .ligne-pari>summary>.pari-match,.groupe-match .ligne-pari>summary>.pari-horaire{display:none}
+.groupe-match .ligne-pari>summary>.pari-selection{grid-row:1}.groupe-match .ligne-pari>summary>.pari-bookmaker{grid-row:2}
+.meilleur-libelle{display:block;font-size:9px;color:var(--accent);padding:5px 0 0 20px}
+#liste-regler>details.carte>summary{white-space:normal;overflow:visible;line-height:1.5}
+#liste-regler>details.carte>summary>.pari-horaire{display:block;margin-top:4px}
+@media(min-width:761px){.outils-horaires{max-width:520px}.groupe-match h3{font-size:17px}.pari-horaire{font-size:12px}}
+/* Le bookmaker et l'horaire partagent la troisième rangée quand la largeur le permet. */
+.ligne-pari>summary>.pari-bookmaker{grid-column:2/-1;padding-right:54px}
+.ligne-pari>summary>.pari-horaire{grid-column:2/-1;grid-row:3;justify-self:start;margin-left:54px}
+.groupe-match .ligne-pari>summary>.pari-bookmaker{padding-right:0}
+@media(max-width:370px){.ligne-pari>summary>.pari-horaire{grid-row:4;margin-left:0}}

@@ -2,6 +2,7 @@
 import json
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -63,6 +64,7 @@ const D={strategies_badges:{claude:'Claude'}},rendreResumeJouer=()=>{};
 let sportJouer='tennis';
 const cotesJouer=[{sport:'tennis',pari:'A',strategies:['claude']},{sport:'football',pari:'B',strategies:['claude']},{sport:'tennis',pari:'C',strategies:[]}];
 const carteActuelle=o=>o.pari;
+function rendreGroupesJouer(liste) {return liste.map(carteActuelle).join('');}
 '''+section+'''
 rendreJouer();assert.equal(document.getElementById('liste-jouer').innerHTML,'AC');
 filtreJouer='valide';rendreJouer();assert.equal(document.getElementById('liste-jouer').innerHTML,'A');
@@ -80,7 +82,7 @@ const document={getElementById(id){
 const e=s => String(s ?? "").replaceAll("<","&lt;").replaceAll('"','&quot;');
 const cote=e,pct=e,eur=e,quand=e,signe=()=>"",ouvrir=()=>{};
 const STATUTS={}, STRAT_PERIODES={futur:"Depuis le lancement",ensemble:"Historique"};
-'''
+'''+(Path(__file__).resolve().parents[1]/'web/horaires.js').read_text()
 
 
 def test_js_recherche_filtres_export_bom_echappement_et_archive_complete():

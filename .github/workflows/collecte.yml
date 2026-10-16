@@ -76,7 +76,10 @@ jobs:
           # Le cron horaire peut être retardé de plusieurs heures : le cycle prend le relais
           # si le dernier règlement date d'au moins 55 min. Même verrou « donnees ».
           REGLEMENT: auto
-          LIVE_PAPIER: oui
+          # Activation explicite seulement après validation des timestamps et des clôtures Live.
+          LIVE_PAPIER: ${{ vars.LIVE_PAPIER || 'non' }}
+          # Arrêt des nouveaux témoins ; les anciens restent conservés et réglés.
+          TEMOIN_PINNACLE_BRUT: non
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
         run: python scripts/cycle.py --donnees donnees --site site
 

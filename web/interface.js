@@ -11,7 +11,7 @@ menuPlus.onclick = () => {
 document.addEventListener('click', ev => {if (!ev.target.closest('#onglets')) fermerMenu();});
 document.addEventListener('keydown', ev => {if (ev.key==='Escape') {fermerMenu();menuPlus.focus();}});
 
-// Chaque résumé reste sur une ligne ; les cellules originales sont déplacées,
+// Les cellules originales sont déplacées,
 // sans clonage des contrôles, pour conserver leurs identifiants et événements.
 const tableauxCompactes=new WeakMap();
 function textePrincipal(el) {
@@ -72,6 +72,8 @@ function adapterTableaux() {
         if(conteneur.id!=='ctl-liste') {
           const texte=(carte.querySelector('.l3 > span') || carte.querySelector(':scope > div'))?.textContent?.trim();
           if(texte) {const pari=document.createElement('span');pari.className='pari-selection';pari.textContent=texte;summary.append(pari);d.classList.add('secondaire-pari');}
+          const horaire=carte.querySelector('time.pari-horaire');
+          if(horaire) summary.append(horaire.cloneNode(true));
         }
         carte.before(d);corps.append(carte);d.append(summary,corps);
       }
@@ -138,6 +140,16 @@ window.addEventListener('online',connexion);window.addEventListener('offline',co
 // Appelé à la fin du rendu : les utilitaires du modèle sont alors initialisés.
 function initialiserInterface() {
   initialiserPalette();compacterFiltres();adapterTableaux();actualiserFraicheur();setInterval(actualiserFraicheur,60000);
+  setInterval(()=>{
+    actualiserHoraires();
+    const actif=document.querySelector('.onglet.actif')?.id;
+    const prefixe=actif==='o-jouer'?'jouer':actif==='o-paris'?'paris':null;
+    if(!prefixe || !document.getElementById(prefixe+'-horaire').value) return;
+    const conteneur=document.getElementById('liste-'+prefixe);
+    const ouverts=new Set([...conteneur.querySelectorAll('details[open]')].map(d=>d.id));
+    if(prefixe==='jouer') rendreJouer();else rendreParis();
+    for(const d of conteneur.querySelectorAll('details')) d.open=ouverts.has(d.id);
+  },60000);
   document.getElementById('bilan-evolution').ontoggle=()=>{if(document.getElementById('bilan-evolution').open) rendreCourbe();};
   choisirVueStrategies(lire('cv-vue-strategies-lignes')==='graphiques'?'graphiques':'liste');
   for(const b of document.querySelectorAll('[data-vue-strategies]')) b.onclick=()=>{

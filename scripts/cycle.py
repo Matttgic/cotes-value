@@ -21,6 +21,7 @@ import os
 import sys
 import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -79,6 +80,73 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
     sinon « aucune source » pour un pari ne dit pas qu'une source était en panne."""
     if erreurs and nom in journal["etapes"]:
         journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:3]}
+
+
+def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal: dict):
+    """Références en parallèle ; les books n'attendent pas Kalshi.
+
+    Un sport présent seulement chez Kalshi reçoit une lecture complémentaire,
+    sans relire les sports déjà couverts ni élargir le radar à l'aveugle.
+    Les résultats des futures sont assemblés dans un ordre déterministe.
+    """
+    limite = maintenant + timedelta(hours=HORIZON_H)
+
+    def sports_des(lignes):
+        return {l["sport"] for l in lignes if comparaison._t(l.get("debut"))
+                and maintenant < comparaison._t(l["debut"]) <= limite}
+
+    def pulse(sports, nom):
+        if mode == "test":
+            plan = {b: ["soccer"] for b in ("winamax", "betclic", "orbitxch")}
+            pages, horizon = 1, 12
+        else:
+            fr = [s for s in SPORTS_FR if pulsescore.SPORTS[s] in sports]
+            if not fr:
+                return [], {}, {}
+            plan = {b: fr for b in FRANCAIS} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in fr]}
+            pages, horizon = 40, HORIZON_H
+        return etape(nom, journal, pulsescore.collecter, cle, plan, horizon, pages) or ([], {}, {})
+
+    def mesures_delta(pin, lignes):
+        """Diagnostic, pas une nouvelle règle de sélection ; temps réels des lignes lues."""
+        refs = [comparaison._t(l.get("collecte")) for l in pin]
+        books = [comparaison._t(l.get("collecte")) for l in lignes]
+        refs, books = [t for t in refs if t], [t for t in books if t]
+        journal["fraicheur_prematch"] = {
+            "pinnacle_premiere_lecture": min(refs).isoformat() if refs else None,
+            "pinnacle_derniere_lecture": max(refs).isoformat() if refs else None,
+            "books_premiere_lecture": min(books).isoformat() if books else None,
+            "books_derniere_lecture": max(books).isoformat() if books else None,
+            "ecart_enveloppe_secondes": round(max(abs((b-r).total_seconds()) for b in (min(books), max(books))
+                                               for r in (min(refs), max(refs))), 1) if refs and books else None,
+        }
+
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        fpin = pool.submit(etape, "pinnacle", journal, lambda: harmoniser_pinnacle(pinnacle.collecter()))
+        fpoly = pool.submit(etape, "polymarket", journal, polymarket.collecter, HORIZON_H)
+        fkal = pool.submit(etape, "kalshi", journal, kalshi.collecter, HORIZON_H)
+        pin, poly = fpin.result() or [], fpoly.result() or []
+        sports = sports_des(pin + poly)
+        lignes, requetes = [], {}
+        if cle:
+            lignes, requetes, erreurs = pulse(sports, "pulsescore")
+            if erreurs:
+                journal["etapes"]["pulsescore"] |= {"degrade": True,
+                    "erreurs": {b: e[:5] for b, e in erreurs.items()}}
+        else:
+            journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
+        kal = fkal.result() or []
+        manque = sports_des(kal) - sports
+        if cle and mode != "test" and manque:
+            autres, compte, erreurs = pulse(manque, "pulsescore_complement")
+            lignes = lignes + autres
+            for b, n in compte.items():
+                requetes[b] = requetes.get(b, 0) + n
+            if erreurs:
+                journal["etapes"]["pulsescore_complement"] |= {"degrade": True,
+                    "erreurs": {b: e[:5] for b, e in erreurs.items()}}
+    mesures_delta(pin, lignes)
+    return pin, poly, kal, lignes, requetes
 
 
 def reglement_echu(etat: dict, maintenant: datetime, mode: str) -> bool:
@@ -273,6 +341,8 @@ def main() -> int:
     # Rafale live isolée AVANT les sources lentes. Les mesures +15/+30 s se font
     # pendant les lectures pré-match, sans changer leur sélection ni les bilans.
     terminer_live = None
+    journal["live_papier"] = {"mode": "papier", "actif": False,
+        "raison": "désactivé par défaut : fraîcheur source et clôtures complètes requises"}
     if cle and os.environ.get("LIVE_PAPIER") == "oui" and args.mode == "complet":
         try:
             from cotes.live_papier import lancer
@@ -280,32 +350,9 @@ def main() -> int:
         except Exception:  # un échec live ne bloque jamais le scanner pré-match
             journal["live_papier"] = {"erreur": "initialisation_indisponible", "mode": "papier"}
 
-    # 1. références (gratuites)
-    pin = etape("pinnacle", journal, lambda: harmoniser_pinnacle(pinnacle.collecter())) or []
-    poly = etape("polymarket", journal, polymarket.collecter, HORIZON_H) or []
-    kal = etape("kalshi", journal, kalshi.collecter, HORIZON_H) or []
+    # Références en parallèle ; PulseScore démarre sans attendre Kalshi.
+    pin, poly, kal, lignes_ps, requetes = collecter_prematch(cle, args.mode, maintenant, journal)
 
-    # 2. bookmakers français + Betfair (PulseScore) : seulement les sports où une référence a des matchs
-    limite = maintenant + timedelta(hours=HORIZON_H)
-    sports_ref = {l["sport"] for l in pin + poly + kal
-                  if l.get("debut") and comparaison._t(l["debut"]) and comparaison._t(l["debut"]) <= limite}
-    if args.mode == "test":
-        plan = {"winamax": ["soccer"], "betclic": ["soccer"], "orbitxch": ["soccer"]}
-        pages_max, horizon = 1, 12
-    else:
-        sports = [s for s in SPORTS_FR if pulsescore.SPORTS[s] in sports_ref]
-        plan = {bm: sports for bm in FRANCAIS} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in sports]}
-        pages_max, horizon = 40, HORIZON_H
-    lignes_ps, requetes = [], {}
-    if cle:
-        r = etape("pulsescore", journal, pulsescore.collecter, cle, plan, horizon, pages_max)
-        if r:
-            lignes_ps, requetes, erreurs_ps = r
-            if erreurs_ps:                       # fonctionnement dégradé : visible dans le journal (etat.json)
-                journal["etapes"]["pulsescore"] |= {"degrade": True,
-                                                    "erreurs": {bm: e[:5] for bm, e in erreurs_ps.items()}}
-    else:
-        journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
     francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
     betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])
     references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly, "Kalshi": kal}
@@ -324,11 +371,13 @@ def main() -> int:
     journal["controle"] = controle.resume(etat_controle) | {"mesures": len(mesures),
                                                             "matchs_suspects": len(suspects)}
     opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
-                         index=index, controle=(etat_controle, suspects)) or []
+                         index=index, controle=(etat_controle, suspects),
+                         temoin_brut=os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui") or []
     paris = lire_json(donnees / "paris.json", [])
     # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
     manuels = lire_json(donnees / "resultats_manuels.json", {})
     paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
+    journal["temoin_pinnacle_brut"] = os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui"
     nouveaux = simulation.placer(opportunites, paris)
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle

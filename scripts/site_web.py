@@ -503,6 +503,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
     html = html.replace("__VISUELS_JS__", (web / "visuels.js").read_text(encoding="utf-8"))
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
+    html = html.replace("__HORAIRES_JS__", (web / "horaires.js").read_text(encoding="utf-8"))
     html = html.replace("__ANALYSES_JS__", (web / "analyses.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
@@ -554,6 +555,11 @@ MODELE = r"""<!doctype html>
   <section class="onglet" id="o-jouer" aria-label="À jouer">
     <div class="page-tete tete-compacte"><h2>À jouer</h2><div class="compteurs" id="jouer-resume"></div></div>
     <p class="aide releve-ligne"><span id="jouer-quand"></span></p>
+    <div class="outils-horaires" aria-label="Horaires des opportunités">
+      <label>Début du match<select id="jouer-horaire"><option value="">Tous les horaires</option><option value="imminent">Imminent · moins de 2 h</option><option value="aujourdhui">Aujourd’hui</option><option value="demain">Demain</option></select></label>
+      <label>Ordre des matchs<select id="jouer-tri"><option value="heure">Heure de match</option><option value="edge">Meilleur edge</option></select></label>
+    </div>
+    <p class="aide" id="jouer-compte" aria-live="polite"></p>
     <div class="puces sports-puces" id="jouer-sports" aria-label="Filtrer les opportunités par sport"></div>
     <div class="puces" id="jouer-filtres" aria-label="Filtrer les opportunités par stratégie"></div>
     <details class="mode-emploi"><summary>Comment lire les sélections</summary><p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
@@ -628,7 +634,7 @@ MODELE = r"""<!doctype html>
     <div id="strategies-vue-graphiques" hidden>
     <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
     <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
-    Jules v1/v2 représentent une seule famille pour la convergence ; cet accord ne prouve pas la rentabilité.</p>
+    Jules v1/v2 représentent une seule famille. Convergence ≥ 2 inclut M3 et reste exploratoire ; Convergence ≥ 3 hors M3 exclut cette stratégie optimisée sur le passé. Un accord ne prouve pas la rentabilité.</p>
     <div class="carte"><div class="puces" id="strategies-legende"></div>
       <div id="strategies-courbes-vide" class="aide"></div>
       <svg id="strategies-courbes" viewBox="0 0 760 300" role="img" aria-label="Courbes comparées des gains cumulés en euros" style="width:100%;height:auto"></svg>
@@ -705,6 +711,10 @@ MODELE = r"""<!doctype html>
     <div class="filtres recherche"><input type="search" id="f-q" placeholder="Rechercher équipe, ligue, pari…" aria-label="Rechercher équipe, ligue ou pari">
       <button class="btn" id="export-csv">Exporter CSV</button></div>
     <p class="aide" id="paris-compte" aria-live="polite"></p>
+    <div class="outils-horaires" aria-label="Horaires des paris">
+      <label>Début du match<select id="paris-horaire"><option value="">Tous les horaires</option><option value="imminent">Imminent · moins de 2 h</option><option value="aujourdhui">Aujourd’hui</option><option value="demain">Demain</option></select></label>
+      <label>Ordre<select id="paris-tri"><option value="">Ordre du journal</option><option value="heure">Heure de match ↑</option><option value="recent">Heure de match ↓</option></select></label>
+    </div>
     <div class="filtres grille-filtres">
       <label>Stratégie / simulation<select id="f-sim"></select></label>
       <label>Référence<select id="f-ref"></select></label>
@@ -788,8 +798,8 @@ const eur = x => (x>0?"+":"") + Number(x).toFixed(2).replace(".", ",") + " €";
 const eurC = x => x==null ? "—" : (x>0?"+":"") + Math.round(x).toLocaleString("fr-FR") + " €";
 const pctC = x => x==null ? "—" : (x>0?"+":"") + (Math.abs(x) >= 1 ? Math.round(100*x).toLocaleString("fr-FR")
   : (100*x).toFixed(1).replace(".", ",")) + " %";
-const quand = s => s ? new Date(s).toLocaleString("fr-FR",{weekday:"short",day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
-const hm = s => s ? new Date(s).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "";
+const quand = s => s ? new Date(s).toLocaleString("fr-FR",{timeZone:"Europe/Paris",weekday:"short",day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
+const hm = s => s ? new Date(s).toLocaleTimeString("fr-FR",{timeZone:"Europe/Paris",hour:"2-digit",minute:"2-digit"}) : "";
 const signe = x => x==null ? "" : x>0 ? "pos" : x<0 ? "neg" : "";
 const STATUTS = {en_cours:"En cours",gagne:"Gagné",perdu:"Perdu",rembourse:"Remboursé",demi_gagne:"½ gagné",
   demi_perdu:"½ perdu",a_regler:"À régler"};
@@ -797,6 +807,7 @@ const lire = k => { try { return localStorage.getItem(k); } catch { return null;
 const ecrire = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
 
 __VISUELS_JS__
+__HORAIRES_JS__
 __INTERFACE_JS__
 
 // --- en-tête et onglets
@@ -835,7 +846,7 @@ const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
 const carteActuelle = o => `<details class="ligne-detail ligne-pari ${o.strategies.length ? "ligne-validee" : ""}" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
-<span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>
+<span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>${horairePari(o)}
 <span class="ligne-book" title="${e(o.bookmaker)}">${monogrammeBookmaker(o.bookmaker)}</span><b class="ligne-cote" aria-label="Cote ${cote(o.cote)}">${cote(o.cote)}</b><b class="ligne-valeur pos" aria-label="Edge ${pct(o.ecart)}">${pct(o.ecart)}</b></summary><div class="ligne-corps"><article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
 <div class="op-meta"><span class="sport-identite">${iconeSport(o.sport)}${e(nomsSports[o.sport] || o.sport || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
 <h3 class="op-match">${e(o.domicile)} – ${e(o.exterieur)}</h3>
@@ -860,9 +871,13 @@ function rendreJouer() {
   document.getElementById("jouer-filtres").innerHTML = choix.map(([cle,nom]) =>
     `<button data-filtre="${e(cle)}" class="${filtreJouer===cle ? "actif" : ""}" aria-pressed="${filtreJouer===cle}">${e(nom)} (${cotesJouer.filter(o => accepte(o,cle) && (!sport || o.sport===sport)).length})</button>`).join("");
   for (const b of document.querySelectorAll("#jouer-filtres button")) b.onclick = () => { filtreJouer=b.dataset.filtre; rendreJouer(); };
-  const liste = cotesJouer.filter(o => accepte(o,filtreJouer) && (!sport || o.sport===sport));
-  document.getElementById("liste-jouer").innerHTML = liste.length ? liste.map(carteActuelle).join("") : '<div class="vide">Aucune opportunité pour ces filtres. Essaie « Tous » et « Tous les sports ».</div>';
+  const maintenant=Date.now();
+  const liste = trierHoraires(cotesJouer.filter(o => accepte(o,filtreJouer) && (!sport || o.sport===sport) &&
+    accepteHoraire(o,document.getElementById('jouer-horaire').value,maintenant)),document.getElementById('jouer-tri').value==='edge'?'':'heure');
+  document.getElementById('jouer-compte').textContent=`${liste.length} offres · ${groupesMatchs(liste).length} matchs · horaires de Paris`;
+  document.getElementById("liste-jouer").innerHTML = liste.length ? rendreGroupesJouer(liste) : '<div class="vide">Aucune opportunité pour ces filtres. Essaie « Tous », « Tous les sports » et « Tous les horaires ».</div>';
 }
+for(const id of ['jouer-horaire','jouer-tri']) document.getElementById(id).onchange=()=>rendreJouer();
 rendreJouer();
 document.getElementById("nb-jouer").textContent = cotesJouer.length || "";
 
@@ -1054,6 +1069,8 @@ document.getElementById("f-q").oninput = () => { limite=50; rendreParis(); };
 document.getElementById("reinitialiser-filtres").onclick = () => {
   strategieChoisie=null; limite=50;
   document.getElementById("f-q").value="";
+  document.getElementById("paris-horaire").value="";
+  document.getElementById("paris-tri").value="";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value="";
   rendreParis();
 };
@@ -1082,7 +1099,7 @@ document.getElementById("export-csv").onclick = () => {
   setTimeout(() => URL.revokeObjectURL(url),1000);
 };
 const carteParis = p => `<details class="ligne-detail ligne-pari" id="pari-${e(encodeURIComponent(JSON.stringify([p.id,p.bookmaker,p.match_id,p.pari,p.detecte,p.reference])))}"><summary>
-<span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span><span class="pari-bookmaker">${e(p.bookmaker)}</span>
+<span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span><span class="pari-bookmaker">${e(p.bookmaker)}</span>${horairePari(p)}
 <span class="ligne-book" title="${e(p.bookmaker)}">${e((p.bookmaker || '?').slice(0,1))}</span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b>
 <span class="ligne-valeur ${signe(p.gain)}" title="${e(STATUTS[p.statut]||p.statut)}">${p.gain!=null?eur(p.gain):e(p.a_regler?'À régler':'En cours')}</span></summary><div class="ligne-corps"><article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${p.reporte_au && p.statut === "en_cours"
@@ -1107,9 +1124,11 @@ function rendreParis() {
       strategies:badges, convergence:p.convergence_historique || false};
   }) : fiches;
   const q = normaliserRecherche(document.getElementById("f-q").value).trim();
-  const L = source.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
+  const maintenant=Date.now(),triHoraire=document.getElementById('paris-tri').value;
+  const L = trierHoraires(source.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
+    accepteHoraire(p,document.getElementById('paris-horaire').value,maintenant) &&
     (!q || normaliserRecherche([p.domicile,p.exterieur,p.ligue,p.pari].join(" ")).includes(q)) &&
-    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v)) : p[k]===v)));
+    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v)) : p[k]===v))),triHoraire);
   parisFiltres = L;
   document.getElementById("paris-compte").textContent = `${L.length} prise(s) · ${Math.min(limite,L.length)} affichées · export des ${L.length} prises filtrées.`;
   const banner = document.getElementById("paris-strategie-banner");
@@ -1126,6 +1145,8 @@ function rendreParis() {
       limite = 50;
       rendreParis();
     };
+  }
+  if (strategieChoisie && !triHoraire) {
     const now = Date.now();
     const aVenir = L.filter(p => p.statut === "en_cours" && new Date(p.debut).getTime() > now)
       .sort((a,b) => new Date(a.debut)-new Date(b.debut));
@@ -1149,6 +1170,7 @@ function rendreParis() {
   plus.style.display = L.length > limite ? "" : "none";
   plus.onclick = () => { limite += 50; rendreParis(); };
 }
+for(const id of ['paris-horaire','paris-tri']) document.getElementById(id).onchange=()=>{limite=50;rendreParis();};
 rendreParis();
 document.getElementById("voir-chatgpt").onclick = () => {
   strategieChoisie = null;
@@ -1225,13 +1247,13 @@ ${(n => n ? `<span class="badge en_cours">${n} à venir</span>` : "")(aVenir(s).
     const L = (D.paris_segments || []).filter(dansSeg(s)), V = aVenir(s);
     a.insertAdjacentHTML("beforeend", `<div class="seg-paris">
 <div class="sp-titre">À venir (${V.length})</div>${V.length ? V.map(x => `<div class="sp">
-<div class="l1"><span class="match">${e(x[0])}</span><span class="quand">${quand(x[8])}</span></div>
+<div class="l1"><span class="match">${e(x[0])}</span>${horairePari({debut:x[8]})}</div>
 <div class="l3"><span>${e(x[1])}</span><span><b>${e(x[2])} ${cote(x[3])}</b> <i>juste${cote(x[4])}</i></span>
 <span><i>écart</i> <span class="${signe(x[5])}">${pct(x[5])}</span></span>
 <span>CLV <span class="${signe(x[7])}">${pct(x[7])}</span> <i>pour l'instant</i></span></div></div>`).join("")
   : `<div class="sp"><i>Aucun pari à venir dans ce segment pour l'instant.</i></div>`}
 <div class="sp-titre">Réglés (${L.length})</div>${L.map(x => `<div class="sp">
-<div class="l1"><span class="match">${e(x[0])}</span><span class="quand">${quand(x[8])}</span></div>
+<div class="l1"><span class="match">${e(x[0])}</span>${horairePari({debut:x[8]})}</div>
 <div class="l3"><span>${e(x[1])}</span><span><b>${e(x[2])} ${cote(x[3])}</b> <i>juste${cote(x[4])}</i></span>
 <span class="badge ${x[5]}">${STATUTS[x[5]] || x[5]}</span><b class="${signe(x[6])}">${eur(x[6])}</b>
 <span>CLV <span class="${signe(x[7])}">${pct(x[7])}</span></span></div></div>`).join("")}</div>`);
@@ -1268,7 +1290,7 @@ document.getElementById("reglement-etat").innerHTML =
 document.getElementById("liste-regler").innerHTML = man.length ? [...groupesReglement.values()].map(ps => {
   const p = ps[0], d = dr.get(p.domicile+" – "+p.exterieur+"|"+p.sport+"|"+p.debut);
   const validation = d && d.validation_apres;
-  return `<details class="carte"><summary>${e(p.domicile)} – ${e(p.exterieur)} · ${ps.length} sélection${ps.length>1?"s":""}</summary>
+  return `<details class="carte"><summary>${e(p.domicile)} – ${e(p.exterieur)} · ${ps.length} sélection${ps.length>1?"s":""}${horairePari(p)}</summary>
 <div class="l4"><span>${quand(p.debut)}</span><span>${e(p.ligue||"")}</span></div>
 <p class="aide">${e(d ? d.raison : "Recherche automatique en cours")}${validation ? " · nouvelle validation possible après "+quand(validation) : ""}.</p>
 ${ps.map(x => `<div class="l4"><span>${e(x.bookmaker)} · ${e(x.pari)}</span><span>${e(x.reference)}</span></div>`).join("")}</details>`;
@@ -1406,7 +1428,7 @@ function rendreStrategies() {
     const detailComp = variante ? (periodeStrategies === "futur"
       ? `Depuis le ${quand(variante.debut)} · ${variante.regles}`
       : `Rejeu exploratoire après audit · ${variante.regles}`) : periodeStrategies === "futur"
-      ? (id.startsWith("Convergence") ? "Depuis le 15/10 à 01 h · 2 familles minimum"
+      ? (id.startsWith("Convergence") ? "Depuis le 15/10 à 01 h · 2 familles minimum · M3 incluse"
          : id.startsWith("JULES EDGE v2") ? "Depuis le 15/10 à 00 h 30 · multi-réf. · max 8/j"
          : id.startsWith("JULES") ? "Depuis le 14/10 à 23 h 04 · 1 pari/match · max 6/j"
          : id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection"
@@ -1444,7 +1466,7 @@ function rendreStrategies() {
     const picks = (v.ids || []).map(id => navPrudent[id]).filter(Boolean).slice(-20).reverse();
     return `<details><summary>${e(v.nom)} · ${v.stats.paris} prises · ${v.stats.regles} réglées</summary>` +
       (picks.length ? picks.map(p => `<article class="carte"><b>${e(p.domicile)} – ${e(p.exterieur)}</b>
-       <div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div><small>${quand(p.detecte)} · ${e(p.statut)}</small></article>`).join("")
+       <div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div>${horairePari(p)}<small>Prise ${quand(p.detecte)} · ${e(p.statut)}</small></article>`).join("")
        : '<p class="aide">Aucune prise depuis le lancement de cette variante.</p>') + '</details>';
   }).join("");
   document.getElementById("prudentes-reconstitution").innerHTML = Object.values(suivis.reconstitution_exploratoire || {}).map(v =>
@@ -1453,7 +1475,7 @@ function rendreStrategies() {
     ? gemPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
-       <small>${quand(p.debut)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       <small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection Gemini Argon depuis son démarrage prospectif.</p>';
   const julesPicks = L.jules_paris || [];
@@ -1461,7 +1483,7 @@ function rendreStrategies() {
     ? julesPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
-       <small>${quand(p.debut)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       <small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection JULES EDGE depuis sa publication du 14/10 à 23 h 04.</p>';
   const v2Picks = L.jules_v2_paris || [];
@@ -1469,7 +1491,7 @@ function rendreStrategies() {
     ? v2Picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
-       <small>${quand(p.debut)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       <small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection JULES EDGE v2 depuis le lancement du 15/10 à 00 h 30.</p>';
   const picks = L.m3_paris || [];
@@ -1477,7 +1499,7 @@ function rendreStrategies() {
     ? picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
-       <small>${quand(p.debut)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       <small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection M3 depuis son démarrage prospectif du 15 octobre.</p>';
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
@@ -1514,6 +1536,8 @@ function rendreStrategies() {
     tr.setAttribute("aria-label", "Voir les paris de " + ligne.nom + " : " + ligne.detail);
     const aller = () => {
       strategieChoisie = {id:ligne.id, nom:ligne.nom + " · " + ligne.detail, periode:periodeStrategies};
+      document.getElementById("paris-horaire").value="";
+      document.getElementById("paris-tri").value="";
       document.getElementById("f-q").value = "";
       for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value = "";
       limite = 50;
@@ -1548,9 +1572,11 @@ rendreStrategies();
 function rendreLivePapier() {
   const j = D.live_papier || {}, last = (j.cycles || []).slice(-1)[0];
   const host = document.getElementById("live-papier-contenu");
-  if (!last) { host.innerHTML = '<p class="aide">En attente du premier cycle papier Live.</p>'; return; }
+  const pause=D.etat?.dernier_cycle?.live_papier?.actif===false;
+  const avertissement=pause?'<p class="aide"><b>Collecte Live en pause.</b> Les flux doivent fournir des horodatages source vérifiables et des clôtures complètes avant réactivation. Les anciennes observations sont conservées.</p>':'';
+  if (!last) { host.innerHTML = avertissement || '<p class="aide">En attente du premier cycle papier Live.</p>'; return; }
   const counts = last.compteurs || {};
-  host.innerHTML = `<p>Dernière observation : ${quand(last.fin)} · rafale ${Number(last.rafale_secondes).toFixed(1)} s
+  host.innerHTML = avertissement+`<p>Dernière observation : ${quand(last.fin)} · rafale ${Number(last.rafale_secondes).toFixed(1)} s
     ${last.rafale_sous_20s ? "" : "· délai supérieur à 20 s : signaux refusés"}.</p>
     <p>${counts.prix_lus || 0} prix lus · ${counts.prix_en_pause || 0} prix en pause reconnue ·
       ${j.total_signaux || 0} signaux vérifiés conservés.</p>
@@ -1633,7 +1659,7 @@ function rendreLaboratoire() {
         const p = L.paris_recents.find(p => p.id === id);
         if (!p) return "";
         return `<div class="carte"><b>${e(p.domicile)} — ${e(p.exterieur)}</b><div>${e(p.pari)} · ${e(p.bookmaker)} ·${cote(p.cote)}</div>
-        <small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] || p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
+        ${horairePari(p)}<small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] || p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
       }).join("")}</details>`;
   }
   document.getElementById("labo-regle").onchange = detail;
@@ -1652,7 +1678,7 @@ __ANALYSES_JS__
 initialiserAnalyses();
 initialiserInterface();
 __ACTUALISATION_JS__
-const champsVue = ["f-q", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
+const champsVue = ["f-q", "jouer-horaire", "jouer-tri", "paris-horaire", "paris-tri", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
 const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +
   (d.querySelector("summary")?.textContent || "").replace(/\d+/g,"#").trim();
 installerActualisation({
