@@ -20,7 +20,7 @@ function monogrammeBookmaker(nom) {
 }
 function miniCourbe(points, couleur='var(--accent)') {
   const pts=(points || []).filter(p=>Number.isFinite(p[0]) && Number.isFinite(p[1]));
-  if (!pts.length) return '<span class="courbe-absente">Courbe après règlement</span>';
+  if (!pts.length) return '<span class="courbe-absente">Courbe indisponible</span>';
   const W=150,H=52,m=4;
   const t0=pts[0][0],t1=pts.at(-1)[0],x=t=>m+(t-t0)/(t1-t0 || 1)*(W-2*m);
   const lo=Math.min(0,...pts.map(p=>p[1])),hi=Math.max(0,...pts.map(p=>p[1]));

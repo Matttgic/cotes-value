@@ -16,9 +16,11 @@ main{padding:20px;display:flex;justify-content:center;overflow:auto}iframe{borde
 <button data-largeur="430" aria-pressed="false">430 px</button>
 <button data-largeur="1200" aria-pressed="false">Ordinateur</button>
 <button id="theme" aria-pressed="false">Mode sombre</button></header>
-<main><iframe title="Cotes Value · aperçu" src="./index.html#jouer"></iframe></main>
+<main><iframe title="Cotes Value · aperçu"></iframe></main>
 <script>
 const cadre=document.querySelector('iframe');
+// Chaque vérification doit charger le HTML publié, sans reprendre l'ancien index du cache.
+cadre.src='./?_apercu='+Date.now()+'#jouer';
 for(const b of document.querySelectorAll('[data-largeur]')) b.onclick=()=>{
   cadre.style.width=b.dataset.largeur+'px';
   for(const c of document.querySelectorAll('[data-largeur]')) c.setAttribute('aria-pressed',String(c===b));
