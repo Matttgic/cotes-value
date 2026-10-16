@@ -70,10 +70,23 @@ jobs:
     timeout-minutes: 15
     concurrency:
       group: pages
-      cancel-in-progress: true
+      cancel-in-progress: false
     environment:
       name: github-pages
     steps:
+      - name: Écarter une interface issue d'un ancien code
+        id: fraicheur
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dernier=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_REF_NAME" --jq .sha)
+          if [ "$dernier" = "$GITHUB_SHA" ]; then
+            echo "publier=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publier=false" >> "$GITHUB_OUTPUT"
+            echo "Publication ignorée : un code plus récent est disponible."
+          fi
       - uses: actions/deploy-pages@v4
+        if: steps.fraicheur.outputs.publier == 'true'
         with:
           artifact_name: ${{ needs.construire.outputs.artefact }}

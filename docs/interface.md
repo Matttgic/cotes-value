@@ -18,6 +18,11 @@ police distante ou service supplémentaire n'est nécessaire.
   aux données existantes. Les sélections, gains, périodes et critères ne sont
   pas modifiés par la présentation.
 
+Les deux workflows de publication vérifient que leur commit est toujours en tête
+de la branche. Une collecte démarrée sur un ancien code conserve ses données,
+mais son ancien HTML n'est plus déployé. Une publication en cours n'est pas
+interrompue par une exécution arrivée après elle.
+
 `verification-responsive.html`, produit avec le site, affiche la vraie page dans
 une fenêtre de 360, 390, 430 ou 1200 px. Il permet de vérifier les deux thèmes et
 les interactions sans changer les préférences du téléphone. Ce cadre ne simule
