@@ -62,3 +62,9 @@ test('une stratégie se déplie sur place, avec un bouton distinct pour ses pari
   assert.ok(html.indexOf('mini-courbe')>html.indexOf('ligne-corps'));
   assert.ok(html.includes('8/10 mesurés') && html.includes('6 gagnés, 4 perdus'));
 });
+
+test('les règles par référence ont un libellé court et gardent leur identité complète',()=>{
+  const html=fn('carteStrategieVisuelle')({id:'PIN-1.5-3-e2-h36',nom:'Pinnacle · PIN-1.5-3-e2-h36',nomCourt:'PIN 1,5–3 · 2%/36h',detail:'Cotes 1,5–3, edge ≥ 2 %, ≤ 36 h',stats:{regles:0,paris:0,attente:0}},[]);
+  assert.ok(html.includes('>PIN 1,5–3 · 2%/36h</span>'));
+  assert.ok(html.includes('<h3>Pinnacle · PIN-1.5-3-e2-h36</h3>'));
+});

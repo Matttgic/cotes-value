@@ -48,7 +48,7 @@ def test_lignes_compactes_et_toutes_les_references_par_defaut():
     for nom in ('carteActuelle', 'carteParis'):
         debut = MODELE.index('const '+nom)
         bloc = MODELE[debut:MODELE.index('`;', debut)]
-        assert '<details class="ligne-detail ligne-pari"' in bloc
+        assert '<details class="ligne-detail ligne-pari' in bloc
         assert '</summary><div class="ligne-corps">' in bloc
     assert '"#liste-segments > details"' in MODELE
     assert 'd.ontoggle' in MODELE

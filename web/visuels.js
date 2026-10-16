@@ -50,7 +50,7 @@ function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   const code=r.nom.startsWith('Convergence')?'CV':r.nom.startsWith('Claude')?'CL':r.nom.startsWith('Gemini')?'GA':r.nom.startsWith('JULES')?'JL':r.nom.startsWith('M3')?'M3':r.nom.startsWith('ChatGPT')?'GP':'RF';
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nom)}</span><span class="ligne-volume" aria-label="${s.regles} paris réglés">${s.regles}</span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}</span><span class="ligne-volume" aria-label="${s.regles} paris réglés">${s.regles}</span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><span class="strategie-avatar" aria-hidden="true">${code}</span><h3>${e(r.nom)}</h3></div>

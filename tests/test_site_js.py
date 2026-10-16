@@ -45,6 +45,11 @@ function installerActualisation(config) {
   assert.equal(sportJouer,'tennis');
   assert.deepEqual([...courbesMasquees],['M3']);
   assert.deepEqual(rendus,['claude_prudent','Stratégie','Équipe Lyon','ensemble']);
+  assert.equal(etat.presentation,'lignes-v1');
+  // Un ancien instantané ne réintroduit pas le filtre qui masquait les 36 règles.
+  elements.get('strategies-ref').value='';delete etat.presentation;
+  config.restaurer(etat);
+  assert.equal(elements.get('strategies-ref').value,'');
 }
 '''+section)
 

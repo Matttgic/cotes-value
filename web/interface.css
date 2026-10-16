@@ -304,3 +304,8 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 #o-strategies>details.carte[open]{padding-bottom:12px}#o-strategies>details.carte[open]>summary{white-space:normal}
 .ligne-mesure.pos{color:var(--vert)}.ligne-mesure.neg{color:var(--rouge)}
 .filtres-depliables{border-bottom:1px solid var(--ligne)}.filtres-depliables>summary::before{content:'›';font-size:18px;margin-right:8px}.filtres-depliables[open]>summary::before{transform:rotate(90deg)}
+
+/* Chevrons dessinés en CSS : aucun caractère parasite pour le lecteur d’écran. */
+.ligne-detail>summary::before,.filtres-depliables>summary::before{content:'';display:block;box-sizing:border-box;width:6px;height:6px;border:solid var(--doux);border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);margin:0 3px 0 0;flex:none}
+.ligne-detail[open]>summary::before,.filtres-depliables[open]>summary::before{transform:rotate(45deg)}
+.ligne-validee>summary::before{border-color:var(--accent)}

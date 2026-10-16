@@ -809,7 +809,7 @@ const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 600
 const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
-const carteActuelle = o => `<details class="ligne-detail ligne-pari" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
+const carteActuelle = o => `<details class="ligne-detail ligne-pari ${o.strategies.length ? "ligne-validee" : ""}" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
 <span class="ligne-nom" title="${e(o.domicile+' – '+o.exterieur+' · '+o.pari)}">${e(o.domicile)} – ${e(o.exterieur)} <span class="ligne-selection">· ${e(o.pari)}</span></span>
 <span class="ligne-book" title="${e(o.bookmaker)}">${monogrammeBookmaker(o.bookmaker)}</span><b class="ligne-cote" aria-label="Cote ${cote(o.cote)}">${cote(o.cote)}</b><b class="ligne-valeur pos" aria-label="Edge ${pct(o.ecart)}">${pct(o.ecart)}</b></summary><div class="ligne-corps"><article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
 <div class="op-meta"><span class="sport-identite">${iconeSport(o.sport)}${e(nomsSports[o.sport] || o.sport || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
@@ -1354,6 +1354,7 @@ function rendreCourbesStrategies(rows) {
 }
 let periodeStrategies = "futur";
 function rendreStrategies() {
+  const lignesOuvertes=new Set([...document.querySelectorAll("#strategies-mobile > details[open]")].map(d=>d.id));
   rendreLivePapier();
   const L = D.laboratoire;
   if (!L || (!L.resultats?.length && !Object.keys(L.comparateurs || {}).length)) {
@@ -1364,6 +1365,7 @@ function rendreStrategies() {
   const bornes = n => String(n).replace(".",",");
   const futur = new Map((L.futur || []).map(r => [r.id,r]));
   let rows = (L.resultats || []).map(r => ({id:r.regle.id, nom:r.regle.reference+" · "+r.regle.id, reference:r.regle.reference,
+    nomCourt:`${({Pinnacle:"PIN",Betfair:"BET",Polymarket:"POL"})[r.regle.reference] || r.regle.reference} ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ${r.regle.edge_min*100}%/${r.regle.avance_max_h}h`,
     detail:`Cotes ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · edge ≥ ${r.regle.edge_min*100} % · ≤ ${r.regle.avance_max_h} h`,
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
     stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
@@ -1477,6 +1479,7 @@ function rendreStrategies() {
   document.getElementById("strategies-mobile").innerHTML=rows.length ? rows.map(r =>
     carteStrategieVisuelle(r,L.navigation?.courbes?.[r.id]?.[periodeStrategies],COULEURS_COMPARATEURS[r.id] || "var(--accent)")).join("")
     : '<div class="vide">Aucune stratégie pour ces filtres. Choisis une autre référence.</div>';
+  for(const d of document.querySelectorAll("#strategies-mobile > details")) d.open=lignesOuvertes.has(d.id);
   // Le résumé déplie la ligne ; seul le bouton explicite ouvre la liste des paris.
   document.querySelectorAll("#strategies-table tbody tr, #strategies-mobile button[data-strategie]").forEach(tr => {
     const ligne = rows.find(r => r.id === tr.dataset.strategie);
