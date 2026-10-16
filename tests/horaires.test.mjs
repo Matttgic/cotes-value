@@ -45,7 +45,7 @@ test('Regroupement visuel, meilleur edge et catégories préservées',()=>{
     {...p,debut:'2026-10-18T18:00:00Z',pari:'Demain'}];
   assert.equal(c.groupesMatchs(rows).length,3);
   const html=c.rendreGroupesJouer(rows);
-  assert.equal((html.match(/class="groupe-match"/g)||[]).length,3);
+  assert.equal((html.match(/class="groupe-match"/g)||[]).length,1);
   assert.ok(html.indexOf('Handicap +1,5')<html.indexOf('Under 2,5'));
   assert.equal((html.match(/<details>/g)||[]).length,4);
   assert.equal(rows[0],p);

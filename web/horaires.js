@@ -62,6 +62,7 @@ function groupesMatchs(liste) {
 function rendreGroupesJouer(liste) {
   return groupesMatchs(liste).map(paris=>{
     const tries=[...paris].sort((a,b)=>b.ecart-a.ecart),p=tries[0];
+    if(paris.length===1) return carteActuelle(p);
     return `<section class="groupe-match" aria-label="${e(p.domicile)} – ${e(p.exterieur)}">
       <header><div class="groupe-sport">${iconeSport(p.sport)}${e(nomsSports[p.sport]||p.sport||'Sport')}${p.ligue?' · '+e(p.ligue):''}</div>
       <h3>${e(p.domicile)} – ${e(p.exterieur)}</h3><div class="groupe-horaire">${horairePari(p)}<span>${paris.length} offre${paris.length>1?'s':''}</span></div></header>
