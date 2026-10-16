@@ -16,6 +16,37 @@ def executer(js):
     assert r.returncode == 0, r.stderr
 
 
+def test_js_vue_restauree_apres_actualisation():
+    section=MODELE.split("__ACTUALISATION_JS__",1)[1].split("</script>",1)[0]
+    executer('''
+const assert=require('node:assert/strict');
+const elements=new Map();
+for(const [id,value] of Object.entries({'f-q':'Équipe Lyon','f-book':'Winamax','strategies-ref':'comparateurs'}))
+  elements.set(id,{value,tagName:'INPUT'});
+const document={getElementById:id=>elements.get(id),querySelectorAll:()=>[]};
+const window={scrollY:320,scrollTo:(x,y)=>assert.equal(y,320)};
+const requestAnimationFrame=fn=>fn();
+const FILTRES={book:[]}, CUMULS=[[]], TRIS={roi:''}, STRAT_PERIODES={ensemble:''};
+let filtreJouer='claude_prudent',refBilan='Stratégie',cumul=0,limite=150,
+    strategieChoisie={id:'Claude (rejeu)',nom:'Claude',periode:'ensemble'},triSeg='roi',ctlVue='conforme',periodeStrategies='ensemble';
+const courbesMasquees=new Set(['M3']);
+const rendus=[];
+const rendreJouer=()=>rendus.push(filtreJouer),rendreBilan=()=>rendus.push(refBilan),
+ rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},
+ rendreStrategies=()=>rendus.push(periodeStrategies);
+function installerActualisation(config) {
+  const etat=config.capturer();
+  filtreJouer='tous';refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
+  courbesMasquees.clear();elements.get('f-q').value='';elements.get('f-book').value='';
+  config.restaurer(JSON.parse(JSON.stringify(etat)));
+  assert.equal(elements.get('f-book').value,'Winamax');
+  assert.equal(strategieChoisie.id,'Claude (rejeu)');assert.equal(limite,150);
+  assert.deepEqual([...courbesMasquees],['M3']);
+  assert.deepEqual(rendus,['claude_prudent','Stratégie','Équipe Lyon','ensemble']);
+}
+'''+section)
+
+
 DOM = '''
 const assert=require("node:assert/strict");
 const elements=new Map();

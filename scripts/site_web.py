@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -498,7 +499,12 @@ def construire(donnees: Path, sortie: Path) -> Path:
     web = Path(__file__).resolve().parent.parent / "web"
     html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
+    html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
+    # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
+    version = hashlib.sha256(html.encode("utf-8")).hexdigest()
+    html = html.replace("__VERSION_SITE__", version)
     (sortie / "index.html").write_text(html, encoding="utf-8")
+    (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "live_papier.json").write_text(json.dumps(live, ensure_ascii=False), encoding="utf-8")
     (sortie / "notifications.json").write_text(json.dumps(notifications_mod.flux(actuelles, paris, retenus),
@@ -1652,6 +1658,44 @@ __NOTIFICATIONS_JS__
 const ONGLETS = ["jouer","bilan","strategies","segments","paris","notifications","regler","controle"];
 ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
+
+__ACTUALISATION_JS__
+const champsVue = ["f-q", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle"];
+const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +
+  (d.querySelector("summary")?.textContent || "").replace(/\d+/g,"#").trim();
+installerActualisation({
+  version:"__VERSION_SITE__",
+  // Les choix de notification restent sous le contrôle de leur formulaire.
+  protegee:() => document.getElementById("o-notifications").classList.contains("actif") ||
+    document.activeElement?.tagName === "SELECT",
+  capturer:() => ({filtreJouer, refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
+    courbes:[...courbesMasquees], champs:Object.fromEntries(champsVue.map(id => [id,document.getElementById(id)?.value])),
+    details:[...document.querySelectorAll("details[open]")].map(cleDetail), y:window.scrollY,
+    defilements:[...document.querySelectorAll("[id]")].filter(x => x.scrollLeft > 0).map(x => [x.id,x.scrollLeft])}),
+  restaurer:s => {
+    for (const id of champsVue) {
+      const el = document.getElementById(id), valeur = s.champs?.[id];
+      if (el && typeof valeur === "string" && (el.tagName !== "SELECT" || [...el.options].some(o => o.value===valeur))) el.value = valeur;
+    }
+    filtreJouer = typeof s.filtreJouer === "string" ? s.filtreJouer : "tous";
+    refBilan = typeof s.refBilan === "string" ? s.refBilan : "Uniques";
+    cumul = Number.isInteger(s.cumul) && CUMULS[s.cumul] ? s.cumul : CUMULS.length-1;
+    limite = Number.isInteger(s.limite) && s.limite >= 50 ? s.limite : 50;
+    strategieChoisie = s.strategieChoisie || null;
+    triSeg = s.triSeg in TRIS ? s.triSeg : "roi";
+    ctlVue = typeof s.ctlVue === "string" ? s.ctlVue : ctlVue;
+    periodeStrategies = s.periodeStrategies in STRAT_PERIODES ? s.periodeStrategies : "futur";
+    courbesMasquees.clear();
+    for (const id of s.courbes || []) courbesMasquees.add(id);
+    rendreJouer(); rendreBilan(); rendreParis(); rendreSegments(); rendreControle(); rendreStrategies();
+    document.getElementById("labo-regle")?.onchange?.();
+    for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));
+    requestAnimationFrame(() => {
+      for (const [id,x] of s.defilements || []) {const el=document.getElementById(id); if(el) el.scrollLeft=x;}
+      window.scrollTo(0, Number(s.y) || 0);
+    });
+  }
+});
 </script>
 </body>
 </html>
