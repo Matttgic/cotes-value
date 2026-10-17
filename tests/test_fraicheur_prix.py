@@ -18,7 +18,7 @@ def test_reception_par_page_transmise_a_la_traduction(monkeypatch):
         self.derniere_reception=f'2026-10-17T00:00:0{page}Z'
         return {'events':[{'eventId':str(page),'startTime':'2099-01-01T12:00:00Z'}], 'hasNextPage':page==1}
     monkeypatch.setattr(pulsescore.Client,'get',get)
-    def traduire(e,bm,sport,moment):
+    def traduire(e,bm,sport,moment,**kwargs):
         captures.append((e['eventId'],moment,e['_collecte_debut']))
         return []
     monkeypatch.setattr(pulsescore,'traduire',traduire)

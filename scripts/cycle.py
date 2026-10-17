@@ -82,7 +82,8 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
         journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:3]}
 
 
-def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal: dict):
+def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal: dict,
+                      attentes: dict | None = None):
     """Références en parallèle ; les books n'attendent pas Kalshi.
 
     Un sport présent seulement chez Kalshi reçoit une lecture complémentaire,
@@ -93,7 +94,9 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
 
     def sports_des(lignes):
         return {l["sport"] for l in lignes if comparaison._t(l.get("debut"))
-                and maintenant < comparaison._t(l["debut"]) <= limite}
+                and (maintenant - timedelta(hours=5) if l.get("debut_approximatif") else maintenant)
+                    < comparaison._t(l["debut"])
+                    <= limite + (timedelta(hours=5) if l.get("debut_approximatif") else timedelta())}
 
     def pulse(sports, nom):
         if mode == "test":
@@ -105,7 +108,8 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 return [], {}, {}
             plan = {b: fr for b in FRANCAIS} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in fr]}
             pages, horizon = 40, HORIZON_H
-        return etape(nom, journal, pulsescore.collecter, cle, plan, horizon, pages) or ([], {}, {})
+        return etape(nom, journal, pulsescore.collecter, cle, plan, horizon, pages,
+                     etat=attentes) or ([], {}, {})
 
     def mesures_delta(pin, lignes):
         """Diagnostic, pas une nouvelle règle de sélection ; temps réels des lignes lues."""
@@ -140,6 +144,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         else:
             journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
         kal = fkal.result() or []
+        signaler(journal, "kalshi", list(kalshi.ERREURS))
         manque = sports_des(kal) - sports
         if cle and mode != "test" and manque:
             autres, compte, erreurs = pulse(manque, "pulsescore_complement")
@@ -193,7 +198,8 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
         # Les corrections vérifiées sont disponibles sans nouvelle requête réseau.
         reglement.appliquer(paris, {}, manuels, maintenant)
         enregistrements = []
-        client = pulsescore.Client(cle) if cle else None
+        attentes = lire_json(donnees / "pulsescore_attentes.json", {})
+        client = pulsescore.Client(cle, etat=attentes) if cle else None
         for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
             # résultats validés par des bookmakers dont le flux marque les matchs terminés (cotes/resultats.py)
             for bm in (resultats_mod.VALIDATEURS if client and sport in API else []):
@@ -205,6 +211,8 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
             enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
                                      sport, depuis, datetime.now(timezone.utc)) or []
             signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
+        if client:
+            ecrire_json(donnees / "pulsescore_attentes.json", attentes)
         nhl = etape("resultats_nhl_officiel", journal, resultats_nhl.collecter, paris, maintenant)
         if nhl:
             enregistrements += nhl[0]
@@ -362,7 +370,9 @@ def main() -> int:
             journal["live_papier"] = {"erreur": "initialisation_indisponible", "mode": "papier"}
 
     # Références en parallèle ; PulseScore démarre sans attendre Kalshi.
-    pin, poly, kal, lignes_ps, requetes = collecter_prematch(cle, args.mode, maintenant, journal)
+    attentes = lire_json(donnees / "pulsescore_attentes.json", {})
+    pin, poly, kal, lignes_ps, requetes = collecter_prematch(cle, args.mode, maintenant, journal, attentes)
+    ecrire_json(donnees / "pulsescore_attentes.json", attentes)
 
     francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
     betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])

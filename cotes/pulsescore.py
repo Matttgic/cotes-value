@@ -11,11 +11,14 @@ normalisé de PulseScore (canonicalMarket) mais vérifie le libellé d'origine (
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
+from math import isfinite
 
 import requests
 
@@ -31,42 +34,80 @@ SPORTS = {"soccer": "football", "basketball": "basket", "tennis": "tennis", "ice
 # --------------------------------------------------------------------------- collecte
 
 class Client:
-    def __init__(self, cle: str, pause: float | None = None):
+    def __init__(self, cle: str, pause: float | None = None, etat: dict | None = None):
         self.s = requests.Session()
         self.s.headers.update({"X-Secret": cle, "Accept-Encoding": "gzip", "Accept": "application/json"})
-        self.pause = float(os.environ.get("PULSESCORE_PAUSE", "1.1")) if pause is None else pause
         self.requetes = 0
         self.derniere_reception = None
         self.erreurs: list[str] = []
+        self.pause = _decimal(os.environ.get("PULSESCORE_PAUSE", "1.1") if pause is None else pause)
+        if self.pause is None or self.pause < 0:
+            self.pause = 1.1
+            self.erreurs.append("PULSESCORE_PAUSE invalide : défaut 1,1 s")
+        self.etat = etat if etat is not None else {}
+        empreinte = hashlib.sha256(cle.encode()).hexdigest()[:16]
+        if self.etat.get("empreinte") != empreinte:
+            self.etat.clear()
+            self.etat["empreinte"] = empreinte
 
     def get(self, chemin: str, params: dict | None = None):
-        """Réponse JSON, ou None (page absente, erreur). Les erreurs réseau et 429 sont réessayées ;
-        chaque échec est noté dans `erreurs` pour être visible dans le journal du cycle."""
-        derniere = "429 répétés"
+        """Réponse objet JSON ; aucun texte d'exception/URL authentifiée journalisé.
+
+        Les délais longs sont persistés pour ne pas bloquer le cycle ni retenter
+        avant Retry-After. Un refus coupe les autres sports du même bookmaker.
+        """
+        contexte = chemin if re.fullmatch(r"[a-z0-9-]+/(?:[a-z0-9-]+/events|results)", chemin) else "requête"
+        bookmaker = chemin.split("/", 1)[0]
+        bookmaker = bookmaker if bookmaker in NOMS else "autres"
+        attente = self.etat.setdefault("bookmakers", {}).setdefault(bookmaker, {})
+        bloque = _heure(attente.get("reessai_apres"))
+        if bloque and datetime.now(timezone.utc) < bloque:
+            message = f"{contexte} : collecte différée (quota/refus)"
+            if message not in self.erreurs:
+                self.erreurs.append(message)
+            return None
+        derniere = "erreur réseau"
         for essai in range(4):
+            self.derniere_reception = None
             try:
                 r = self.s.get(f"{BASE}/{chemin}", params=params, timeout=90)
-                self.derniere_reception = datetime.now(timezone.utc).isoformat(timespec="seconds")
-            except requests.RequestException as e:
-                self.requetes += 1                 # tentative émise (sa facturation n'est pas connue)
-                derniere = repr(e)[:150]
-                time.sleep(2 * (essai + 1) + self.pause)
+                maintenant = datetime.now(timezone.utc)
+                self.derniere_reception = maintenant.isoformat(timespec="seconds")
+            except requests.RequestException:
+                self.requetes += 1  # Un timeout peut aussi avoir consommé un crédit.
+                if essai < 3:
+                    time.sleep(2 * (essai + 1) + self.pause)
                 continue
             self.requetes += 1
+            if r.status_code in (401, 403):
+                attente["reessai_apres"] = (maintenant + timedelta(hours=1)).isoformat()
+                self.erreurs.append(f"{contexte} : HTTP {r.status_code}")
+                return None
             if r.status_code == 429:
-                time.sleep(float(r.headers.get("Retry-After") or 2 * (essai + 1)) + self.pause)
+                delai = _retry_after(r.headers.get("Retry-After"), maintenant, 2 * (essai + 1))
+                # Une valeur invalide est remplacée par le backoff ; jamais NaN/inf dans sleep().
+                attente["reessai_apres"] = (maintenant + timedelta(seconds=delai)).isoformat()
+                derniere = "HTTP 429"
+                if delai > 60 or essai == 3:
+                    break
+                time.sleep(delai + self.pause)
                 continue
             time.sleep(self.pause)
             if r.status_code != 200:
                 if r.status_code != 404:
-                    self.erreurs.append(f"{chemin} : HTTP {r.status_code}")
+                    self.erreurs.append(f"{contexte} : HTTP {r.status_code}")
                 return None
             try:
-                return r.json()
+                d = r.json()
             except ValueError:
-                self.erreurs.append(f"{chemin} : JSON invalide")
+                self.erreurs.append(f"{contexte} : JSON invalide")
                 return None
-        self.erreurs.append(f"{chemin} : {derniere}")
+            if not isinstance(d, dict):
+                self.erreurs.append(f"{contexte} : objet JSON attendu")
+                return None
+            attente.pop("reessai_apres", None)
+            return d
+        self.erreurs.append(f"{contexte} : {derniere}")
         return None
 
     def matchs(self, bookmaker: str, sport: str, heures: float, pages_max: int = 40) -> list[dict]:
@@ -80,32 +121,43 @@ class Client:
             recue = self.derniere_reception or datetime.now(timezone.utc).isoformat(timespec="seconds")
             if not d or not d.get("events"):
                 break
+            if not isinstance(d["events"], list):
+                self.erreurs.append(f"{bookmaker}/{sport}/events : liste attendue")
+                break
             maintenant = datetime.now(timezone.utc)
             for e in d["events"]:
+                if not isinstance(e, dict):
+                    continue
                 debut = _heure(e.get("startTime"))
                 if not e.get("live") and not e.get("suspended") and debut and debut > maintenant:
                     out.append({**e, "_collecte_debut": requete_debut, "_collecte_recue": recue})
-            dernier = _heure(d["events"][-1].get("startTime"))
+            dernier = _heure(d["events"][-1].get("startTime")) if isinstance(d["events"][-1], dict) else None
             if not d.get("hasNextPage") or (dernier and dernier > limite):
                 break
         return [e for e in out if (_heure(e["startTime"]) or limite) <= limite]
 
 
 def collecter(cle: str, plan: dict[str, list[str]], heures: float = 36,
-              pages_max: int = 40) -> tuple[list[dict], dict[str, int], dict[str, list[str]]]:
+              pages_max: int = 40, etat: dict | None = None) -> tuple[list[dict], dict[str, int], dict[str, list[str]]]:
     """plan : bookmaker -> sports (noms PulseScore). Les bookmakers sont lus en parallèle (la limite de
     débit est par bookmaker). Renvoie (lignes, requêtes par bookmaker, erreurs par bookmaker) : une panne
     sur un bookmaker ou un sport n'efface pas ce qui a été lu ailleurs."""
+    etat = etat if etat is not None else {}
+    # Initialisation séquentielle de l'empreinte, puis un client et une entrée
+    # de quota par bookmaker : un 429 Winamax ne bloque jamais Betclic.
+    clients = {bm: Client(cle, etat=etat) for bm in plan}
+
     def un_bookmaker(bm: str):
-        c = Client(cle)
+        c = clients[bm]
         lignes = []
         for sp in plan[bm]:
             try:
                 moment = datetime.now(timezone.utc).isoformat(timespec="seconds")
                 for e in c.matchs(bm, sp, heures, pages_max):
-                    lignes += traduire(e, bm, SPORTS.get(sp, sp), e.get("_collecte_recue") or moment)
+                    lignes += traduire(e, bm, SPORTS.get(sp, sp), e.get("_collecte_recue") or moment,
+                                       erreurs=c.erreurs)
             except Exception as e:                                   # noqa: BLE001
-                c.erreurs.append(f"{sp} : {repr(e)[:150]}")
+                c.erreurs.append(f"{sp} : {type(e).__name__}")
         return bm, lignes, c.requetes, c.erreurs
 
     with ThreadPoolExecutor(max_workers=max(1, len(plan))) as pool:
@@ -118,9 +170,34 @@ def collecter(cle: str, plan: dict[str, list[str]], heures: float = 36,
 
 def _heure(s):
     try:
-        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+        t = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        return t.astimezone(timezone.utc) if t.tzinfo is not None else None
     except (AttributeError, ValueError):
         return None
+
+
+def _decimal(x) -> float | None:
+    if isinstance(x, bool):
+        return None
+    try:
+        n = float(x)
+        return n if isfinite(n) else None
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _retry_after(valeur, maintenant: datetime, defaut: float) -> float:
+    n = _decimal(valeur)
+    if n is not None and 0 <= n <= 365 * 86400:
+        return n
+    try:
+        t = parsedate_to_datetime(str(valeur))
+        n = (t - maintenant).total_seconds()
+        if t.tzinfo is not None and 0 <= n <= 365 * 86400:
+            return n
+    except (TypeError, ValueError, OverflowError):
+        pass
+    return defaut
 
 
 def _nombre(s) -> float | None:
@@ -190,12 +267,10 @@ def periode(sport: str, canonique: str | None, libelle: str) -> str | None:
         return "MATCH"
     if sport != "tennis":
         return None        # période annoncée par PulseScore mais absente du libellé : ambigu, ignoré
-    table = {"hockey": {"FIRST_HALF": "P1", "SECOND_HALF": "P2", "THIRD_PERIOD": "P3"},
-             "tennis": {"FIRST_SET": "SET1", "SECOND_SET": "SET2", "FIRST_HALF": "SET1"}}.get(sport, {})
-    if c in table:
-        return table[c]
-    return {"FIRST_HALF": "MT1", "SECOND_HALF": "MT2", "FIRST_QUARTER": "QT1", "SECOND_QUARTER": "QT2",
-            "THIRD_QUARTER": "QT3", "FOURTH_QUARTER": "QT4", "FIRST_SET": "SET1", "SECOND_SET": "SET2"}.get(c)
+    # Le hockey exige déjà un libellé explicite ci-dessus : FIRST_HALF seul
+    # ne prouve pas une première période. Au tennis, seuls ces alias sont établis.
+    return {"FIRST_SET": "SET1", "SECOND_SET": "SET2", "FIRST_HALF": "SET1"}.get(c)
+
 
 
 # ---------------------------------------------------------------- règles des bookmakers (prolongations)
@@ -292,7 +367,10 @@ def _equipe(nom: str, dom: str, ext: str) -> str | None:
     return None
 
 
-def traduire(e: dict, bookmaker: str, sport: str, moment: str) -> list[dict]:
+def traduire(e: dict, bookmaker: str, sport: str, moment: str,
+             erreurs: list[str] | None = None) -> list[dict]:
+    if not isinstance(e, dict):
+        return []
     dom, ext = e.get("home"), e.get("away")
     base = {"source": NOMS.get(bookmaker, bookmaker), "bookmaker": bookmaker, "sport": sport,
             "ligue": e.get("league"), "match_id": f"{bookmaker}|{e.get('eventId')}", "domicile": dom,
@@ -300,19 +378,51 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str) -> list[dict]:
             "collecte_debut": e.get("_collecte_debut"), "collecte_recue": e.get("_collecte_recue"),
             "lien": e.get("slug")}
     out = []
-    for m in e.get("markets") or []:
-        # l'état « actif » du marché n'est pas fiable chez tous les bookmakers (NetBet) : on se fie aux cotes
-        sels = [s for s in m.get("selections") or [] if s.get("isActive", True) and not s.get("suspended")
-                and (s.get("odds") or 0) > 1]
+    markets = e.get("markets") or []
+    if not isinstance(markets, list):
+        if erreurs is not None and len(erreurs) < 100:
+            erreurs.append("événement ignoré : liste de marchés attendue")
+        return []
+    for m in markets:
+        if not isinstance(m, dict) or not isinstance(m.get("selections"), list):
+            continue
+        # L'état « actif » du marché n'est pas fiable chez tous les bookmakers.
+        sels = []
+        nul_annonce = any(isinstance(s, dict) and s.get("canonicalOutcome") == "DRAW"
+                          for s in m["selections"])
+        for s in m["selections"]:
+            if not isinstance(s, dict) or not s.get("isActive", True) or s.get("suspended"):
+                continue
+            cote = _decimal(s.get("odds"))
+            ligne = _decimal(s["line"]) if s.get("line") is not None else None
+            if (cote is None or cote <= 1 or (s.get("line") is not None and ligne is None)
+                    or not isinstance(s.get("canonicalOutcome"), (str, type(None)))
+                    or not isinstance(s.get("rawName"), (str, type(None)))):
+                if erreurs is not None and len(erreurs) < 100:
+                    erreurs.append("sélection ignorée : prix/ligne/intitulé invalide")
+                continue
+            sels.append({**s, "odds": cote, "line": ligne})
         if not sels:
             continue
         canon, libelle = m.get("canonicalMarket"), m.get("rawName") or ""
+        if not isinstance(libelle, str) or not isinstance(canon, (str, type(None))):
+            continue
         if libelle_exclu(sport, canon, libelle):
+            continue
+        if not isinstance(m.get("period"), (str, type(None))):
             continue
         per = "MATCH" if canon == "HALF_TIME_FULL_TIME" else periode(sport, m.get("period"), libelle)
         if per is None:
             continue
-        for marche, ligne, issue, s in _marche(canon, libelle, sels, sport, dom, ext):
+        try:
+            traduites = list(_marche(canon, libelle, sels, sport, dom, ext, nul_annonce))
+        except (TypeError, ValueError, AttributeError, OverflowError):
+            if erreurs is not None and len(erreurs) < 100:
+                erreurs.append("marché ignoré : données invalides")
+            continue
+        for marche, ligne, issue, s in traduites:
+            if ligne is not None and _decimal(ligne) is None:
+                continue
             p = per
             if per == "MATCH":
                 p = periode_match(bookmaker, sport, marche, libelle, ligne)
@@ -324,12 +434,12 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str) -> list[dict]:
     return out
 
 
-def _marche(canon, libelle, sels, sport, dom, ext):
+def _marche(canon, libelle, sels, sport, dom, ext, nul_annonce=False):
     """Générateur de (marché, ligne, issue, sélection) pour un marché PulseScore."""
     issues = {s.get("canonicalOutcome"): s for s in sels}
     l = libelle.lower()
     if canon in ("MATCH_RESULT", "HALF_TIME_RESULT", "SET_WINNER"):
-        nul = "DRAW" in issues
+        nul = nul_annonce or "DRAW" in issues
         for k, s in issues.items():
             i = {"HOME": "DOM", "AWAY": "EXT", "DRAW": "NUL"}.get(k)
             if i:

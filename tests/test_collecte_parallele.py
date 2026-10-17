@@ -27,7 +27,7 @@ def test_kalshi_attend_pulse_et_sport_exclusif_est_couvert_sans_relecture(monkey
         assert pulse_lu.wait(2), "PulseScore ne doit pas attendre Kalshi"
         return [ligne("football"), ligne("basket")]
 
-    def pulse(key, plan, horizon, pages):
+    def pulse(key, plan, horizon, pages, **kwargs):
         plans.append(plan)
         pulse_lu.set()
         return [{"lecture": len(plans)}], {"winamax": 1}, {}
@@ -70,3 +70,21 @@ def test_arret_temoin_ne_change_pas_les_opportunites_calculées():
     apres = comparer(fr, refs, temoin_brut=False)
     assert any(o["reference"] == BRUT for o in avant)
     assert apres == [o for o in avant if o["reference"] != BRUT]
+
+
+def test_radar_kalshi_estime_passe_ne_supprime_pas_sport_exclusif(monkeypatch):
+    plans = []
+    monkeypatch.setattr(cycle.pinnacle, 'collecter', lambda: [])
+    monkeypatch.setattr(cycle.polymarket, 'collecter', lambda *a: [])
+    monkeypatch.setattr(cycle.kalshi, 'collecter', lambda *a: [
+        {**ligne('basket'), 'debut': '2026-10-16T22:00:00Z', 'debut_approximatif': True}])
+    def pulse(key, plan, *a, **kw):
+        plans.append(plan)
+        return [], {}, {}
+    monkeypatch.setattr(cycle.pulsescore, 'collecter', pulse)
+    monkeypatch.setattr(cycle.kalshi, 'ERREURS', ['HTTP 503'])
+    j = {'etapes': {}}
+    cycle.collecter_prematch('test', 'complet', NOW, j)
+    assert plans[0]['winamax'] == ['basketball']
+    assert j['etapes']['kalshi']['degrade']
+    assert j['etapes']['kalshi']['erreurs'] == ['HTTP 503']

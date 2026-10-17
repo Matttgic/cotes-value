@@ -53,6 +53,12 @@ def capturer(g: dict, cle: str, maintenant: datetime) -> dict | None:
     ]}, cle, maintenant)
 
 
+def _exploitables(entree: dict) -> list[dict]:
+    """Conserve les derniers scores, mais suspend ceux contredits par le fournisseur."""
+    attente = entree.get("a_reconfirmer", {})
+    return [m for m in entree.get("matchs", []) if m["id"] not in attente]
+
+
 def collecter(paris: list[dict], deja: dict, enregistrements: list[dict], cle_api: str,
               cache: dict, maintenant: datetime, http=requests) -> tuple[dict, dict]:
     """Cache persistant et diagnostic sans clé, URL authentifiée ni corps d'erreur."""
@@ -79,6 +85,8 @@ def collecter(paris: list[dict], deja: dict, enregistrements: list[dict], cle_ap
         e = ligues[k]
         e["matchs"] = [m for m in e.get("matchs", []) if (d := theodds._heure(m.get("debut")))
                        and timedelta(0) < maintenant - d < GARDE]
+        ids = {m["id"] for m in e["matchs"]}
+        e["a_reconfirmer"] = {k: v for k, v in e.get("a_reconfirmer", {}).items() if k in ids}
         if not e["matchs"] and (not (d := theodds._heure(e.get("essai"))) or maintenant - d >= GARDE):
             del ligues[k]
     besoin = {}
@@ -97,7 +105,7 @@ def collecter(paris: list[dict], deja: dict, enregistrements: list[dict], cle_ap
             besoin.setdefault(cle, []).append(p)
     for cle, ps in sorted(besoin.items(), key=lambda x: (ligues.get(x[0], {}).get("essai", ""), x[0])):
         e = ligues.setdefault(cle, {"matchs": []})
-        nouveaux = [p for p in ps if not theodds.retrouver(p, e["matchs"], cle)]
+        nouveaux = [p for p in ps if not theodds.retrouver(p, _exploitables(e), cle)]
         essai = theodds._heure(e.get("essai"))
         bloque = theodds._heure(cache.get("reessai_apres"))
         if (not nouveaux or (essai and maintenant - essai < REESSAI)
@@ -128,24 +136,33 @@ def collecter(paris: list[dict], deja: dict, enregistrements: list[dict], cle_ap
                         pass
                     cache["reessai_apres"] = (maintenant + timedelta(seconds=delai)).isoformat()
                 continue
-            d = r.json()
+            try:
+                d = r.json()
+            except ValueError:
+                bilan["erreurs"].append(f"{cle} : JSON invalide")
+                continue
             if not isinstance(d, list) or any(not isinstance(g, dict) for g in d):
                 bilan["erreurs"].append(f"{cle} : réponse inattendue")
                 continue
             matchs = {m["id"]: m for m in e["matchs"]}
             for g in d:
-                m = capturer(g, cle, maintenant)
+                m = None if g.get("deleted") is True else capturer(g, cle, maintenant)
+                attente = e.setdefault("a_reconfirmer", {})
                 if m:
                     matchs[m["id"]] = m
-                elif g.get("sport_key") == cle and g.get("id"):
-                    matchs.pop(str(g["id"]), None)
+                    attente.pop(m["id"], None)
+                elif g.get("sport_key") == cle and str(g.get("id")) in matchs:
+                    # Une réponse partielle/annulée ne détruit pas le score connu,
+                    # et ne permet pas de régler avec un final désormais contredit.
+                    attente[str(g["id"])] = {"lu": maintenant.isoformat(timespec="seconds"),
+                        "raison": "supprime" if g.get("deleted") is True else "final_non_reconfirme"}
             e["matchs"] = list(matchs.values())
         except (requests.RequestException, ValueError):
             bilan["erreurs"].append(f"{cle} : lecture indisponible")
     valides = {}
     for cle, ps in besoin.items():
         for p in ps:
-            m = theodds.retrouver(p, ligues[cle]["matchs"], cle)
+            m = theodds.retrouver(p, _exploitables(ligues[cle]), cle)
             if not m:
                 continue
             autres = resultats.retrouver(p, enregistrements)
@@ -161,7 +178,8 @@ def collecter(paris: list[dict], deja: dict, enregistrements: list[dict], cle_ap
             })
             if r["score"] == m["score"]:
                 r["id_paris_autorises"].append(p["id"])
-    bilan.update(matchs_valides=len(valides),
+    bilan.update(matchs_a_reconfirmer=sum(len(e.get("a_reconfirmer", {})) for e in ligues.values()),
+                 matchs_valides=len(valides),
                  paris_compatibles=sum(len(r["id_paris_autorises"]) for r in valides.values()),
                  requetes_jour=cache.get("requetes_jour", 0))
     if "quota_restant" in cache:

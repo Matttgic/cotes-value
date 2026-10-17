@@ -143,3 +143,41 @@ def test_hockey_ne_regle_que_le_vainqueur_et_wnba_reconnue():
     assert rs['winamax|1']['id_paris_autorises'] == ['p1']
     p = {**bet(), 'ligue':'WNBA', 'domicile':'New York Liberty', 'exterieur':'Indiana Fever'}
     assert run([p], HTTP([event(sport_key='basketball_wnba', home_team='New York Liberty', away_team='Indiana Fever')]))[0]
+
+
+@pytest.mark.parametrize('change', [{'status': 'cancelled'}, {'status': 'in_progress'},
+                                    {'home_score': None}, {'deleted': True}])
+def test_cache_final_conserve_mais_suspendu_jusqua_reconfirmation(change):
+    cache, http = {}, HTTP()
+    assert run(cache=cache, http=http)[0]
+    http.data = [event(**change)]
+    ps = [bet(), bet(id='autre', domicile='Miami Heat')]
+    rs, b = run(ps, http, cache, now=NOW + timedelta(hours=2))
+    assert not rs and b['matchs_a_reconfirmer'] == 1
+    e = cache['ligues'][KEY]
+    assert tuple(e['matchs'][0]['score']) == (99, 91)
+    assert 'e1' in e['a_reconfirmer']
+    # Un JSON valide vide n'est pas une confirmation de ce final.
+    http.data = []
+    assert not run(ps, http, cache, now=NOW + timedelta(hours=3))[0]
+    http.data = [event(home_score=101)]
+    rs, b = run(ps, http, cache, now=NOW + timedelta(hours=4))
+    assert rs['winamax|1']['score'] == (101, 91) and not b['matchs_a_reconfirmer']
+
+
+def test_json_invalide_preserve_cache_et_quota():
+    cache, http = {}, HTTP()
+    run(cache=cache, http=http)
+    class Malformed(HTTP):
+        def get(self, *a, **kw):
+            class Response:
+                status_code = 200
+                headers = {'X-Daily-Remaining': '998'}
+                def json(self):
+                    raise ValueError('test-secret')
+            return Response()
+    rs, b = run([bet(), bet(id='autre', domicile='Miami Heat')], Malformed(), cache,
+                now=NOW + timedelta(hours=2))
+    assert rs and b['erreurs'] == [KEY + ' : JSON invalide']
+    assert cache['quota_restant'] == 998
+    assert 'test-secret' not in json.dumps([cache, b])
