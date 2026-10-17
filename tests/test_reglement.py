@@ -135,7 +135,7 @@ def test_signaux_suspects_sans_pari():
     fr = [{**base, "source": "winamax", "match_id": "w1", "cote": 4.0},       # écart énorme
           {**base, "source": "betclic", "match_id": "b1", "cote": 2.2}]       # écart de 10 %
     ref = [{**base, "source": "pinnacle", "match_id": "p1", "cote": 1.95, "proba_juste": 0.5, "marge": 0.03}]
-    opp = {o["bookmaker"]: o for o in comparer(fr, {"Pinnacle": ref})}
+    opp = {o["bookmaker"]: o for o in comparer(fr, {"Pinnacle": ref}, temoin_brut=False)}
     assert opp["winamax"]["suspect"] == "écart trop grand" and opp["betclic"]["suspect"] is None
     paris = []
     placer(list(opp.values()), paris)

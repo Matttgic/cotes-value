@@ -84,3 +84,49 @@ def test_mesure_seulement_avec_une_reference_lue_au_meme_moment():
     m = CT.mesurer([fr], {"Pinnacle": {"m1": {k: vieux}}, "Betfair": {"m1": {k: frais}}})
     assert [(nom, round(r, 2)) for _, nom, _, r, _ in m] == [("Betfair", 0.94)]
     assert CT.mesurer([fr], {"Pinnacle": {"m1": {k: frais}}})[0][1] == "Pinnacle"
+
+
+def test_contemporaines_dates_absentes_invalides_ou_sans_fuseau_refusees():
+    frais={'collecte':'2026-10-17T12:00:00+00:00'}
+    for date in [None,'','invalide','2026-10-17T12:00:00']:
+        sans={'collecte':date}
+        assert CT.contemporaines(sans,frais) is False
+        assert CT.contemporaines(frais,sans) is False
+        assert CT.contemporaines(sans,sans) is False
+    fr=ligne(collecte=None)
+    ref={**ligne(), 'proba_juste':.5}
+    k=CT.cle(fr)
+    assert CT.mesurer([fr],{'Pinnacle':{'m1':{k:ref}}})==[]
+    assert comparer([fr],{'Pinnacle':[ref]},index={'Pinnacle':{'m1':{k:ref}}})==[]
+    for date in [None,'invalide','2029-12-31T20:00:00']:
+        assert comparer([{**fr,'collecte':date}],{'Pinnacle':[ref]},
+                        index={'Pinnacle':{'m1':{k:ref}}})==[]
+    fr.pop('collecte')
+    assert comparer([fr],{'Pinnacle':[ref]},index={'Pinnacle':{'m1':{k:ref}}})==[]
+
+
+def test_contemporaines_fuseaux_et_bornes_exactes():
+    a={'collecte':'2026-10-17T14:00:00+02:00'}
+    for date,attendu in [('2026-10-17T12:00:00Z',True),('2026-10-17T12:10:00Z',True),
+                         ('2026-10-17T12:15:00Z',True),('2026-10-17T12:15:00.000001Z',False),
+                         ('2026-10-17T11:45:00Z',True),('2026-10-17T12:20:00Z',False)]:
+        assert CT.contemporaines(a,{'collecte':date}) is attendu
+        assert CT.contemporaines({'collecte':date},a) is attendu
+
+
+def test_purge_groupes_compare_instants_et_pas_chaines_iso():
+    from copy import deepcopy
+    base={'bookmaker':'unibet-fr','sport':'hockey','marche':'TOTAL','periode':'MATCH',
+          'type':'x','n':20,'rapports':[.9]*20,'exemples':[]}
+    dates={'egal':'2026-09-17T10:00:00.000000Z',
+           'recent_chaine_plus_petite':'2026-09-17T09:30:00-01:00',
+           'vieux_chaine_plus_grande':'2026-09-17T11:30:00+02:00',
+           'vieux':'2026-09-17T09:59:59.999999Z',
+           'invalide':'invalide','sans_fuseau':'2026-09-17T11:00:00','absent':None}
+    etat={'groupes':{k:{**deepcopy(base),'maj':v} for k,v in dates.items()}}
+    CT.mettre_a_jour(etat,[],'2026-10-17T12:00:00+02:00')
+    assert set(etat['groupes'])=={'egal','recent_chaine_plus_petite'}
+    # Sans horloge de cycle vérifiable, aucune limite de purge n’est inventée.
+    avant=deepcopy(etat)
+    CT.mettre_a_jour(etat,[],None)
+    assert etat==avant

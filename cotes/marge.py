@@ -10,7 +10,7 @@ import math
 
 def proba_justes(cotes: list[float]) -> list[float] | None:
     """Probabilités sans marge d'un marché complet (toutes ses issues). None si invalide."""
-    if len(cotes) < 2 or any((c is None) or (c <= 1.0) or math.isnan(c) for c in cotes):
+    if len(cotes) < 2 or any((c is None) or not math.isfinite(c) or c <= 1.0 for c in cotes):
         return None
     inv = [1.0 / c for c in cotes]
     if sum(inv) < 1.0:            # marché sans marge (ou incomplet) : on normalise simplement

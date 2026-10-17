@@ -34,16 +34,20 @@ FENETRE_MIN = 15
 
 def _lue(s) -> datetime | None:
     try:
-        return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+        date = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+        return date if date.tzinfo is not None and date.utcoffset() is not None else None
     except (TypeError, ValueError):
         return None
 
 
 def contemporaines(l: dict, r: dict) -> bool:
-    """Cote française et cote de référence lues à moins de FENETRE_MIN minutes d'écart (vrai si une heure
-    manque, comme avant). Règle commune à la comparaison et au contrôle de conformité."""
+    """Deux lectures datées avec fuseau, à moins de FENETRE_MIN minutes d'écart.
+
+    Date absente, illisible ou sans fuseau : comparaison refusée. Cette règle
+    porte sur les nouvelles observations, sans réinterpréter les anciennes prises.
+    """
     t_fr, t_ref = _lue(l.get("collecte")), _lue(r.get("collecte"))
-    return not (t_fr and t_ref) or abs((t_fr - t_ref).total_seconds()) <= FENETRE_MIN * 60
+    return bool(t_fr and t_ref and abs((t_fr - t_ref).total_seconds()) <= FENETRE_MIN * 60)
 
 MESURES_MIN = 8
 MEDIANE_MIN, MEDIANE_MAX = 0.70, 1.02
@@ -161,12 +165,15 @@ def mettre_a_jour(etat: dict, mesures: list[tuple[dict, str, float, float]], mom
     # groupes plus mesurés depuis 30 jours (intitulé disparu, ou période corrigée) : retirés. Les marchés
     # rares (NFL : une journée par semaine) gardent ainsi leurs mesures ; le site n'affiche que les groupes
     # mesurés dans les dernières 6 heures
-    try:
-        limite = (datetime.fromisoformat(moment) - timedelta(days=30)).isoformat()
-    except ValueError:
-        limite = ""
-    for k in [k for k, g in groupes.items() if (g.get("maj") or "") < limite]:
-        del groupes[k]
+    moment_dt = _lue(moment)
+    if moment_dt:
+        limite = moment_dt - timedelta(days=30)
+        for k in list(groupes):
+            maj = _lue(groupes[k].get("maj"))
+            # Sans date vérifiable, un groupe ne peut pas conserver sa
+            # conformité indéfiniment. Les mesures futures le reconstruiront.
+            if maj is None or maj < limite:
+                del groupes[k]
     for g in groupes.values():
         g["rapports"] = g["rapports"][-GARDER:]
         if "paires_alt" in g:

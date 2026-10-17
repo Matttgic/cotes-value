@@ -57,7 +57,7 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
     nouveaux = []
     lot = maintenant or datetime.now(timezone.utc)
     for o in sorted(opportunites, key=lambda o: -o["ecart"]):
-        if o.get("suspect"):
+        if o.get("suspect") or o.get("pariable") is False or o.get("reference") == "Pinnacle brut":
             continue
         decision = maintenant or datetime.now(timezone.utc)
         debut = _heure(o.get("debut"))

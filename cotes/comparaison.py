@@ -39,7 +39,7 @@ DESACCORD_MAX = 1.25            # cotes justes de deux références qui diffère
 
 
 def _t(s) -> datetime | None:
-    return C._heure(s)
+    return CT._lue(s)
 
 
 # --------------------------------------------------------------------------- références
@@ -134,7 +134,9 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
     for l in francais:
         if l["periode"].endswith("?") or not l.get("cote"):
             continue
-        t_fr, debut = _t(l["collecte"]), _t(l["debut"])
+        t_fr, debut = _t(l.get("collecte")), _t(l.get("debut"))
+        if not t_fr:
+            continue
         if debut and t_fr and debut <= t_fr:
             continue
         k = cle(l)
@@ -151,6 +153,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
         if len(trouvees) >= 2:
             justes = [1 / r["proba_juste"] for r in trouvees.values()]
             desaccord = max(justes) / min(justes) > DESACCORD_MAX
+            # Mélange équipondéré des probabilités, pas des cotes inverses :
+            # sur un marché complet commun, la somme des probabilités reste 1.
             p = sum(r["proba_juste"] for r in trouvees.values()) / len(trouvees)
             trouvees["Consensus"] = {"proba_juste": p, "cote_juste": 1 / p, "collecte": l["collecte"],
                                      "domicile": l["domicile"], "exterieur": l["exterieur"],
@@ -182,7 +186,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "score_association": r.get("score_association"), "sources": r.get("sources"),
                 "match_id_reference": r.get("match_id"), "reference_inversee": r.get("inverse"),
                 "composantes": r.get("composantes"), "controle": _controle_du_groupe(l, controle),
-                "lien": l.get("lien"), "suspect": suspect})
+                "lien": l.get("lien"), "suspect": suspect,
+                "pariable": nom != BRUT and not bool(suspect)})
     return opportunites
 
 
