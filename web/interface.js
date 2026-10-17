@@ -35,6 +35,15 @@ function adapterTableaux() {
         const titre=textePrincipal(cellules[0]);
         const resume=document.createElement('summary');
         const nom=document.createElement('span');nom.className='ligne-nom';nom.textContent=titre;nom.title=titre;resume.append(nom);
+        if(['liste-bilan','bilan-books','bilan-tranches'].includes(table.id)) {
+          const volume=cellules.find((td,j)=>/^Paris/i.test(noms[j] || ''));
+          if(volume) {
+            const matchs=[...volume.querySelectorAll('small')].find(el=>/matchs$/.test(el.textContent.trim()));
+            const exposition=document.createElement('small');exposition.className='bilan-exposition';
+            exposition.textContent=textePrincipal(volume)+' tickets'+(matchs?' · '+matchs.textContent:'');
+            nom.append(exposition);
+          }
+        }
         // Les deux mesures prioritaires du tableau, avec leurs libellés.
         const mesures=cellules.map((td,j)=>({td,j})).filter(({j})=>j>0);
         const prioritaires=mesures.filter(({j})=>/gain|net|roi|clv|réel|espéré/i.test(noms[j] || '')).slice(0,2);
