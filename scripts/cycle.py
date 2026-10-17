@@ -122,10 +122,14 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         }
 
     with ThreadPoolExecutor(max_workers=3) as pool:
+        journal["pinnacle_configuration"] = {"mode": "environnement" if os.environ.get("PINNACLE_API_KEY", "").strip()
+                                                else "guest_historique"}
         fpin = pool.submit(etape, "pinnacle", journal, lambda: harmoniser_pinnacle(pinnacle.collecter()))
         fpoly = pool.submit(etape, "polymarket", journal, polymarket.collecter, HORIZON_H)
         fkal = pool.submit(etape, "kalshi", journal, kalshi.collecter, HORIZON_H)
         pin, poly = fpin.result() or [], fpoly.result() or []
+        signaler(journal, "pinnacle", list(pinnacle.ERREURS))
+        signaler(journal, "polymarket", list(polymarket.ERREURS))
         sports = sports_des(pin + poly)
         lignes, requetes = [], {}
         if cle:

@@ -206,8 +206,8 @@ def collecter(key, *, only_books=None, http=requests):
                     "has_next_page": d.get("hasNextPage") if isinstance(d, dict) else None,
                     "error": error or (None if isinstance(events, list) else "schema_inattendu")}
         sid, sport = spec
-        ev, error1 = get(f"{pinnacle.BASE}/sports/{sid}/matchups?withSpecials=true", pinnacle.HEADERS)
-        mk, error2 = get(f"{pinnacle.BASE}/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true", pinnacle.HEADERS)
+        ev, error1 = get(f"{pinnacle.BASE}/sports/{sid}/matchups?withSpecials=true", pinnacle.headers())
+        mk, error2 = get(f"{pinnacle.BASE}/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true", pinnacle.headers())
         return {"source": source, "sport": sport, "started_at": started,
                 "received_at": datetime.now(timezone.utc).isoformat(), "events": ev if isinstance(ev, list) else [],
                 "markets": mk if isinstance(mk, list) else [], "requests": 2,

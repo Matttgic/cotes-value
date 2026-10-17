@@ -70,9 +70,9 @@ def probe(http=requests) -> dict:
     # UNIQUEMENT les chemins déjà utilisés par le collecteur pré-match.
     # Aucun endpoint live Pinnacle non documenté n'est inventé.
     for sid, sport in ((29, "football"), (19, "hockey")):
-        matchups, m_meta = get(f"{pinnacle.BASE}/sports/{sid}/matchups?withSpecials=true", pinnacle.HEADERS)
+        matchups, m_meta = get(f"{pinnacle.BASE}/sports/{sid}/matchups?withSpecials=true", pinnacle.headers())
         markets, p_meta = get(f"{pinnacle.BASE}/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true",
-                              pinnacle.HEADERS)
+                              pinnacle.headers())
         live = [m for m in matchups or [] if isinstance(m, dict) and m.get("isLive") is True] \
             if isinstance(matchups, list) else []
         mids = {m.get("id") for m in live}

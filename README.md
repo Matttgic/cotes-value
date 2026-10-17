@@ -123,6 +123,13 @@ Les simulations se recoupent et leurs mises ne s'additionnent pas.
 
 ## Mise en route
 
+Pinnacle accepte une surcharge `PINNACLE_API_KEY` : secret GitHub Actions portant ce nom,
+ou variable d’environnement locale. Les sondes et le journal papier utilisent la même configuration.
+La valeur guest historique reste le secours si cette variable est vide, pour conserver la collecte ;
+ce changement n’est donc pas une suppression complète de la valeur dans le dépôt ou son historique.
+`.env.example` ne contient aucune clé et les fichiers `.env` sont ignorés. Python ne les charge pas
+automatiquement : exporter les variables avant l’exécution. Les diagnostics n’affichent jamais les clés.
+
 1. Secret `PULSESCORE_KEY` (Settings → Secrets and variables → Actions → Secrets).
 2. Settings → Pages → Source : **GitHub Actions**.
 3. Test : Actions → « Collecte et comparaison » → Run workflow → mode `test` (≈ 4 requêtes).

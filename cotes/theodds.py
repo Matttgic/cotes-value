@@ -207,11 +207,15 @@ class Client:
                 if r.status_code in (401, 403):
                     etat["valide"] = False
                 return None
-            d = r.json()
+            try:
+                d = r.json()
+            except ValueError:
+                self.erreurs.append(f"compte {etat['numero']} : JSON invalide")
+                return None
             if isinstance(d, list):
                 return d
             self.erreurs.append(f"compte {etat['numero']} : réponse inattendue")
-        except (requests.RequestException, ValueError):
+        except requests.RequestException:
             # Une exception requests contient souvent l'URL, donc la clé. Jamais
             # de repr(exception), de corps d'erreur ou d'URL dans les journaux.
             self.erreurs.append(f"compte {etat['numero']} : lecture indisponible")

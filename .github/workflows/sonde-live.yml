@@ -25,6 +25,7 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Sonder les flux sans modifier les donnees
         env:
+          PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
         run: python scripts/sonde_live_pauses.py --sortie /tmp/audit-live.json
