@@ -8,14 +8,21 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from .convergence import STRATEGIES, cle_selection, paris_convergence
 from .laboratoire import heure
 from .strategies_prudentes import VARIANTES
 
 API = "https://tapotyftgyacbnjmeovn.supabase.co/functions/v1/cv-notifications"
+AGE_PRIX_MAX_MINUTES = 5
 NOMS = {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
         **{v["cle"]: v["court"] for v in VARIANTES}, "convergence": "Convergence ≥ 2"}
+
+
+def empreinte_prix(p: dict) -> str:
+    return hashlib.sha256(json.dumps((*cle_selection(p), p.get("cote")),
+        ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
 
 
 def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
@@ -35,20 +42,26 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
     alertes = {}
     for o in actuelles:
         debut = heure(o.get("debut"))
+        recue = heure(o.get("collecte_recue") or o.get("detecte"))
         if (o.get("suspect") or o.get("reference") == "Pinnacle brut" or not debut
-                or debut <= maintenant + timedelta(minutes=1)):
+                or debut <= maintenant + timedelta(minutes=1) or not recue
+                or not timedelta(0) <= maintenant-recue <= timedelta(minutes=AGE_PRIX_MAX_MINUTES)):
             continue
         key = (*cle_selection(o), o.get("cote"))
         dates = observations.get(key, {})
         if not dates or not any(maintenant-timedelta(minutes=15) <= t <= maintenant for t in dates.values()):
             continue
-        empreinte = hashlib.sha256(json.dumps(key, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+        empreinte = empreinte_prix(o)
         alertes[empreinte] = {
             "id": empreinte, "strategies": sorted(dates), "labels": [NOMS[c] for c in sorted(dates)],
             "validations": {c: t.isoformat() for c, t in dates.items()},
             "detecte": max(dates.values()).isoformat(), "debut": debut.isoformat(),
             "match": f'{o.get("domicile", "")} – {o.get("exterieur", "")}',
-            "pari": o.get("pari", ""), "bookmaker": o.get("bookmaker", ""), "cote": o.get("cote"),
+            # Le serveur actuel affiche le texte du pari tel quel : l'heure est
+            # visible aussi sans redéployer le service Web Push.
+            "pari": (o.get("pari", "")[:180]+"\nPrix relevé "+recue.astimezone(ZoneInfo("Europe/Paris")).strftime("%d/%m %H:%M:%S")),
+            "collecte_le": recue.isoformat(), "age_prix_secondes": round((maintenant-recue).total_seconds()),
+            "bookmaker": o.get("bookmaker", ""), "cote": o.get("cote"),
         }
     return {"generated_at": maintenant.isoformat(timespec="seconds"),
             "alertes": sorted(alertes.values(), key=lambda a: a["detecte"], reverse=True)[:100]}

@@ -162,6 +162,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 suspect = "écart trop grand"
             opportunites.append({
                 "detecte": l["collecte"], "bookmaker": l["source"], "sport": l["sport"], "ligue": l.get("ligue"),
+                "collecte_debut": l.get("collecte_debut"), "collecte_recue": l.get("collecte_recue"),
                 "match_id": l["match_id"], "domicile": l["domicile"], "exterieur": l["exterieur"],
                 "debut": l["debut"], "marche": l["marche"], "periode": l["periode"], "ligne": l.get("ligne"),
                 "issue": l["issue"], "pari": libelle_pari(l), "libelle_bookmaker": l.get("libelle"),

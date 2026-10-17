@@ -11,6 +11,7 @@ Chaque référence (Pinnacle, Betfair, Polymarket, Kalshi, Consensus, témoin Pi
 from __future__ import annotations
 
 import hashlib
+from math import isfinite
 from datetime import datetime, timedelta, timezone
 
 from . import VERSION
@@ -63,6 +64,7 @@ def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
             continue
         deja.add(pid)
         p = {"id": pid, "simulation": code, "reference": o["reference"], "detecte": o["detecte"],
+             "collecte_debut": o.get("collecte_debut"), "collecte_recue": o.get("collecte_recue"),
              "bookmaker": o["bookmaker"], "sport": o["sport"], "ligue": o.get("ligue"),
              "match_id": o["match_id"], "domicile": o["domicile"], "exterieur": o["exterieur"],
              "debut": o["debut"], "marche": o["marche"], "periode": o["periode"], "ligne": o.get("ligne"),
@@ -80,6 +82,35 @@ def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
         paris.append(p)
         nouveaux.append(p)
     return nouveaux
+
+
+def suivre_prix(paris: list[dict], lignes: list[dict]) -> None:
+    """Dernier prix relu du même contrat ; la cote de prise et les bilans restent intacts.
+
+    Une disparition n'est pas une baisse : aucune valeur n'est inventée si la
+    ligne n'est plus dans le flux. Le navigateur affiche l'âge de la dernière lecture.
+    """
+    index = {}
+    for l in lignes:
+        t = _heure(l.get("collecte_recue") or l.get("collecte"))
+        prix = l.get("cote")
+        if not t or not t.tzinfo or isinstance(prix,bool) or not isinstance(prix, (int, float)) or not isfinite(prix) or prix <= 1:
+            continue
+        k = (l.get("match_id"), cle(l))
+        if k not in index or t > index[k][0]:
+            index[k] = (t, prix)
+    for p in paris:
+        if p.get("statut") != "en_cours":
+            continue
+        vu = index.get((p.get("match_id"), cle(p)))
+        if not vu:
+            continue
+        t, prix = vu
+        avant = _heure(p.get("prix_revu_le"))
+        if avant and avant.tzinfo and t < avant:
+            continue
+        p["prix_revu"] = prix
+        p["prix_revu_le"] = t.isoformat(timespec="seconds")
 
 
 FRAICHEUR_CLOTURE_MIN = 15

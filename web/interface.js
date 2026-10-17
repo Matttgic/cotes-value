@@ -74,6 +74,8 @@ function adapterTableaux() {
           if(texte) {const pari=document.createElement('span');pari.className='pari-selection';pari.textContent=texte;summary.append(pari);d.classList.add('secondaire-pari');}
           const horaire=carte.querySelector('time.pari-horaire');
           if(horaire) summary.append(horaire.cloneNode(true));
+          const collecte=carte.querySelector('.pari-collecte');
+          if(collecte) summary.append(collecte.cloneNode(true));
         }
         carte.before(d);corps.append(carte);d.append(summary,corps);
       }
@@ -140,6 +142,9 @@ window.addEventListener('online',connexion);window.addEventListener('offline',co
 // Appelé à la fin du rendu : les utilitaires du modèle sont alors initialisés.
 function initialiserInterface() {
   initialiserPalette();compacterFiltres();adapterTableaux();actualiserFraicheur();setInterval(actualiserFraicheur,60000);
+  const diagnostics=D.diagnostic_alertes || [];
+  document.getElementById('notif-diagnostic').innerHTML=diagnostics.length?diagnostics.slice().reverse().map(c=>
+    `<p>Demande ${quand(c.envoi_demande_le)} · ${(c.alertes || []).length} signal(s) préparé(s) · ${c.resultat?.sent || 0} notification(s) acceptée(s) par le service Push${c.resultat?.ok===false?' · envoi en erreur':''}.</p>`).join(''):'<p>Aucun diagnostic d’envoi disponible pour les anciennes alertes.</p>';
   setInterval(()=>{
     actualiserHoraires();
     const actif=document.querySelector('.onglet.actif')?.id;

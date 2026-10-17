@@ -36,6 +36,7 @@ class Client:
         self.s.headers.update({"X-Secret": cle, "Accept-Encoding": "gzip", "Accept": "application/json"})
         self.pause = float(os.environ.get("PULSESCORE_PAUSE", "1.1")) if pause is None else pause
         self.requetes = 0
+        self.derniere_reception = None
         self.erreurs: list[str] = []
 
     def get(self, chemin: str, params: dict | None = None):
@@ -45,6 +46,7 @@ class Client:
         for essai in range(4):
             try:
                 r = self.s.get(f"{BASE}/{chemin}", params=params, timeout=90)
+                self.derniere_reception = datetime.now(timezone.utc).isoformat(timespec="seconds")
             except requests.RequestException as e:
                 self.requetes += 1                 # tentative émise (sa facturation n'est pas connue)
                 derniere = repr(e)[:150]
@@ -72,14 +74,17 @@ class Client:
         limite = datetime.now(timezone.utc) + timedelta(hours=heures)
         out = []
         for page in range(1, pages_max + 1):
+            requete_debut = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            self.derniere_reception = None
             d = self.get(f"{bookmaker}/{sport}/events", {"page": page, "limit": 30})
+            recue = self.derniere_reception or datetime.now(timezone.utc).isoformat(timespec="seconds")
             if not d or not d.get("events"):
                 break
             maintenant = datetime.now(timezone.utc)
             for e in d["events"]:
                 debut = _heure(e.get("startTime"))
                 if not e.get("live") and not e.get("suspended") and debut and debut > maintenant:
-                    out.append(e)
+                    out.append({**e, "_collecte_debut": requete_debut, "_collecte_recue": recue})
             dernier = _heure(d["events"][-1].get("startTime"))
             if not d.get("hasNextPage") or (dernier and dernier > limite):
                 break
@@ -98,7 +103,7 @@ def collecter(cle: str, plan: dict[str, list[str]], heures: float = 36,
             try:
                 moment = datetime.now(timezone.utc).isoformat(timespec="seconds")
                 for e in c.matchs(bm, sp, heures, pages_max):
-                    lignes += traduire(e, bm, SPORTS.get(sp, sp), moment)
+                    lignes += traduire(e, bm, SPORTS.get(sp, sp), e.get("_collecte_recue") or moment)
             except Exception as e:                                   # noqa: BLE001
                 c.erreurs.append(f"{sp} : {repr(e)[:150]}")
         return bm, lignes, c.requetes, c.erreurs
@@ -292,6 +297,7 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str) -> list[dict]:
     base = {"source": NOMS.get(bookmaker, bookmaker), "bookmaker": bookmaker, "sport": sport,
             "ligue": e.get("league"), "match_id": f"{bookmaker}|{e.get('eventId')}", "domicile": dom,
             "exterieur": ext, "debut": e.get("startTime"), "collecte": moment, "joueur": None,
+            "collecte_debut": e.get("_collecte_debut"), "collecte_recue": e.get("_collecte_recue"),
             "lien": e.get("slug")}
     out = []
     for m in e.get("markets") or []:

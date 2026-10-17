@@ -87,3 +87,21 @@ Le plafond d'une stratégie atteint avant l'activation ne sera pas contourné.
 Références : https://developer.mozilla.org/en-US/docs/Web/API/Push_API ;
 https://supabase.com/docs/guides/functions/auth ;
 https://docs.github.com/en/actions/concepts/security/openid-connect.
+
+## Fraîcheur et chemin rapide — 17 octobre 2026
+
+La collecte Actions s'exécute en trois phases sous le même verrou des données :
+
+1. `cycle.py --reglement non --sans-site` collecte, compare et sauvegarde les prises ; commit/push des données.
+2. `envoyer_notifications.py --donnees donnees --flux notifications-rapides.json` recalcule les mêmes sélections officielles et demande les envois, avant la génération du site et les sources de résultats.
+3. `cycle.py --seulement-reglement --reglement auto` conserve le rattrapage du règlement horaire et construit le site ; second commit des résultats et diagnostics.
+
+Une erreur d'envoi ne bloque pas la phase de règlement. Les alertes ne précèdent jamais la sauvegarde distante des prises. Les plafonds, règles et prix d'origine des stratégies restent identiques.
+
+Pour les nouveaux relevés PulseScore, `collecte_recue` est l'heure de réception de la réponse par page, avant la pause volontaire entre requêtes ; `collecte_debut` décrit le début de sa requête logique, retries compris. Pinnacle horodate la réponse des marchés par sport. Ces heures locales ne prouvent pas l'heure de mise à jour interne du fournisseur, qu'on ne possède pas toujours. Les anciens `detecte` ne sont pas réécrits et restent parfois des heures de début de lot.
+
+Les alertes écartent les prix de plus de cinq minutes à la préparation et les dates futures. L'heure du prix figure dans le texte de notification, sans changement nécessaire du service Supabase. La déduplication et la date de validation de chaque stratégie restent intactes. Une notification n'est pas une réservation de cote : le prix peut encore changer avant le clic, et Chrome peut retarder la réception.
+
+`notifications_diagnostic.json` conserve les 100 dernières tentatives de cycles : préparation, début/fin de demande d'envoi, métadonnées publiques des signaux et bilan agrégé de l'expéditeur. Aucun jeton ni abonnement n'y figure. `sent` signifie une acceptation par le service Push, pas une réception certifiée sur le téléphone, et n'est pas un résultat individuel par signal. Le site affiche « Envoi demandé », jamais une réception inventée.
+
+`prix_revu` / `prix_revu_le` suivent la dernière lecture API du même marché, période, ligne et issue. Ils ne modifient pas `cote`, `ecart`, `mise` ou les résultats de la prise. Une ligne absente ne produit pas un faux nouveau prix ; sa dernière observation vieillit simplement. Les cotes modifiées et l'heure de lecture sont visibles dans Paris et les listes de stratégies, avec l'heure du relevé initial.

@@ -50,3 +50,18 @@ test('Regroupement visuel, meilleur edge et catégories préservées',()=>{
   assert.equal((html.match(/<details>/g)||[]).length,4);
   assert.equal(rows[0],p);
 });
+
+test('Collecte visible : Paris, prix baissé et début de lot historique distingués',()=>{
+  c.cote=x=>Number(x).toFixed(2).replace('.',',');
+  const now=at('2026-10-17T00:05:00Z');
+  const p={cote:1.76,detecte:'2026-10-16T23:56:25Z',collecte_recue:'2026-10-16T23:56:30Z',
+    prix_revu:1.56,prix_revu_le:'2026-10-17T00:04:00Z',alerte_demande_le:'2026-10-16T23:57:00Z',statut:'en_cours'};
+  const html=c.collectePari(p,now);
+  assert.ok(html.includes('01:56:30'));
+  assert.ok(html.includes('il y a 8 min'));
+  assert.ok(html.includes('1,56 (-0,20)'));
+  assert.ok(html.includes('Envoi demandé 01:57:00 · délai 30 s'));
+  assert.ok(html.includes('collecte-ancienne'));
+  assert.ok(c.collectePari({detecte:p.detecte},now).includes('réception exacte inconnue'));
+  assert.ok(c.collectePari({}).includes('Collecte non renseignée'));
+});

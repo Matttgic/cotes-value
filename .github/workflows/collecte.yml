@@ -81,7 +81,8 @@ jobs:
           # Arrêt des nouveaux témoins ; les anciens restent conservés et réglés.
           TEMOIN_PINNACLE_BRUT: non
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
-        run: python scripts/cycle.py --donnees donnees --site site
+        # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
+        run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
 
       - name: Enregistrer les données
         run: |
@@ -99,7 +100,31 @@ jobs:
 
       - name: Envoyer les nouvelles alertes Chrome
         continue-on-error: true
-        run: python scripts/envoyer_notifications.py --flux site/notifications.json
+        run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
+
+      - name: Règlement après les alertes et construction du site
+        env:
+          PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
+          THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
+          THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
+          THE_ODDS_API_KEY_3: ${{ secrets.THE_ODDS_API_KEY_3 }}
+          THE_ODDS_API_KEY_4: ${{ secrets.THE_ODDS_API_KEY_4 }}
+        run: python scripts/cycle.py --seulement-reglement --reglement auto --donnees donnees --site site
+
+      - name: Enregistrer les résultats et le diagnostic des alertes
+        if: always()
+        run: |
+          cd donnees
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -qm "Résultats et alertes $(date -u +%FT%TZ)"
+          for i in 1 2 3; do
+            git push -q origin donnees && exit 0
+            git pull -q --rebase origin donnees
+          done
+          exit 1
 
       - uses: actions/upload-pages-artifact@v3
         with:

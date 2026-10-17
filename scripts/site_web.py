@@ -55,7 +55,7 @@ def cle_fiche(p: dict) -> tuple:
 
 CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
-                "ligue", "regle_le", "reporte_au", "id", "joueur")
+                "ligue", "regle_le", "reporte_au", "id", "joueur", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")
 
 
 PARIS_TZ = ZoneInfo("Europe/Paris")
@@ -388,6 +388,13 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
 
 def construire(donnees: Path, sortie: Path) -> Path:
     paris = _lire(donnees / "paris.json", []) + lire_archives(donnees)     # bilan sur TOUS les paris
+    journal_alertes = _lire(donnees / "notifications_diagnostic.json", {"cycles": []})
+    demandes = {a["id"]: c.get("envoi_demande_le") for c in journal_alertes.get("cycles", [])
+                for a in c.get("alertes", []) if a.get("id")}
+    for p in paris:
+        demande = demandes.get(notifications_mod.empreinte_prix(p))
+        if demande:
+            p["alerte_demande_le"] = demande
     etat = _lire(donnees / "etat.json", {})
     actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", [])
                  if not o.get("suspect") and o.get("reference") != "Pinnacle brut"]
@@ -440,22 +447,22 @@ def construire(donnees: Path, sortie: Path) -> Path:
         }
         laboratoire["m3_paris"] = [{k: p.get(k) for k in
             ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
             for p in sorted((p for p in paris if id(p) in m3_ids),
                             key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
         laboratoire["gemini_paris"] = [{k: p.get(k) for k in
             ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
             for p in sorted((p for p in paris if id(p) in gemini_ids),
                             key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
         laboratoire["jules_paris"] = [{k: p.get(k) for k in
             ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
             for p in sorted((p for p in paris if id(p) in jules_ids),
                             key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
         laboratoire["jules_v2_paris"] = [{k: p.get(k) for k in
             ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain")}
+             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
             for p in sorted((p for p in paris if id(p) in jules_v2_ids),
                             key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
         officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
@@ -478,7 +485,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     live_vue = {**live, "cycles": live.get("cycles", [])[-3:],
                 "total_signaux": len(live.get("signaux", [])),
                 "observations": live.get("observations", [])[-12:], "signaux": live.get("signaux", [])[-12:]}
-    data = {"live_papier": live_vue,
+    data = {"live_papier": live_vue, "diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
             "catalogue": catalogue_paris(paris, retenus),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
@@ -564,6 +571,7 @@ MODELE = r"""<!doctype html>
     <div class="puces" id="jouer-filtres" aria-label="Filtrer les opportunités par stratégie"></div>
     <details class="mode-emploi"><summary>Comment lire les sélections</summary><p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
     Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille. Les nouvelles variantes ne donnent pas de votes supplémentaires.</p></details>
+    <details class="mode-emploi"><summary>Fraîcheur des prix</summary><p>« Cote relevée » indique l’heure enregistrée pour ce prix. Les nouvelles prises utilisent la réception API ; les anciennes gardent l’heure du lot. Ce n’est pas une preuve de mise à jour du bookmaker. Une cote peut baisser immédiatement. La cote simulée reste celle de la prise ; une baisse observée ensuite est indiquée séparément.</p></details>
     <div id="liste-jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
@@ -750,7 +758,8 @@ MODELE = r"""<!doctype html>
   <section class="onglet" id="o-notifications">
     <div class="page-tete"><div><p class="surtitre">Tes stratégies, au bon moment</p><h2>Les notifications</h2><p class="sous-texte">Choisis les alertes à recevoir sur cet appareil.</p></div></div>
     <p class="aide">Reçois les nouvelles sélections des stratégies choisies, même lorsque cet onglet est fermé.
-    Les alertes suivent les scans, environ toutes les 5 minutes. Vérifie la cote : elle peut changer avant ton clic.</p>
+    Les alertes partent après la sauvegarde des prises, avant les résultats et la construction du site. Les prix de plus de 5 minutes à la préparation sont écartés. Vérifie la cote : elle peut changer avant ton clic.</p>
+    <details class="mode-emploi"><summary>Délais et derniers envois</summary><div id="notif-diagnostic"></div><p class="aide">Une réponse du service Push ne confirme pas la réception sur le téléphone. Chrome, le réseau et l’économie de batterie peuvent retarder l’affichage. L’heure de réception API ne certifie pas l’heure de mise à jour interne du fournisseur.</p></details>
     <p class="carte" id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
     <fieldset class="carte" id="notif-strategies"><legend>Stratégies à suivre</legend></fieldset>
     <div class="filtres"><button class="btn" id="notif-activer">Activer les notifications</button>
@@ -846,7 +855,7 @@ const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
 const carteActuelle = o => `<details class="ligne-detail ligne-pari ${o.strategies.length ? "ligne-validee" : ""}" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
-<span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>${horairePari(o)}
+<span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>${horairePari(o)}${collectePari(o)}
 <span class="ligne-book" title="${e(o.bookmaker)}">${monogrammeBookmaker(o.bookmaker)}</span><b class="ligne-cote" aria-label="Cote ${cote(o.cote)}">${cote(o.cote)}</b><b class="ligne-valeur pos" aria-label="Edge ${pct(o.ecart)}">${pct(o.ecart)}</b></summary><div class="ligne-corps"><article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
 <div class="op-meta"><span class="sport-identite">${iconeSport(o.sport)}${e(nomsSports[o.sport] || o.sport || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
 <h3 class="op-match">${e(o.domicile)} – ${e(o.exterieur)}</h3>
@@ -1074,7 +1083,7 @@ document.getElementById("reinitialiser-filtres").onclick = () => {
   for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value="";
   rendreParis();
 };
-const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","clv","statut","gain","strategies"];
+const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","clv","statut","gain","strategies","collecte_recue","collecte_debut","prix_revu","prix_revu_le"];
 // Les cellules texte ne doivent pas devenir des formules à l'ouverture dans un tableur.
 const celluleCSV = valeur => {
   if (valeur == null) return '""';
@@ -1099,7 +1108,7 @@ document.getElementById("export-csv").onclick = () => {
   setTimeout(() => URL.revokeObjectURL(url),1000);
 };
 const carteParis = p => `<details class="ligne-detail ligne-pari" id="pari-${e(encodeURIComponent(JSON.stringify([p.id,p.bookmaker,p.match_id,p.pari,p.detecte,p.reference])))}"><summary>
-<span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span><span class="pari-bookmaker">${e(p.bookmaker)}</span>${horairePari(p)}
+<span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span><span class="pari-bookmaker">${e(p.bookmaker)}</span>${horairePari(p)}${collectePari(p)}
 <span class="ligne-book" title="${e(p.bookmaker)}">${e((p.bookmaker || '?').slice(0,1))}</span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b>
 <span class="ligne-valeur ${signe(p.gain)}" title="${e(STATUTS[p.statut]||p.statut)}">${p.gain!=null?eur(p.gain):e(p.a_regler?'À régler':'En cours')}</span></summary><div class="ligne-corps"><article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${p.reporte_au && p.statut === "en_cours"
@@ -1466,7 +1475,7 @@ function rendreStrategies() {
     const picks = (v.ids || []).map(id => navPrudent[id]).filter(Boolean).slice(-20).reverse();
     return `<details><summary>${e(v.nom)} · ${v.stats.paris} prises · ${v.stats.regles} réglées</summary>` +
       (picks.length ? picks.map(p => `<article class="carte"><b>${e(p.domicile)} – ${e(p.exterieur)}</b>
-       <div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div>${horairePari(p)}<small>Prise ${quand(p.detecte)} · ${e(p.statut)}</small></article>`).join("")
+       <div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div>${horairePari(p)}${collectePari(p)}<small>Prise ${quand(p.detecte)} · ${e(p.statut)}</small></article>`).join("")
        : '<p class="aide">Aucune prise depuis le lancement de cette variante.</p>') + '</details>';
   }).join("");
   document.getElementById("prudentes-reconstitution").innerHTML = Object.values(suivis.reconstitution_exploratoire || {}).map(v =>
@@ -1475,7 +1484,7 @@ function rendreStrategies() {
     ? gemPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
-       <small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection Gemini Argon depuis son démarrage prospectif.</p>';
   const julesPicks = L.jules_paris || [];
@@ -1483,7 +1492,7 @@ function rendreStrategies() {
     ? julesPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
-       <small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection JULES EDGE depuis sa publication du 14/10 à 23 h 04.</p>';
   const v2Picks = L.jules_v2_paris || [];
@@ -1491,7 +1500,7 @@ function rendreStrategies() {
     ? v2Picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
-       <small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection JULES EDGE v2 depuis le lancement du 15/10 à 00 h 30.</p>';
   const picks = L.m3_paris || [];
@@ -1499,7 +1508,7 @@ function rendreStrategies() {
     ? picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
-       <small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection M3 depuis son démarrage prospectif du 15 octobre.</p>';
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
@@ -1659,7 +1668,7 @@ function rendreLaboratoire() {
         const p = L.paris_recents.find(p => p.id === id);
         if (!p) return "";
         return `<div class="carte"><b>${e(p.domicile)} — ${e(p.exterieur)}</b><div>${e(p.pari)} · ${e(p.bookmaker)} ·${cote(p.cote)}</div>
-        ${horairePari(p)}<small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] || p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
+        ${horairePari(p)}${collectePari(p)}<small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] || p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
       }).join("")}</details>`;
   }
   document.getElementById("labo-regle").onchange = detail;

@@ -10,12 +10,44 @@ import json
 import os
 import sys
 from pathlib import Path
+from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.notifications import API  # noqa: E402
+
+
+def preparer(donnees: Path, maintenant: datetime | None = None) -> dict:
+    """Même sélection que le site, sans attendre sa génération ni les résultats."""
+    from cotes import stockage
+    from cotes.convergence import selections
+    from cotes.strategies_prudentes import selections_prudentes
+    from cotes.notifications import flux
+    paris = json.loads((donnees / "paris.json").read_text()) + stockage.lire_archives(donnees)
+    actuelles = json.loads((donnees / "opportunites_actuelles.json").read_text())
+    retenus = selections(paris)
+    retenus.update(selections_prudentes(paris, bases=retenus))
+    return flux(actuelles, paris, retenus, maintenant)
+
+
+def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
+    from scripts.cycle import ecrire_json
+    flux = preparer(donnees)
+    ecrire_json(destination, flux)
+    debut = datetime.now(timezone.utc)
+    bilan = transmettre(flux)
+    fin = datetime.now(timezone.utc)
+    # Données publiques de diagnostic uniquement, jamais d'abonnement ni de jeton.
+    journal = {"prepare_le": flux["generated_at"], "envoi_demande_le": debut.isoformat(),
+               "envoi_termine_le": fin.isoformat(), "resultat": bilan,
+               "alertes": [{k:a.get(k) for k in ("id","match","pari","bookmaker","cote","collecte_le","age_prix_secondes","detecte")}
+                            for a in flux["alertes"]]}
+    ancien = donnees / "notifications_diagnostic.json"
+    historique = json.loads(ancien.read_text()) if ancien.exists() else {"cycles": []}
+    ecrire_json(ancien, {"cycles": (historique.get("cycles", [])+[journal])[-100:]})
+    return bilan
 
 
 def transmettre(flux: dict, env=None, ouvrir=urlopen) -> dict:
@@ -47,7 +79,8 @@ def transmettre(flux: dict, env=None, ouvrir=urlopen) -> dict:
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--flux", type=Path, default=Path("site/notifications.json"))
+    p.add_argument("--donnees", type=Path, help="Préparer les alertes immédiatement depuis les données sauvegardées")
     args = p.parse_args()
-    bilan = transmettre(json.loads(args.flux.read_text(encoding="utf-8")))
+    bilan = envoyer_et_journaliser(args.donnees,args.flux) if args.donnees else transmettre(json.loads(args.flux.read_text(encoding="utf-8")))
     print(json.dumps(bilan, ensure_ascii=False))
     sys.exit(0 if bilan.get("ok") else 1)

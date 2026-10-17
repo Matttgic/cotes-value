@@ -88,11 +88,12 @@ def _norm_special(desc: str, dom: str, ext: str) -> tuple[str, str]:
 def collecter(sports: dict | None = None) -> list[dict]:
     """Toutes les cotes ouvertes (avant-match), une ligne par issue, avec probabilité juste."""
     sports = sports or SPORTS
-    maintenant = datetime.now(timezone.utc).isoformat(timespec="seconds")
     lignes: list[dict] = []
     for sid, sport in sports.items():
         matchups = _get(f"/sports/{sid}/matchups?withSpecials=true") or []
+        requete_debut = datetime.now(timezone.utc).isoformat(timespec="seconds")
         marches = _get(f"/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true") or []
+        maintenant = datetime.now(timezone.utc).isoformat(timespec="seconds")
         if not matchups or not marches:
             continue
         par_id = {m["id"]: m for m in matchups}
@@ -107,6 +108,7 @@ def collecter(sports: dict | None = None) -> list[dict]:
             if len(prix) < 2:
                 continue
             base = {"source": "pinnacle", "sport": sport, "collecte": maintenant,
+                    "collecte_debut": requete_debut, "collecte_recue": maintenant,
                     "mise_max": (mk.get("limits") or [{}])[0].get("amount")}
             if mu["type"] == "matchup":
                 lignes += _lignes_match(mu, mk, prix, par_id, periodes, base)

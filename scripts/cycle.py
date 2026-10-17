@@ -304,6 +304,8 @@ def main() -> int:
     a.add_argument("--mode", choices=["complet", "test"], default=os.environ.get("MODE_COLLECTE", "complet"))
     a.add_argument("--donnees", default="donnees")
     a.add_argument("--site", default="site")
+    a.add_argument("--sans-site", action="store_true",
+                   help="Sauvegarder la collecte avant le chemin rapide d'alertes ; site construit ensuite")
     a.add_argument("--reglement", choices=["auto", "oui", "non"], default=os.environ.get("REGLEMENT", "auto"),
                    help="auto = si le dernier règlement date d'au moins REGLEMENT_MINUTES")
     a.add_argument("--seulement-reglement", action="store_true",
@@ -379,6 +381,7 @@ def main() -> int:
     paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
     journal["temoin_pinnacle_brut"] = os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui"
     nouveaux = simulation.placer(opportunites, paris)
+    simulation.suivre_prix(paris, francais)
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
 
@@ -424,8 +427,9 @@ def main() -> int:
     ecrire_json(donnees / "etat.json", etat)
 
     # 6. site
-    from site_web import construire                                     # noqa: E402
-    construire(donnees, Path(args.site))
+    if not args.sans_site:
+        from site_web import construire                                 # noqa: E402
+        construire(donnees, Path(args.site))
     print(json.dumps({k: journal[k] for k in ("mode", "cotes", "matchs_francais", "opportunites", "nouveaux_paris",
                                                "requetes_pulsescore", "controle", "etapes")}, ensure_ascii=False, indent=1))
     return 0
