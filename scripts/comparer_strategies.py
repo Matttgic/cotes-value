@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.laboratoire import (REGLES, DEBUT_ETUDE, PERIODES, audit, classer, evaluer,  # noqa: E402
                                heure, resume, selectionner)
-from cotes.stockage import lire_archives  # noqa: E402
+from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import paris_gemini  # noqa: E402
 from cotes.strategie_jules import paris_jules  # noqa: E402
@@ -86,7 +86,7 @@ def comparer(paris: list[dict], releve: str) -> dict:
 
 def produire(donnees: Path, sortie: Path) -> dict:
     brut = (donnees / "paris.json").read_bytes()
-    ps = json.loads(brut) + lire_archives(donnees)
+    ps = fusionner_paris(json.loads(brut), lire_archives(donnees))
     sha = subprocess.check_output(["git", "-C", str(donnees), "rev-parse", "HEAD"], text=True).strip()
     etat = json.loads((donnees / "etat.json").read_text())
     # Le commit est la date à laquelle tous les règlements du cycle sont connus.

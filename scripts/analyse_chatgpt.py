@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import REGLES, clv_finale, paris_strategie, premiers_par_selection  # noqa: E402
-from cotes.stockage import lire_archives  # noqa: E402
+from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, _heure, motif_refus, paris_chatgpt  # noqa: E402
 
 
@@ -60,5 +60,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--donnees", type=Path, required=True)
     args = parser.parse_args()
-    paris = json.loads((args.donnees / "paris.json").read_text()) + lire_archives(args.donnees)
+    paris = fusionner_paris(json.loads((args.donnees / "paris.json").read_text()), lire_archives(args.donnees))
     print(json.dumps(analyser(paris), ensure_ascii=False, indent=2))

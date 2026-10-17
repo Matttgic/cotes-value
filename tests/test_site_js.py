@@ -192,3 +192,23 @@ D.segments=[{...ancien,sigma_fiable:true,evenements:35,sigma_limites:[]}];
 rendreSegments();html=document.getElementById('liste-segments').innerHTML;
 assert.ok(html.includes('À confirmer') && html.includes('essais multiples non corrigés'));
 ''')
+
+
+def test_prix_modifie_visible_sans_transferer_les_badges():
+    section=MODELE[MODELE.index('const parCote = new Map();'):MODELE.index('const age = minutes(dc.debut);')]
+    executer(DOM+'''
+const D={actuelles:[{bookmaker:'Winamax',match_id:'w|1',marche:'VAINQUEUR',periode:'MATCH',
+ domicile:'Athinaikos',exterieur:'Panseraikos',pari:'Athinaikos gagne',cote:1.6,ecart:.03,
+ debut:'2099-01-01T12:00:00Z',reference:'Pinnacle',cote_juste:1.55,strategies:[],
+ prix_change:true,prix_precedent:1.8,convergence_precedente:true,validation_precedente:'2026-10-17T10:00:00Z'}],
+ strategies_badges:{}};
+const nomsSports={},monogrammeBookmaker=()=>'',iconeSport=()=>'';
+'''+section+'''
+const html=carteActuelle(cotesJouer[0]);
+assert.ok(html.split('</summary>')[0].includes('Prix modifié'));
+assert.ok(html.includes('prise précédente à 1.8') && html.includes('Aucun badge transféré'));
+assert.ok(!html.includes('Signal brut · aucune stratégie'));
+assert.equal(badgeStrategies(cotesJouer[0]),'');
+const brut=carteActuelle({...cotesJouer[0],prix_change:false});
+assert.ok(brut.includes('Signal brut · aucune stratégie') && !brut.includes('Prix modifié'));
+''')

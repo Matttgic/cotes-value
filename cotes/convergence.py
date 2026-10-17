@@ -43,8 +43,7 @@ def votes(paris: list[dict], retenus: dict[str, set[int]]) -> dict[tuple, dict]:
     groupes = {}
     for p in paris:
         t = heure(p.get("detecte"))
-        if (not t or isinstance(p.get("cote"), bool) or not isinstance(p.get("cote"), (int, float))
-                or not isfinite(p["cote"]) or p["cote"] <= 1 or not p.get("match_id")
+        if (not t or not _prix_valide(p.get("cote")) or not p.get("match_id")
                 or not p.get("bookmaker")):
             continue
         # Les variantes peuvent être présentes pour les badges. Elles ne
@@ -60,18 +59,27 @@ def votes(paris: list[dict], retenus: dict[str, set[int]]) -> dict[tuple, dict]:
     return groupes
 
 
+def _prix_valide(prix) -> bool:
+    return isinstance(prix, (int, float)) and not isinstance(prix, bool) and isfinite(prix) and prix > 1
+
+
 @figer_selecteur("convergence")
 def paris_convergence(paris: list[dict], retenus: dict[str, set[int]] | None = None,
                       depuis: str | None = None) -> set[int]:
     retenus = retenus if retenus is not None else selections(paris, depuis=depuis)
     debut = heure(depuis or CONVERGENCE["debut"])
+    if debut is None:
+        return set()
     ordre = {ref: i for i, ref in enumerate(REFERENCES)}
+    representant = lambda p: (ordre.get(p.get("reference"), 99), str(p.get("id") or ""))
     premiers = {}
-    for (cle, t, _), groupe in sorted(votes(paris, retenus).items(), key=lambda kv: kv[0][1]):
+    # Même instant, plusieurs prix : départage déterministe, sans dépendre de l'ordre du fichier.
+    groupes = sorted(votes(paris, retenus).items(), key=lambda kv: (
+        kv[0][1], min(representant(p) for p in kv[1]["paris"]), kv[0][2]))
+    for (cle, t, _), groupe in groupes:
         if t < debut or len(groupe["familles"]) < 2 or cle in premiers:
             continue
-        premiers[cle] = min(groupe["paris"], key=lambda p: (
-            ordre.get(p.get("reference"), 99), str(p.get("id") or "")))
+        premiers[cle] = min(groupe["paris"], key=representant)
     return {id(p) for p in premiers.values()}
 
 
@@ -82,21 +90,34 @@ def valider_actuelles(actuelles: list[dict], paris: list[dict], retenus: dict[st
     dédoublonnages réels des sélecteurs restent respectés. La date est affichée.
     """
     par_prix = {}
+    dernieres = {}
     convergents = paris_convergence(paris, retenus)
     for p in paris:
         t = heure(p.get("detecte"))
         strategies = {cle for cle, ids in retenus.items() if id(p) in ids}
-        if t is None or not strategies:
+        if t is None or not strategies or not _prix_valide(p.get("cote")):
             continue
         cle, prix = cle_selection(p), p.get("cote")
         item = par_prix.setdefault((cle, prix), {"strategies": set(), "convergence": False, "validation_detecte": t})
         item["strategies"].update(strategies)
         item["convergence"] |= id(p) in convergents
         item["validation_detecte"] = max(item["validation_detecte"], t)
+        rang = (t, prix)
+        if cle not in dernieres or rang > dernieres[cle][0]:
+            dernieres[cle] = (rang, prix, item)
     out = []
     for o in actuelles:
-        item = par_prix.get((cle_selection(o), o.get("cote")))
+        cle, prix = cle_selection(o), o.get("cote")
+        item = par_prix.get((cle, prix)) if _prix_valide(prix) else None
+        precedent = dernieres.get(cle)
+        t_actuel = heure(o.get("detecte"))
+        change = bool(_prix_valide(prix) and item is None and precedent and t_actuel is not None
+                      and precedent[2]["validation_detecte"] <= t_actuel)
         out.append({**o, "strategies": sorted(item["strategies"]) if item else [],
                     "convergence": bool(item and item["convergence"]),
+                    "prix_change": change, "prix_precedent": precedent[1] if change else None,
+                    "strategies_precedentes": sorted(precedent[2]["strategies"]) if change else [],
+                    "convergence_precedente": bool(change and precedent[2]["convergence"]),
+                    "validation_precedente": precedent[2]["validation_detecte"].isoformat() if change else None,
                     "validation_detecte": item["validation_detecte"].isoformat() if item else None})
     return out

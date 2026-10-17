@@ -16,7 +16,7 @@ from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_conver
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes, suivis_prudents  # noqa: E402
 from cotes.reglement import gain as gain_reglement, GAIN  # noqa: E402
-from cotes.stockage import lire_archives  # noqa: E402
+from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
 from cotes.strategie_jules import JULES, paris_jules  # noqa: E402
@@ -435,7 +435,7 @@ def enrichir_evenements(paris: list[dict], laboratoire: dict, maintenant: str):
 
 
 def construire(donnees: Path, sortie: Path) -> Path:
-    paris = _lire(donnees / "paris.json", []) + lire_archives(donnees)     # bilan sur TOUS les paris
+    paris = fusionner_paris(_lire(donnees / "paris.json", []), lire_archives(donnees))
     journal_alertes = _lire(donnees / "notifications_diagnostic.json", {"cycles": []})
     demandes = {a["id"]: c.get("envoi_demande_le") for c in journal_alertes.get("cycles", [])
                 for a in c.get("alertes", []) if a.get("id")}
@@ -626,7 +626,8 @@ MODELE = r"""<!doctype html>
     <div class="puces sports-puces" id="jouer-sports" aria-label="Filtrer les opportunités par sport"></div>
     <div class="puces" id="jouer-filtres" aria-label="Filtrer les opportunités par stratégie"></div>
     <details class="mode-emploi"><summary>Comment lire les sélections</summary><p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
-    Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille. Les nouvelles variantes ne donnent pas de votes supplémentaires.</p></details>
+    Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille. Les nouvelles variantes ne donnent pas de votes supplémentaires.
+    « Prix modifié » signifie qu'une prise antérieure existe à une autre cote : ses badges ne sont pas transférés au nouveau prix.</p></details>
     <details class="mode-emploi"><summary>Fraîcheur des prix</summary><p>« Cote relevée » indique l’heure enregistrée pour ce prix. Les nouvelles prises utilisent la réception API ; les anciennes gardent l’heure du lot. Ce n’est pas une preuve de mise à jour du bookmaker. Une cote peut baisser immédiatement. La cote simulée reste celle de la prise ; une baisse observée ensuite est indiquée séparément.</p></details>
     <div id="liste-jouer"></div>
   </section>
@@ -915,14 +916,15 @@ const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
 const carteActuelle = o => `<details class="ligne-detail ligne-pari ${o.strategies.length ? "ligne-validee" : ""}" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
-<span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>${horairePari(o)}${collectePari(o)}
+<span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}${o.prix_change ? ' <small>· Prix modifié</small>' : ''}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>${horairePari(o)}${collectePari(o)}
 <span class="ligne-book" title="${e(o.bookmaker)}">${monogrammeBookmaker(o.bookmaker)}</span><b class="ligne-cote" aria-label="Cote ${cote(o.cote)}">${cote(o.cote)}</b><b class="ligne-valeur pos" aria-label="Edge ${pct(o.ecart)}">${pct(o.ecart)}</b></summary><div class="ligne-corps"><article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
 <div class="op-meta"><span class="sport-identite">${iconeSport(o.sport)}${e(nomsSports[o.sport] || o.sport || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
 <h3 class="op-match">${e(o.domicile)} – ${e(o.exterieur)}</h3>
 <p class="op-pari">${e(o.pari)}</p>
 <div class="op-offre"><div class="op-prix">${monogrammeBookmaker(o.bookmaker)}<span>${e(o.bookmaker)}<small>Cote proposée</small></span><b>${cote(o.cote)}</b></div>
 <div class="op-edge">${pct(o.ecart)}<small>Écart à la cote juste</small></div></div>
-<div class="l4">${badgeStrategies(o) || '<span class="signal-brut">Signal brut · aucune stratégie</span>'}</div>
+<div class="l4">${badgeStrategies(o) || (o.prix_change ? `<span class="signal-brut">Prix différent · prise précédente à ${cote(o.prix_precedent)}</span>` : '<span class="signal-brut">Signal brut · aucune stratégie</span>')}</div>
+${o.prix_change ? `<p class="aide">${o.convergence_precedente ? 'Convergence ≥ 2 enregistrée' : 'Sélection enregistrée'} le ${quand(o.validation_precedente)} à ${cote(o.prix_precedent)}. Aucun badge transféré à la cote actuelle.</p>` : ''}
 ${o.strategies.length ? `<div class="op-validation">Prise enregistrée le ${quand(o.validation_detecte)}</div>` : ""}
 <div class="op-reference">${(() => { const r=o.refs.find(r=>r.ecart===o.ecart) || o.refs[0];
   return `Cote juste <b>${cote(r.cote_juste)}</b> · ${e(r.reference)}` + (o.refs.length>1 ? `<details><summary>Les ${o.refs.length} références</summary><p>${o.refs.map(r=>`${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join(" · ")}</p></details>` : "");})()}</div>

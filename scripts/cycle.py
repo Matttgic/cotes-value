@@ -387,7 +387,7 @@ def main() -> int:
     journal["temoin_pinnacle_brut"] = os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui"
     nouveaux = simulation.placer(opportunites, paris)
     from cotes.decisions import figer_nouveaux
-    figer_nouveaux(paris + stockage.lire_archives(donnees), nouveaux)
+    figer_nouveaux(stockage.fusionner_paris(paris, stockage.lire_archives(donnees)), nouveaux)
     simulation.suivre_prix(paris, francais)
     justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle

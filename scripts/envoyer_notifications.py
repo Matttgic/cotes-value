@@ -25,7 +25,7 @@ def preparer(donnees: Path, maintenant: datetime | None = None) -> dict:
     from cotes.convergence import selections
     from cotes.strategies_prudentes import selections_prudentes
     from cotes.notifications import flux
-    paris = json.loads((donnees / "paris.json").read_text()) + stockage.lire_archives(donnees)
+    paris = stockage.fusionner_paris(json.loads((donnees / "paris.json").read_text()), stockage.lire_archives(donnees))
     actuelles = json.loads((donnees / "opportunites_actuelles.json").read_text())
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))

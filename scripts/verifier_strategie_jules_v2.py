@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.laboratoire import DEBUT_ETUDE, PERIODES, PARIS, audit, heure, resume  # noqa: E402
 from cotes.reglement import GAIN, gain  # noqa: E402
-from cotes.stockage import lire_archives  # noqa: E402
+from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import paris_gemini  # noqa: E402
 from cotes.strategie_jules import paris_jules  # noqa: E402
@@ -95,7 +95,7 @@ def main():
     source = subprocess.check_output(["git", "show", args.livree_commit+":cotes/strategie_jules.py"], text=True)
     namespace = {"__name__": "jules_livree"}
     exec(compile(source, args.livree_commit, "exec"), namespace)
-    paris = json.loads((args.donnees/"paris.json").read_text())+lire_archives(args.donnees)
+    paris = fusionner_paris(json.loads((args.donnees/"paris.json").read_text()), lire_archives(args.donnees))
     r = rapport(paris, args.releve, namespace["paris_jules_v2"])
     r["source_commit"] = subprocess.check_output(["git", "-C", str(args.donnees), "rev-parse", "HEAD"], text=True).strip()
     r["livree_commit"] = args.livree_commit

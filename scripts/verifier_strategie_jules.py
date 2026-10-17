@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.laboratoire import heure, resume  # noqa: E402
-from cotes.stockage import lire_archives  # noqa: E402
+from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_jules import DEBUT_REJEU, JULES, paris_jules  # noqa: E402
 
 
@@ -41,7 +41,7 @@ def main():
     a.add_argument("--releve", required=True)
     a.add_argument("--sortie", type=Path, required=True)
     args = a.parse_args()
-    paris = json.loads((args.donnees / "paris.json").read_text()) + lire_archives(args.donnees)
+    paris = fusionner_paris(json.loads((args.donnees / "paris.json").read_text()), lire_archives(args.donnees))
     r = rapport(paris, args.releve)
     r["source_sha256"] = hashlib.sha256(json.dumps(paris, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     r["source_commit"] = subprocess.check_output(
