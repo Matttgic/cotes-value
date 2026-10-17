@@ -28,7 +28,7 @@
     if(lire(key)!==s) throw Error('Autorise le stockage du site pour enregistrer cet appareil.');
   }
   async function request(action,extra={}) {
-    const r=await fetch(api+'/'+action,{method:'POST',headers:{'Content-Type':'application/json'},
+    const r=await fetch(api+'/'+action,{method:'POST',cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({id:device?.id,token:device?.token,...extra}),signal:AbortSignal.timeout(15000)});
     const d=await r.json();if(!r.ok) {const error=Error(d.error||'Service indisponible');error.status=r.status;throw error;}return d;
   }

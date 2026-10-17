@@ -41,10 +41,10 @@ test('les dates et votes propres à chaque stratégie empêchent les alertes ré
     {cote:NaN},{strategies:['inconnue']},{labels:undefined},{validations:{}}]) assert.equal(validAlert({...alert,...change},now),false);
 });
 test('seul le workflow de collecte du dépôt et de la branche autorisés est accepté',()=>{
-  const p={repository_id:'1404917041',repository_owner_id:'1',repository:'Matttgic/cotes-value',
+  const p={repository_id:'1404917041',repository_owner_id:'183744829',repository:'Matttgic/cotes-value',
     ref:'refs/heads/ccr-148b8ccc-phitmr',workflow_ref:'Matttgic/cotes-value/.github/workflows/collecte.yml@refs/heads/ccr-148b8ccc-phitmr',event_name:'workflow_dispatch'};
   assert.ok(validClaims(p));
-  for(const change of [{repository_id:'2'},{ref:'refs/heads/other'},{workflow_ref:'other'},{event_name:'pull_request'}]) assert.equal(validClaims({...p,...change}),false);
+  for(const change of [{repository_id:'2'},{repository_owner_id:'2'},{repository_owner_id:undefined},{ref:'refs/heads/other'},{workflow_ref:'other'},{event_name:'pull_request'}]) assert.equal(validClaims({...p,...change}),false);
 });
 test('CORS, authentification des envois et clé privée protégée',async()=>{
   const handler=app();
@@ -104,4 +104,41 @@ test('M3 Max 3 est un choix distinct, sans abonnement automatique',()=>{
   assert.ok(validAlert(a,now));
   assert.equal(alertsFor({...device,strategies:['m3']},[a],now).length,0);
   assert.equal(alertsFor({...device,strategies:['m3_structure']},[a],now).length,1);
+});
+
+
+test('le corps est limité en octets avant lecture complète, même avec une taille mensongère',async()=>{
+  for(const contentLength of [undefined,'0']) {
+    let pulls=0,cancelled=false,calls=0;
+    const stream=new ReadableStream({
+      pull(controller) {pulls++;controller.enqueue(new TextEncoder().encode('é'.repeat(60000)));},
+      cancel() {cancelled=true;}
+    });
+    const headers={Origin:ORIGIN};if(contentLength!==undefined) headers['Content-Length']=contentLength;
+    const request=new Request('https://example.test/cv-notifications/subscribe',{
+      method:'POST',headers,body:stream,duplex:'half'});
+    const handler=app({db:async()=>{calls++;return [];}});
+    const result=await handler(request);
+    assert.equal(result.status,413);assert.ok(cancelled);assert.ok(pulls<=3);
+    assert.equal(calls,0);assert.equal(result.headers.get('Cache-Control'),'no-store');
+    assert.equal(result.headers.get('X-Content-Type-Options'),'nosniff');
+  }
+});
+
+test('une requête UTF-8 découpée en milieu de caractère reste valide',async()=>{
+  const bytes=new TextEncoder().encode(JSON.stringify({id,token,strategies:['strategie'],subscription:sub(),note:'équipe'}));
+  const position=bytes.indexOf(0xc3)+1;
+  const stream=new ReadableStream({start(c){c.enqueue(bytes.slice(0,position));c.enqueue(bytes.slice(position));c.close();}});
+  const request=new Request('https://example.test/cv-notifications/subscribe',{
+    method:'POST',headers:{Origin:ORIGIN},body:stream,duplex:'half'});
+  const r=await app({db:async()=>true})(request);
+  assert.equal(r.status,200);
+});
+
+test('le service worker ne crée aucun cache réseau et les requêtes privées évitent le cache',()=>{
+  const handlers={};const ctx={self:{addEventListener:(type,fn)=>{handlers[type]=fn;}}};
+  vm.createContext(ctx);vm.runInContext(readFileSync(new URL('../web/sw.js',import.meta.url),'utf8'),ctx);
+  assert.equal(handlers.fetch,undefined);
+  const code=readFileSync(new URL('../web/notifications.js',import.meta.url),'utf8');
+  assert.ok(code.includes("method:'POST',cache:'no-store',credentials:'omit'"));
 });

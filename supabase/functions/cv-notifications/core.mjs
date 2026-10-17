@@ -30,15 +30,30 @@ export function alertsFor(device,alerts,now=Date.now()) {
     date(a.validations[s])>=date(device.since_at) && date(a.validations[s])>=now-15*60000 && date(a.validations[s])<=now+60000));
 }
 export function validClaims(p) {
-  return p.repository_id==='1404917041' && p.repository_owner_id &&
+  return p.repository_id==='1404917041' && p.repository_owner_id==='183744829' &&
     p.repository==='Matttgic/cotes-value' && p.ref==='refs/heads/ccr-148b8ccc-phitmr' &&
     p.workflow_ref==='Matttgic/cotes-value/.github/workflows/collecte.yml@refs/heads/ccr-148b8ccc-phitmr' &&
     ['push','schedule','workflow_dispatch'].includes(p.event_name);
 }
+// Borne le corps accumulé en mémoire, même sans Content-Length ou si celui-ci ment.
+async function lireCorps(req, limite=200000) {
+  if(!req.body) return '';
+  const reader=req.body.getReader(), decoder=new TextDecoder();
+  let total=0, texte='';
+  try {
+    while(true) {
+      const {done,value}=await reader.read();
+      if(done) return texte+decoder.decode();
+      total+=value.byteLength;
+      if(total>limite) {await reader.cancel();return null;}
+      texte+=decoder.decode(value,{stream:true});
+    }
+  } finally {reader.releaseLock();}
+}
 export function createHandler({db,config,authorize,send,clock=Date.now}) {
   return async req => {
     const origin=req.headers.get('Origin');
-    const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin'};
+    const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin','X-Content-Type-Options':'nosniff'};
     if(origin===ORIGIN) Object.assign(headers,{'Access-Control-Allow-Origin':ORIGIN,
       'Access-Control-Allow-Headers':'content-type,authorization','Access-Control-Allow-Methods':'GET,POST,OPTIONS'});
     const reply=(obj,status=200)=>new Response(JSON.stringify(obj),{status,headers});
@@ -54,8 +69,8 @@ export function createHandler({db,config,authorize,send,clock=Date.now}) {
         if(!await authorize(req.headers.get('Authorization')||'')) return reply({error:'Accès refusé'},401);
       } else if(origin!==ORIGIN) return reply({error:'Origine requise'},403);
       if(Number(req.headers.get('Content-Length')||0)>200000) return reply({error:'Requête trop grande'},413);
-      const raw=await req.text();
-      if(raw.length>200000) return reply({error:'Requête trop grande'},413);
+      const raw=await lireCorps(req);
+      if(raw===null) return reply({error:'Requête trop grande'},413);
       let body; try {body=JSON.parse(raw);} catch {return reply({error:'JSON invalide'},400);}
       if(!body || typeof body!=='object' || Array.isArray(body)) return reply({error:'Requête invalide'},400);
       const now=clock();

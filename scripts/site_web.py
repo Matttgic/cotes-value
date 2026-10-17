@@ -24,6 +24,7 @@ from cotes.strategie_jules_v2 import JULES_V2, paris_jules_v2  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
                               evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
+from cotes.securite import json_public
 from cotes import notifications as notifications_mod  # noqa: E402
 
 
@@ -560,9 +561,13 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "m3": M3,
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
+    # Tous les contenus sont vérifiés avant de remplacer le site existant.
+    donnees_json = json_public(data)
+    live_json = json_public(live)
+    alertes_json = json_public(notifications_mod.flux(actuelles, paris, retenus))
     sortie.mkdir(parents=True, exist_ok=True)
     web = Path(__file__).resolve().parent.parent / "web"
-    html = MODELE.replace("__DONNEES__", json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/"))
+    html = MODELE.replace("__DONNEES__", donnees_json)
     html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
     html = html.replace("__VISUELS_JS__", (web / "visuels.js").read_text(encoding="utf-8"))
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
@@ -577,9 +582,8 @@ def construire(donnees: Path, sortie: Path) -> Path:
     (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
     (sortie / "verification-responsive.html").write_text((web / "verification-responsive.html").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
-    (sortie / "live_papier.json").write_text(json.dumps(live, ensure_ascii=False), encoding="utf-8")
-    (sortie / "notifications.json").write_text(json.dumps(notifications_mod.flux(actuelles, paris, retenus),
-                                                        ensure_ascii=False), encoding="utf-8")
+    (sortie / "live_papier.json").write_text(live_json, encoding="utf-8")
+    (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
     return sortie / "index.html"
 
