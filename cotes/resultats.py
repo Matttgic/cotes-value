@@ -72,7 +72,8 @@ REPORT_MAX_J = 7
 
 def _heure(s) -> datetime | None:
     try:
-        return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+        date = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+        return date if date.tzinfo is not None and date.utcoffset() is not None else None
     except (TypeError, ValueError):
         return None
 
@@ -165,6 +166,25 @@ APISPORTS_FINAUX = {"FT", "AOT", "AET", "AP", "PEN"}
 APISPORTS_FRAIS_MIN = 60           # jour courant ou veille : relu au plus toutes les heures
 APISPORTS_ANCIEN_H = 6             # jours plus anciens : toutes les 6 heures
 ERREURS_APISPORTS: list[str] = []
+RESULTATS_IGNORES: list[dict] = []
+_IGNORES_CLES: set[tuple] = set()
+IGNORES_MAX = 100
+
+
+def reinitialiser_ignores() -> None:
+    RESULTATS_IGNORES.clear()
+    _IGNORES_CLES.clear()
+
+
+def _ignorer(r: dict, raison: str) -> None:
+    """Un diagnostic par résultat/source/raison, borné par cycle."""
+    cle = tuple(str(r.get(k)) for k in ("source", "sport", "domicile", "exterieur", "debut")) + (raison,)
+    if cle in _IGNORES_CLES or len(RESULTATS_IGNORES) >= IGNORES_MAX:
+        return
+    _IGNORES_CLES.add(cle)
+    RESULTATS_IGNORES.append({**{k: r.get(k) for k in ("source", "sport", "domicile", "exterieur")},
+                             "debut": str(r.get("debut")) if r.get("debut") is not None else None,
+                             "raison": raison})
 
 
 def _ap_paire(x) -> tuple[int, int] | None:
@@ -236,16 +256,37 @@ def lire_apisports(cle: str, sport: str, jours: list[str], cache: dict, maintena
             try:
                 r = http.get(APISPORTS[sport], params={"date": jour, "timezone": "UTC"},
                              headers={"x-apisports-key": cle}, timeout=60)
-                d = r.json()
                 quota[sport] = r.headers.get("x-ratelimit-requests-remaining")
+                if not r.ok:
+                    raise ValueError(f"HTTP {r.status_code}")
+                d = r.json()
+                if not isinstance(d, dict):
+                    raise ValueError("Réponse API non objet")
                 if d.get("errors"):
                     ERREURS_APISPORTS.append(f"{sport} {jour} : {str(d['errors'])[:150]}")
                 else:
-                    matchs = [m for m in (apisports_match(sport, g) for g in d.get("response") or []) if m]
+                    reponse = d.get("response")
+                    if not isinstance(reponse, list) or any(not isinstance(g, dict) for g in reponse):
+                        raise ValueError("Liste response absente ou invalide")
+                    matchs = []
+                    for g in reponse:
+                        m = apisports_match(sport, g)
+                        if m is None:
+                            continue
+                        if m["debut"] is None or not _score_valide(m["score"]):
+                            _ignorer(m, "date_debut_absente_ou_invalide" if m["debut"] is None else "score_invalide")
+                            continue
+                        matchs.append(m)
+                    if not matchs:
+                        vide_confirme = reponse == [] and type(d.get("results")) is int and d["results"] == 0
+                        if not vide_confirme:
+                            raise ValueError("Réponse sans match terminé exploitable ni vide confirmé")
+                        if entree.get("matchs"):
+                            raise ValueError("Réponse vide contradictoire : cache précédent conservé")
                     entree = {"lu": maintenant.isoformat(timespec="seconds"),
                               "matchs": [{**m, "debut": m["debut"].isoformat() if m["debut"] else None} for m in matchs]}
                     cache[k] = entree
-            except (requests.RequestException, ValueError) as e:
+            except (requests.RequestException, ValueError, TypeError, AttributeError) as e:
                 ERREURS_APISPORTS.append(f"{sport} {jour} : {repr(e)[:150]}")
         for m in entree.get("matchs") or []:
             out.append({**m, "debut": _heure(m["debut"]), "score": tuple(m["score"]),
@@ -417,9 +458,15 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
 
     meilleurs: dict[str, tuple[float, float, dict]] = {}
     for r in enregistrements:
+        if r.get("sport") != p["sport"]:
+            continue
+        date = _heure(r.get("debut"))
+        if date is None:
+            _ignorer(r, "date_debut_absente_ou_invalide")
+            continue
         if r.get("a_venir") or feminin([r["domicile"], r["exterieur"]]) != fem_pari:
             continue
-        ecart = abs((r["debut"] - debut).total_seconds()) if r["sport"] == p["sport"] and r["debut"] else None
+        ecart = abs((date - debut).total_seconds())
         tennis_large = p["sport"] == "tennis" and ecart is not None and ecart <= ECART_TENNIS_H * 3600
         if ecart is None or (ecart > ECART_HEURE_MIN * 60 and not tennis_large):
             continue
@@ -428,6 +475,11 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
         score = max(direct, inverse)
         if score < (RESSEMBLANCE_TENNIS_LOIN if ecart > ECART_HEURE_MIN * 60 else RESSEMBLANCE_MIN):
             continue
+        if not _score_valide(r.get("score")):
+            _ignorer(r, "score_invalide")
+            continue
+        # Les tableaux JSON doivent être comparables et dénombrables comme les tuples des collecteurs.
+        r = {**r, "score": tuple(r["score"])}
         # à ressemblance égale, l'heure la plus proche (même affiche deux fois dans la fenêtre)
         if r["source"] not in meilleurs or (score, -ecart) > meilleurs[r["source"]][:2]:
             meilleurs[r["source"]] = (score, -ecart, _oriente(r, inverse > direct))
@@ -455,7 +507,20 @@ def _retenus(p: dict, enregistrements: list[dict]) -> list[dict]:
     plus petit des deux côtés que celui d'une source fiable est un score en cours de match figé (Unibet UK
     40-26 au lieu de 101-89) : écarté s'il est seul à le donner."""
     # score impossible pour le sport (PMU : 0-0 pour un match de volley terminé) : ignoré, pas un désaccord
-    trouves = [r for r in retrouver(p, enregistrements) if r.get("abandon") or plausible(p["sport"], r["score"])]
+    identifies = retrouver(p, enregistrements)
+    bas_corrobores = set()
+    if p["sport"] == "basket":
+        comptes = Counter(r["score"] for r in identifies if _score_valide(r["score"]))
+        for r in identifies:
+            sc = r["score"]
+            if (_score_valide(sc) and comptes[sc] >= SOURCES_MIN and min(sc) > 0
+                    and max(sc) >= 40 and sc[0] != sc[1]
+                    and len(r.get("periodes") or []) >= 4
+                    and all(_score_valide(q) for q in r["periodes"])
+                    and _periodes_coherentes("basket", r)):
+                bas_corrobores.add(sc)
+    trouves = [r for r in identifies if r.get("abandon") or plausible(p["sport"], r["score"])
+               or r["score"] in bas_corrobores]
     fiables = [r["score"] for r in trouves if r["source"] in SOURCES_FIABLES]
     nb = Counter(r["score"] for r in trouves)          # un score donné par deux sources n'est pas un accident
     trouves = [r for r in trouves if nb[r["score"]] > 1 or not any(
@@ -505,9 +570,16 @@ def _majoritaires(trouves: list[dict]) -> list[dict]:
     return [r for r in trouves if r["score"] == score]
 
 
+def _score_valide(score) -> bool:
+    return isinstance(score, (tuple, list)) and len(score) == 2 and all(
+        isinstance(x, int) and not isinstance(x, bool) and x >= 0 for x in score)
+
+
 def plausible(sport: str, score: tuple[int, int]) -> bool:
     """Score final possible pour le sport (écarte un 0-0 de volley ou un 12-9 de basket figé en cours de
     match), pour accepter une source seule."""
+    if not _score_valide(score):
+        return False
     a, b = score
     if sport == "volley":                          # en sets
         return max(a, b) in (2, 3) and min(a, b) < max(a, b)
@@ -591,6 +663,8 @@ def diagnostic(p: dict, enregistrements: list[dict], maintenant: datetime | None
                 validation = limite.isoformat(timespec="seconds")
     if consensus(p, enregistrements, maintenant):
         raison = "score validé, détail du marché ou de la période manquant"
+    if debut is None:
+        raison = "date de début du pari absente, invalide ou sans fuseau"
     return {"match_id": p.get("match_id"), "match": f'{p["domicile"]} – {p["exterieur"]}', "sport": p["sport"], "debut": p.get("debut"),
             "sources": {r["source"]: {"score": r["score"], "periodes": r["periodes"]} for r in trouves},
             "retenues": sorted(r["source"] for r in retenus),

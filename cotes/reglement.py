@@ -19,6 +19,8 @@ GAIN = {"gagne": 1.0, "demi_gagne": 0.5, "rembourse": 0.0, "demi_perdu": -0.5, "
 
 
 def gain(statut: str, mise: float, cote: float) -> float:
+    if statut not in GAIN:
+        raise ValueError(f"Statut de règlement inconnu : {statut!r}")
     f = GAIN[statut]
     return round(mise * f * (cote - 1) if f > 0 else mise * f, 2)
 
@@ -265,6 +267,8 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
         if p["statut"] not in ("en_cours", "a_regler"):
             continue
         statut = manuels.get(p["id"]) if isinstance(manuels.get(p["id"]), str) else None
+        if statut is not None and statut not in GAIN:
+            _alerte(p, "statut_reglement_inconnu")
         preuve = {"origine": "statut saisi à la main"} if statut else None
         if statut is None:
             r = resultats.get(p["match_id"])
@@ -314,14 +318,25 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
             p["preuve_reglement"] = {**(preuve or {}), "periode_utilisee": p.get("periode"), "version": VERSION}
             continue
         try:
-            debut = datetime.fromisoformat(p["debut"].replace("Z", "+00:00"))
-        except (AttributeError, ValueError):
+            debut = datetime.fromisoformat(str(p.get("debut")).replace("Z", "+00:00"))
+            if debut.tzinfo is None or debut.utcoffset() is None:
+                raise ValueError("Date sans fuseau")
+        except (TypeError, ValueError):
+            _alerte(p, "date_debut_absente_ou_invalide")
+            p["statut"] = "a_regler"
             continue
         if p["match_id"] in reportes:              # match reporté, pas encore joué : on attend
             p["statut"] = "en_cours"
             p["reporte_au"] = reportes[p["match_id"]].isoformat(timespec="seconds")
         elif maintenant - debut > timedelta(hours=12):
             p["statut"] = "a_regler"              # résultat introuvable : à régler à la main
+
+
+def _alerte(p: dict, code: str) -> None:
+    """Trace stable : les appels répétés ne font pas grossir le pari."""
+    alertes = p.setdefault("alertes", [])
+    if code not in alertes:
+        alertes.append(code)
 
 
 def lire_resultats_pulsescore(client, bookmaker: str, sport_api: str, sport: str, pages: int = 5) -> dict[str, dict]:

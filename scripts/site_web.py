@@ -88,6 +88,9 @@ def trace(p: dict) -> list[str]:
            + (f" (« {p['libelle_bookmaker']} »)" if p.get("libelle_bookmaker") else "") + f" à {_c(p.get('cote'))}."]
     if p.get("registre_version"):
         out.append(f"Décision figée le {_h(p.get('decide_le'), True)} · registre v{p['registre_version']}.")
+    messages = {"date_debut_absente_ou_invalide": "Date de début absente, invalide ou sans fuseau : règlement à vérifier.",
+                "statut_reglement_inconnu": "Statut manuel inconnu : aucun gain calculé pour cette valeur."}
+    out.extend(messages[a] for a in p.get("alertes", []) if a in messages)
     prise = p.get("preuve_prise") or {}
     ref = f"Cote juste {p.get('reference')} : {_c(p.get('cote_juste'))}"
     if prise.get("composantes"):

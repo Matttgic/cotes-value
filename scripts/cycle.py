@@ -183,6 +183,7 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
     regler = reglement_echu(etat_avant, maintenant, mode_reglement)
     journal["reglement"] = regler
     if regler:
+        resultats_mod.reinitialiser_ignores()
         ouverts_avant = {id(p) for p in paris if p.get("statut") in ("en_cours", "a_regler")}
         manuels = lire_json(donnees / "resultats_manuels.json", {})
         # Les corrections vérifiées sont disponibles sans nouvelle requête réseau.
@@ -293,6 +294,10 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
             selections[k] = selections.get(k, True) and p.get("reference") == "Pinnacle brut"
         journal["resultats"]["selections_en_attente"] = len(selections)
         journal["resultats"]["selections_temoins_en_attente"] = sum(selections.values())
+        journal["resultats"]["ignores"] = list(resultats_mod.RESULTATS_IGNORES)
+        journal["resultats"]["ignores_limite"] = resultats_mod.IGNORES_MAX
+        journal["resultats"]["paris_avec_alertes"] = sum(bool(p.get("alertes")) for p in paris
+                                                         if p.get("statut") in ("en_cours", "a_regler"))
     else:
         journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
 

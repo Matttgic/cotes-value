@@ -272,6 +272,8 @@ def test_apisports_lecture_cache_et_reglement():
 
     class Rep:
         headers = {"x-ratelimit-requests-remaining": "97"}
+        ok = True
+        status_code = 200
 
         def __init__(self, d):
             self.d = d
