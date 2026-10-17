@@ -96,3 +96,14 @@ def test_scanner_refuse_secret_actuel_et_historique_sans_imprimer_valeur(tmp_pat
     assert r.returncode == 0
     r = subprocess.run([sys.executable, str(script), '--historique'], cwd=tmp_path, capture_output=True, text=True)
     assert r.returncode == 1 and secret not in r.stdout+r.stderr
+
+
+def test_marqueurs_du_gabarit_dans_un_pari_restent_des_donnees(tmp_path):
+    import re
+    texte = '__INTERFACE_JS__ __VISUELS_JS__ __ACTUALISATION_JS__ __VERSION_SITE__ __DONNEES__'
+    p = pari(pari=texte)
+    (tmp_path/'paris.json').write_text(json.dumps([p]))
+    html = construire(tmp_path, tmp_path/'site').read_text()
+    d = json.loads(re.search(r'const D = (\{.*?\});\n', html, re.S).group(1))
+    colonne = d['catalogue']['champs'].index('pari')
+    assert any(texte == row[colonne] for row in d['catalogue']['lignes'])

@@ -567,7 +567,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     alertes_json = json_public(notifications_mod.flux(actuelles, paris, retenus))
     sortie.mkdir(parents=True, exist_ok=True)
     web = Path(__file__).resolve().parent.parent / "web"
-    html = MODELE.replace("__DONNEES__", donnees_json)
+    html = MODELE
     html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
     html = html.replace("__VISUELS_JS__", (web / "visuels.js").read_text(encoding="utf-8"))
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
@@ -576,8 +576,10 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
-    version = hashlib.sha256(html.encode("utf-8")).hexdigest()
+    version = hashlib.sha256(html.replace("__DONNEES__", donnees_json, 1).encode("utf-8")).hexdigest()
     html = html.replace("__VERSION_SITE__", version)
+    # Les données externes ne passent jamais dans les remplacements du gabarit.
+    html = html.replace("__DONNEES__", donnees_json, 1)
     (sortie / "index.html").write_text(html, encoding="utf-8")
     (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
     (sortie / "verification-responsive.html").write_text((web / "verification-responsive.html").read_text(encoding="utf-8"), encoding="utf-8")

@@ -26,7 +26,7 @@ Cette passe vérifie le code courant, l'historique du code, les diagnostics hist
 | Rendre Pinnacle brut non pariable | Traité : témoin explicitement séparé, nouvelles créations coupées dans le workflow, lignes individuelles exclues du catalogue public ; agrégats historiques conservés. |
 | Sécuriser `tranche()` | Traité : entrées invalides signalées explicitement, sans classement financier fictif. |
 | Sécuriser `gain()` | Traité : statut inconnu signalé par `ValueError`. Retourner zéro aurait masqué une incohérence de règlement. |
-| Ajouter et exécuter les tests | **773 tests Python + 39 JavaScript = 812 tests** sur cette version. Les tests ne constituent pas une mesure complète de couverture de toutes les branches du code. |
+| Ajouter et exécuter les tests | **774 tests Python + 39 JavaScript = 813 tests** sur cette version. Les tests ne constituent pas une mesure complète de couverture de toutes les branches du code. |
 
 ## Secrets : recherche effectuée et ce qu'elle ne prouve pas
 
@@ -74,7 +74,7 @@ Les appels privés du navigateur précisent désormais `cache: no-store`, sans c
 
 Avant toute écriture, le générateur vérifie les données destinées au HTML, au journal papier et au flux public d'alertes. Les champs privés connus (`subscription`, jetons, autorisation, clés privées, etc.) ou des motifs de secrets provoquent un refus explicite. Lorsqu'un secret est présent dans l'environnement du build, sa valeur exacte est aussi contrôlée. La page précédente n'est pas remplacée par un artefact dangereux. Ce contrôle est une défense supplémentaire, pas une autorisation à stocker des secrets dans la branche de données.
 
-Le JSON embarqué échappe désormais `<`, `>` et `&`, y compris les formes `<script` et `<!--`, tout en préservant les données après décodage. Les données affichées continuent d'être échappées par le rendu existant. Les tests injectent des contenus de balisage et vérifient que la structure du script n'est pas modifiée.
+Le JSON embarqué échappe désormais `<`, `>` et `&`, y compris les formes `<script` et `<!--`, tout en préservant les données après décodage. Les marqueurs du gabarit sont également remplacés avant l'insertion des données : un texte externe contenant `__INTERFACE_JS__` ou `__VERSION_SITE__` ne déclenche plus un remplacement de code. Les données affichées continuent d'être échappées par le rendu existant. Les tests injectent des contenus de balisage et vérifient que la structure du script n'est pas modifiée.
 
 ## Branche par défaut et migration
 
