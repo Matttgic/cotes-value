@@ -149,7 +149,7 @@ function initialiserInterface() {
     actualiserHoraires();
     const actif=document.querySelector('.onglet.actif')?.id;
     const prefixe=actif==='o-jouer'?'jouer':actif==='o-paris'?'paris':null;
-    if(!prefixe || !document.getElementById(prefixe+'-horaire').value) return;
+    if(!prefixe || (prefixe!=='jouer' && !document.getElementById(prefixe+'-horaire').value)) return;
     const conteneur=document.getElementById('liste-'+prefixe);
     const ouverts=new Set([...conteneur.querySelectorAll('details[open]')].map(d=>d.id));
     if(prefixe==='jouer') rendreJouer();else rendreParis();

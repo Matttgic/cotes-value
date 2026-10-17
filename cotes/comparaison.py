@@ -16,6 +16,7 @@ Une référence n'est utilisée que si elle est fiable à cet instant :
 from __future__ import annotations
 
 import re
+from math import isfinite
 from datetime import datetime
 
 from . import controle as CT
@@ -57,7 +58,15 @@ def reference_betfair(lignes: list[dict]) -> list[dict]:
                 ok = False
                 break
             b, v = achat[0], vente[0]
-            pb, pv = 1 / float(b["price"]), 1 / float(v["price"])
+            try:
+                prix_b, prix_v = float(b["price"]), float(v["price"])
+            except (TypeError, ValueError, KeyError):
+                ok = False
+                break
+            if not (isfinite(prix_b) and isfinite(prix_v) and 1 < prix_b <= prix_v):
+                ok = False
+                break
+            pb, pv = 1 / prix_b, 1 / prix_v
             l["ecart_achat_vente"] = round(pb - pv, 4)
             l["liquidite"] = round(min(float(b.get("liquidity") or 0), float(v.get("liquidity") or 0)), 2)
             probs.append((pb + pv) / 2)
@@ -77,7 +86,7 @@ def _fiable(nom: str, l: dict) -> bool:
     if nom == "Pinnacle":
         return (l.get("marge_pinnacle") or 0) <= MARGE_MAX_PINNACLE
     ecart = l.get("ecart_achat_vente") or 0
-    if ecart > ECART_ACHAT_VENTE_MAX or ecart > ECART_RELATIF_MAX * min(l["proba_juste"], 1 - l["proba_juste"]):
+    if not 0 <= ecart <= ECART_ACHAT_VENTE_MAX or ecart > ECART_RELATIF_MAX * min(l["proba_juste"], 1 - l["proba_juste"]):
         return False
     return float(l.get("liquidite") or 0) >= LIQUIDITE_MIN.get(nom, 0)
 

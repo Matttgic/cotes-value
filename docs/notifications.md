@@ -105,3 +105,11 @@ Les alertes écartent les prix de plus de cinq minutes à la préparation et les
 `notifications_diagnostic.json` conserve les 100 dernières tentatives de cycles : préparation, début/fin de demande d'envoi, métadonnées publiques des signaux et bilan agrégé de l'expéditeur. Aucun jeton ni abonnement n'y figure. `sent` signifie une acceptation par le service Push, pas une réception certifiée sur le téléphone, et n'est pas un résultat individuel par signal. Le site affiche « Envoi demandé », jamais une réception inventée.
 
 `prix_revu` / `prix_revu_le` suivent la dernière lecture API du même marché, période, ligne et issue. Ils ne modifient pas `cote`, `ecart`, `mise` ou les résultats de la prise. Une ligne absente ne produit pas un faux nouveau prix ; sa dernière observation vieillit simplement. Les cotes modifiées et l'heure de lecture sont visibles dans Paris et les listes de stratégies, avec l'heure du relevé initial.
+
+### Variante M3 Max 3 et décisions figées (17 octobre)
+
+`m3_structure` est un abonnement distinct, jamais activé automatiquement. Le
+service Push accepte cette nouvelle clé ; les abonnements existants gardent
+leurs choix. La variante ne donne aucun vote supplémentaire aux convergences.
+Les nouvelles prises enregistrent leurs sélections et leurs refus avant la
+sauvegarde utilisée par l’envoi. Le registre n’est pas rempli rétroactivement.

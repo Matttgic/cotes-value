@@ -98,3 +98,10 @@ test('le service worker refuse les doublons et les notifications périmées',asy
   await push({...packet,id:'b'.repeat(64),expires_at:iso(Date.now()-1)});assert.equal(shown.length,1);
   await push({...packet,id:'c'.repeat(64),debut:'invalide'});assert.equal(shown.length,1);
 });
+
+test('M3 Max 3 est un choix distinct, sans abonnement automatique',()=>{
+  const a={...alert,strategies:['m3_structure'],labels:['M3 Max 3'],validations:{m3_structure:iso(now-30000)}};
+  assert.ok(validAlert(a,now));
+  assert.equal(alertsFor({...device,strategies:['m3']},[a],now).length,0);
+  assert.equal(alertsFor({...device,strategies:['m3_structure']},[a],now).length,1);
+});

@@ -10,6 +10,8 @@ Chaque référence (Pinnacle, Betfair, Polymarket, Kalshi, Consensus, témoin Pi
 """
 from __future__ import annotations
 
+from .decisions import figer_selecteur
+
 import hashlib
 from math import isfinite
 from datetime import datetime, timedelta, timezone
@@ -47,14 +49,19 @@ def _id(*parts) -> str:
     return hashlib.sha1("|".join(str(p) for p in parts).encode()).hexdigest()[:16]
 
 
-def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
+def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | None = None) -> list[dict]:
     """Ajoute les nouveaux paris (modifie `paris`) et renvoie ceux qui viennent d'être pris. Un pari par
     référence, bookmaker et sélection, à la première détection, rangé dans la tranche de son écart. Un même
     pari vu chez plusieurs bookmakers = paris distincts (on sait ainsi lequel se trompe le plus souvent)."""
     deja = {p["id"] for p in paris}
     nouveaux = []
+    lot = maintenant or datetime.now(timezone.utc)
     for o in sorted(opportunites, key=lambda o: -o["ecart"]):
         if o.get("suspect"):
+            continue
+        decision = maintenant or datetime.now(timezone.utc)
+        debut = _heure(o.get("debut"))
+        if not debut or not debut.tzinfo or debut <= decision + timedelta(seconds=30):
             continue
         code = simulation_de(o["ecart"], o["cote"])
         if code is None:
@@ -64,6 +71,7 @@ def placer(opportunites: list[dict], paris: list[dict]) -> list[dict]:
             continue
         deja.add(pid)
         p = {"id": pid, "simulation": code, "reference": o["reference"], "detecte": o["detecte"],
+             "decide_le": decision.isoformat(timespec="microseconds"), "lot_decision": lot.isoformat(),
              "collecte_debut": o.get("collecte_debut"), "collecte_recue": o.get("collecte_recue"),
              "bookmaker": o["bookmaker"], "sport": o["sport"], "ligue": o.get("ligue"),
              "match_id": o["match_id"], "domicile": o["domicile"], "exterieur": o["exterieur"],
@@ -141,10 +149,11 @@ def clv_finale(p: dict) -> float | None:
 
 
 def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], maintenant: datetime | None = None):
-    """Met à jour la cote juste « de clôture » des paris dont le match n'a pas commencé (pour la CLV).
+    """Intègre une lecture pré-match prouvée, même traitée après le coup d’envoi.
 
-    Seule une cote de référence lue avant le coup d'envoi et depuis moins de FRAICHEUR_CLOTURE_MIN minutes
-    est retenue ; sinon la dernière valeur valide est gardée. `cloture_lue` est l'heure de lecture de la
+    Avant le départ, la lecture doit dater de moins de FRAICHEUR_CLOTURE_MIN minutes.
+    Après le départ, sa date source doit toujours prouver t < début ; le filtre
+    de clôture à 30 min reste appliqué par clv_finale(). `cloture_lue` est l'heure de lecture de la
     référence (et non celle du traitement)."""
     maintenant = maintenant or datetime.now(timezone.utc)
     for p in paris:
@@ -154,17 +163,17 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], mai
             debut = datetime.fromisoformat(p["debut"].replace("Z", "+00:00"))
         except (AttributeError, ValueError):
             continue
-        if debut <= maintenant:
+        if not debut.tzinfo:
             continue
         proba, lue = justes.get((p["match_id"], cle(p)), {}).get(p["reference"]) or (None, None)
         t = _heure(lue)
         if not proba or not t or t.tzinfo is None or t >= debut:
             continue
         age = (maintenant - t).total_seconds()
-        if not -TOLERANCE_HORLOGE_S <= age <= FRAICHEUR_CLOTURE_MIN * 60:      # périmée, ou dans le futur
+        if age < -TOLERANCE_HORLOGE_S or (maintenant < debut and age > FRAICHEUR_CLOTURE_MIN * 60):      # périmée, ou dans le futur
             continue
         avant = _heure(p.get("cloture_lue"))
-        if avant and avant.tzinfo and t < avant:        # jamais revenir à une observation plus ancienne
+        if avant and avant.tzinfo and t <= avant:        # uniquement une nouvelle observation
             continue
         p["cote_juste_cloture"] = round(1 / proba, 4)
         p["clv"] = round(p["cote"] * proba - 1, 4)
@@ -206,6 +215,7 @@ def dans_strategie(p: dict, depuis: str | None = None) -> bool:
     return not any(n[1] for n in noms) and not any(n[2] for n in noms[:2])
 
 
+@figer_selecteur("strategie")
 def paris_strategie(paris: list[dict], depuis: str | None = None) -> set[int]:
     """Les paris de la stratégie (id() de leur dict) : une mise par cote française, à sa première détection
     qui suit la stratégie."""
@@ -240,6 +250,9 @@ def _cumuler(paris: list[dict], groupe) -> dict:
     """Résumé par (groupe, référence), (groupe, « Toutes »), (groupe, « Uniques ») et (groupe, « Stratégie ») :
     nombre, mises, gains, ROI, CLV moyenne. « Toutes » = les vraies références, un pari par référence ; « Uniques » = un pari par
     cote française ; le témoin « Pinnacle brut » n'a que sa propre ligne."""
+    from .evenements import identites
+    liens = identites(paris)
+    numeros = {cle:i for i,cle in enumerate(dict.fromkeys(liens.values()))}
     out: dict[str, dict] = {}
     uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
     chatgpt = paris_chatgpt(paris)
@@ -268,8 +281,11 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                                       # paris réglés avec / sans CLV mesurée : gain réel, et gain espéré d'après
                                       # la CLV (mise × CLV) pour ceux qui en ont une
                                       "gains_avec_clv": 0.0, "espere_clv": 0.0, "gains_sans_clv": 0.0,
-                                      "regles_sans_clv": 0})
+                                      "regles_sans_clv": 0, "evenements_detail": {}})
             b["paris"] += 1
+            ev = b["evenements_detail"].setdefault(str(numeros[liens[id(p)]]), [0,0,0.0,0])
+            ev[0] += 1
+            ev[1] += p["statut"] not in ("en_cours", "a_regler")
             if p["statut"] in ("en_cours", "a_regler"):
                 b["en_cours"] += 1
             else:
@@ -279,6 +295,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                 b["gagnes"] += p["statut"] in ("gagne", "demi_gagne")
             clv = clv_finale(p)
             if clv is not None:
+                ev[2] += clv
+                ev[3] += 1
                 b["clv_somme"] += clv
                 b["clv_n"] += 1
                 b["gains_avec_clv"] += p["gain"] or 0
@@ -287,6 +305,12 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                 b["regles_sans_clv"] += 1
                 b["gains_sans_clv"] += p["gain"] or 0
     for b in out.values():
+        es = list(b["evenements_detail"].values())
+        b["evenements"] = len(es)
+        b["evenements_regles"] = sum(v[1]>0 for v in es)
+        cs = [v[2]/v[3] for v in es if v[3]]
+        b["clv_evenement"] = sum(cs)/len(cs) if cs else None
+        b["clv_evenements_n"] = len(cs)
         b["roi"] = round(b["gains"] / b["mises"], 4) if b["mises"] else None
         b["clv_moyenne"] = round(b["clv_somme"] / b["clv_n"], 4) if b["clv_n"] else None
         for k in ("gains", "gains_avec_clv", "espere_clv", "gains_sans_clv"):

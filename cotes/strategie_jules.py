@@ -9,6 +9,8 @@ Stratégie indépendante recherchant un rendement positif réel à long terme pa
 """
 from __future__ import annotations
 
+from .decisions import figer_selecteur
+
 from collections import Counter
 from datetime import datetime
 from math import isfinite
@@ -113,6 +115,7 @@ def motif_refus_jules(p: dict, depuis: str = JULES["debut"]) -> str | None:
     return None
 
 
+@figer_selecteur("jules")
 def paris_jules(paris: list[dict], depuis: str = JULES["debut"]) -> set[int]:
     """Sélectionne les paris respectant les critères JULES EDGE v1.
 

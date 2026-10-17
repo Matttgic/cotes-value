@@ -7,6 +7,7 @@ si les références diffèrent. Une sélection plus tardive ne réécrit pas le 
 from __future__ import annotations
 
 from math import isfinite
+from .decisions import figer_selecteur
 
 from cotes.laboratoire import heure
 from cotes.simulation import paris_strategie, REFERENCES
@@ -59,6 +60,7 @@ def votes(paris: list[dict], retenus: dict[str, set[int]]) -> dict[tuple, dict]:
     return groupes
 
 
+@figer_selecteur("convergence")
 def paris_convergence(paris: list[dict], retenus: dict[str, set[int]] | None = None,
                       depuis: str | None = None) -> set[int]:
     retenus = retenus if retenus is not None else selections(paris, depuis=depuis)

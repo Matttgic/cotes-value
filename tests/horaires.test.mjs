@@ -65,3 +65,11 @@ test('Collecte visible : Paris, prix baissé et début de lot historique disting
   assert.ok(c.collectePari({detecte:p.detecte},now).includes('réception exacte inconnue'));
   assert.ok(c.collectePari({}).includes('Collecte non renseignée'));
 });
+
+test('une opportunité commencée disparaît même sans filtre horaire',()=>{
+  const now=at('2026-10-17T12:00:00Z');
+  assert.equal(c.opportuniteAvantMatch({debut:'2026-10-17T12:00:00Z'},now),false);
+  assert.equal(c.opportuniteAvantMatch({debut:'2026-10-17T11:59:59Z'},now),false);
+  assert.equal(c.opportuniteAvantMatch({debut:'2026-10-17T12:00:01Z'},now),true);
+  assert.equal(c.opportuniteAvantMatch({debut:'bad'},now),false);
+});

@@ -126,6 +126,10 @@ def selectionner(paris: list[dict], r: Regle, depuis: str = DEBUT_ETUDE) -> list
         if key not in vus:
             vus.add(key)
             out.append(p)
+    if depuis == DEBUT_SUIVI:
+        from .decisions import appliquer
+        ids = appliquer(paris, {id(p) for p in out}, "labo:"+r.id)
+        out = [p for p in paris if id(p) in ids]
     return out
 
 
@@ -172,7 +176,9 @@ def resume(rows: list[dict], connu_avant: str, incertitude: bool = True) -> dict
     best = max([0]+gains)
     g_degrade = sum(gain(p["statut"], MISE, max(1.01, p["cote"]*.99)) for p in regles)
     full_stakes = len(rows)*MISE
-    return {"paris": len(rows), "regles": n, "attente": len(attente),
+    from .evenements import mesures
+    evenements = mesures(rows, regles, clv)
+    return {**evenements, "paris": len(rows), "regles": n, "attente": len(attente),
             "gagnes": sum(p["statut"] in ("gagne", "demi_gagne") for p in regles),
             "perdus": sum(p["statut"] in ("perdu", "demi_perdu") for p in regles),
             "rembourses": sum(p["statut"] == "rembourse" for p in regles),

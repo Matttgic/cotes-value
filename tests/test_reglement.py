@@ -186,7 +186,7 @@ def test_tranches_d_ecart_un_pari_une_fois():
         [None, "A", "A", "B", "C", "D", "E", "E"]
     assert simulation_de(0.025, 12.0) is None and simulation_de(0.05, 12.0) == "X"
     o = {"reference": "Pinnacle", "detecte": "t1", "bookmaker": "Winamax", "sport": "football", "match_id": "w1",
-         "domicile": "A", "exterieur": "B", "debut": "d", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5,
+         "domicile": "A", "exterieur": "B", "debut": "2099-01-01T18:00:00Z", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5,
          "issue": "PLUS", "pari": "x", "cote": 2.1, "cote_juste": 2.05, "ecart": 0.025}
     paris = []
     assert [p["simulation"] for p in placer([o], paris)] == ["A"]
@@ -279,6 +279,7 @@ def test_paris_uniques_une_mise_par_cote():
 
 
 def test_trace_du_pari_de_la_prise_au_reglement():
+    from datetime import datetime, timezone
     from cotes import VERSION
     from cotes.reglement import appliquer
     from cotes.simulation import placer
@@ -289,7 +290,7 @@ def test_trace_du_pari_de_la_prise_au_reglement():
          "score_association": 0.95, "composantes": {"Pinnacle": 2.01, "Betfair": 1.99},
          "controle": {"statut": "conforme", "n": 40, "mediane": 0.93}}
     paris = []
-    p = placer([o], paris)[0]
+    p = placer([o], paris, datetime(2026, 10, 7, 10, tzinfo=timezone.utc))[0]
     assert p["preuve_prise"]["composantes"] == {"Pinnacle": 2.01, "Betfair": 1.99}
     assert p["preuve_prise"]["controle"]["statut"] == "conforme" and p["preuve_prise"]["version"] == VERSION
     appliquer(paris, {"winamax|1": {"sport": "football", "score": (2, 1), "periodes": [(1, 0), (1, 1)],

@@ -73,12 +73,22 @@ def normaliser(nom: str | None) -> tuple[tuple[str, ...], bool, frozenset]:
     return tuple(mots), fem, jeunes
 
 
+def _premiere_explicite(nom: str | None) -> bool:
+    s = unicodedata.normalize("NFKD", nom or "").encode("ascii", "ignore").decode().lower()
+    return bool(re.search(r"\b(?:equipe premiere|first team|1st team|seniors?)\b|\((?:i|1)\)", s))
+
+
 def ressemblance(a: str | None, b: str | None) -> float:
-    (ma, fa, ja), (mb, fb, jb) = normaliser(a), normaliser(b)
+    categorie = lambda n: normaliser(re.sub(r"\b(?:u|under)[ -]?(\d{2})\b", r"u\1", n or "", flags=re.I))
+    (ma, fa, ja), (mb, fb, jb) = categorie(a), categorie(b)
     if not ma or not mb:
         return 0.0
-    # féminin / jeunes notés d'un seul côté (Pinnacle n'écrit pas toujours « U21 » ni « Women ») : pénalité
-    penalite = 0.85 if (fa != fb or ja != jb) else 1.0
+    # Une catégorie absente est une incertitude ; deux catégories explicites
+    # contradictoires sont des équipes différentes, même si les noms coïncident.
+    if ((ja and _premiere_explicite(b)) or (jb and _premiere_explicite(a))
+            or (ja and jb and ja != jb)):
+        return 0.0
+    penalite = 0.85 if (fa != fb or bool(ja) != bool(jb)) else 1.0
     return penalite * _ressemblance_mots(ma, mb)
 
 

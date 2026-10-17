@@ -62,7 +62,7 @@ def test_js_filtre_sport_se_combine_avec_la_strategie():
     executer(DOM+'''
 const D={strategies_badges:{claude:'Claude'}},rendreResumeJouer=()=>{};
 let sportJouer='tennis';
-const cotesJouer=[{sport:'tennis',pari:'A',strategies:['claude']},{sport:'football',pari:'B',strategies:['claude']},{sport:'tennis',pari:'C',strategies:[]}];
+const cotesJouer=[{sport:'tennis',pari:'A',debut:'2099-01-01T12:00:00Z',strategies:['claude']},{sport:'football',pari:'B',debut:'2099-01-01T12:00:00Z',strategies:['claude']},{sport:'tennis',pari:'C',debut:'2099-01-01T12:00:00Z',strategies:[]}];
 const carteActuelle=o=>o.pari;
 function rendreGroupesJouer(liste) {return liste.map(carteActuelle).join('');}
 '''+section+'''
@@ -142,4 +142,33 @@ assert.ok(axes.includes("+400 €") && axes.includes("-200 €") && axes.include
 assert.ok(!axes.includes("h") && !axes.includes(","));
 periodeStrategies="futur"; rendreCourbesStrategies(rows);
 assert.ok(document.getElementById("strategies-courbes-vide").textContent.includes("Aucun pari réglé"));
+''')
+
+
+def test_cumul_evenements_pas_double_compte_entre_tranches():
+    section=MODELE[MODELE.index('function additionner('):MODELE.index('function rendreBilan()')]
+    executer('''
+const assert=require('node:assert/strict');
+const refBilan='Pinnacle';
+const D={bilan:{'A|Pinnacle':{paris:2,regles:2,clv_n:2,evenements_detail:{'1':[2,2,.2,2]}},
+                 'B|Pinnacle':{paris:2,regles:2,clv_n:2,evenements_detail:{'1':[1,1,.1,1],'2':[1,1,-.1,1]}}}};
+'''+section+'''
+const s=additionner(['A','B']);
+assert.equal(s.regles,4);assert.equal(s.evenements_regles,2);assert.equal(s.clv_evenements_n,2);
+assert.ok(Math.abs(s.clv_evenement)<1e-10);
+''')
+
+
+def test_navigation_compacte_retrouve_contrat_exact_du_catalogue():
+    section=MODELE[MODELE.index('const recentes = '):MODELE.index('document.getElementById("nb-paris")')]
+    executer('''
+const assert=require('node:assert/strict');
+const D={paris:[{id:'p',trace:['preuve']}],strategies_badges:{m3_structure:'M3 Max 3'},
+ catalogue:{champs:['id','cote','debut','pari','simulation','strategies'],
+            lignes:[['p',1.8,'2026-10-17T12:00:00Z','Handicap -3,5','C',['m3_structure']]]},
+ laboratoire:{navigation:{paris:{p:{strategies_historiques:[],convergence_historique:false}}}}};
+'''+section+'''
+const p=D.laboratoire.navigation.paris.p;
+assert.equal(p.cote,1.8);assert.equal(p.pari,'Handicap -3,5');assert.equal(p.debut,'2026-10-17T12:00:00Z');
+assert.deepEqual(p.trace,['preuve']);assert.equal(p.m3_structure,true);
 ''')

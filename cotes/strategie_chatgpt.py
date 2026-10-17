@@ -6,6 +6,8 @@ Les archives doivent être incluses avant de sélectionner, comme pour le bilan.
 """
 from __future__ import annotations
 
+from .decisions import figer_selecteur
+
 from collections import Counter
 from datetime import datetime
 from math import isfinite
@@ -93,6 +95,7 @@ def motif_refus(p: dict, depuis: str = CHATGPT["debut"]) -> str | None:
     return None
 
 
+@figer_selecteur("chatgpt")
 def paris_chatgpt(paris: list[dict], depuis: str = CHATGPT["debut"]) -> set[int]:
     """Première détection admissible par match ; au même instant, edge maximal.
 

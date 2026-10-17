@@ -6,6 +6,8 @@ La selection prospective commence le 15/10/2026 (heure de Paris).
 """
 from __future__ import annotations
 
+from .decisions import figer_selecteur
+
 from datetime import datetime
 from math import isfinite
 
@@ -85,6 +87,7 @@ def motif_refus_m3(p: dict, depuis: str | None = None) -> str | None:
     return None
 
 
+@figer_selecteur("m3")
 def paris_m3(paris: list[dict], depuis: str | None = None) -> set[int]:
     """Une mise fictive par selection/bookmaker, premier prix disponible.
 

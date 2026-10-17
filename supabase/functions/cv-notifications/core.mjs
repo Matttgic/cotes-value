@@ -1,6 +1,6 @@
 export const ORIGIN = 'https://matttgic.github.io';
 export const SITE = ORIGIN + '/cotes-value/';
-export const STRATEGIES = ['strategie','chatgpt','gemini','jules','jules_v2','m3','convergence','claude_prudent','convergence_3'];
+export const STRATEGIES = ['strategie','chatgpt','gemini','jules','jules_v2','m3','convergence','claude_prudent','convergence_3','m3_structure'];
 export const hash = async s => [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,'0')).join('');
 const date = x => typeof x==='string' ? Date.parse(x) : NaN;
 export function validSubscription(s) {
@@ -19,7 +19,7 @@ export function validSubscription(s) {
 export function validAlert(a,now=Date.now()) {
   return a && /^[a-f0-9]{64}$/.test(a.id) && Array.isArray(a.strategies) &&
     a.strategies.length>0 && a.strategies.every(s=>STRATEGIES.includes(s)) &&
-    Array.isArray(a.labels) && a.labels.length<=9 && a.labels.every(s=>typeof s==='string' && s.length<=80) &&
+    Array.isArray(a.labels) && a.labels.length<=STRATEGIES.length && a.labels.every(s=>typeof s==='string' && s.length<=80) &&
     a.validations && a.strategies.every(s=>Number.isFinite(date(a.validations[s]))) &&
     Number.isFinite(a.cote) && a.cote>1 && a.cote<=100 &&
     ['match','pari','bookmaker'].every(k=>typeof a[k]==='string' && a[k].length>0 && a[k].length<=250) &&

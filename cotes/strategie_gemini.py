@@ -15,6 +15,8 @@ Principe :
 """
 from __future__ import annotations
 
+from .decisions import figer_selecteur
+
 from collections import Counter
 from datetime import datetime, timezone
 from math import isfinite
@@ -139,6 +141,7 @@ def motif_refus_gemini(p: dict, depuis: str = GEMINI["debut"]) -> str | None:
     return None
 
 
+@figer_selecteur("gemini")
 def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
     """Sélectionne au plus un pari par événement sportif, dans l'ordre réel.
 

@@ -74,6 +74,8 @@ def comparer(paris: list[dict], releve: str) -> dict:
         periode["ic95"] = None
     return {"schema": 1, "releve": releve, "audit": qualite, "resultats": resultats,
             "suivis_prudents": suivis_prudents(paris, releve),
+            "registre": {"figes": sum("selections_figees" in p for p in paris),
+                         "reconstruits": sum("selections_figees" not in p for p in paris)},
             "decision": classer(resultats),
             "comparateurs": {"JULES EDGE v2 (rejeu)": jules_v2,
                              "JULES EDGE v1 (rejeu)": {**evaluer(jules_rows, releve), "ensemble": ensemble(jules_rows)},

@@ -4,6 +4,8 @@ Le protocole est dans docs/protocole-jules-v2.md. La v1 reste inchangée.
 """
 from __future__ import annotations
 
+from .decisions import figer_selecteur
+
 from collections import Counter
 from datetime import timezone
 
@@ -144,5 +146,6 @@ def analyser_jules_v2(paris, depuis=JULES_V2["debut"]):
             "fusions_tardives": fusions_tardives, "par_jour": dict(jours), "refus": dict(refus)}
 
 
+@figer_selecteur("jules_v2")
 def paris_jules_v2(paris, depuis=JULES_V2["debut"]):
     return analyser_jules_v2(paris, depuis)["selection"]

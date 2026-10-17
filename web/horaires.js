@@ -57,6 +57,9 @@ function collectePari(p, maintenant=Date.now()) {
   }
   return `<span class="pari-collecte${c.ancien?' collecte-ancienne':''}" title="${e(precision)}" data-collecte="${e(p.collecte_recue || p.detecte || '')}" data-precision="${p.collecte_recue?'api':'lot'}" data-statut="${e(p.statut || '')}"><span class="collecte-date">${e(c.texte)}</span>${suite}</span>`;
 }
+function opportuniteAvantMatch(p,maintenant=Date.now()) {
+  const debut=heureMatch(p);return Boolean(debut && debut.getTime()>maintenant);
+}
 function accepteHoraire(p, filtre, maintenant=Date.now()) {
   if(!filtre) return true;
   const date=heureMatch(p);if(!date) return false;

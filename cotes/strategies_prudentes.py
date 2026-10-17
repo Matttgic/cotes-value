@@ -1,4 +1,4 @@
-"""Deux variantes de simulation figées après l'audit du 15 octobre.
+"""Variantes de simulation figées après les audits des 15 et 17 octobre.
 
 Elles ne participent jamais aux votes des stratégies de base. La sélection ne
 consulte ni résultat, ni gain, ni CLV. Protocole : docs/variantes-prudentes.md.
@@ -10,6 +10,8 @@ from itertools import groupby
 from math import isfinite
 from zoneinfo import ZoneInfo
 
+from .decisions import appliquer
+from .strategie_m3_structure import M3_STRUCTURE, paris_m3_structure
 from .convergence import STRATEGIES, selections, votes
 from .laboratoire import heure
 from .simulation import REFERENCES, paris_strategie
@@ -26,7 +28,7 @@ CONVERGENCE_3 = {
     "debut": DEBUT_VARIANTES, "version": "1", "mise": 10,
     "regles": "≥3 familles parmi Claude, ChatGPT, Gemini, Jules · 1 pari/match · mise fictive 10 €",
 }
-VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3)
+VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE)
 PARIS = ZoneInfo("Europe/Paris")
 
 
@@ -138,7 +140,11 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
         p = min(groupe["paris"], key=lambda p: (ordre.get(p.get("reference"), 99), str(p.get("id") or "")))
         candidats.add(id(p))
     convergence = selection_unique(paris, candidats, depart)["selection"]
-    return {"claude_prudent": prudent, "convergence_3": convergence}
+    resultat = {"claude_prudent": prudent, "convergence_3": convergence}
+    if depuis is None:
+        resultat = {cle: appliquer(paris, ids, cle) for cle, ids in resultat.items()}
+    resultat["m3_structure"] = paris_m3_structure(paris) if depuis is None else set()
+    return resultat
 
 
 def suivis_prudents(paris: list[dict], maintenant: str) -> dict:
@@ -148,9 +154,10 @@ def suivis_prudents(paris: list[dict], maintenant: str) -> dict:
     observes = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) < fin]
     officiel = selections_prudentes(observes)
     rejoue = selections_prudentes(observes, depuis=DEBUT_SUIVI)
-    def lignes(selection):
+    def lignes(selection, reconstitution=False):
         return {v["cle"]: {"nom": v["nom"], "ids": [p["id"] for p in observes if id(p) in selection[v["cle"]]],
-                           "stats": resume([p for p in observes if id(p) in selection[v["cle"]]],
-                                           maintenant, incertitude=False)} for v in VARIANTES}
+                           "debut": v["debut"], "stats": resume([p for p in observes if id(p) in selection[v["cle"]]],
+                                           maintenant, incertitude=False)} for v in VARIANTES
+                if not (reconstitution and v.get("prospectif_seulement"))}
     return {"debut_prospectif": DEBUT_VARIANTES, "officiel": lignes(officiel),
-            "reconstitution_depuis": DEBUT_SUIVI, "reconstitution_exploratoire": lignes(rejoue)}
+            "reconstitution_depuis": DEBUT_SUIVI, "reconstitution_exploratoire": lignes(rejoue, reconstitution=True)}
