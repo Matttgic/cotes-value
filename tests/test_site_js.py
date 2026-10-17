@@ -172,3 +172,23 @@ const p=D.laboratoire.navigation.paris.p;
 assert.equal(p.cote,1.8);assert.equal(p.pari,'Handicap -3,5');assert.equal(p.debut,'2026-10-17T12:00:00Z');
 assert.deepEqual(p.trace,['preuve']);assert.equal(p.m3_structure,true);
 ''')
+
+
+def test_segments_sigma_exploratoire_et_compatibilite_anciens_champs():
+    section=MODELE[MODELE.index('let triSeg = "roi";'):MODELE.index('// --- À régler')]
+    executer(DOM+'''
+const pctC=pct, eurC=eur;
+const ancien={n:35,gagnes:30,attendus:20,ecart_sigma:3,roi:.2,gains:70,clv_moyenne:.02,clv_n:30};
+const D={segments:[ancien]};
+'''+section+'''
+let html=document.getElementById('liste-segments').innerHTML;
+assert.ok(html.includes('Sigma fragile') && !html.includes('Solide'));
+assert.ok(!html.includes('undefined') && !html.includes('NaN'));
+assert.deepEqual(verdict(ancien),['Piste','en_cours']);
+D.segments=[{...ancien,sigma_fiable:false,evenements:4,sigma_limites:['tickets_meme_evenement']}];
+rendreSegments();html=document.getElementById('liste-segments').innerHTML;
+assert.ok(html.includes('4 matchs') && html.includes('tickets sur les mêmes matchs'));
+D.segments=[{...ancien,sigma_fiable:true,evenements:35,sigma_limites:[]}];
+rendreSegments();html=document.getElementById('liste-segments').innerHTML;
+assert.ok(html.includes('À confirmer') && html.includes('essais multiples non corrigés'));
+''')

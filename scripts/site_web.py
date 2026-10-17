@@ -765,10 +765,12 @@ MODELE = r"""<!doctype html>
     <details class="aide"><summary>Comment lire</summary>
     <p>Un segment = les paris uniques réglés d'une tranche de cote, d'un bookmaker, d'un sport, d'une référence, ou d'un croisement
     (au moins 10 paris). La référence est celle de la première détection du pari unique. <b>Attendu</b> : la réussite prévue par la cote juste ; à 1,30, gagner 77 % est normal.
-    <b>Écart</b> : réussite réelle moins attendue, en écarts-types ; moins de 2, c'est dans la marge du hasard.</p>
-    <p><b>Solide</b> : au moins 30 paris, réussite nettement au-dessus de l'attendu et CLV positive.
-    <b>Piste</b> : ROI et CLV positifs, à confirmer. <b>Chance ?</b> : ROI positif mais CLV nulle ou négative
-    (on n'a pas battu le marché : sans doute de la chance). Avec de nombreux segments, quelques-uns brillent forcément par hasard.</p>
+    <b>Écart</b> : réussite réelle moins attendue, en écarts-types sous hypothèse de paris binaires indépendants.
+    L'indicateur devient fragile avec peu de matchs, des tickets corrélés, des remboursements ou des probabilités extrêmes.</p>
+    <p><b>À confirmer</b> : au moins 30 paris sur des événements distincts, sans demi-règlement ni remboursement,
+    écart d'au moins 2 et CLV positive. Ce repère descriptif ne prouve aucune rentabilité.
+    <b>Piste</b> : ROI et CLV positifs. <b>CLV à vérifier</b> : ROI positif sans CLV positive mesurée.
+    Les segments sont exploratoires : les nombreux essais et les dépendances restantes ne sont pas corrigés.</p>
     <p>Toucher un segment affiche ses paris : d'abord ceux à venir (pas encore commencés, du plus proche au plus lointain), puis ceux déjà réglés. Le toucher à nouveau les replie. Un pari à venir n'entre dans les chiffres du segment qu'une fois réglé.</p></details>
   </section>
   <section class="onglet" id="o-paris">
@@ -1298,9 +1300,12 @@ document.getElementById("voir-jules-v2").onclick = () => {
 // --- Segments : les groupes de paris qui marchent, avec ce qui relève de la chance
 let triSeg = "roi";
 const TRIS = {roi: "Meilleur ROI", reussite: "Réussite au-dessus de l'attendu"};
-const verdict = s => (s.n >= 30 && s.ecart_sigma >= 2 && (s.clv_moyenne || 0) > 0.01) ? ["Solide", "gagne"]
+const verdict = s => (s.sigma_fiable === true && s.ecart_sigma >= 2 && (s.clv_moyenne || 0) > 0.01) ? ["À confirmer", "en_cours"]
   : (s.roi > 0 && (s.clv_moyenne || 0) > 0) ? ["Piste", "en_cours"]
-  : s.roi > 0 ? ["Chance ?", "a_regler"] : ["Perdant", "perdu"];
+  : s.roi > 0 ? ["CLV à vérifier", "a_regler"] : ["Perdant", "perdu"];
+const limitesSigma = s => (s.sigma_limites || []).map(k => ({effectif_faible:"moins de 30 paris",
+  tickets_meme_evenement:"tickets sur les mêmes matchs",reglements_non_binaires:"demi-règlements ou remboursements",
+  attendus_extremes:"probabilités extrêmes"})[k]).filter(Boolean).join(" · ");
 const nomSeg = s => [s.tranche && "Cotes " + s.tranche, s.bookmaker, s.sport && s.sport.replace("_", " "), s.reference && "Réf. " + s.reference]
   .filter(Boolean).join(" · ");
 const dansSeg = s => x => (!s.tranche || x[9] === s.tranche) && (!s.bookmaker || x[2] === s.bookmaker) && (!s.sport || x[10] === s.sport) && (!s.reference || x[11] === s.reference);
@@ -1318,9 +1323,10 @@ function rendreSegments() {
     const [v, c] = verdict(s);
     return `<details class="ligne-detail ligne-segment" id="segment-${D.segments.indexOf(s)}" data-i="${D.segments.indexOf(s)}"><summary><span class="ligne-nom">${e(nomSeg(s))}</span><span class="ligne-volume">${s.n} p.</span><span class="ligne-roi ${signe(s.roi)}">${pctC(s.roi)}</span><b class="ligne-valeur ${signe(s.gains)}">${eurC(s.gains)}</b></summary><div class="ligne-corps"><article class="carte seg">
 <div class="l1"><span class="match">${e(nomSeg(s))}</span><span class="badge ${c}">${v}</span></div>
-<div class="l3"><span>${s.n} paris · <b>${s.gagnes} gagnés = ${Math.round(100 * s.gagnes / s.n)} %</b></span>
+<div class="l3"><span>${s.n} paris${Number.isInteger(s.evenements) ? ` · ${s.evenements} matchs` : ""} · <b>${s.gagnes} gagnés = ${Math.round(100 * s.gagnes / s.n)} %</b></span>
 <span><i>attendu</i> ${Math.round(100 * s.attendus / s.n)} %</span>
 <span><i>écart</i> <span class="${signe(s.ecart_sigma)}">${s.ecart_sigma > 0 ? "+" : ""}${String(s.ecart_sigma).replace(".", ",")}</span></span></div>
+<p class="aide">${s.sigma_fiable === true ? "Sigma descriptif sous hypothèse d'indépendance ; essais multiples non corrigés." : `Sigma fragile${limitesSigma(s) ? " : " + e(limitesSigma(s)) : " : conditions statistiques non vérifiées"}.`}</p>
 <div class="l4"><span>ROI <b class="${signe(s.roi)}">${pctC(s.roi)}</b> (${eurC(s.gains)})</span>
 <span>CLV <span class="${signe(s.clv_moyenne)}">${pctC(s.clv_moyenne)}</span> <i>${s.clv_n}/${s.n}</i></span>
 ${(n => n ? `<span class="badge en_cours">${n} à venir</span>` : "")(aVenir(s).length)}</div></article></div></details>`;

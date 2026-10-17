@@ -159,6 +159,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             trouvees["Consensus"] = {"proba_juste": p, "cote_juste": 1 / p, "collecte": l["collecte"],
                                      "domicile": l["domicile"], "exterieur": l["exterieur"],
                                      "sources": "+".join(sorted(trouvees)),
+                                     "lectures_references": {n: r.get("collecte") for n, r in trouvees.items()},
                                      "composantes": {n: round(1 / r["proba_juste"], 3) for n, r in trouvees.items()}}
         # simulation témoin : la cote AFFICHÉE par Pinnacle, marge comprise (sans retrait de la marge)
         pin = trouvees.get("Pinnacle")
@@ -182,6 +183,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "cote": l["cote"], "reference": nom, "cote_juste": round(1 / r["proba_juste"], 3),
                 "cote_reference": r.get("cote"), "proba_juste": round(r["proba_juste"], 5),
                 "ecart": round(ecart, 4), "lu_reference": r.get("collecte"),
+                "lectures_references": r.get("lectures_references"),
                 "match_reference": f'{r.get("domicile")} - {r.get("exterieur")}',
                 "score_association": r.get("score_association"), "sources": r.get("sources"),
                 "match_id_reference": r.get("match_id"), "reference_inversee": r.get("inverse"),

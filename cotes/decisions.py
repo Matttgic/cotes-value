@@ -31,12 +31,32 @@ def figer_nouveaux(paris, nouveaux):
     Les dates/prix des prises restent inchangés. Les variantes n'ajoutent aucun
     vote aux convergences. Les refus sont figés par le dictionnaire vide.
     """
-    from .convergence import selections, paris_convergence
-    from .strategies_prudentes import selections_prudentes, VARIANTES
-    from .laboratoire import REGLES, DEBUT_SUIVI, selectionner
     candidats = [p for p in nouveaux if 'selections_figees' not in p]
     if not candidats:
         return
+    # Valider tout le lot avant toute écriture : id() n'est qu'une clé en mémoire.
+    from collections import Counter
+    from datetime import datetime
+    objets = {id(p) for p in paris}
+    ids = [p.get('id') for p in candidats]
+    if any(not isinstance(pid, str) or not pid.strip() for pid in ids):
+        raise ValueError("Pari sans identifiant stable : impossible de figer les décisions")
+    comptes = Counter(p.get('id') for p in paris if isinstance(p.get('id'), str))
+    if len(set(ids)) != len(ids) or any(comptes[pid] != 1 for pid in ids):
+        raise ValueError("Identifiant du nouveau pari absent ou dupliqué dans le registre")
+    if any(id(p) not in objets for p in candidats):
+        raise ValueError("Les nouveaux paris doivent être les objets du registre, pas des copies")
+    for p in candidats:
+        try:
+            decision = datetime.fromisoformat(str(p.get('decide_le')).replace('Z', '+00:00'))
+            if decision.tzinfo is None or decision.utcoffset() is None:
+                raise ValueError('Date sans fuseau')
+        except (TypeError, ValueError) as e:
+            raise ValueError("Date de décision absente ou invalide : impossible de figer le pari") from e
+    # Imports locaux volontaires : évitent les cycles decisions/convergence/stratégies/laboratoire.
+    from .convergence import selections, paris_convergence
+    from .strategies_prudentes import selections_prudentes, VARIANTES
+    from .laboratoire import REGLES, DEBUT_SUIVI, selectionner
     retenus = selections(paris)
     retenus['convergence'] = paris_convergence(paris, retenus)
     retenus.update(selections_prudentes(paris, bases=retenus))

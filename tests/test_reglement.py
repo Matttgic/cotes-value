@@ -127,6 +127,7 @@ def test_gains():
 
 
 def test_signaux_suspects_sans_pari():
+    from datetime import datetime, timezone
     from cotes.comparaison import comparer
     from cotes.simulation import placer
     base = {"sport": "football", "ligue": "L", "domicile": "Lens", "exterieur": "Lille",
@@ -138,7 +139,7 @@ def test_signaux_suspects_sans_pari():
     opp = {o["bookmaker"]: o for o in comparer(fr, {"Pinnacle": ref}, temoin_brut=False)}
     assert opp["winamax"]["suspect"] == "écart trop grand" and opp["betclic"]["suspect"] is None
     paris = []
-    placer(list(opp.values()), paris)
+    placer(list(opp.values()), paris, datetime(2029, 12, 31, 20, tzinfo=timezone.utc))
     assert paris and all(p["bookmaker"] == "betclic" for p in paris)
 
 
@@ -181,17 +182,21 @@ def test_bilan_par_tranche_de_cote():
 
 
 def test_tranches_d_ecart_un_pari_une_fois():
+    from datetime import datetime, timedelta, timezone
     from cotes.simulation import placer, simulation_de
     assert [simulation_de(e, 2.0) for e in (0.019, 0.02, 0.029, 0.03, 0.045, 0.06, 0.07, 0.30)] == \
         [None, "A", "A", "B", "C", "D", "E", "E"]
     assert simulation_de(0.025, 12.0) is None and simulation_de(0.05, 12.0) == "X"
-    o = {"reference": "Pinnacle", "detecte": "t1", "bookmaker": "Winamax", "sport": "football", "match_id": "w1",
+    maintenant = datetime(2026, 10, 17, 11, tzinfo=timezone.utc)
+    o = {"reference": "Pinnacle", "detecte": maintenant.isoformat(), "lu_reference": maintenant.isoformat(),
+         "bookmaker": "Winamax", "sport": "football", "match_id": "w1",
          "domicile": "A", "exterieur": "B", "debut": "2099-01-01T18:00:00Z", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5,
          "issue": "PLUS", "pari": "x", "cote": 2.1, "cote_juste": 2.05, "ecart": 0.025}
     paris = []
-    assert [p["simulation"] for p in placer([o], paris)] == ["A"]
+    assert [p["simulation"] for p in placer([o], paris, maintenant)] == ["A"]
     # plus tard l'écart passe à 6 % : même pari, pas repris dans D
-    assert placer([{**o, "detecte": "t2", "cote": 2.2, "ecart": 0.06}], paris) == [] and len(paris) == 1
+    assert placer([{**o, "detecte": (maintenant+timedelta(minutes=1)).isoformat(), "cote": 2.2, "ecart": 0.06}],
+                  paris, maintenant+timedelta(minutes=1)) == [] and len(paris) == 1
 
 
 def test_deduction_sans_score_a_la_mi_temps():
@@ -288,6 +293,8 @@ def test_trace_du_pari_de_la_prise_au_reglement():
          "debut": "2026-10-07T18:00:00+00:00", "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM",
          "pari": "Lens", "cote_juste": 2.0, "match_id_reference": "p9", "reference_inversee": False,
          "score_association": 0.95, "composantes": {"Pinnacle": 2.01, "Betfair": 1.99},
+         "lu_reference": "2026-10-07T10:00:00Z",
+         "lectures_references": {"Pinnacle": "2026-10-07T09:59:00Z", "Betfair": "2026-10-07T10:00:00Z"},
          "controle": {"statut": "conforme", "n": 40, "mediane": 0.93}}
     paris = []
     p = placer([o], paris, datetime(2026, 10, 7, 10, tzinfo=timezone.utc))[0]

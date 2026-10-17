@@ -26,6 +26,7 @@ from .strategie_jules_v2 import JULES_V2, paris_jules_v2
 
 MISE = 10.0
 INF = float("inf")
+FRAICHEUR_PRISE_MIN = 15
 SIMULATIONS = {     # écart dans [ecart, ecart_max[, cote dans [cote_min, cote_max]
     "A": {"ecart": 0.02, "ecart_max": 0.03, "cote_min": 1.0, "cote_max": 10.0, "nom": "2 à 3 %"},
     "B": {"ecart": 0.03, "ecart_max": 0.04, "cote_min": 1.0, "cote_max": 10.0, "nom": "3 à 4 %"},
@@ -38,6 +39,8 @@ SIMULATIONS = {     # écart dans [ecart, ecart_max[, cote dans [cote_min, cote_
 
 def simulation_de(ecart: float, cote: float) -> str | None:
     """La simulation (une seule) d'une opportunité, ou None."""
+    if not _nombre_fini(ecart) or not _cote_valide(cote):
+        return None
     for code, s in SIMULATIONS.items():
         if s["ecart"] <= ecart < s["ecart_max"] and s["cote_min"] <= cote <= s["cote_max"]:
             return code
@@ -56,12 +59,16 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
     deja = {p["id"] for p in paris}
     nouveaux = []
     lot = maintenant or datetime.now(timezone.utc)
-    for o in sorted(opportunites, key=lambda o: -o["ecart"]):
+    admissibles = [o for o in opportunites if _nombre_fini(o.get("ecart"))
+                  and _cote_valide(o.get("cote")) and _cote_valide(o.get("cote_juste"))]
+    for o in sorted(admissibles, key=lambda o: -o["ecart"]):
         if o.get("suspect") or o.get("pariable") is False or o.get("reference") == "Pinnacle brut":
             continue
         decision = maintenant or datetime.now(timezone.utc)
         debut = _heure(o.get("debut"))
         if not debut or not debut.tzinfo or debut <= decision + timedelta(seconds=30):
+            continue
+        if not _lectures_fraiches(o, decision, debut):
             continue
         code = simulation_de(o["ecart"], o["cote"])
         if code is None:
@@ -86,6 +93,7 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
                               "equipes_inversees": o.get("reference_inversee"),
                               "ressemblance_noms": o.get("score_association"),
                               "composantes": o.get("composantes"), "controle": o.get("controle"),
+                              "lectures_references": o.get("lectures_references"),
                               "version": VERSION}}
         paris.append(p)
         nouveaux.append(p)
@@ -134,6 +142,40 @@ def _heure(s) -> datetime | None:
         return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
     except (TypeError, ValueError):
         return None
+
+
+def _nombre_fini(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and isfinite(x)
+
+
+def _cote_valide(cote) -> bool:
+    return _nombre_fini(cote) and cote > 1
+
+
+def _lectures_fraiches(o: dict, decision: datetime, debut: datetime) -> bool:
+    """Deux lectures datées, contemporaines et encore fraîches lors de la décision.
+
+    L'heure de réception FR, si fournie, ne remplace pas une détection absente ou
+    périmée. Les anciennes prises ne passent jamais par cette validation.
+    """
+    from .controle import contemporaines
+    fr, ref = _heure(o.get("detecte")), _heure(o.get("lu_reference"))
+    dates = [fr, ref]
+    lectures = o.get("lectures_references")
+    if o.get("reference") == "Consensus" and (not isinstance(lectures, dict) or len(lectures) < 2):
+        return False
+    if lectures is not None:
+        if not isinstance(lectures, dict) or not lectures:
+            return False
+        dates.extend(_heure(t) for t in lectures.values())
+    if "collecte_recue" in o and o["collecte_recue"] is not None:
+        dates.append(_heure(o["collecte_recue"]))
+    if any(t is None or t.tzinfo is None or t.utcoffset() is None for t in dates):
+        return False
+    if any(not contemporaines({"collecte": o["detecte"]}, {"collecte": t.isoformat()}) for t in dates[1:]):
+        return False
+    return all(t < debut and -TOLERANCE_HORLOGE_S <= (decision - t).total_seconds() <= FRAICHEUR_PRISE_MIN * 60
+               for t in dates)
 
 
 def clv_finale(p: dict) -> float | None:
@@ -187,7 +229,12 @@ TRANCHES = [(1.0, 1.5, "1,01 – 1,50"), (1.5, 2.0, "1,51 – 2,00"), (2.0, 3.0,
 
 
 def tranche(cote: float) -> str:
-    return next(nom for bas, haut, nom in TRANCHES if bas < cote <= haut)
+    """Une donnée corrompue reste repérable, sans bloquer la construction du bilan."""
+    if _cote_valide(cote):
+        for bas, haut, nom in TRANCHES:
+            if bas < cote <= haut:
+                return nom
+    return "cote invalide"
 
 
 # Stratégie du 11/10/2026 : critères tirés des paris du 5 au 11/10 (meilleure CLV), puis FIGÉS. Elle n'est
@@ -334,17 +381,21 @@ def bilan_tranches(paris: list[dict]) -> dict:
 
 
 SEGMENT_MIN = 10       # paris réglés minimum pour afficher un segment
+SIGMA_FIABLE_MIN = 30  # condition nécessaire, jamais une preuve de rentabilité
 REGLES = ("gagne", "perdu", "demi_gagne", "demi_perdu", "rembourse")
 
 
 def segments(paris: list[dict]) -> list[dict]:
     """Bilan par segment (tranche, bookmaker, sport, référence et leurs croisements) sur les paris uniques réglés :
     réussite réelle contre réussite attendue (somme des probabilités justes à la prise), écart en écarts-types,
-    ROI et CLV. Un segment qui « marche » par chance a une réussite proche de l'attendu et une CLV nulle."""
+    ROI et CLV. Le sigma reste descriptif : corrélations, règlements non binaires et essais multiples
+    empêchent de l'interpréter automatiquement comme une preuve de rentabilité."""
     # Référence de la première détection : une seule mise, même si plusieurs
     # références ont signalé la même sélection.
     uniques = premiers_par_selection(paris)
     regles = [p for p in paris if id(p) in uniques and p.get("statut") in REGLES and p.get("cote_juste")]
+    from .evenements import identites
+    liens = identites(regles)
     from itertools import combinations
 
     dimensions = ("tranche", "bookmaker", "sport", "reference")
@@ -370,7 +421,18 @@ def segments(paris: list[dict]) -> list[dict]:
         mises = sum(p["mise"] for p in rows)
         gains = sum(p.get("gain") or 0 for p in rows)
         clvs = [c for c in (clv_finale(p) for p in rows) if c is not None]
+        evenements = len({liens[id(p)] for p in rows})
+        limites = []
+        if len(rows) < SIGMA_FIABLE_MIN:
+            limites.append("effectif_faible")
+        if evenements < len(rows):
+            limites.append("tickets_meme_evenement")
+        if any(p["statut"] not in ("gagne", "perdu") for p in rows):
+            limites.append("reglements_non_binaires")
+        if min(attendus, sum(1-q for q in probas)) < 5:
+            limites.append("attendus_extremes")
         out.append({**dict(cle_seg), "n": len(rows), "gagnes": gagnes, "attendus": round(attendus, 1),
+                    "evenements": evenements, "sigma_fiable": not limites, "sigma_limites": limites,
                     "ecart_sigma": round((gagnes - attendus) / sd, 2), "gains": round(gains, 2),
                     "roi": round(gains / mises, 4) if mises else None,
                     "clv_moyenne": round(sum(clvs) / len(clvs), 4) if clvs else None, "clv_n": len(clvs)})
