@@ -10,7 +10,9 @@ from collections import Counter
 from datetime import timezone
 
 from .correspondance import avec_marqueurs_ligue, normaliser
-from .strategie_jules import PARIS, _heure, _nombre
+from .strategie_jules import PARIS, _heure
+from .strategie_commune import (nombre_fini as _nombre, preuve_de, correspondance_prouvee,
+                               edge_coherent, ligne_non_quart, issue_valide)
 
 JULES_V2 = {
     "nom": "JULES EDGE v2", "version": "2-reconstruite",
@@ -27,15 +29,11 @@ JULES_V2 = {
 
 
 def _correspondance(p):
-    preuve = p.get("preuve_prise") or {}
-    score = _nombre(preuve.get("ressemblance_noms"))
     return (p.get("reference") in JULES_V2["references"]
             and p.get("bookmaker") in JULES_V2["bookmakers"]
             and p.get("sport") in JULES_V2["sports"] and not p.get("suspect")
             and _heure(p.get("detecte")) is not None and _heure(p.get("debut")) is not None
-            and bool(preuve.get("match_id_reference"))
-            and (preuve.get("controle") or {}).get("statut") == "conforme"
-            and score is not None and score >= JULES_V2["ressemblance_min"])
+            and correspondance_prouvee(p, JULES_V2["ressemblance_min"]))
 
 
 def motif_refus_jules_v2(p, depuis=JULES_V2["debut"]):
@@ -54,7 +52,7 @@ def motif_refus_jules_v2(p, depuis=JULES_V2["debut"]):
     if (cote is None or juste is None or edge is None or juste <= 1
             or not JULES_V2["cote_min"] <= cote <= JULES_V2["cote_max"]
             or not JULES_V2["edge_min"] <= edge <= JULES_V2["edge_max"]
-            or abs(cote/juste-1-edge) > .002):
+            or not edge_coherent(cote, juste, edge)):
         return "cote ou edge incohérent / hors bornes"
     marche, periode = p.get("marche"), p.get("periode")
     if marche not in JULES_V2["marches"] or periode not in ("MATCH", "TEMPS_REG"):
@@ -63,25 +61,28 @@ def motif_refus_jules_v2(p, depuis=JULES_V2["debut"]):
         return "tennis et volley : vainqueur du match seulement"
     if marche in ("TOTAL", "HANDICAP"):
         ligne = _nombre(p.get("ligne"))
-        if ligne is None or not (ligne*2).is_integer():
+        if not ligne_non_quart(ligne):
             return "ligne absente ou fractionnée en quarts"
-    issues = ("PLUS", "MOINS") if marche == "TOTAL" else ("DOM", "EXT", "NUL") if marche == "RESULTAT_1N2" else ("DOM", "EXT")
-    if p.get("issue") not in issues:
+    if not issue_valide(marche, p.get("issue")):
         return "issue invalide"
     return None
 
 
 def _cles(p):
-    sport = p["sport"]
-    cles = [("reference", sport, p["reference"], str(p["preuve_prise"]["match_id_reference"]))]
+    sport = p.get("sport")
+    reference = preuve_de(p).get("match_id_reference")
+    cles = [("reference", sport, p.get("reference"), str(reference))] if reference else []
     if p.get("match_id"):
         cles.append(("bookmaker", sport, p["bookmaker"], str(p["match_id"])))
-    noms = [avec_marqueurs_ligue(p.get(k), p.get("ligue")) or "" for k in ("domicile", "exterieur")]
+    ligue = p.get("ligue") if isinstance(p.get("ligue"), str) else None
+    noms = [avec_marqueurs_ligue(p.get(k) if isinstance(p.get(k), str) else None, ligue) or ""
+            for k in ("domicile", "exterieur")]
+    debut = _heure(p.get("debut"))
     normes = [normaliser(n) for n in noms]
     feminin = any(n[1] for n in normes)
     jeunes = set().union(*(n[2] for n in normes))
     paires = [noms]
-    ref = p.get("match_reference") or ""
+    ref = p.get("match_reference") if isinstance(p.get("match_reference"), str) else ""
     if ref.count(" - ") == 1:
         paires.append(ref.split(" - "))
     for paire in paires:
@@ -89,8 +90,8 @@ def _cles(p):
         for n in paire:
             mots, fem, categorie = normaliser(n)
             normalises.append((mots, fem or feminin, tuple(sorted(categorie or jeunes))))
-        if all(n[0] for n in normalises):
-            cles.append(("equipes", sport, _heure(p["debut"]).astimezone(timezone.utc), tuple(sorted(normalises))))
+        if debut and all(n[0] for n in normalises):
+            cles.append(("equipes", sport, debut.astimezone(timezone.utc), tuple(sorted(normalises))))
     return cles
 
 
@@ -100,6 +101,7 @@ def analyser_jules_v2(paris, depuis=JULES_V2["debut"]):
     Une fusion tardive de deux groupes déjà sélectionnés est signalée. Elle ne
     supprime jamais rétroactivement une mise. Les alias inconnus restent une limite.
     """
+    paris = list(paris)
     lignes = sorted((p for p in paris if _correspondance(p)), key=lambda p: (
         _heure(p["detecte"]), -(_nombre(p.get("ecart")) or 0), -(_nombre(p.get("cote")) or 0),
         p["bookmaker"], str(p.get("id") or p.get("match_id") or "")))
@@ -142,10 +144,23 @@ def analyser_jules_v2(paris, depuis=JULES_V2["debut"]):
             prises[root] = 1
             jours[jour] += 1
             selection.add(id(p))
-    return {"selection": selection, "doublons_ecartes": doublons, "plafond_ecartes": plafond,
+    return {"selection": selection, "lignes_examinees": len(paris),
+            "hors_correspondance": len(paris) - len(lignes), "doublons_ecartes": doublons, "plafond_ecartes": plafond,
             "fusions_tardives": fusions_tardives, "par_jour": dict(jours), "refus": dict(refus)}
 
 
 @figer_selecteur("jules_v2")
 def paris_jules_v2(paris, depuis=JULES_V2["debut"]):
     return analyser_jules_v2(paris, depuis)["selection"]
+
+
+def diagnostic_jules_v2(paris, depuis=JULES_V2["debut"]):
+    """Diagnostic JSON d'un rejeu des règles, sans écriture ni résultat futur lu.
+
+    Les décisions prospectives font foi via paris_jules_v2() et le registre.
+    Ce rejeu peut différer de celles-ci si les données d'entrée ont été corrigées.
+    """
+    resultat = analyser_jules_v2(paris, depuis)
+    return {"mode": "rejeu_diagnostic", "strategie": "jules_v2", "version": JULES_V2["version"],
+            "depuis": depuis, "selectionnes": len(resultat["selection"]),
+            **{k: v for k, v in resultat.items() if k != "selection"}}

@@ -10,8 +10,10 @@ from .decisions import figer_selecteur
 
 from collections import Counter
 from datetime import datetime
-from math import isfinite
 from zoneinfo import ZoneInfo
+
+from .strategie_commune import (nombre_fini as _nombre, preuve_de, correspondance_prouvee,
+                               edge_coherent, ligne_non_quart, issue_valide)
 
 CHATGPT = {
     "nom": "ChatGPT", "version": "1", "debut": "2026-10-14T03:15:00+00:00",
@@ -31,16 +33,6 @@ def _heure(value) -> datetime | None:
     try:
         t = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
         return t if t.tzinfo is not None else None
-    except (TypeError, ValueError):
-        return None
-
-
-def _nombre(value) -> float | None:
-    if isinstance(value, bool):
-        return None
-    try:
-        n = float(value)
-        return n if isfinite(n) else None
     except (TypeError, ValueError):
         return None
 
@@ -68,15 +60,12 @@ def motif_refus(p: dict, depuis: str = CHATGPT["debut"]) -> str | None:
         return "cote hors intervalle 1,50–3,00"
     if edge is None or not CHATGPT["edge_min"] <= edge <= CHATGPT["edge_max"]:
         return "edge hors intervalle 3–12 %"
-    if juste is None or juste <= 1 or abs(cote / juste - 1 - edge) > 0.002:
+    if not edge_coherent(cote, juste, edge):
         return "edge incohérent avec la cote juste"
     lu = _heure(p.get("lu_reference"))
     if not lu or not 0 <= (t - lu).total_seconds() <= CHATGPT["fraicheur_max_minutes"] * 60:
         return "référence absente, future ou vieille de plus de 5 minutes"
-    preuve = p.get("preuve_prise") or {}
-    score = _nombre(preuve.get("ressemblance_noms"))
-    if ((preuve.get("controle") or {}).get("statut") != "conforme"
-            or score is None or score < 0.85 or not preuve.get("match_id_reference")):
+    if not correspondance_prouvee(p, 0.85):
         return "preuve de correspondance ou de conformité insuffisante"
     marche = p.get("marche")
     if marche not in CHATGPT["marches"] or p.get("periode") not in ("MATCH", "TEMPS_REG"):
@@ -87,10 +76,9 @@ def motif_refus(p: dict, depuis: str = CHATGPT["debut"]) -> str | None:
         return "tennis et volley : vainqueur uniquement"
     if marche in ("TOTAL", "HANDICAP"):
         ligne = _nombre(p.get("ligne"))
-        if ligne is None or not (ligne * 2).is_integer():
+        if not ligne_non_quart(ligne):
             return "ligne absente ou fractionnée en quarts"
-    issues = ("PLUS", "MOINS") if marche == "TOTAL" else ("DOM", "EXT", "NUL") if marche == "RESULTAT_1N2" else ("DOM", "EXT")
-    if p.get("issue") not in issues:
+    if not issue_valide(marche, p.get("issue")):
         return "issue invalide"
     return None
 
@@ -104,10 +92,12 @@ def paris_chatgpt(paris: list[dict], depuis: str = CHATGPT["debut"]) -> set[int]
     """
     candidats = [p for p in paris if motif_refus(p, depuis) is None]
     candidats.sort(key=lambda p: (_heure(p["detecte"]), -float(p["ecart"]), -float(p["cote"]),
-                                 p["bookmaker"], str(p.get("id") or p["match_id"])))
+                                 p["bookmaker"], str(p.get("id") or p.get("match_id") or "")))
     matchs, selection, par_jour = set(), set(), Counter()
     for p in candidats:
-        match = (p["sport"], str(p["preuve_prise"]["match_id_reference"]))
+        # La preuve et les nombres sont déjà validés par motif_refus().
+        match = (p["sport"], str(preuve_de(p)["match_id_reference"]))
+        # Jour civil de Paris : le plafond ne se réinitialise pas à minuit UTC.
         jour = _heure(p["detecte"]).astimezone(PARIS).date()
         if match in matchs or par_jour[jour] >= CHATGPT["paris_max_jour"]:
             continue

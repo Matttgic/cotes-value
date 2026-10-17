@@ -21,7 +21,7 @@ from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import paris_gemini  # noqa: E402
 from cotes.strategie_jules import paris_jules  # noqa: E402
-from cotes.strategie_jules_v2 import JULES_V2, analyser_jules_v2, paris_jules_v2  # noqa: E402
+from cotes.strategie_jules_v2 import JULES_V2, diagnostic_jules_v2, paris_jules_v2  # noqa: E402
 from cotes.strategie_m3 import paris_m3  # noqa: E402
 from scripts.comparer_strategies import claude_rejouee  # noqa: E402
 
@@ -74,14 +74,16 @@ def rapport(paris, releve=RELEVE, selection_livree=None):
             partie = [p for p in lignes if heure(debut) <= heure(p["debut"]) < heure(fin)]
             r[periode] = mesures(partie, releve if periode == "test" else fin)
         comparateurs[nom] = r
-    diagnostic = analyser_jules_v2(observes, depuis=DEBUT_ETUDE)
-    diagnostic.pop("selection")
+    diagnostic = diagnostic_jules_v2(observes, depuis=DEBUT_ETUDE)
     return {"schema": 1, "releve": releve, "debut_etude": DEBUT_ETUDE,
             "fin_etude": PERIODES[-1][2], "strategie": JULES_V2,
             "nature": "Rejeu exploratoire ; bootstrap par jour descriptif ; aucune rentabilité future démontrée.",
             "audit": qualite, "identite": diagnostic, "comparateurs": comparateurs,
             "source_sha256": hashlib.sha256(json.dumps(paris, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
             "selecteur_sha256": hashlib.sha256((Path(__file__).resolve().parent.parent/"cotes/strategie_jules_v2.py").read_bytes()).hexdigest(),
+            "dependances_selecteur_sha256": {nom: hashlib.sha256(
+                (Path(__file__).resolve().parent.parent / "cotes" / nom).read_bytes()).hexdigest()
+                for nom in ("strategie_commune.py", "strategie_jules.py", "correspondance.py", "decisions.py")},
             "protocole_sha256": hashlib.sha256((Path(__file__).resolve().parent.parent/"docs/protocole-jules-v2.md").read_bytes()).hexdigest()}
 
 
