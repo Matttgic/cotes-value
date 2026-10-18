@@ -27,7 +27,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes import (livescore, comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
+from cotes import (flashscore, livescore, comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, smarkets, stockage)
 from cotes.direct import betclic as betclic_direct  # noqa: E402
 from cotes.direct import netbet as netbet_direct  # noqa: E402
@@ -646,6 +646,19 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
         resultats = {}
         for p in paris:
             if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
+                r = resultats_mod.consensus(p, enregistrements, maintenant)
+                if r:
+                    resultats[p["match_id"]] = r
+        # Flashscore : secours gratuit pour ce qu'aucune source n'a validé, et seule source du volley, du handball
+        # et du rugby sans PulseScore (une source seule ne règle qu'après 24 h : cotes/resultats.py)
+        restants = [p for p in paris if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats]
+        for sport, jours in flashscore.jours_a_lire(restants, maintenant).items():
+            n = len(flashscore.ERREURS)
+            enregistrements += etape(f"resultats_flashscore_{sport}", journal, flashscore.lire, sport, jours,
+                                     maintenant) or []
+            signaler(journal, f"resultats_flashscore_{sport}", flashscore.ERREURS[n:])
+        for p in restants:
+            if p["match_id"] not in resultats:
                 r = resultats_mod.consensus(p, enregistrements, maintenant)
                 if r:
                     resultats[p["match_id"]] = r
