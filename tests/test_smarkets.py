@@ -221,6 +221,31 @@ def test_erreur_http_ne_journalise_pas_le_corps():
     assert "secret" not in json.dumps(meta)
 
 
+def test_403_coupe_sans_rafale(monkeypatch):
+    appels = []
+
+    class Bloque:
+        def get(self, url, timeout=30, headers=None):
+            appels.append(url)
+
+            class R:
+                status_code = 403
+                text = "secret-ne-pas-journaliser"
+
+                def json(self):
+                    return {"secret": "secret-ne-pas-journaliser"}
+
+            return R()
+
+    monkeypatch.setattr(smarkets.time, "sleep", lambda s: None)
+    lignes, meta = smarkets.collecter({"football", "tennis"}, 12, Bloque(), maintenant=MAINTENANT)
+    assert lignes == []
+    assert meta["erreurs"] == ["HTTP 403"]
+    assert "secret" not in json.dumps(meta)
+    assert len(appels) == 2
+    assert all("football_match" in u for u in appels)
+
+
 def test_sports_vides_ne_contactent_pas_le_reseau():
     class Boom:
         def get(self, *args, **kwargs):

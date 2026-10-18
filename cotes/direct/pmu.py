@@ -10,6 +10,10 @@ en place pour tout ce qui passerait quand même.
 En ``shadow``, PulseScore reste la source des décisions ; le flux direct sert au
 rapport de couverture. Basculer exige au moins 95 % des matchs PulseScore
 retrouvés et 99 % des cotes communes à ±0,01.
+
+La liste ``all/all/all`` est plafonnée (le 18/10/2026 elle s'arrêtait vers 22 h
+alors que l'horizon est 36 h). Si le dernier match lu est avant cet horizon,
+chaque compétition du ``group.json`` est relue.
 """
 from __future__ import annotations
 
@@ -203,6 +207,51 @@ def sports_demandes(sports: set[str] | None) -> list[tuple[str, str]]:
         if sports is None or interne in sports:
             out.append((terme, interne))
     return out
+
+
+def _chemin_liste(chemin: str) -> str:
+    """Quatre segments avant ``matches.json`` : le sport, puis la compétition, complétés par ``all``."""
+    parts = [p for p in str(chemin).split("/") if p]
+    while len(parts) < 4:
+        parts.append("all")
+    return "listView/" + "/".join(parts) + "/matches.json"
+
+
+def _feuilles(doc, terme: str) -> list[str]:
+    """Compétitions feuilles de ``group.json`` pour un sport (``football/france/ligue_1``)."""
+    if not isinstance(doc, dict):
+        return []
+    racine = doc.get("group") if isinstance(doc.get("group"), dict) else doc
+    feuilles: list[str] = []
+
+    def walk(noeud, chemin: str) -> None:
+        if isinstance(noeud, list):
+            for enfant in noeud:
+                walk(enfant, chemin)
+            return
+        if not isinstance(noeud, dict):
+            return
+        cle = noeud.get("termKey")
+        suivant = f"{chemin}/{cle}" if cle else chemin
+        enfants = [g for g in (noeud.get("groups") or []) if isinstance(g, dict)]
+        brut = suivant.strip("/")
+        if (noeud.get("sport") and cle and noeud.get("eventCount") and not enfants
+                and brut.startswith(terme + "/")):
+            feuilles.append(brut)
+        for enfant in enfants:
+            walk(enfant, suivant)
+
+    walk(racine, "")
+    return feuilles
+
+
+def _liste_courte(events: list[dict], maintenant: datetime, heures: float) -> bool:
+    """Vrai si aucun match à venir n'atteint l'horizon : la liste globale est incomplète."""
+    horizon = maintenant + timedelta(hours=heures)
+    debuts = [_heure(e.get("start")) for e in events
+              if isinstance(e, dict) and e.get("state") == "NOT_STARTED"]
+    debuts = [d for d in debuts if d]
+    return not debuts or max(debuts) < horizon
 
 
 def _exclu(offre: dict) -> bool:
@@ -413,12 +462,26 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     demandes = sports_demandes(sports)
     if not demandes:
         return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
+    arbre = None
     for terme, sport in demandes:
         doc = client.get(f"listView/{terme}/all/all/all/matches.json")
         if not doc:
             continue
         lectures += 1
         events = [e.get("event") for e in doc.get("events") or [] if isinstance(e, dict)]
+        if _liste_courte(events, maintenant, heures):
+            if arbre is None:
+                arbre = client.get("group.json") or {}
+            connus = {e.get("id") for e in events if isinstance(e, dict)}
+            for chemin in _feuilles(arbre, terme):
+                extra = client.get(_chemin_liste(chemin))
+                if not extra:
+                    continue
+                for wrap in extra.get("events") or []:
+                    ev = wrap.get("event") if isinstance(wrap, dict) else None
+                    if isinstance(ev, dict) and ev.get("id") not in connus:
+                        connus.add(ev.get("id"))
+                        events.append(ev)
         choisis = [e for e in events if isinstance(e, dict) and _a_venir(e, maintenant, heures)]
         matchs += len(choisis)
         for i in range(0, len(choisis), PAR_LOT):
