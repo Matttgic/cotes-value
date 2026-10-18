@@ -105,7 +105,13 @@ def test_at_place_lexterieur_devant():
 
 def test_drapeau_eteint_par_defaut_et_allume_seulement_si_oui(monkeypatch):
     monkeypatch.delenv("SMARKETS_DANS_DECISION", raising=False)
+    monkeypatch.delenv("SMARKETS_COLLECTE", raising=False)
     assert smarkets.dans_decision() is False
+    assert smarkets.collecte_active() is False
+    monkeypatch.setenv("SMARKETS_COLLECTE", "oui")
+    assert smarkets.collecte_active() is True
+    monkeypatch.setenv("SMARKETS_COLLECTE", "non")
+    assert smarkets.collecte_active() is False
     assert smarkets.hors_consensus() == frozenset({"Smarkets"})
     refs = {"Pinnacle": [], "Betfair": [], "Polymarket": []}
     smarkets.ajouter_table(refs, [{"bookmaker": "smarkets"}])

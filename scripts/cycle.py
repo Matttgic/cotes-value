@@ -164,7 +164,15 @@ def _cache_sm(chemin: Path) -> dict:
 
 def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
                        maintenant: datetime, journal: dict):
-    """Relit Smarkets au plus toutes les 20 min. Un 429 ou un budget garde le cache périmé."""
+    """Relit Smarkets au plus toutes les 20 min, seulement si ``SMARKETS_COLLECTE`` est oui.
+
+    Éteint (défaut) : zéro appel. La table des paris déjà pris reste celle de l'historique.
+    Un 429 ou un budget garde le cache périmé.
+    """
+    if not smarkets.collecte_active():
+        journal["etapes"]["smarkets"] = {"secondes": 0.0, "ok": True, "desactive": True}
+        journal["smarkets_cache"] = {"reutilise": False, "perime": False, "desactive": True}
+        return [], {"ok": True, "erreurs": [], "requetes": 0, "desactive": True}
     chemin = donnees / "smarkets_cache.json"
     cache = _cache_sm(chemin)
     if _instant(cache.get("lu")) and maintenant - _instant(cache.get("lu")) < timedelta(minutes=SMARKETS_FRAIS_MIN):
