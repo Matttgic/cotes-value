@@ -28,7 +28,7 @@ from urllib.parse import urlencode
 import requests
 
 from cotes.correspondance import ressemblance
-from cotes.direct.horizon import fusionner, tranche
+from cotes.direct.horizon import fusionner
 from cotes.pulsescore import traduire
 
 ACCUEIL = "https://www.unibet.fr/"
@@ -633,8 +633,9 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
     si aucun match du sport n'est sur le radar.
 
     Avec une réserve (le cycle), le radar ne retire pas de match : chaque sport est
-    suivi par ``nextEventId`` jusqu'à l'horizon, période principale d'abord.
-    Quelques marchés secondaires tournent ensuite. La comparaison reçoit l'union.
+    suivi par ``nextEventId`` jusqu'à l'horizon, sur le marché principal seulement.
+    Les autres types (handicaps, score exact) produisaient des clés communes aux
+    mauvaises cotes. La comparaison reçoit l'union avec le cache.
     """
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
@@ -714,23 +715,12 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
     curseur_suivant = None
     if reserve is not None:
         primaires = []
-        secondaires = []
         for interne, noeud in candidats:
             filtres = _filtres(interne, filtres_heures)
-            if not filtres:
-                continue
-            primaires.append((noeud, interne, filtres[0][0], filtres[0][1]))
-            for type_id, periode in filtres[1:]:
-                secondaires.append((noeud, interne, type_id, periode))
+            if filtres:
+                primaires.append((noeud, interne, filtres[0][0], filtres[0][1]))
         executer(primaires)
-        choisis, curseur_suivant = tranche(secondaires, int(bloc.get("curseur") or 0), 4)
-        if echeance is None or echeance.ok():
-            for noeud, interne, type_id, periode in choisis:
-                if echeance is not None and not echeance.ok():
-                    client._noter("budget")
-                    break
-                _lire_filtre(client, noeud, interne, sac, type_id, periode, horizon, echeance,
-                             min(4, pages_max), session=session)
+        curseur_suivant = 0
     elif filtre_radar:
         primaires = []
         for interne, noeud in candidats:

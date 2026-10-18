@@ -573,9 +573,15 @@ def _collecter_reserve(sports, heures, session, pause, maintenant, echeance, res
             feuilles[terme] = _feuilles(arbre, terme)
         comp_lu_nouveau = moment
     ordre = courts + [couple for couple in demandes_lues if couple not in courts]
-    file_comp = [(terme, sport, chemin)
-                 for terme, sport in ordre
-                 for chemin in (feuilles.get(terme) or [])]
+    paniers = [[(terme, sport, chemin) for chemin in (feuilles.get(terme) or [])]
+               for terme, sport in ordre]
+    paniers = [p for p in paniers if p]
+    file_comp = []
+    if paniers:
+        for i in range(max(len(p) for p in paniers)):
+            for panier in paniers:
+                if i < len(panier):
+                    file_comp.append(panier[i])
     choisis_comp, curseur_comp = tranche(file_comp, int(reserve.get("curseur_comp") or 0), _LOIN_COMP)
     connus = {ev.get("id") for _sport, ev in events}
     comp_ids = set()
