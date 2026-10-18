@@ -13,17 +13,24 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 |---|---|---|---|
 | Pinnacle | Référence | API publique du site (`cotes/pinnacle.py`) | Gratuit |
 | Polymarket | Référence | API officielle gamma (`cotes/polymarket.py`) | Gratuit |
-| Kalshi | Référence (vainqueur) | API officielle (`cotes/kalshi.py`) | Gratuit |
 | Betfair Exchange | Référence | PulseScore, via Orbit Exchange | Offre PulseScore |
-| Winamax, Betclic, Unibet, PMU | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
+| Winamax, Betclic, Unibet | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
+| PMU | Cotes à comparer | Kambi en parallèle de PulseScore (`cotes/direct/pmu.py`) | Gratuit |
 
 NetBet n'est pas suivi : le flux « netbet » de PulseScore est celui du site international (netbet.com), pas
 de netbet.fr (intitulés anglais, corners, handicaps asiatiques en quart, compétitions hors liste ANJ).
 
 Vérifications faites (workflow « Vérifications des sources ») :
 - Pinnacle lu directement = PS3838 de PulseScore : 98 % des 4 161 cotes à moins de 1 % d'écart ;
-- Polymarket et Kalshi lus directement = PulseScore : 87 % et 99 % des marchés strictement identiques
+- Polymarket lu directement = PulseScore : 87 % des marchés strictement identiques
   (les écarts restants : marchés sans échanges, écartés par le comparateur).
+
+PMU peut être lu sur l'API Kambi (`SOURCE_PMU`, défaut `shadow`). En `shadow`, PulseScore
+reste la source des paris et un rapport `pmu_comparaison.json` compare les deux flux.
+`auto` prend Kambi et revient à PulseScore si la lecture échoue. `direct` ne lit plus PMU
+chez PulseScore. `pulsescore` désactive Kambi. Le rapport est prêt à basculer à partir de
+95 % des matchs retrouvés et 99 % des cotes communes à ±0,01. Les paris déjà pris contre
+Kalshi restent affichés ; Kalshi n'est plus interrogé.
 
 ## Comment ça marche
 

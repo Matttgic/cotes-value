@@ -279,7 +279,8 @@ def test_diagnostic_pinnacle_remonte_dans_cycle_sans_cle(monkeypatch):
         return []
     monkeypatch.setattr(P,'collecter',pin)
     monkeypatch.setattr(M,'collecter',lambda *a:[])
-    monkeypatch.setattr(cycle.kalshi,'collecter',lambda *a:[])
+    monkeypatch.setattr(cycle.pmu_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
+    monkeypatch.delenv('SOURCE_PMU', raising=False)
     monkeypatch.setenv('PINNACLE_API_KEY','secret-test-prive')
     journal={'etapes':{}}
     cycle.collecter_prematch(None,'test',NOW,journal)

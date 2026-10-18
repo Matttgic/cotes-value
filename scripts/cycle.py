@@ -26,8 +26,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes import (comparaison, controle, kalshi, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
+from cotes import (comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, stockage)
+from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
@@ -84,11 +85,10 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
 
 def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal: dict,
                       attentes: dict | None = None):
-    """Références en parallèle ; les books n'attendent pas Kalshi.
+    """Pinnacle et Polymarket en parallèle, puis les books français et Betfair.
 
-    Un sport présent seulement chez Kalshi reçoit une lecture complémentaire,
-    sans relire les sports déjà couverts ni élargir le radar à l'aveugle.
-    Les résultats des futures sont assemblés dans un ordre déterministe.
+    PMU vient de PulseScore, de Kambi, ou des deux selon SOURCE_PMU (défaut shadow :
+    PulseScore décide, Kambi n'est qu'un rapport). Une panne de l'un n'arrête pas l'autre.
     """
     limite = maintenant + timedelta(hours=HORIZON_H)
 
@@ -98,7 +98,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                     < comparaison._t(l["debut"])
                     <= limite + (timedelta(hours=5) if l.get("debut_approximatif") else timedelta())}
 
-    def pulse(sports, nom):
+    def pulse(sports, nom, sans_pmu=False):
         if mode == "test":
             plan = {b: ["soccer"] for b in ("winamax", "betclic", "orbitxch")}
             pages, horizon = 1, 12
@@ -106,7 +106,8 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             fr = [s for s in SPORTS_FR if pulsescore.SPORTS[s] in sports]
             if not fr:
                 return [], {}, {}
-            plan = {b: fr for b in FRANCAIS} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in fr]}
+            livres = [b for b in FRANCAIS if not (sans_pmu and b == "pmu")]
+            plan = {b: fr for b in livres} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in fr]}
             pages, horizon = 40, HORIZON_H
         return etape(nom, journal, pulsescore.collecter, cle, plan, horizon, pages,
                      etat=attentes) or ([], {}, {})
@@ -125,12 +126,13 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                                                for r in (min(refs), max(refs))), 1) if refs and books else None,
         }
 
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    source_pmu = pmu_direct.mode_source()
+    journal["pmu_source"] = source_pmu
+    with ThreadPoolExecutor(max_workers=2) as pool:
         journal["pinnacle_configuration"] = {"mode": "environnement" if os.environ.get("PINNACLE_API_KEY", "").strip()
                                                 else "guest_historique"}
         fpin = pool.submit(etape, "pinnacle", journal, lambda: harmoniser_pinnacle(pinnacle.collecter()))
         fpoly = pool.submit(etape, "polymarket", journal, polymarket.collecter, HORIZON_H)
-        fkal = pool.submit(etape, "kalshi", journal, kalshi.collecter, HORIZON_H)
         pin, poly = fpin.result() or [], fpoly.result() or []
         if pinnacle._cle_resolue:
             journal["pinnacle_configuration"] = {"mode": pinnacle.origine_cle}
@@ -148,27 +150,34 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         signaler(journal, "pinnacle", list(pinnacle.ERREURS))
         signaler(journal, "polymarket", list(polymarket.ERREURS))
         sports = sports_des(pin + poly)
+        direct_lignes, direct_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
+        if source_pmu != "pulsescore":
+            recu = etape("pmu_direct", journal, pmu_direct.collecter, sports,
+                         12 if mode == "test" else HORIZON_H)
+            if recu is None:
+                direct_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
+            else:
+                direct_lignes, direct_meta = recu
+            signaler(journal, "pmu_direct", list(direct_meta.get("erreurs") or []))
+        direct_utilisable = bool(direct_meta.get("ok") and (direct_lignes or not direct_meta.get("erreurs")))
+        sans_pmu = source_pmu == "direct" or (source_pmu == "auto" and direct_utilisable)
         lignes, requetes = [], {}
         if cle:
-            lignes, requetes, erreurs = pulse(sports, "pulsescore")
-            if erreurs:
+            lignes, requetes, erreurs = pulse(sports, "pulsescore", sans_pmu=sans_pmu)
+            if erreurs and "pulsescore" in journal["etapes"]:
                 journal["etapes"]["pulsescore"] |= {"degrade": True,
                     "erreurs": {b: e[:5] for b, e in erreurs.items()}}
         else:
             journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
-        kal = fkal.result() or []
-        signaler(journal, "kalshi", list(kalshi.ERREURS))
-        manque = sports_des(kal) - sports
-        if cle and mode != "test" and manque:
-            autres, compte, erreurs = pulse(manque, "pulsescore_complement")
-            lignes = lignes + autres
-            for b, n in compte.items():
-                requetes[b] = requetes.get(b, 0) + n
-            if erreurs:
-                journal["etapes"]["pulsescore_complement"] |= {"degrade": True,
-                    "erreurs": {b: e[:5] for b, e in erreurs.items()}}
+        if source_pmu == "shadow":
+            try:
+                journal["pmu_direct_rapport"] = pmu_direct.rapport(lignes, direct_lignes)
+            except Exception as e:  # noqa: BLE001
+                journal["pmu_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
+        elif sans_pmu:
+            lignes = [l for l in lignes if l.get("bookmaker") != "pmu"] + list(direct_lignes)
     mesures_delta(pin, lignes)
-    return pin, poly, kal, lignes, requetes
+    return pin, poly, lignes, requetes
 
 
 def reglement_echu(etat: dict, maintenant: datetime, mode: str) -> bool:
@@ -382,14 +391,17 @@ def main() -> int:
         except Exception:  # un échec live ne bloque jamais le scanner pré-match
             journal["live_papier"] = {"erreur": "initialisation_indisponible", "mode": "papier"}
 
-    # Références en parallèle ; PulseScore démarre sans attendre Kalshi.
+    # Références en parallèle, puis les bookmakers. PMU direct ne remplace PulseScore
+    # qu'en mode direct, ou en auto quand Kambi a répondu.
     attentes = lire_json(donnees / "pulsescore_attentes.json", {})
-    pin, poly, kal, lignes_ps, requetes = collecter_prematch(cle, args.mode, maintenant, journal, attentes)
+    pin, poly, lignes_ps, requetes = collecter_prematch(cle, args.mode, maintenant, journal, attentes)
     ecrire_json(donnees / "pulsescore_attentes.json", attentes)
+    if "pmu_direct_rapport" in journal:
+        ecrire_json(donnees / "pmu_comparaison.json", journal["pmu_direct_rapport"])
 
     francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
     betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])
-    references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly, "Kalshi": kal}
+    references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly}
 
     # 3. contrôle de conformité des marchés (cumulé d'un cycle à l'autre), comparaison et paris simulés :
     #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari
@@ -447,8 +459,7 @@ def main() -> int:
     journal.update({
         "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "requetes_pulsescore": requetes, "cotes": {"francaises": len(francais), "pinnacle": len(pin),
-                                                    "betfair": len(betfair), "polymarket": len(poly),
-                                                    "kalshi": len(kal)},
+                                                    "betfair": len(betfair), "polymarket": len(poly)},
         "matchs_francais": len({l["match_id"] for l in francais}),
         "opportunites": sum(not o.get("suspect") for o in opportunites),
         "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),

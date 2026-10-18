@@ -1,65 +1,132 @@
-"""Ordonnancement réel : une référence lente ne bloque pas les cotes FR."""
+"""Ordonnancement réel : une référence lente ne bloque pas les cotes FR.
+
+PMU en shadow reste celui de PulseScore. Le complément qui n'existait que pour
+les sports vus seulement chez Kalshi n'est plus appelé.
+"""
 from datetime import datetime, timezone
-from threading import Event
 
 from scripts import cycle
 
 NOW = datetime(2026, 10, 17, tzinfo=timezone.utc)
 
 
-def ligne(sport):
-    return {"sport": sport, "debut": "2026-10-17T12:00:00Z"}
+def ligne(sport, bookmaker="winamax"):
+    return {"sport": sport, "debut": "2026-10-17T12:00:00Z", "bookmaker": bookmaker,
+            "match_id": f"{bookmaker}|{sport}", "domicile": "Lens", "exterieur": "Lille",
+            "cote": 1.9, "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM"}
 
 
-def test_kalshi_attend_pulse_et_sport_exclusif_est_couvert_sans_relecture(monkeypatch):
-    pulse_lu, poly_lance = Event(), Event()
+def _sans_reseau(monkeypatch, direct=None):
+    monkeypatch.delenv("SOURCE_PMU", raising=False)
+
+    def dire(*args, **kwargs):
+        if direct:
+            return direct(*args, **kwargs)
+        return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
+
+    monkeypatch.setattr(cycle.pmu_direct, "collecter", dire)
+
+
+def test_shadow_garde_pulsescore_et_ne_relit_pas_un_complement(monkeypatch):
     plans = []
+    appels_direct = []
 
     def pin():
-        assert poly_lance.wait(2), "les références doivent démarrer en parallèle"
-        return [ligne("football")]
-
-    def poly(*args):
-        poly_lance.set()
-        return []
-
-    def kal(*args):
-        assert pulse_lu.wait(2), "PulseScore ne doit pas attendre Kalshi"
         return [ligne("football"), ligne("basket")]
 
     def pulse(key, plan, horizon, pages, **kwargs):
         plans.append(plan)
-        pulse_lu.set()
-        return [{"lecture": len(plans)}], {"winamax": 1}, {}
+        return [ligne("football", "pmu")], {"pmu": 1}, {}
 
+    def direct(sports, heures):
+        appels_direct.append(set(sports))
+        return [ligne("football", "pmu") | {"cote": 9.99, "match_id": "pmu|direct"}], {
+            "ok": True, "erreurs": [], "requetes": 1, "matchs": 1}
+
+    _sans_reseau(monkeypatch, direct)
     monkeypatch.setattr(cycle.pinnacle, "collecter", pin)
-    monkeypatch.setattr(cycle.polymarket, "collecter", poly)
-    monkeypatch.setattr(cycle.kalshi, "collecter", kal)
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
     monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
     monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
     j = {"etapes": {}}
-    pin, poly, kal, lignes, compte = cycle.collecter_prematch("test", "complet", NOW, j)
-    assert [p["winamax"] for p in plans] == [["soccer"], ["basketball"]]
-    assert plans[0]["orbitxch"] == ["soccer"] and plans[1]["orbitxch"] == []
-    assert lignes == [{"lecture": 1}, {"lecture": 2}] and compte == {"winamax": 2}
+    pin, poly, lignes, compte = cycle.collecter_prematch("test", "complet", NOW, j)
+    assert list(plans) and "pmu" in plans[0]
+    assert [p["winamax"] for p in plans] == [["soccer", "basketball"]]
+    assert len(plans) == 1
+    assert "pulsescore_complement" not in j["etapes"]
+    assert lignes[0]["cote"] == 1.9
+    assert appels_direct == [{"football", "basket"}]
+    assert j["pmu_direct_rapport"]["matchs_communs"] == 1
+    assert j["pmu_source"] == "shadow"
     assert all(e["ok"] for e in j["etapes"].values())
+    assert pin and poly == [] and compte == {"pmu": 1}
 
 
-def test_echec_reference_isole_et_aucun_appel_api_sans_cle(monkeypatch):
+def test_echec_reference_isole_et_shadow_sans_cle_ne_plante_pas(monkeypatch):
     def panne(*args):
         raise RuntimeError("source indisponible")
+
+    _sans_reseau(monkeypatch)
     monkeypatch.setattr(cycle.pinnacle, "collecter", panne)
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle.kalshi, "collecter", lambda *a: [ligne("basket")])
     monkeypatch.setattr(cycle.pulsescore, "collecter", lambda *a: (_ for _ in ()).throw(AssertionError("pas de clé")))
     j = {"etapes": {}}
-    pin, poly, kal, lignes, compte = cycle.collecter_prematch(None, "complet", NOW, j)
-    assert pin == [] and kal and not lignes and not compte
+    pin, poly, lignes, compte = cycle.collecter_prematch(None, "complet", NOW, j)
+    assert pin == [] and not lignes and not compte
     assert j["etapes"]["pinnacle"]["ok"] is False
     assert j["etapes"]["pulsescore"]["ok"] is False
+    assert j["pmu_direct_rapport"]["matchs_pulsescore"] == 0
+    assert "pulsescore_complement" not in j["etapes"]
 
 
-def test_arret_temoin_ne_change_pas_les_opportunites_calculées():
+def test_auto_bascule_sur_pulsescore_si_kambi_echoue(monkeypatch):
+    plans = []
+
+    def pulse(key, plan, *a, **kw):
+        plans.append(plan)
+        return [ligne("football", "pmu")], {"pmu": 1}, {}
+
+    def direct(sports, heures):
+        return [], {"ok": False, "erreurs": ["HTTP 429"], "requetes": 4, "matchs": 0}
+
+    _sans_reseau(monkeypatch, direct)
+    monkeypatch.setenv("SOURCE_PMU", "auto")
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
+    j = {"etapes": {}}
+    _, _, lignes, _ = cycle.collecter_prematch("test", "complet", NOW, j)
+    assert "pmu" in plans[0]
+    assert lignes[0]["match_id"] == "pmu|football"
+    assert j["etapes"]["pmu_direct"]["degrade"] is True
+    assert "pmu_direct_rapport" not in j
+
+
+def test_direct_retire_pmu_de_pulsescore(monkeypatch):
+    plans = []
+
+    def pulse(key, plan, *a, **kw):
+        plans.append(plan)
+        return [ligne("football", "winamax")], {"winamax": 1}, {}
+
+    def direct(sports, heures):
+        return [ligne("football", "pmu") | {"cote": 1.7}], {"ok": True, "erreurs": [], "requetes": 2, "matchs": 1}
+
+    _sans_reseau(monkeypatch, direct)
+    monkeypatch.setenv("SOURCE_PMU", "direct")
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
+    j = {"etapes": {}}
+    _, _, lignes, _ = cycle.collecter_prematch("test", "complet", NOW, j)
+    assert "pmu" not in plans[0] and "winamax" in plans[0]
+    assert {l["bookmaker"] for l in lignes} == {"winamax", "pmu"}
+    assert next(l["cote"] for l in lignes if l["bookmaker"] == "pmu") == 1.7
+
+
+def test_arret_temoin_ne_change_pas_les_opportunites_calculees():
     from cotes.comparaison import comparer, BRUT
     base = {"sport": "football", "ligue": "L", "domicile": "Lens", "exterieur": "Lille",
             "debut": "2030-01-01T20:00:00Z", "collecte": "2030-01-01T19:00:00Z", "marche": "TOTAL",
@@ -70,21 +137,3 @@ def test_arret_temoin_ne_change_pas_les_opportunites_calculées():
     apres = comparer(fr, refs, temoin_brut=False)
     assert any(o["reference"] == BRUT for o in avant)
     assert apres == [o for o in avant if o["reference"] != BRUT]
-
-
-def test_radar_kalshi_estime_passe_ne_supprime_pas_sport_exclusif(monkeypatch):
-    plans = []
-    monkeypatch.setattr(cycle.pinnacle, 'collecter', lambda: [])
-    monkeypatch.setattr(cycle.polymarket, 'collecter', lambda *a: [])
-    monkeypatch.setattr(cycle.kalshi, 'collecter', lambda *a: [
-        {**ligne('basket'), 'debut': '2026-10-16T22:00:00Z', 'debut_approximatif': True}])
-    def pulse(key, plan, *a, **kw):
-        plans.append(plan)
-        return [], {}, {}
-    monkeypatch.setattr(cycle.pulsescore, 'collecter', pulse)
-    monkeypatch.setattr(cycle.kalshi, 'ERREURS', ['HTTP 503'])
-    j = {'etapes': {}}
-    cycle.collecter_prematch('test', 'complet', NOW, j)
-    assert plans[0]['winamax'] == ['basketball']
-    assert j['etapes']['kalshi']['degrade']
-    assert j['etapes']['kalshi']['erreurs'] == ['HTTP 503']

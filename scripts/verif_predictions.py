@@ -1,8 +1,7 @@
-"""Vérification : nos lectures directes Polymarket et Kalshi = les prix fournis par PulseScore ?
+"""Vérification : nos lectures directes Polymarket = les prix fournis par PulseScore ?
 
-1. Lit quelques pages PulseScore (Polymarket et Kalshi), environ 6 requêtes.
-2. Relit aussitôt les mêmes marchés via les API officielles (identifiants identiques :
-   conditionId Polymarket, ticker Kalshi), comme le font nos collecteurs.
+1. Lit quelques pages PulseScore (Polymarket), environ 3 requêtes.
+2. Relit aussitôt les mêmes marchés via l'API officielle (conditionId), comme le collecteur.
 3. Compare le meilleur achat, la meilleure vente et le prix milieu de chaque marché ouvert.
 
 Sortie : verif/rapport.json. Usage : PULSESCORE_KEY=... python scripts/verif_predictions.py
@@ -21,9 +20,7 @@ import requests
 
 PS = "https://api.pulsescore.net/api"
 GAMMA = "https://gamma-api.polymarket.com"
-KALSHI = "https://api.elections.kalshi.com/trade-api/v2"
-PAGES = {"polymarket": [("soccer", 1), ("soccer", 2), ("tennis", 1)],
-         "kalshi": [("soccer", 1), ("tennis", 1), ("basketball", 1)]}
+PAGES = {"polymarket": [("soccer", 1), ("soccer", 2), ("tennis", 1)]}
 OUT = Path("verif")
 
 
@@ -32,7 +29,7 @@ def _liste(x):
 
 
 def pulsescore(session: requests.Session) -> dict[str, list[dict]]:
-    out = {"polymarket": [], "kalshi": []}
+    out = {"polymarket": []}
     for source, pages in PAGES.items():
         for sport, page in pages:
             r = session.get(f"{PS}/{source}/{sport}/events", params={"page": page, "limit": 30}, timeout=60)
@@ -59,16 +56,6 @@ def polymarket_direct(ids: list[str]) -> dict[str, dict]:
     return res
 
 
-def kalshi_direct(tickers: list[str]) -> dict[str, dict]:
-    res = {}
-    for i in range(0, len(tickers), 100):
-        r = requests.get(f"{KALSHI}/markets", params={"tickers": ",".join(tickers[i:i + 100])}, timeout=60)
-        if r.status_code == 200:
-            for m in r.json().get("markets") or []:
-                res[m.get("ticker")] = m
-    return res
-
-
 def comparer(a_ps: tuple[float, float], a_dir: tuple[float, float], base: dict) -> dict:
     (b1, v1), (b2, v2) = a_ps, a_dir
     return {**base, "achat_pulsescore": b1, "vente_pulsescore": v1, "achat_direct": b2, "vente_direct": v2,
@@ -88,7 +75,6 @@ def main() -> int:
     ps = pulsescore(s)
     t1 = datetime.now(timezone.utc)
     pm = polymarket_direct([m["id"] for m in ps["polymarket"] if str(m["id"]).startswith("0x")])
-    ks = kalshi_direct([m["id"] for m in ps["kalshi"] if m["id"]])
     t2 = datetime.now(timezone.utc)
 
     lignes = []
@@ -103,22 +89,9 @@ def main() -> int:
         lignes.append(comparer((float(sel["bestBid"]), float(sel["bestAsk"])),
                                (float(d["bestBid"]), float(d["bestAsk"])),
                                {"source": "polymarket", "evenement": m["evenement"], "marche": d.get("question")}))
-    for m in ps["kalshi"]:
-        d = ks.get(m["id"])
-        if not d or d.get("status") not in ("active", "open"):
-            continue
-        sel = next((x for x in m["selections"] if str(x.get("selectionId", "")).endswith(":yes")), None)
-        try:
-            direct = (float(d["yes_bid_dollars"]), float(d["yes_ask_dollars"]))
-        except (KeyError, TypeError, ValueError):
-            continue
-        if not sel or sel.get("bestBid") is None:
-            continue
-        lignes.append(comparer((float(sel["bestBid"]), float(sel["bestAsk"])), direct,
-                               {"source": "kalshi", "evenement": m["evenement"], "marche": d.get("title")}))
 
     resume = {}
-    for src in ("polymarket", "kalshi"):
+    for src in ("polymarket",):
         L = [l for l in lignes if l["source"] == src]
         e = [l["ecart_milieu_pts"] for l in L]
         resume[src] = {"marches_compares": len(L), "identiques": sum(l["identique"] for l in L),
@@ -128,8 +101,7 @@ def main() -> int:
     rapport = {"lecture_pulsescore": [t0.isoformat(timespec="seconds"), t1.isoformat(timespec="seconds")],
                "lecture_directe_fin": t2.isoformat(timespec="seconds"), "resume": resume,
                "plus_gros_ecarts": sorted(lignes, key=lambda l: -l["ecart_milieu_pts"])[:25],
-               "exemples": [l for l in lignes if l["source"] == "polymarket"][:15]
-               + [l for l in lignes if l["source"] == "kalshi"][:15]}
+               "exemples": [l for l in lignes if l["source"] == "polymarket"][:15]}
     (OUT / "rapport.json").write_text(json.dumps(rapport, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps({k: rapport[k] for k in ("lecture_pulsescore", "lecture_directe_fin", "resume")},
                      ensure_ascii=False, indent=1))
