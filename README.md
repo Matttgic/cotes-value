@@ -41,7 +41,8 @@ Kalshi restent affichés ; Kalshi n'est plus interrogé.
 Winamax peut être lu sur son socket (`SOURCE_WINAMAX`, défaut `shadow`), avec les
 mêmes quatre modes et les mêmes seuils. Le rapport est `winamax_comparaison.json`.
 Si PulseScore répond 401, 403, 402 ou quota, les cotes Winamax viennent du socket
-même en `shadow` (`winamax_repli`). Les routes sont espacées.
+même en `shadow` (`winamax_repli`). La liste d'un sport arrive en une fois, puis
+les marchés comparés. Une lecture vide est un échec : le repli ne s'en sert pas.
 
 Unibet.fr peut être lu sur son API (`SOURCE_UNIBET`, défaut `shadow`), avec les
 mêmes quatre modes et les mêmes seuils. Le rapport est `unibet_comparaison.json`.

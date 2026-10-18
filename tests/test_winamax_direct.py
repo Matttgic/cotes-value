@@ -16,17 +16,30 @@ class Memoire:
         self.requetes = 0
         self.erreurs = []
 
-    def demander(self, route):
-        self.demandes.append(route)
+    def _noter(self, message):
+        if message not in self.erreurs:
+            self.erreurs.append(message)
+
+    def demander(self, route, filtre=None):
+        self.demandes.append((route, filtre))
         self.requetes += 1
-        return self.routes.get(route)
+        if filtre is None:
+            return self.routes.get(route)
+        return self.routes.get((route, filtre))
 
 
-def test_fixture_traduit_les_marches_connus_et_ecarte_le_reste():
-    transport = Memoire(FIXTURE)
+def _sport_avec_marches():
+    detail = FIXTURE["match:100"]
+    return {"matches": FIXTURE["sport:1"]["matches"], "bets": detail["bets"],
+            "outcomes": detail["outcomes"], "odds": detail["odds"]}
+
+
+def test_fixture_traduit_les_marches_connus_et_ecarte_le_reste(monkeypatch):
+    monkeypatch.setattr(winamax, "FILTRES", {})
+    transport = Memoire({"sport:1": _sport_avec_marches()})
     lignes, meta = winamax.collecter({"football"}, 36, transport=transport, maintenant=MAINTENANT)
-    assert meta["ok"] and meta["matchs"] == 1 and meta["requetes"] == 2
-    assert transport.demandes == ["sport:1", "match:100"]
+    assert meta["ok"] and meta["matchs"] == 1 and meta["requetes"] == 1
+    assert transport.demandes == [("sport:1", None)]
     assert all(l["bookmaker"] == "winamax" and l["source"] == "Winamax" for l in lignes)
     cles = {(l["marche"], l["periode"], l["issue"], l["ligne"]) for l in lignes}
     assert ("RESULTAT_1N2", "MATCH", "DOM", None) in cles
@@ -79,7 +92,7 @@ def test_tennis_separe_sets_et_jeux():
         },
         "odds": {str(i): 1.8 for i in range(1, 11)},
     }
-    transport = Memoire({"sport:5": {"matches": {"5": match}}, "match:5": detail})
+    transport = Memoire({"sport:5": {"matches": {"5": match}, **detail}})
     lignes, meta = winamax.collecter({"tennis"}, 36, transport=transport, maintenant=MAINTENANT)
     assert meta["matchs"] == 1
     cles = {(l["marche"], l["periode"], l["issue"], l["ligne"]) for l in lignes}
@@ -112,7 +125,11 @@ def test_pause_entre_les_routes(monkeypatch):
 
     class Faux:
         def __init__(self):
-            self.file = ["0{}", "40{}", '42["m",{"matches":{}}]', '42["m",{"matches":{}}]']
+            self.file = [
+                "0{}", "40{}",
+                '42["m",{"matches":{},"requestId":"w0"}]',
+                '42["m",{"matches":{},"requestId":"w1"}]',
+            ]
             self.envoyes = []
 
         def recv_str(self):
@@ -126,8 +143,8 @@ def test_pause_entre_les_routes(monkeypatch):
 
     faux = Faux()
     client = winamax.Socket(pause=(0.35, 0.6), connecter=lambda: faux)
-    assert client.demander("sport:1") == {"matches": {}}
-    assert client.demander("sport:5") == {"matches": {}}
+    assert client.demander("sport:1")["matches"] == {}
+    assert client.demander("sport:5")["matches"] == {}
     assert pauses == [0.4]
     assert client.requetes == 2
     assert "42" in faux.envoyes[1]
@@ -158,3 +175,97 @@ def test_mode_par_defaut(monkeypatch):
     assert winamax.mode_source() == "direct"
     monkeypatch.setenv("SOURCE_WINAMAX", "autre")
     assert winamax.mode_source() == "shadow"
+
+
+def test_poussee_sans_identifiant_est_ignoree(monkeypatch):
+    monkeypatch.setattr(winamax.time, "sleep", lambda s: None)
+
+    class Faux:
+        def __init__(self):
+            self.file = [
+                "0{}", "40{}",
+                '42["m",{"matches":{"9":1}}]',
+                '42["m",{"matches":{"1":1},"requestId":"w0"}]',
+            ]
+
+        def recv_str(self):
+            return self.file.pop(0)
+
+        def send_str(self, msg):
+            pass
+
+        def close(self):
+            pass
+
+    client = winamax.Socket(pause=(0, 0), connecter=lambda: Faux())
+    assert client.demander("sport:1") == {"matches": {"1": 1}, "requestId": "w0"}
+
+
+def test_filtre_ajoute_les_marches_du_sport(monkeypatch):
+    monkeypatch.setattr(winamax, "FILTRES", {"football": (6,)})
+    match = FIXTURE["sport:1"]["matches"]["100"]
+    detail = FIXTURE["match:100"]
+    transport = Memoire({
+        "sport:1": {"matches": {"100": match}},
+        ("sport:1", 6): {"bets": detail["bets"], "outcomes": detail["outcomes"], "odds": detail["odds"]},
+    })
+    lignes, meta = winamax.collecter({"football"}, 36, transport=transport, maintenant=MAINTENANT)
+    assert transport.demandes == [("sport:1", None), ("sport:1", 6)]
+    assert meta["ok"] and meta["matchs"] == 1
+    assert any(l["marche"] == "TOTAL" and l["ligne"] == 2.5 for l in lignes)
+
+
+def test_lecture_vide_est_un_echec():
+    transport = Memoire({"sport:1": {"matches": {}}})
+    lignes, meta = winamax.collecter({"football"}, 36, transport=transport, maintenant=MAINTENANT)
+    assert lignes == [] and meta["ok"] is False and meta["matchs"] == 0
+    assert "lecture vide" in meta["erreurs"]
+
+
+def test_lecture_incompletee_est_un_echec(monkeypatch):
+    monkeypatch.setattr(winamax, "FILTRES", {})
+    matches = {}
+    bets, outcomes, odds = {}, {}, {}
+    for i in range(1, 9):
+        matches[str(i)] = {
+            "matchId": i, "status": "PREMATCH", "competitor1Name": f"Domicile{i}",
+            "competitor2Name": "Exterieur", "matchStart": 1792346400,
+        }
+    # Une seule cote pour huit matchs annoncés.
+    bets["1"] = {"betId": 1, "matchId": 1, "marketId": 1, "betTitle": "Résultat",
+                 "available": True, "outcomes": [11, 12]}
+    outcomes["11"] = {"label": "Domicile1", "code": "1", "available": True}
+    outcomes["12"] = {"label": "Exterieur", "code": "2", "available": True}
+    odds["11"] = 1.8
+    odds["12"] = 2.1
+    transport = Memoire({"sport:1": {"matches": matches, "bets": bets, "outcomes": outcomes, "odds": odds}})
+    lignes, meta = winamax.collecter({"football"}, 36, transport=transport, maintenant=MAINTENANT)
+    assert meta["matchs"] == 8 and lignes and meta["ok"] is False
+    assert "lecture incomplète" in meta["erreurs"]
+
+
+def test_repli_ignore_une_lecture_vide(monkeypatch):
+    from datetime import datetime, timezone
+    from scripts import cycle
+    from tests.test_collecte_parallele import _sans_reseau, ligne
+    maintenant = datetime(2026, 10, 17, tzinfo=timezone.utc)
+
+    def pulse(key, plan, *a, **kw):
+        return [ligne("football", "winamax") | {"cote": 1.9}], {"winamax": 1}, {
+            "winamax": ["winamax/soccer/events : HTTP 401"]}
+
+    def direct(sports, heures, **kwargs):
+        return [], {"ok": False, "erreurs": ["lecture vide"], "requetes": 1, "matchs": 0}
+
+    _sans_reseau(monkeypatch)
+    monkeypatch.setattr(cycle.winamax_direct, "collecter", direct)
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
+    j = {"etapes": {}}
+    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", maintenant, j)
+    wina = [l for l in lignes if l["bookmaker"] == "winamax"]
+    assert wina and wina[0]["cote"] == 1.9
+    assert j["winamax_source_effective"] == "shadow"
+    assert j["etapes"]["winamax_direct"]["ok"] is False
