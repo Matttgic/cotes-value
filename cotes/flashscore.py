@@ -63,9 +63,11 @@ def match(sport: str, d: dict) -> dict | None:
             periodes = []
         libelles = [str(i + 1) for i in range(len(periodes))]
     else:
-        if periodes and (len(periodes) != 2 or (sum(a for a, _ in periodes), sum(b for _, b in periodes)) != score):
+        # Un match terminé normalement n'a pas de prolongation : ses périodes réglementaires font le score
+        attendu = {"hockey": 3, "basket": 4, "football_americain": 4}.get(sport, 2)
+        if periodes and (len(periodes) != attendu or (sum(a for a, _ in periodes), sum(b for _, b in periodes)) != score):
             periodes = []                          # détail absent ou différent du score : le score final suffit
-        libelles = ["1", "2"] if periodes else []
+        libelles = [str(i + 1) for i in range(len(periodes))]
     return {"source": "flashscore", "sport": sport, "domicile": dom, "exterieur": ext, "debut": debut,
             "score": score, "periodes": periodes, "libelles": libelles, "corners": None, "abandon": False}
 

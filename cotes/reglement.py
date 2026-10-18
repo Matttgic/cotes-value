@@ -123,6 +123,10 @@ def scores_par_periode(sport: str, score: tuple[int, int], periodes: list[tuple[
         out["SETS_TERMINES"] = sum(1 for _, t, _ in sets if t)
         if sets and (not all(t for _, t, _ in sets) or max(gagnes) < 2):
             out["ABANDON"] = True
+    elif sport in ("handball", "rugby"):
+        out["MATCH"] = score
+        if len(reg) >= 2 and not any(l in hors_reg for l in lab[:2]):
+            out["MT1"], out["MT2"] = reg[0], reg[1]    # deux mi-temps ; le score final peut compter la prolongation
     else:
         out["MATCH"] = score
     return out
