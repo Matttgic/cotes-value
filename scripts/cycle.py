@@ -772,7 +772,7 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
         # Rien ne règle ces matchs : la liste est prête à être complétée à la main
         ecrire_json(donnees / "resultats_a_saisir.json",
                     {"genere": maintenant.isoformat(timespec="seconds"),
-                     "aide": "Copier `modele` dans resultats_manuels.json sous la clé `match_id`, y remplir le score.",
+                     "aide": "Copier `modele` dans resultats_manuels.json sous chaque clé de `match_ids`, y remplir le score.",
                      "matchs": resultats_mod.a_saisir(paris, enregistrements, maintenant)})
     else:
         journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
