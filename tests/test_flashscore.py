@@ -90,6 +90,19 @@ def test_meme_equipe_meme_heure_suffit_quand_l_autre_nom_est_inconnu():
     assert resultats.retrouver(_pari(), [_rec("Eisbaren Berlin", "Klagenfurt"), _rec("Eisbaren Berlin", "Autre")]) == []
     # une autre équipe : rien
     assert resultats.retrouver(_pari(), [_rec("Zurich", "Klagenfurt")]) == []
+    # le même match sous deux noms (LiveScore : français et anglais) reste un seul candidat
+    variantes = [{**_rec("Eisbaren Berlin", "Klagenfurt"), "id_source": "e1"},
+                 {**_rec("Eisbaren Berlin", "EC Klagenfurt AC"), "id_source": "e1"}]
+    assert [r["score"] for r in resultats.retrouver(_pari(), variantes)] == [(2, 1)]
+
+
+def test_secours_ne_regle_pas_seul_un_homonyme_pourrait_coller():
+    tard = datetime(2026, 10, 16, 18, tzinfo=timezone.utc)
+    seul = [_rec("Eisbaren Berlin", "Klagenfurt", source="livescore")]
+    assert resultats.consensus(_pari(), seul, tard) is None
+    # confirmé par une autre source qui reconnaît le match : réglé
+    deux = seul + [_rec("Eisbären Berlin", "EC-KAC", source="espn")]
+    assert resultats.consensus(_pari(), deux, tard)["score"] == (2, 1)
 
 
 def test_ligue_feminine_suffit_quand_les_noms_n_ont_pas_de_marqueur():
@@ -127,3 +140,9 @@ def test_hockey_et_basket_periodes_reglementaires():
     b = {"AB": "3", "AC": "3", "AD": "1792087200", "AE": "A", "AF": "B", "AG": "70", "AH": "84",
          "BA": "14", "BB": "21", "BC": "23", "BD": "18", "BE": "19", "BF": "27", "BG": "14", "BH": "18"}
     assert len(flashscore.match("basket", b)["periodes"]) == 4
+
+
+def test_groupe_f_n_est_pas_une_ligue_feminine():
+    f = resultats.LIGUE_FEMININE
+    assert f.search("Tauron Liga (F)") and f.search("Liga F") and f.search("Bundesliga F")
+    assert not f.search("UEFA Champions League - Groupe F") and not f.search("Euroligue - Poule F")

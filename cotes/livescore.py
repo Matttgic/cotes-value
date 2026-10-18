@@ -96,11 +96,12 @@ def match(sport: str, e: dict) -> list[dict]:
         else:
             periodes = []                           # détail incomplet : seul le score final sert
     else:                                           # tennis : sets gagnés, jeux de chaque set
+        if statut == "Ret.":                        # abandon : le set interrompu rend le détail incohérent avec le score,
+            return []                               # le consensus le jetterait et le joueur en tête serait déclaré gagnant
         score = final
         periodes = _paires(e, ["S1", "S2", "S3", "S4", "S5"])
         libelles = [str(i + 1) for i in range(len(periodes))]
-        abandon = statut == "Ret."
-    base_rec = {"source": "livescore", "sport": sport, "debut": debut, "score": tuple(score),
+    base_rec = {"source": "livescore", "id_source": e.get("Eid"), "sport": sport, "debut": debut, "score": tuple(score),
                 "periodes": periodes, "libelles": libelles, "corners": None, "abandon": abandon}
     noms = [(doms[0], exts[0])]
     if (doms[-1], exts[-1]) != noms[0]:

@@ -674,7 +674,7 @@ MODELE = r"""<!doctype html>
     <p><b>Paris uniques</b> : chaque cote française comptée une fois, même si plusieurs références l'ont signalée.
     <b>Pinnacle, Betfair…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
     <b>Toutes réf.</b> : la somme des références (une même cote peut y compter plusieurs fois).
-    <b>Pinnacle brut</b> : témoin, cote Pinnacle avec sa marge. Statistiques conservées ; tickets individuels exclus du catalogue Paris pour accélérer le mobile.
+    <b>Pinnacle brut</b> : témoin arrêté le 18/10/2026, cote Pinnacle avec sa marge. Ses paris ont été retirés des données (ROI −12,6 % contre −12,8 % sans la marge) ; plus aucun n'est pris.
     <b>Stratégie</b> : les paris qui suivent les critères choisis le 11/10 (voir le texte au-dessus du graphique),
     comptés seulement depuis cette date. <b>ChatGPT</b> : stratégie indépendante, règles figées le 14/10,
     une seule mise par match et cinq nouvelles mises maximum par jour (heure de Paris).

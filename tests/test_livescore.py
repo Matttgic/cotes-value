@@ -35,8 +35,8 @@ def test_tennis_sets_jeux_abandon_et_forfait():
     r = livescore.match("tennis", _e(Eps="FT", Tr1="1", Tr2="2", Tr1S1="7", Tr2S1="6", Tr1S2="4", Tr2S2="6",
                                      Tr1S3="2", Tr2S3="6"))[0]
     assert r["score"] == (1, 2) and r["periodes"] == [(7, 6), (4, 6), (2, 6)] and r["abandon"] is False
-    ab = livescore.match("tennis", _e(Eps="Ret.", Tr1="0", Tr2="1", Tr1S1="1", Tr2S1="6", Tr1S2="0", Tr2S2="2"))[0]
-    assert ab["abandon"] is True
+    # abandon : ignoré, sinon le joueur en tête serait réglé gagnant au lieu de suivre la règle d'abandon
+    assert livescore.match("tennis", _e(Eps="Ret.", Tr1="0", Tr2="1", Tr1S1="1", Tr2S1="6", Tr1S2="0", Tr2S2="2")) == []
     assert livescore.match("tennis", _e(Eps="W.O.", Tr1="0", Tr2="0")) == []
 
 

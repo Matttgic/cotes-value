@@ -70,7 +70,7 @@ ESPN_NOTES_FEMININES = re.compile(r"women|^wwc|ncaaw|nwsl|usl super league|liga 
 # tennis : abandon en cours de match (règles d'abandon de chaque bookmaker, cotes/reglement.py)
 ESPN_ABANDONS = {"STATUS_RETIRED"}
 REPORT_MAX_J = 7
-LIGUE_FEMININE = re.compile(r"\((?:f|w)\)|\b(?:femmes?|women|womens|feminin|f\.)\b|\bf\.?$", re.I)
+LIGUE_FEMININE = re.compile(r"\((?:f|w)\)|\b(?:femmes?|women|womens|feminin|f\.)\b|(?<!groupe )(?<!group )(?<!poule )(?<!pool )\bf\.?$", re.I)
 
 
 def _heure(s) -> datetime | None:
@@ -506,8 +506,10 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
             meilleurs[r["source"]] = (score, -ecart, _oriente(r, inverse > direct))
     trouves = [r for _, _, r in meilleurs.values()]
     for source, candidats in secours.items():
-        if source not in meilleurs and len(candidats) == 1:
-            trouves.append(candidats[0][1])
+        # les variantes de nom d'un même match (LiveScore : français et anglais) ne sont qu'un candidat
+        distincts = {r.get("id_source") or id(r) for _, r in candidats}
+        if source not in meilleurs and len(distincts) == 1:
+            trouves.append({**candidats[0][1], "secours": True})
     return trouves
 
 
@@ -634,6 +636,9 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
     if not trouves:
         return None
     if len(trouves) < SOURCES_MIN:
+        # rapprochement de secours (une seule équipe reconnue) : un homonyme à la même heure ne règle pas seul
+        if trouves[0].get("secours"):
+            return None
         debut = _heure(p.get("reporte_au") or p.get("debut"))
         fiables = TENNIS_FIABLES if p["sport"] == "tennis" else SOURCES_FIABLES
         depuis = maintenant - debut if maintenant and debut else timedelta(0)
