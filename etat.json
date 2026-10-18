@@ -1,48 +1,49 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T21:03:21+00:00",
+  "debut": "2026-10-18T21:07:57+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.1,
+    "secondes": 7.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "prix bid/ask invalides"
+     "prix bid/ask invalides",
+     "prix lu après le coup d'envoi : rejet pré-match"
     ]
    },
    "pinnacle": {
-    "secondes": 34.3,
+    "secondes": 35.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 17 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403",
-     "sport 5 matchups : HTTP 403",
-     "sport 1 matchups : HTTP 403"
+     "sport 5 matchups : HTTP 403"
     ]
    },
-   "unibet_direct": {
-    "secondes": 3.4,
+   "olybet": {
+    "secondes": 3.1,
     "ok": true
    },
-   "olybet": {
-    "secondes": 5.2,
+   "unibet_direct": {
+    "secondes": 3.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 11.5,
+    "secondes": 11.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 18.6,
+    "secondes": 17.3,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 32.8,
+    "secondes": 32.3,
     "ok": true
    },
    "pulsescore": {
-    "secondes": 16.0,
+    "secondes": 16.1,
     "ok": true,
     "degrade": true,
     "erreurs": {
@@ -61,7 +62,7 @@
     "betclic_repli": "L'API Betclic remplace PulseScore (401/403/402/quota ou lecture impossible)"
    },
    "netbet": {
-    "secondes": 37.0,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -69,15 +70,12 @@
     ]
    },
    "smarkets": {
-    "secondes": 19.5,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 5.6,
+    "secondes": 5.4,
     "ok": true
    },
    "comparaison": {
@@ -85,7 +83,7 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.1,
+    "secondes": 0.2,
     "ok": true
    }
   },
@@ -100,8 +98,8 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 886,
-   "lignes_perimees": 5296,
+   "age_max_s": 608,
+   "lignes_perimees": 5720,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -112,12 +110,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 42,
+    "head_200": 39,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 9,
-    "choisi_fixe": 5,
-    "reprise_403": 5
+    "choisi_fixe": 10,
+    "choisi_autre": 3,
+    "reprise_403": 6
    }
   },
   "winamax_source": "auto",
@@ -212,17 +210,17 @@
     {
      "match": "Bahia – Flamengo",
      "source": "Pinnacle",
-     "cote_netbet": 3.25,
+     "cote_netbet": 3.3,
      "cote_reference": 3.62,
-     "ecart_relatif": 0.1022,
+     "ecart_relatif": 0.0884,
      "aberrant": false
     },
     {
      "match": "Bahia – Flamengo",
      "source": "PMU",
-     "cote_netbet": 3.25,
+     "cote_netbet": 3.3,
      "cote_reference": 3.15,
-     "ecart_relatif": 0.0317,
+     "ecart_relatif": 0.0476,
      "aberrant": false
     },
     {
@@ -285,22 +283,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T21:03:31+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T21:03:37+00:00",
+   "pinnacle_premiere_lecture": "2026-10-18T21:08:07+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T21:08:15+00:00",
    "books_premiere_lecture": "2026-10-18T18:12:14+00:00",
-   "books_derniere_lecture": "2026-10-18T21:03:56+00:00",
-   "ecart_enveloppe_secondes": 10283.0
+   "books_derniere_lecture": "2026-10-18T21:08:33+00:00",
+   "ecart_enveloppe_secondes": 10561.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 550,
    "a_verifier": 10,
    "non_conforme": 8,
-   "mesures": 11112,
+   "mesures": 11883,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -309,40 +308,27 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T20:19:51+00:00"
   },
-  "fin": "2026-10-18T21:05:01+00:00",
+  "fin": "2026-10-18T21:09:19+00:00",
   "requetes_pulsescore": {
    "betclic": 4,
    "orbitxch": 4
   },
   "cotes": {
-   "francaises": 28914,
-   "pinnacle": 95472,
+   "francaises": 28638,
+   "pinnacle": 95408,
    "betfair": 0,
-   "polymarket": 9945,
+   "polymarket": 9928,
    "smarkets": 2468
   },
-  "matchs_francais": 661,
-  "opportunites": 8,
+  "matchs_francais": 662,
+  "opportunites": 9,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "requetes_par_mois": {
-  "2026-10": 231004
+  "2026-10": 231012
  },
  "historique": [
-  {
-   "debut": "2026-10-17T20:21:46+00:00",
-   "mode": "complet",
-   "opportunites": 35,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "winamax": 17,
-    "betclic": 17,
-    "unibet-fr": 18,
-    "pmu": 16,
-    "orbitxch": 22
-   }
-  },
   {
    "debut": "2026-10-17T20:26:23+00:00",
    "mode": "complet",
@@ -2808,6 +2794,16 @@
    "debut": "2026-10-18T21:03:21+00:00",
    "mode": "complet",
    "opportunites": 8,
+   "nouveaux_paris": 0,
+   "requetes_pulsescore": {
+    "betclic": 4,
+    "orbitxch": 4
+   }
+  },
+  {
+   "debut": "2026-10-18T21:07:57+00:00",
+   "mode": "complet",
+   "opportunites": 9,
    "nouveaux_paris": 0,
    "requetes_pulsescore": {
     "betclic": 4,
