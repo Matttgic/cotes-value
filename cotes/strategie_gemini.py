@@ -29,7 +29,10 @@ PARIS = ZoneInfo("Europe/Paris")
 
 GEMINI = {
     "nom": "Gemini Argon",
-    "version": "1",
+    "version": "2",
+    # v1 : un seul pari par match. v2 : un pari par bookmaker et par match (PR #2).
+    # Les libellés historiques « v1 » restent des clés d'affichage ; "debut" ne bouge pas.
+    "version_depuis": "2026-10-18T01:28:09+00:00",
     "debut": "2026-10-14T18:00:00+00:00",
     "references": ("Pinnacle", "Betfair", "Polymarket"),
     "bookmakers": ("Winamax", "Betclic", "Unibet", "PMU"),

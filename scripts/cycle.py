@@ -141,6 +141,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             "seuil_min": pinnacle.age_max_secondes() // 60,
             "age_max_s": max(ages) if ages else None,
             "lignes_perimees": sum(1 for l in pin if isinstance(l, dict) and l.get("cote_perimee")),
+            "rechauffeur": pinnacle.etat_rechauffeur,
         }
         signaler(journal, "pinnacle", list(pinnacle.ERREURS))
         signaler(journal, "polymarket", list(polymarket.ERREURS))
