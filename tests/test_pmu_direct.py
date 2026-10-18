@@ -114,6 +114,91 @@ def test_rapport_shadow_et_cotes_a_un_centime():
     assert vide["couverture"] is None and vide["pret_a_basculer"] is False
 
 
+def _offre(type_en, label, anglais, issues, lifetime="FULL_TIME"):
+    return {
+        "id": 1, "eventId": 1025806339,
+        "betOfferType": {"englishName": type_en},
+        "criterion": {"label": label, "englishLabel": anglais, "lifetime": lifetime, "occurrenceType": "GOALS"},
+        "outcomes": [{"label": a, "englishLabel": a, "odds": b, "type": c, "line": d, "status": "OPEN"}
+                     for a, b, c, d in issues],
+    }
+
+
+def _lignes(offres, sport="football", domicile="Fagiano Okayama", exterieur="Vissel Kobe"):
+    from cotes.pulsescore import traduire
+    event = {"id": 1025806339, "homeName": domicile, "awayName": exterieur,
+             "start": "2026-10-18T23:30:00Z", "state": "NOT_STARTED", "group": "Ligue"}
+    ev = pmu.evenement_depuis(event, offres)
+    return traduire(ev, "pmu", sport, "2026-10-18T12:00:00+00:00")
+
+
+def test_les_marches_annexes_ne_remplacent_pas_le_resultat():
+    """Premier but, race-to et « au moins N buts » ne doivent pas écraser la clé du marché principal."""
+    offres = [
+        _offre("Match", "Premier but (Nul : Pas de but)", "First Goal (Draw: No Goals)",
+               [("1", 2080, "OT_ONE", None), ("X", 8000, "OT_CROSS", None), ("2", 1970, "OT_TWO", None)]),
+        _offre("Match", "Temps réglementaire", "Full Time",
+               [("1", 2700, "OT_ONE", None), ("X", 2950, "OT_CROSS", None), ("2", 2330, "OT_TWO", None)]),
+        _offre("Yes/No", "Les deux équipes marquent au moins 2 buts", "Both Teams To Score at least 2 goals",
+               [("Oui", 3000, "OT_YES", None), ("Non", 1300, "OT_NO", None)]),
+        _offre("Yes/No", "Les deux équipes marquent", "Both Teams To Score",
+               [("Oui", 1700, "OT_YES", None), ("Non", 2000, "OT_NO", None)]),
+        _offre("Match", "Quart-temps 1 - Premier à 20 points", "Quarter 1 - First to 20 Points",
+               [("1", 1800, "OT_ONE", None), ("2", 1900, "OT_TWO", None)], lifetime=None),
+    ]
+    lignes = _lignes(offres)
+    un_n_deux = [l for l in lignes if l["marche"] == "RESULTAT_1N2" and l["periode"] == "MATCH"]
+    assert {(l["issue"], l["cote"]) for l in un_n_deux} == {("DOM", 2.7), ("NUL", 2.95), ("EXT", 2.33)}
+    assert not any(l["marche"] == "VAINQUEUR" for l in lignes)
+    btts = [l for l in lignes if l["marche"] == "BOTH_TEAMS_TO_SCORE"]
+    assert {(l["issue"], l["cote"]) for l in btts} == {("YES", 1.7), ("NO", 2.0)}
+
+
+def test_periode_apres_l_unite_ne_se_confond_pas_avec_le_match():
+    domicile, exterieur = "Löwen Frankfurt", "Iserlohn Roosters"
+    offres = [
+        _offre("Correct Score", "Score exact", "Correct Score",
+               [("1-0", 7000, "OT_UNTYPED", None), ("2-1", 9000, "OT_UNTYPED", None)]),
+        _offre("Correct Score", "Score exact - Première période", "Correct Score - Period 1",
+               [("1-0", 4500, "OT_UNTYPED", None), ("2-1", 8000, "OT_UNTYPED", None)], lifetime=None),
+        _offre("Over/Under", "Nombre total de buts - Période 2", "Total Goals - Period 2",
+               [("Plus de 1.5", 1850, "OT_OVER", 1500), ("Moins de 1.5", 1950, "OT_UNDER", 1500)],
+               lifetime=None),
+        _offre("Over/Under", "Nombre de buts par Löwen Frankfurt - 1ère mi-temps",
+               "Total Goals by Löwen Frankfurt - 1st Half",
+               [("Plus de 0.5", 1800, "OT_OVER", 500), ("Moins de 0.5", 1900, "OT_UNDER", 500)],
+               lifetime=None),
+        _offre("Match", "Set 1", "Set 1",
+               [("1", 1600, "OT_ONE", None), ("2", 2200, "OT_TWO", None)], lifetime=None),
+    ]
+    hockey = _lignes(offres[:4], sport="hockey", domicile=domicile, exterieur=exterieur)
+    scores = {(l["periode"], l["issue"], l["cote"]) for l in hockey if l["marche"] == "CORRECT_SCORE"}
+    assert ("TEMPS_REG", "1-0", 7.0) in scores
+    assert ("P1", "1-0", 4.5) in scores
+    assert not any(l["periode"] == "TEMPS_REG" and l["cote"] == 4.5 for l in hockey if l["marche"] == "CORRECT_SCORE")
+    totaux = [l for l in hockey if l["marche"] == "TOTAL" and l["issue"] == "PLUS"]
+    assert totaux and totaux[0]["periode"] == "P2" and totaux[0]["ligne"] == 1.5
+    equipe = [l for l in hockey if l["marche"] == "TOTAL_DOM"]
+    assert {(l["periode"], l["issue"]) for l in equipe} == {("MT1", "PLUS"), ("MT1", "MOINS")}
+    tennis = _lignes(offres[4:], sport="tennis", domicile="Struff", exterieur="Giron")
+    assert {(l["marche"], l["periode"]) for l in tennis} == {("VAINQUEUR", "SET1")}
+
+
+def test_handicap_hockey_equivalent_garde_le_temps_reglementaire():
+    reg = {"match_id": "pmu|1", "marche": "HANDICAP", "periode": "MATCH", "ligne": -2.5,
+           "issue": "DOM", "cote": 3.95, "libelle": "Handicap - Temps réglementaire"}
+    prol = {**reg, "cote": 3.90, "libelle": "Handicap - Prolongations et séance de tirs au but incluses"}
+    gardes = pmu._retenir([prol, reg])
+    assert gardes == [reg]
+    essai = _offre("Match", "Premier Essai (Égalité: Aucune équipe ne marque un essai)", "First Try",
+                   [("1", 1720, "OT_ONE", None), ("X", 20100, "OT_CROSS", None), ("2", 2100, "OT_TWO", None)])
+    plein = _offre("Match", "Temps réglementaire (3-way)", "Full Time",
+                   [("1", 1560, "OT_ONE", None), ("X", 21000, "OT_CROSS", None), ("2", 2400, "OT_TWO", None)])
+    lignes = _lignes([essai, plein], sport="rugby", domicile="Harlequins", exterieur="Vannes")
+    assert {(l["issue"], l["cote"]) for l in lignes if l["marche"] == "RESULTAT_1N2"} == {
+        ("DOM", 1.56), ("NUL", 21.0), ("EXT", 2.4)}
+
+
 def test_mode_par_defaut_shadow(monkeypatch):
     monkeypatch.delenv("SOURCE_PMU", raising=False)
     assert pmu.mode_source() == "shadow"
