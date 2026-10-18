@@ -26,6 +26,7 @@ import requests
 
 from cotes.comparaison import reference_echange
 from cotes.correspondance import ressemblance
+from cotes.direct.horizon import fusionner
 
 BASE = "https://api.smarkets.com/v3"
 _OUI = {"1", "oui", "on", "true", "yes"}
@@ -76,6 +77,7 @@ _ISSUE = {
 _HTFT = {"HOME": "DOM", "AWAY": "EXT", "DRAW": "NUL"}
 _PROLONGATION = ("hockey", "basket", "football_americain", "baseball")
 _ECART_RADAR_S = 90 * 60
+LISTE_VALIDE_MIN = 60
 _echeance = None
 
 
@@ -166,6 +168,34 @@ class Client:
         self.erreurs: list[str] = []
         self._bloque = False
         self._premier = True
+        self._restant: int | None = None       # requêtes encore permises dans la fenêtre
+        self._reset: float = 60.0              # secondes avant le renouvellement du quota
+        self.attentes = 0.0
+
+    def _quota(self, reponse) -> None:
+        """Retient le quota annoncé : l'API autorise 60 requêtes par minute."""
+        entetes = getattr(reponse, "headers", None) or {}
+        try:
+            self._restant = int(entetes.get("x-ratelimit-remaining"))
+            self._reset = min(120.0, max(1.0, float(entetes.get("x-ratelimit-reset", 60))))
+        except (TypeError, ValueError):
+            pass
+
+    def _attendre_quota(self) -> bool:
+        """Fenêtre épuisée : on attend son renouvellement si le budget le permet, sinon on s'arrête (cache)."""
+        if self._restant is None or self._restant > 1:
+            return True
+        attente = self._reset + 1.0
+        reste = getattr(self.echeance, "reste", None) if self.echeance is not None else None
+        reste = reste() if reste else None
+        if reste is not None and attente > reste - 3:
+            self._bloque = True
+            self._noter("budget")
+            return False
+        time.sleep(attente)
+        self.attentes += attente
+        self._restant = None
+        return True
 
     def _espacer(self) -> None:
         if self._premier:
@@ -191,6 +221,8 @@ class Client:
             if not self._temps():
                 return None
             self._espacer()
+            if not self._attendre_quota():
+                return None
             self.requetes += 1
             delai = 30 if self.echeance is None else self.echeance.timeout(8)
             try:
@@ -203,8 +235,15 @@ class Client:
                     return None
                 time.sleep(0.5 * (essai + 1))
                 continue
+            self._quota(r)
             if r.status_code == 429:
-                # Retry-After n'est pas attendu : on s'arrête et le cycle garde le cache.
+                # Quota dépassé malgré la cadence : une seule attente du renouvellement, puis on s'arrête
+                # et le cycle garde le cache.
+                if essai == 0 and "x-ratelimit-reset" in (getattr(r, "headers", None) or {}):
+                    self._restant = 0
+                    if self._attendre_quota():
+                        continue
+                    return None
                 self._bloque = True
                 self._noter("HTTP 429")
                 return None
@@ -396,11 +435,16 @@ def _evenements(client: Client, type_event: str, heures: float, maintenant: date
 
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
               maintenant: datetime | None = None, radar: list[dict] | None = None,
-              echeance=None) -> tuple[list[dict], dict]:
+              echeance=None, reserve: dict | None = None) -> tuple[list[dict], dict]:
     """Lignes au format référence (probabilité juste déjà calculée).
 
     ``radar`` limite aux matchs déjà vus chez les books français. ``None`` garde
     l'ancien parcours (fixtures). Une liste vide ne contacte pas l'API.
+
+    L'API autorise 60 requêtes par minute : le client suit son quota et le budget du cycle ne suffit
+    pas pour tout le catalogue. Avec ``reserve`` (les lignes du passage précédent), les matchs les
+    moins récemment lus passent d'abord, ceux que le budget n'atteint pas gardent leurs lignes
+    d'avant (au plus une heure), et le catalogue complet est relu en quelques passages.
     """
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
@@ -413,76 +457,111 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     if radar is not None and not radar:
         return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0, "perime": False}
     bruts: list[dict] = []
-    matchs = 0
-    for type_event, sport in demandes:
+    a_lire: list[tuple[dict, str]] = []
+    # La liste des matchs coûte à elle seule la moitié du quota : gardée une heure avec la réserve.
+    memo = (reserve or {}).get("evenements") or {}
+    memo_lu = _heure(memo.get("lu"))
+    voulus = {s for _, s in demandes}
+    if reserve is not None and memo_lu and maintenant - memo_lu < timedelta(minutes=LISTE_VALIDE_MIN) \
+            and isinstance(memo.get("liste"), list):
+        horizon = maintenant + timedelta(hours=heures)
+        for ev in memo["liste"]:
+            debut = _heure(ev.get("start_datetime")) if isinstance(ev, dict) else None
+            if debut and maintenant < debut <= horizon and ev.get("sport_interne") in voulus and ev.get("id"):
+                a_lire.append((ev, ev["sport_interne"]))
+        evenements = memo
+    else:
+        for type_event, sport in demandes:
+            if client._bloque:
+                break
+            a_lire += [(ev, sport) for ev in _evenements(client, type_event, heures, maintenant, radar, sport)]
+        evenements = {"lu": maintenant.isoformat(timespec="seconds"), "liste": [
+            {"id": ev.get("id"), "name": ev.get("name"), "start_datetime": ev.get("start_datetime"),
+             "sport_interne": sport} for ev, sport in a_lire]}
+    matchs = len(a_lire)
+    lus: dict[str, str] = {}
+    for ligne in (reserve or {}).get("lignes") or []:
+        if isinstance(ligne, dict) and ligne.get("match_id"):
+            lus[ligne["match_id"]] = max(lus.get(ligne["match_id"], ""), str(ligne.get("collecte") or ""))
+    a_lire.sort(key=lambda es: (lus.get(f"smarkets|{es[0].get('id')}", ""), str(es[0].get("start_datetime"))))
+    traites = 0
+    for groupe in _lots(a_lire, 10):
+        sports_du_lot = {str(e["id"]): s for e, s in groupe}
+        lot = [e for e, _ in groupe]
         if client._bloque:
             break
-        events = _evenements(client, type_event, heures, maintenant, radar, sport)
-        matchs += len(events)
-        for lot in _lots(events, 10):
-            ids = ",".join(str(e["id"]) for e in lot if e.get("id"))
-            doc = client.get(f"events/{ids}/markets/")
-            marches = [m for m in ((doc or {}).get("markets") or [])
-                       if isinstance(m, dict) and m.get("state") in (None, "open")
-                       and not m.get("hidden") and _type_marche(m) in MARCHES]
-            if not marches:
+        ids = ",".join(str(e["id"]) for e in lot if e.get("id"))
+        doc = client.get(f"events/{ids}/markets/")
+        if isinstance(doc, dict):
+            traites += len(lot)
+        marches = [m for m in ((doc or {}).get("markets") or [])
+                   if isinstance(m, dict) and m.get("state") in (None, "open")
+                   and not m.get("hidden") and _type_marche(m) in MARCHES]
+        if not marches:
+            continue
+        ids_m = [str(m["id"]) for m in marches if m.get("id")]
+        contrats: dict[str, list] = {}
+        carnets: dict[str, dict] = {}
+        for groupe in _lots(ids_m, 20):
+            cle = ",".join(groupe)
+            doc_c = client.get(f"markets/{cle}/contracts/")
+            for c in ((doc_c or {}).get("contracts") or []) if isinstance(doc_c, dict) else []:
+                if isinstance(c, dict):
+                    contrats.setdefault(str(c.get("market_id")), []).append(c)
+            doc_q = client.get(f"markets/{cle}/quotes/")
+            if isinstance(doc_q, dict) and "error_type" not in doc_q:
+                carnets.update(doc_q)
+        par_event = {str(e["id"]): e for e in lot}
+        vainqueurs: dict[str, list] = {}
+        for m in marches:
+            if _type_marche(m) in ("WINNER_3_WAY", "WINNER_2_WAY"):
+                vainqueurs.setdefault(str(m.get("event_id")), []).extend(
+                    contrats.get(str(m.get("id")), []))
+        for m in marches:
+            event = par_event.get(str(m.get("event_id")))
+            if not event:
                 continue
-            ids_m = [str(m["id"]) for m in marches if m.get("id")]
-            contrats: dict[str, list] = {}
-            carnets: dict[str, dict] = {}
-            for groupe in _lots(ids_m, 20):
-                cle = ",".join(groupe)
-                doc_c = client.get(f"markets/{cle}/contracts/")
-                for c in ((doc_c or {}).get("contracts") or []) if isinstance(doc_c, dict) else []:
-                    if isinstance(c, dict):
-                        contrats.setdefault(str(c.get("market_id")), []).append(c)
-                doc_q = client.get(f"markets/{cle}/quotes/")
-                if isinstance(doc_q, dict) and "error_type" not in doc_q:
-                    carnets.update(doc_q)
-            par_event = {str(e["id"]): e for e in lot}
-            vainqueurs: dict[str, list] = {}
-            for m in marches:
-                if _type_marche(m) in ("WINNER_3_WAY", "WINNER_2_WAY"):
-                    vainqueurs.setdefault(str(m.get("event_id")), []).extend(
-                        contrats.get(str(m.get("id")), []))
-            for m in marches:
-                event = par_event.get(str(m.get("event_id")))
-                if not event:
+            sport = sports_du_lot[str(event["id"])]
+            interne, periode, a_ligne = MARCHES[_type_marche(m)]
+            home, away = _equipes(event, vainqueurs.get(str(event.get("id")), []))
+            if not home or not away:
+                continue
+            debut = _heure(event.get("start_datetime"))
+            if not debut:
+                continue
+            ligne = _ligne(m) if a_ligne else None
+            if a_ligne and ligne is None:
+                continue
+            per = periode_match(sport, str(m.get("name") or ""), periode)
+            base = {
+                "source": "Smarkets", "bookmaker": "smarkets", "sport": sport,
+                "ligue": None, "match_id": f"smarkets|{event.get('id')}",
+                "domicile": home, "exterieur": away, "debut": debut.isoformat(),
+                "collecte": moment, "joueur": None, "cle_marche": f"smarkets|{m.get('id')}",
+                "marche": interne, "periode": per, "ligne": ligne, "libelle": m.get("name"),
+            }
+            for contrat in contrats.get(str(m.get("id")), []):
+                if contrat.get("state_or_outcome") not in (None, "open"):
                     continue
-                interne, periode, a_ligne = MARCHES[_type_marche(m)]
-                home, away = _equipes(event, vainqueurs.get(str(event.get("id")), []))
-                if not home or not away:
+                issue = _issue(interne, contrat)
+                if not issue:
                     continue
-                debut = _heure(event.get("start_datetime"))
-                if not debut:
+                carnet = _carnet(carnets.get(str(contrat.get("id"))) or {})
+                if not carnet:
+                    # Une issue ouverte sans achat ou sans vente retire tout le marché,
+                    # comme une ligne Betfair incomplète.
+                    bruts.append({**base, "issue": issue, "achat": [], "vente": []})
                     continue
-                ligne = _ligne(m) if a_ligne else None
-                if a_ligne and ligne is None:
-                    continue
-                per = periode_match(sport, str(m.get("name") or ""), periode)
-                base = {
-                    "source": "Smarkets", "bookmaker": "smarkets", "sport": sport,
-                    "ligue": None, "match_id": f"smarkets|{event.get('id')}",
-                    "domicile": home, "exterieur": away, "debut": debut.isoformat(),
-                    "collecte": moment, "joueur": None, "cle_marche": f"smarkets|{m.get('id')}",
-                    "marche": interne, "periode": per, "ligne": ligne, "libelle": m.get("name"),
-                }
-                for contrat in contrats.get(str(m.get("id")), []):
-                    if contrat.get("state_or_outcome") not in (None, "open"):
-                        continue
-                    issue = _issue(interne, contrat)
-                    if not issue:
-                        continue
-                    carnet = _carnet(carnets.get(str(contrat.get("id"))) or {})
-                    if not carnet:
-                        # Une issue ouverte sans achat ou sans vente retire tout le marché,
-                        # comme une ligne Betfair incomplète.
-                        bruts.append({**base, "issue": issue, "achat": [], "vente": []})
-                        continue
-                    achat, vente = carnet
-                    bruts.append({**base, "issue": issue, "achat": [achat], "vente": [vente]})
+                achat, vente = carnet
+                bruts.append({**base, "issue": issue, "achat": [achat], "vente": [vente]})
     justes = reference_echange(bruts, "Smarkets")
-    perime = any(e in ("budget", "HTTP 429") for e in client.erreurs) or (
-        echeance is not None and not echeance.ok())
+    if reserve is not None:
+        justes = fusionner((reserve or {}).get("lignes") or [], justes, maintenant, heures, age_max_h=1)
+        # Un passage partiel n'est pas périmé : le budget ou le quota a coupé la fin du catalogue, relue au suivant.
+        perime = not traites and bool(client.erreurs)
+    else:
+        perime = any(e in ("budget", "HTTP 429") for e in client.erreurs) or (
+            echeance is not None and not echeance.ok())
     return justes, {"ok": not client.erreurs or bool(justes), "erreurs": list(client.erreurs),
-                    "requetes": client.requetes, "matchs": matchs, "perime": perime}
+                    "requetes": client.requetes, "matchs": matchs, "lus": traites, "perime": perime,
+                    "evenements": evenements}

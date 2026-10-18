@@ -66,7 +66,7 @@ RYTHME_MIN = 20
 # Les lectures lointaines ne tombent pas le même cycle : PMU toutes les 20 min,
 # Unibet 27, Betclic 34. Le premier passage (aucun tampon) reste complet.
 RYTHME_SOURCE = {"pmu": 20, "unibet": 27, "betclic": 34}
-SMARKETS_FRAIS_MIN = 20
+SMARKETS_FRAIS_MIN = 15
 _journal_lock = threading.Lock()
 # minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
 REGLEMENT_MINUTES = float(os.environ.get("REGLEMENT_MINUTES", "55"))
@@ -173,7 +173,7 @@ def _cache_sm(chemin: Path) -> dict:
 
 def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
                        maintenant: datetime, journal: dict):
-    """Relit Smarkets au plus toutes les 20 min, seulement si ``SMARKETS_COLLECTE`` est oui.
+    """Relit Smarkets au plus toutes les 15 min, seulement si ``SMARKETS_COLLECTE`` est oui.
 
     Éteint (défaut) : zéro appel. La table des paris déjà pris reste celle de l'historique.
     Un 429 ou un budget garde le cache périmé.
@@ -203,7 +203,8 @@ def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
     smarkets._echeance = echeance
     try:
         recu = etape_bornee("smarkets", journal, BUDGETS["smarkets"], smarkets.collecter,
-                            sports, heures, maintenant=maintenant, radar=radar, echeance=echeance)
+                            sports, heures, maintenant=maintenant, radar=radar, echeance=echeance,
+                            reserve={"lignes": cache.get("lignes") or [], "evenements": cache.get("evenements")})
     finally:
         smarkets._echeance = None
     if not isinstance(recu, tuple) or len(recu) != 2:
@@ -217,6 +218,7 @@ def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
         lignes = list(precedentes)
     ecrire_json(chemin, {
         "lu": maintenant.isoformat(), "lignes": lignes, "perime": perime, "matchs": info.get("matchs"),
+        "lus": info.get("lus"), "evenements": info.get("evenements") or cache.get("evenements"),
     })
     if perime and "smarkets" in journal["etapes"]:
         et = journal["etapes"]["smarkets"]
@@ -601,6 +603,19 @@ def conserver_journal_reglement(etat: dict, journal: dict, effectue: bool) -> No
         etat["dernier_cycle_reglement"] = dict(journal)
 
 
+TEMOIN_ABANDONNE = "Pinnacle brut"
+
+
+def charger_paris(donnees: Path, journal: dict) -> list[dict]:
+    """paris.json sans le témoin « Pinnacle brut », abandonné : il ne servait qu'à mesurer ce que change le retrait
+    de la marge (ROI −12,6 % contre −12,8 % avec la marge retirée) et pesait 80 % du fichier. Retiré à la lecture,
+    donc sous le verrou de la branche « donnees » ; l'historique reste dans les commits."""
+    paris, retires = stockage.retirer_reference(lire_json(donnees / "paris.json", []), TEMOIN_ABANDONNE)
+    if retires:
+        journal["temoin_pinnacle_brut_retires"] = retires
+    return paris
+
+
 def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
                         journal: dict, requetes: dict, mode_reglement: str) -> bool:
     # Le règlement ne lit pas Smarkets : les cotes de l'échange ne servent pas à solder un pari.
@@ -786,7 +801,7 @@ def main() -> int:
 
     if args.seulement_reglement:
         # Cycle indépendant : aucune collecte ni placement de paris.
-        paris = lire_json(donnees / "paris.json", [])
+        paris = charger_paris(donnees, journal)
         manuels = lire_json(donnees / "resultats_manuels.json", {})
         paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
         requetes = {}
@@ -876,7 +891,7 @@ def main() -> int:
     # le pari enregistre les trois champs.
     comparaison.annoter_ecarts(opportunites, francais,
                                {"Betfair": betfair, "Polymarket": poly, "Smarkets": sm_lignes})
-    paris = lire_json(donnees / "paris.json", [])
+    paris = charger_paris(donnees, journal)
     # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
     manuels = lire_json(donnees / "resultats_manuels.json", {})
     paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
