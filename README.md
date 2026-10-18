@@ -271,7 +271,7 @@ dans un fichier isolé de la branche données, avec délais réels et prix revus
 
 ## Sécurité et audit
 
-[Configuration, secrets et publication](SECURITY.md) · [Audit consolidé du 17 octobre 2026](docs/audit-final-consolide-2026-10-17.md).
+[Configuration, secrets et publication](SECURITY.md).
 Le retrait complet de la valeur guest Pinnacle reste conditionné à une configuration de remplacement validée. La revue détaillée de cinq moteurs de sélection reste ouverte ; les rapports ne certifient pas une rentabilité future.
 
 ## Règlement sans PulseScore
