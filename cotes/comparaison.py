@@ -8,9 +8,12 @@ Pour chaque cote d'un bookmaker français : on retrouve le même match chez chaq
 Une référence n'est utilisée que si elle est fiable à cet instant :
 - lue à moins de `FENETRE_MIN` minutes de la cote française (sinon une cote qui a bougé crée une
   fausse erreur) ;
-- Pinnacle : marge du marché ≤ 12 % (au-delà, retirer la marge devient imprécis) ;
+- Pinnacle : marge du marché ≤ 12 % (au-delà, retirer la marge devient imprécis) et cache
+  pas plus vieux que `PINNACLE_AGE_MAX_MIN` (``cote_perimee`` faux) ;
 - Betfair, Polymarket, Kalshi : écart achat/vente ≤ 5 points et ≤ 25 % du prix, et un minimum d'argent
   engagé.
+Corners, cartons et paris pair/impair ne sont pas comparés : l'ANJ ne les autorise pas chez les
+bookmakers français.
 « Consensus » = moyenne des probabilités des références disponibles (au moins deux).
 """
 from __future__ import annotations
@@ -36,6 +39,20 @@ BRUT = "Pinnacle brut"          # référence témoin : cote Pinnacle affichée,
 ECART_SUSPECT = 0.25            # cotes <= 10
 ECART_SUSPECT_GROSSES = 1.0     # cotes > 10
 DESACCORD_MAX = 1.25            # cotes justes de deux références qui diffèrent de plus de 25 % : suspect
+_HORS_ANJ = re.compile(
+    r"odd\s*/\s*even|even\s*/\s*odd|odd\s+or\s+even|even\s+or\s+odd|"
+    r"pair\s*/\s*impair|impair\s*/\s*pair|pair\s+ou\s+impair|impair\s+ou\s+pair",
+    re.IGNORECASE)
+
+
+def hors_perimetre_anj(l: dict) -> bool:
+    """Corners, cartons et pair/impair : pas de comparaison avec les books français."""
+    marche = str(l.get("marche") or "")
+    if marche.startswith(("CORNERS_", "CARTONS_")):
+        return True
+    if "ODD_EVEN" in marche.upper() or "PAIR_IMPAIR" in marche.upper():
+        return True
+    return bool(_HORS_ANJ.search(f"{marche} {l.get('libelle') or ''}"))
 
 
 def _t(s) -> datetime | None:
@@ -84,6 +101,8 @@ def _fiable(nom: str, l: dict) -> bool:
     if not l.get("proba_juste") or not (0 < l["proba_juste"] < 1):
         return False
     if nom == "Pinnacle":
+        if l.get("cote_perimee"):
+            return False
         return (l.get("marge_pinnacle") or 0) <= MARGE_MAX_PINNACLE
     ecart = l.get("ecart_achat_vente") or 0
     if not 0 <= ecart <= ECART_ACHAT_VENTE_MAX or ecart > ECART_RELATIF_MAX * min(l["proba_juste"], 1 - l["proba_juste"]):
@@ -132,6 +151,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
     index = index if index is not None else indexer(francais, references)
     opportunites = []
     for l in francais:
+        if hors_perimetre_anj(l):
+            continue
         if l["periode"].endswith("?") or not l.get("cote"):
             continue
         t_fr, debut = _t(l.get("collecte")), _t(l.get("debut"))
