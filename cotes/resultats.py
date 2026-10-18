@@ -28,6 +28,8 @@ from .correspondance import normaliser, ressemblance
 
 VALIDATEURS = ["orbitxch", "draftkings", "unibet-uk", "interwetten-de", "betmgm", "pmu"]
 ECART_HEURE_MIN = 45
+SECOURS_HEURE_MIN = 15
+SECOURS_NOM_MIN = 0.95
 RESSEMBLANCE_MIN = 0.75
 # tennis : l'heure annoncée n'est qu'une estimation (ordre de passage, pluie) ; jusqu'à 12 h d'écart si les
 # deux joueurs sont clairement les mêmes (cas réel : Charaeva – Zheng annoncé 02:00, joué à 11:05)
@@ -68,6 +70,7 @@ ESPN_NOTES_FEMININES = re.compile(r"women|^wwc|ncaaw|nwsl|usl super league|liga 
 # tennis : abandon en cours de match (règles d'abandon de chaque bookmaker, cotes/reglement.py)
 ESPN_ABANDONS = {"STATUS_RETIRED"}
 REPORT_MAX_J = 7
+LIGUE_FEMININE = re.compile(r"\((?:f|w)\)|\b(?:femmes?|women|womens|feminin|f\.)\b|\bf\.?$", re.I)
 
 
 def _heure(s) -> datetime | None:
@@ -446,7 +449,8 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
     dom, ext = _noms(p)
     # féminin : au niveau du match (« BC La Tronche Meylan – Toulouse (F) » : une seule équipe marquée)
     feminin = lambda noms: any(normaliser(n)[1] for n in noms)  # noqa: E731
-    fem_pari = feminin(dom + ext)
+    # le championnat le dit parfois seul (Unibet : « Tauron Liga (F) » avec des équipes sans marqueur)
+    fem_pari = feminin(dom + ext) or bool(LIGUE_FEMININE.search(str(p.get("ligue") or "")))
     en_femmes = lambda n: n if normaliser(n)[1] else f"{n} Women"  # noqa: E731
     if fem_pari:
         dom, ext = [en_femmes(n) for n in dom], [en_femmes(n) for n in ext]
@@ -457,6 +461,7 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
         return max((ressemblance(n, x) for n in noms if normaliser(n)[2] == normaliser(x)[2]), default=0.0)
 
     meilleurs: dict[str, tuple[float, float, dict]] = {}
+    secours: dict[str, list] = {}
     for r in enregistrements:
         if r.get("sport") != p["sport"]:
             continue
@@ -474,6 +479,22 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
         inverse = min(proche(dom, r["exterieur"]), proche(ext, r["domicile"]))
         score = max(direct, inverse)
         if score < (RESSEMBLANCE_TENNIS_LOIN if ecart > ECART_HEURE_MIN * 60 else RESSEMBLANCE_MIN):
+            # Secours : une équipe au nom quasi identique et le même coup d'envoi (± 15 min) suffisent, l'autre
+            # s'écrit parfois très différemment (« EC-KAC » / « Klagenfurt »). Une équipe ne joue pas deux
+            # matchs en même temps ; si plusieurs matchs d'une source collent, aucun n'est retenu (ambigu).
+            if p["sport"] == "tennis" or ecart > SECOURS_HEURE_MIN * 60:
+                continue
+            d1 = (proche(dom, r["domicile"]), proche(ext, r["exterieur"]))
+            i1 = (proche(dom, r["exterieur"]), proche(ext, r["domicile"]))
+            if max(d1) >= SECOURS_NOM_MIN and max(d1) >= max(i1):
+                inverse_secours = False
+            elif max(i1) >= SECOURS_NOM_MIN:
+                inverse_secours = True
+            else:
+                continue
+            if _score_valide(r.get("score")):
+                r = {**r, "score": tuple(r["score"])}
+                secours.setdefault(r["source"], []).append((-ecart, _oriente(r, inverse_secours)))
             continue
         if not _score_valide(r.get("score")):
             _ignorer(r, "score_invalide")
@@ -483,7 +504,11 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
         # à ressemblance égale, l'heure la plus proche (même affiche deux fois dans la fenêtre)
         if r["source"] not in meilleurs or (score, -ecart) > meilleurs[r["source"]][:2]:
             meilleurs[r["source"]] = (score, -ecart, _oriente(r, inverse > direct))
-    return [r for _, _, r in meilleurs.values()]
+    trouves = [r for _, _, r in meilleurs.values()]
+    for source, candidats in secours.items():
+        if source not in meilleurs and len(candidats) == 1:
+            trouves.append(candidats[0][1])
+    return trouves
 
 
 def _periodes_coherentes(sport: str, r: dict) -> bool:
@@ -613,7 +638,9 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
         fiables = TENNIS_FIABLES if p["sport"] == "tennis" else SOURCES_FIABLES
         depuis = maintenant - debut if maintenant and debut else timedelta(0)
         seule_fiable = trouves[0]["source"] in fiables and depuis >= timedelta(hours=DELAI_SOURCE_UNIQUE_H)
-        seule_ancienne = p["sport"] not in SEULES_SPORTS_EXCLUS \
+        # Flashscore ne garde que les matchs finis dans le temps réglementaire : au hockey, son score est final
+        sport_ok = p["sport"] not in SEULES_SPORTS_EXCLUS or (p["sport"] == "hockey" and trouves[0]["source"] == "flashscore")
+        seule_ancienne = sport_ok \
             and trouves[0]["source"] not in SEULES_SOURCES_EXCLUES \
             and depuis >= timedelta(hours=DELAI_SOURCE_QUELCONQUE_H) and plausible(p["sport"], trouves[0]["score"])
         if not (seule_fiable or seule_ancienne):
