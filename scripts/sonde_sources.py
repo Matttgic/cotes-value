@@ -40,6 +40,7 @@ def _extrait(texte: str, n: int = 160) -> str:
     """Extrait court, sans jeton ni URL authentifiée."""
     t = re.sub(r"(?i)(token|secret|api[_-]?key|authorization|hstoken)(['\"=: ]+)[^\s,'\"}]{6,}",
                r"\1\2[omis]", texte or "")
+    t = re.sub(r'(?i)("sid"\s*:\s*")[^"]+', r"\1[omis]", t)
     t = re.sub(r"\s+", " ", t).strip()
     return t[:n]
 
@@ -302,33 +303,50 @@ def olybet() -> dict:
                        f"{premier['detail'] or 'echec simple'} ; repli {type(e).__name__}")
 
 
-def winamax() -> list[dict]:
-    page, brut = lire_http("Winamax page sports/1", WINAMAX_PAGE,
-                           {"Accept": "text/html", "Accept-Language": "fr-FR"})
-    lignes = [page]
-    html = brut.decode("utf-8", "replace") if isinstance(brut, bytes) else ""
-    a_etat = "PRELOADED_STATE" in html
-    ident = None
-    m = re.search(r'"matches"\s*:\s*\[\s*(\d+)', html)
-    if m:
-        ident = m.group(1)
-    if ident is None:
-        m = re.search(r"PRELOADED_STATE\s*=\s*(\{.*)", html)
+def _id_winamax(html: str) -> str | None:
+    for motif in (r'"matches"\s*:\s*\[\s*(\d+)', r'"matches"\s*:\s*\{\s*"(\d+)"',
+                  r'"matchId"\s*:\s*"?(\d+)', r"/paris-sportifs/match/(\d+)"):
+        m = re.search(motif, html)
         if m:
-            try:
-                doc, _ = json.JSONDecoder().raw_decode(m.group(1))
-                matchs = doc.get("matches") if isinstance(doc, dict) else None
-                if isinstance(matchs, dict) and matchs:
-                    ident = next(iter(matchs))
-                elif isinstance(matchs, list) and matchs:
-                    ident = matchs[0]
-            except ValueError:
-                ident = None
-    if ident is None:
-        m = re.search(r'"matchId"\s*:\s*"?(\d+)', html)
-        ident = m.group(1) if m else None
+            return m.group(1)
+    m = re.search(r"PRELOADED_STATE\s*=\s*(\{.*)", html)
+    if not m:
+        return None
+    try:
+        doc, _ = json.JSONDecoder().raw_decode(m.group(1))
+    except ValueError:
+        return None
+    matchs = doc.get("matches") if isinstance(doc, dict) else None
+    if isinstance(matchs, dict) and matchs:
+        return str(next(iter(matchs)))
+    if isinstance(matchs, list) and matchs:
+        return str(matchs[0])
+    return None
+
+
+def winamax() -> list[dict]:
+    entetes = {"Accept": "text/html", "Accept-Language": "fr-FR"}
+    page, brut = lire_http("Winamax page sports/1", WINAMAX_PAGE, entetes)
+    html = brut.decode("utf-8", "replace") if isinstance(brut, bytes) else ""
+    ident = _id_winamax(html)
+    if not ident:
+        try:
+            r, debut, brut2 = _cffi(WINAMAX_PAGE, entetes, impersonate="safari")
+            html2 = brut2.decode("utf-8", "replace")
+            ident2 = _id_winamax(html2)
+            if ident2 or len(brut2) > len(html):
+                html, ident = html2, ident2 or ident
+                page = _mesure("Winamax page sports/1", "curl_cffi", r.status_code, len(brut2),
+                               debut, html2[:160], 200 <= r.status_code < 300, "repli safari")
+        except Exception as e:  # noqa: BLE001
+            page["detail"] = f"safari {type(e).__name__}"
+    lignes = [page]
+    a_etat = "PRELOADED_STATE" in html
+    i = html.find("PRELOADED_STATE")
+    apercu = _extrait(html[i:i + 90]) if i >= 0 else ""
     page["detail"] = ("PRELOADED_STATE présent" if a_etat else "PRELOADED_STATE absent") + (
-        f", match {ident}" if ident else ", aucun match")
+        f", match {ident}" if ident else ", aucun match") + (f" | {apercu}" if not ident and apercu else "")
+    page["extrait"] = _extrait(apercu or html[:160])
     if not ident:
         lignes.append(_mesure("Winamax socket.io match", page["client"], None, 0, time.perf_counter(),
                               "", False, "aucun matchId"))
