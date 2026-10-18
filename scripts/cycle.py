@@ -337,7 +337,10 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             else:
                 wina_lignes, wina_meta = recu
             signaler(journal, "winamax_direct", list(wina_meta.get("erreurs") or []))
-        wina_utilisable = bool(wina_meta.get("ok") and (wina_lignes or not wina_meta.get("erreurs")))
+            if wina_meta.get("ok") is False and "winamax_direct" in journal["etapes"]:
+                journal["etapes"]["winamax_direct"]["ok"] = False
+        # Une lecture vide (ok, ou zéro cote) ne doit pas remplacer PulseScore.
+        wina_utilisable = bool(wina_meta.get("ok") and wina_lignes)
         sans_wina = source_wina == "direct" or (source_wina == "auto" and wina_utilisable)
         source_uni = unibet_direct.mode_source()
         journal["unibet_source"] = source_uni

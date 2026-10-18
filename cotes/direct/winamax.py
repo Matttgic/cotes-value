@@ -1,9 +1,15 @@
 """Cotes Winamax lues sur le socket socket.io, au format d'événement PulseScore.
 
-Relevé le 18/10/2026 : une session curl_cffi qui se fait passer pour Chrome,
-route ``sport:<id>`` pour les matchs, puis ``match:<id>`` pour les marchés.
+Relevé le 18/10/2026 : une session curl_cffi qui se fait passer pour Chrome.
+La route ``sport:<id>`` porte déjà tous les matchs du sport (environ 340 sur
+36 h). Les marchés comparés arrivent ensuite, un filtre à la fois, et non
+match par match. Le serveur pousse aussi des mises à jour sans ``requestId`` :
+elles sont ignorées, seule la trame qui porte l'identifiant demandé est lue.
 ``marketId`` est l'identifiant Sportradar. Corners, cartons et pair/impair
 ne sont pas traduits : les exclusions de la comparaison restent en place.
+
+Une lecture sans aucun match, ou qui ne cote pas la moitié de ceux qu'elle
+vient d'annoncer, est un échec. Le repli ne s'en sert pas.
 
 ``SOURCE_WINAMAX`` vaut ``pulsescore``, ``direct``, ``auto`` ou ``shadow``
 (défaut). En ``shadow``, PulseScore décide et le socket sert au rapport.
@@ -65,7 +71,23 @@ _PAR_SPORT = {
         443: "MATCH_RESULT", 446: "OVER_UNDER", 452: "BOTH_TEAMS_TO_SCORE",
         459: "DRAW_NO_BET", 460: "ASIAN_HANDICAP",
     },
+    # Le vainqueur à deux issues porte le même identifiant qu'au tennis.
+    "volley": {186: "MATCH_RESULT"},
+    "snooker": {186: "MATCH_RESULT"},
+    "badminton": {186: "MATCH_RESULT"},
+    "football_americain": {219: "MATCH_RESULT"},
 }
+# Filtres de la page sport, limités aux marchés déjà comparés. Le football est
+# le plus lourd (quelques Mo par filtre) ; un filtre remplace des centaines de
+# routes ``match:``.
+FILTRES = {
+    "football": (6, 13, 16, 56, 17, 74, 4),
+    "basket": (207,),
+}
+# En dessous, la lecture a vu les matchs mais n'a presque pas sorti de cotes.
+_SEUIL_LECTURE = 0.5
+_MIN_POUR_SEUIL = 8
+_REPONSES_MAX = 8
 _echeance = None
 _HUIT = {"1": "HOME", "2": "AWAY", "x": "DRAW", "X": "DRAW"}
 _DOUBLES = {"9": "HOME_DRAW", "10": "HOME_AWAY", "11": "DRAW_AWAY"}
@@ -115,6 +137,7 @@ class Socket:
         self._session = None
         self._premier = True
         self.echeance = None
+        self._seq = 0
 
     def fermer(self) -> None:
         try:
@@ -142,7 +165,7 @@ class Socket:
         else:
             from curl_cffi.requests import Session
             self._session = Session(impersonate="chrome")
-            self._ws = self._session.ws_connect(URL, headers={"Origin": ORIGIN}, timeout=20)
+            self._ws = self._session.ws_connect(URL, headers={"Origin": ORIGIN}, timeout=30)
         if not str(self._lire() or "").startswith("0"):
             raise OSError("ouverture")
         self._ws.send_str("40")
@@ -162,7 +185,22 @@ class Socket:
             return msg
         return ""
 
-    def demander(self, route: str) -> dict | None:
+    def _lire_reponse(self, identifiant: str) -> str:
+        """Ignore les poussées sans l'identifiant de la demande en cours."""
+        for _ in range(_REPONSES_MAX):
+            msg = self._lire()
+            if not str(msg).startswith("42"):
+                continue
+            try:
+                doc = json.loads(msg[2:])
+            except ValueError:
+                continue
+            payload = doc[1] if isinstance(doc, list) and len(doc) > 1 else None
+            if isinstance(payload, dict) and payload.get("requestId") == identifiant:
+                return msg
+        return ""
+
+    def demander(self, route: str, filtre: int | None = None) -> dict | None:
         if self.echeance is not None and not self.echeance.ok():
             self._noter("budget")
             return None
@@ -170,12 +208,18 @@ class Socket:
             self._noter("route ignorée")
             return None
         self._espacer()
+        identifiant = f"w{self._seq}"
+        self._seq += 1
+        corps = {"route": route, "requestId": identifiant}
+        if filtre is not None:
+            corps["filterId"] = int(filtre)
+        message = "42" + json.dumps(["m", corps], separators=(",", ":"))
         for essai in range(2):
             try:
                 self._assurer()
-                self._ws.send_str('42["m",{"route":"%s"}]' % route)
+                self._ws.send_str(message)
                 self.requetes += 1
-                msg = self._lire()
+                msg = self._lire_reponse(identifiant)
             except Exception:  # noqa: BLE001
                 self.fermer()
                 if essai == 0:
@@ -183,7 +227,7 @@ class Socket:
                 self._noter(f"{route} : réseau")
                 return None
             if not str(msg).startswith("42"):
-                self._noter(f"{route} : réponse inattendue")
+                self._noter(f"{route} : réponse absente")
                 return None
             try:
                 doc = json.loads(msg[2:])
@@ -338,7 +382,7 @@ def evenement_depuis(match: dict, detail: dict, sport: str) -> dict | None:
     odds = {str(k): v for k, v in (detail.get("odds") or {}).items()}
     marches = []
     for offre in (detail.get("bets") or {}).values():
-        if isinstance(offre, dict) and offre.get("matchId") not in (None, match.get("matchId")):
+        if isinstance(offre, dict) and str(offre.get("matchId")) != str(match.get("matchId")):
             continue
         marche = marche_depuis(offre, outcomes, odds, str(domicile), str(exterieur), sport)
         if marche:
@@ -394,6 +438,27 @@ def _noter_budget(client) -> None:
         noter("budget")
 
 
+def _fusionner(sac: dict, doc: dict | None) -> None:
+    if not isinstance(doc, dict):
+        return
+    for cle in ("bets", "outcomes", "odds"):
+        val = doc.get(cle)
+        if isinstance(val, dict):
+            sac[cle].update(val)
+
+
+def _detail_du(match_id, sac: dict) -> dict:
+    mid = str(match_id)
+    bets = {cle: offre for cle, offre in sac["bets"].items()
+            if isinstance(offre, dict) and str(offre.get("matchId")) == mid}
+    besoin = {str(oid) for offre in bets.values() for oid in (offre.get("outcomes") or [])}
+    return {
+        "bets": bets,
+        "outcomes": {k: v for k, v in sac["outcomes"].items() if str(k) in besoin},
+        "odds": {k: v for k, v in sac["odds"].items() if str(k) in besoin},
+    }
+
+
 def collecter(sports: set[str] | None = None, heures: float = 36, transport=None,
               pause: tuple[float, float] = (0.35, 0.6),
               maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
@@ -408,7 +473,6 @@ def collecter(sports: set[str] | None = None, heures: float = 36, transport=None
     moment = maintenant.isoformat(timespec="seconds")
     lignes: list[dict] = []
     matchs = 0
-    lectures = 0
     try:
         demandes = sports_demandes(sports)
         if not demandes:
@@ -418,24 +482,33 @@ def collecter(sports: set[str] | None = None, heures: float = 36, transport=None
                 _noter_budget(client)
                 break
             doc = client.demander(f"sport:{ident}")
-            if not doc:
+            if not isinstance(doc, dict):
                 continue
-            lectures += 1
+            sac = {"bets": {}, "outcomes": {}, "odds": {}}
+            _fusionner(sac, doc)
+            for filtre in FILTRES.get(sport, ()):
+                if echeance is not None and not echeance.ok():
+                    _noter_budget(client)
+                    break
+                _fusionner(sac, client.demander(f"sport:{ident}", filtre))
             bruts = [m for m in (doc.get("matches") or {}).values()
                      if isinstance(m, dict) and _a_venir(m, maintenant, heures)]
             bruts.sort(key=lambda m: m.get("matchStart") or 0)
             matchs += len(bruts)
             for match in bruts:
-                if echeance is not None and not echeance.ok():
-                    _noter_budget(client)
-                    break
-                detail = client.demander(f"match:{match.get('matchId')}")
-                if not detail:
-                    continue
-                ev = evenement_depuis(match, detail, sport)
+                ev = evenement_depuis(match, _detail_du(match.get("matchId"), sac), sport)
                 if ev:
                     lignes += _retenir(traduire(ev, "winamax", sport, moment))
-        return lignes, {"ok": lectures > 0 or not client.erreurs, "erreurs": list(client.erreurs),
+        couverts = len({l.get("match_id") for l in lignes})
+        if not lignes:
+            client._noter("lecture vide")
+            ok = False
+        elif matchs >= _MIN_POUR_SEUIL and couverts < _SEUIL_LECTURE * matchs:
+            client._noter("lecture incomplète")
+            ok = False
+        else:
+            ok = True
+        return lignes, {"ok": ok, "erreurs": list(client.erreurs),
                         "requetes": client.requetes, "matchs": matchs}
     finally:
         if propre and hasattr(client, "fermer"):
