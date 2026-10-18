@@ -15,7 +15,7 @@ function iconeSport(sport) {
 }
 const nomsSports={football:'Football',basket:'Basket',tennis:'Tennis',hockey:'Hockey',volley:'Volley',handball:'Handball',rugby:'Rugby',football_americain:'Foot US',baseball:'Baseball'};
 function monogrammeBookmaker(nom) {
-  const codes={Winamax:'w',Betclic:'b',Unibet:'u',PMU:'p'};
+  const codes={Winamax:'w',Betclic:'b',Unibet:'u',PMU:'p',OlyBet:'o'};
   return `<span class="book-monogramme book-${codes[nom] || 'autre'}" aria-hidden="true">${e(String(nom || '?').slice(0,1))}</span>`;
 }
 function miniCourbe(points, couleur='var(--accent)') {

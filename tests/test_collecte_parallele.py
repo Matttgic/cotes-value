@@ -25,6 +25,9 @@ def _sans_reseau(monkeypatch, direct=None):
         return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
 
     monkeypatch.setattr(cycle.pmu_direct, "collecter", dire)
+    monkeypatch.setattr(cycle.olybet_direct, "collecter",
+                        lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.delenv("SOURCE_OLYBET", raising=False)
 
 
 def test_shadow_garde_pulsescore_et_ne_relit_pas_un_complement(monkeypatch):

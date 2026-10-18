@@ -24,8 +24,8 @@ import requests
 
 BASE = "https://api.pulsescore.net/api"
 FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu"]   # NetBet retiré : flux netbet.com, pas netbet.fr
-NOMS = {"winamax": "Winamax", "betclic": "Betclic", "unibet-fr": "Unibet", "pmu": "PMU", "netbet": "NetBet",
-        "orbitxch": "Betfair"}
+NOMS = {"winamax": "Winamax", "betclic": "Betclic", "unibet-fr": "Unibet", "pmu": "PMU",
+        "olybet": "OlyBet", "netbet": "NetBet", "orbitxch": "Betfair"}
 SPORTS = {"soccer": "football", "basketball": "basket", "tennis": "tennis", "ice-hockey": "hockey",
           "handball": "handball", "volleyball": "volley", "rugby-union": "rugby", "american-football":
           "football_americain", "baseball": "baseball", "mma": "mma", "table-tennis": "tennis_de_table"}

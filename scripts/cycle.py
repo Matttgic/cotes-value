@@ -28,6 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, stockage)
+from cotes.direct import olybet as olybet_direct  # noqa: E402
 from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline  # noqa: E402
@@ -176,6 +177,24 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 journal["pmu_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
         elif sans_pmu:
             lignes = [l for l in lignes if l.get("bookmaker") != "pmu"] + list(direct_lignes)
+    source_oly = olybet_direct.mode_source()
+    journal["olybet_source"] = source_oly
+    if source_oly == "direct":
+        sports_oly = sports & {"football"} if mode == "test" else sports
+        recu = etape("olybet", journal, olybet_direct.collecter, sports_oly,
+                     12 if mode == "test" else HORIZON_H)
+        if recu is None:
+            oly_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
+            oly_lignes = []
+        else:
+            oly_lignes, oly_meta = recu
+        signaler(journal, "olybet", list(oly_meta.get("erreurs") or []))
+        lignes = list(lignes) + list(oly_lignes)
+        try:
+            refs = list(pin) + [l for l in lignes if l.get("bookmaker") == "pmu"]
+            journal["olybet_controle"] = olybet_direct.controle_prix(oly_lignes, refs)
+        except Exception as e:  # noqa: BLE001
+            journal["olybet_controle"] = {"ok": False, "erreur": type(e).__name__}
     mesures_delta(pin, lignes)
     return pin, poly, lignes, requetes
 
