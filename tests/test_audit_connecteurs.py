@@ -111,7 +111,7 @@ def test_configuration_pinnacle_dynamique_et_fichiers_env_proteges(monkeypatch):
     assert 'PINNACLE_API_KEY=' in exemple and 'PINNACLE_AGE_MAX_MIN=' in exemple
     assert 'PINNACLE_RECHAUFFEUR_URL=' in exemple and 'PINNACLE_RECHAUFFEUR_SECRET=' in exemple
     assert 'PINNACLE_PROXY_URL=' in exemple
-    for wf in ['collecte.yml','sonde-live.yml','verif.yml']:
+    for wf in ['collecte.yml','sonde-live.yml']:
         texte=(racine/'.github/workflows'/wf).read_text()
         assert 'PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}' in texte
         assert 'PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}' in texte

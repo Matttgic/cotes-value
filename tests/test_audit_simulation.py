@@ -77,7 +77,7 @@ def test_consensus_conserve_et_verifie_les_dates_de_chaque_composante():
     fr = ligne(cote=2.2, collecte=NOW.isoformat(), debut=(NOW+timedelta(hours=2)).isoformat())
     index = {n: {fr['match_id']: {cle(fr): {**fr, 'proba_juste': .5}}}
              for n in ('Pinnacle', 'Betfair')}
-    out = comparer([fr], {'Pinnacle': [], 'Betfair': []}, index=index, temoin_brut=False)
+    out = comparer([fr], {'Pinnacle': [], 'Betfair': []}, index=index)
     consensus = next(o for o in out if o['reference'] == 'Consensus')
     assert consensus['lectures_references'] == {'Pinnacle': NOW.isoformat(), 'Betfair': NOW.isoformat()}
     p = S.placer([consensus], [], NOW)[0]
