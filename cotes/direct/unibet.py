@@ -28,7 +28,7 @@ from urllib.parse import urlencode
 import requests
 
 from cotes.correspondance import ressemblance
-from cotes.direct.horizon import fusionner
+from cotes.direct.horizon import fusionner, tranche
 from cotes.pulsescore import traduire
 
 ACCUEIL = "https://www.unibet.fr/"
@@ -543,24 +543,38 @@ def _correspond(event: dict, candidats: list) -> bool:
     return False
 
 
+def _id_suivant(doc: dict) -> str | None:
+    """Identifiant de la page suivante. ``pageIndex`` est ignoré par l'API."""
+    valeur = doc.get("nextEventId") if isinstance(doc, dict) else None
+    if isinstance(valeur, bool) or valeur is None:
+        return None
+    if isinstance(valeur, int):
+        return str(valeur)
+    texte = str(valeur).strip()
+    if texte[:1] in "eE" and texte[1:].isdigit():
+        return texte[1:]
+    return texte if texte.isdigit() else None
+
+
 def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
                  type_id, periode, horizon: datetime | None = None, echeance=None,
                  pages_max: int = _PAGES_MAX, session=None, espacer=None,
-                 verrou_sac: threading.Lock | None = None,
-                 pages: list[int] | None = None) -> None:
+                 verrou_sac: threading.Lock | None = None) -> None:
     params = dict(PARAMS)
     if type_id is not None:
         params["marketTypeId"] = str(type_id)
     if periode is not None:
         params["periodId"] = str(periode)
     connus: set[str] = set()
-    indexes = list(pages) if pages is not None else list(range(pages_max))
-    for page in indexes:
+    suivant: str | None = None
+    for page in range(max(1, pages_max)):
         if echeance is not None and not echeance.ok():
             client._noter("budget")
             return
-        params["pageIndex"] = str(page)
-        doc = client.get(f"next/50/p{noeud}", params, session=session, espacer=espacer)
+        requete = dict(params)
+        if suivant:
+            requete["nextEventId"] = suivant
+        doc = client.get(f"next/50/p{noeud}", requete, session=session, espacer=espacer)
         if not doc:
             return
         items = doc.get("items") if isinstance(doc.get("items"), dict) else {}
@@ -588,6 +602,10 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
         total = doc.get("numberOfEvents")
         if isinstance(total, int) and not isinstance(total, bool) and (page + 1) * 50 >= total:
             return
+        nxt = _id_suivant(doc)
+        if not nxt or nxt == suivant:
+            return
+        suivant = nxt
 
 
 def _avec_reserve(lignes, meta, reserve):
@@ -610,13 +628,13 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
 
     ``concurrence`` 1 (défaut des tests) enchaîne les filtres : le jeton renouvelé
     sert à l'appel suivant. Au-dessus, quelques travailleurs gardent chacun leur
-    pause. ``radar`` vide ou absent ne filtre pas. Un radar non vide ne lit que
-    les sports et les matchs qui y figurent, et s'arrête après le marché principal
+    pause.     ``radar`` vide ou absent ne filtre pas. Sans réserve, un radar non vide ne lit
+    que les sports et les matchs qui y figurent, et s'arrête après le marché principal
     si aucun match du sport n'est sur le radar.
 
-    Avec une réserve, la lecture principale reste celle de l'horizon court
-    (3 pages, période principale). Deux pages plus loin tournent ensuite, et
-    la comparaison reçoit l'union sur l'horizon demandé.
+    Avec une réserve (le cycle), le radar ne retire pas de match : chaque sport est
+    suivi par ``nextEventId`` jusqu'à l'horizon, période principale d'abord.
+    Quelques marchés secondaires tournent ensuite. La comparaison reçoit l'union.
     """
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
@@ -633,11 +651,14 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         return _avec_reserve(None, {"ok": False, "erreurs": list(client.erreurs),
                                     "requetes": client.requetes, "matchs": 0}, reserve)
     sac = {"events": {}, "markets": {}, "outcomes": {}}
-    heures_lecture = min(float(heures), float(_HORIZON_COURT)) if reserve is not None else float(heures)
+    heures_lecture = float(heures)
     horizon = maintenant + timedelta(hours=heures_lecture)
     radar_idx = _radar_par_sport(radar)
-    filtre_radar = bool(radar_idx)
-    pages_max = _pages(heures_lecture)
+    # La réserve sert la couverture : le radar Pinnacle laisserait dehors
+    # les matchs que PulseScore compare quand même.
+    filtre_radar = bool(radar_idx) and reserve is None
+    pages_max = _PAGES_MAX if reserve is not None else _pages(heures_lecture)
+    filtres_heures = _HORIZON_COURT if reserve is not None else heures_lecture
     verrou_sac = threading.Lock()
     largeur = max(1, int(concurrence or 1))
 
@@ -690,10 +711,30 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         if noeud is None:
             continue
         candidats.append((interne, noeud))
-    if filtre_radar:
+    curseur_suivant = None
+    if reserve is not None:
+        primaires = []
+        secondaires = []
+        for interne, noeud in candidats:
+            filtres = _filtres(interne, filtres_heures)
+            if not filtres:
+                continue
+            primaires.append((noeud, interne, filtres[0][0], filtres[0][1]))
+            for type_id, periode in filtres[1:]:
+                secondaires.append((noeud, interne, type_id, periode))
+        executer(primaires)
+        choisis, curseur_suivant = tranche(secondaires, int(bloc.get("curseur") or 0), 4)
+        if echeance is None or echeance.ok():
+            for noeud, interne, type_id, periode in choisis:
+                if echeance is not None and not echeance.ok():
+                    client._noter("budget")
+                    break
+                _lire_filtre(client, noeud, interne, sac, type_id, periode, horizon, echeance,
+                             min(4, pages_max), session=session)
+    elif filtre_radar:
         primaires = []
         for interne, noeud in candidats:
-            filtres = _filtres(interne, heures_lecture)
+            filtres = _filtres(interne, filtres_heures)
             if filtres:
                 primaires.append((noeud, interne, filtres[0][0], filtres[0][1]))
         executer(primaires)
@@ -701,32 +742,15 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         for interne, noeud in candidats:
             if any(_correspond(ev, radar_idx.get(interne, []))
                    for ev in sac["events"].values() if ev.get("sport") == interne):
-                for type_id, periode in _filtres(interne, heures_lecture)[1:]:
+                for type_id, periode in _filtres(interne, filtres_heures)[1:]:
                     suite.append((noeud, interne, type_id, periode))
         executer(suite)
     else:
         tout = []
         for interne, noeud in candidats:
-            for type_id, periode in _filtres(interne, heures_lecture):
+            for type_id, periode in _filtres(interne, filtres_heures):
                 tout.append((noeud, interne, type_id, periode))
         executer(tout)
-    curseur_suivant = int(bloc.get("curseur") or 0) or _PAGES_COURT if reserve is not None else None
-    if reserve is not None and (echeance is None or echeance.ok()):
-        curseur = int(bloc.get("curseur") or 0) or _PAGES_COURT
-        if curseur < _PAGES_COURT or curseur >= _PAGES_MAX:
-            curseur = _PAGES_COURT
-        pages_loin = [p for p in (curseur, curseur + 1) if p < _PAGES_MAX]
-        curseur_suivant = _PAGES_COURT if curseur + 2 >= _PAGES_MAX else curseur + 2
-        horizon_loin = maintenant + timedelta(hours=heures)
-        for interne, noeud in candidats:
-            if echeance is not None and not echeance.ok():
-                client._noter("budget")
-                break
-            filtres = _filtres(interne, heures_lecture)
-            if not filtres:
-                continue
-            _lire_filtre(client, noeud, interne, sac, filtres[0][0], filtres[0][1],
-                         horizon_loin, echeance, pages=pages_loin, session=session)
     _attacher(sac)
     moment = maintenant.isoformat(timespec="seconds")
     lignes: list[dict] = []
@@ -822,10 +846,23 @@ def rapport(pulse: list[dict], direct: list[dict]) -> dict:
     accord = egaux / communs if communs else None
     pret = bool(couverture is not None and accord is not None
                 and couverture + 1e-9 >= COUVERTURE_MIN and accord + 1e-9 >= ACCORD_MIN)
+    associes = {mid for mid, _did in couples}
+    manques = []
+    for mid, ligne in matchs_ps.items():
+        if mid in associes or len(manques) >= 20:
+            continue
+        manques.append({
+            "sport": ligne.get("sport"),
+            "domicile": ligne.get("domicile"),
+            "exterieur": ligne.get("exterieur"),
+            "ligue": ligne.get("ligue"),
+            "debut": ligne.get("debut"),
+        })
     return {
         "matchs_pulsescore": len(matchs_ps),
         "matchs_direct": len(matchs_di),
         "matchs_communs": len(couples),
+        "manques": manques,
         "couverture": None if couverture is None else round(couverture, 4),
         "selections_communes": communs,
         "selections_egales": egaux,

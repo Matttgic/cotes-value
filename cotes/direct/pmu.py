@@ -12,10 +12,12 @@ rapport de couverture. Basculer exige au moins 95 % des matchs PulseScore
 retrouvés et 99 % des cotes communes à ±0,01.
 
 La liste ``all/all/all`` est plafonnée (le 18/10/2026 elle s'arrêtait vers 22 h
-alors que l'horizon est 36 h). Sans réserve, chaque compétition du ``group.json``
-est relue. Avec une réserve (le cycle), les matchs à moins de 6 h sont relus
-à chaque passage, et les compétitions plus lointaines tournent : le catalogue
-est mis en cache, quelques feuilles par cycle, deux lectures à la fois.
+alors que l'horizon est 36 h). Un match isolé au-delà de l'horizon peut aussi
+faire croire que la liste est complète et cacher des ligues. Sans réserve,
+chaque compétition du ``group.json`` est relue quand la liste n'atteint pas
+l'horizon. Avec une réserve (le cycle), les matchs à moins de 6 h sont relus
+à chaque passage, et les feuilles de compétition tournent pour tous les sports :
+le catalogue est mis en cache, quelques feuilles par cycle, deux lectures à la fois.
 Un HTTP 429 arrête cette lecture. L'union couvre les 36 h.
 """
 from __future__ import annotations
@@ -550,23 +552,29 @@ def _collecter_reserve(sports, heures, session, pause, maintenant, echeance, res
     frais = comp_lu is not None and maintenant - comp_lu < timedelta(minutes=_COMP_FRAIS_MIN)
     events: list[tuple[str, dict]] = []
     courts = []
+    demandes_lues = []
     for terme, sport in demandes:
         if client._bloque or not client._temps():
             break
         doc = client.get(f"listView/{terme}/all/all/all/matches.json")
         lus = _events_doc(doc)
         events.extend((sport, ev) for ev in lus)
+        demandes_lues.append((terme, sport))
         if _liste_courte(lus, maintenant, heures):
             courts.append((terme, sport))
     feuilles = dict(comps)
     comp_lu_nouveau = reserve.get("comp_lu")
-    if courts and not frais and not client._bloque and client._temps():
+    # Un seul match très lointain dans la liste globale masque les ligues
+    # absentes du plafond : on complète tous les sports, les listes courtes d'abord.
+    manque = any(terme not in feuilles for terme, _sport in demandes_lues)
+    if demandes_lues and (not frais or manque) and not client._bloque and client._temps():
         arbre = client.get("group.json") or {}
-        for terme, _sport in courts:
+        for terme, _sport in demandes_lues:
             feuilles[terme] = _feuilles(arbre, terme)
         comp_lu_nouveau = moment
+    ordre = courts + [couple for couple in demandes_lues if couple not in courts]
     file_comp = [(terme, sport, chemin)
-                 for terme, sport in courts
+                 for terme, sport in ordre
                  for chemin in (feuilles.get(terme) or [])]
     choisis_comp, curseur_comp = tranche(file_comp, int(reserve.get("curseur_comp") or 0), _LOIN_COMP)
     connus = {ev.get("id") for _sport, ev in events}
@@ -759,10 +767,23 @@ def rapport(pulse: list[dict], direct: list[dict]) -> dict:
     accord = egaux / communs if communs else None
     pret = bool(couverture is not None and accord is not None
                 and couverture + 1e-9 >= COUVERTURE_MIN and accord + 1e-9 >= ACCORD_MIN)
+    associes = {mid for mid, _did in couples}
+    manques = []
+    for mid, ligne in matchs_ps.items():
+        if mid in associes or len(manques) >= 20:
+            continue
+        manques.append({
+            "sport": ligne.get("sport"),
+            "domicile": ligne.get("domicile"),
+            "exterieur": ligne.get("exterieur"),
+            "ligue": ligne.get("ligue"),
+            "debut": ligne.get("debut"),
+        })
     return {
         "matchs_pulsescore": len(matchs_ps),
         "matchs_direct": len(matchs_di),
         "matchs_communs": len(couples),
+        "manques": manques,
         "couverture": None if couverture is None else round(couverture, 4),
         "selections_communes": communs,
         "selections_egales": egaux,

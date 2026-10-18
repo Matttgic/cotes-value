@@ -26,9 +26,11 @@ BASE = "https://offering.begmedia.com/web/offering.access.api/offering.access.ap
 LISTE = "GetMatchesBySportWithNotifications"
 DETAIL = "GetMatchWithNotification"
 PAGE = 40
-_OFFSET_MAX = 160
+_LISTE_MAX = 640
 _PRES_H = 6
-_FRAIS_LOIN_MIN = 30
+# Un détail relu il y a moins longtemps reste en cache : le budget sert
+# d'abord aux matchs encore jamais lus.
+_FRAIS_MIN = 10
 COUVERTURE_MIN = 0.95
 ACCORD_MIN = 0.99
 ECART_COTE = 0.01
@@ -364,7 +366,11 @@ def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
         return "MATCH_RESULT"
     if bas.startswith("double chance"):
         return "DOUBLE_CHANCE"
+    # « Les 2 équipes marquent ou + de 2,5 » est une combinaison : ses cotes
+    # Oui/Non ne sont pas celles du marché les deux équipes marquent.
     if bas.startswith(("les 2 équipes marquent", "les deux équipes marquent", "both teams")):
+        if re.search(r"\b(?:ou|or|et|and)\b|&|\+", bas):
+            return None
         return "BOTH_TEAMS_TO_SCORE"
     if bas.startswith("score exact"):
         return "CORRECT_SCORE"
@@ -517,8 +523,7 @@ class Client:
 
 
 def _a_venir(match: dict, maintenant: datetime, heures: float) -> bool:
-    if match.get("direct"):
-        return False
+    """L'heure décide. Le champ souvent appelé « direct » est aussi levé sur des matchs à venir."""
     debut = _heure(match.get("debut"))
     return bool(debut and maintenant < debut <= maintenant + timedelta(hours=heures))
 
@@ -528,15 +533,31 @@ def _charge_liste(slug: str, offset: int = 0) -> bytes:
             + encode_champ_varint(4, offset) + encode_champ_varint(5, PAGE))
 
 
-def _offset_suivant(reserve: dict) -> tuple[int, int]:
-    """Page 0 à chaque cycle. L'autre page tourne ; un curseur nul part à la page suivante."""
-    extra = int(reserve.get("offset") or 0) or PAGE
-    if extra <= 0 or extra >= _OFFSET_MAX:
-        extra = PAGE
-    prochain = extra + PAGE
-    if prochain >= _OFFSET_MAX:
-        prochain = 0
-    return extra, prochain
+def _lire_pages(client: Client, slug: str, maintenant: datetime, heures: float) -> list[dict]:
+    """Pages d'offset 0 jusqu'à la fin du catalogue ou au-delà de l'horizon."""
+    horizon = maintenant + timedelta(hours=heures)
+    offset = 0
+    trouves = []
+    while offset <= _LISTE_MAX:
+        if not client._temps():
+            break
+        trame = client.poster(LISTE, _charge_liste(slug, offset))
+        if client._bloque:
+            break
+        matchs = matchs_de_la_liste(trame) if trame else []
+        if not matchs:
+            break
+        debuts = []
+        for match in matchs:
+            debut = _heure(match.get("debut"))
+            if debut is not None:
+                debuts.append(debut)
+            if _a_venir(match, maintenant, heures):
+                trouves.append(match)
+        if len(matchs) < PAGE or (debuts and min(debuts) > horizon):
+            break
+        offset += PAGE
+    return trouves
 
 
 def _detailler(client: Client, match: dict, moment: str) -> tuple[list[dict], bool]:
@@ -557,30 +578,24 @@ def _detailler(client: Client, match: dict, moment: str) -> tuple[list[dict], bo
 
 def _collecter_reserve(client: Client, demandes, heures: float, maintenant: datetime,
                        reserve: dict) -> tuple[list[dict], dict]:
-    """Page proche à chaque cycle, une page lointaine en plus. L'union reste sur 36 h."""
+    """Tout le catalogue dans l'horizon. On détaille d'abord les matchs absents du cache."""
     moment = maintenant.isoformat(timespec="seconds")
-    extra, prochain = _offset_suivant(reserve)
     candidats = []
     vus: set = set()
     lectures = 0
     for sport, slug in demandes:
-        for offset in (0, extra):
-            if not client._temps():
-                break
-            trame = client.poster(LISTE, _charge_liste(slug, offset))
-            if trame:
-                lectures += 1
-            if client._bloque:
-                break
-            for match in matchs_de_la_liste(trame):
-                if not _a_venir(match, maintenant, heures):
-                    continue
-                cle = (sport, match.get("id"))
-                if cle in vus:
-                    continue
-                vus.add(cle)
-                candidats.append({**match, "sport": sport})
-        if client._bloque or not client._temps():
+        if not client._temps() or client._bloque:
+            break
+        avant = client.requetes
+        for match in _lire_pages(client, slug, maintenant, heures):
+            cle = (sport, match.get("id"))
+            if cle in vus:
+                continue
+            vus.add(cle)
+            candidats.append({**match, "sport": sport})
+        if client.requetes > avant:
+            lectures += 1
+        if client._bloque:
             break
     frais: dict = {}
     for ligne in reserve.get("lignes") or []:
@@ -590,26 +605,24 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
         mid = ligne.get("match_id")
         if mid and lu and (mid not in frais or lu > frais[mid]):
             frais[mid] = lu
-    limite = maintenant + timedelta(hours=min(_PRES_H, heures))
 
-    def proche(match) -> bool:
-        debut = _heure(match.get("debut"))
-        return bool(debut and debut <= limite)
+    def rang(match):
+        lu = frais.get(f"betclic|{match.get('id')}")
+        debut = _heure(match.get("debut")) or maintenant
+        if lu is None:
+            return (0, debut, debut)
+        return (1, lu, debut)
 
     def a_relire(match) -> bool:
-        if proche(match):
-            return True
         lu = frais.get(f"betclic|{match.get('id')}")
-        if lu is not None and maintenant - lu < timedelta(minutes=_FRAIS_LOIN_MIN):
-            return False
-        return True
+        if lu is None:
+            return True
+        return maintenant - lu >= timedelta(minutes=_FRAIS_MIN)
 
-    file = [m for m in candidats if proche(m)]
-    file.sort(key=lambda match: _heure(match.get("debut")) or maintenant)
-    loin = [m for m in candidats if not proche(m) and a_relire(m)]
-    loin.sort(key=lambda match: _heure(match.get("debut")) or maintenant)
+    file = [m for m in candidats if a_relire(m)]
+    file.sort(key=rang)
     lignes: list[dict] = []
-    for match in file + loin:
+    for match in file:
         if not client._temps():
             break
         ajoutees, lue = _detailler(client, match, moment)
@@ -618,13 +631,13 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
         lignes += ajoutees
         if client._bloque:
             break
-    fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures)
+    fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures, age_max_h=2)
     return fusion, {
         "ok": lectures > 0 or not client.erreurs or bool(fusion),
         "erreurs": list(client.erreurs),
         "requetes": client.requetes,
         "matchs": len({l.get("match_id") for l in fusion}),
-        "reserve": {"offset": prochain, "lignes": fusion},
+        "reserve": {"offset": 0, "lignes": fusion},
     }
 
 
@@ -634,8 +647,8 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``betclic``).
 
     Sans réserve, une seule page (offset 0) puis le détail, comme avant.
-    Avec réserve, la page 0 et une page plus loin ; les matchs déjà frais
-    ne sont pas redétaillés, et la comparaison reçoit l'union sur l'horizon.
+    Avec réserve, chaque sport est paginé jusqu'à l'horizon. Les matchs déjà
+    détaillés depuis moins de dix minutes restent en cache.
     """
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
@@ -731,10 +744,23 @@ def rapport(pulse: list[dict], direct: list[dict]) -> dict:
     accord = egaux / communs if communs else None
     pret = bool(couverture is not None and accord is not None
                 and couverture + 1e-9 >= COUVERTURE_MIN and accord + 1e-9 >= ACCORD_MIN)
+    associes = {mid for mid, _did in couples}
+    manques = []
+    for mid, ligne in matchs_ps.items():
+        if mid in associes or len(manques) >= 20:
+            continue
+        manques.append({
+            "sport": ligne.get("sport"),
+            "domicile": ligne.get("domicile"),
+            "exterieur": ligne.get("exterieur"),
+            "ligue": ligne.get("ligue"),
+            "debut": ligne.get("debut"),
+        })
     return {
         "matchs_pulsescore": len(matchs_ps),
         "matchs_direct": len(matchs_di),
         "matchs_communs": len(couples),
+        "manques": manques,
         "couverture": None if couverture is None else round(couverture, 4),
         "selections_communes": communs,
         "selections_egales": egaux,

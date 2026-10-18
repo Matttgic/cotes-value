@@ -75,6 +75,22 @@ def _lens():
     ])
 
 
+def test_combinaison_n_est_pas_les_deux_equipes_marquent():
+    vrai = betclic.marche_pulse({
+        "nom": "Les 2 équipes marquent (t. rég)",
+        "selections": [{"nom": "Oui", "cote": 1.8}, {"nom": "Non", "cote": 1.9}],
+    }, "Lens", "Lille")
+    assert vrai["canonicalMarket"] == "BOTH_TEAMS_TO_SCORE"
+    combo = betclic.marche_pulse({
+        "nom": "Les 2 équipes marquent ou + de 2,5 buts dans le match (t. rég)",
+        "selections": [{"nom": "Oui", "cote": 1.4}, {"nom": "Non", "cote": 2.6}],
+    }, "Lens", "Lille")
+    assert combo is None
+    a_venir = {"debut": DEBUT, "direct": True}
+    assert betclic._a_venir(a_venir, MAINTENANT, 36)
+    assert not betclic._a_venir({"debut": "2026-10-18T08:00:00Z", "direct": False}, MAINTENANT, 36)
+
+
 def test_mode_par_defaut_shadow(monkeypatch):
     monkeypatch.delenv("SOURCE_BETCLIC", raising=False)
     assert betclic.mode_source() == "shadow"
@@ -95,7 +111,8 @@ def test_premiere_trame_ignore_la_suivante():
 def test_collecte_traduit_le_resultat_et_ferme_apres_la_premiere_trame():
     autre = _detail("Résultat du match (t. rég)", [_sel("Nice", 99), _sel("Nul", 99), _sel("Rennes", 99)])
     session = Session([
-        (_liste(_match(7, "Lens", "Lille"), _match(8, "Angers", "Marseille", direct=True)) + autre, 200),
+        (_liste(_match(7, "Lens", "Lille"),
+                _match(8, "Angers", "Marseille", debut="2026-10-18T08:00:00Z", direct=True)) + autre, 200),
         (_lens() + autre, 200),
     ])
     lignes, meta = betclic.collecter({"football"}, 36, session=session, maintenant=MAINTENANT)
