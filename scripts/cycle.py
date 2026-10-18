@@ -162,7 +162,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             signaler(journal, "pmu_direct", list(direct_meta.get("erreurs") or []))
         direct_utilisable = bool(direct_meta.get("ok") and (direct_lignes or not direct_meta.get("erreurs")))
         sans_pmu = source_pmu == "direct" or (source_pmu == "auto" and direct_utilisable)
-        lignes, requetes = [], {}
+        lignes, requetes, erreurs = [], {}, {}
         if cle:
             lignes, requetes, erreurs = pulse(sports, "pulsescore", sans_pmu=sans_pmu)
             if erreurs and "pulsescore" in journal["etapes"]:
@@ -170,11 +170,22 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                     "erreurs": {b: e[:5] for b, e in erreurs.items()}}
         else:
             journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
+        pmu_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
+                  or pulsescore.indisponible(erreurs.get("pmu", []) if cle else ["PULSESCORE_KEY absente"]))
         if source_pmu == "shadow":
             try:
                 journal["pmu_direct_rapport"] = pmu_direct.rapport(lignes, direct_lignes)
             except Exception as e:  # noqa: BLE001
                 journal["pmu_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
+            if pmu_ko and direct_utilisable:
+                lignes = [l for l in lignes if l.get("bookmaker") != "pmu"] + list(direct_lignes)
+                journal["pmu_repli"] = "Kambi remplace PulseScore (401/403/402/quota ou lecture impossible)"
+                journal["pmu_source_effective"] = "direct"
+                if "pulsescore" in journal["etapes"]:
+                    journal["etapes"]["pulsescore"]["pmu_repli"] = journal["pmu_repli"]
+            elif pmu_ko:
+                journal["pmu_repli"] = "PulseScore indisponible, Kambi sans cote utilisable"
+                journal["pmu_source_effective"] = "shadow"
         elif sans_pmu:
             lignes = [l for l in lignes if l.get("bookmaker") != "pmu"] + list(direct_lignes)
     source_oly = olybet_direct.mode_source()

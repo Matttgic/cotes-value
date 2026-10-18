@@ -116,7 +116,7 @@ def test_retry_after_date_http():
     assert P._retry_after('Sat, 17 Oct 2026 11:00:00 GMT', now, 2) == 2
 
 
-@pytest.mark.parametrize('status', [401, 403])
+@pytest.mark.parametrize('status', [401, 402, 403])
 def test_refus_ne_fait_pas_une_rafale_sur_tous_les_sports(client, monkeypatch, status):
     appels = []
     def get(*a, **kw):

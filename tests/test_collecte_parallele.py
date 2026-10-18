@@ -129,6 +129,63 @@ def test_direct_retire_pmu_de_pulsescore(monkeypatch):
     assert next(l["cote"] for l in lignes if l["bookmaker"] == "pmu") == 1.7
 
 
+def test_shadow_bascule_sur_kambi_si_pulsescore_refuse(monkeypatch):
+    def pulse(key, plan, *a, **kw):
+        assert "pmu" in plan
+        return [ligne("football", "pmu") | {"cote": 1.9}], {"pmu": 1}, {
+            "pmu": ["pmu/soccer/events : HTTP 401"]}
+
+    def direct(sports, heures):
+        return [ligne("football", "pmu") | {"cote": 1.7, "match_id": "pmu|kambi"}], {
+            "ok": True, "erreurs": [], "requetes": 2, "matchs": 1}
+
+    _sans_reseau(monkeypatch, direct)
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
+    j = {"etapes": {}}
+    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", NOW, j)
+    pmu = [l for l in lignes if l["bookmaker"] == "pmu"]
+    assert pmu and pmu[0]["cote"] == 1.7 and pmu[0]["match_id"] == "pmu|kambi"
+    assert j["pmu_source"] == "shadow" and j["pmu_source_effective"] == "direct"
+    assert "Kambi" in j["pmu_repli"] and j["etapes"]["pulsescore"]["pmu_repli"] == j["pmu_repli"]
+
+
+def test_402_coupe_sans_journaliser_le_corps(monkeypatch):
+    import json
+    from cotes import pulsescore
+
+    class Reponse:
+        status_code = 402
+        text = "secret-quota-ne-pas-journaliser"
+        headers = {}
+
+        def json(self):
+            return {"message": self.text}
+
+    appels = []
+
+    class Session:
+        headers = {}
+
+        def get(self, *args, **kwargs):
+            appels.append(args)
+            return Reponse()
+
+    monkeypatch.setattr(pulsescore.time, "sleep", lambda *a: None)
+    client = pulsescore.Client("cle", pause=0, etat={})
+    client.s = Session()
+    assert client.get("pmu/soccer/events") is None
+    assert client.get("pmu/tennis/events") is None
+    assert appels and len(appels) == 1
+    assert client.erreurs[0].endswith("HTTP 402")
+    assert "secret" not in json.dumps(client.erreurs)
+    assert pulsescore.indisponible(client.erreurs)
+    assert pulsescore.indisponible(["winamax/soccer/events : collecte différée (quota/refus)"])
+    assert not pulsescore.indisponible(["winamax/soccer/events : HTTP 500"])
+
+
 def test_arret_temoin_ne_change_pas_les_opportunites_calculees():
     from cotes.comparaison import comparer, BRUT
     base = {"sport": "football", "ligue": "L", "domicile": "Lens", "exterieur": "Lille",

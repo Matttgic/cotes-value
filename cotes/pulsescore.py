@@ -79,7 +79,8 @@ class Client:
                     time.sleep(2 * (essai + 1) + self.pause)
                 continue
             self.requetes += 1
-            if r.status_code in (401, 403):
+            if r.status_code in (401, 402, 403):
+                # Compte, paiement ou quota refusé : on n'insiste pas sur les autres sports.
                 attente["reessai_apres"] = (maintenant + timedelta(hours=1)).isoformat()
                 self.erreurs.append(f"{contexte} : HTTP {r.status_code}")
                 return None
@@ -135,6 +136,18 @@ class Client:
             if not d.get("hasNextPage") or (dernier and dernier > limite):
                 break
         return [e for e in out if (_heure(e["startTime"]) or limite) <= limite]
+
+
+_INDISPONIBLE = re.compile(r"HTTP (?:401|402|403)|\bquota\b", re.I)
+
+
+def indisponible(erreurs) -> bool:
+    """401, 403, 402 ou quota : PulseScore ne peut pas servir de source à ce cycle."""
+    if isinstance(erreurs, dict):
+        textes = [e for liste in erreurs.values() for e in (liste or [])]
+    else:
+        textes = list(erreurs or [])
+    return any(_INDISPONIBLE.search(str(e)) for e in textes)
 
 
 def collecter(cle: str, plan: dict[str, list[str]], heures: float = 36,
