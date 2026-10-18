@@ -1,0 +1,27 @@
+name: Sonde des sources
+
+# Lecture seule, lancée à la main ou en poussant la branche dédiée.
+# Pas de planification sur la branche par défaut.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cursor/sonde-sources-eea9
+
+permissions:
+  contents: read
+
+jobs:
+  sonde:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dépendances de lecture
+        run: pip install requests curl_cffi
+      - name: Interroger les sources
+        run: python scripts/sonde_sources.py
