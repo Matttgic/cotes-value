@@ -92,8 +92,6 @@ def test_bilan_courbe_et_fiches_utilisent_exactement_les_memes_paris(tmp_path):
     import re
     rows = [pari("m1", statut="gagne", gain=11, regle_le="2026-10-14T15:00:00+00:00"),
             pari("m2", statut="perdu", gain=-10, regle_le="2026-10-14T15:00:00+00:00")]
-    temoin = {**rows[0], "id": "m1-temoin", "reference": "Pinnacle brut"}
-    rows.append(temoin)
     avant = deepcopy(rows)
     b = bilan(rows)
     assert b["D|ChatGPT"]["gains"] == 1 and b["D|ChatGPT"]["regles"] == 2

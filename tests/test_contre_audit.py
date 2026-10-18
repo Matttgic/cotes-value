@@ -126,11 +126,3 @@ def test_evenements_et_clv_ponderent_les_matchs_pas_le_nombre_de_tickets():
     s=resume(rows+[autre],'2026-10-18T00:00:00Z',incertitude=False)
     assert s['regles']==4 and s['evenements_regles']==2
     assert s['clv']==5 and s['clv_evenement']==0 and s['clv_evenements_n']==2
-
-
-def test_catalogue_exclut_temoin_sans_retirer_son_bilan():
-    from scripts.site_web import catalogue_paris
-    a=candidat();b=candidat('temoin',reference='Pinnacle brut')
-    catalogue=catalogue_paris([a,b],{})
-    assert len(catalogue['lignes'])==1
-    assert simulation.bilan([a,b])['C|Pinnacle brut']['paris']==1

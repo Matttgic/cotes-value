@@ -27,14 +27,6 @@ def test_selection_par_fiches():
     assert m1["sims"] == ["A", "C"] and m1["cote"] == 2.10 and m1["detecte"] == "2026-10-01T10:00"   # 1re détection
 
 
-def test_temoin_a_sa_propre_part():
-    paris = [{**pari("A", f"t{i}", f"2026-10-05T10:{i:02d}"), "reference": "Pinnacle brut"} for i in range(50)]
-    paris += [pari("A", f"v{i}", f"2026-10-01T10:{i:02d}") for i in range(5)]
-    fiches, _, _ = site_web.selection_paris(paris, en_cours=8, regles=4)
-    assert sum(f["reference"] == "Pinnacle" for f in fiches) == 5          # pas évincés par le témoin
-    assert sum(f["reference"] == "Pinnacle brut" for f in fiches) == 2     # 8 // 4
-
-
 def test_construire_bilan_sur_tous_les_paris(tmp_path):
     paris = [pari("A", f"m{i}", f"2026-10-01T10:{i:02d}") for i in range(5)]
     (tmp_path / "paris.json").write_text(json.dumps(paris), encoding="utf-8")
@@ -62,9 +54,8 @@ def test_gain_attendu_et_bilan_par_bookmaker():
     base = {"simulation": "A", "mise": 10, "match_id": "w|1", "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None,
             "issue": "DOM", "joueur": None, "statut": "perdu", "gain": -10.0, "cote": 2.2, "cote_juste": 2.0,
             "regle_le": "2026-10-07T12:00:00+00:00", "detecte": "1", "bookmaker": "PMU"}
-    c = site_web.courbes([{**base, "reference": "Pinnacle"}, {**base, "reference": "Pinnacle brut", "issue": "EXT"}])
+    c = site_web.courbes([{**base, "reference": "Pinnacle"}])
     assert c["Uniques"][0][3] == 1.0                     # 10 × (2,2 / 2,0 − 1)
-    assert c["Pinnacle brut"][0][3] is None              # témoin : pas de gain attendu
     b = bilan_bookmakers([{**base, "reference": "Pinnacle"}, {**base, "reference": "Pinnacle", "simulation": "X",
                                                              "issue": "EXT", "bookmaker": "Winamax"}])
     assert b["PMU·A|Uniques"]["regles"] == 1 and b["Winamax·X|Uniques"]["regles"] == 1

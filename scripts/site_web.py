@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCHES, bilan,  # noqa: E402
+from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bilan,  # noqa: E402
                               bilan_bookmakers, bilan_tranches, moyennes_ecarts, paris_strategie,
                               premiers_par_selection, REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
@@ -158,26 +158,21 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     ouverts = sorted((f for f in fiches if f["statut"] == "en_cours"), key=recents("detecte"), reverse=True)
     finis = sorted((f for f in fiches if f["statut"] not in ("en_cours", "a_regler")), key=recents("regle_le"),
                    reverse=True)
-    # le témoin « Pinnacle brut » (des centaines de paris par cycle) a sa propre part, plus petite
-    temoin = lambda f: f["reference"] == TEMOIN                 # noqa: E731
-    gardees = ([f for f in ouverts if not temoin(f)][:en_cours] + [f for f in finis if not temoin(f)][:regles]
-               + [f for f in ouverts if temoin(f)][:en_cours // 4] + [f for f in finis if temoin(f)][:regles // 4]
-               + [f for f in fiches if f["a_regler"]])
+    gardees = ouverts[:en_cours] + finis[:regles] + [f for f in fiches if f["a_regler"]]
     # Les filtres ChatGPT et Gemini donnent accès à l'ensemble de leurs paris, même si les
     # simulations très volumineuses ont repoussé une fiche hors des plus récentes.
     deja = {id(f) for f in gardees}
     gardees += [f for f in fiches if (f["chatgpt"] or f["gemini"] or f["jules"] or f["jules_v2"]) and id(f) not in deja]
     gardees.sort(key=recents("detecte"), reverse=True)
     valeurs = {f: sorted({str(p.get(c)) for p in paris if p.get(c) is not None}) for f, c in CHAMPS_FILTRES.items()}
-    return gardees, sum(f["reference"] != TEMOIN for f in fiches), valeurs
+    return gardees, len(fiches), valeurs
 
 
 def courbes(paris: list[dict]) -> dict[str, list]:
     """Pour le graphique du gain cumulé : par vue du bilan (Uniques, chaque référence, Toutes), les paris
     réglés dans l'ordre du règlement, chacun en [minute du règlement, gain, simulation, gain attendu] (la
     page fait le cumul selon les simulations choisies). Gain attendu = mise × (cote / cote juste − 1) : ce que
-    le pari rapporte en moyenne si la cote juste est exacte (absent pour le témoin, comparé à une cote avec
-    marge)."""
+    le pari rapporte en moyenne si la cote juste est exacte."""
     uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
     chatgpt = paris_chatgpt(paris)
     gemini = paris_gemini(paris)
@@ -192,9 +187,9 @@ def courbes(paris: list[dict]) -> dict[str, list]:
         except ValueError:
             continue
         attendu = (round(p["mise"] * (p["cote"] / p["cote_juste"] - 1), 2)
-                   if p["reference"] != TEMOIN and p.get("cote_juste") else None)
+                   if p.get("cote_juste") else None)
         point = [t, round(p.get("gain") or 0, 2), p.get("simulation"), attendu]
-        vues = ([p["reference"]] + ([] if p["reference"] == TEMOIN else ["Toutes"])
+        vues = ([p["reference"], "Toutes"]
                 + (["Uniques"] if id(p) in uniques else [])
                 + ([STRATEGIE["nom"]] if id(p) in strategie else [])
                 + ([CHATGPT["nom"]] if id(p) in chatgpt else [])
@@ -276,14 +271,13 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]]) -> dict:
     """Toutes les prises, en colonnes compactes ; le navigateur ne rend que 50 cartes.
 
     Une ligne = une prise enregistrée (référence comprise), prix/date exacts.
-    Le témoin brut reste dans les agrégats Python, pas dans le catalogue mobile.
     La CLV exportée est uniquement celle de clôture validée, comme dans le bilan.
     """
     champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence", "mise", "unique_bilan"]
     uniques = premiers_par_selection(paris)
     convergents = paris_convergence(paris, retenus)
     rows = []
-    for p in sorted((p for p in paris if p.get("reference") != TEMOIN), key=lambda p: p.get("detecte") or "", reverse=True):
+    for p in sorted(paris, key=lambda p: p.get("detecte") or "", reverse=True):
         f = {k: p.get(k) for k in CHAMPS_FICHE}
         f.update(simulation=p.get("simulation"), clv=clv_finale(p), tranche=tranche(p["cote"]) if p.get("cote") else None,
                  strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents,
@@ -447,7 +441,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             p["alerte_demande_le"] = demande
     etat = _lire(donnees / "etat.json", {})
     actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", [])
-                 if not o.get("suspect") and o.get("reference") != "Pinnacle brut"]
+                 if not o.get("suspect")]
     ctl = _lire(donnees / "controle.json", {})
     # seulement les groupes mesurés dans les 6 dernières heures (les anciens restent dans controle.json)
     dernier = (etat.get("dernier_cycle") or {}).get("debut") or ""
@@ -542,14 +536,13 @@ def construire(donnees: Path, sortie: Path) -> Path:
         laboratoire["navigation"]["paris"] = {pid: {k: p.get(k) for k in
             ("strategies_historiques", "convergence_historique", "tranche", "cote", "strategies", "jules_v2")}
             for pid, p in laboratoire["navigation"]["paris"].items()}
-    valeurs["reference"] = [r for r in valeurs.get("reference", []) if r != TEMOIN]
     data = {"live_papier": live_vue, "diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
             "catalogue": catalogue_paris(paris, retenus),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
-            "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste if p["a_regler"] or p.get("reference") != TEMOIN], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles, "bilan": bilan(paris),
+            "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles, "bilan": bilan(paris),
             "ecarts_references": moyennes_ecarts(paris),
             "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "segments": segments(paris),
             "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
@@ -674,7 +667,6 @@ MODELE = r"""<!doctype html>
     <p><b>Paris uniques</b> : chaque cote française comptée une fois, même si plusieurs références l'ont signalée.
     <b>Pinnacle, Betfair…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
     <b>Toutes réf.</b> : la somme des références (une même cote peut y compter plusieurs fois).
-    <b>Pinnacle brut</b> : témoin arrêté le 18/10/2026, cote Pinnacle avec sa marge. Ses paris ont été retirés des données (ROI −12,6 % contre −12,8 % sans la marge) ; plus aucun n'est pris.
     <b>Stratégie</b> : les paris qui suivent les critères choisis le 11/10 (voir le texte au-dessus du graphique),
     comptés seulement depuis cette date. <b>ChatGPT</b> : stratégie indépendante, règles figées le 14/10,
     une seule mise par match et cinq nouvelles mises maximum par jour (heure de Paris).
@@ -976,7 +968,6 @@ const JL = D.jules || {};
 const JV2 = D.jules_v2 || {};
 const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée une seule fois (10 € par pari).",
   Toutes: "Somme des références : une même cote repérée par plusieurs références compte plusieurs fois.",
-  "Pinnacle brut": "Témoin : cotes comparées à la cote Pinnacle affichée, marge comprise.",
   "Stratégie": `Stratégie testée depuis le ${ST.debut ? new Date(ST.debut).toLocaleString("fr-FR", {day: "numeric",
     month: "numeric", hour: "2-digit", minute: "2-digit"}) : "11/10"} : référence ${(ST.references || []).join(", ")},
     écart ≥ 2 %, cote < ${String(ST.cote_max).replace(".", ",")}, repéré moins de ${ST.avance_max_h} h avant le match,
@@ -1033,7 +1024,7 @@ function additionner(sims, source = D.bilan, prefixe = "") {
   return t;
 }
 function rendreBilan() {
-  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", ...D.references.filter(r => r !== "Pinnacle brut"), "Toutes", "Pinnacle brut"];
+  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", ...D.references, "Toutes"];
   const bloc = D.ecarts_references || {};
   document.getElementById("bilan-ecarts").textContent = "Paris uniques réglés · " +
     ["Betfair", "Polymarket", "Smarkets"].map(nom => {
@@ -1085,7 +1076,7 @@ function rendreCourbe() {
     (sims.length === SIMS.length ? "" : " · " + nomCumul(sims));
   const cum = [0], att = [0];
   for (const p of pts) { cum.push(cum[cum.length - 1] + p[1]); att.push(att[att.length - 1] + (p[3] || 0)); }
-  const avecAttendu = pts.some(p => p[3] != null);       // pas pour le témoin (cote avec marge)
+  const avecAttendu = pts.some(p => p[3] != null);
   const total = cum[cum.length - 1];
   document.getElementById("legende").innerHTML = pts.length < 2 ? "" :
     `<span><i style="background:var(--serie)"></i>Réel <b class="${signe(total)}">${eurC(total)}</b></span>` +
@@ -1156,7 +1147,7 @@ if(D.laboratoire?.navigation?.paris) {
     if(p) D.laboratoire.navigation.paris[id]={...p,...meta};
   }
 }
-document.getElementById("nb-paris").textContent = fiches.filter(f => f.reference !== "Pinnacle brut").length || "";
+document.getElementById("nb-paris").textContent = fiches.length || "";
 const normaliserRecherche = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr");
 let parisFiltres = [];
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
@@ -1233,8 +1224,7 @@ function rendreParis() {
   }) : fiches;
   const q = normaliserRecherche(document.getElementById("f-q").value).trim();
   const maintenant=Date.now(),triHoraire=document.getElementById('paris-tri').value;
-  const L = trierHoraires(source.filter(p => (f.reference || p.reference !== "Pinnacle brut") &&
-    accepteHoraire(p,document.getElementById('paris-horaire').value,maintenant) &&
+  const L = trierHoraires(source.filter(p => accepteHoraire(p,document.getElementById('paris-horaire').value,maintenant) &&
     (!q || normaliserRecherche([p.domicile,p.exterieur,p.ligue,p.pari].join(" ")).includes(q)) &&
     Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v)) : p[k]===v))),triHoraire);
   parisFiltres = L;
@@ -1377,8 +1367,7 @@ rendreSegments();
 const manUniques = new Map();
 D.paris.filter(p => p.a_regler).forEach(p => {
   const cle = JSON.stringify([p.match_id,p.marche,p.periode,p.ligne,p.issue,p.joueur]);
-  const avant = manUniques.get(cle);
-  if (!avant || (avant.reference === "Pinnacle brut" && p.reference !== "Pinnacle brut")) manUniques.set(cle,p);
+  if (!manUniques.has(cle)) manUniques.set(cle,p);
 });
 const man = [...manUniques.values()];
 document.getElementById("nb-regler").textContent = man.length || "";
@@ -1391,10 +1380,9 @@ man.forEach(p => {
   groupesReglement.get(cle).push(p);
 });
 const panneAP = Object.values(jr.etapes||{}).some(x => (x.erreurs||[]).some(t => /suspended/i.test(t)));
-const vraiMan = man.filter(p => p.reference !== "Pinnacle brut");
 const prop = jr.propline || {};
 document.getElementById("reglement-etat").innerHTML =
-  `<p>${man.length} sélections sur ${groupesReglement.size} affiches : ${vraiMan.length} avec référence calculée, ${man.length-vraiMan.length} témoins Pinnacle brut. Les témoins restent dans le suivi.</p>` +
+  `<p>${man.length} sélections sur ${groupesReglement.size} affiches.</p>` +
   (jr.debut ? `<p>Dernière recherche : ${quand(jr.debut)}.${Number.isInteger(jr.resultats?.paris_regles) ? ` ${jr.resultats.paris_regles} enregistrements réglés à ce passage.` : ""}</p>` : "") +
   (panneAP ? `<p>API-Sports : compte suspendu. Les autres sources continuent. Les quatre clés The Odds API partagent la même couverture ; elles ne couvrent pas toutes les compétitions ni les mi-temps.</p>` : "") +
   (prop.configure ? `<p>Prop-Line : ${prop.requetes_scores||0} appel(s) scores à ce passage, ${prop.matchs_valides||0} affiche(s) validée(s)${Number.isFinite(prop.quota_restant) ? " · "+prop.quota_restant+" requêtes restantes aujourd’hui" : ""}. ${(prop.erreurs||[]).length ? "Lecture dégradée : "+(prop.erreurs||[]).map(e).join(" ; ")+"." : "Les compétitions et périodes sans couverture restent en attente."}</p>` :

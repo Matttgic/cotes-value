@@ -183,7 +183,7 @@ function initialiserAnalyses() {
     option.textContent=D.variantes?.[id]?.nom || (regle?`${regle.reference} · ${id}`:id.replace(' (rejeu)',''));groupes.get(nomGroupe).append(option);
   }
   for(const [id,champ] of [['analyse-sport','sport'],['analyse-book','bookmaker']]) {
-    const sel=document.getElementById(id);for(const val of [...new Set(fiches.filter(p=>p.reference!=='Pinnacle brut').map(p=>p[champ]).filter(Boolean))].sort()) {const o=document.createElement('option');o.value=val;o.textContent=nomsSports[val] || val;sel.append(o);}
+    const sel=document.getElementById(id);for(const val of [...new Set(fiches.map(p=>p[champ]).filter(Boolean))].sort()) {const o=document.createElement('option');o.value=val;o.textContent=nomsSports[val] || val;sel.append(o);}
   }
   for(const id of ['analyse-selection','analyse-periode','analyse-sport','analyse-book']) document.getElementById(id).onchange=rendreAnalyses;
   const graph=document.getElementById('analyse-graphiques');

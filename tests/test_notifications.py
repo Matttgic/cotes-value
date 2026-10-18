@@ -23,10 +23,9 @@ def test_flux_meme_prise_prix_et_plusieurs_strategies_sans_doublon():
     assert not flux([o],[p],{'strategie':set()},NOW)['alertes']
 
 
-def test_flux_exclut_anciens_matches_commences_et_temoin():
+def test_flux_exclut_anciens_matches_commences_et_suspects():
     p=selection(); ids={'strategie':{id(p)}}
-    for o in ({**p,'suspect':True},{**p,'reference':'Pinnacle brut'},
-              {**p,'debut':NOW.isoformat()}):
+    for o in ({**p,'suspect':True},{**p,'debut':NOW.isoformat()}):
         assert not flux([o],[p],ids,NOW)['alertes']
     p['detecte']=(NOW-timedelta(minutes=16)).isoformat()
     assert not flux([p],[p],ids,NOW)['alertes']
