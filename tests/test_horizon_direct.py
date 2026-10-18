@@ -99,25 +99,26 @@ def test_betclic_reserve_page_lointaine_et_cache():
         _sel("Lens", 1.8), _sel("Nul", 3.4), _sel("Lille", 4.5)])
     detail_loin = _detail("Résultat du match (t. rég)", [
         _sel("Brest", 1.7), _sel("Nul", 3.6), _sel("Nice", 4.4)])
+    passe = (MAINTENANT - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    remplissage = [_match(1000 + i, "A", "B", passe) for i in range(39)]
+    page_pleine = _liste(_match(7, "Lens", "Lille", pres), *remplissage)
     session = Session([
-        (_liste(_match(7, "Lens", "Lille", pres)), 200),
+        (page_pleine, 200),
         (_liste(_match(80, "Brest", "Nice", loin)), 200),
         (detail_pres, 200),
         (detail_loin, 200),
-        (_liste(_match(7, "Lens", "Lille", pres)), 200),
+        (page_pleine, 200),
         (_liste(), 200),
-        (detail_pres, 200),
     ])
     lignes, meta = betclic.collecter(
         {"football"}, 36, session=session, maintenant=MAINTENANT, reserve={})
-    assert meta["reserve"]["offset"] == 80
     assert {l["domicile"] for l in lignes} == {"Lens", "Brest"}
     assert session.corps[0] == charge(0) and session.corps[1] == charge(40)
     lignes, meta = betclic.collecter(
         {"football"}, 36, session=session, maintenant=MAINTENANT, reserve=meta["reserve"])
-    assert session.corps[4] == charge(0) and session.corps[5] == charge(80)
+    assert session.corps[4] == charge(0) and session.corps[5] == charge(40)
     assert {l["domicile"] for l in lignes} == {"Lens", "Brest"}
-    assert len(session.corps) == 7
+    assert len(session.corps) == 6
 
 
 def test_unibet_reserve_page_lointaine_et_cache(monkeypatch):
@@ -126,9 +127,8 @@ def test_unibet_reserve_page_lointaine_et_cache(monkeypatch):
     monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
     e, ev = _event("e9", "Lyon", "Nice", "2610191800")
     session = Session([
-        (200, {"items": {}, "numberOfEvents": 0}, {}),
-        (200, {"items": {e: ev}, "numberOfEvents": 400}, {}),
-        (200, {"items": {}, "numberOfEvents": 0}, {}),
+        (200, {"items": {e: ev}, "numberOfEvents": 400, "nextEventId": 42}, {}),
+        (200, {"items": {}, "numberOfEvents": 400}, {}),
     ])
     cache = {
         "bookmaker": "unibet-fr", "match_id": "unibet-fr|cache", "sport": "football",
@@ -138,9 +138,10 @@ def test_unibet_reserve_page_lointaine_et_cache(monkeypatch):
     lignes, meta = unibet.collecter(
         {"football"}, 36, session=session, page=Page(), pause=(0, 0),
         maintenant=MAINTENANT, reserve={"lignes": [cache]})
-    assert any("pageIndex=3" in u for u in session.urls)
+    assert any("nextEventId=42" in u for u in session.urls)
+    assert not any("pageIndex=" in u for u in session.urls)
     assert any(l["match_id"] == "unibet-fr|cache" for l in lignes)
-    assert meta["reserve"]["curseur"] == 5
+    assert meta["reserve"]["curseur"] == 0
     assert "JETON" not in json.dumps({k: v for k, v in meta.items() if k != "reserve"})
 
 

@@ -178,6 +178,19 @@ class Socket:
         if self._ws is None:
             self._ouvrir()
 
+    def _reprise(self, essai: int) -> bool:
+        """Pause courte puis nouvel essai, tant que le budget le permet."""
+        if self.echeance is not None and not self.echeance.ok():
+            return False
+        delai = min(1.0, 0.3 * (essai + 1))
+        reste = getattr(self.echeance, "reste", None) if self.echeance is not None else None
+        if reste is not None:
+            valeur = reste()
+            if valeur is not None and valeur < delai + 1:
+                return False
+        _pause(delai)
+        return True
+
     def _lire(self) -> str:
         for _ in range(12):
             msg = self._ws.recv_str()
@@ -216,7 +229,10 @@ class Socket:
         if filtre is not None:
             corps["filterId"] = int(filtre)
         message = "42" + json.dumps(["m", corps], separators=(",", ":"))
-        for essai in range(2):
+        for essai in range(3):
+            if self.echeance is not None and not self.echeance.ok():
+                self._noter("budget")
+                return None
             try:
                 self._assurer()
                 self._ws.send_str(message)
@@ -224,7 +240,7 @@ class Socket:
                 msg = self._lire_reponse(identifiant)
             except Exception:  # noqa: BLE001
                 self.fermer()
-                if essai == 0:
+                if essai < 2 and self._reprise(essai):
                     continue
                 self._noter(f"{route} : réseau")
                 return None

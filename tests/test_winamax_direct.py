@@ -150,6 +150,36 @@ def test_pause_entre_les_routes(monkeypatch):
     assert "42" in faux.envoyes[1]
 
 
+def test_coupure_puis_reprise(monkeypatch):
+    monkeypatch.setattr(winamax.time, "sleep", lambda s: None)
+
+    class Faux:
+        def __init__(self, casse):
+            self.casse = casse
+            self.file = ["0{}", "40{}", '42["m",{"matches":{"1":1},"requestId":"w0"}]']
+
+        def recv_str(self):
+            return self.file.pop(0)
+
+        def send_str(self, msg):
+            if self.casse and msg.startswith("42"):
+                raise OSError("coupure")
+
+        def close(self):
+            pass
+
+    etat = {"n": 0}
+
+    def connecter():
+        etat["n"] += 1
+        return Faux(casse=etat["n"] == 1)
+
+    client = winamax.Socket(pause=(0, 0), connecter=connecter)
+    assert client.demander("sport:1") == {"matches": {"1": 1}, "requestId": "w0"}
+    assert client.erreurs == []
+    assert etat["n"] == 2
+
+
 def test_erreur_reseau_sans_corps():
     class Faux:
         def recv_str(self):
