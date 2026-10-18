@@ -67,7 +67,7 @@ def match(sport: str, d: dict) -> dict | None:
         if periodes and (len(periodes) != attendu or (sum(a for a, _ in periodes), sum(b for _, b in periodes)) != score):
             periodes = []                          # détail absent ou différent du score : le score final suffit
         libelles = [str(i + 1) for i in range(len(periodes))]
-    return {"source": "flashscore", "sport": sport, "domicile": dom, "exterieur": ext, "debut": debut,
+    return {"source": "flashscore", "id_source": d.get("AA"), "sport": sport, "domicile": dom, "exterieur": ext, "debut": debut,
             "score": score, "periodes": periodes, "libelles": libelles, "corners": None, "abandon": False}
 
 
