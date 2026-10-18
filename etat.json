@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T21:25:12+00:00",
+  "debut": "2026-10-18T21:29:51+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.7,
+    "secondes": 9.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,7 +12,7 @@
     ]
    },
    "pinnacle": {
-    "secondes": 34.5,
+    "secondes": 38.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -22,39 +22,26 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 4.2,
+    "secondes": 4.3,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.4,
+    "secondes": 9.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 11.1,
+    "secondes": 11.7,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 12.0,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:3 : réseau"
-    ]
+    "secondes": 20.1,
+    "ok": true
    },
    "pulsescore": {
-    "secondes": 16.4,
+    "secondes": 16.3,
     "ok": true,
     "degrade": true,
     "erreurs": {
-     "winamax": [
-      "winamax/soccer/events : HTTP 429",
-      "winamax/basketball/events : collecte différée (quota/refus)",
-      "winamax/tennis/events : collecte différée (quota/refus)",
-      "winamax/ice-hockey/events : collecte différée (quota/refus)",
-      "winamax/handball/events : collecte différée (quota/refus)"
-     ],
      "betclic": [
       "betclic/soccer/events : HTTP 429",
       "betclic/basketball/events : collecte différée (quota/refus)",
@@ -70,7 +57,7 @@
     "betclic_repli": "L'API Betclic remplace PulseScore (401/403/402/quota ou lecture impossible)"
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -78,27 +65,24 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 52.3,
+    "secondes": 56.3,
     "ok": true
    },
    "smarkets": {
-    "secondes": 19.8,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 2.1,
+    "secondes": 5.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.4,
+    "secondes": 0.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.0,
+    "secondes": 0.1,
     "ok": true
    }
   },
@@ -113,14 +97,11 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 737,
-   "lignes_perimees": 88654,
-   "rechauffeur": "ok",
+   "age_max_s": 854,
+   "lignes_perimees": 5450,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
@@ -128,8 +109,8 @@
     "head_200": 39,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 8,
-    "choisi_autre": 5,
+    "choisi_autre": 10,
+    "choisi_fixe": 3,
     "reprise_403": 5
    }
   },
@@ -138,8 +119,7 @@
   "betclic_source": "shadow",
   "olybet_source": "direct",
   "netbet_source": "direct",
-  "winamax_source_effective": "pulsescore",
-  "winamax_repli": "Socket Winamax vide ou en échec, PulseScore décide",
+  "winamax_source_effective": "direct",
   "betclic_direct_rapport": {
    "matchs_pulsescore": 0,
    "matchs_direct": 118,
@@ -224,38 +204,6 @@
    "examines": 9,
    "comparaisons": [
     {
-     "match": "Bahia – Flamengo",
-     "source": "Pinnacle",
-     "cote_netbet": 3.4,
-     "cote_reference": 3.83,
-     "ecart_relatif": 0.1123,
-     "aberrant": false
-    },
-    {
-     "match": "Bahia – Flamengo",
-     "source": "PMU",
-     "cote_netbet": 3.4,
-     "cote_reference": 3.25,
-     "ecart_relatif": 0.0462,
-     "aberrant": false
-    },
-    {
-     "match": "Barcelona SC – Universidad Catolica del Ecuador",
-     "source": "Pinnacle",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.41,
-     "ecart_relatif": 0.1079,
-     "aberrant": false
-    },
-    {
-     "match": "Barcelona SC – Universidad Catolica del Ecuador",
-     "source": "PMU",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.2,
-     "ecart_relatif": 0.0227,
-     "aberrant": false
-    },
-    {
      "match": "Sportivo Luqueño – Sportivo San Lorenzo",
      "source": "Pinnacle",
      "cote_netbet": 1.72,
@@ -294,27 +242,60 @@
      "cote_reference": 3.2,
      "ecart_relatif": 0.0781,
      "aberrant": false
+    },
+    {
+     "match": "Llaneros FC – Independiente Santa Fe",
+     "source": "Pinnacle",
+     "cote_netbet": 2.52,
+     "cote_reference": 2.71,
+     "ecart_relatif": 0.0701,
+     "aberrant": false
+    },
+    {
+     "match": "Llaneros FC – Independiente Santa Fe",
+     "source": "PMU",
+     "cote_netbet": 2.52,
+     "cote_reference": 2.5,
+     "ecart_relatif": 0.008,
+     "aberrant": false
+    },
+    {
+     "match": "Belgrano – River Plate",
+     "source": "Pinnacle",
+     "cote_netbet": 3.3,
+     "cote_reference": 3.74,
+     "ecart_relatif": 0.1176,
+     "aberrant": false
+    },
+    {
+     "match": "Belgrano – River Plate",
+     "source": "PMU",
+     "cote_netbet": 3.3,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0476,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T21:25:21+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T21:25:28+00:00",
+   "pinnacle_premiere_lecture": "2026-10-18T21:30:02+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T21:30:10+00:00",
    "books_premiere_lecture": "2026-10-18T19:51:08+00:00",
-   "books_derniere_lecture": "2026-10-18T21:25:47+00:00",
-   "ecart_enveloppe_secondes": 5660.0
+   "books_derniere_lecture": "2026-10-18T21:30:29+00:00",
+   "ecart_enveloppe_secondes": 5942.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 550,
    "a_verifier": 10,
    "non_conforme": 8,
-   "mesures": 6114,
+   "mesures": 10716,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -323,41 +304,27 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T21:19:09+00:00"
   },
-  "fin": "2026-10-18T21:27:03+00:00",
+  "fin": "2026-10-18T21:31:34+00:00",
   "requetes_pulsescore": {
-   "winamax": 4,
    "betclic": 4,
    "orbitxch": 4
   },
   "cotes": {
-   "francaises": 24511,
-   "pinnacle": 94104,
+   "francaises": 28213,
+   "pinnacle": 94984,
    "betfair": 0,
-   "polymarket": 9813,
+   "polymarket": 9811,
    "smarkets": 3515
   },
-  "matchs_francais": 540,
-  "opportunites": 3,
+  "matchs_francais": 651,
+  "opportunites": 9,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "requetes_par_mois": {
-  "2026-10": 231116
+  "2026-10": 231124
  },
  "historique": [
-  {
-   "debut": "2026-10-17T20:52:16+00:00",
-   "mode": "complet",
-   "opportunites": 20,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "winamax": 17,
-    "betclic": 17,
-    "unibet-fr": 18,
-    "pmu": 16,
-    "orbitxch": 21
-   }
-  },
   {
    "debut": "2026-10-17T20:56:52+00:00",
    "mode": "complet",
@@ -2815,6 +2782,16 @@
    "nouveaux_paris": 0,
    "requetes_pulsescore": {
     "winamax": 4,
+    "betclic": 4,
+    "orbitxch": 4
+   }
+  },
+  {
+   "debut": "2026-10-18T21:29:51+00:00",
+   "mode": "complet",
+   "opportunites": 9,
+   "nouveaux_paris": 0,
+   "requetes_pulsescore": {
     "betclic": 4,
     "orbitxch": 4
    }
