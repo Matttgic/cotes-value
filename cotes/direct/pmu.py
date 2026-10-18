@@ -52,6 +52,46 @@ _ISSUES = {
     "OT_ONE_OR_CROSS": "HOME_DRAW", "OT_ONE_OR_TWO": "HOME_AWAY",
     "OT_CROSS_OR_TWO": "DRAW_AWAY",
 }
+# « Match » chez Kambi couvre aussi le premier but, le race-to et la manche :
+# ces intitulés ne sont pas le résultat du match.
+_PAS_RESULTAT = re.compile(
+    r"first goal|premier but|first team to score|premi[eè]re [eé]quipe|"
+    r"first to|premier [aà]|race to|"
+    r"touchdown|"
+    r"\bframes?\b|\bmanches?\b|"
+    r"next goal|prochain but|winning margin|marge de victoire|"
+    r"premier essai|first try|"
+    r"à la fin du\s+\d+\s*e?\s*set|result at end of set",
+    re.I)
+_ORDINAUX = {"1": "1re", "2": "2e", "3": "3e", "4": "4e"}
+_UNITES_PERIODE = {
+    "periode": "période", "période": "période", "period": "période",
+    "quart-temps": "quart-temps", "quarter": "quart-temps",
+    "set": "set", "mi-temps": "mi-temps", "half": "mi-temps",
+}
+_PERIODE_APRES = re.compile(
+    r"(?i)\b(p[eé]riode|period|quart-temps|quarter|set|mi-temps|half)\s*([1-4])\b")
+_PERIODE_MOTS = (
+    (re.compile(r"(?i)\bpremi[eè]re\s+p[eé]riode\b"), "1re période"),
+    (re.compile(r"(?i)\bdeuxi[eè]me\s+p[eé]riode\b"), "2e période"),
+    (re.compile(r"(?i)\btroisi[eè]me\s+p[eé]riode\b"), "3e période"),
+)
+_A_PERIODE = re.compile(
+    r"(?i)\b(?:1re|2e|3e|4e)\s+(?:période|quart-temps|set|mi-temps)\b|"
+    r"\b[1-4]\s*(?:er|ère|re|e|st|nd|rd|th)?\s*(?:mi-temps|half|période|periode|period|"
+    r"quart-temps|quarter|set)\b|"
+    r"\b(?:half time|halftime|mi-temps)\b")
+_QUEUE_PERIODE = re.compile(
+    r"(?i)\s*[-–]\s*(?:"
+    r"1st half|2nd half|first half|second half|half time|"
+    r"1(?:re|ère|ere)? mi-temps|2e mi-temps|mi-temps|"
+    r"regular time|temps r[ée]glementaire|"
+    r"including overtime(?: and penalty shootout)?|"
+    r"prolongations?(?:\s+incluses)?(?:\s+et\s+\S+)*|"
+    r"(?:premi[eè]re|deuxi[eè]me|troisi[eè]me)\s+p[eé]riode|"
+    r"(?:p[eé]riode|period|quart-temps|quarter|set)\s*[1-4]|"
+    r"[1-4](?:er|re|e|ère)?\s+(?:p[eé]riode|quart-temps|set|mi-temps)"
+    r")\s*$")
 MODES = ("pulsescore", "direct", "auto", "shadow")
 
 
@@ -177,47 +217,113 @@ def _exclu(offre: dict) -> bool:
     return type_offre.startswith("Player") or "scorer" in libelle.lower() or "buteur" in libelle.lower()
 
 
+def _normaliser_periode(libelle: str) -> str:
+    """« Période 2 » et « Première période » deviennent « 2e période » / « 1re période ».
+
+    ``pulsescore.periode`` ne lit le numéro que lorsqu'il précède l'unité.
+    """
+    texte = libelle or ""
+    for motif, remplacement in _PERIODE_MOTS:
+        texte = motif.sub(remplacement, texte)
+
+    def _ordre(m: re.Match) -> str:
+        unite = _UNITES_PERIODE[m.group(1).lower()]
+        return f"{_ORDINAUX[m.group(2)]} {unite}"
+
+    return _PERIODE_APRES.sub(_ordre, texte)
+
+
+def _avec_periode(francais: str, anglais: str) -> str:
+    """Libellé français, complété par la période anglaise si elle n'y est pas."""
+    base = _normaliser_periode(francais)
+    if _A_PERIODE.search(base):
+        return base
+    autre = _normaliser_periode(anglais)
+    if autre and _A_PERIODE.search(autre) and autre.casefold() not in base.casefold():
+        return f"{base} - {autre}".strip(" -")
+    return base
+
+
+def _btts(anglais: str, francais: str) -> bool:
+    """Les deux équipes marquent, pas « au moins 2 buts » ni un combiné."""
+    if re.search(r"at least|au moins|\band\b", anglais) or re.search(r"au moins|\bet\b", francais):
+        return False
+    return "both teams to score" in anglais or "les deux équipes marquent" in francais
+
+
 def _canonique(offre: dict, domicile: str, exterieur: str) -> tuple[str, str] | None:
     crit = offre.get("criterion") or {}
     anglais = str(crit.get("englishLabel") or "")
     francais = str(crit.get("label") or anglais)
     type_offre = str((offre.get("betOfferType") or {}).get("englishName") or "")
     bas = anglais.lower()
-    if "both teams to score" in bas or "les deux équipes marquent" in francais.lower():
-        return "BOTH_TEAMS_TO_SCORE", francais
+    fr = francais.lower()
+    if _btts(bas, fr):
+        return "BOTH_TEAMS_TO_SCORE", _avec_periode(francais, anglais)
     if type_offre == "Double Chance" or bas == "double chance":
-        return "DOUBLE_CHANCE", francais
-    if "draw no bet" in bas or "remboursé" in francais.lower():
-        return "DRAW_NO_BET", francais
+        return "DOUBLE_CHANCE", _avec_periode(francais, anglais)
+    if "draw no bet" in bas or "remboursé" in fr:
+        return "DRAW_NO_BET", _avec_periode(francais, anglais)
     if type_offre in ("HT/FT", "Half Time/Full Time") or "half time/full time" in bas:
         return "HALF_TIME_FULL_TIME", francais
     if type_offre == "Correct Score" or bas == "correct score":
-        return "CORRECT_SCORE", francais
+        return "CORRECT_SCORE", _avec_periode(francais, anglais)
     if type_offre == "3-Way Handicap":
-        return "EUROPEAN_HANDICAP", francais
+        return "EUROPEAN_HANDICAP", _avec_periode(francais, anglais)
     if type_offre == "Handicap" or bas == "handicap":
-        return "ASIAN_HANDICAP", francais
+        return "ASIAN_HANDICAP", _avec_periode(francais, anglais)
     if type_offre == "Over/Under" or bas.startswith("total"):
         equipe = _equipe_du_total(anglais, francais)
         if equipe:
             if equipe.casefold() == domicile.casefold():
-                return "HOME_OVER_UNDER", francais
+                return "HOME_OVER_UNDER", _avec_periode(francais, anglais)
             if equipe.casefold() == exterieur.casefold():
-                return "AWAY_OVER_UNDER", francais
+                return "AWAY_OVER_UNDER", _avec_periode(francais, anglais)
             return None
         if "set" in bas and "game" not in bas:
-            return "TOTAL_SETS", francais
-        return "OVER_UNDER", francais
+            return "TOTAL_SETS", _avec_periode(francais, anglais)
+        return "OVER_UNDER", _avec_periode(francais, anglais)
     if type_offre == "Match":
-        return "MATCH_RESULT", francais
+        if _PAS_RESULTAT.search(f"{anglais} {francais}"):
+            return None
+        return "MATCH_RESULT", _avec_periode(francais, anglais)
     return None
 
 
 def _equipe_du_total(anglais: str, francais: str) -> str | None:
     for texte, separateur in ((anglais, " by "), (francais, " par ")):
-        if separateur in texte.lower():
-            return texte.split(separateur, 1)[1].strip() or None
+        bas = texte.lower()
+        idx = bas.find(separateur)
+        if idx < 0:
+            continue
+        nom = _QUEUE_PERIODE.sub("", texte[idx + len(separateur):].strip()).strip(" -")
+        return nom or None
     return None
+
+
+def _priorite_libelle(ligne: dict) -> int:
+    """Quand deux intitulés tombent sur la même clé, garder le temps réglementaire."""
+    texte = (ligne.get("libelle") or "").lower()
+    if "temps rég" in texte or "temps règ" in texte or "regular time" in texte:
+        return 2
+    if "prolong" in texte or "overtime" in texte or "tirs au but" in texte:
+        return 0
+    return 1
+
+
+def _retenir(lignes: list[dict]) -> list[dict]:
+    gardes: dict[tuple, dict] = {}
+    ordre: list[tuple] = []
+    for ligne in lignes:
+        cle = (ligne.get("match_id"), ligne.get("marche"), ligne.get("periode"),
+               ligne.get("ligne"), ligne.get("issue"))
+        if cle not in gardes:
+            ordre.append(cle)
+            gardes[cle] = ligne
+            continue
+        if _priorite_libelle(ligne) > _priorite_libelle(gardes[cle]):
+            gardes[cle] = ligne
+    return [gardes[cle] for cle in ordre]
 
 
 def _score(libelle: str) -> str | None:
@@ -326,7 +432,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
                 ev = evenement_depuis(event, [o for o in offres if isinstance(o, dict)
                                               and o.get("eventId") == event.get("id")])
                 if ev:
-                    lignes += traduire(ev, "pmu", sport, moment)
+                    lignes += _retenir(traduire(ev, "pmu", sport, moment))
     return lignes, {"ok": lectures > 0 or not client.erreurs, "erreurs": list(client.erreurs),
                     "requetes": client.requetes, "matchs": matchs}
 
