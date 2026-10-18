@@ -1,32 +1,32 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T04:29:04+00:00",
+  "debut": "2026-10-18T04:35:21+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 17.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 5 matchups : HTTP 403",
-     "sport 1 matchups : HTTP 403",
-     "sport 37 matchups : HTTP 403"
-    ]
-   },
    "polymarket": {
-    "secondes": 19.3,
+    "secondes": 16.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "prix bid/ask invalides"
     ]
    },
+   "pinnacle": {
+    "secondes": 22.5,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 5 matchups : HTTP 403",
+     "sport 1 matchups : HTTP 403",
+     "sport 13 matchups : HTTP 403"
+    ]
+   },
    "pmu_direct": {
-    "secondes": 47.5,
+    "secondes": 46.8,
     "ok": true
    },
    "pulsescore": {
-    "secondes": 46.7,
+    "secondes": 39.0,
     "ok": true,
     "degrade": true,
     "erreurs": {
@@ -46,16 +46,20 @@
      ]
     }
    },
+   "olybet": {
+    "secondes": 5.5,
+    "ok": true
+   },
    "association": {
-    "secondes": 108.8,
+    "secondes": 75.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.8,
+    "secondes": 2.3,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 109.3,
+    "secondes": 74.9,
     "ok": true
    }
   },
@@ -70,8 +74,8 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 813,
-   "lignes_perimees": 4997,
+   "age_max_s": 882,
+   "lignes_perimees": 140339,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -81,48 +85,121 @@
     "sautes": 0,
     "extrait": null
    },
-   "sonde_cache": {
-    "chemin": "/sports/29/markets/straight?primaryOnly=false",
-    "ecart_s": 8,
-    "paris": {
-     "status": 200,
-     "cache": "HIT",
-     "age": null,
-     "octets": 32239856,
-     "t": "2026-10-18T04:29:12.617Z"
-    },
-    "github": {
-     "status": 200,
-     "cache": "HIT",
-     "age": 556,
-     "octets": 32240838
-    }
-   }
+   "sonde_cache": null
   },
   "pmu_direct_rapport": {
    "matchs_pulsescore": 299,
    "matchs_direct": 310,
    "matchs_communs": 287,
    "couverture": 0.9599,
-   "selections_communes": 16651,
-   "selections_egales": 15816,
-   "accord_cotes": 0.9499,
+   "selections_communes": 16650,
+   "selections_egales": 15878,
+   "accord_cotes": 0.9536,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
    "pret_a_basculer": false
   },
+  "olybet_source": "direct",
+  "olybet_controle": {
+   "ok": true,
+   "seuil_relatif": 0.15,
+   "examines": 10,
+   "comparaisons": [
+    {
+     "match": "Monterrey – Pachuca",
+     "source": "Pinnacle",
+     "cote_olybet": 1.61,
+     "cote_reference": 1.694,
+     "ecart_relatif": 0.0498,
+     "aberrant": false
+    },
+    {
+     "match": "Monterrey – Pachuca",
+     "source": "PMU",
+     "cote_olybet": 1.61,
+     "cote_reference": 1.5,
+     "ecart_relatif": 0.0733,
+     "aberrant": false
+    },
+    {
+     "match": "Fiorentina – Como",
+     "source": "Pinnacle",
+     "cote_olybet": 3.28,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.0629,
+     "aberrant": false
+    },
+    {
+     "match": "Fiorentina – Como",
+     "source": "PMU",
+     "cote_olybet": 3.28,
+     "cote_reference": 3.25,
+     "ecart_relatif": 0.0092,
+     "aberrant": false
+    },
+    {
+     "match": "AC Milan – Atalanta",
+     "source": "Pinnacle",
+     "cote_olybet": 1.75,
+     "cote_reference": 1.826,
+     "ecart_relatif": 0.0418,
+     "aberrant": false
+    },
+    {
+     "match": "AC Milan – Atalanta",
+     "source": "PMU",
+     "cote_olybet": 1.75,
+     "cote_reference": 1.74,
+     "ecart_relatif": 0.0057,
+     "aberrant": false
+    },
+    {
+     "match": "Juventus – Lazio",
+     "source": "Pinnacle",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.685,
+     "ecart_relatif": 0.0266,
+     "aberrant": false
+    },
+    {
+     "match": "Juventus – Lazio",
+     "source": "PMU",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.64,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Udinese – Lecce",
+     "source": "Pinnacle",
+     "cote_olybet": 1.75,
+     "cote_reference": 1.826,
+     "ecart_relatif": 0.0418,
+     "aberrant": false
+    },
+    {
+     "match": "Udinese – Lecce",
+     "source": "PMU",
+     "cote_olybet": 1.75,
+     "cote_reference": 1.78,
+     "ecart_relatif": 0.0169,
+     "aberrant": false
+    }
+   ],
+   "aberrants": []
+  },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T04:29:13+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T04:29:18+00:00",
-   "books_premiere_lecture": "2026-10-18T04:30:12+00:00",
-   "books_derniere_lecture": "2026-10-18T04:30:57+00:00",
-   "ecart_enveloppe_secondes": 104.0
+   "pinnacle_premiere_lecture": "2026-10-18T04:35:38+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T04:35:42+00:00",
+   "books_premiere_lecture": "2026-10-18T04:36:32+00:00",
+   "books_derniere_lecture": "2026-10-18T04:37:11+00:00",
+   "ecart_enveloppe_secondes": 93.0
   },
   "controle": {
-   "conforme": 438,
-   "a_verifier": 6,
-   "non_conforme": 8,
-   "mesures": 45223,
+   "conforme": 451,
+   "a_verifier": 8,
+   "non_conforme": 7,
+   "mesures": 37619,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -131,7 +208,7 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T04:09:08+00:00"
   },
-  "fin": "2026-10-18T04:34:42+00:00",
+  "fin": "2026-10-18T04:39:55+00:00",
   "requetes_pulsescore": {
    "winamax": 18,
    "betclic": 19,
@@ -140,33 +217,20 @@
    "orbitxch": 22
   },
   "cotes": {
-   "francaises": 143277,
-   "pinnacle": 145653,
-   "betfair": 26047,
-   "polymarket": 28777
+   "francaises": 166161,
+   "pinnacle": 145754,
+   "betfair": 26055,
+   "polymarket": 29064
   },
-  "matchs_francais": 1420,
-  "opportunites": 37,
-  "opportunites_suspectes": 10,
-  "nouveaux_paris": 0
+  "matchs_francais": 1788,
+  "opportunites": 14,
+  "opportunites_suspectes": 3,
+  "nouveaux_paris": 1
  },
  "requetes_par_mois": {
-  "2026-10": 218758
+  "2026-10": 218851
  },
  "historique": [
-  {
-   "debut": "2026-10-17T00:43:39+00:00",
-   "mode": "complet",
-   "opportunites": 30,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "winamax": 21,
-    "betclic": 21,
-    "unibet-fr": 22,
-    "pmu": 18,
-    "orbitxch": 22
-   }
-  },
   {
    "debut": "2026-10-17T00:49:52+00:00",
    "mode": "complet",
@@ -2759,6 +2823,19 @@
    "mode": "complet",
    "opportunites": 37,
    "nouveaux_paris": 0,
+   "requetes_pulsescore": {
+    "winamax": 18,
+    "betclic": 19,
+    "unibet-fr": 19,
+    "pmu": 15,
+    "orbitxch": 22
+   }
+  },
+  {
+   "debut": "2026-10-18T04:35:21+00:00",
+   "mode": "complet",
+   "opportunites": 14,
+   "nouveaux_paris": 1,
    "requetes_pulsescore": {
     "winamax": 18,
     "betclic": 19,
