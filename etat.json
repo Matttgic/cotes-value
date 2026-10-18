@@ -1,36 +1,33 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T04:05:22+00:00",
+  "debut": "2026-10-18T04:19:43+00:00",
   "mode": "complet",
   "etapes": {
-   "kalshi": {
-    "secondes": 0.5,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "HTTP 429"
-    ]
-   },
    "pinnacle": {
-    "secondes": 16.7,
+    "secondes": 14.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 26 matchups : HTTP 403",
-     "sport 5 matchups : HTTP 403",
-     "sport 1 matchups : HTTP 403"
+     "sport 29 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "sport 5 matchups : HTTP 403"
     ]
    },
    "polymarket": {
-    "secondes": 54.1,
+    "secondes": 15.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "prix bid/ask invalides"
+     "prix bid/ask invalides",
+     "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
+   "pmu_direct": {
+    "secondes": 46.4,
+    "ok": true
+   },
    "pulsescore": {
-    "secondes": 38.1,
+    "secondes": 53.4,
     "ok": true,
     "degrade": true,
     "erreurs": {
@@ -51,15 +48,15 @@
     }
    },
    "association": {
-    "secondes": 60.5,
+    "secondes": 50.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.0,
+    "secondes": 1.6,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 59.7,
+    "secondes": 51.1,
     "ok": true
    }
   },
@@ -68,13 +65,14 @@
    "actif": false,
    "raison": "désactivé par défaut : fraîcheur source et clôtures complètes requises"
   },
+  "pmu_source": "shadow",
   "pinnacle_configuration": {
    "mode": "site"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 891,
-   "lignes_perimees": 139807,
+   "age_max_s": 843,
+   "lignes_perimees": 23098,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -85,80 +83,78 @@
     "extrait": null
    },
    "sonde_cache": {
-    "chemin": "/sports/29/markets/straight?primaryOnly=false",
-    "ecart_s": 8,
+    "chemin": "/sports/29/markets/straight?withSpecials=true&primaryOnly=false",
+    "ecart_s": 5,
     "paris": {
      "status": 200,
      "cache": "HIT",
      "age": null,
      "octets": 32217303,
-     "t": "2026-10-18T04:05:30.796Z"
+     "t": "2026-10-18T04:19:52.678Z"
     },
     "github": {
-     "status": 200,
-     "cache": "HIT",
-     "age": 45,
-     "octets": 32223560
+     "status": 403,
+     "cache": "BYPASS",
+     "age": null,
+     "octets": 151
     }
    }
   },
+  "pmu_direct_rapport": {
+   "matchs_pulsescore": 298,
+   "matchs_direct": 309,
+   "matchs_communs": 286,
+   "couverture": 0.9597,
+   "selections_communes": 16593,
+   "selections_egales": 15819,
+   "accord_cotes": 0.9534,
+   "seuil_couverture": 0.95,
+   "seuil_accord": 0.99,
+   "pret_a_basculer": false
+  },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T04:05:32+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T04:05:36+00:00",
-   "books_premiere_lecture": "2026-10-18T04:06:17+00:00",
-   "books_derniere_lecture": "2026-10-18T04:06:53+00:00",
-   "ecart_enveloppe_secondes": 81.0
+   "pinnacle_premiere_lecture": "2026-10-18T04:19:53+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T04:19:57+00:00",
+   "books_premiere_lecture": "2026-10-18T04:20:46+00:00",
+   "books_derniere_lecture": "2026-10-18T04:21:38+00:00",
+   "ecart_enveloppe_secondes": 105.0
   },
   "controle": {
    "conforme": 438,
    "a_verifier": 4,
    "non_conforme": 8,
-   "mesures": 30955,
+   "mesures": 31129,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-18T03:13:05+00:00"
+   "dernier_reglement": "2026-10-18T04:09:08+00:00"
   },
-  "fin": "2026-10-18T04:09:01+00:00",
+  "fin": "2026-10-18T04:23:28+00:00",
   "requetes_pulsescore": {
-   "winamax": 18,
+   "winamax": 20,
    "betclic": 19,
-   "unibet-fr": 19,
-   "pmu": 15,
+   "unibet-fr": 23,
+   "pmu": 17,
    "orbitxch": 21
   },
   "cotes": {
-   "francaises": 141762,
-   "pinnacle": 145314,
-   "betfair": 25692,
-   "polymarket": 28687,
-   "kalshi": 163
+   "francaises": 142277,
+   "pinnacle": 28379,
+   "betfair": 25971,
+   "polymarket": 28758
   },
   "matchs_francais": 1413,
-  "opportunites": 9,
+  "opportunites": 10,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "requetes_par_mois": {
-  "2026-10": 218473
+  "2026-10": 218573
  },
  "historique": [
-  {
-   "debut": "2026-10-17T00:13:09+00:00",
-   "mode": "complet",
-   "opportunites": 30,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "winamax": 21,
-    "betclic": 21,
-    "unibet-fr": 22,
-    "pmu": 18,
-    "orbitxch": 21
-   }
-  },
   {
    "debut": "2026-10-17T00:19:19+00:00",
    "mode": "complet",
@@ -2756,6 +2752,19 @@
     "betclic": 19,
     "unibet-fr": 19,
     "pmu": 15,
+    "orbitxch": 21
+   }
+  },
+  {
+   "debut": "2026-10-18T04:19:43+00:00",
+   "mode": "complet",
+   "opportunites": 10,
+   "nouveaux_paris": 1,
+   "requetes_pulsescore": {
+    "winamax": 20,
+    "betclic": 19,
+    "unibet-fr": 23,
+    "pmu": 17,
     "orbitxch": 21
    }
   }
