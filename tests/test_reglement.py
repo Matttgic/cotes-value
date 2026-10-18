@@ -153,13 +153,6 @@ def test_betfair_issues_manquantes_pas_gonflees():
     assert abs(r["1-1"] - (1 / 9 + 1 / 10) / 2) < 1e-6
 
 
-def test_bilan_toutes_sans_le_temoin():
-    from cotes.simulation import bilan
-    p = {"simulation": "A", "statut": "gagne", "mise": 10, "gain": 10.0, "clv": 0.02}
-    b = bilan([{**p, "reference": "Pinnacle"}, {**p, "reference": "Pinnacle brut", "statut": "perdu", "gain": -10.0}])
-    assert b["A|Toutes"]["gains"] == 10.0 and b["A|Toutes"]["gagnes"] == 1 and b["A|Pinnacle brut"]["gains"] == -10.0
-
-
 def test_bilan_par_tranche_de_cote():
     from cotes.simulation import bilan_tranches, tranche
     assert tranche(1.5) == "1,01 – 1,50" and tranche(1.51) == "1,51 – 2,00" and tranche(25) == "plus de 10"
@@ -263,12 +256,11 @@ def test_paris_uniques_une_mise_par_cote():
             "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM", "joueur": None}
     paris = [{**base, "reference": "Betfair", "detecte": "2026-10-07T10:15:00"},
              {**base, "reference": "Pinnacle", "detecte": "2026-10-07T10:00:00"},
-             {**base, "reference": "Pinnacle brut", "detecte": "2026-10-07T09:45:00"},
              {**base, "reference": "Pinnacle", "issue": "EXT", "gain": -10, "statut": "perdu",
               "detecte": "2026-10-07T10:00:00"}]
     b = bilan(paris)
     assert b["A|Toutes"]["paris"] == 3 and b["A|Uniques"]["paris"] == 2
-    assert b["A|Uniques"]["gains"] == 1 and b["A|Uniques"]["gagnes"] == 1      # le témoin n'y entre pas
+    assert b["A|Uniques"]["gains"] == 1 and b["A|Uniques"]["gagnes"] == 1
 
 
 def test_trace_du_pari_de_la_prise_au_reglement():

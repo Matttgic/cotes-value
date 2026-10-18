@@ -752,16 +752,12 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
             if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])]
         attente = [p for p in paris if p["statut"] == "a_regler"]
         journal["resultats"]["paris_en_attente"] = len(attente)
-        journal["resultats"]["temoins_en_attente"] = sum(p.get("reference") == "Pinnacle brut" for p in attente)
         journal["resultats"]["paris_regles"] = sum(id(p) in ouverts_avant and p.get("statut") in reglement.GAIN for p in paris)
         # Même regroupement que le compteur « À régler » du site : une sélection
-        # commune aux références n'est comptée qu'une fois, témoin après les vraies références.
-        selections = {}
-        for p in attente:
-            k = tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur"))
-            selections[k] = selections.get(k, True) and p.get("reference") == "Pinnacle brut"
+        # commune aux références n'est comptée qu'une fois.
+        selections = {tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur"))
+                      for p in attente}
         journal["resultats"]["selections_en_attente"] = len(selections)
-        journal["resultats"]["selections_temoins_en_attente"] = sum(selections.values())
         journal["resultats"]["ignores"] = list(resultats_mod.RESULTATS_IGNORES)
         journal["resultats"]["ignores_limite"] = resultats_mod.IGNORES_MAX
         journal["resultats"]["paris_avec_alertes"] = sum(bool(p.get("alertes")) for p in paris

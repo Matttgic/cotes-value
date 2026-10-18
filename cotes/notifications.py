@@ -43,7 +43,7 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
     for o in actuelles:
         debut = heure(o.get("debut"))
         recue = heure(o.get("collecte_recue") or o.get("detecte"))
-        if (o.get("suspect") or o.get("pariable") is False or o.get("reference") == "Pinnacle brut" or not debut
+        if (o.get("suspect") or o.get("pariable") is False or not debut
                 or debut <= maintenant + timedelta(minutes=1) or not recue
                 or not timedelta(0) <= maintenant-recue <= timedelta(minutes=AGE_PRIX_MAX_MINUTES)):
             continue

@@ -6,7 +6,7 @@ Simulations = tranches d'écart qui ne se chevauchent pas (écart = cote frança
     X « cotes > 10 », écart ≥ 3 %                               (à part : cote juste imprécise, gros aléa)
 Un pari n'est pris qu'une fois par référence, bookmaker et sélection (à la cote vue à la première
 détection) et appartient à une seule simulation : « A+B » = les paris de 2 à 4 %, chacun compté une fois.
-Chaque référence (Pinnacle, Betfair, Polymarket, Consensus, témoin Pinnacle brut) a ses paris.
+Chaque référence (Pinnacle, Betfair, Polymarket, Smarkets, Consensus) a ses paris.
 Kalshi n'est plus collecté ; le nom reste dans la liste pour les paris déjà enregistrés.
 """
 from __future__ import annotations
@@ -63,7 +63,7 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
     admissibles = [o for o in opportunites if _nombre_fini(o.get("ecart"))
                   and _cote_valide(o.get("cote")) and _cote_valide(o.get("cote_juste"))]
     for o in sorted(admissibles, key=lambda o: -o["ecart"]):
-        if o.get("suspect") or o.get("pariable") is False or o.get("reference") == "Pinnacle brut":
+        if o.get("suspect") or o.get("pariable") is False:
             continue
         decision = maintenant or datetime.now(timezone.utc)
         debut = _heure(o.get("debut"))
@@ -225,7 +225,6 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], mai
         p["cloture_lue"] = t.isoformat(timespec="seconds")
 
 
-TEMOIN = "Pinnacle brut"
 # tranches de cote (bornes basses exclues, hautes incluses)
 TRANCHES = [(1.0, 1.5, "1,01 – 1,50"), (1.5, 2.0, "1,51 – 2,00"), (2.0, 3.0, "2,01 – 3,00"),
             (3.0, 5.0, "3,01 – 5,00"), (5.0, 10.0, "5,01 – 10"), (10.0, float("inf"), "plus de 10")]
@@ -281,13 +280,11 @@ def paris_strategie(paris: list[dict], depuis: str | None = None) -> set[int]:
 
 def premiers_par_selection(paris: list[dict]) -> set[int]:
     """Les « paris uniques » (repérés par id() de leur dict) : pour chaque cote française (bookmaker, match, marché, issue), le
-    pari de sa première détection, quelle que soit la référence qui l'a repérée (le témoin exclu). C'est ce
+    pari de sa première détection, quelle que soit la référence qui l'a repérée. C'est ce
     qu'on aurait réellement joué : une seule mise par cote, même si plusieurs références l'ont signalée."""
     ordre = {r: i for i, r in enumerate(REFERENCES)}
     premiers: dict[tuple, dict] = {}
     for p in paris:
-        if p.get("reference") == TEMOIN:
-            continue
         k = tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur")) \
             if p.get("match_id") else (id(p),)
         rang = (p.get("detecte") or "", ordre.get(p.get("reference"), 99))
@@ -299,7 +296,7 @@ def premiers_par_selection(paris: list[dict]) -> set[int]:
 def _cumuler(paris: list[dict], groupe) -> dict:
     """Résumé par (groupe, référence), (groupe, « Toutes »), (groupe, « Uniques ») et (groupe, « Stratégie ») :
     nombre, mises, gains, ROI, CLV moyenne. « Toutes » = les vraies références, un pari par référence ; « Uniques » = un pari par
-    cote française ; le témoin « Pinnacle brut » n'a que sa propre ligne."""
+    cote française."""
     from .evenements import identites
     liens = identites(paris)
     numeros = {cle:i for i,cle in enumerate(dict.fromkeys(liens.values()))}
@@ -310,9 +307,7 @@ def _cumuler(paris: list[dict], groupe) -> dict:
     jules = paris_jules(paris)
     jules_v2 = paris_jules_v2(paris)
     for p in paris:
-        clefs = [f'{groupe(p)}|{p["reference"]}']
-        if p["reference"] != TEMOIN:
-            clefs.append(f'{groupe(p)}|Toutes')
+        clefs = [f'{groupe(p)}|{p["reference"]}', f'{groupe(p)}|Toutes']
         if id(p) in uniques:
             clefs.append(f'{groupe(p)}|Uniques')
         if id(p) in strategie:
@@ -386,7 +381,7 @@ def moyennes_ecarts(paris: list[dict]) -> dict:
     for nom, champ in specs:
         valeurs = []
         for p in paris:
-            if id(p) not in uniques or p.get("statut") not in REGLES or p.get("reference") == TEMOIN:
+            if id(p) not in uniques or p.get("statut") not in REGLES:
                 continue
             valeur = p.get(champ)
             if valeur is None and p.get("reference") == nom:

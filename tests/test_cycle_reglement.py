@@ -64,7 +64,7 @@ def test_collecte_et_cron_partagent_delai_verrou_et_cles():
             assert f'THE_ODDS_API_KEY_{i}: ${{{{ secrets.THE_ODDS_API_KEY_{i} }}}}' in texte
 
 
-def test_un_passage_regle_ce_qui_est_prouve_et_compte_les_vrais_temoin_separement(tmp_path,monkeypatch):
+def test_un_passage_regle_ce_qui_est_prouve_et_compte_les_selections_en_attente(tmp_path,monkeypatch):
     from tests.test_theodds import pari
     for key in ['API_SPORTS_KEY','PROPLINE_API_KEY',*[f'THE_ODDS_API_KEY_{i}' for i in range(1,5)]]:
         monkeypatch.delenv(key,raising=False)
@@ -76,14 +76,14 @@ def test_un_passage_regle_ce_qui_est_prouve_et_compte_les_vrais_temoin_separemen
     (tmp_path/'resultats_manuels.json').write_text(json.dumps({'prouve':'gagne'}))
     ps=[pari(id='prouve',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler'),
         pari(id='vrai',reference='Pinnacle',match_id='pmu|absent',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler'),
-        pari(id='temoin-du-vrai',reference='Pinnacle brut',match_id='pmu|absent',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler'),
-        pari(id='temoin-seul',reference='Pinnacle brut',match_id='pmu|autre',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler')]
+        pari(id='autre-ref',reference='Betfair',match_id='pmu|absent',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler'),
+        pari(id='seul',reference='Pinnacle',match_id='pmu|autre',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler')]
     j={'etapes':{}}
     assert cycle.effectuer_reglement(ps,tmp_path,NOW,'',j,{},'auto')
     assert ps[0]['statut']=='gagne' and all(p['statut']=='a_regler' for p in ps[1:])
     assert j['resultats']['paris_regles']==1
-    assert j['resultats']['paris_en_attente']==3 and j['resultats']['temoins_en_attente']==2
-    assert j['resultats']['selections_en_attente']==2 and j['resultats']['selections_temoins_en_attente']==1
+    assert j['resultats']['paris_en_attente']==3
+    assert j['resultats']['selections_en_attente']==2      # une sélection commune à deux références compte une fois
 
 
 @pytest.mark.parametrize('mode,effectue',[('auto',False),('oui',True)])
