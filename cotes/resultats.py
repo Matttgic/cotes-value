@@ -707,14 +707,37 @@ def a_saisir(paris: list[dict], enregistrements: list[dict], maintenant: datetim
              limite: int = 200) -> list[dict]:
     """Les matchs que rien ne règle : de quoi remplir donnees/resultats_manuels.json sans rien chercher d'autre.
     Pour chaque match, les paris en attente, les périodes dont ils ont besoin, ce que les sources en disent,
-    et le modèle de saisie (`modele` à copier dans resultats_manuels.json sous la clé `match_id`)."""
-    groupes: dict[str, list[dict]] = {}
-    for p in paris:
-        if p["statut"] == "a_regler":
-            groupes.setdefault(p["match_id"], []).append(p)
+    et le modèle de saisie (`modele` à copier dans resultats_manuels.json sous chacune des clés de `match_ids`).
+    Un même match vu par plusieurs bookmakers (autre `match_id`, autre orthographe) n'est listé qu'une fois."""
+    from .evenements import identites
+    a_regler = [p for p in paris if p["statut"] == "a_regler"]
+    identite = identites(a_regler)
+    groupes: dict = {}
+    for p in a_regler:
+        groupes.setdefault(identite[id(p)], []).append(p)
+
+    def meme_match(a: dict, b: dict) -> bool:
+        """Sans preuve de lien : même sport, même coup d'envoi (± 15 min), deux équipes très proches (≥ 0,9,
+        ce qui écarte le féminin et les jeunes). Prudent : une erreur ferait saisir un score sous le mauvais match."""
+        ta, tb = _heure(a.get("debut")), _heure(b.get("debut"))
+        if a["sport"] != b["sport"] or not ta or not tb or abs((ta - tb).total_seconds()) > SECOURS_HEURE_MIN * 60:
+            return False
+        sim = lambda x, y: min(ressemblance(x["domicile"], y["domicile"]), ressemblance(x["exterieur"], y["exterieur"]))  # noqa: E731
+        inv = min(ressemblance(a["domicile"], b["exterieur"]), ressemblance(a["exterieur"], b["domicile"]))
+        return max(sim(a, b), inv) >= 0.9 - 1e-9
+
+    fusionnes: list[list[dict]] = []
+    for ps in sorted(groupes.values(), key=lambda g: str(g[0].get("debut"))):
+        cible = next((g for g in fusionnes if meme_match(g[0], ps[0])), None)
+        if cible is None:
+            fusionnes.append(list(ps))
+        else:
+            cible.extend(ps)
     sortie = []
-    for mid, ps in sorted(groupes.items(), key=lambda kv: str(kv[1][0].get("debut"))):
+    for ps in fusionnes:
         p = ps[0]
+        ids = sorted({x["match_id"] for x in ps})
+        mid = p["match_id"]
         periodes = sorted({x["periode"] for x in ps})
         modele = {"score": [None, None]}
         if any(x["periode"] in ("MT1", "MT2") or x["marche"] == "HALF_TIME_FULL_TIME" for x in ps):
@@ -724,7 +747,8 @@ def a_saisir(paris: list[dict], enregistrements: list[dict], maintenant: datetim
         if p["sport"] in ("hockey", "basket", "tennis", "volley", "baseball", "football_americain"):
             modele["periodes"] = [[None, None]]
         d = diagnostic(p, enregistrements, maintenant)
-        sortie.append({"match_id": mid, "match": f'{p["domicile"]} – {p["exterieur"]}', "sport": p["sport"],
+        sortie.append({"match_id": mid, "match_ids": ids, "match": f'{p["domicile"]} – {p["exterieur"]}',
+                       "sport": p["sport"],
                        "ligue": p.get("ligue"), "debut": p.get("debut"), "paris": len(ps),
                        "periodes_requises": periodes, "raison": d.get("raison"), "sources_vues": d.get("sources", {}),
                        "modele": modele})

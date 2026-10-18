@@ -89,3 +89,28 @@ def test_liste_a_saisir_pour_les_matchs_sans_source():
 def test_hockey_sans_vainqueur_des_tirs_au_but_est_ignore():
     assert livescore.match("hockey", _e(Eps="AP", Tr1="3", Tr2="3", Tr1OR="3", Tr2OR="3",
                                         Tr1Pe1="2", Tr2Pe1="0", Tr1Pe2="1", Tr2Pe2="2", Tr1Pe3="0", Tr2Pe3="1")) == []
+
+
+def test_liste_a_saisir_un_match_vu_par_plusieurs_bookmakers_une_seule_fois():
+    from cotes import resultats
+    base = {"statut": "a_regler", "sport": "basket", "domicile": "Besiktas", "exterieur": "Galatasaray",
+            "debut": "2026-10-16T15:00:00Z", "marche": "VAINQUEUR", "periode": "MATCH", "ligue": "BSL"}
+    paris = [{**base, "match_id": "winamax|1", "domicile": "Besiktas Istanbul"},
+             {**base, "match_id": "unibet-fr|2", "periode": "MT1"},
+             {**base, "match_id": "pmu|3", "domicile": "Lens", "exterieur": "Lille"}]
+    liste = resultats.a_saisir(paris, [], datetime(2026, 10, 18, tzinfo=timezone.utc))
+    assert len(liste) == 2
+    bes = next(m for m in liste if "Lens" not in m["match"])
+    assert bes["match_ids"] == ["unibet-fr|2", "winamax|1"] and bes["paris"] == 2
+    assert bes["periodes_requises"] == ["MATCH", "MT1"]
+
+
+def test_liste_a_saisir_ne_fusionne_pas_deux_matchs_differents():
+    from cotes import resultats
+    base = {"statut": "a_regler", "sport": "volley", "marche": "VAINQUEUR", "periode": "MATCH",
+            "debut": "2026-10-16T15:00:00Z", "ligue": "L"}
+    paris = [{**base, "match_id": "winamax|1", "domicile": "Lodz", "exterieur": "Mielec"},
+             {**base, "match_id": "pmu|2", "domicile": "Lodz (F)", "exterieur": "Mielec (F)"},        # féminin
+             {**base, "match_id": "betclic|3", "domicile": "Lodz", "exterieur": "Mielec",
+              "debut": "2026-10-16T18:00:00Z"}]                                                       # autre heure
+    assert len(resultats.a_saisir(paris, [], datetime(2026, 10, 18, tzinfo=timezone.utc))) == 3

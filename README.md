@@ -286,6 +286,7 @@ Les scores viennent de plusieurs sources gratuites, rapprochées par noms d'équ
 | Rugby | Flashscore | 11/13 |
 
 Une source seule ne règle qu'après 24 h (6 h pour LiveScore, ESPN, API-Sports, NHL). `donnees/resultats_a_saisir.json`
-liste les matchs qu'aucune source ne règle, avec le modèle de saisie de `resultats_manuels.json`. Le journal du
+liste les matchs qu'aucune source ne règle (un match vu par plusieurs bookmakers n'y figure qu'une fois, avec toutes
+ses clés dans `match_ids`), avec le modèle de saisie de `resultats_manuels.json`. Le journal du
 cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non
 officiels : ils peuvent changer sans préavis.
