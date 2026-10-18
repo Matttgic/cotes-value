@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T17:51:25+00:00",
+  "debut": "2026-10-18T17:56:01+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 10.7,
+    "secondes": 9.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,37 +12,37 @@
     ]
    },
    "pinnacle": {
-    "secondes": 28.7,
+    "secondes": 29.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 markets/straight : HTTP 403",
      "sport 5 matchups : HTTP 403",
-     "sport 1 matchups : HTTP 403"
+     "sport 1 matchups : HTTP 403",
+     "sport 37 matchups : HTTP 403"
     ]
    },
-   "olybet": {
-    "secondes": 5.1,
+   "unibet_direct": {
+    "secondes": 4.6,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 6.6,
+   "olybet": {
+    "secondes": 6.4,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 13.5,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 17.6,
+    "secondes": 13.2,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 20.7,
+    "secondes": 14.6,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 17.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -50,7 +50,7 @@
     ]
    },
    "pulsescore": {
-    "secondes": 21.8,
+    "secondes": 24.3,
     "ok": true,
     "degrade": true,
     "erreurs": {
@@ -69,11 +69,11 @@
     "desactive": true
    },
    "association": {
-    "secondes": 5.5,
+    "secondes": 6.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.9,
+    "secondes": 0.5,
     "ok": true
    },
    "cotes_cloture": {
@@ -86,14 +86,14 @@
    "actif": false,
    "raison": "désactivé par défaut : fraîcheur source et clôtures complètes requises"
   },
-  "pmu_source": "shadow",
+  "pmu_source": "auto",
   "pinnacle_configuration": {
    "mode": "site"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 721,
-   "lignes_perimees": 78274,
+   "age_max_s": 870,
+   "lignes_perimees": 12059,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -104,58 +104,275 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 18,
-    "head_403": 3,
+    "head_200": 45,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 4,
-    "choisi_fixe": 3,
+    "choisi_autre": 6,
+    "choisi_fixe": 9,
     "reprise_403": 4
    }
   },
   "winamax_source": "auto",
-  "unibet_source": "shadow",
+  "unibet_source": "auto",
   "betclic_source": "shadow",
   "olybet_source": "direct",
   "netbet_source": "direct",
-  "pmu_direct_rapport": {
-   "matchs_pulsescore": 121,
-   "matchs_direct": 137,
-   "matchs_communs": 121,
-   "manques": [],
-   "couverture": 1.0,
-   "selections_communes": 8940,
-   "selections_egales": 8664,
-   "accord_cotes": 0.9691,
-   "seuil_couverture": 0.95,
-   "seuil_accord": 0.99,
-   "pret_a_basculer": false
-  },
   "winamax_source_effective": "direct",
-  "unibet_direct_rapport": {
-   "matchs_pulsescore": 139,
-   "matchs_direct": 155,
-   "matchs_communs": 139,
-   "manques": [],
-   "couverture": 1.0,
-   "selections_communes": 290,
-   "selections_egales": 290,
-   "accord_cotes": 1.0,
-   "seuil_couverture": 0.95,
-   "seuil_accord": 0.99,
-   "pret_a_basculer": true
-  },
   "betclic_direct_rapport": {
    "matchs_pulsescore": 138,
    "matchs_direct": 139,
    "matchs_communs": 138,
    "manques": [],
    "couverture": 1.0,
-   "selections_communes": 2962,
-   "selections_egales": 2900,
-   "accord_cotes": 0.9791,
+   "selections_communes": 5106,
+   "selections_egales": 5042,
+   "accord_cotes": 0.9875,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
-   "pret_a_basculer": false
+   "pret_a_basculer": false,
+   "diagnostic": {
+    "cotes_differentes": {
+     "mouvement": 59,
+     "issues_permutees": 5
+    },
+    "cotes_differentes_par_marche": {
+     "mouvement": {
+      "DOUBLE_CHANCE|MATCH": 1,
+      "BOTH_TEAMS_TO_SCORE|MATCH": 2,
+      "TOTAL_DOM|MATCH": 4,
+      "TOTAL_EXT|MATCH": 5,
+      "CORRECT_SCORE|MATCH": 14,
+      "JEUX_TOTAL|MATCH": 32,
+      "DOUBLE_CHANCE|TEMPS_REG": 1
+     },
+     "issues_permutees": {
+      "CORRECT_SCORE|MATCH": 5
+     }
+    },
+    "absentes_du_direct": {
+     "marche_absent": 7170,
+     "issue_absente": 681,
+     "periode_differente": 4100,
+     "ligne_differente": 2
+    },
+    "absentes_par_marche": {
+     "marche_absent": {
+      "DRAW_NO_BET|MATCH": 130,
+      "HANDICAP_3|MATCH": 1020,
+      "HANDICAP_3|MT1": 612,
+      "HANDICAP_3|MT2": 612,
+      "HALF_TIME_FULL_TIME|MATCH": 536,
+      "TOTAL_DOM|MT1": 2,
+      "TOTAL_EXT|MT1": 2,
+      "TOTAL_DOM|MT2": 2,
+      "TOTAL_EXT|MT2": 2,
+      "HALF_TIME_FULL_TIME|TEMPS_REG": 58,
+      "HANDICAP|MATCH": 748,
+      "DRAW_NO_BET|MT1": 18,
+      "HANDICAP|MT1": 106,
+      "HANDICAP|MT2?": 64,
+      "SETS_HANDICAP|MATCH": 158,
+      "JEUX_TOTAL_DOM|MATCH": 216,
+      "JEUX_TOTAL_EXT|MATCH": 216,
+      "JEUX_HANDICAP|MATCH": 504,
+      "JEUX_HANDICAP|SET1": 226,
+      "SETS_TOTAL|MATCH": 82,
+      "DRAW_NO_BET|TEMPS_REG": 34,
+      "CORRECT_SCORE|MATCH": 612,
+      "HANDICAP_3|TEMPS_REG": 306,
+      "HANDICAP|P1": 34,
+      "HANDICAP|P2": 34,
+      "HANDICAP|P3": 34,
+      "DRAW_NO_BET|P1": 34,
+      "DRAW_NO_BET|P2": 34,
+      "DRAW_NO_BET|P3": 34,
+      "TOTAL|TEMPS_REG": 370,
+      "BOTH_TEAMS_TO_SCORE|MATCH": 34,
+      "TOTAL|P1": 34,
+      "TOTAL|P2": 34,
+      "TOTAL|P3": 34,
+      "BOTH_TEAMS_TO_SCORE|P1": 34,
+      "BOTH_TEAMS_TO_SCORE|P2": 34,
+      "BOTH_TEAMS_TO_SCORE|P3": 34,
+      "HANDICAP|SET1": 36,
+      "TOTAL_DOM|MATCH": 8,
+      "TOTAL_EXT|MATCH": 8,
+      "RESULTAT_1N2|MT1": 15,
+      "RESULTAT_1N2|MT2?": 15,
+      "TOTAL|MATCH": 10
+     },
+     "issue_absente": {
+      "TOTAL|MT1": 132,
+      "TOTAL|MT2": 24,
+      "TOTAL_DOM|MT1": 30,
+      "DOUBLE_CHANCE|MATCH": 3,
+      "TOTAL_EXT|MT1": 16,
+      "TOTAL_DOM|MT2": 4,
+      "TOTAL|MT2?": 64,
+      "JEUX_TOTAL|SET1": 360,
+      "DOUBLE_CHANCE|TEMPS_REG": 6,
+      "DOUBLE_CHANCE|P1": 6,
+      "DOUBLE_CHANCE|P2": 6,
+      "DOUBLE_CHANCE|P3": 6,
+      "TOTAL|SET1": 24
+     },
+     "periode_differente": {
+      "TOTAL|MT1": 382,
+      "TOTAL|MT2": 384,
+      "TOTAL_DOM|MT1": 118,
+      "TOTAL_EXT|MT1": 132,
+      "TOTAL_DOM|MT2": 130,
+      "TOTAL_EXT|MT2": 134,
+      "CORRECT_SCORE|MT1": 612,
+      "CORRECT_SCORE|MT2": 612,
+      "VAINQUEUR|MT2?": 2,
+      "RESULTAT_1N2|MT1": 12,
+      "VAINQUEUR|SET1": 84,
+      "VAINQUEUR|SET2": 84,
+      "RESULTAT_1N2|P1": 51,
+      "RESULTAT_1N2|P2": 51,
+      "RESULTAT_1N2|P3": 51,
+      "DOUBLE_CHANCE|P1": 45,
+      "DOUBLE_CHANCE|P2": 45,
+      "DOUBLE_CHANCE|P3": 45,
+      "TOTAL_DOM|TEMPS_REG": 182,
+      "TOTAL_EXT|TEMPS_REG": 182,
+      "TOTAL_DOM|P1": 114,
+      "TOTAL_EXT|P1": 112,
+      "TOTAL_DOM|P2": 128,
+      "TOTAL_EXT|P2": 128,
+      "TOTAL_DOM|P3": 128,
+      "TOTAL_EXT|P3": 128,
+      "VAINQUEUR|SET3": 12,
+      "VAINQUEUR|SET4": 12
+     },
+     "ligne_differente": {
+      "JEUX_TOTAL|MATCH": 2
+     }
+    },
+    "exemples": [
+     {
+      "cause": "issue_absente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT1",
+      "ligne": 0.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 1.19,
+      "cote_direct": null
+     },
+     {
+      "cause": "issue_absente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT1",
+      "ligne": 0.5,
+      "issue": "MOINS",
+      "cote_pulsescore": 3.6,
+      "cote_direct": null
+     },
+     {
+      "cause": "periode_differente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT1",
+      "ligne": 1.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 2.02,
+      "cote_direct": null
+     },
+     {
+      "cause": "periode_differente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT1",
+      "ligne": 1.5,
+      "issue": "MOINS",
+      "cote_pulsescore": 1.55,
+      "cote_direct": null
+     },
+     {
+      "cause": "periode_differente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT1",
+      "ligne": 2.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 3.58,
+      "cote_direct": null
+     },
+     {
+      "cause": "periode_differente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT1",
+      "ligne": 2.5,
+      "issue": "MOINS",
+      "cote_pulsescore": 1.14,
+      "cote_direct": null
+     },
+     {
+      "cause": "issue_absente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT2",
+      "ligne": 0.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 1.11,
+      "cote_direct": null
+     },
+     {
+      "cause": "issue_absente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT2",
+      "ligne": 0.5,
+      "issue": "MOINS",
+      "cote_pulsescore": 5.0,
+      "cote_direct": null
+     },
+     {
+      "cause": "periode_differente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT2",
+      "ligne": 1.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 1.64,
+      "cote_direct": null
+     },
+     {
+      "cause": "periode_differente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT2",
+      "ligne": 1.5,
+      "issue": "MOINS",
+      "cote_pulsescore": 1.87,
+      "cote_direct": null
+     },
+     {
+      "cause": "periode_differente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT2",
+      "ligne": 2.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 2.75,
+      "cote_direct": null
+     },
+     {
+      "cause": "periode_differente",
+      "sport": "football",
+      "marche": "TOTAL",
+      "periode": "MT2",
+      "ligne": 2.5,
+      "issue": "MOINS",
+      "cote_pulsescore": 1.25,
+      "cote_direct": null
+     }
+    ]
+   }
   },
   "olybet_controle": {
    "ok": true,
@@ -197,17 +414,17 @@
     {
      "match": "Juventus – Lazio",
      "source": "Pinnacle",
-     "cote_olybet": 1.59,
-     "cote_reference": 1.649,
-     "ecart_relatif": 0.036,
+     "cote_olybet": 1.61,
+     "cote_reference": 1.676,
+     "ecart_relatif": 0.0392,
      "aberrant": false
     },
     {
      "match": "Juventus – Lazio",
      "source": "PMU",
-     "cote_olybet": 1.59,
+     "cote_olybet": 1.61,
      "cote_reference": 1.56,
-     "ecart_relatif": 0.0192,
+     "ecart_relatif": 0.0321,
      "aberrant": false
     },
     {
@@ -238,32 +455,32 @@
      "match": "Al Fateh – Al-Khaleej Club Saihat",
      "source": "Pinnacle",
      "cote_netbet": 1.8,
-     "cote_reference": 1.893,
-     "ecart_relatif": 0.0491,
+     "cote_reference": 1.901,
+     "ecart_relatif": 0.0531,
      "aberrant": false
     },
     {
      "match": "Al Fateh – Al-Khaleej Club Saihat",
      "source": "PMU",
      "cote_netbet": 1.8,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0374,
+     "cote_reference": 1.65,
+     "ecart_relatif": 0.0909,
      "aberrant": false
     },
     {
      "match": "Baltika Kaliningrad – Rostov",
      "source": "Pinnacle",
      "cote_netbet": 1.95,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.1522,
-     "aberrant": true
+     "cote_reference": 2.29,
+     "ecart_relatif": 0.1485,
+     "aberrant": false
     },
     {
      "match": "CS U Craiova – Farul Constanta",
      "source": "Pinnacle",
      "cote_netbet": 1.33,
-     "cote_reference": 1.44,
-     "ecart_relatif": 0.0767,
+     "cote_reference": 1.429,
+     "ecart_relatif": 0.0694,
      "aberrant": false
     },
     {
@@ -278,8 +495,8 @@
      "match": "FC Twente – Utrecht",
      "source": "Pinnacle",
      "cote_netbet": 1.28,
-     "cote_reference": 1.364,
-     "ecart_relatif": 0.0613,
+     "cote_reference": 1.366,
+     "ecart_relatif": 0.0632,
      "aberrant": false
     },
     {
@@ -291,23 +508,14 @@
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Baltika Kaliningrad – Rostov",
-     "source": "Pinnacle",
-     "cote_netbet": 1.95,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.1522,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T17:51:34+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T17:51:49+00:00",
-   "books_premiere_lecture": "2026-10-18T17:51:25+00:00",
-   "books_derniere_lecture": "2026-10-18T17:52:32+00:00",
-   "ecart_enveloppe_secondes": 58.0
+   "pinnacle_premiere_lecture": "2026-10-18T17:56:10+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T17:56:15+00:00",
+   "books_premiere_lecture": "2026-10-18T16:25:27+00:00",
+   "books_derniere_lecture": "2026-10-18T17:57:10+00:00",
+   "ecart_enveloppe_secondes": 5448.0
   },
   "smarkets_cache": {
    "reutilise": false,
@@ -316,10 +524,10 @@
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 473,
-   "a_verifier": 7,
+   "conforme": 507,
+   "a_verifier": 14,
    "non_conforme": 8,
-   "mesures": 17475,
+   "mesures": 14548,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -328,42 +536,27 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T17:25:21+00:00"
   },
-  "fin": "2026-10-18T17:52:48+00:00",
+  "fin": "2026-10-18T17:57:24+00:00",
   "requetes_pulsescore": {
    "betclic": 11,
-   "unibet-fr": 11,
-   "pmu": 11,
-   "orbitxch": 13
+   "orbitxch": 14
   },
   "cotes": {
-   "francaises": 53649,
-   "pinnacle": 95646,
-   "betfair": 11542,
-   "polymarket": 14147,
+   "francaises": 42750,
+   "pinnacle": 96153,
+   "betfair": 11623,
+   "polymarket": 14146,
    "smarkets": 0
   },
-  "matchs_francais": 768,
-  "opportunites": 10,
-  "opportunites_suspectes": 1,
-  "nouveaux_paris": 1
+  "matchs_francais": 798,
+  "opportunites": 16,
+  "opportunites_suspectes": 0,
+  "nouveaux_paris": 5
  },
  "requetes_par_mois": {
-  "2026-10": 229975
+  "2026-10": 230000
  },
  "historique": [
-  {
-   "debut": "2026-10-17T16:05:49+00:00",
-   "mode": "complet",
-   "opportunites": 20,
-   "nouveaux_paris": 3,
-   "requetes_pulsescore": {
-    "winamax": 22,
-    "betclic": 22,
-    "unibet-fr": 24,
-    "pmu": 19,
-    "orbitxch": 21
-   }
-  },
   {
    "debut": "2026-10-17T16:10:44+00:00",
    "mode": "complet",
@@ -2945,6 +3138,16 @@
     "unibet-fr": 11,
     "pmu": 11,
     "orbitxch": 13
+   }
+  },
+  {
+   "debut": "2026-10-18T17:56:01+00:00",
+   "mode": "complet",
+   "opportunites": 16,
+   "nouveaux_paris": 5,
+   "requetes_pulsescore": {
+    "betclic": 11,
+    "orbitxch": 14
    }
   }
  ],
