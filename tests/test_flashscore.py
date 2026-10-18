@@ -116,3 +116,14 @@ def test_mi_temps_du_rugby_et_du_handball():
     assert sc["MT1"] == (35, 0) and sc["MT2"] == (14, 28) and sc["MATCH"] == (49, 28)
     p = {"marche": "TOTAL", "periode": "MT1", "issue": "PLUS", "ligne": 30.5, "sport": "rugby"}
     assert reglement.regler(p, sc) == "gagne"
+
+
+def test_hockey_et_basket_periodes_reglementaires():
+    h = {"AB": "3", "AC": "3", "AD": "1792087200", "AE": "A", "AF": "B", "AG": "4", "AH": "7",
+         "BA": "1", "BB": "3", "BC": "2", "BD": "3", "BE": "1", "BF": "1"}
+    r = flashscore.match("hockey", h)
+    assert r["periodes"] == [(1, 3), (2, 3), (1, 1)] and r["libelles"] == ["1", "2", "3"]
+    assert flashscore.match("hockey", {**h, "AG": "5"})["periodes"] == []
+    b = {"AB": "3", "AC": "3", "AD": "1792087200", "AE": "A", "AF": "B", "AG": "70", "AH": "84",
+         "BA": "14", "BB": "21", "BC": "23", "BD": "18", "BE": "19", "BF": "27", "BG": "14", "BH": "18"}
+    assert len(flashscore.match("basket", b)["periodes"]) == 4
