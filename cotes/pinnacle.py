@@ -63,6 +63,11 @@ ORTHO_PRIX = ("?primaryOnly=false&withSpecials=true", "?primaryOnly=false", "?wi
 choix_prix: dict[str, int] = {}
 _choix_coupe = False
 _ortho_refusees: set[str] = set()   # orthographes refusées (403) pendant ce cycle
+# 18/10/2026 : GitHub reçoit ~3 refus 403 aléatoires par cycle. Quand l'un tombe sur le football, le cycle
+# perd 80 % des cotes. Une seule reprise par requête, après une courte pause, avec un plafond par cycle.
+REPRISES_403_MAX = 6
+PAUSE_REPRISE_403_S = 3
+_reprises_403 = 0
 _plans: dict[int, dict] = {}
 
 
@@ -295,12 +300,14 @@ def _demander_rechauffe(sports: dict) -> None:
 
 
 def _get(path: str, essais: int = 3):
-    global _bloque
+    global _bloque, _reprises_403
     if _bloque:
         return None
+    reprise_403 = False
     m = re.match(r"^/sports/(\d+)/(matchups|markets/straight)(?:\?|$)", path)
     contexte = f"sport {m[1]} {m[2]}" if m else "requête"
-    for i in range(essais):
+    i = 0
+    while i < essais:
         try:
             r = requests.get(base_api() + path, headers=headers(), timeout=90)
             if r.status_code == 200:
@@ -312,9 +319,17 @@ def _get(path: str, essais: int = 3):
                 if isinstance(d, list):
                     _ages[path] = _lire_age(r)
                     _statuts[path] = _lire_statut_cache(r)
+                    if reprise_403:
+                        _compter("reprise_403_ok")
                     return d
                 _erreur(f"{contexte} : liste JSON attendue")
                 return None
+            if r.status_code == 403 and not reprise_403 and _reprises_403 < REPRISES_403_MAX:
+                _reprises_403 += 1            # refus aléatoire : un seul nouvel essai, sans noter d'erreur s'il passe
+                _compter("reprise_403")
+                reprise_403 = True
+                time.sleep(PAUSE_REPRISE_403_S)
+                continue
             _erreur(f"{contexte} : HTTP {r.status_code}")
             if r.status_code == 403:
                 return None                   # ce sport seulement ; les autres sports du cycle continuent
@@ -325,8 +340,9 @@ def _get(path: str, essais: int = 3):
                 return None
         except requests.RequestException:
             _erreur(f"{contexte} : réseau indisponible")
-        if i + 1 < essais:
-            time.sleep(2 * (i + 1))
+        i += 1
+        if i < essais:
+            time.sleep(2 * i)
     return None
 
 
@@ -438,8 +454,9 @@ def _norm_special(desc: str, dom: str, ext: str) -> tuple[str, str]:
 
 def collecter(sports: dict | None = None) -> list[dict]:
     """Toutes les cotes ouvertes (avant-match), une ligne par issue, avec probabilité juste."""
-    global _bloque, _choix_coupe
+    global _bloque, _choix_coupe, _reprises_403
     ERREURS.clear()
+    _reprises_403 = 0
     _bloque = False
     _ages.clear()
     _statuts.clear()
