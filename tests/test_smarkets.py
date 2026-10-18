@@ -233,7 +233,7 @@ def test_403_coupe_sans_rafale(monkeypatch):
                 text = "secret-ne-pas-journaliser"
 
                 def json(self):
-                    return {"secret": "secret-ne-pas-journaliser"}
+                    return {"secret": "HsToken secret-ne-pas-journaliser"}
 
             return R()
 
