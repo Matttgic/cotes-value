@@ -1,4 +1,6 @@
-import { handler, ordreOrthographes, rechauffer, secretIdentique } from "../pinnacle-rechauffe/index.ts";
+import {
+  cheminMarches, cheminMatchups, extraire, handler, rechauffer, secretIdentique,
+} from "../pinnacle-rechauffe/index.ts";
 
 function egal(obtenu: unknown, attendu: unknown, message: string) {
   const a = JSON.stringify(obtenu);
@@ -6,18 +8,11 @@ function egal(obtenu: unknown, attendu: unknown, message: string) {
   if (a !== b) throw new Error(`${message}\nobtenu ${a}\nattendu ${b}`);
 }
 
-Deno.test("rotation des cinq orthographes toutes les 5 minutes", () => {
-  const cinq = [
-    "",
-    "?primaryOnly=false",
-    "?withSpecials=true",
-    "?primaryOnly=false&withSpecials=true",
-    "?withSpecials=true&primaryOnly=false",
-  ];
-  egal(ordreOrthographes(0), cinq, "cycle 0");
-  egal(ordreOrthographes(300_000), cinq.slice(1).concat(cinq.slice(0, 1)), "cycle 1");
-  egal(ordreOrthographes(1_200_000), cinq.slice(4).concat(cinq.slice(0, 4)), "cycle 4");
-  egal(ordreOrthographes(1_500_000), cinq, "cycle 5 revient au début");
+const sansPause = async (_ms: number) => {};
+
+Deno.test("chemins identiques à la collecte Python, sans cache-buster", () => {
+  egal(cheminMatchups(29), "/sports/29/matchups?withSpecials=true", "matchups");
+  egal(cheminMarches(29), "/sports/29/markets/straight?primaryOnly=false&withSpecials=true", "marchés");
 });
 
 Deno.test("secret : comparaison stricte, longueurs différentes refusées", () => {
@@ -38,90 +33,82 @@ Deno.test("x-secret incorrect : 401 sans appel Pinnacle", async () => {
     method: "POST",
     headers: { "x-secret": "mauvais", "content-type": "application/json" },
     body: JSON.stringify({ sports: [29], key: "cle-guest" }),
-  }), fetchImpl, 0);
+  }), fetchImpl, 0, sansPause);
   egal(res.status, 401, "statut");
   egal(appels, 0, "aucun appel");
   if ((await res.text()).includes("cle-guest")) throw new Error("clé reflétée");
 });
 
-Deno.test("HIT puis MISS : la deuxième orthographe est retenue, le corps n'est pas renvoyé", async () => {
+Deno.test("MISS : deux lectures par sport, en-têtes du site, corps et clé jamais renvoyés", async () => {
   Deno.env.set("RECHAUFFEUR_SECRET", "attendu");
   const urls: string[] = [];
   const cle = "cle-guest-ne-pas-renvoyer";
   const fetchImpl: typeof fetch = async (input, init) => {
-    const url = String(input);
-    urls.push(url);
+    urls.push(String(input).split("/0.1")[1]);
     const entete = new Headers(init?.headers);
     if (entete.get("X-API-Key") !== cle) throw new Error("clé absente de l'en-tête");
     if (entete.get("Referer") !== "https://www.pinnacle.com/") throw new Error("referer");
-    if (entete.get("Origin") !== "https://www.pinnacle.com") throw new Error("origin");
-    if (entete.get("User-Agent") !== "Mozilla/5.0 (cotes-value)") throw new Error("ua");
-    const hit = url.includes("/markets/straight") && !url.includes("?");
     return new Response(JSON.stringify([{ fuite: cle, cote: 1.5 }]), {
-      status: 200,
-      headers: { "cf-cache-status": hit ? "HIT" : "MISS" },
+      status: 200, headers: { "cf-cache-status": "MISS" },
     });
   };
   const res = await handler(new Request("https://exemple/fn", {
     method: "POST",
     headers: { "x-secret": "attendu" },
     body: JSON.stringify({ sports: [29, "non", 0], key: `  ${cle}  ` }),
-  }), fetchImpl, 0);
+  }), fetchImpl, 0, sansPause);
   egal(res.status, 200, "statut");
   const corps = await res.json();
-  const plan = corps["29"];
-  egal(plan.markets, "/sports/29/markets/straight?primaryOnly=false", "orthographe suivante");
-  egal(plan.cache, "MISS", "cache");
-  egal(plan.fresh, true, "renouvelé");
-  if (!plan.matchups.startsWith("/sports/29/matchups?withSpecials=true&_=")) throw new Error(plan.matchups);
-  if (plan.matchups.includes("cle-guest")) throw new Error("clé dans le chemin");
+  egal(urls, [cheminMatchups(29), cheminMarches(29)], "deux URL fixes");
+  egal(corps["29"].fresh, true, "renouvelé");
+  egal(corps["29"].statuts, { matchups: 200, markets: 200 }, "statuts");
   if (JSON.stringify(corps).includes(cle) || JSON.stringify(corps).includes("fuite")) {
     throw new Error("donnée ou clé renvoyée");
   }
-  const marches = urls.filter((u) => u.includes("/markets/straight"));
-  egal(marches.map((u) => u.split("/0.1")[1]), [
-    "/sports/29/markets/straight",
-    "/sports/29/markets/straight?primaryOnly=false",
-  ], "arrêt au MISS");
 });
 
-Deno.test("rechauffer direct : EXPIRED arrête, les sports avancent en parallèle", async () => {
+Deno.test("403 : disjoncteur, les sports suivants ne sont pas appelés, extrait sans clé", async () => {
   const vus: string[] = [];
   const fetchImpl: typeof fetch = async (input) => {
     const url = String(input);
     vus.push(url);
-    const expired = url.includes("withSpecials=true&primaryOnly=false");
-    return new Response("[]", { status: 200, headers: { "cf-cache-status": expired ? "EXPIRED" : "HIT" } });
+    if (url.includes("/sports/4/")) {
+      return new Response("<html>Just a moment... k-secret</html>", { status: 403 });
+    }
+    return new Response("[]", { status: 200, headers: { "cf-cache-status": "HIT", Age: "30" } });
   };
-  const data = await rechauffer([4, 29], "k", 1_200_000, fetchImpl);
-  egal(data["4"].markets, "/sports/4/markets/straight?withSpecials=true&primaryOnly=false", "première du cycle 4");
-  egal(data["29"].cache, "EXPIRED", "statut");
-  egal(data["4"].fresh, true, "renouvelé");
-  if (vus.filter((u) => u.includes("/markets/")).length !== 2) throw new Error("trop d'orthographes");
+  // Concurrence 2 : 4 et 29 partent ensemble ; 33 et 12 doivent être sautés.
+  const data = await rechauffer([4, 29, 33, 12], "k-secret", 0, fetchImpl, sansPause);
+  egal(data["4"].statuts, { matchups: 403, markets: null }, "refus noté");
+  egal(data["4"].extrait, "<html>Just a moment... ***</html>", "extrait masqué");
+  egal(data["12"].cache, "SAUTE", "sport suivant sauté");
+  if (vus.some((u) => u.includes("/sports/12/"))) throw new Error("appel après refus");
+  egal(data["29"].fresh, false, "HIT n'est pas un renouvellement");
 });
 
-Deno.test("cinq HIT : plus petit Age connu, sans le faire passer pour un renouvellement", async () => {
+Deno.test("204 sur matchups : pas de lecture des prix, pas de disjoncteur", async () => {
+  const vus: string[] = [];
   const fetchImpl: typeof fetch = async (input) => {
     const url = String(input);
-    const path = url.split("/0.1")[1] ?? url;
-    let age: string | null = null;
-    if (path.includes("/sports/29/")) {
-      if (path.endsWith("/markets/straight")) age = "294";
-      else if (path.endsWith("?primaryOnly=false")) age = null;
-      else if (path.endsWith("?withSpecials=true")) age = "287";
-      else if (path.includes("primaryOnly=false&withSpecials=true")) age = "400";
-      else if (path.includes("withSpecials=true&primaryOnly=false")) age = "290";
-    }
-    const headers = new Headers({ "cf-cache-status": "HIT" });
-    if (age != null) headers.set("Age", age);
-    return new Response("[]", { status: 200, headers });
+    vus.push(url);
+    if (url.includes("/sports/29/")) return new Response(null, { status: 204 });
+    return new Response("[]", { status: 200, headers: { "cf-cache-status": "EXPIRED" } });
   };
-  const data = await rechauffer([29, 4], "k", 0, fetchImpl);
-  egal(data["29"].markets, "/sports/29/markets/straight?withSpecials=true", "plus petit Age");
-  egal(data["29"].fresh, false, "pas un renouvellement");
-  egal(data["29"].age_s, 287, "âge retenu");
-  egal(data["29"].cache, "HIT", "statut");
-  egal(data["4"].fresh, false, "sans Age");
-  egal(data["4"].age_s, null, "âge inconnu");
-  egal(data["4"].markets, "/sports/4/markets/straight", "première orthographe si tout est inconnu");
+  const data = await rechauffer([29, 4], "k", 0, fetchImpl, sansPause);
+  egal(data["29"].statuts, { matchups: 204, markets: null }, "204");
+  egal(data["4"].fresh, true, "le sport suivant continue");
+  egal(vus.filter((u) => u.includes("/sports/29/markets")).length, 0, "pas de prix après 204");
+});
+
+Deno.test("pause entre les lectures", async () => {
+  const pauses: number[] = [];
+  const fetchImpl: typeof fetch = async () =>
+    new Response("[]", { status: 200, headers: { "cf-cache-status": "HIT" } });
+  await rechauffer([29], "k", 0, fetchImpl, async (ms) => { pauses.push(ms); });
+  egal(pauses, [300, 300], "pause avant les prix et après le sport");
+});
+
+Deno.test("extraire : compacte et coupe à 160 caractères", () => {
+  egal(extraire("a\n  b", ""), "a b", "espaces");
+  egal(extraire("x".repeat(500), "").length, 160, "longueur");
 });

@@ -463,7 +463,7 @@ def test_age_max_entete_et_horodatage_rechauffeur():
     assert age is None and perime is True
 
 
-def test_rechauffeur_impose_les_chemins_et_un_age_sans_entete(monkeypatch,caplog):
+def test_rechauffeur_n_impose_plus_ses_chemins_et_date_la_fraicheur(monkeypatch,caplog):
     monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
     monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
     monkeypatch.setattr(P,'_cle_dynamique',lambda: 'cle-de-cycle')
@@ -472,9 +472,10 @@ def test_rechauffeur_impose_les_chemins_et_un_age_sans_entete(monkeypatch,caplog
         vu.update(url=url, corps=json, headers=headers, timeout=timeout)
         return Reponse({'29':{
             'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
-            'markets':'/sports/29/markets/straight?withSpecials=true',
+            'markets':'/sports/29/markets/straight?primaryOnly=false&withSpecials=true',
             't':datetime.now(timezone.utc).isoformat(),
             'cache':'MISS','fresh':True,'age_s':None,
+            'statuts':{'matchups':200,'markets':200},'extrait':None,
         }})
     urls=[]
     def get(url, **kw):
@@ -488,8 +489,11 @@ def test_rechauffeur_impose_les_chemins_et_un_age_sans_entete(monkeypatch,caplog
     assert vu['url']=='https://exemple.test/rechauffe' and vu['timeout']==120
     assert vu['headers']['x-region']=='eu-west-3' and vu['headers']['x-secret']=='secret-rechauffe'
     assert vu['corps']=={'sports':[29],'key':'cle-de-cycle'}
-    assert any(u.endswith('/sports/29/matchups?withSpecials=true&_=abc') for u in urls)
-    assert any(u.endswith('/sports/29/markets/straight?withSpecials=true') for u in urls)
+    # 18/10/2026 : le cache-buster « &_= » faisait répondre Pinnacle en 204/403 -> URL fixes seulement.
+    assert not any('_=abc' in u for u in urls)
+    assert any(u.endswith('/sports/29/matchups?withSpecials=true') for u in urls)
+    assert any(u.endswith('/sports/29/markets/straight?primaryOnly=false&withSpecials=true') for u in urls)
+    assert P.resume_rechauffeur()=={'statuts':{'matchups_200':1,'markets_200':1},'sautes':0,'extrait':None}
     assert out and all(l['cote_perimee'] is False and 0<=l['age_cache_s']<30 for l in out)
     assert 'cle-de-cycle' not in caplog.text+json.dumps(P.ERREURS)
     assert 'secret-rechauffe' not in caplog.text+json.dumps(P.ERREURS)
@@ -500,10 +504,10 @@ def test_hit_sans_age_reste_perime_et_age_s_est_utilise(monkeypatch):
     monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
     monkeypatch.setattr(P,'_cle_dynamique',lambda: 'cle-de-cycle')
     plans=[{'29':{'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
-                  'markets':'/sports/29/markets/straight?withSpecials=true',
+                  'markets':'/sports/29/markets/straight?primaryOnly=false&withSpecials=true',
                   't':datetime.now(timezone.utc).isoformat(),'cache':'HIT','fresh':False,'age_s':None}},
            {'29':{'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
-                  'markets':'/sports/29/markets/straight?withSpecials=true',
+                  'markets':'/sports/29/markets/straight?primaryOnly=false&withSpecials=true',
                   't':datetime.now(timezone.utc).isoformat(),'cache':'HIT','fresh':False,'age_s':290}}]
     monkeypatch.setattr(P.requests,'post',lambda *a, **k: Reponse(plans.pop(0)))
     monkeypatch.setattr(P.requests,'get',lambda url, **kw: (
@@ -547,7 +551,7 @@ def test_chemin_rechauffe_invalide_et_proxy(monkeypatch):
         Reponse([matchup()], headers={'Age':'4'}) if 'matchups' in url else Reponse([marche_pin()], headers={'Age':'4'})))
     out=P.collecter({29:'football'})
     assert urls[0]=='https://proxy.exemple.test/pinnacle/sports/29/matchups?withSpecials=true'
-    assert any(u.endswith('/sports/29/markets/straight?primaryOnly=false') for u in urls)
+    assert urls[1]=='https://proxy.exemple.test/pinnacle/sports/29/markets/straight?primaryOnly=false&withSpecials=true'
     assert not any('evil.exemple' in u for u in urls)
     assert out and all(l['age_cache_s']==4 and l['cote_perimee'] is False for l in out)
 
@@ -609,3 +613,11 @@ def test_rechauffeur_timeout_120_et_etat(monkeypatch):
 def test_gemini_version_2_et_debut_inchange():
     from cotes.strategie_gemini import GEMINI
     assert GEMINI['version']=='2' and GEMINI['debut']=='2026-10-14T18:00:00+00:00'
+
+
+def test_resume_rechauffeur_compte_refus_et_sautes():
+    P._plans.update({4:{'statuts':{'matchups':403,'markets':None},'extrait':'Just a moment','cache':'MATCHUPS_403'},
+                     29:{'statuts':{'matchups':None,'markets':None},'extrait':None,'cache':'SAUTE'},
+                     33:{'statuts':{'matchups':204,'markets':None},'extrait':None,'cache':'MATCHUPS_204'}})
+    assert P.resume_rechauffeur()=={'statuts':{'matchups_403':1,'matchups_204':1},'sautes':1,
+                                    'extrait':'Just a moment'}
