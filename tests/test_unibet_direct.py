@@ -223,6 +223,98 @@ def test_rapport_shadow_et_cotes_a_un_centime():
     assert parfait["couverture"] == 1 and parfait["accord_cotes"] == 1 and parfait["pret_a_basculer"] is True
 
 
+def _collecte(items, heures=36, echeance=None, radar=None, plan=None):
+    if plan is None:
+        plan = [(200, {"items": items, "numberOfEvents": 1}, {})]
+    session = Session(plan)
+    lignes, meta = unibet.collecter(
+        {"football"}, heures, session=session, page=Page(), pause=(0, 0),
+        maintenant=MAINTENANT, echeance=echeance, radar=radar)
+    return session, lignes, meta
+
+
+def test_horizon_court_garde_la_periode_principale(monkeypatch):
+    monkeypatch.setattr(unibet, "MARCHES", {"football": ((1, 100), (1, 102), (605, 100))})
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    session, _, meta = _collecte({}, heures=6, plan=[(200, {"items": {}, "numberOfEvents": 0}, {})] * 3)
+    assert meta["ok"] is False or meta["requetes"] == 2
+    periodes = " ".join(session.urls)
+    assert "periodId=102" not in periodes
+    assert session.urls[0].count("marketTypeId=1") == 1
+    assert any("marketTypeId=605" in u for u in session.urls)
+    assert len(session.urls) == 2
+
+
+def test_radar_ignore_un_sport_sans_match(monkeypatch):
+    monkeypatch.setattr(unibet, "MARCHES", {"football": ((1, 100), (605, 100))})
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    e, ev = _event("e1", "Angers", "Marseille", "2610182000")
+    session, lignes, _ = _collecte(
+        {e: ev}, radar=[{"sport": "football", "domicile": "Nice", "exterieur": "Rennes",
+                         "debut": "2026-10-18T20:00:00Z"}])
+    assert len(session.urls) == 1 and "marketTypeId=605" not in session.urls[0]
+    assert lignes == []
+    vide, _, _ = _collecte({}, radar=[{"sport": "tennis", "domicile": "Sinner", "exterieur": "Alcaraz",
+                                       "debut": "2026-10-18T20:00:00Z"}])
+    assert vide.urls == []
+
+
+def test_radar_poursuit_les_marches_du_match(monkeypatch):
+    monkeypatch.setattr(unibet, "MARCHES", {"football": ((1, 100), (605, 100))})
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    e, ev = _event("e1", "Angers", "Marseille", "2610182000")
+    session, _, _ = _collecte(
+        {e: ev}, radar=[{"sport": "football", "domicile": "Angers", "exterieur": "Marseille",
+                         "debut": "2026-10-18T20:00:00Z"}],
+        plan=[(200, {"items": {e: ev}, "numberOfEvents": 1}, {})] * 2)
+    assert len(session.urls) == 2
+    assert "marketTypeId=605" in session.urls[1]
+
+
+def test_budget_rend_les_cotes_deja_lues(monkeypatch):
+    monkeypatch.setattr(unibet, "MARCHES", {"football": ((1, 100), (605, 100))})
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    e, ev = _event("e1", "Angers", "Marseille", "2610182000")
+    offre = {
+        e: ev,
+        "m1": {"parent": e, "desc": "1 N 2", "style": "WIN_DRAW_WIN", "period": "90 Mins"},
+        **dict([
+            _issue("o1", "m1", "Angers", "2,10"),
+            _issue("o2", "m1", "N", "3,40"),
+            _issue("o3", "m1", "Marseille", "3,20"),
+        ]),
+    }
+
+    class Budget:
+        def __init__(self):
+            self.n = 0
+
+        def ok(self):
+            return self.n < 1
+
+        def reste(self):
+            return 10.0 if self.ok() else 0.0
+
+        def timeout(self, plafond):
+            return 4
+
+    budget = Budget()
+
+    class UneSession(Session):
+        def get(self, url, timeout=30, headers=None):
+            budget.n += 1
+            return super().get(url, timeout=timeout, headers=headers)
+
+    session = UneSession([(200, {"items": offre, "numberOfEvents": 1}, {})] * 4)
+    lignes, meta = unibet.collecter(
+        {"football"}, 36, session=session, page=Page(), pause=(0, 0),
+        maintenant=MAINTENANT, echeance=budget)
+    assert len(session.urls) == 1
+    assert meta["matchs"] == 1 and any(l["cote"] == 2.1 for l in lignes)
+    assert "budget" in meta["erreurs"]
+    assert JETON not in json.dumps(meta)
+
+
 def test_shadow_bascule_si_pulsescore_refuse(monkeypatch):
     from datetime import datetime, timezone
     from scripts import cycle

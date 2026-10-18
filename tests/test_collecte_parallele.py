@@ -220,6 +220,59 @@ def test_402_coupe_sans_journaliser_le_corps(monkeypatch):
     assert not pulsescore.indisponible(["winamax/soccer/events : HTTP 500"])
 
 
+def test_sources_independantes_partent_ensemble(monkeypatch):
+    import threading
+    import time
+
+    starts = []
+    verrou = threading.Lock()
+
+    def lent(*args, **kwargs):
+        with verrou:
+            starts.append(time.monotonic())
+        time.sleep(0.25)
+        return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
+
+    def pulse(*args, **kwargs):
+        lent()
+        return [], {}, {}
+
+    _sans_reseau(monkeypatch)
+    monkeypatch.setattr(cycle.pmu_direct, "collecter", lent)
+    monkeypatch.setattr(cycle.winamax_direct, "collecter", lent)
+    monkeypatch.setattr(cycle.unibet_direct, "collecter", lent)
+    monkeypatch.setattr(cycle.betclic_direct, "collecter", lent)
+    monkeypatch.setattr(cycle.olybet_direct, "collecter", lent)
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
+    cycle.collecter_prematch("cle", "complet", NOW, {"etapes": {}})
+    assert len(starts) == 6
+    assert max(starts) - min(starts) < 0.5
+
+
+def test_cloture_reutilise_l_index(monkeypatch):
+    from cotes import comparaison
+
+    base = {"sport": "football", "domicile": "Lens", "exterieur": "Lille",
+            "debut": "2030-01-01T20:00:00Z", "collecte": "2030-01-01T19:00:00Z",
+            "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM",
+            "marge_pinnacle": 0.02}
+    fr = [{**base, "source": "winamax", "bookmaker": "winamax", "match_id": "w|1", "cote": 2.1}]
+    pin = [{**base, "source": "pinnacle", "match_id": "p1", "cote": 2.0, "proba_juste": 0.5}]
+    idx = comparaison.indexer(fr, {"Pinnacle": pin})
+
+    def boom(*args, **kwargs):
+        raise AssertionError("associer")
+
+    monkeypatch.setattr(comparaison.C, "associer", boom)
+    clos = comparaison.cotes_justes_depuis(idx)
+    cle = ("w|1", ("VAINQUEUR", "MATCH", None, "DOM"))
+    assert abs(clos[cle]["Pinnacle"][0] - 0.5) < 1e-9
+    assert clos[cle]["Pinnacle brut"] == clos[cle]["Pinnacle"]
+
+
 def test_arret_temoin_ne_change_pas_les_opportunites_calculees():
     from cotes.comparaison import comparer, BRUT
     base = {"sport": "football", "ligue": "L", "domicile": "Lens", "exterieur": "Lille",
