@@ -201,9 +201,9 @@ def test_jeton_absent(monkeypatch):
     assert lignes == [] and meta["ok"] is False and meta["erreurs"] == ["jeton absent"]
 
 
-def test_mode_par_defaut_shadow(monkeypatch):
+def test_mode_par_defaut_auto(monkeypatch):
     monkeypatch.delenv("SOURCE_UNIBET", raising=False)
-    assert unibet.mode_source() == "shadow"
+    assert unibet.mode_source() == "auto"
     monkeypatch.setenv("SOURCE_UNIBET", "DIRECT")
     assert unibet.mode_source() == "direct"
     monkeypatch.setenv("SOURCE_UNIBET", "ailleurs")
@@ -316,6 +316,8 @@ def test_budget_rend_les_cotes_deja_lues(monkeypatch):
 
 
 def test_shadow_bascule_si_pulsescore_refuse(monkeypatch):
+    monkeypatch.setenv("SOURCE_UNIBET", "shadow")
+    monkeypatch.setenv("SOURCE_PMU", "shadow")
     from datetime import datetime, timezone
     from scripts import cycle
     from tests.test_collecte_parallele import _sans_reseau, ligne

@@ -274,9 +274,9 @@ def test_liste_qui_atteint_l_horizon_ne_relit_pas_les_competitions():
     assert not any("group.json" in u for u in session.urls)
 
 
-def test_mode_par_defaut_shadow(monkeypatch):
+def test_mode_par_defaut_auto(monkeypatch):
     monkeypatch.delenv("SOURCE_PMU", raising=False)
-    assert pmu.mode_source() == "shadow"
+    assert pmu.mode_source() == "auto"
     monkeypatch.setenv("SOURCE_PMU", "AUTO")
     assert pmu.mode_source() == "auto"
     monkeypatch.setenv("SOURCE_PMU", "ailleurs")

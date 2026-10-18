@@ -9,8 +9,8 @@ d'un match : Unibet est la source la plus lourde. Corners, cartons, buteurs et
 cotes boostées sont écartés. Les sports sont ceux déjà suivis (liste ANJ),
 lus dans l'état de la page, pas des identifiants figés.
 
-``SOURCE_UNIBET`` vaut ``pulsescore``, ``direct``, ``auto`` ou ``shadow``
-(défaut). En ``shadow``, PulseScore décide et ce flux sert au rapport.
+``SOURCE_UNIBET`` vaut ``pulsescore``, ``direct``, ``auto`` (défaut) ou
+``shadow``. En ``shadow``, PulseScore décide et ce flux sert au rapport.
 Basculer exige 95 % des matchs retrouvés et 99 % des cotes communes à ±0,01.
 """
 from __future__ import annotations
@@ -92,8 +92,8 @@ _CROCHET = re.compile(r"[\[(]\s*([-+]?\d+(?:[.,]\d+)?)\s*[\])]")
 
 
 def mode_source() -> str:
-    """``shadow`` si la variable est absente ou inconnue."""
-    valeur = os.environ.get("SOURCE_UNIBET", "shadow").strip().lower()
+    """``auto`` si la variable est absente. Une valeur inconnue reste ``shadow``."""
+    valeur = os.environ.get("SOURCE_UNIBET", "auto").strip().lower()
     return valeur if valeur in MODES else "shadow"
 
 
