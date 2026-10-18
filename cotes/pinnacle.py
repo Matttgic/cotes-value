@@ -55,6 +55,9 @@ origine_cle = "guest_historique"
 _ages: dict[str, int | None] = {}
 _statuts: dict[str, str] = {}
 etat_rechauffeur = "absent"      # absent | ok | indisponible | url_refusee
+sonde_cache: dict | None = None  # mesure : GitHub profite-t-il du cache rempli depuis Paris ?
+SPORT_SONDE = 29
+ORTHO_SONDE = ("", "?primaryOnly=false", "?withSpecials=true", "?withSpecials=true&primaryOnly=false")
 _plans: dict[int, dict] = {}
 
 
@@ -175,6 +178,32 @@ def _chemin_matchups(sid: int) -> str:
 
 def _chemin_marches(sid: int) -> str:
     return f"/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true"
+
+
+def sonder_cache() -> dict | None:
+    """Relit depuis GitHub l'URL alternative que le réchauffeur vient de lire à Paris.
+
+    Mesure seulement (statut, cache, âge, taille) : les données lues ne servent pas à la collecte.
+    """
+    plan = _plans.get(SPORT_SONDE) or {}
+    sonde = plan.get("sonde")
+    if _bloque or not isinstance(sonde, dict):
+        return None
+    chemin = sonde.get("path")
+    permis = {f"/sports/{SPORT_SONDE}/markets/straight{q}" for q in ORTHO_SONDE}
+    if chemin not in permis:
+        return None
+    paris = {k: sonde.get(k) for k in ("status", "cache", "age", "octets", "t")}
+    debut = datetime.now(timezone.utc)
+    try:
+        r = requests.get(base_api() + chemin, headers=headers(), timeout=60)
+        github = {"status": r.status_code, "cache": _lire_statut_cache(r), "age": _lire_age(r),
+                  "octets": len(getattr(r, "content", b"") or b"")}
+    except requests.RequestException:
+        github = {"status": 0, "cache": "", "age": None, "octets": 0}
+    lu_paris = _instant(sonde.get("t"))
+    ecart = int((debut - lu_paris).total_seconds()) if lu_paris else None
+    return {"chemin": chemin, "ecart_s": ecart, "paris": paris, "github": github}
 
 
 def resume_rechauffeur() -> dict:
@@ -379,11 +408,12 @@ def _norm_special(desc: str, dom: str, ext: str) -> tuple[str, str]:
 
 def collecter(sports: dict | None = None) -> list[dict]:
     """Toutes les cotes ouvertes (avant-match), une ligne par issue, avec probabilité juste."""
-    global _bloque
+    global _bloque, sonde_cache
     ERREURS.clear()
     _bloque = False
     _ages.clear()
     _statuts.clear()
+    sonde_cache = None
     oublier_cle()
     sports = sports or SPORTS
     _demander_rechauffe(sports)
@@ -441,6 +471,7 @@ def collecter(sports: dict | None = None) -> list[dict]:
             except (KeyError, TypeError, ValueError, AttributeError, OverflowError):
                 _erreur(f"sport {sid} : schéma de marché invalide")
     _ajouter_proba_justes(lignes)
+    sonde_cache = sonder_cache()
     return lignes
 
 

@@ -621,3 +621,39 @@ def test_resume_rechauffeur_compte_refus_et_sautes():
                      33:{'statuts':{'matchups':204,'markets':None},'extrait':None,'cache':'MATCHUPS_204'}})
     assert P.resume_rechauffeur()=={'statuts':{'matchups_403':1,'matchups_204':1},'sautes':1,
                                     'extrait':'Just a moment'}
+
+
+def test_sonde_cache_relit_l_url_de_paris_sans_toucher_aux_donnees(monkeypatch):
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    monkeypatch.setattr(P,'_cle_dynamique',lambda: 'cle-de-cycle')
+    F='/sports/29/markets/straight?primaryOnly=false&withSpecials=true'
+    sonde='/sports/29/markets/straight?withSpecials=true'
+    lu=(datetime.now(timezone.utc)-timedelta(seconds=5)).isoformat()
+    monkeypatch.setattr(P.requests,'post',lambda *a, **k: Reponse({'29':{
+        'matchups':'/sports/29/matchups?withSpecials=true','markets':F,'t':lu,'cache':'HIT','fresh':False,
+        'age_s':30,'statuts':{'matchups':200,'markets':200},'extrait':None,
+        'sonde':{'path':sonde,'status':200,'cache':'MISS','age':None,'octets':1234,'t':lu}}}))
+    urls=[]
+    def get(url, **kw):
+        urls.append(url)
+        if url.endswith(sonde):
+            return Reponse([{'ne':'pas utiliser'}], headers={'cf-cache-status':'HIT','Age':'6'})
+        if 'matchups' in url:
+            return Reponse([matchup()], headers={'Age':'30'})
+        return Reponse([marche_pin()], headers={'Age':'30'})
+    monkeypatch.setattr(P.requests,'get',get)
+    out=P.collecter({29:'football'})
+    assert urls[-1].endswith(sonde) and sum(u.endswith(sonde) for u in urls)==1
+    s=P.sonde_cache
+    assert s['chemin']==sonde and s['paris']['cache']=='MISS' and s['github']['cache']=='HIT'
+    assert s['github']['age']==6 and s['github']['status']==200 and 4<=s['ecart_s']<=60
+    assert out and all(l['age_cache_s']==30 for l in out)          # données : URL fixe seulement
+
+
+def test_sonde_cache_refuse_un_chemin_hors_liste(monkeypatch):
+    P._plans[29]={'sonde':{'path':'https://evil.exemple/x','t':datetime.now(timezone.utc).isoformat()}}
+    monkeypatch.setattr(P.requests,'get',lambda *a, **k: (_ for _ in ()).throw(AssertionError('appel')))
+    assert P.sonder_cache() is None
+    P._plans[29]={'sonde':{'path':'/sports/29/markets/straight?primaryOnly=false&withSpecials=true'}}
+    assert P.sonder_cache() is None

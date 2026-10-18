@@ -1,5 +1,5 @@
 import {
-  cheminMarches, cheminMatchups, extraire, handler, rechauffer, secretIdentique,
+  cheminMarches, cheminMatchups, cheminSonde, extraire, handler, rechauffer, secretIdentique,
 } from "../pinnacle-rechauffe/index.ts";
 
 function egal(obtenu: unknown, attendu: unknown, message: string) {
@@ -59,7 +59,8 @@ Deno.test("MISS : deux lectures par sport, en-têtes du site, corps et clé jama
   }), fetchImpl, 0, sansPause);
   egal(res.status, 200, "statut");
   const corps = await res.json();
-  egal(urls, [cheminMatchups(29), cheminMarches(29)], "deux URL fixes");
+  egal(urls, [cheminMatchups(29), cheminMarches(29), cheminSonde(29, 0)], "deux URL fixes puis la sonde");
+  egal(corps["29"].sonde.cache, "MISS", "sonde notée");
   egal(corps["29"].fresh, true, "renouvelé");
   egal(corps["29"].statuts, { matchups: 200, markets: 200 }, "statuts");
   if (JSON.stringify(corps).includes(cle) || JSON.stringify(corps).includes("fuite")) {
@@ -105,10 +106,30 @@ Deno.test("pause entre les lectures", async () => {
   const fetchImpl: typeof fetch = async () =>
     new Response("[]", { status: 200, headers: { "cf-cache-status": "HIT" } });
   await rechauffer([29], "k", 0, fetchImpl, async (ms) => { pauses.push(ms); });
-  egal(pauses, [300, 300], "pause avant les prix et après le sport");
+  egal(pauses, [300, 300, 300], "pause avant les prix, après le sport, avant la sonde");
 });
 
 Deno.test("extraire : compacte et coupe à 160 caractères", () => {
   egal(extraire("a\n  b", ""), "a b", "espaces");
   egal(extraire("x".repeat(500), "").length, 160, "longueur");
+});
+
+Deno.test("sonde : orthographe tournante toutes les 5 minutes, jamais l'URL fixe", () => {
+  egal(cheminSonde(29, 0), "/sports/29/markets/straight", "cycle 0");
+  egal(cheminSonde(29, 300_000), "/sports/29/markets/straight?primaryOnly=false", "cycle 1");
+  egal(cheminSonde(29, 1_200_000), "/sports/29/markets/straight", "revient après 20 min");
+  for (let t = 0; t < 1_200_000; t += 300_000) {
+    if (cheminSonde(29, t) === cheminMarches(29)) throw new Error("la sonde ne doit pas toucher l'URL fixe");
+  }
+});
+
+Deno.test("sonde absente si le sport 29 n'est pas demandé ou si un refus a eu lieu", async () => {
+  const ok: typeof fetch = async () => new Response("[]", { status: 200, headers: { "cf-cache-status": "HIT" } });
+  const sans = await rechauffer([4], "k", 0, ok, sansPause);
+  egal(sans["4"].sonde, undefined, "pas de sonde hors sport 29");
+  const refus: typeof fetch = async (input) =>
+    String(input).includes("/sports/4/") ? new Response("non", { status: 403 })
+      : new Response("[]", { status: 200, headers: { "cf-cache-status": "HIT" } });
+  const bloque = await rechauffer([29, 4], "k", 0, refus, sansPause);
+  egal(bloque["29"].sonde, undefined, "pas de sonde après un refus");
 });

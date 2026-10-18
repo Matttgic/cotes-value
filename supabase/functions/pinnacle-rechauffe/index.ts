@@ -16,6 +16,18 @@ export function cheminMarches(sid: number): string {
   return `/sports/${sid}/markets/straight?primaryOnly=false&withSpecials=true`;
 }
 
+// Sonde (un seul sport) : une orthographe alternative des prix, qui change toutes les 5 minutes.
+// Chacune revient toutes les 20 minutes, plus que la durée du cache (~15 min) : la lecture de Paris
+// va donc chercher des cotes neuves. La collecte relit la même URL depuis GitHub pour mesurer si
+// elle profite de ce cache. Rien n'est utilisé pour les données tant que ce n'est pas prouvé.
+export const SPORT_SONDE = 29;
+export const ORTHO_SONDE = ["", "?primaryOnly=false", "?withSpecials=true", "?withSpecials=true&primaryOnly=false"];
+
+export function cheminSonde(sid: number, epochMs: number): string {
+  const i = Math.floor(epochMs / 300_000) % ORTHO_SONDE.length;
+  return `/sports/${sid}/markets/straight${ORTHO_SONDE[i]}`;
+}
+
 export function secretIdentique(fourni: string, attendu: string): boolean {
   const a = new TextEncoder().encode(fourni);
   const b = new TextEncoder().encode(attendu);
@@ -37,7 +49,9 @@ function entetes(key: string): HeadersInit {
 const REMPLIS = new Set(["MISS", "EXPIRED", "DYNAMIC"]);
 const REFUS = new Set([401, 403, 429]);
 
-export type Lecture = { path: string; status: number; cache: string; age: number | null; extrait: string | null };
+export type Lecture = {
+  path: string; status: number; cache: string; age: number | null; extrait: string | null; octets: number;
+};
 
 function ageEntete(r: Response): number | null {
   const brut = r.headers.get("Age");
@@ -61,15 +75,19 @@ async function lire(path: string, key: string, fetchImpl: typeof fetch): Promise
     const cache = (r.headers.get("cf-cache-status") || "").toUpperCase();
     const age = ageEntete(r);
     const texte = await r.text();
-    return { path, status: r.status, cache, age, extrait: r.status === 200 ? null : extraire(texte, key) };
+    return {
+      path, status: r.status, cache, age, extrait: r.status === 200 ? null : extraire(texte, key),
+      octets: texte.length,
+    };
   } catch (e) {
-    return { path, status: 0, cache: "", age: null, extrait: extraire(String(e), key) };
+    return { path, status: 0, cache: "", age: null, extrait: extraire(String(e), key), octets: 0 };
   }
 }
 
 export type Plan = {
   matchups: string; markets: string; t: string; cache: string; fresh: boolean; age_s: number | null;
   statuts: { matchups: number | null; markets: number | null }; extrait: string | null;
+  sonde?: { path: string; status: number; cache: string; age: number | null; octets: number; t: string };
 };
 
 export function planDepuis(sid: number, t: string, mu: Lecture | null, mk: Lecture | null): Plan {
@@ -120,6 +138,14 @@ export async function rechauffer(
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONCURRENCE, sports.length) }, () => un()));
+  const plan = sortie[String(SPORT_SONDE)];
+  if (!bloque && plan && plan.statuts.markets === 200) {
+    await pause(PAUSE_MS);
+    const debut = new Date().toISOString();
+    const l = await lire(cheminSonde(SPORT_SONDE, epochMs), key, fetchImpl);
+    plan.sonde = { path: l.path, status: l.status, cache: l.cache, age: l.age, octets: l.octets, t: debut };
+    console.log(JSON.stringify({ sonde: plan.sonde }));
+  }
   return sortie;
 }
 
