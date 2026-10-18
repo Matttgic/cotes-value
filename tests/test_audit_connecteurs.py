@@ -301,11 +301,33 @@ def test_diagnostic_pinnacle_remonte_dans_cycle_sans_cle(monkeypatch):
 
 
 def test_403_pinnacle_na_bloque_pas_le_sport_suivant(monkeypatch):
+    calls=[]; pauses=[]
+    monkeypatch.setattr(P.requests,'get',lambda *a,**kw:calls.append(1) or Reponse(status=403))
+    monkeypatch.setattr(P.time,'sleep',pauses.append)
+    P._reprises_403=0; P.choix_prix.clear()
+    assert appeler(P) is None and appeler(P) is None
+    # une seule reprise par requête, après une pause de 3 s ; le refus reste noté, aucun blocage
+    assert len(calls)==4 and pauses==[P.PAUSE_REPRISE_403_S]*2 and P._bloque is False
+    assert 'HTTP 403' in ' '.join(P.ERREURS) and P.choix_prix['reprise_403']==2
+
+
+def test_403_aleatoire_repris_une_fois_sans_erreur_notee(monkeypatch):
+    # Cas réel du 18/10 : un 403 aléatoire sur le football faisait tomber le cycle à 28 000 cotes.
+    reponses=[Reponse(status=403),Reponse([matchup()])]
+    monkeypatch.setattr(P.requests,'get',lambda *a,**kw:reponses.pop(0))
+    monkeypatch.setattr(P.time,'sleep',lambda _:None)
+    P._reprises_403=0; P.choix_prix.clear(); P.ERREURS.clear()
+    assert appeler(P)==[matchup()]
+    assert not P.ERREURS and P.choix_prix=={'reprise_403':1,'reprise_403_ok':1}
+
+
+def test_reprises_403_plafonnees_par_cycle(monkeypatch):
     calls=[]
     monkeypatch.setattr(P.requests,'get',lambda *a,**kw:calls.append(1) or Reponse(status=403))
-    monkeypatch.setattr(P.time,'sleep',lambda _:pytest.fail('Aucun réessai après un 403'))
-    assert appeler(P) is None and appeler(P) is None
-    assert len(calls)==2 and P._bloque is False and 'HTTP 403' in ' '.join(P.ERREURS)
+    monkeypatch.setattr(P.time,'sleep',lambda _:None)
+    P._reprises_403=0; P.choix_prix.clear()
+    for _ in range(P.REPRISES_403_MAX+3): appeler(P)
+    assert len(calls)==2*P.REPRISES_403_MAX+3
 
 
 def test_403_dun_sport_laisse_passer_le_suivant(monkeypatch):
@@ -318,7 +340,7 @@ def test_403_dun_sport_laisse_passer_le_suivant(monkeypatch):
             return Reponse([matchup()])
         return Reponse([marche_pin()])
     monkeypatch.setattr(P.requests,'get',get)
-    monkeypatch.setattr(P.time,'sleep',lambda _:pytest.fail('Aucun réessai après un 403'))
+    monkeypatch.setattr(P.time,'sleep',lambda _:None)
     out=P.collecter({13:'hockey_sur_gazon',29:'football'})
     assert len(out)==2 and {l['issue'] for l in out}=={'DOM','EXT'}
     assert P._bloque is False
