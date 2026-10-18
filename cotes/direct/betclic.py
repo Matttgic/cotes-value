@@ -19,12 +19,16 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 from cotes.correspondance import ressemblance
+from cotes.direct.horizon import fusionner
 from cotes.pulsescore import traduire
 
 BASE = "https://offering.begmedia.com/web/offering.access.api/offering.access.api.MatchService"
 LISTE = "GetMatchesBySportWithNotifications"
 DETAIL = "GetMatchWithNotification"
 PAGE = 40
+_OFFSET_MAX = 160
+_PRES_H = 6
+_FRAIS_LOIN_MIN = 30
 COUVERTURE_MIN = 0.95
 ACCORD_MIN = 0.99
 ECART_COTE = 0.01
@@ -458,16 +462,30 @@ class Client:
     def _temps(self) -> bool:
         if self._bloque:
             return False
-        if self.echeance is not None and not self.echeance.ok():
+        if self.echeance is None:
+            return True
+        if not self.echeance.ok():
             if "budget" not in self.erreurs:
                 self.erreurs.append("budget")
             return False
+        reste = getattr(self.echeance, "reste", None)
+        if reste is not None:
+            valeur = reste()
+            if valeur is not None and valeur < 3:
+                if "budget" not in self.erreurs:
+                    self.erreurs.append("budget")
+                return False
         return True
 
     def poster(self, methode: str, charge: bytes) -> bytes | None:
         if not self._temps():
             return None
         delai = 8 if self.echeance is None else self.echeance.timeout(8)
+        reste = getattr(self.echeance, "reste", None) if self.echeance is not None else None
+        if reste is not None:
+            valeur = reste()
+            if valeur is not None:
+                delai = min(delai, max(1.0, valeur - 1))
         self.requetes += 1
         try:
             reponse = self.session.post(
@@ -505,9 +523,120 @@ def _a_venir(match: dict, maintenant: datetime, heures: float) -> bool:
     return bool(debut and maintenant < debut <= maintenant + timedelta(hours=heures))
 
 
+def _charge_liste(slug: str, offset: int = 0) -> bytes:
+    return (encode_champ_octets(1, slug) + encode_champ_octets(2, "fr")
+            + encode_champ_varint(4, offset) + encode_champ_varint(5, PAGE))
+
+
+def _offset_suivant(reserve: dict) -> tuple[int, int]:
+    """Page 0 à chaque cycle. L'autre page tourne ; un curseur nul part à la page suivante."""
+    extra = int(reserve.get("offset") or 0) or PAGE
+    if extra <= 0 or extra >= _OFFSET_MAX:
+        extra = PAGE
+    prochain = extra + PAGE
+    if prochain >= _OFFSET_MAX:
+        prochain = 0
+    return extra, prochain
+
+
+def _detailler(client: Client, match: dict, moment: str) -> tuple[list[dict], bool]:
+    trame = client.poster(DETAIL, encode_champ_varint(1, int(match["id"])) + encode_champ_octets(2, "fr"))
+    if client._bloque:
+        return [], bool(trame)
+    marches = []
+    for offre in marches_du_detail(trame):
+        traduit = marche_pulse(offre, match["domicile"], match["exterieur"])
+        if traduit:
+            marches.append(traduit)
+    if not marches:
+        return [], bool(trame)
+    evenement = {"eventId": match["id"], "home": match["domicile"], "away": match["exterieur"],
+                 "league": match.get("competition"), "startTime": match.get("debut"), "markets": marches}
+    return traduire(evenement, "betclic", match["sport"], moment), bool(trame)
+
+
+def _collecter_reserve(client: Client, demandes, heures: float, maintenant: datetime,
+                       reserve: dict) -> tuple[list[dict], dict]:
+    """Page proche à chaque cycle, une page lointaine en plus. L'union reste sur 36 h."""
+    moment = maintenant.isoformat(timespec="seconds")
+    extra, prochain = _offset_suivant(reserve)
+    candidats = []
+    vus: set = set()
+    lectures = 0
+    for sport, slug in demandes:
+        for offset in (0, extra):
+            if not client._temps():
+                break
+            trame = client.poster(LISTE, _charge_liste(slug, offset))
+            if trame:
+                lectures += 1
+            if client._bloque:
+                break
+            for match in matchs_de_la_liste(trame):
+                if not _a_venir(match, maintenant, heures):
+                    continue
+                cle = (sport, match.get("id"))
+                if cle in vus:
+                    continue
+                vus.add(cle)
+                candidats.append({**match, "sport": sport})
+        if client._bloque or not client._temps():
+            break
+    frais: dict = {}
+    for ligne in reserve.get("lignes") or []:
+        if not isinstance(ligne, dict):
+            continue
+        lu = _heure(ligne.get("collecte"))
+        mid = ligne.get("match_id")
+        if mid and lu and (mid not in frais or lu > frais[mid]):
+            frais[mid] = lu
+    limite = maintenant + timedelta(hours=min(_PRES_H, heures))
+
+    def proche(match) -> bool:
+        debut = _heure(match.get("debut"))
+        return bool(debut and debut <= limite)
+
+    def a_relire(match) -> bool:
+        if proche(match):
+            return True
+        lu = frais.get(f"betclic|{match.get('id')}")
+        if lu is not None and maintenant - lu < timedelta(minutes=_FRAIS_LOIN_MIN):
+            return False
+        return True
+
+    file = [m for m in candidats if proche(m)]
+    file.sort(key=lambda match: _heure(match.get("debut")) or maintenant)
+    loin = [m for m in candidats if not proche(m) and a_relire(m)]
+    loin.sort(key=lambda match: _heure(match.get("debut")) or maintenant)
+    lignes: list[dict] = []
+    for match in file + loin:
+        if not client._temps():
+            break
+        ajoutees, lue = _detailler(client, match, moment)
+        if lue:
+            lectures += 1
+        lignes += ajoutees
+        if client._bloque:
+            break
+    fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures)
+    return fusion, {
+        "ok": lectures > 0 or not client.erreurs or bool(fusion),
+        "erreurs": list(client.erreurs),
+        "requetes": client.requetes,
+        "matchs": len({l.get("match_id") for l in fusion}),
+        "reserve": {"offset": prochain, "lignes": fusion},
+    }
+
+
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
-              maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
-    """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``betclic``)."""
+              maintenant: datetime | None = None, echeance=None,
+              reserve=None) -> tuple[list[dict], dict]:
+    """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``betclic``).
+
+    Sans réserve, une seule page (offset 0) puis le détail, comme avant.
+    Avec réserve, la page 0 et une page plus loin ; les matchs déjà frais
+    ne sont pas redétaillés, et la comparaison reçoit l'union sur l'horizon.
+    """
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
         echeance = _echeance
@@ -515,15 +644,16 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     if not demandes:
         return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
     client = Client(session, echeance)
+    if reserve is not None:
+        return _collecter_reserve(client, demandes, heures, maintenant,
+                                  reserve if isinstance(reserve, dict) else {})
     moment = maintenant.isoformat(timespec="seconds")
     candidats = []
     lectures = 0
     for sport, slug in demandes:
         if not client._temps():
             break
-        charge = (encode_champ_octets(1, slug) + encode_champ_octets(2, "fr")
-                  + encode_champ_varint(4, 0) + encode_champ_varint(5, PAGE))
-        trame = client.poster(LISTE, charge)
+        trame = client.poster(LISTE, _charge_liste(slug, 0))
         if trame:
             lectures += 1
         if client._bloque:
@@ -536,21 +666,12 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     for match in candidats:
         if not client._temps():
             break
-        trame = client.poster(DETAIL, encode_champ_varint(1, int(match["id"])) + encode_champ_octets(2, "fr"))
-        if trame:
+        ajoutees, lue = _detailler(client, match, moment)
+        if lue:
             lectures += 1
+        lignes += ajoutees
         if client._bloque:
             break
-        marches = []
-        for offre in marches_du_detail(trame):
-            traduit = marche_pulse(offre, match["domicile"], match["exterieur"])
-            if traduit:
-                marches.append(traduit)
-        if not marches:
-            continue
-        evenement = {"eventId": match["id"], "home": match["domicile"], "away": match["exterieur"],
-                     "league": match.get("competition"), "startTime": match.get("debut"), "markets": marches}
-        lignes += traduire(evenement, "betclic", match["sport"], moment)
     return lignes, {"ok": lectures > 0 or not client.erreurs, "erreurs": list(client.erreurs),
                     "requetes": client.requetes, "matchs": len(candidats)}
 

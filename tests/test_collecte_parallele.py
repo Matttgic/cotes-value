@@ -50,7 +50,7 @@ def test_shadow_garde_pulsescore_et_ne_relit_pas_un_complement(monkeypatch):
         plans.append(plan)
         return [ligne("football", "pmu")], {"pmu": 1}, {}
 
-    def direct(sports, heures):
+    def direct(sports, heures, **kwargs):
         appels_direct.append(set(sports))
         return [ligne("football", "pmu") | {"cote": 9.99, "match_id": "pmu|direct"}], {
             "ok": True, "erreurs": [], "requetes": 1, "matchs": 1}
@@ -98,7 +98,7 @@ def test_auto_bascule_sur_pulsescore_si_kambi_echoue(monkeypatch):
         plans.append(plan)
         return [ligne("football", "pmu")], {"pmu": 1}, {}
 
-    def direct(sports, heures):
+    def direct(sports, heures, **kwargs):
         return [], {"ok": False, "erreurs": ["HTTP 429"], "requetes": 4, "matchs": 0}
 
     _sans_reseau(monkeypatch, direct)
@@ -122,7 +122,7 @@ def test_direct_retire_pmu_de_pulsescore(monkeypatch):
         plans.append(plan)
         return [ligne("football", "winamax")], {"winamax": 1}, {}
 
-    def direct(sports, heures):
+    def direct(sports, heures, **kwargs):
         return [ligne("football", "pmu") | {"cote": 1.7}], {"ok": True, "erreurs": [], "requetes": 2, "matchs": 1}
 
     _sans_reseau(monkeypatch, direct)
@@ -144,7 +144,7 @@ def test_shadow_bascule_sur_kambi_si_pulsescore_refuse(monkeypatch):
         return [ligne("football", "pmu") | {"cote": 1.9}], {"pmu": 1}, {
             "pmu": ["pmu/soccer/events : HTTP 401"]}
 
-    def direct(sports, heures):
+    def direct(sports, heures, **kwargs):
         return [ligne("football", "pmu") | {"cote": 1.7, "match_id": "pmu|kambi"}], {
             "ok": True, "erreurs": [], "requetes": 2, "matchs": 1}
 
@@ -172,6 +172,7 @@ def test_shadow_bascule_sur_socket_si_pulsescore_refuse_winamax(monkeypatch):
             "ok": True, "erreurs": [], "requetes": 2, "matchs": 1}
 
     _sans_reseau(monkeypatch)
+    monkeypatch.setenv("SOURCE_WINAMAX", "shadow")
     monkeypatch.setattr(cycle.winamax_direct, "collecter", direct)
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])

@@ -170,7 +170,7 @@ def test_erreur_reseau_sans_corps():
 
 def test_mode_par_defaut(monkeypatch):
     monkeypatch.delenv("SOURCE_WINAMAX", raising=False)
-    assert winamax.mode_source() == "shadow"
+    assert winamax.mode_source() == "auto"
     monkeypatch.setenv("SOURCE_WINAMAX", "direct")
     assert winamax.mode_source() == "direct"
     monkeypatch.setenv("SOURCE_WINAMAX", "autre")
@@ -267,5 +267,57 @@ def test_repli_ignore_une_lecture_vide(monkeypatch):
     _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", maintenant, j)
     wina = [l for l in lignes if l["bookmaker"] == "winamax"]
     assert wina and wina[0]["cote"] == 1.9
-    assert j["winamax_source_effective"] == "shadow"
+    assert j["winamax_source"] == "auto"
+    assert j["winamax_source_effective"] == "pulsescore"
+    assert "PulseScore" in j["winamax_repli"]
     assert j["etapes"]["winamax_direct"]["ok"] is False
+
+
+def test_auto_decide_avec_le_socket_et_le_pari_reste_bilan(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    from cotes import simulation
+    from scripts import cycle
+    from tests.test_collecte_parallele import _sans_reseau, ligne
+    maintenant = datetime(2026, 10, 18, 12, tzinfo=timezone.utc)
+    debut = "2026-10-18T18:00:00+00:00"
+    plans = []
+
+    def pulse(key, plan, *a, **kw):
+        plans.append(plan)
+        return [ligne("football", "pmu")], {"pmu": 1}, {}
+
+    def direct(sports, heures, **kwargs):
+        return [{
+            "sport": "football", "debut": debut, "bookmaker": "winamax", "source": "Winamax",
+            "match_id": "winamax|1", "domicile": "Lens", "exterieur": "Lille",
+            "cote": 2.1, "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM",
+            "collecte": maintenant.isoformat(),
+        }], {"ok": True, "erreurs": [], "requetes": 1, "matchs": 1}
+
+    _sans_reseau(monkeypatch)
+    monkeypatch.delenv("SOURCE_WINAMAX", raising=False)
+    monkeypatch.setattr(cycle.winamax_direct, "collecter", direct)
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football") | {"debut": debut}])
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
+    j = {"etapes": {}}
+    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", maintenant, j)
+    assert plans and "winamax" not in plans[0]
+    wina = [l for l in lignes if l["bookmaker"] == "winamax"]
+    assert wina and wina[0]["cote"] == 2.1 and wina[0]["match_id"] == "winamax|1"
+    assert j["winamax_source"] == "auto" and j["winamax_source_effective"] == "direct"
+    ecart = round(2.1 / 1.9 - 1, 4)
+    opp = {
+        "reference": "Pinnacle", "bookmaker": "winamax", "sport": "football",
+        "marche": "VAINQUEUR", "periode": "MATCH", "issue": "DOM", "ligne": None,
+        "match_id": "winamax|1", "domicile": "Lens", "exterieur": "Lille", "pari": "Lens",
+        "detecte": maintenant.isoformat(), "debut": debut,
+        "lu_reference": (maintenant - timedelta(minutes=2)).isoformat(),
+        "cote": 2.1, "cote_juste": 1.9, "ecart": ecart,
+    }
+    paris = []
+    nouveaux = simulation.placer([opp], paris, maintenant)
+    assert len(nouveaux) == 1 and nouveaux[0]["bookmaker"] == "winamax" and nouveaux[0]["mise"] == 10
+    bilan = simulation.bilan(paris)
+    assert bilan["E|Pinnacle"]["paris"] == 1 and bilan["E|Pinnacle"]["en_cours"] == 1
