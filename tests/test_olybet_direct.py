@@ -135,6 +135,9 @@ def test_cycle_ajoute_olybet_par_defaut(monkeypatch):
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.betclic_direct, "collecter",
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.setattr(cycle.netbet_direct, "collecter",
+                        lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.delenv("SOURCE_NETBET", raising=False)
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [{
         "sport": "football", "debut": "2026-10-18T20:00:00Z", "source": "pinnacle",
         "domicile": "Sporting CP", "exterieur": "Academico Viseu", "cote": 1.20,

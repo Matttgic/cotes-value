@@ -33,9 +33,12 @@ def _sans_reseau(monkeypatch, direct=None):
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.betclic_direct, "collecter",
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.setattr(cycle.netbet_direct, "collecter",
+                        lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setenv("SOURCE_UNIBET", "shadow")
     monkeypatch.delenv("SOURCE_BETCLIC", raising=False)
     monkeypatch.delenv("SOURCE_OLYBET", raising=False)
+    monkeypatch.delenv("SOURCE_NETBET", raising=False)
     monkeypatch.delenv("SOURCE_WINAMAX", raising=False)
 
 
@@ -244,12 +247,13 @@ def test_sources_independantes_partent_ensemble(monkeypatch):
     monkeypatch.setattr(cycle.unibet_direct, "collecter", lent)
     monkeypatch.setattr(cycle.betclic_direct, "collecter", lent)
     monkeypatch.setattr(cycle.olybet_direct, "collecter", lent)
+    monkeypatch.setattr(cycle.netbet_direct, "collecter", lent)
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
     monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
     monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
     cycle.collecter_prematch("cle", "complet", NOW, {"etapes": {}})
-    assert len(starts) == 6
+    assert len(starts) == 7
     assert max(starts) - min(starts) < 0.5
 
 
