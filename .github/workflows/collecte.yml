@@ -71,7 +71,6 @@ jobs:
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
           PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
-          PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
           THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
           THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
@@ -85,6 +84,11 @@ jobs:
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
           # Smarkets (quota de 60 requêtes par minute, lecture en plusieurs passages) ; variable de dépôt SMARKETS_COLLECTE=non pour couper
           SMARKETS_COLLECTE: ${{ vars.SMARKETS_COLLECTE || 'oui' }}
+          # Plus d'abonnement PulseScore : les cotes françaises viennent toutes des lecteurs directs.
+          SOURCE_PMU: direct
+          SOURCE_WINAMAX: direct
+          SOURCE_UNIBET: direct
+          SOURCE_BETCLIC: direct
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
         run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
 
@@ -108,7 +112,6 @@ jobs:
 
       - name: Règlement après les alertes et construction du site
         env:
-          PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
           THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
           THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}

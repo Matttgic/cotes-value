@@ -9,16 +9,23 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 
 ## Sources
 
+**Sans PulseScore depuis le 18/10/2026** (plus d'abonnement) : le workflow de collecte ne reçoit plus
+`PULSESCORE_KEY` et fixe `SOURCE_PMU`, `SOURCE_WINAMAX`, `SOURCE_UNIBET` et `SOURCE_BETCLIC` à `direct`. Les
+cotes viennent toutes des lecteurs directs ; Betfair, qui n'existait que via PulseScore, n'est plus une
+référence. `cotes/pulsescore.py` reste dans le dépôt pour son **traducteur** (`traduire`), que tous les lecteurs
+directs utilisent. Son client réseau et les modes `shadow` / `auto` / `pulsescore` ne servent plus qu'à relire
+d'anciennes données. Les sections ci-dessous qui parlent de PulseScore décrivent cet ancien fonctionnement.
+
 | Source | Rôle | Accès | Coût |
 |---|---|---|---|
 | Pinnacle | Référence | API publique du site (`cotes/pinnacle.py`) | Gratuit |
 | Polymarket | Référence | API officielle gamma (`cotes/polymarket.py`) | Gratuit |
-| Betfair Exchange | Référence | PulseScore, via Orbit Exchange | Offre PulseScore |
+| Betfair Exchange | Référence (arrêtée) | PulseScore, via Orbit Exchange | Plus disponible |
 | Smarkets | Référence | API publique v3, sans compte (`cotes/smarkets.py`) | Gratuit |
-| Winamax | Cotes à comparer | Socket en parallèle de PulseScore (`cotes/direct/winamax.py`) | Gratuit |
-| Betclic | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
-| Unibet | Cotes à comparer | API LVS en parallèle de PulseScore (`cotes/direct/unibet.py`) | Gratuit |
-| PMU | Cotes à comparer | Kambi en parallèle de PulseScore (`cotes/direct/pmu.py`) | Gratuit |
+| Winamax | Cotes à comparer | Socket (`cotes/direct/winamax.py`) | Gratuit |
+| Betclic | Cotes à comparer | API gRPC-web (`cotes/direct/betclic.py`) | Gratuit |
+| Unibet | Cotes à comparer | API LVS (`cotes/direct/unibet.py`) | Gratuit |
+| PMU | Cotes à comparer | Kambi (`cotes/direct/pmu.py`) | Gratuit |
 | OlyBet | Cotes à comparer | Swarm BetConstruct (`cotes/direct/olybet.py`) | Gratuit |
 
 NetBet n'est pas suivi : le flux « netbet » de PulseScore est celui du site international (netbet.com), pas
