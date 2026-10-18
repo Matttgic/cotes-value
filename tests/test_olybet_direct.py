@@ -129,6 +129,10 @@ def test_cycle_ajoute_olybet_par_defaut(monkeypatch):
     monkeypatch.delenv("SOURCE_PMU", raising=False)
     monkeypatch.setattr(cycle.pmu_direct, "collecter",
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.setattr(cycle.winamax_direct, "collecter",
+                        lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.setattr(cycle.unibet_direct, "collecter",
+                        lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [{
         "sport": "football", "debut": "2026-10-18T20:00:00Z", "source": "pinnacle",
         "domicile": "Sporting CP", "exterieur": "Academico Viseu", "cote": 1.20,

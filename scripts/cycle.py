@@ -30,6 +30,7 @@ from cotes import (comparaison, controle, pinnacle, polymarket, pulsescore, regl
                    simulation, smarkets, stockage)
 from cotes.direct import olybet as olybet_direct  # noqa: E402
 from cotes.direct import pmu as pmu_direct  # noqa: E402
+from cotes.direct import unibet as unibet_direct  # noqa: E402
 from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline  # noqa: E402
@@ -100,7 +101,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                     < comparaison._t(l["debut"])
                     <= limite + (timedelta(hours=5) if l.get("debut_approximatif") else timedelta())}
 
-    def pulse(sports, nom, sans_pmu=False, sans_winamax=False):
+    def pulse(sports, nom, sans_pmu=False, sans_winamax=False, sans_unibet=False):
         if mode == "test":
             livres = [b for b in ("winamax", "betclic") if not (sans_winamax and b == "winamax")]
             plan = {b: ["soccer"] for b in livres} | {"orbitxch": ["soccer"]}
@@ -110,7 +111,8 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             if not fr:
                 return [], {}, {}
             livres = [b for b in FRANCAIS
-                      if not (sans_pmu and b == "pmu") and not (sans_winamax and b == "winamax")]
+                      if not (sans_pmu and b == "pmu") and not (sans_winamax and b == "winamax")
+                      and not (sans_unibet and b == "unibet-fr")]
             plan = {b: fr for b in livres} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in fr]}
             pages, horizon = 40, HORIZON_H
         return etape(nom, journal, pulsescore.collecter, cle, plan, horizon, pages,
@@ -178,10 +180,23 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             signaler(journal, "winamax_direct", list(wina_meta.get("erreurs") or []))
         wina_utilisable = bool(wina_meta.get("ok") and (wina_lignes or not wina_meta.get("erreurs")))
         sans_wina = source_wina == "direct" or (source_wina == "auto" and wina_utilisable)
+        source_uni = unibet_direct.mode_source()
+        journal["unibet_source"] = source_uni
+        uni_lignes, uni_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
+        if source_uni != "pulsescore":
+            recu = etape("unibet_direct", journal, unibet_direct.collecter, sports,
+                         12 if mode == "test" else HORIZON_H, maintenant=maintenant)
+            if recu is None:
+                uni_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
+            else:
+                uni_lignes, uni_meta = recu
+            signaler(journal, "unibet_direct", list(uni_meta.get("erreurs") or []))
+        uni_utilisable = bool(uni_meta.get("ok") and (uni_lignes or not uni_meta.get("erreurs")))
+        sans_uni = source_uni == "direct" or (source_uni == "auto" and uni_utilisable)
         lignes, requetes, erreurs = [], {}, {}
         if cle:
             lignes, requetes, erreurs = pulse(sports, "pulsescore", sans_pmu=sans_pmu,
-                                              sans_winamax=sans_wina)
+                                              sans_winamax=sans_wina, sans_unibet=sans_uni)
             if erreurs and "pulsescore" in journal["etapes"]:
                 journal["etapes"]["pulsescore"] |= {"degrade": True,
                     "erreurs": {b: e[:5] for b, e in erreurs.items()}}
@@ -223,6 +238,24 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 journal["winamax_source_effective"] = "shadow"
         elif sans_wina:
             lignes = [l for l in lignes if l.get("bookmaker") != "winamax"] + list(wina_lignes)
+        uni_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
+                  or pulsescore.indisponible(erreurs.get("unibet-fr", []) if cle else ["PULSESCORE_KEY absente"]))
+        if source_uni == "shadow":
+            try:
+                journal["unibet_direct_rapport"] = unibet_direct.rapport(lignes, uni_lignes)
+            except Exception as e:  # noqa: BLE001
+                journal["unibet_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
+            if uni_ko and uni_utilisable:
+                lignes = [l for l in lignes if l.get("bookmaker") != "unibet-fr"] + list(uni_lignes)
+                journal["unibet_repli"] = "L'API Unibet remplace PulseScore (401/403/402/quota ou lecture impossible)"
+                journal["unibet_source_effective"] = "direct"
+                if "pulsescore" in journal["etapes"]:
+                    journal["etapes"]["pulsescore"]["unibet_repli"] = journal["unibet_repli"]
+            elif uni_ko:
+                journal["unibet_repli"] = "PulseScore indisponible, API Unibet sans cote utilisable"
+                journal["unibet_source_effective"] = "shadow"
+        elif sans_uni:
+            lignes = [l for l in lignes if l.get("bookmaker") != "unibet-fr"] + list(uni_lignes)
     source_oly = olybet_direct.mode_source()
     journal["olybet_source"] = source_oly
     if source_oly == "direct":
@@ -465,6 +498,8 @@ def main() -> int:
         ecrire_json(donnees / "pmu_comparaison.json", journal["pmu_direct_rapport"])
     if "winamax_direct_rapport" in journal:
         ecrire_json(donnees / "winamax_comparaison.json", journal["winamax_direct_rapport"])
+    if "unibet_direct_rapport" in journal:
+        ecrire_json(donnees / "unibet_comparaison.json", journal["unibet_direct_rapport"])
 
     francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
     betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])

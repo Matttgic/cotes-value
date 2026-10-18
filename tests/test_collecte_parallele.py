@@ -29,6 +29,9 @@ def _sans_reseau(monkeypatch, direct=None):
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.winamax_direct, "collecter",
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.setattr(cycle.unibet_direct, "collecter",
+                        lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.delenv("SOURCE_UNIBET", raising=False)
     monkeypatch.delenv("SOURCE_OLYBET", raising=False)
     monkeypatch.delenv("SOURCE_WINAMAX", raising=False)
 
