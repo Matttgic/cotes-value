@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T21:39:07+00:00",
+  "debut": "2026-10-18T21:43:44+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 7.8,
+    "secondes": 7.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,43 +12,38 @@
     ]
    },
    "pinnacle": {
-    "secondes": 31.0,
-    "ok": true
+    "secondes": 19.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 22 markets/straight : HTTP 403"
+    ]
    },
    "unibet_direct": {
-    "secondes": 3.5,
+    "secondes": 3.8,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.7,
+    "secondes": 4.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 11.5,
+    "secondes": 13.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 12.9,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:3 : réseau"
-    ]
+    "secondes": 18.4,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 34.0,
+    "ok": true
    },
    "pulsescore": {
-    "secondes": 17.9,
+    "secondes": 16.1,
     "ok": true,
     "degrade": true,
     "erreurs": {
-     "winamax": [
-      "winamax/soccer/events : HTTP 429",
-      "winamax/basketball/events : collecte différée (quota/refus)",
-      "winamax/tennis/events : collecte différée (quota/refus)",
-      "winamax/ice-hockey/events : collecte différée (quota/refus)",
-      "winamax/handball/events : collecte différée (quota/refus)"
-     ],
      "betclic": [
       "betclic/soccer/events : HTTP 429",
       "betclic/basketball/events : collecte différée (quota/refus)",
@@ -63,12 +58,8 @@
     },
     "betclic_repli": "L'API Betclic remplace PulseScore (401/403/402/quota ou lecture impossible)"
    },
-   "betclic_direct": {
-    "secondes": 31.6,
-    "ok": true
-   },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -76,16 +67,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 24.3,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 5.3,
+    "secondes": 5.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.5,
+    "secondes": 0.6,
     "ok": true
    },
    "cotes_cloture": {
@@ -104,8 +98,8 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 3,
-   "lignes_perimees": 0,
+   "age_max_s": 889,
+   "lignes_perimees": 2906,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -116,8 +110,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 65,
-    "choisi_autre": 13
+    "head_200": 29,
+    "choisi_autre": 5,
+    "head_403": 3,
+    "ortho_refusee": 2,
+    "choisi_fixe": 5,
+    "reprise_403": 1
    }
   },
   "winamax_source": "auto",
@@ -125,8 +123,7 @@
   "betclic_source": "shadow",
   "olybet_source": "direct",
   "netbet_source": "direct",
-  "winamax_source_effective": "pulsescore",
-  "winamax_repli": "Socket Winamax vide ou en échec, PulseScore décide",
+  "winamax_source_effective": "direct",
   "betclic_direct_rapport": {
    "matchs_pulsescore": 0,
    "matchs_direct": 116,
@@ -238,8 +235,8 @@
      "match": "Sportivo Trinidense – Libertad",
      "source": "PMU",
      "cote_netbet": 2.85,
-     "cote_reference": 2.63,
-     "ecart_relatif": 0.0837,
+     "cote_reference": 2.6,
+     "ecart_relatif": 0.0962,
      "aberrant": false
     },
     {
@@ -286,23 +283,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T21:39:23+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T21:39:36+00:00",
-   "books_premiere_lecture": "2026-10-18T19:51:08+00:00",
-   "books_derniere_lecture": "2026-10-18T21:39:39+00:00",
-   "ecart_enveloppe_secondes": 6508.0
+   "pinnacle_premiere_lecture": "2026-10-18T21:43:53+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T21:44:02+00:00",
+   "books_premiere_lecture": "2026-10-18T20:00:33+00:00",
+   "books_derniere_lecture": "2026-10-18T21:44:04+00:00",
+   "ecart_enveloppe_secondes": 6209.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 550,
    "a_verifier": 10,
    "non_conforme": 8,
-   "mesures": 9951,
+   "mesures": 11272,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -311,41 +307,27 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T21:19:09+00:00"
   },
-  "fin": "2026-10-18T21:40:25+00:00",
+  "fin": "2026-10-18T21:45:14+00:00",
   "requetes_pulsescore": {
-   "winamax": 4,
    "betclic": 4,
    "orbitxch": 4
   },
   "cotes": {
-   "francaises": 23940,
-   "pinnacle": 95366,
+   "francaises": 27591,
+   "pinnacle": 94761,
    "betfair": 0,
-   "polymarket": 9431,
-   "smarkets": 3515
+   "polymarket": 9516,
+   "smarkets": 4165
   },
-  "matchs_francais": 567,
+  "matchs_francais": 689,
   "opportunites": 10,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 0
  },
  "requetes_par_mois": {
-  "2026-10": 231144
+  "2026-10": 231152
  },
  "historique": [
-  {
-   "debut": "2026-10-17T21:07:32+00:00",
-   "mode": "complet",
-   "opportunites": 28,
-   "nouveaux_paris": 2,
-   "requetes_pulsescore": {
-    "winamax": 17,
-    "betclic": 17,
-    "unibet-fr": 17,
-    "pmu": 16,
-    "orbitxch": 21
-   }
-  },
   {
    "debut": "2026-10-17T21:13:20+00:00",
    "mode": "complet",
@@ -2795,6 +2777,16 @@
    "nouveaux_paris": 1,
    "requetes_pulsescore": {
     "winamax": 4,
+    "betclic": 4,
+    "orbitxch": 4
+   }
+  },
+  {
+   "debut": "2026-10-18T21:43:44+00:00",
+   "mode": "complet",
+   "opportunites": 10,
+   "nouveaux_paris": 0,
+   "requetes_pulsescore": {
     "betclic": 4,
     "orbitxch": 4
    }
