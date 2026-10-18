@@ -1,4 +1,4 @@
-"""Comparaison des cotes françaises aux cotes justes des références (Pinnacle, Betfair, Polymarket, Kalshi).
+"""Comparaison des cotes françaises aux cotes justes des références (Pinnacle, Betfair, Polymarket).
 
 Pour chaque cote d'un bookmaker français : on retrouve le même match chez chaque référence
 (cotes/correspondance.py), puis le même pari (marché, période, ligne, issue). Écart :
@@ -10,7 +10,7 @@ Une référence n'est utilisée que si elle est fiable à cet instant :
   fausse erreur) ;
 - Pinnacle : marge du marché ≤ 12 % (au-delà, retirer la marge devient imprécis) et cache
   pas plus vieux que `PINNACLE_AGE_MAX_MIN` (``cote_perimee`` faux) ;
-- Betfair, Polymarket, Kalshi : écart achat/vente ≤ 5 points et ≤ 25 % du prix, et un minimum d'argent
+- Betfair et Polymarket : écart achat/vente ≤ 5 points et ≤ 25 % du prix, et un minimum d'argent
   engagé.
 Corners, cartons et paris pair/impair ne sont pas comparés : l'ANJ ne les autorise pas chez les
 bookmakers français.
@@ -31,7 +31,7 @@ FENETRE_MIN = CT.FENETRE_MIN
 MARGE_MAX_PINNACLE = 0.12
 ECART_ACHAT_VENTE_MAX = 0.05
 ECART_RELATIF_MAX = 0.25       # écart achat/vente rapporté au prix : 0,01/0,03 n'est pas un prix fiable
-LIQUIDITE_MIN = {"Betfair": 20.0, "Polymarket": 100.0, "Kalshi": 0.0}
+LIQUIDITE_MIN = {"Betfair": 20.0, "Polymarket": 100.0}
 ECART_MIN = 0.02
 # Au-delà, une « erreur de cote » est presque toujours un marché mal reconnu (statistique prise pour des
 # buts, série prise pour un match…) : l'opportunité est gardée pour contrôle mais marquée suspecte, sans pari.
@@ -110,16 +110,6 @@ def _fiable(nom: str, l: dict) -> bool:
     return float(l.get("liquidite") or 0) >= LIQUIDITE_MIN.get(nom, 0)
 
 
-def _kalshi_issue(l: dict) -> dict | None:
-    """Kalshi donne le nom de l'équipe comme issue : on le traduit en DOM / EXT."""
-    if l["issue"] in ("DOM", "EXT", "NUL"):
-        return l
-    a, b = C.ressemblance(l["issue"], l["domicile"]), C.ressemblance(l["issue"], l["exterieur"])
-    if max(a, b) < 0.6:
-        return None
-    return {**l, "issue": "DOM" if a >= b else "EXT"}
-
-
 # --------------------------------------------------------------------------- comparaison
 
 def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str, dict]:
@@ -127,8 +117,6 @@ def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str
     matchs_fr = C.matchs_de(francais)
     index: dict[str, dict] = {}
     for nom, lignes in references.items():
-        if nom == "Kalshi":
-            lignes = [x for x in (_kalshi_issue(l) for l in lignes) if x]
         lignes = [l for l in lignes if _fiable(nom, l)]
         par_match: dict[str, list[dict]] = {}
         for l in lignes:
@@ -228,8 +216,6 @@ def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) 
     out: dict[tuple, dict[str, tuple]] = {}
     matchs_fr = C.matchs_de(francais)
     for nom, lignes in references.items():
-        if nom == "Kalshi":
-            lignes = [x for x in (_kalshi_issue(l) for l in lignes) if x]
         lignes = [l for l in lignes if _fiable(nom, l)]
         par_match: dict[str, list[dict]] = {}
         for l in lignes:

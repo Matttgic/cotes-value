@@ -58,7 +58,7 @@ GARDER = 300                       # mesures conservées par groupe (les plus r�
 # par match : seules des cotes françaises systématiquement AU-DESSUS du juste trahissent une mauvaise
 # association (des cotes basses = simplement un match à forte marge, ex. grand favori)
 MATCH_MESURES_MIN, MATCH_MEDIANE_MIN, MATCH_MEDIANE_MAX = 6, 0.50, 1.04
-ORDRE_REFERENCES = ("Pinnacle", "Betfair", "Polymarket", "Kalshi")
+ORDRE_REFERENCES = ("Pinnacle", "Betfair", "Polymarket")
 # Temps réglementaire et prolongation incluse donnent des cotes proches : le rapport médian ne suffit pas à
 # les distinguer. On compare donc aussi chaque cote à l'autre version de Pinnacle : une cote française suit
 # de plus près (dispersion plus faible) la version qu'elle cote vraiment.
