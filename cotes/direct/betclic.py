@@ -36,6 +36,8 @@ _PRES_H = 6
 _FRAIS_MIN = 3
 # Lectures de détail simultanées (5 en parallèle n'ont pas donné de 429).
 _CONCURRENCE = 4
+# Onglets lus en plus de « Le Top » : demi-temps, périodes, quarts-temps, sets, jeux.
+LIBELLES_ONGLETS = {"résultats", "buts", "points", "sets", "jeux"}
 COUVERTURE_MIN = 0.95
 ACCORD_MIN = 0.99
 ECART_COTE = 0.01
@@ -331,6 +333,18 @@ def marches_du_detail(trame: bytes | None) -> list[dict]:
                     selections = _selections(brut) if nom else []
                     if nom and selections:
                         sortie.append({"nom": nom, "selections": selections})
+    return dedoublonner(sortie)
+
+
+def dedoublonner(marches: list[dict]) -> list[dict]:
+    """Un même marché apparaît dans plusieurs sections d'un onglet, ou dans plusieurs onglets."""
+    vus: set = set()
+    sortie = []
+    for marche in marches:
+        cle = (marche["nom"], tuple((s["nom"], s["cote"]) for s in marche["selections"]))
+        if cle not in vus:
+            vus.add(cle)
+            sortie.append(marche)
     return sortie
 
 
@@ -362,38 +376,88 @@ def _nombre(valeur) -> float | None:
         return None
 
 
+def categories_du_detail(trame: bytes | None) -> list[tuple[str, str]]:
+    """(identifiant, libellé) des onglets du match. Le détail par défaut n'a que « Le Top »."""
+    racine = decode_protobuf(_charge(trame))
+    sortie = []
+    for enveloppe in racine.get(1, []):
+        if not isinstance(enveloppe, (bytes, bytearray)):
+            continue
+        for match in decode_protobuf(enveloppe).get(1, []):
+            if not isinstance(match, (bytes, bytearray)):
+                continue
+            for brut in decode_protobuf(match).get(10, []):
+                if not isinstance(brut, (bytes, bytearray)):
+                    continue
+                champs = decode_protobuf(brut)
+                ident = _texte(champs.get(2, [b""])[0])
+                libelle = _texte(champs.get(3, [b""])[0])
+                if ident and libelle:
+                    sortie.append((ident, libelle))
+    return sortie
+
+
+def onglets_utiles(trame: bytes | None) -> list[str]:
+    """Onglets de marchés comparables (résultats, buts, points, sets, jeux), sans « Le Top »."""
+    utiles = []
+    for ident, libelle in categories_du_detail(trame):
+        if libelle.strip().lower() in LIBELLES_ONGLETS and ident not in utiles:
+            utiles.append(ident)
+    return utiles
+
+
+# « 1ère mi-temps (seule) - », « 2ème mi-temps - », « 1er QT - », « 3ème période - », « 1er set - »
+_PREFIXE_PERIODE = re.compile(
+    r"^\s*(?:1[èe]re|2[èe]me|3[èe]me|[1-4](?:er|è|e|ème|eme)?)\s+"
+    r"(?:mi-temps(?:\s*\(seule\))?|p[ée]riode|qt|set)\s+-\s+", re.I)
+_NOMS_TOTAL = re.compile(r"\b(?:buts?|points?|jeux)\b")
+_EXCLU = ("buteur", "décisif", "decisif", "passeur", "mi-temps", "mi temps", "&", "écart", "ecart",
+          "quand sera", "comment", "intervalle", "multi", "choix", "cage", "pénalty", "penalty", "plus prolifique")
+
+
 def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
-    bas = nom.strip().lower()
+    """Marché canonique PulseScore. Un préfixe de période (mi-temps, QT, période, set) reste
+    dans le libellé : c'est ``traduire`` qui en déduit la période."""
+    m = _PREFIXE_PERIODE.match(nom)
+    corps = nom[m.end():] if m else nom
+    bas = corps.strip().lower()
     # « prolong. & pen. inclus » n'est pas une combinaison de marchés.
     sans_abrege = re.sub(r"prolong\w*\.?\s*&\s*pen\w*\.?", "prolongations", bas)
-    if any(mot in sans_abrege for mot in ("buteur", "décisif", "decisif", "passeur", "mi-temps",
-                                          "mi temps", "&", "écart", "ecart", "quand sera", "comment")):
+    if any(mot in sans_abrege for mot in _EXCLU):
         return None
-    if bas.startswith(("résultat du match", "resultat du match", "vainqueur")):
+    if bas.startswith(("résultat du match (rembours", "resultat du match (rembours")):
+        return "DRAW_NO_BET"
+    if bas.startswith(("résultat du match", "resultat du match", "vainqueur du match")) or (
+            m and bas in ("vainqueur", "résultat", "resultat")):
         return "MATCH_RESULT"
-    if bas.startswith("double chance"):
+    if bas.startswith("double chance") and not m:
         return "DOUBLE_CHANCE"
     # « Les 2 équipes marquent ou + de 2,5 » est une combinaison : ses cotes
     # Oui/Non ne sont pas celles du marché les deux équipes marquent.
-    if bas.startswith(("les 2 équipes marquent", "les deux équipes marquent", "both teams")):
+    if bas.startswith(("les 2 équipes marquent", "les deux équipes marquent", "both teams")) and not m:
         if re.search(r"\b(?:ou|or|et|and)\b|&|\+", bas):
             return None
         return "BOTH_TEAMS_TO_SCORE"
-    if bas.startswith("score exact"):
+    if bas.startswith("score exact") and not m:
         return "CORRECT_SCORE"
-    # « Total de buts - Équipe » (football, basket) ou « Équipe - Nombre total de buts » (hockey).
+    if bas.startswith("nombre de sets") and not m:
+        return "TOTAL_SETS"
+    if not _NOMS_TOTAL.search(bas):
+        return None
+    # « Total de buts - Équipe » (football, basket), « Équipe - Nombre total de buts » (hockey,
+    # tennis) ou « Nombre de buts - Équipe » (périodes).
     equipe = None
-    if " - " in nom and bas.startswith(("total", "nombre total")):
-        equipe = nom.split(" - ", 1)[1].strip().lower()
-    elif " - " in nom and re.search(r"^.+? - (?:nombre )?total\b", bas):
-        equipe = nom.split(" - ", 1)[0].strip().lower()
+    if " - " in corps and re.match(r"(?:nombre total|nombre|total)\b", bas):
+        equipe = corps.split(" - ", 1)[1].strip().lower()
+    elif " - " in corps and re.search(r"^.+? - (?:nombre )?total\b", bas):
+        equipe = corps.split(" - ", 1)[0].strip().lower()
     if equipe is not None:
         if equipe == domicile.strip().lower():
             return "HOME_OVER_UNDER"
         if equipe == exterieur.strip().lower():
             return "AWAY_OVER_UNDER"
         return None
-    if bas.startswith(("nombre total", "total de buts", "total de points", "total de jeux", "total points")):
+    if re.match(r"(?:nombre total|total de|total points|nombre de)\b", bas):
         return "OVER_UNDER"
     return None
 
@@ -454,6 +518,14 @@ def _double_chance(nom: str, domicile: str, exterieur: str) -> str | None:
             frozenset({"HOME", "AWAY"}): "HOME_AWAY"}.get(frozenset(issues))
 
 
+TOTAUX = ("OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER", "TOTAL_SETS")
+
+
+def _libelle_pulse(nom: str) -> str:
+    """« 1er QT » -> « 1er quart-temps » : la période est lue dans le libellé par ``traduire``."""
+    return re.sub(r"\b([1-4])\s*(?:er|è|e|ème|eme)?\s*QT\b", r"\1er quart-temps", nom, flags=re.I)
+
+
 def marches_pulse(marche: dict, domicile: str, exterieur: str) -> list[dict]:
     """Marchés au format PulseScore. Un total Betclic regroupe toutes ses lignes
     dans un seul marché : on en fait un marché par ligne, sinon la traduction
@@ -466,7 +538,7 @@ def marches_pulse(marche: dict, domicile: str, exterieur: str) -> list[dict]:
         nom = str(offre.get("nom") or "")
         if canon == "CORRECT_SCORE":
             issue, ligne = "SCORE", None
-        elif canon in ("OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
+        elif canon in TOTAUX:
             issue, ligne = _sens_total(nom), _ligne_totale(nom)
         elif canon == "DOUBLE_CHANCE":
             issue, ligne = _double_chance(nom, domicile, exterieur), None
@@ -476,17 +548,18 @@ def marches_pulse(marche: dict, domicile: str, exterieur: str) -> list[dict]:
                 issue = None
         else:
             issue, ligne = _issue(nom, domicile, exterieur), None
-        if not issue or (canon.endswith("OVER_UNDER") and ligne is None):
+        if not issue or (canon in TOTAUX and ligne is None):
             continue
         selections.append({"canonicalOutcome": issue, "rawName": nom, "odds": offre["cote"], "line": ligne})
-    if canon.endswith("OVER_UNDER"):
+    if canon in TOTAUX:
         par_ligne: dict = {}
         for sel in selections:
             par_ligne.setdefault(sel["line"], []).append(sel)
         groupes = [(f"{marche.get('nom')}|{ligne:g}", sels) for ligne, sels in par_ligne.items()]
     else:
         groupes = [(marche.get("nom"), selections)]
-    return [{"marketId": ident, "canonicalMarket": canon, "rawName": marche.get("nom"),
+    libelle = _libelle_pulse(marche.get("nom") or "")
+    return [{"marketId": ident, "canonicalMarket": canon, "rawName": libelle,
              "period": "FULL_TIME", "selections": sels}
             for ident, sels in groupes if len(sels) >= 2]
 
@@ -602,18 +675,38 @@ def _lire_pages(client: Client, slug: str, maintenant: datetime, heures: float) 
     return trouves
 
 
-def _detailler(client: Client, match: dict, moment: str) -> tuple[list[dict], bool]:
-    trame = client.poster(DETAIL, encode_champ_varint(1, int(match["id"])) + encode_champ_octets(2, "fr"))
+def _detailler(client: Client, match: dict, moment: str,
+               onglets: bool = True) -> tuple[list[dict], bool, bool]:
+    """(lignes, lecture réussie, complet). « Le Top » d'abord, puis les onglets utiles
+    (demi-temps, périodes, sets, jeux) tant que le budget le permet."""
+    charge = encode_champ_varint(1, int(match["id"])) + encode_champ_octets(2, "fr")
+    trame = client.poster(DETAIL, charge)
     if client._bloque:
-        return [], bool(trame)
+        return [], bool(trame), False
+    offres = marches_du_detail(trame)
+    complet = bool(trame)
+    if onglets and trame:
+        for ident in onglets_utiles(trame):
+            if client._bloque or not client._temps():
+                complet = False
+                break
+            suite = client.poster(DETAIL, charge + encode_champ_octets(3, ident))
+            if not suite:
+                complet = False
+                continue
+            offres = dedoublonner(offres + marches_du_detail(suite))
     marches = []
-    for offre in marches_du_detail(trame):
-        marches += marches_pulse(offre, match["domicile"], match["exterieur"])
+    for offre in offres:
+        for traduit in marches_pulse(offre, match["domicile"], match["exterieur"]):
+            # Au hockey le score exact de Betclic n'est pas celui de Pinnacle (+180 % de cote).
+            if traduit["canonicalMarket"] == "CORRECT_SCORE" and match["sport"] != "football":
+                continue
+            marches.append(traduit)
     if not marches:
-        return [], bool(trame)
+        return [], bool(trame), complet
     evenement = {"eventId": match["id"], "home": match["domicile"], "away": match["exterieur"],
                  "league": match.get("competition"), "startTime": match.get("debut"), "markets": marches}
-    return traduire(evenement, "betclic", match["sport"], moment), bool(trame)
+    return traduire(evenement, "betclic", match["sport"], moment), bool(trame), complet
 
 
 def _collecter_reserve(client: Client, demandes, heures: float, maintenant: datetime,
@@ -664,13 +757,23 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
     lignes: list[dict] = []
     arret = threading.Event()
 
+    anciennes: dict = {}
+    for ligne in reserve.get("lignes") or []:
+        if isinstance(ligne, dict) and ligne.get("match_id"):
+            anciennes.setdefault(ligne["match_id"], []).append(ligne)
+
     def lire(match):
         if arret.is_set() or not client._temps():
             return None
-        recu = _detailler(client, match, moment)
+        ajoutees, lue, complet = _detailler(client, match, moment)
         if client._bloque:
             arret.set()
-        return recu
+        if not complet and ajoutees:
+            # Onglets coupés par le budget : on garde les marchés déjà lus au cycle précédent.
+            presentes = {l.get("cle_marche") for l in ajoutees}
+            ajoutees = ajoutees + [l for l in anciennes.get(f"betclic|{match.get('id')}", [])
+                                   if l.get("cle_marche") not in presentes]
+        return ajoutees, lue
 
     with ThreadPoolExecutor(max(1, concurrence)) as pool:
         for recu in pool.map(lire, file):
@@ -728,7 +831,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     for match in candidats:
         if not client._temps():
             break
-        ajoutees, lue = _detailler(client, match, moment)
+        ajoutees, lue, _complet = _detailler(client, match, moment)
         if lue:
             lectures += 1
         lignes += ajoutees

@@ -311,3 +311,38 @@ def test_rapport_classe_les_ecarts():
     diag = betclic.rapport(pulse, direct)["diagnostic"]
     assert diag["cotes_differentes"] == {"issues_permutees": 2, "cache_perime": 1}
     assert diag["absentes_du_direct"] == {"marche_absent": 2, "signe_ligne": 1, "periode_differente": 1}
+
+
+def test_classement_des_marches_par_periode():
+    c = betclic._classe
+    assert c("1ère mi-temps (seule) - Nombre total de buts", "A", "B") == "OVER_UNDER"
+    assert c("2ème mi-temps (seule) - Nombre total de buts - B", "A", "B") == "AWAY_OVER_UNDER"
+    assert c("1er QT - Nombre total de Points - A", "A", "B") == "HOME_OVER_UNDER"
+    assert c("1ère période - Nombre de buts - B", "A", "B") == "AWAY_OVER_UNDER"
+    assert c("1er set - Nombre total de jeux", "A", "B") == "OVER_UNDER"
+    assert c("A - Nombre total de jeux gagnés", "A", "B") == "HOME_OVER_UNDER"
+    assert c("1ère mi-temps - Vainqueur", "A", "B") == "MATCH_RESULT"
+    assert c("Résultat du match (remboursé si match nul)", "A", "B") == "DRAW_NO_BET"
+    assert c("Nombre de sets", "A", "B") == "TOTAL_SETS"
+    for exclu in ("Nombre total de tirs", "Mi-temps avec le plus de buts", "Nombre total de points - Intervalle",
+                  "2ème période - Vainqueur avec handicap", "1ère mi-temps (seule) - Cage inviolée pour A",
+                  "Vainqueur du 1er set / Vainqueur du match", "Nombre total de sets"):
+        assert c(exclu, "A", "B") is None, exclu
+    libelle = betclic.marches_pulse({"nom": "1er QT - Nombre total de points", "selections": [
+        {"nom": "+ de 41,5", "cote": 1.7}, {"nom": "- de 41,5", "cote": 1.7}]}, "A", "B")[0]["rawName"]
+    assert "quart-temps" in libelle
+
+
+def test_onglets_utiles_et_lecture_complete():
+    def onglet(ident, libelle):
+        return betclic.encode_champ_octets(10, betclic.encode_champ_octets(2, ident) + betclic.encode_champ_octets(3, libelle))
+    marche = betclic.encode_champ_octets(2, "Nombre total de buts (t. rég)") + b"".join(
+        betclic.encode_champ_octets(16, x) for x in (_sel("+ de 2,5", 1.9), _sel("- de 2,5", 1.85)))
+    match = betclic.encode_champ_octets(11, betclic.encode_champ_octets(3, marche)) + onglet("ca_top", "Le Top") + onglet("ca_buts", "Buts") + onglet("ca_x", "Joueurs")
+    top = betclic.trame_grpc(betclic.encode_champ_octets(1, betclic.encode_champ_octets(1, match)))
+    assert betclic.onglets_utiles(top) == ["ca_buts"]
+    mi_temps = _detail("1ère mi-temps (seule) - Nombre total de buts", [_sel("+ de 0,5", 1.2), _sel("- de 0,5", 3.9)])
+    session = Session([(_liste(_match(7, "Lens", "Lille")), 200), (top, 200), (mi_temps, 200)])
+    lignes, meta = betclic.collecter({"football"}, 36, session=session, maintenant=MAINTENANT)
+    assert meta["requetes"] == 3
+    assert {(l["periode"], l["ligne"]) for l in lignes} == {("MATCH", 2.5), ("MT1", 0.5)}

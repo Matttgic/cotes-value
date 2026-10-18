@@ -58,7 +58,7 @@ BUDGETS = {
     "unibet_direct": 75,
     "olybet": 40,
     "netbet": 40,
-    "betclic_direct": 45,
+    "betclic_direct": 80,
     "smarkets": 60,
 }
 PRES_H = 6
