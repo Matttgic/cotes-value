@@ -25,6 +25,9 @@ def diagnostics_isoles(monkeypatch):
     monkeypatch.delenv('PINNACLE_RECHAUFFEUR_URL', raising=False)
     monkeypatch.delenv('PINNACLE_RECHAUFFEUR_SECRET', raising=False)
     monkeypatch.delenv('PINNACLE_PROXY_URL', raising=False)
+    monkeypatch.setenv('PINNACLE_CHOIX_PRIX', 'non')   # pas de HEAD réseau dans les autres tests
+    P.choix_prix.clear()
+    monkeypatch.setattr(P,'_choix_coupe',False)
     monkeypatch.setattr(P,'_cle_dynamique',lambda: None)
     yield
     P.ERREURS.clear();M.ERREURS.clear()
@@ -626,37 +629,81 @@ def test_resume_rechauffeur_compte_refus_et_sautes():
                                     'extrait':'Just a moment'}
 
 
-def test_sonde_cache_relit_l_url_de_paris_sans_toucher_aux_donnees(monkeypatch):
-    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
-    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
-    monkeypatch.setattr(P,'_cle_dynamique',lambda: 'cle-de-cycle')
-    F='/sports/29/markets/straight?primaryOnly=false&withSpecials=true'
-    sonde='/sports/29/markets/straight?withSpecials=true'
-    lu=(datetime.now(timezone.utc)-timedelta(seconds=5)).isoformat()
-    monkeypatch.setattr(P.requests,'post',lambda *a, **k: Reponse({'29':{
-        'matchups':'/sports/29/matchups?withSpecials=true','markets':F,'t':lu,'cache':'HIT','fresh':False,
-        'age_s':30,'statuts':{'matchups':200,'markets':200},'extrait':None,
-        'sonde':{'path':sonde,'status':200,'cache':'MISS','age':None,'octets':1234,'t':lu}}}))
-    urls=[]
+FIXE='/sports/29/markets/straight?primaryOnly=false&withSpecials=true'
+
+
+class Tete:
+    def __init__(self, status=200, cache=None, age=None):
+        self.status_code=status
+        self.headers={}
+        if cache: self.headers['cf-cache-status']=cache
+        if age is not None: self.headers['Age']=str(age)
+
+
+def _brancher(monkeypatch, tetes, prix_par_url=None):
+    monkeypatch.setenv('PINNACLE_CHOIX_PRIX','oui')
+    heads, gets = [], []
+    def head(url, **kw):
+        heads.append(url)
+        for q, t in tetes.items():
+            if url.endswith('/markets/straight'+q):
+                return t
+        return Tete(404)
     def get(url, **kw):
-        urls.append(url)
-        if url.endswith(sonde):
-            return Reponse([{'ne':'pas utiliser'}], headers={'cf-cache-status':'HIT','Age':'6'})
+        gets.append(url)
         if 'matchups' in url:
-            return Reponse([matchup()], headers={'Age':'30'})
-        return Reponse([marche_pin()], headers={'Age':'30'})
+            return Reponse([matchup()])
+        for suffixe, rep in (prix_par_url or {}).items():
+            if url.endswith(suffixe):
+                return rep
+        return Reponse([marche_pin()], headers={'cf-cache-status':'HIT','Age':'800'})
+    monkeypatch.setattr(P.requests,'head',head)
     monkeypatch.setattr(P.requests,'get',get)
+    return heads, gets
+
+
+def test_choix_prend_l_orthographe_la_plus_fraiche(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {
+        '?primaryOnly=false&withSpecials=true': Tete(200,'HIT',800),
+        '?primaryOnly=false': Tete(200,'HIT',45),
+        '?withSpecials=true': Tete(200,'HIT',300),
+        '?withSpecials=true&primaryOnly=false': Tete(200,'HIT',None),
+        '': Tete(200,'HIT',600)},
+        {'/markets/straight?primaryOnly=false': Reponse([marche_pin()], headers={'cf-cache-status':'HIT','Age':'47'})})
     out=P.collecter({29:'football'})
-    assert urls[-1].endswith(sonde) and sum(u.endswith(sonde) for u in urls)==1
-    s=P.sonde_cache
-    assert s['chemin']==sonde and s['paris']['cache']=='MISS' and s['github']['cache']=='HIT'
-    assert s['github']['age']==6 and s['github']['status']==200 and 4<=s['ecart_s']<=60
-    assert out and all(l['age_cache_s']==30 for l in out)          # données : URL fixe seulement
+    assert len(heads)==5
+    assert [g for g in gets if 'markets' in g][0].endswith('/markets/straight?primaryOnly=false')
+    assert out and all(l['age_cache_s']==47 and l['cote_perimee'] is False for l in out)
+    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['head_200']==5
 
 
-def test_sonde_cache_refuse_un_chemin_hors_liste(monkeypatch):
-    P._plans[29]={'sonde':{'path':'https://evil.exemple/x','t':datetime.now(timezone.utc).isoformat()}}
-    monkeypatch.setattr(P.requests,'get',lambda *a, **k: (_ for _ in ()).throw(AssertionError('appel')))
-    assert P.sonder_cache() is None
-    P._plans[29]={'sonde':{'path':'/sports/29/markets/straight?primaryOnly=false&withSpecials=true'}}
-    assert P.sonder_cache() is None
+def test_choix_garde_l_url_fixe_sans_age_exploitable(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {q: Tete(200,'HIT',None) for q in P.ORTHO_PRIX})
+    P.collecter({29:'football'})
+    assert [g for g in gets if 'markets' in g]==[P.base_api()+FIXE]
+    assert P.choix_prix['choisi_fixe']==1
+
+
+def test_choix_disjoncteur_au_premier_403(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {'?primaryOnly=false&withSpecials=true': Tete(403,'BYPASS')})
+    P.collecter({29:'football'})
+    assert len(heads)==1 and P._choix_coupe is True   # coupé dès le premier refus
+    assert P.choix_prix=={'head_403':1,'choisi_fixe':1}
+    assert P._choisir_chemin_prix(33)=='/sports/33/markets/straight?primaryOnly=false&withSpecials=true'
+    assert len(heads)==1                               # le sport suivant ne refait pas de HEAD
+
+
+def test_choix_repli_sur_l_url_fixe_si_l_orthographe_choisie_est_refusee(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {'?withSpecials=true': Tete(200,'HIT',10)},
+        {'/markets/straight?withSpecials=true': Reponse(None, status=403)})
+    out=P.collecter({29:'football'})
+    marches=[g for g in gets if 'markets' in g]
+    assert marches[0].endswith('/markets/straight?withSpecials=true') and marches[-1].endswith(FIXE)
+    assert out and P.choix_prix['repli_fixe']==1
+
+
+def test_choix_coupe_par_variable(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {'?primaryOnly=false': Tete(200,'HIT',5)})
+    monkeypatch.setenv('PINNACLE_CHOIX_PRIX','non')
+    P.collecter({29:'football'})
+    assert heads==[] and [g for g in gets if 'markets' in g]==[P.base_api()+FIXE]

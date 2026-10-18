@@ -55,9 +55,13 @@ origine_cle = "guest_historique"
 _ages: dict[str, int | None] = {}
 _statuts: dict[str, str] = {}
 etat_rechauffeur = "absent"      # absent | ok | indisponible | url_refusee
-sonde_cache: dict | None = None  # mesure : GitHub profite-t-il du cache rempli depuis Paris ?
-SPORT_SONDE = 29
-ORTHO_SONDE = ("", "?primaryOnly=false", "?withSpecials=true", "?withSpecials=true&primaryOnly=false")
+# Prix : la même réponse existe sous plusieurs orthographes d'URL, chacune avec son propre âge dans le
+# cache Cloudflare (mesuré le 18/10/2026 : 45 s pour l'une, ~15 min pour l'URL fixe ; cache partagé
+# entre Paris et GitHub). Un HEAD par orthographe donne l'âge sans télécharger les ~32 Mo du football.
+ORTHO_PRIX = ("?primaryOnly=false&withSpecials=true", "?primaryOnly=false", "?withSpecials=true",
+              "?withSpecials=true&primaryOnly=false", "")
+choix_prix: dict[str, int] = {}
+_choix_coupe = False
 _plans: dict[int, dict] = {}
 
 
@@ -180,30 +184,45 @@ def _chemin_marches(sid: int) -> str:
     return f"/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true"
 
 
-def sonder_cache() -> dict | None:
-    """Relit depuis GitHub l'URL alternative que le réchauffeur vient de lire à Paris.
+def choix_actif() -> bool:
+    """PINNACLE_CHOIX_PRIX=non coupe le choix d'orthographe (retour à l'URL fixe)."""
+    return os.environ.get("PINNACLE_CHOIX_PRIX", "").strip().lower() not in ("non", "0", "false")
 
-    Mesure seulement (statut, cache, âge, taille) : les données lues ne servent pas à la collecte.
-    """
-    plan = _plans.get(SPORT_SONDE) or {}
-    sonde = plan.get("sonde")
-    if _bloque or not isinstance(sonde, dict):
-        return None
-    chemin = sonde.get("path")
-    permis = {f"/sports/{SPORT_SONDE}/markets/straight{q}" for q in ORTHO_SONDE}
-    if chemin not in permis:
-        return None
-    paris = {k: sonde.get(k) for k in ("status", "cache", "age", "octets", "t")}
-    debut = datetime.now(timezone.utc)
-    try:
-        r = requests.get(base_api() + chemin, headers=headers(), timeout=60)
-        github = {"status": r.status_code, "cache": _lire_statut_cache(r), "age": _lire_age(r),
-                  "octets": len(getattr(r, "content", b"") or b"")}
-    except requests.RequestException:
-        github = {"status": 0, "cache": "", "age": None, "octets": 0}
-    lu_paris = _instant(sonde.get("t"))
-    ecart = int((debut - lu_paris).total_seconds()) if lu_paris else None
-    return {"chemin": chemin, "ecart_s": ecart, "paris": paris, "github": github}
+
+def _compter(cle: str) -> None:
+    choix_prix[cle] = choix_prix.get(cle, 0) + 1
+
+
+def _choisir_chemin_prix(sid: int) -> str:
+    """Orthographe des prix la plus fraîche selon un HEAD ; l'URL fixe au moindre doute."""
+    global _choix_coupe
+    fixe = _chemin_marches(sid)
+    if _choix_coupe or _bloque or not choix_actif():
+        return fixe
+    meilleur, age_min = fixe, None
+    for q in ORTHO_PRIX:
+        chemin = f"/sports/{sid}/markets/straight{q}"
+        try:
+            r = requests.head(base_api() + chemin, headers=headers(), timeout=15, allow_redirects=False)
+        except requests.RequestException:
+            _compter("head_reseau")
+            continue
+        code = getattr(r, "status_code", None)
+        _compter(f"head_{code}")
+        if code in (401, 403, 429):
+            _choix_coupe = True              # disjoncteur : plus de HEAD jusqu'au prochain cycle
+            break
+        if code != 200:
+            continue
+        statut, age = _lire_statut_cache(r), _lire_age(r)
+        if statut in ("MISS", "EXPIRED", "DYNAMIC"):
+            age = 0
+        elif statut != "HIT" or age is None:
+            continue
+        if age_min is None or age < age_min:
+            meilleur, age_min = chemin, age
+    _compter("choisi_fixe" if meilleur == fixe else "choisi_autre")
+    return meilleur
 
 
 def resume_rechauffeur() -> dict:
@@ -408,12 +427,13 @@ def _norm_special(desc: str, dom: str, ext: str) -> tuple[str, str]:
 
 def collecter(sports: dict | None = None) -> list[dict]:
     """Toutes les cotes ouvertes (avant-match), une ligne par issue, avec probabilité juste."""
-    global _bloque, sonde_cache
+    global _bloque, _choix_coupe
     ERREURS.clear()
     _bloque = False
     _ages.clear()
     _statuts.clear()
-    sonde_cache = None
+    choix_prix.clear()
+    _choix_coupe = False
     oublier_cle()
     sports = sports or SPORTS
     _demander_rechauffe(sports)
@@ -425,8 +445,12 @@ def collecter(sports: dict | None = None) -> list[dict]:
         if not matchups:
             continue
         requete_debut = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        chemin_prix = _chemin_marches(sid)
+        chemin_prix = _choisir_chemin_prix(sid)
         marches = _get(chemin_prix) or []
+        if not marches and chemin_prix != _chemin_marches(sid):
+            _compter("repli_fixe")           # orthographe choisie refusée ou vide : URL fixe
+            chemin_prix = _chemin_marches(sid)
+            marches = _get(chemin_prix) or []
         maintenant_dt = datetime.now(timezone.utc)
         maintenant = maintenant_dt.isoformat(timespec="seconds")
         if not matchups or not marches:
@@ -471,7 +495,6 @@ def collecter(sports: dict | None = None) -> list[dict]:
             except (KeyError, TypeError, ValueError, AttributeError, OverflowError):
                 _erreur(f"sport {sid} : schéma de marché invalide")
     _ajouter_proba_justes(lignes)
-    sonde_cache = sonder_cache()
     return lignes
 
 

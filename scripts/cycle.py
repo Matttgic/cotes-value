@@ -146,7 +146,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             "lignes_perimees": sum(1 for l in pin if isinstance(l, dict) and l.get("cote_perimee")),
             "rechauffeur": pinnacle.etat_rechauffeur,
             "rechauffeur_detail": pinnacle.resume_rechauffeur(),
-            "sonde_cache": pinnacle.sonde_cache,
+            "choix_prix": dict(pinnacle.choix_prix),
         }
         signaler(journal, "pinnacle", list(pinnacle.ERREURS))
         signaler(journal, "polymarket", list(polymarket.ERREURS))
