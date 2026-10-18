@@ -341,27 +341,3 @@ def _alerte(p: dict, code: str) -> None:
     alertes = p.setdefault("alertes", [])
     if code not in alertes:
         alertes.append(code)
-
-
-def lire_resultats_pulsescore(client, bookmaker: str, sport_api: str, sport: str, pages: int = 5) -> dict[str, dict]:
-    """Résultats récents d'un bookmaker (archive PulseScore de 30 jours)."""
-    out = {}
-    for page in range(1, pages + 1):
-        d = client.get(f"{bookmaker}/results", {"sport": sport_api, "page": page, "limit": 30})
-        if not d or not d.get("results"):
-            break
-        for r in d["results"]:
-            st = r.get("settlement") or {}
-            sc = r.get("score") or {}
-            ps = r.get("periodScores") or {}
-            try:
-                score = (int(sc.get("home")), int(sc.get("away")))
-            except (TypeError, ValueError):
-                continue
-            periodes = list(zip(ps.get("home") or [], ps.get("away") or []))
-            out[f"{bookmaker}|{r.get('eventId')}"] = {"sport": sport, "score": score, "periodes": periodes,
-                                                      "libelles": ps.get("labels") or [],
-                                                      "final": bool(st.get("final"))}
-        if not d.get("hasNextPage"):
-            break
-    return out

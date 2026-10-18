@@ -886,7 +886,6 @@ def main() -> int:
                                                             "matchs_suspects": len(suspects)}
     opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
                          index=index, controle=(etat_controle, suspects),
-                         temoin_brut=os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui",
                          hors_consensus=hors) or []
     # Écarts d'affichage, y compris quand Smarkets ne décide pas. Avant le placement :
     # le pari enregistre les trois champs.
@@ -896,7 +895,6 @@ def main() -> int:
     # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
     manuels = lire_json(donnees / "resultats_manuels.json", {})
     paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
-    journal["temoin_pinnacle_brut"] = os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui"
     nouveaux = simulation.placer(opportunites, paris)
     from cotes.decisions import figer_nouveaux
     figer_nouveaux(stockage.fusionner_paris(paris, stockage.lire_archives(donnees)), nouveaux)

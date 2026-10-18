@@ -106,11 +106,6 @@ def hors_consensus() -> frozenset[str]:
     return frozenset() if dans_decision() else frozenset({"Smarkets"})
 
 
-def ajouter_decision(references: dict, lignes: list[dict]) -> dict:
-    """Compatibilité : la table est toujours alimentée."""
-    return ajouter_table(references, lignes)
-
-
 def _heure(valeur):
     try:
         t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))

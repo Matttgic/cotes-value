@@ -20,7 +20,6 @@ ENTETES = {"x-fsign": "SW9D1eZo", "x-requested-with": "XMLHttpRequest", "referer
            "User-Agent": "Mozilla/5.0"}
 SPORTS = {"football": 1, "tennis": 2, "basket": 3, "hockey": 4, "football_americain": 5, "baseball": 6,
           "handball": 7, "rugby": 8, "volley": 12}
-UTILISES = ("volley", "handball", "rugby")
 HISTORIQUE_J = 7
 ERREURS: list[str] = []
 

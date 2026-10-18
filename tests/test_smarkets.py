@@ -150,7 +150,7 @@ def test_table_smarkets_separee_du_consensus(monkeypatch):
             "Smarkets": [{**ref("s1", 0.55, "Smarkets"), "bookmaker": "smarkets"}]}
     monkeypatch.delenv("SMARKETS_DANS_DECISION", raising=False)
     hors = smarkets.hors_consensus()
-    op = comparaison.comparer(fr, refs, ecart_min=-1, temoin_brut=False, hors_consensus=hors)
+    op = comparaison.comparer(fr, refs, ecart_min=-1, hors_consensus=hors)
     par = {o["reference"]: o for o in op}
     assert par["Smarkets"]["ecart"] == round(2.10 * 0.55 - 1, 4)
     assert par["Smarkets"]["suspect"] is None
@@ -158,7 +158,7 @@ def test_table_smarkets_separee_du_consensus(monkeypatch):
     assert par["Consensus"]["proba_juste"] == 0.4
     assert par["Pinnacle"]["suspect"] is None
     sans = comparaison.comparer(fr, {k: v for k, v in refs.items() if k != "Smarkets"},
-                                ecart_min=-1, temoin_brut=False)
+                                ecart_min=-1)
     assert {o["reference"]: (o["proba_juste"], o["ecart"], o["suspect"])
             for o in sans if o["reference"] in ("Pinnacle", "Betfair", "Consensus")} == {
         o["reference"]: (o["proba_juste"], o["ecart"], o["suspect"])
@@ -171,7 +171,7 @@ def test_table_smarkets_separee_du_consensus(monkeypatch):
     pris = placer([par["Smarkets"]], paris, datetime(2030, 1, 1, 19, 5, tzinfo=timezone.utc))
     assert len(pris) == 1 and pris[0]["reference"] == "Smarkets" and pris[0]["mise"] == MISE == 10
     monkeypatch.setenv("SMARKETS_DANS_DECISION", "oui")
-    avec = comparaison.comparer(fr, refs, ecart_min=-1, temoin_brut=False,
+    avec = comparaison.comparer(fr, refs, ecart_min=-1,
                                 hors_consensus=smarkets.hors_consensus())
     cons = next(o for o in avec if o["reference"] == "Consensus")
     assert cons["sources"] == "Betfair+Pinnacle+Smarkets"

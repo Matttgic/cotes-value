@@ -275,17 +275,3 @@ def test_cloture_reutilise_l_index(monkeypatch):
     clos = comparaison.cotes_justes_depuis(idx)
     cle = ("w|1", ("VAINQUEUR", "MATCH", None, "DOM"))
     assert abs(clos[cle]["Pinnacle"][0] - 0.5) < 1e-9
-    assert clos[cle]["Pinnacle brut"] == clos[cle]["Pinnacle"]
-
-
-def test_arret_temoin_ne_change_pas_les_opportunites_calculees():
-    from cotes.comparaison import comparer, BRUT
-    base = {"sport": "football", "ligue": "L", "domicile": "Lens", "exterieur": "Lille",
-            "debut": "2030-01-01T20:00:00Z", "collecte": "2030-01-01T19:00:00Z", "marche": "TOTAL",
-            "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "joueur": None}
-    fr = [{**base, "source": "betclic", "match_id": "b1", "cote": 2.2}]
-    refs = {"Pinnacle": [{**base, "source": "pinnacle", "match_id": "p1", "cote": 1.95, "proba_juste": 0.5}]}
-    avant = comparer(fr, refs)
-    apres = comparer(fr, refs, temoin_brut=False)
-    assert any(o["reference"] == BRUT for o in avant)
-    assert apres == [o for o in avant if o["reference"] != BRUT]

@@ -24,7 +24,7 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 NetBet n'est pas suivi : le flux « netbet » de PulseScore est celui du site international (netbet.com), pas
 de netbet.fr (intitulés anglais, corners, handicaps asiatiques en quart, compétitions hors liste ANJ).
 
-Vérifications faites (workflow « Vérifications des sources ») :
+Vérifications faites (sondes du 8/10/2026, retirées depuis) :
 - Pinnacle lu directement = PS3838 de PulseScore : 98 % des 4 161 cotes à moins de 1 % d'écart ;
 - Polymarket lu directement = PulseScore : 87 % des marchés strictement identiques
   (les écarts restants : marchés sans échanges, écartés par le comparateur).
@@ -80,9 +80,7 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    des références disponibles).
 5. **Paris simulés** (`cotes/simulation.py`) : 10 € à la première détection, un pari par référence,
    bookmaker et sélection, rangé dans la tranche de son écart : **A** 2 à 3 %, **B** 3 à 4 %, **C** 4 à 5 %,
-   **D** 5 à 7 %, **E** 7 % et plus (cotes ≤ 10), **X** cotes > 10 (≥ 3 %). La cote juste est suivie jusqu'au coup d'envoi (**CLV**). Référence témoin
-   **Pinnacle brut** : la cote affichée par Pinnacle, marge comprise, pour mesurer ce que change le retrait
-   de la marge.
+   **D** 5 à 7 %, **E** 7 % et plus (cotes ≤ 10), **X** cotes > 10 (≥ 3 %). La cote juste est suivie jusqu'au coup d'envoi (**CLV**).
 6. **Règlement** (`cotes/reglement.py`) avec les résultats PulseScore du bookmaker du pari, selon son
    règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
@@ -205,8 +203,6 @@ automatiquement : exporter les variables avant l'exécution. Les diagnostics n'a
    planifiées) ; la tâche planifiée horaire redémarre la chaîne si elle s'arrête. Pour arrêter :
    `COLLECTE_AUTO` ≠ `oui`.
 
-Coût en requêtes : `python scripts/simulation_appels.py` (≈ 337 000/mois pour les 4 bookmakers +
-Betfair toutes les 5 min : offre PRO nécessaire ; l'offre gratuite ne sert qu'aux tests).
 
 Le workflow horaire **Règlement des paris** utilise aussi les secrets optionnels
 `THE_ODDS_API_KEY_1` à `THE_ODDS_API_KEY_4` pour les scores manquants, après PulseScore,

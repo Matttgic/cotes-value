@@ -37,7 +37,6 @@ ECARTS_AFFICHES = (("Betfair", "ecart_betfair"), ("Polymarket", "ecart_polymarke
 ECART_MIN = 0.02
 # Au-delà, une « erreur de cote » est presque toujours un marché mal reconnu (statistique prise pour des
 # buts, série prise pour un match…) : l'opportunité est gardée pour contrôle mais marquée suspecte, sans pari.
-BRUT = "Pinnacle brut"          # référence témoin : cote Pinnacle affichée, marge comprise
 ECART_SUSPECT = 0.25            # cotes <= 10
 ECART_SUSPECT_GROSSES = 1.0     # cotes > 10
 DESACCORD_MAX = 1.25            # cotes justes de deux références qui diffèrent de plus de 25 % : suspect
@@ -164,7 +163,7 @@ def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str
 
 def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min: float = ECART_MIN,
              index: dict | None = None, controle: tuple[dict, dict] | None = None,
-             temoin_brut: bool = True, hors_consensus: set[str] | None = None) -> list[dict]:
+             hors_consensus: set[str] | None = None) -> list[dict]:
     """Opportunités (cote française × probabilité juste − 1 ≥ ecart_min). `controle` = (état du contrôle
     de conformité, matchs suspects) : une cote dont l'intitulé n'est pas contrôlé conforme est marquée
     suspecte (pas de pari)."""
@@ -205,10 +204,6 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                                      "sources": "+".join(sorted(membres)),
                                      "lectures_references": {n: r.get("collecte") for n, r in membres.items()},
                                      "composantes": {n: round(1 / r["proba_juste"], 3) for n, r in membres.items()}}
-        # simulation témoin : la cote AFFICHÉE par Pinnacle, marge comprise (sans retrait de la marge)
-        pin = trouvees.get("Pinnacle")
-        if temoin_brut and pin and pin.get("cote"):
-            trouvees[BRUT] = {**pin, "proba_juste": 1 / pin["cote"]}
         for nom, r in trouvees.items():
             ecart = l["cote"] * r["proba_juste"] - 1
             if ecart < ecart_min:
@@ -233,7 +228,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "match_id_reference": r.get("match_id"), "reference_inversee": r.get("inverse"),
                 "composantes": r.get("composantes"), "controle": _controle_du_groupe(l, controle),
                 "lien": l.get("lien"), "suspect": suspect,
-                "pariable": nom != BRUT and not bool(suspect)})
+                "pariable": not bool(suspect)})
     return opportunites
 
 
@@ -268,8 +263,6 @@ def cotes_justes_depuis(index: dict, hors_consensus: set[str] | None = None) -> 
             heures = [_t(t) for _, t in membres.values()]
             v["Consensus"] = (sum(p for p, _ in membres.values()) / len(membres),
                               min(heures).isoformat(timespec="seconds") if all(h and h.tzinfo for h in heures) else None)
-        if "Pinnacle" in v:
-            v[BRUT] = v["Pinnacle"]      # CLV des paris « brut » mesurée contre la cote juste : la vraie valeur
     return out
 
 
