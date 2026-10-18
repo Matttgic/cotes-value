@@ -1,6 +1,6 @@
 """PMU via Kambi : fixtures enregistrées, aucun appel réseau."""
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -42,14 +42,18 @@ def _collecter(plan, pause=(0, 0)):
     return lignes, meta, session
 
 
+GROUPE_VIDE = {"group": {"termKey": "football", "groups": []}}
+
+
 def test_fixture_traduit_les_marches_connus_et_ecarte_le_reste():
     liste = {"events": FIXTURE["events"]}
     offres = {"betOffers": FIXTURE["betOffers"]}
-    lignes, meta, session = _collecter([(200, liste), (200, offres)])
-    assert meta["ok"] and meta["matchs"] == 1 and meta["requetes"] == 2
-    assert len(session.urls) == 2
+    lignes, meta, session = _collecter([(200, liste), (200, GROUPE_VIDE), (200, offres)])
+    assert meta["ok"] and meta["matchs"] == 1 and meta["requetes"] == 3
+    assert len(session.urls) == 3
     assert "listView/football/" in session.urls[0]
-    assert "betoffer/event/1025806339.json" in session.urls[1]
+    assert "group.json" in session.urls[1]
+    assert "betoffer/event/1025806339.json" in session.urls[2]
     assert "1028404555" not in session.urls[1]
     assert all(l["bookmaker"] == "pmu" and l["source"] == "PMU" for l in lignes)
     cles = {(l["marche"], l["issue"], l["ligne"]) for l in lignes}
@@ -79,7 +83,8 @@ def test_pause_entre_1_et_1_5_et_429_sans_fuite(monkeypatch, caplog):
     liste = {"events": FIXTURE["events"]}
     offres = {"betOffers": FIXTURE["betOffers"]}
     lignes, meta, session = _collecter(
-        [(429, {"secret": "NE_PAS_LOGUER"}), (200, liste), (200, offres)], pause=(1.0, 1.5))
+        [(429, {"secret": "NE_PAS_LOGUER"}), (200, liste), (200, GROUPE_VIDE), (200, offres)],
+        pause=(1.0, 1.5))
     assert lignes and meta["ok"]
     assert 1.2 in pauses and any(s >= 2 for s in pauses)
     assert "NE_PAS_LOGUER" not in caplog.text
@@ -197,6 +202,76 @@ def test_handicap_hockey_equivalent_garde_le_temps_reglementaire():
     lignes = _lignes([essai, plein], sport="rugby", domicile="Harlequins", exterieur="Vannes")
     assert {(l["issue"], l["cote"]) for l in lignes if l["marche"] == "RESULTAT_1N2"} == {
         ("DOM", 1.56), ("NUL", 21.0), ("EXT", 2.4)}
+
+
+def _event(eid, home, away, start, state="NOT_STARTED"):
+    return {"event": {"id": eid, "homeName": home, "awayName": away, "start": start,
+                      "group": "Ligue", "state": state, "tags": ["MATCH"]}}
+
+
+def _offre_simple(eid):
+    return {
+        "id": eid, "eventId": eid,
+        "betOfferType": {"englishName": "Match"},
+        "criterion": {"label": "Temps réglementaire", "englishLabel": "Full Time",
+                      "lifetime": "FULL_TIME", "occurrenceType": "GOALS"},
+        "outcomes": [
+            {"label": "1", "englishLabel": "1", "odds": 2000, "type": "OT_ONE", "status": "OPEN"},
+            {"label": "X", "englishLabel": "X", "odds": 3000, "type": "OT_CROSS", "status": "OPEN"},
+            {"label": "2", "englishLabel": "2", "odds": 3500, "type": "OT_TWO", "status": "OPEN"},
+        ],
+    }
+
+
+def test_chemin_et_feuilles():
+    assert pmu._chemin_liste("football/france/ligue_1") == (
+        "listView/football/france/ligue_1/all/matches.json")
+    assert pmu._chemin_liste("football/champions_league") == (
+        "listView/football/champions_league/all/all/matches.json")
+    doc = {"group": {"termKey": "football", "groups": [
+        {"termKey": "france", "groups": [
+            {"sport": "FOOTBALL", "termKey": "ligue_1", "eventCount": 3},
+            {"sport": "FOOTBALL", "termKey": "vide", "eventCount": 0},
+        ]},
+        {"sport": "FOOTBALL", "termKey": "mls", "eventCount": 1},
+    ]}}
+    assert pmu._feuilles(doc, "football") == ["football/france/ligue_1", "football/mls"]
+    assert pmu._feuilles(doc, "tennis") == []
+
+
+def test_liste_tronquee_complete_par_les_competitions():
+    """La liste globale s'arrête avant 36 h : les feuilles de group.json complètent."""
+    tot = "2026-10-19T10:00:00Z"
+    dedans = "2026-10-19T18:00:00Z"
+    dehors = "2026-10-20T04:00:00Z"
+    liste = {"events": [_event(1, "Lens", "Lille", tot)]}
+    groupe = {"group": {"termKey": "football", "groups": [
+        {"termKey": "france", "groups": [
+            {"sport": "FOOTBALL", "termKey": "ligue_1", "eventCount": 2},
+        ]},
+    ]}}
+    feuille = {"events": [
+        _event(2, "Brest", "Nice", dedans),
+        _event(3, "Marseille", "Lyon", dehors),
+    ]}
+    offres = {"betOffers": [_offre_simple(1), _offre_simple(2), _offre_simple(3)]}
+    lignes, meta, session = _collecter(
+        [(200, liste), (200, groupe), (200, feuille), (200, offres)])
+    noms = {(l["domicile"], l["exterieur"]) for l in lignes if l["marche"] == "RESULTAT_1N2"}
+    assert ("Lens", "Lille") in noms
+    assert ("Brest", "Nice") in noms
+    assert ("Marseille", "Lyon") not in noms
+    assert meta["matchs"] == 2
+    assert any("listView/football/france/ligue_1/all/matches.json" in u for u in session.urls)
+
+
+def test_liste_qui_atteint_l_horizon_ne_relit_pas_les_competitions():
+    pile = (MAINTENANT + timedelta(hours=36)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    liste = {"events": [_event(1, "Lens", "Lille", pile)]}
+    offres = {"betOffers": [_offre_simple(1)]}
+    lignes, meta, session = _collecter([(200, liste), (200, offres)])
+    assert meta["matchs"] == 1 and any(l["domicile"] == "Lens" for l in lignes)
+    assert not any("group.json" in u for u in session.urls)
 
 
 def test_mode_par_defaut_shadow(monkeypatch):

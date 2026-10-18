@@ -14,7 +14,9 @@ pas dans cette moyenne. L'écart affiché reste dans les deux cas.
 from __future__ import annotations
 
 import os
+import random
 import re
+import time
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -138,25 +140,54 @@ def _liquidite(quantite) -> float:
 
 
 class Client:
-    """GET. Un 429 est retenté ; le corps n'est jamais journalisé."""
+    """GET espacés. Un 403 (blocage du runner, pas une auth) est retenté une fois puis coupe le sport.
 
-    def __init__(self, session=None):
-        self.session = session or requests.Session()
+    Sans session injectée, curl_cffi se fait passer pour Chrome : l'API publique
+    répond 200 hors de GitHub et 403 en 0,1 s depuis les runners, dès la première
+    requête. Le corps n'est jamais journalisé.
+    """
+
+    def __init__(self, session=None, pause: tuple[float, float] = (0.2, 0.4)):
+        self.session = session if session is not None else _session_chrome()
+        self.pause = pause
         self.requetes = 0
         self.erreurs: list[str] = []
+        self._bloque = False
+        self._premier = True
+
+    def _espacer(self) -> None:
+        if self._premier:
+            self._premier = False
+            return
+        bas, haut = self.pause
+        if haut > 0:
+            time.sleep(haut if bas == haut else random.uniform(bas, haut))
 
     def get(self, chemin: str):
+        if self._bloque:
+            return None
         url = chemin if chemin.startswith("http") else f"{BASE}/{chemin.lstrip('/')}"
         dernier = "réseau"
         for essai in range(3):
+            self._espacer()
             self.requetes += 1
             try:
                 r = self.session.get(url, timeout=30, headers={"Accept": "application/json"})
-            except requests.RequestException:
+            except (requests.RequestException, OSError):
                 dernier = "réseau"
+                time.sleep(0.5 * (essai + 1))
                 continue
+            if r.status_code == 403:
+                # Pas une demande d'identifiants : la même URL répond 200 ailleurs.
+                if essai == 0:
+                    time.sleep(1.5)
+                    continue
+                self._bloque = True
+                self._noter("HTTP 403")
+                return None
             if r.status_code in (429, 500, 502, 503, 504):
                 dernier = f"HTTP {r.status_code}"
+                time.sleep(0.5 * (essai + 1))
                 continue
             if r.status_code != 200:
                 self._noter(f"HTTP {r.status_code}")
@@ -176,6 +207,12 @@ class Client:
     def _noter(self, message: str) -> None:
         if message not in self.erreurs and len(self.erreurs) < 30:
             self.erreurs.append(message)
+
+
+def _session_chrome():
+    """Session navigateur. L'API ne demande pas de compte ; seul le fingerprint change."""
+    from curl_cffi.requests import Session
+    return Session(impersonate="chrome")
 
 
 def _lots(valeurs: list, taille: int):
