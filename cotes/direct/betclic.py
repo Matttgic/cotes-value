@@ -14,6 +14,8 @@ from __future__ import annotations
 import os
 import re
 import struct
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -29,8 +31,11 @@ PAGE = 40
 _LISTE_MAX = 640
 _PRES_H = 6
 # Un détail relu il y a moins longtemps reste en cache : le budget sert
-# d'abord aux matchs encore jamais lus.
-_FRAIS_MIN = 10
+# d'abord aux matchs encore jamais lus. Le cycle dure 5 min : au-delà de 3 min
+# de cache, des cotes de 10 min d'âge décidaient des paris.
+_FRAIS_MIN = 3
+# Lectures de détail simultanées (5 en parallèle n'ont pas donné de 429).
+_CONCURRENCE = 4
 COUVERTURE_MIN = 0.95
 ACCORD_MIN = 0.99
 ECART_COTE = 0.01
@@ -359,8 +364,10 @@ def _nombre(valeur) -> float | None:
 
 def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
     bas = nom.strip().lower()
-    if any(mot in bas for mot in ("buteur", "décisif", "decisif", "passeur", "mi-temps",
-                                  "mi temps", "&", "écart", "ecart", "quand sera", "comment")):
+    # « prolong. & pen. inclus » n'est pas une combinaison de marchés.
+    sans_abrege = re.sub(r"prolong\w*\.?\s*&\s*pen\w*\.?", "prolongations", bas)
+    if any(mot in sans_abrege for mot in ("buteur", "décisif", "decisif", "passeur", "mi-temps",
+                                          "mi temps", "&", "écart", "ecart", "quand sera", "comment")):
         return None
     if bas.startswith(("résultat du match", "resultat du match", "vainqueur")):
         return "MATCH_RESULT"
@@ -374,8 +381,13 @@ def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
         return "BOTH_TEAMS_TO_SCORE"
     if bas.startswith("score exact"):
         return "CORRECT_SCORE"
+    # « Total de buts - Équipe » (football, basket) ou « Équipe - Nombre total de buts » (hockey).
+    equipe = None
     if " - " in nom and bas.startswith(("total", "nombre total")):
         equipe = nom.split(" - ", 1)[1].strip().lower()
+    elif " - " in nom and re.search(r"^.+? - (?:nombre )?total\b", bas):
+        equipe = nom.split(" - ", 1)[0].strip().lower()
+    if equipe is not None:
         if equipe == domicile.strip().lower():
             return "HOME_OVER_UNDER"
         if equipe == exterieur.strip().lower():
@@ -384,6 +396,17 @@ def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
     if bas.startswith(("nombre total", "total de buts", "total de points", "total de jeux", "total points")):
         return "OVER_UNDER"
     return None
+
+
+def _equipe_proche(bas: str, equipe: str) -> bool:
+    """Nom exact, ou l'un contenu dans l'autre en mots entiers (« Independiente » / « CA Independiente »)."""
+    equipe = equipe.strip().lower()
+    if not bas or not equipe:
+        return False
+    if bas == equipe:
+        return True
+    court, long_ = sorted((bas, equipe), key=len)
+    return len(court) >= 4 and f" {court} " in f" {long_} "
 
 
 def _issue(nom: str, domicile: str, exterieur: str) -> str | None:
@@ -398,6 +421,10 @@ def _issue(nom: str, domicile: str, exterieur: str) -> str | None:
         return "HOME"
     if bas == exterieur.strip().lower():
         return "AWAY"
+    # Libellé abrégé (double chance surtout) : ambigu si les deux équipes correspondent.
+    dom, ext = _equipe_proche(bas, domicile), _equipe_proche(bas, exterieur)
+    if dom != ext:
+        return "HOME" if dom else "AWAY"
     return None
 
 
@@ -427,10 +454,13 @@ def _double_chance(nom: str, domicile: str, exterieur: str) -> str | None:
             frozenset({"HOME", "AWAY"}): "HOME_AWAY"}.get(frozenset(issues))
 
 
-def marche_pulse(marche: dict, domicile: str, exterieur: str) -> dict | None:
+def marches_pulse(marche: dict, domicile: str, exterieur: str) -> list[dict]:
+    """Marchés au format PulseScore. Un total Betclic regroupe toutes ses lignes
+    dans un seul marché : on en fait un marché par ligne, sinon la traduction
+    ne garderait que la dernière (la plus haute)."""
     canon = _classe(marche.get("nom") or "", domicile, exterieur)
     if not canon:
-        return None
+        return []
     selections = []
     for offre in marche.get("selections") or []:
         nom = str(offre.get("nom") or "")
@@ -449,10 +479,22 @@ def marche_pulse(marche: dict, domicile: str, exterieur: str) -> dict | None:
         if not issue or (canon.endswith("OVER_UNDER") and ligne is None):
             continue
         selections.append({"canonicalOutcome": issue, "rawName": nom, "odds": offre["cote"], "line": ligne})
-    if len(selections) < 2:
-        return None
-    return {"marketId": marche.get("nom"), "canonicalMarket": canon, "rawName": marche.get("nom"),
-            "period": "FULL_TIME", "selections": selections}
+    if canon.endswith("OVER_UNDER"):
+        par_ligne: dict = {}
+        for sel in selections:
+            par_ligne.setdefault(sel["line"], []).append(sel)
+        groupes = [(f"{marche.get('nom')}|{ligne:g}", sels) for ligne, sels in par_ligne.items()]
+    else:
+        groupes = [(marche.get("nom"), selections)]
+    return [{"marketId": ident, "canonicalMarket": canon, "rawName": marche.get("nom"),
+             "period": "FULL_TIME", "selections": sels}
+            for ident, sels in groupes if len(sels) >= 2]
+
+
+def marche_pulse(marche: dict, domicile: str, exterieur: str) -> dict | None:
+    """Premier marché traduit (les marchés sans lignes n'en ont qu'un)."""
+    traduits = marches_pulse(marche, domicile, exterieur)
+    return traduits[0] if traduits else None
 
 
 class Client:
@@ -566,9 +608,7 @@ def _detailler(client: Client, match: dict, moment: str) -> tuple[list[dict], bo
         return [], bool(trame)
     marches = []
     for offre in marches_du_detail(trame):
-        traduit = marche_pulse(offre, match["domicile"], match["exterieur"])
-        if traduit:
-            marches.append(traduit)
+        marches += marches_pulse(offre, match["domicile"], match["exterieur"])
     if not marches:
         return [], bool(trame)
     evenement = {"eventId": match["id"], "home": match["domicile"], "away": match["exterieur"],
@@ -577,7 +617,7 @@ def _detailler(client: Client, match: dict, moment: str) -> tuple[list[dict], bo
 
 
 def _collecter_reserve(client: Client, demandes, heures: float, maintenant: datetime,
-                       reserve: dict) -> tuple[list[dict], dict]:
+                       reserve: dict, concurrence: int = _CONCURRENCE) -> tuple[list[dict], dict]:
     """Tout le catalogue dans l'horizon. On détaille d'abord les matchs absents du cache."""
     moment = maintenant.isoformat(timespec="seconds")
     candidats = []
@@ -622,15 +662,24 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
     file = [m for m in candidats if a_relire(m)]
     file.sort(key=rang)
     lignes: list[dict] = []
-    for match in file:
-        if not client._temps():
-            break
-        ajoutees, lue = _detailler(client, match, moment)
-        if lue:
-            lectures += 1
-        lignes += ajoutees
+    arret = threading.Event()
+
+    def lire(match):
+        if arret.is_set() or not client._temps():
+            return None
+        recu = _detailler(client, match, moment)
         if client._bloque:
-            break
+            arret.set()
+        return recu
+
+    with ThreadPoolExecutor(max(1, concurrence)) as pool:
+        for recu in pool.map(lire, file):
+            if recu is None:
+                continue
+            ajoutees, lue = recu
+            if lue:
+                lectures += 1
+            lignes += ajoutees
     fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures, age_max_h=2)
     return fusion, {
         "ok": lectures > 0 or not client.erreurs or bool(fusion),
@@ -643,12 +692,12 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
 
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
               maintenant: datetime | None = None, echeance=None,
-              reserve=None) -> tuple[list[dict], dict]:
+              reserve=None, concurrence: int = _CONCURRENCE) -> tuple[list[dict], dict]:
     """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``betclic``).
 
     Sans réserve, une seule page (offset 0) puis le détail, comme avant.
     Avec réserve, chaque sport est paginé jusqu'à l'horizon. Les matchs déjà
-    détaillés depuis moins de dix minutes restent en cache.
+    détaillés depuis moins de trois minutes restent en cache.
     """
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
@@ -659,7 +708,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     client = Client(session, echeance)
     if reserve is not None:
         return _collecter_reserve(client, demandes, heures, maintenant,
-                                  reserve if isinstance(reserve, dict) else {})
+                                  reserve if isinstance(reserve, dict) else {}, concurrence)
     moment = maintenant.isoformat(timespec="seconds")
     candidats = []
     lectures = 0
@@ -698,6 +747,88 @@ def _cle_selection(ligne: dict):
     return (ligne.get("marche"), ligne.get("periode"), valeur, ligne.get("issue"))
 
 
+class Compteur:
+    """Classe les cotes qui ne collent pas, pour savoir quoi corriger.
+
+    Cotes différentes : ``cache_perime`` (la lecture directe date de plus de deux
+    minutes de plus que celle de PulseScore), ``issues_permutees`` (le prix
+    PulseScore est celui d'une autre issue du même marché, ordre des issues),
+    ``mouvement`` (même âge : la cote a bougé, ou l'écart reste à expliquer).
+    Sélections PulseScore sans équivalent direct : ``signe_ligne`` (même ligne
+    de signe opposé), ``ligne_differente``, ``periode_differente``,
+    ``marche_absent``, ``issue_absente``. Aucune clé ni URL n'y figure.
+    """
+
+    def __init__(self):
+        self.cotes: dict = {}
+        self.absentes: dict = {}
+        self.exemples: list[dict] = []
+
+    @staticmethod
+    def _ajouter(table: dict, cause: str, marche, periode) -> None:
+        cle = f"{marche}|{periode}"
+        table.setdefault(cause, {})
+        table[cause][cle] = table[cause].get(cle, 0) + 1
+
+    def _exemple(self, cause: str, ligne: dict, autre: dict | None) -> None:
+        if len(self.exemples) >= 12:
+            return
+        self.exemples.append({
+            "cause": cause, "sport": ligne.get("sport"), "marche": ligne.get("marche"),
+            "periode": ligne.get("periode"), "ligne": ligne.get("ligne"), "issue": ligne.get("issue"),
+            "cote_pulsescore": ligne.get("cote"),
+            "cote_direct": None if autre is None else autre.get("cote"),
+        })
+
+    def different(self, ligne: dict, autre: dict, propres: list[dict], offres: dict) -> None:
+        cause = "mouvement"
+        ta, tb = _heure(ligne.get("collecte")), _heure(autre.get("collecte"))
+        if ta and tb and (ta - tb).total_seconds() > 120:
+            cause = "cache_perime"
+        else:
+            cote = _nombre(ligne.get("cote"))
+            for voisine in propres:
+                if (voisine is ligne or voisine.get("marche") != ligne.get("marche")
+                        or voisine.get("periode") != ligne.get("periode")
+                        or voisine.get("ligne") != ligne.get("ligne")
+                        or voisine.get("issue") == ligne.get("issue")):
+                    continue
+                reste = offres.get(_cle_selection(voisine))
+                valeur = _nombre(reste.get("cote")) if reste else None
+                if cote is not None and valeur is not None and abs(cote - valeur) <= ECART_COTE + 1e-9:
+                    cause = "issues_permutees"
+                    break
+        self._ajouter(self.cotes, cause, ligne.get("marche"), ligne.get("periode"))
+        self._exemple(cause, ligne, autre)
+
+    def absente(self, ligne: dict, offres: dict) -> None:
+        marche, periode = ligne.get("marche"), ligne.get("periode")
+        valeur, issue = ligne.get("ligne"), ligne.get("issue")
+        causes = set()
+        for (m, p, v, i) in offres:
+            if m != marche:
+                continue
+            causes.add("issue_absente")
+            if i != issue:
+                continue
+            if p != periode and v == valeur:
+                causes.add("periode_differente")
+            elif p == periode and isinstance(v, (int, float)) and isinstance(valeur, (int, float)):
+                causes.add("signe_ligne" if v != 0 and abs(v + valeur) < 1e-9 else "ligne_differente")
+        cause = next((c for c in ("signe_ligne", "periode_differente", "ligne_differente", "issue_absente")
+                      if c in causes), "marche_absent")
+        self._ajouter(self.absentes, cause, marche, periode)
+        if cause != "marche_absent":
+            self._exemple(cause, ligne, None)
+
+    def resume(self) -> dict:
+        def total(table):
+            return {cause: sum(par.values()) for cause, par in table.items()}
+        return {"cotes_differentes": total(self.cotes), "cotes_differentes_par_marche": self.cotes,
+                "absentes_du_direct": total(self.absentes), "absentes_par_marche": self.absentes,
+                "exemples": self.exemples}
+
+
 def rapport(pulse: list[dict], direct: list[dict]) -> dict:
     """Couverture des matchs PulseScore et part des cotes communes à ±0,01."""
     ps = [l for l in pulse if isinstance(l, dict) and l.get("bookmaker") == "betclic"]
@@ -729,18 +860,21 @@ def rapport(pulse: list[dict], direct: list[dict]) -> dict:
     for ligne in di:
         index.setdefault(ligne.get("match_id"), {})[_cle_selection(ligne)] = ligne
     communs = egaux = 0
+    ecarts = Compteur()
     for mid_ps, mid_di in couples:
         offres = index.get(mid_di, {})
-        for ligne in ps:
-            if ligne.get("match_id") != mid_ps:
-                continue
+        propres = [l for l in ps if l.get("match_id") == mid_ps]
+        for ligne in propres:
             autre = offres.get(_cle_selection(ligne))
             if not autre:
+                ecarts.absente(ligne, offres)
                 continue
             communs += 1
             ca, cb = _nombre(ligne.get("cote")), _nombre(autre.get("cote"))
             if ca is not None and cb is not None and abs(ca - cb) <= ECART_COTE + 1e-9:
                 egaux += 1
+            else:
+                ecarts.different(ligne, autre, propres, offres)
     accord = egaux / communs if communs else None
     pret = bool(couverture is not None and accord is not None
                 and couverture + 1e-9 >= COUVERTURE_MIN and accord + 1e-9 >= ACCORD_MIN)
@@ -768,4 +902,5 @@ def rapport(pulse: list[dict], direct: list[dict]) -> dict:
         "seuil_couverture": COUVERTURE_MIN,
         "seuil_accord": ACCORD_MIN,
         "pret_a_basculer": pret,
+        "diagnostic": ecarts.resume(),
     }

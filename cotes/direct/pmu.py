@@ -6,7 +6,7 @@ Formule 1, voile et sports d'hiver sont écartés. Corners, cartons et pair/impa
 ne sont pas traduits : les exclusions déjà appliquées par la comparaison restent
 en place pour tout ce qui passerait quand même.
 
-``SOURCE_PMU`` vaut ``pulsescore``, ``direct``, ``auto`` ou ``shadow`` (défaut).
+``SOURCE_PMU`` vaut ``pulsescore``, ``direct``, ``auto`` (défaut) ou ``shadow``.
 En ``shadow``, PulseScore reste la source des décisions ; le flux direct sert au
 rapport de couverture. Basculer exige au moins 95 % des matchs PulseScore
 retrouvés et 99 % des cotes communes à ±0,01.
@@ -114,8 +114,8 @@ _MARGE_S = 3.0
 
 
 def mode_source() -> str:
-    """``shadow`` si la variable est absente ou inconnue."""
-    valeur = os.environ.get("SOURCE_PMU", "shadow").strip().lower()
+    """``auto`` si la variable est absente. Une valeur inconnue reste ``shadow``."""
+    valeur = os.environ.get("SOURCE_PMU", "auto").strip().lower()
     return valeur if valeur in MODES else "shadow"
 
 

@@ -238,3 +238,76 @@ def test_shadow_bascule_si_pulsescore_refuse(monkeypatch):
     assert bet and bet[0]["cote"] == 1.7 and bet[0]["match_id"] == "betclic|grpc"
     assert journal["betclic_source_effective"] == "direct"
     assert "Betclic" in journal["betclic_repli"]
+
+
+def test_total_multi_lignes_donne_un_marche_par_ligne():
+    marche = {"nom": "Nombre total de buts (t. rég)", "selections": [
+        {"nom": "+ de 1,5", "cote": 1.4}, {"nom": "- de 1,5", "cote": 2.9},
+        {"nom": "+ de 2,5", "cote": 2.1}, {"nom": "- de 2,5", "cote": 1.7}]}
+    traduits = betclic.marches_pulse(marche, "Lens", "Lille")
+    assert [m["selections"][0]["line"] for m in traduits] == [1.5, 2.5]
+    assert len({m["marketId"] for m in traduits}) == 2
+    session = Session([(_liste(_match(7, "Lens", "Lille")), 200),
+                       (_detail(marche["nom"], [_sel(s["nom"], s["cote"]) for s in marche["selections"]]), 200)])
+    lignes, _ = betclic.collecter({"football"}, 36, session=session, maintenant=MAINTENANT)
+    assert {(l["issue"], l["ligne"]) for l in lignes} == {
+        ("PLUS", 1.5), ("MOINS", 1.5), ("PLUS", 2.5), ("MOINS", 2.5)}
+
+
+def test_double_chance_nom_abrege():
+    marche = {"nom": "Double chance (t. rég)", "selections": [
+        {"nom": "Racing Club ou Nul", "cote": 1.28}, {"nom": "Racing Club ou Independiente", "cote": 1.32},
+        {"nom": "Nul ou CA Independiente", "cote": 1.45}]}
+    issues = {s["canonicalOutcome"] for s in betclic.marche_pulse(marche, "Racing Club", "CA Independiente")["selections"]}
+    assert issues == {"HOME_DRAW", "HOME_AWAY", "DRAW_AWAY"}
+
+
+def test_total_equipe_hockey_et_abrege_prolongations():
+    nom = "Texas Stars - Nombre total de buts (prolong. & pen. inclus)"
+    assert betclic._classe(nom, "Manitoba Moose", "Texas Stars") == "AWAY_OVER_UNDER"
+    assert betclic._classe("Buteur & passeur", "A", "B") is None
+    assert betclic._classe("Nombre total de buts - Autre", "A", "B") is None
+
+
+def test_lecture_en_parallele_garde_toutes_les_lignes():
+    detail = _lens()
+    matchs = [_match(i, "Lens", "Lille") for i in range(1, 7)]
+    session = Session([(_liste(*matchs), 200)] + [(detail, 200)] * 6)
+    lignes, meta = betclic.collecter({"football"}, 36, session=session, maintenant=MAINTENANT,
+                                     reserve={"lignes": []})
+    assert meta["ok"] is True and meta["matchs"] == 6
+    assert {l["match_id"] for l in lignes} == {f"betclic|{i}" for i in range(1, 7)}
+
+
+def test_429_en_parallele_arrete_la_suite():
+    matchs = [_match(i, "Lens", "Lille") for i in range(1, 9)]
+    session = Session([(_liste(*matchs), 200)] + [(b"", 429)] * 8)
+    lignes, meta = betclic.collecter({"football"}, 36, session=session, maintenant=MAINTENANT,
+                                     reserve={"lignes": []}, concurrence=1)
+    assert lignes == [] and "HTTP 429" in meta["erreurs"]
+    assert meta["requetes"] == 2
+
+
+def test_rapport_classe_les_ecarts():
+    base = {"bookmaker": "betclic", "sport": "football", "domicile": "Lens", "exterieur": "Lille",
+            "debut": DEBUT}
+    def l(mid, marche, ligne, issue, cote, collecte="2026-10-18T12:00:00+00:00", periode="MATCH"):
+        return {**base, "match_id": mid, "marche": marche, "periode": periode, "ligne": ligne,
+                "issue": issue, "cote": cote, "collecte": collecte}
+    pulse = [l("betclic|ps", "RESULTAT_1N2", None, "DOM", 1.8),
+             l("betclic|ps", "RESULTAT_1N2", None, "NUL", 3.4),
+             l("betclic|ps", "RESULTAT_1N2", None, "EXT", 4.5),
+             l("betclic|ps", "TOTAL", 2.5, "PLUS", 1.9, collecte="2026-10-18T12:05:00+00:00"),
+             l("betclic|ps", "HANDICAP", -1.5, "DOM", 2.2),
+             l("betclic|ps", "TOTAL", 3.5, "PLUS", 3.0),
+             l("betclic|ps", "TOTAL", 3.5, "MOINS", 1.3, periode="MT1"),
+             l("betclic|ps", "DOUBLE_CHANCE", None, "HOME_DRAW", 1.2)]
+    direct = [l("betclic|g", "RESULTAT_1N2", None, "DOM", 4.5),
+              l("betclic|g", "RESULTAT_1N2", None, "NUL", 3.4),
+              l("betclic|g", "RESULTAT_1N2", None, "EXT", 1.8),
+              l("betclic|g", "TOTAL", 2.5, "PLUS", 2.1),
+              l("betclic|g", "TOTAL", -3.5, "PLUS", 3.0),
+              l("betclic|g", "TOTAL", 3.5, "MOINS", 1.3)]
+    diag = betclic.rapport(pulse, direct)["diagnostic"]
+    assert diag["cotes_differentes"] == {"issues_permutees": 2, "cache_perime": 1}
+    assert diag["absentes_du_direct"] == {"marche_absent": 2, "signe_ligne": 1, "periode_differente": 1}

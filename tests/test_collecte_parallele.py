@@ -17,7 +17,7 @@ def ligne(sport, bookmaker="winamax"):
 
 
 def _sans_reseau(monkeypatch, direct=None):
-    monkeypatch.delenv("SOURCE_PMU", raising=False)
+    monkeypatch.setenv("SOURCE_PMU", "shadow")
 
     def dire(*args, **kwargs):
         if direct:
@@ -35,7 +35,7 @@ def _sans_reseau(monkeypatch, direct=None):
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.netbet_direct, "collecter",
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
-    monkeypatch.delenv("SOURCE_UNIBET", raising=False)
+    monkeypatch.setenv("SOURCE_UNIBET", "shadow")
     monkeypatch.delenv("SOURCE_BETCLIC", raising=False)
     monkeypatch.delenv("SOURCE_OLYBET", raising=False)
     monkeypatch.delenv("SOURCE_NETBET", raising=False)

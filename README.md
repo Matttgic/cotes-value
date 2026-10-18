@@ -29,9 +29,9 @@ Vérifications faites (workflow « Vérifications des sources ») :
 - Polymarket lu directement = PulseScore : 87 % des marchés strictement identiques
   (les écarts restants : marchés sans échanges, écartés par le comparateur).
 
-PMU peut être lu sur l'API Kambi (`SOURCE_PMU`, défaut `shadow`). En `shadow`, PulseScore
-reste la source des paris et un rapport `pmu_comparaison.json` compare les deux flux.
-`auto` prend Kambi et revient à PulseScore si la lecture échoue. `direct` ne lit plus PMU
+PMU peut être lu sur l'API Kambi (`SOURCE_PMU`, défaut `auto`). `auto` prend Kambi et revient à PulseScore
+si la lecture échoue. En `shadow`, PulseScore reste la source des paris et un rapport
+`pmu_comparaison.json` compare les deux flux. `direct` ne lit plus PMU
 chez PulseScore. `pulsescore` désactive Kambi. Si PulseScore répond 401, 403, 402
 ou quota, le cycle continue : même en `shadow`, les cotes PMU viennent de Kambi
 et le journal l'indique (`pmu_repli`). Le rapport est prêt à basculer à partir de
@@ -46,7 +46,7 @@ Si PulseScore répond 401, 403, 402 ou quota, les cotes Winamax viennent du sock
 même en `shadow` (`winamax_repli`). La liste d'un sport arrive en une fois, puis
 les marchés comparés. Une lecture vide est un échec : le repli ne s'en sert pas.
 
-Unibet.fr peut être lu sur son API (`SOURCE_UNIBET`, défaut `shadow`), avec les
+Unibet.fr peut être lu sur son API (`SOURCE_UNIBET`, défaut `auto`), avec les
 mêmes quatre modes et les mêmes seuils. Le rapport est `unibet_comparaison.json`.
 Si PulseScore répond 401, 403, 402 ou quota, les cotes Unibet viennent de l'API
 même en `shadow` (`unibet_repli`). Seuls les marchés comparés sont demandés.
