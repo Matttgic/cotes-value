@@ -164,7 +164,7 @@ def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str
 
 def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min: float = ECART_MIN,
              index: dict | None = None, controle: tuple[dict, dict] | None = None,
-             temoin_brut: bool = True) -> list[dict]:
+             temoin_brut: bool = True, hors_consensus: set[str] | None = None) -> list[dict]:
     """Opportunités (cote française × probabilité juste − 1 ≥ ecart_min). `controle` = (état du contrôle
     de conformité, matchs suspects) : une cote dont l'intitulé n'est pas contrôlé conforme est marquée
     suspecte (pas de pari)."""
@@ -191,17 +191,20 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             trouvees[nom] = r
         controle_raison = CT.raison(l, *controle) if controle and trouvees else None
         desaccord = False
-        if len(trouvees) >= 2:
-            justes = [1 / r["proba_juste"] for r in trouvees.values()]
+        # Une référence hors consensus garde sa table de paris. Elle ne change
+        # ni la moyenne partagée, ni le désaccord des tables déjà en place.
+        membres = {n: r for n, r in trouvees.items() if n not in (hors_consensus or ())}
+        if len(membres) >= 2:
+            justes = [1 / r["proba_juste"] for r in membres.values()]
             desaccord = max(justes) / min(justes) > DESACCORD_MAX
             # Mélange équipondéré des probabilités, pas des cotes inverses :
             # sur un marché complet commun, la somme des probabilités reste 1.
-            p = sum(r["proba_juste"] for r in trouvees.values()) / len(trouvees)
+            p = sum(r["proba_juste"] for r in membres.values()) / len(membres)
             trouvees["Consensus"] = {"proba_juste": p, "cote_juste": 1 / p, "collecte": l["collecte"],
                                      "domicile": l["domicile"], "exterieur": l["exterieur"],
-                                     "sources": "+".join(sorted(trouvees)),
-                                     "lectures_references": {n: r.get("collecte") for n, r in trouvees.items()},
-                                     "composantes": {n: round(1 / r["proba_juste"], 3) for n, r in trouvees.items()}}
+                                     "sources": "+".join(sorted(membres)),
+                                     "lectures_references": {n: r.get("collecte") for n, r in membres.items()},
+                                     "composantes": {n: round(1 / r["proba_juste"], 3) for n, r in membres.items()}}
         # simulation témoin : la cote AFFICHÉE par Pinnacle, marge comprise (sans retrait de la marge)
         pin = trouvees.get("Pinnacle")
         if temoin_brut and pin and pin.get("cote"):
@@ -242,7 +245,8 @@ def _controle_du_groupe(l: dict, controle: tuple[dict, dict] | None) -> dict | N
     return {k: g.get(k) for k in ("statut", "n", "mediane")} if g else None
 
 
-def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) -> dict[tuple, dict[str, tuple]]:
+def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]],
+                       hors_consensus: set[str] | None = None) -> dict[tuple, dict[str, tuple]]:
     """(match français, clé) -> {référence: (probabilité juste, heure de lecture)} : sert à suivre la cote
     juste jusqu'au coup d'envoi (CLV) des paris déjà pris, même quand l'écart a disparu."""
     out: dict[tuple, dict[str, tuple]] = {}
@@ -255,10 +259,12 @@ def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]]) 
         for mid_fr, (mid_ref, inverse, _) in C.associer(matchs_fr, C.matchs_de(lignes)).items():
             for l in par_match.get(mid_ref, []):
                 out.setdefault((mid_fr, cle(inverser(l) if inverse else l)), {})[nom] = (l["proba_juste"], l.get("collecte"))
+    hors = hors_consensus or ()
     for v in out.values():
-        if len(v) >= 2:                  # lu à l'heure de la plus ancienne des références qui le composent
-            heures = [_t(t) for _, t in v.values()]
-            v["Consensus"] = (sum(p for p, _ in v.values()) / len(v),
+        membres = {n: x for n, x in v.items() if n not in hors}
+        if len(membres) >= 2:            # lu à l'heure de la plus ancienne des références qui le composent
+            heures = [_t(t) for _, t in membres.values()]
+            v["Consensus"] = (sum(p for p, _ in membres.values()) / len(membres),
                               min(heures).isoformat(timespec="seconds") if all(h and h.tzinfo for h in heures) else None)
         if "Pinnacle" in v:
             v[BRUT] = v["Pinnacle"]      # CLV des paris « brut » mesurée contre la cote juste : la vraie valeur

@@ -106,21 +106,71 @@ def test_at_place_lexterieur_devant():
 def test_drapeau_eteint_par_defaut_et_allume_seulement_si_oui(monkeypatch):
     monkeypatch.delenv("SMARKETS_DANS_DECISION", raising=False)
     assert smarkets.dans_decision() is False
+    assert smarkets.hors_consensus() == frozenset({"Smarkets"})
     refs = {"Pinnacle": [], "Betfair": [], "Polymarket": []}
-    smarkets.ajouter_decision(refs, [{"bookmaker": "smarkets"}])
-    assert "Smarkets" not in refs
+    smarkets.ajouter_table(refs, [{"bookmaker": "smarkets"}])
+    assert refs["Smarkets"][0]["bookmaker"] == "smarkets"
     for valeur in ("non", "off", "false", ""):
         monkeypatch.setenv("SMARKETS_DANS_DECISION", valeur)
-        assert smarkets.dans_decision() is False
+        assert smarkets.dans_decision() is False and "Smarkets" in smarkets.hors_consensus()
     monkeypatch.setenv("SMARKETS_DANS_DECISION", "oui")
-    assert smarkets.dans_decision() is True
-    smarkets.ajouter_decision(refs, [{"bookmaker": "smarkets", "source": "Smarkets"}])
-    assert refs["Smarkets"][0]["bookmaker"] == "smarkets"
+    assert smarkets.dans_decision() is True and smarkets.hors_consensus() == frozenset()
     assert "Smarkets" not in STRATEGIE["references"]
     assert "Smarkets" not in GEMINI["references"]
     assert "Smarkets" not in JULES_V2["references"]
     assert "Smarkets" not in M3["references"]
     assert "Smarkets" not in LIVE_REFERENCES
+
+
+def test_table_smarkets_separee_du_consensus(monkeypatch):
+    """10 € contre Smarkets, même drapeau éteint. Le consensus des autres tables ne bouge pas."""
+    from datetime import datetime, timezone
+
+    from cotes.simulation import MISE, placer
+
+    moment = "2030-01-01T19:00:00+00:00"
+    debut = "2030-01-01T20:00:00+00:00"
+    base = {"sport": "football", "ligue": "L", "domicile": "Fulham", "exterieur": "Crystal Palace",
+            "debut": debut, "collecte": moment, "marche": "VAINQUEUR", "periode": "MATCH",
+            "ligne": None, "issue": "DOM"}
+    fr = [{**base, "source": "winamax", "bookmaker": "winamax", "match_id": "w|1", "cote": 2.10}]
+
+    def ref(mid, proba, source):
+        return {**base, "source": source, "match_id": mid, "proba_juste": proba,
+                "cote_juste": round(1 / proba, 4), "ecart_achat_vente": 0.02, "liquidite": 50,
+                "marge_pinnacle": 0.04}
+
+    refs = {"Pinnacle": [ref("p1", 0.40, "pinnacle")], "Betfair": [ref("b1", 0.40, "betfair")],
+            "Smarkets": [{**ref("s1", 0.55, "Smarkets"), "bookmaker": "smarkets"}]}
+    monkeypatch.delenv("SMARKETS_DANS_DECISION", raising=False)
+    hors = smarkets.hors_consensus()
+    op = comparaison.comparer(fr, refs, ecart_min=-1, temoin_brut=False, hors_consensus=hors)
+    par = {o["reference"]: o for o in op}
+    assert par["Smarkets"]["ecart"] == round(2.10 * 0.55 - 1, 4)
+    assert par["Smarkets"]["suspect"] is None
+    assert par["Consensus"]["sources"] == "Betfair+Pinnacle"
+    assert par["Consensus"]["proba_juste"] == 0.4
+    assert par["Pinnacle"]["suspect"] is None
+    sans = comparaison.comparer(fr, {k: v for k, v in refs.items() if k != "Smarkets"},
+                                ecart_min=-1, temoin_brut=False)
+    assert {o["reference"]: (o["proba_juste"], o["ecart"], o["suspect"])
+            for o in sans if o["reference"] in ("Pinnacle", "Betfair", "Consensus")} == {
+        o["reference"]: (o["proba_juste"], o["ecart"], o["suspect"])
+        for o in op if o["reference"] in ("Pinnacle", "Betfair", "Consensus")}
+    clos = comparaison.index_cotes_justes(fr, refs, hors_consensus=hors)
+    cle = ("w|1", ("VAINQUEUR", "MATCH", None, "DOM"))
+    assert abs(clos[cle]["Smarkets"][0] - 0.55) < 1e-9
+    assert abs(clos[cle]["Consensus"][0] - 0.4) < 1e-9
+    paris = []
+    pris = placer([par["Smarkets"]], paris, datetime(2030, 1, 1, 19, 5, tzinfo=timezone.utc))
+    assert len(pris) == 1 and pris[0]["reference"] == "Smarkets" and pris[0]["mise"] == MISE == 10
+    monkeypatch.setenv("SMARKETS_DANS_DECISION", "oui")
+    avec = comparaison.comparer(fr, refs, ecart_min=-1, temoin_brut=False,
+                                hors_consensus=smarkets.hors_consensus())
+    cons = next(o for o in avec if o["reference"] == "Consensus")
+    assert cons["sources"] == "Betfair+Pinnacle+Smarkets"
+    assert abs(cons["proba_juste"] - (0.40 + 0.40 + 0.55) / 3) < 1e-5
+    assert cons["suspect"] == "références en désaccord"
 
 
 def test_ecart_affiche_meme_hors_decision():

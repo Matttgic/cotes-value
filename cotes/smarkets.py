@@ -6,8 +6,10 @@ plus basse offre, la meilleure vente la plus haute demande. La cote juste est
 ensuite le milieu achat/vente, comme Betfair : le spread est dans le milieu,
 aucune commission n'est retirée en plus.
 
-``SMARKETS_DANS_DECISION`` (défaut : non) décide si ces cotes entrent dans la
-détection de value. Sinon elles ne servent qu'à l'écart affiché dans le bilan.
+Les paris simulés contre Smarkets ont leur propre table, comme Betfair :
+10 € dès qu'un bookmaker français bat la cote juste. ``SMARKETS_DANS_DECISION``
+(défaut : non) ne décide que du consensus partagé. Éteint, Smarkets n'entre
+pas dans cette moyenne. L'écart affiché reste dans les deux cas.
 """
 from __future__ import annotations
 
@@ -74,14 +76,24 @@ def dans_decision() -> bool:
     return os.environ.get("SMARKETS_DANS_DECISION", "").strip().lower() in _OUI
 
 
-def ajouter_decision(references: dict, lignes: list[dict]) -> dict:
-    """Comme Betfair : présent dans la décision seulement si le drapeau est oui.
+def ajouter_table(references: dict, lignes: list[dict]) -> dict:
+    """Table de paris propre, toujours, comme Betfair.
 
-    Les lignes ne sont jamais versées dans les cotes françaises.
+    Les lignes ne sont jamais versées dans les cotes françaises. Le drapeau
+    ne retire pas cette table : il ne concerne que le consensus.
     """
-    if dans_decision():
-        references["Smarkets"] = lignes
+    references["Smarkets"] = lignes
     return references
+
+
+def hors_consensus() -> frozenset[str]:
+    """Smarkets reste hors de la moyenne partagée tant que le drapeau est éteint."""
+    return frozenset() if dans_decision() else frozenset({"Smarkets"})
+
+
+def ajouter_decision(references: dict, lignes: list[dict]) -> dict:
+    """Compatibilité : la table est toujours alimentée."""
+    return ajouter_table(references, lignes)
 
 
 def _heure(valeur):

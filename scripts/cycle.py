@@ -479,12 +479,17 @@ def main() -> int:
         sm_lignes, sm_info = sm
     signaler(journal, "smarkets", list(sm_info.get("erreurs") or []))
     journal["smarkets_dans_decision"] = smarkets.dans_decision()
-    smarkets.ajouter_decision(references, sm_lignes)
+    # Table propre, comme Betfair. Le drapeau ne retire que le consensus partagé.
+    smarkets.ajouter_table(references, sm_lignes)
+    hors = smarkets.hors_consensus()
 
     # 3. contrôle de conformité des marchés (cumulé d'un cycle à l'autre), comparaison et paris simulés :
-    #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari
+    #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari.
+    #    Le contrôle reste celui des références déjà en place : Smarkets a sa table,
+    #    pas une nouvelle mesure de conformité.
     index = etape("association", journal, comparaison.indexer, francais, references) or {}
-    mesures = controle.mesurer(francais, index)
+    index_controle = {n: v for n, v in index.items() if n != "Smarkets"}
+    mesures = controle.mesurer(francais, index_controle)
     etat_controle = controle.mettre_a_jour(lire_json(donnees / "controle.json", {}), mesures,
                                            journal["debut"])
     suspects = controle.matchs_suspects(mesures)
@@ -496,7 +501,8 @@ def main() -> int:
                                                             "matchs_suspects": len(suspects)}
     opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
                          index=index, controle=(etat_controle, suspects),
-                         temoin_brut=os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui") or []
+                         temoin_brut=os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui",
+                         hors_consensus=hors) or []
     # Écarts d'affichage, y compris quand Smarkets ne décide pas. Avant le placement :
     # le pari enregistre les trois champs.
     comparaison.annoter_ecarts(opportunites, francais,
@@ -510,7 +516,8 @@ def main() -> int:
     from cotes.decisions import figer_nouveaux
     figer_nouveaux(stockage.fusionner_paris(paris, stockage.lire_archives(donnees)), nouveaux)
     simulation.suivre_prix(paris, francais)
-    justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references) or {}
+    justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references,
+                   hors_consensus=hors) or {}
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
 
     # La collecte reprend le règlement si le workflow horaire a été retardé.
