@@ -286,6 +286,7 @@ def test_diagnostic_pinnacle_remonte_dans_cycle_sans_cle(monkeypatch):
     monkeypatch.setattr(cycle.pmu_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
     monkeypatch.setattr(cycle.winamax_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
     monkeypatch.setattr(cycle.unibet_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
+    monkeypatch.setattr(cycle.betclic_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
     monkeypatch.setattr(cycle.olybet_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
     monkeypatch.delenv('SOURCE_PMU', raising=False)
     monkeypatch.delenv('SOURCE_OLYBET', raising=False)

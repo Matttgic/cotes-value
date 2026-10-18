@@ -29,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, smarkets, stockage)
+from cotes.direct import betclic as betclic_direct  # noqa: E402
 from cotes.direct import olybet as olybet_direct  # noqa: E402
 from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes.direct import unibet as unibet_direct  # noqa: E402
@@ -54,6 +55,7 @@ BUDGETS = {
     "winamax_direct": 45,
     "unibet_direct": 75,
     "olybet": 40,
+    "betclic_direct": 45,
     "smarkets": 60,
 }
 PRES_H = 6
@@ -243,9 +245,10 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                     < comparaison._t(l["debut"])
                     <= limite + (timedelta(hours=5) if l.get("debut_approximatif") else timedelta())}
 
-    def pulse(sports, nom, sans_pmu=False, sans_winamax=False, sans_unibet=False):
+    def pulse(sports, nom, sans_pmu=False, sans_winamax=False, sans_unibet=False, sans_betclic=False):
         if mode == "test":
-            livres = [b for b in ("winamax", "betclic") if not (sans_winamax and b == "winamax")]
+            livres = [b for b in ("winamax", "betclic")
+                      if not (sans_winamax and b == "winamax") and not (sans_betclic and b == "betclic")]
             plan = {b: ["soccer"] for b in livres} | {"orbitxch": ["soccer"]}
             pages, horizon = 1, 12
         else:
@@ -254,7 +257,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 return [], {}, {}
             livres = [b for b in FRANCAIS
                       if not (sans_pmu and b == "pmu") and not (sans_winamax and b == "winamax")
-                      and not (sans_unibet and b == "unibet-fr")]
+                      and not (sans_unibet and b == "unibet-fr") and not (sans_betclic and b == "betclic")]
             plan = {b: fr for b in livres} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in fr]}
             pages, horizon = 40, HORIZON_H
         return etape_bornee(nom, journal, BUDGETS["pulsescore"], pulsescore.collecter, cle, plan,
@@ -358,10 +361,27 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             signaler(journal, "unibet_direct", list(uni_meta.get("erreurs") or []))
         uni_utilisable = bool(uni_meta.get("ok") and (uni_lignes or not uni_meta.get("erreurs")))
         sans_uni = source_uni == "direct" or (source_uni == "auto" and uni_utilisable)
+        source_bet = betclic_direct.mode_source()
+        journal["betclic_source"] = source_bet
+        bet_lignes, bet_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
+        if source_bet != "pulsescore":
+            heures_bet, plein_bet = heures_ombre("betclic", source_bet, mode, maintenant, rythme)
+            if plein_bet:
+                rythme["betclic"] = maintenant.isoformat()
+            recu = source_bornee(betclic_direct, "betclic_direct", journal, BUDGETS["betclic_direct"],
+                                 betclic_direct.collecter, sports, heures_bet, maintenant=maintenant)
+            if recu is None:
+                bet_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
+            else:
+                bet_lignes, bet_meta = recu
+            signaler(journal, "betclic_direct", list(bet_meta.get("erreurs") or []))
+        bet_utilisable = bool(bet_meta.get("ok") and (bet_lignes or not bet_meta.get("erreurs")))
+        sans_bet = source_bet == "direct" or (source_bet == "auto" and bet_utilisable)
         lignes, requetes, erreurs = [], {}, {}
         if cle:
             lignes, requetes, erreurs = pulse(sports, "pulsescore", sans_pmu=sans_pmu,
-                                              sans_winamax=sans_wina, sans_unibet=sans_uni)
+                                              sans_winamax=sans_wina, sans_unibet=sans_uni,
+                                              sans_betclic=sans_bet)
             if erreurs and "pulsescore" in journal["etapes"]:
                 journal["etapes"]["pulsescore"] |= {"degrade": True,
                     "erreurs": {b: e[:5] for b, e in erreurs.items()}}
@@ -421,6 +441,24 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 journal["unibet_source_effective"] = "shadow"
         elif sans_uni:
             lignes = [l for l in lignes if l.get("bookmaker") != "unibet-fr"] + list(uni_lignes)
+        bet_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
+                  or pulsescore.indisponible(erreurs.get("betclic", []) if cle else ["PULSESCORE_KEY absente"]))
+        if source_bet == "shadow":
+            try:
+                journal["betclic_direct_rapport"] = betclic_direct.rapport(lignes, bet_lignes)
+            except Exception as e:  # noqa: BLE001
+                journal["betclic_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
+            if bet_ko and bet_utilisable:
+                lignes = [l for l in lignes if l.get("bookmaker") != "betclic"] + list(bet_lignes)
+                journal["betclic_repli"] = "L'API Betclic remplace PulseScore (401/403/402/quota ou lecture impossible)"
+                journal["betclic_source_effective"] = "direct"
+                if "pulsescore" in journal["etapes"]:
+                    journal["etapes"]["pulsescore"]["betclic_repli"] = journal["betclic_repli"]
+            elif bet_ko:
+                journal["betclic_repli"] = "PulseScore indisponible, API Betclic sans cote utilisable"
+                journal["betclic_source_effective"] = "shadow"
+        elif sans_bet:
+            lignes = [l for l in lignes if l.get("bookmaker") != "betclic"] + list(bet_lignes)
     source_oly = olybet_direct.mode_source()
     journal["olybet_source"] = source_oly
     if source_oly == "direct":
@@ -442,7 +480,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             journal["olybet_controle"] = {"ok": False, "erreur": type(e).__name__}
     mesures_delta(pin, lignes)
     if rythme_path is not None:
-        ecrire_json(rythme_path, {k: rythme[k] for k in ("pmu", "unibet") if k in rythme})
+        ecrire_json(rythme_path, {k: rythme[k] for k in ("pmu", "unibet", "betclic") if k in rythme})
     return pin, poly, lignes, requetes
 
 
@@ -670,6 +708,8 @@ def main() -> int:
         ecrire_json(donnees / "winamax_comparaison.json", journal["winamax_direct_rapport"])
     if "unibet_direct_rapport" in journal:
         ecrire_json(donnees / "unibet_comparaison.json", journal["unibet_direct_rapport"])
+    if "betclic_direct_rapport" in journal:
+        ecrire_json(donnees / "betclic_comparaison.json", journal["betclic_direct_rapport"])
 
     francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
     betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])
