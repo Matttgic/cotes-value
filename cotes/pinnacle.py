@@ -301,6 +301,12 @@ def _ajouter_proba_justes(lignes: list[dict]) -> None:
                      {"PLUS", "MOINS"} if "TOTAL" in marche or marche.startswith("JOUEUR:") else None)
         valides = valides and all(isinstance(i, str) and i for i in issues)
         valides = valides and len(set(issues)) == len(issues) and (attendues is None or set(issues) == attendues)
+        # Les spéciaux ne sont pas encore traduits en DOM/NUL/EXT : on exige seulement
+        # le nombre d'issues du marché. Un handicap européen à 2 prix n'est pas un 2-issues.
+        if marche.startswith("SPECIAL:3-Way Handicap"):
+            valides = valides and len(issues) == 3
+        elif marche in ("SPECIAL:Draw No Bet", "SPECIAL:Both Teams To Score?"):
+            valides = valides and len(issues) == 2
         valides = valides and all(all(l.get(k) == g[0].get(k) for k in
                          ("match_id", "marche", "periode", "ligne", "joueur")) for l in g)
         if not valides:

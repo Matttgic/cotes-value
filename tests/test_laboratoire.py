@@ -29,6 +29,11 @@ def test_famille_figee_et_selection_sans_resultat():
     assert [p["id"] for p in selectionner([later, p], R)] == ["a"]
 
 
+def test_cote_et_edge_textuels_ne_font_pas_planter_la_selection():
+    p = pari(cote="2.10", ecart="0.05", cote_juste="2.0")
+    assert selectionner([p], R) == [p]
+
+
 def test_un_match_plusieurs_books_et_egalite_deterministe():
     a = pari()
     b = {**a, "id": "b", "bookmaker": "PMU", "ecart": .06, "cote": 2.12}

@@ -143,7 +143,10 @@ def evenements(heures: int = 48) -> list[dict]:
             if len(valides) != len(page):
                 _erreur("événements invalides dans une page")
             out += [{**e, "_collecte_debut": debut_lecture, "_collecte_recue": reception} for e in valides]
-            if len(page) < 100 or offset >= 1900:
+            if len(page) < 100:
+                break
+            if offset >= 1900:
+                _erreur("liste d'événements tronquée (plafond de pagination)")
                 break
             offset += 100
     out = list({str(e["id"]): e for e in out}.values())

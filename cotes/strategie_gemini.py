@@ -141,25 +141,43 @@ def motif_refus_gemini(p: dict, depuis: str = GEMINI["debut"]) -> str | None:
     return None
 
 
+def _peut_relier(p: dict) -> bool:
+    """Identité fiable, y compris sur une ligne ensuite écartée (edge, fenêtre, cote)."""
+    if p.get("reference") not in GEMINI["references"]:
+        return False
+    if p.get("bookmaker") not in GEMINI["bookmakers"] or p.get("suspect"):
+        return False
+    if not _heure(p.get("detecte")) or not _heure(p.get("debut")):
+        return False
+    preuve = p.get("preuve_prise") or {}
+    score = _nombre(preuve.get("ressemblance_noms"))
+    return bool(
+        preuve.get("match_id_reference")
+        and score is not None
+        and score >= GEMINI["ressemblance_min"]
+        and (preuve.get("controle") or {}).get("statut") == "conforme"
+    )
+
+
 @figer_selecteur("gemini")
 def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
     """Sélectionne au plus un pari par événement sportif, dans l'ordre réel.
 
     À détection simultanée, priorise l'edge le plus élevé puis la cote la plus
     basse (minimisation de la variance). Respecte le plafond journalier Europe/Paris.
+    Un alias rencontré sur un pari déjà écarté est mémorisé : sinon
+    W/Pinnacle → W/Polymarket (écarté) → PMU/Polymarket reprend le match.
     """
-    candidats = [p for p in paris if motif_refus_gemini(p, depuis) is None]
+    candidats = [p for p in paris if _peut_relier(p)]
     candidats.sort(
         key=lambda p: (
             _heure(p["detecte"]),
-            -float(p["ecart"]),
-            float(p["cote"]),
+            -(_nombre(p.get("ecart")) or 0),
+            _nombre(p.get("cote")) or 0,
             str(p.get("bookmaker") or ""),
             str(p.get("id") or p.get("match_id") or ""),
         )
     )
-    # Un alias rencontré sur un pari déjà écarté doit aussi être mémorisé.
-    # Sinon W/Pinnacle → W/Polymarket (écarté) → PMU/Polymarket reprend le match.
     parents, utilises, selection, par_jour = {}, {}, set(), Counter()
 
     def racine(cle):
@@ -187,6 +205,8 @@ def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
             if all(noms):
                 cles.append(("equipes", sport, _heure(p["debut"]).astimezone(timezone.utc), noms))
         root = associer(cles)
+        if motif_refus_gemini(p, depuis) is not None:
+            continue
         jour = _heure(p["detecte"]).astimezone(PARIS).date()
         if utilises.get(root) or par_jour[jour] >= GEMINI["paris_max_jour"]:
             continue

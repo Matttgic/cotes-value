@@ -113,13 +113,17 @@ def admissible(p: dict, r: Regle, depuis: str) -> bool:
         return False
     if heure(p["detecte"]) < heure(depuis) or refus_qualite(p):
         return False
-    return (r.cote_min <= p["cote"] <= r.cote_max and r.edge_min <= p["ecart"] <= r.edge_max
+    cote, edge = nombre(p.get("cote")), nombre(p.get("ecart"))
+    if cote is None or edge is None:
+        return False
+    return (r.cote_min <= cote <= r.cote_max and r.edge_min <= edge <= r.edge_max
             and (heure(p["debut"])-heure(p["detecte"])).total_seconds() <= r.avance_max_h*3600)
 
 
 def selectionner(paris: list[dict], r: Regle, depuis: str = DEBUT_ETUDE) -> list[dict]:
     rows = [p for p in paris if admissible(p, r, depuis)]
-    rows.sort(key=lambda p: (heure(p["detecte"]), -p["ecart"], -p["cote"], p["bookmaker"], str(p["id"])))
+    rows.sort(key=lambda p: (heure(p["detecte"]), -(nombre(p.get("ecart")) or 0),
+                             -(nombre(p.get("cote")) or 0), p["bookmaker"], str(p["id"])))
     vus, out = set(), []
     for p in rows:
         key = cle_match(p)

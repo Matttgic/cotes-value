@@ -20,6 +20,20 @@ def pari(mid="m1", **changes):
     return {**p, **changes}
 
 
+def test_alias_sur_cote_refusee_empeche_un_second_bookmaker():
+    premier = pari(domicile="PSG", exterieur="OL")
+    pont = pari(reference="Polymarket", ecart=0.20, detecte="2026-10-14T18:01:00Z",
+                domicile="PSG", exterieur="OL")
+    pont = {**pont, "id": "pont", "preuve_prise": {**pont["preuve_prise"], "match_id_reference": "poly"}}
+    autre = {**pont, "id": "pmu", "bookmaker": "PMU", "match_id": "pmu|different", "ecart": 0.05,
+             "domicile": "Paris Saint Germain", "exterieur": "Olympique Lyonnais",
+             "detecte": "2026-10-14T18:02:00Z"}
+    assert motif_refus_gemini(pont) is not None
+    assert motif_refus_gemini(autre) is None
+    assert paris_gemini([autre, premier]) == {id(premier), id(autre)}
+    assert paris_gemini([autre, pont, premier]) == {id(premier)}
+
+
 def test_alias_de_reference_sur_pari_ecarte_est_memorise():
     premier = pari(domicile="Paris", exterieur="Lyon")
     preuve = {**premier["preuve_prise"], "match_id_reference": "poly1"}
