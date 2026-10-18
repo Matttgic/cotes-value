@@ -24,7 +24,7 @@ LISTE_PMU = (
     "https://eu1.offering-api.kambicdn.com/offering/v2018/pmusportsfr/"
     "listView/football/all/all/all/matches.json?" + PARAMS_KAMBI
 )
-SMARKETS = "https://api.smarkets.com/v3/events/?state=upcoming&type_scope=football&limit=5&sort=start_datetime"
+SMARKETS = "https://api.smarkets.com/v3/events/?states=upcoming&limit=5&type=football_match"
 POLYMARKET = "https://gamma-api.polymarket.com/events?active=true&closed=false&limit=3"
 OLYBET = "wss://eu-swarm-reverse.betconstruct.com/"
 WINAMAX_PAGE = "https://www.winamax.fr/paris-sportifs/sports/1"
@@ -69,41 +69,54 @@ def _http(url: str, headers: dict | None = None, timeout: int = 25, data: bytes 
     return r, debut
 
 
-def _cffi(url: str, headers: dict | None = None, timeout: int = 25, data: bytes | None = None):
+def _cffi(url: str, headers: dict | None = None, timeout: int = 25, data: bytes | None = None,
+          limite: int | None = None, impersonate: str = "chrome"):
     from curl_cffi.requests import Session
     h = {"Accept": "*/*", **(headers or {})}
     debut = time.perf_counter()
-    with Session(impersonate="chrome") as s:
+    with Session(impersonate=impersonate) as s:
         if data is None:
-            r = s.get(url, headers=h, timeout=timeout)
+            r = s.get(url, headers=h, timeout=timeout, stream=limite is not None)
         else:
-            r = s.post(url, headers=h, data=data, timeout=timeout)
-    return r, debut
+            r = s.post(url, headers=h, data=data, timeout=timeout, stream=limite is not None)
+        if limite is None:
+            brut = r.content
+        else:
+            brut = _premiers_octets(r, limite)
+            r.close()
+    return r, debut, brut
 
 
 def lire_http(nom: str, url: str, headers: dict | None = None, data: bytes | None = None,
-              limite: int | None = None) -> tuple[dict, bytes | str | None]:
-    """requests d'abord. curl_cffi seulement si le statut est 403."""
+              limite: int | None = None, repli_reseau: bool = False) -> tuple[dict, bytes | str | None]:
+    """requests d'abord. curl_cffi si 403, ou si le réseau coupe et que ``repli_reseau`` est vrai."""
+    raison = "403"
     try:
         r, debut = _http(url, headers, data=data, stream=limite is not None)
-        brut = r.content if limite is None else _premiers_octets(r, limite)
-        if limite is not None:
-            r.close()
-        status = r.status_code
+        try:
+            brut = r.content if limite is None else _premiers_octets(r, limite)
+            status = r.status_code
+        finally:
+            if limite is not None:
+                r.close()
         if status != 403:
             texte = brut.decode("utf-8", "replace") if isinstance(brut, bytes) else ""
             return _mesure(nom, "requests", status, len(brut), debut, texte, 200 <= status < 300), brut
     except requests.RequestException as e:
-        return _mesure(nom, "requests", None, 0, time.perf_counter(), "", False, type(e).__name__), None
+        if not repli_reseau:
+            return _mesure(nom, "requests", None, 0, time.perf_counter(), "", False, type(e).__name__), None
+        raison = type(e).__name__
     try:
-        r, debut = _cffi(url, headers, data=data)
-        brut = r.content[:limite] if limite else r.content
+        r, debut, brut = _cffi(url, headers, data=data, limite=limite, impersonate="chrome")
+        if r.status_code == 403:
+            r, debut, brut = _cffi(url, headers, data=data, limite=limite, impersonate="safari")
+            raison = f"{raison}, puis safari"
         texte = brut.decode("utf-8", "replace")
         return _mesure(nom, "curl_cffi", r.status_code, len(brut), debut, texte,
-                       200 <= r.status_code < 300, "repli après 403"), brut
+                       200 <= r.status_code < 300, f"repli après {raison}"), brut
     except Exception as e:  # noqa: BLE001
         return _mesure(nom, "curl_cffi", None, 0, time.perf_counter(), "", False,
-                       f"repli après 403 : {type(e).__name__}"), None
+                       f"repli après {raison} : {type(e).__name__}"), None
 
 
 def _premiers_octets(reponse, limite: int) -> bytes:
@@ -146,7 +159,8 @@ def pmu() -> list[dict]:
     return lignes
 
 
-def _ws_stdlib(url: str, origin: str, messages: list[str], timeout: float = 20) -> tuple[int, str]:
+def _ws_stdlib(url: str, origin: str, messages: list[str], timeout: float = 20,
+               lire_ouverture: bool = False, lectures_finale: int = 1) -> tuple[int, str]:
     """Poignée WebSocket minimale (RFC 6455), sans bibliothèque."""
     u = urlparse(url)
     hote, port = u.hostname, u.port or 443
@@ -181,18 +195,24 @@ def _ws_stdlib(url: str, origin: str, messages: list[str], timeout: float = 20) 
         return statut, entete[:200].decode("utf-8", "replace")
     reste = entete.split(b"\r\n\r\n", 1)[1]
     recus = []
-    for msg in messages:
-        _ws_envoyer(tls, msg)
+    if lire_ouverture:
         morceau, reste = _ws_lire(tls, reste)
         recus.append(morceau)
+    for i, msg in enumerate(messages):
+        _ws_envoyer(tls, msg)
+        n = lectures_finale if i == len(messages) - 1 else 1
+        for _ in range(max(1, n)):
+            morceau, reste = _ws_lire(tls, reste)
+            recus.append(morceau)
+            if not morceau:
+                break
     tls.close()
     return 101, " | ".join(recus)[:500]
 
 
-def _ws_envoyer(tls, texte: str) -> None:
-    data = texte.encode()
+def _ws_cadre(tls, opcode: int, data: bytes) -> None:
     masque = b"\x11\x22\x33\x44"
-    cadre = bytearray([0x81])
+    cadre = bytearray([0x80 | opcode])
     n = len(data)
     if n < 126:
         cadre.append(0x80 | n)
@@ -201,6 +221,10 @@ def _ws_envoyer(tls, texte: str) -> None:
         cadre += struct.pack(">H", n)
     cadre += masque + bytes(b ^ masque[i % 4] for i, b in enumerate(data))
     tls.sendall(cadre)
+
+
+def _ws_envoyer(tls, texte: str) -> None:
+    _ws_cadre(tls, 0x1, texte.encode())
 
 
 def _ws_lire(tls, reste: bytes = b"") -> tuple[str, bytes]:
@@ -214,21 +238,30 @@ def _ws_lire(tls, reste: bytes = b"") -> tuple[str, bytes]:
         out, reste = reste[:n], reste[n:]
         return out
 
-    tete = prendre(2)
-    if len(tete) < 2:
-        return "", reste
-    n = tete[1] & 0x7F
-    if n == 126:
-        n = struct.unpack(">H", prendre(2))[0]
-    elif n == 127:
-        n = struct.unpack(">Q", prendre(8))[0]
-    n = min(n, 8000)
-    if tete[1] & 0x80:
-        masque = prendre(4)
-        data = bytes(b ^ masque[i % 4] for i, b in enumerate(prendre(n)))
-    else:
-        data = prendre(n)
-    return data.decode("utf-8", "replace"), reste
+    for _ in range(6):
+        tete = prendre(2)
+        if len(tete) < 2:
+            return "", reste
+        n = tete[1] & 0x7F
+        if n == 126:
+            n = struct.unpack(">H", prendre(2))[0]
+        elif n == 127:
+            n = struct.unpack(">Q", prendre(8))[0]
+        n = min(n, 8000)
+        if tete[1] & 0x80:
+            masque = prendre(4)
+            data = bytes(b ^ masque[i % 4] for i, b in enumerate(prendre(n)))
+        else:
+            data = prendre(n)
+        opcode = tete[0] & 0x0F
+        if opcode == 9:
+            _ws_cadre(tls, 0xA, data)
+            continue
+        if opcode == 1:
+            return data.decode("utf-8", "replace"), reste
+        if opcode == 8:
+            return "", reste
+    return "", reste
 
 
 def olybet() -> dict:
@@ -262,7 +295,8 @@ def olybet() -> dict:
             ws.close()
         texte = a[:120] + " " + b[:120]
         return _mesure("OlyBet swarm football", "curl_cffi", 101, len(a) + len(b), debut, texte,
-                       '"code":0' in a.replace(" ", "") or '"code": 0' in a, "repli")
+                       '"code":0' in a.replace(" ", "") or '"code": 0' in a,
+                       f"repli après websocket {premier['status']} {premier['detail']}".strip())
     except Exception as e:  # noqa: BLE001
         return _mesure("OlyBet swarm football", "curl_cffi", premier["status"], 0, debut, "", False,
                        f"{premier['detail'] or 'echec simple'} ; repli {type(e).__name__}")
@@ -274,20 +308,27 @@ def winamax() -> list[dict]:
     lignes = [page]
     html = brut.decode("utf-8", "replace") if isinstance(brut, bytes) else ""
     a_etat = "PRELOADED_STATE" in html
-    page["detail"] = "PRELOADED_STATE présent" if a_etat else "PRELOADED_STATE absent"
     ident = None
-    m = re.search(r"PRELOADED_STATE\s*=\s*(\{.*)", html)
+    m = re.search(r'"matches"\s*:\s*\[\s*(\d+)', html)
     if m:
-        try:
-            doc, _ = json.JSONDecoder().raw_decode(m.group(1))
-            matchs = doc.get("matches") if isinstance(doc, dict) else None
-            if isinstance(matchs, dict) and matchs:
-                ident = next(iter(matchs))
-        except ValueError:
-            ident = None
+        ident = m.group(1)
+    if ident is None:
+        m = re.search(r"PRELOADED_STATE\s*=\s*(\{.*)", html)
+        if m:
+            try:
+                doc, _ = json.JSONDecoder().raw_decode(m.group(1))
+                matchs = doc.get("matches") if isinstance(doc, dict) else None
+                if isinstance(matchs, dict) and matchs:
+                    ident = next(iter(matchs))
+                elif isinstance(matchs, list) and matchs:
+                    ident = matchs[0]
+            except ValueError:
+                ident = None
     if ident is None:
         m = re.search(r'"matchId"\s*:\s*"?(\d+)', html)
         ident = m.group(1) if m else None
+    page["detail"] = ("PRELOADED_STATE présent" if a_etat else "PRELOADED_STATE absent") + (
+        f", match {ident}" if ident else ", aucun match")
     if not ident:
         lignes.append(_mesure("Winamax socket.io match", page["client"], None, 0, time.perf_counter(),
                               "", False, "aucun matchId"))
@@ -297,11 +338,11 @@ def winamax() -> list[dict]:
     try:
         statut, texte = _ws_stdlib(
             f"wss://{WINAMAX_SOCK}/uof-sports-server/socket.io/?EIO=4&transport=websocket",
-            "https://www.winamax.fr", ["40", message])
+            "https://www.winamax.fr", ["40", message], lire_ouverture=True, lectures_finale=3)
         ok = statut == 101 and ("42" in texte or "match" in texte.lower())
         ligne = _mesure("Winamax socket.io match", "websocket", statut, len(texte), debut,
                         texte, ok, f"match {ident}")
-        if ok or statut == 101:
+        if ok:
             lignes.append(ligne)
             return lignes
     except Exception as e:  # noqa: BLE001
@@ -320,38 +361,47 @@ def winamax() -> list[dict]:
             corps = ws.recv_str()
             ws.close()
         texte = " ".join((ouvert, ack, corps))
-        lignes.append(_mesure("Winamax socket.io match", "curl_cffi", 101, len(texte), debut, texte,
-                              "42" in texte or "match" in texte.lower(), f"repli match {ident}"))
+        lignes.append(_mesure(
+            "Winamax socket.io match", "curl_cffi", 101, len(texte), debut, texte,
+            "42" in texte or "match" in texte.lower(),
+            f"repli match {ident} après {ligne.get('status')} {ligne.get('detail')}".strip()))
     except Exception as e:  # noqa: BLE001
         lignes.append(_mesure("Winamax socket.io match", "curl_cffi", ligne.get("status"), 0, debut, "",
                               False, f"{ligne.get('detail')} ; repli {type(e).__name__}"))
     return lignes
 
 
-def _jeton_unibet(html: str) -> str | None:
-    texte = html.replace("\\u0022", '"').replace("&quot;", '"')
-    m = re.search(r'X-LVS-HSToken"\s*:\s*"([^"]+)"', texte)
-    return m.group(1) if m else None
-
-
-def _noeud_football(html: str) -> str | None:
-    texte = html.replace("\\u0022", '"').replace("&quot;", '"')
-    m = re.search(r'lvs-api/next/\d+/(p\d+)', texte)
-    if m and re.search(r"football", texte[max(0, m.start() - 400):m.end() + 400], re.I):
-        return m.group(1)
-    m = re.search(r'"name"\s*:\s*"Football".{0,300}?"id"\s*:\s*"(p\d+)"', texte, re.I | re.S)
-    if m:
-        return m.group(1)
-    m = re.search(r'"(p\d+)"[^}]{0,200}"termKey"\s*:\s*"football"', texte, re.I | re.S)
-    return m.group(1) if m else None
+def _etat_unibet(html: str) -> tuple[str | None, str | None]:
+    m = re.search(r'<script[^>]*id="serverApp-state"[^>]*>(.*?)</script>', html, re.S)
+    if not m:
+        return None, None
+    try:
+        doc = json.loads(m.group(1))
+    except ValueError:
+        return None, None
+    jeton = (doc.get("HsToken") or {}).get("hsToken") if isinstance(doc.get("HsToken"), dict) else None
+    noeud = None
+    for item in (doc.get("Ept") or {}).get("ept") or []:
+        if isinstance(item, dict) and item.get("code") == "FOOT" and isinstance(item.get("id"), int):
+            noeud = f"p{item['id']}"
+            break
+    return jeton if isinstance(jeton, str) and jeton else None, noeud
 
 
 def unibet() -> list[dict]:
     page, brut = lire_http("Unibet accueil", UNIBET, {"Accept": "text/html", "Accept-Language": "fr-FR"})
     html = brut.decode("utf-8", "replace") if isinstance(brut, bytes) else ""
-    jeton = _jeton_unibet(html)
-    noeud = _noeud_football(html)
-    page["detail"] = f"jeton {'oui' if jeton else 'non'}, nœud {noeud or 'absent'}"
+    jeton, noeud = _etat_unibet(html)
+    if jeton and not noeud:
+        sport, brut_sport = lire_http("Unibet football", "https://www.unibet.fr/sport/football",
+                                      {"Accept": "text/html", "Accept-Language": "fr-FR"})
+        html_sport = brut_sport.decode("utf-8", "replace") if isinstance(brut_sport, bytes) else ""
+        jeton2, noeud = _etat_unibet(html_sport)
+        jeton = jeton2 or jeton
+        page["detail"] = (f"jeton oui, nœud {noeud or 'absent'} "
+                          f"(page sport {sport['status']}, {page['detail']})")
+    else:
+        page["detail"] = f"jeton {'oui' if jeton else 'non'}, nœud {noeud or 'absent'} ({page['detail']})"
     page["extrait"] = _extrait("page unibet, jeton omis")
     lignes = [page]
     if not jeton or not noeud:
@@ -359,9 +409,10 @@ def unibet() -> list[dict]:
                               "", False, page["detail"]))
         return lignes
     url = f"https://www.unibet.fr/lvs-api/next/50/{noeud}"
-    api, _ = lire_http("Unibet lvs-api football", url, {
+    api, corps = lire_http("Unibet lvs-api football", url, {
         "X-LVS-HSToken": jeton, "Accept": "application/json", "Referer": UNIBET})
-    api["extrait"] = _extrait(re.sub(r"[A-Za-z0-9+/_=-]{24,}", "[omis]", api["extrait"]))
+    texte = corps.decode("utf-8", "replace") if isinstance(corps, bytes) else ""
+    api["extrait"] = _extrait(re.sub(r"[A-Za-z0-9+/_=-]{24,}", "[omis]", texte))
     api["detail"] = f"nœud {noeud}"
     lignes.append(api)
     return lignes
@@ -389,13 +440,16 @@ def betclic() -> dict:
         "x-bg-regulation": "FR",
         "x-bg-ref-brand": "BETCLIC",
         "x-bg-ref-regulator-zone": "FR",
+        "Accept": "application/grpc-web+proto",
         "Origin": "https://www.betclic.fr",
         "Referer": "https://www.betclic.fr/",
     }
-    ligne, brut = lire_http("Betclic GetMatchesBySport", BETCLIC, entetes, data=cadre, limite=65536)
+    ligne, brut = lire_http("Betclic GetMatchesBySport", BETCLIC, entetes, data=cadre,
+                            limite=8192, repli_reseau=True)
     if isinstance(brut, bytes) and brut:
-        ligne["extrait"] = _extrait(repr(brut[:80]))
+        ligne["extrait"] = _extrait(repr(brut[:60]))
         ligne["ok"] = ligne["status"] == 200 and len(brut) > 5
+        ligne["detail"] = f"première trame {len(brut)} o"
     return ligne
 
 
