@@ -324,8 +324,9 @@ def test_classement_des_marches_par_periode():
     assert c("1ère mi-temps - Vainqueur", "A", "B") == "MATCH_RESULT"
     assert c("Résultat du match (remboursé si match nul)", "A", "B") == "DRAW_NO_BET"
     assert c("Nombre de sets", "A", "B") == "TOTAL_SETS"
+    assert c("2ème période - Vainqueur avec handicap", "A", "B") == "ECART"
     for exclu in ("Nombre total de tirs", "Mi-temps avec le plus de buts", "Nombre total de points - Intervalle",
-                  "2ème période - Vainqueur avec handicap", "1ère mi-temps (seule) - Cage inviolée pour A",
+                  "1ère mi-temps (seule) - Cage inviolée pour A",
                   "Vainqueur du 1er set / Vainqueur du match", "Nombre total de sets"):
         assert c(exclu, "A", "B") is None, exclu
     libelle = betclic.marches_pulse({"nom": "1er QT - Nombre total de points", "selections": [
@@ -346,3 +347,27 @@ def test_onglets_utiles_et_lecture_complete():
     lignes, meta = betclic.collecter({"football"}, 36, session=session, maintenant=MAINTENANT)
     assert meta["requetes"] == 3
     assert {(l["periode"], l["ligne"]) for l in lignes} == {("MATCH", 2.5), ("MT1", 0.5)}
+
+
+def test_ecart_est_un_handicap():
+    marche = {"nom": "Écart de buts (t. rég)", "selections": [
+        {"nom": n, "cote": c} for n, c in [
+            ("Lyon gagne de 2 buts ou +", 3.0), ("Nice ne perd pas ou perd de 1 but exactement", 1.4),
+            ("Lyon gagne de 1 but exactement", 3.1), ("Nice gagne de 1 ou +", 4.0),
+            ("Lyon ne perd pas", 1.2), ("J. Duranville décisif", 2.4)]]}
+    traduits = betclic.marches_pulse(marche, "Lyon", "Nice", "football")
+    assert {m["marketId"].split("|")[1] for m in traduits} == {"-1.5", "+0.5"}
+    gros = next(m for m in traduits if m["marketId"].endswith("-1.5"))
+    assert {(s["canonicalOutcome"], s["line"]) for s in gros["selections"]} == {("HOME", -1.5), ("AWAY", 1.5)}
+    assert all(m["canonicalMarket"] == "ASIAN_HANDICAP" for m in traduits)
+    # le domicile qui perd : Nice gagne de 2 ou + = Nice −1,5 = ligne du domicile +1,5
+    ext = betclic.marches_pulse({"nom": "Écart de buts", "selections": [
+        {"nom": "Nice gagne de 2 buts ou +", "cote": 6.0},
+        {"nom": "Lyon ne perd pas ou perd de 1 but exactement", "cote": 1.1}]}, "Lyon", "Nice", "football")
+    assert [s["line"] for s in ext[0]["selections"]] == [1.5, -1.5] and ext[0]["marketId"].endswith("+1.5")
+    # unités : jeux et sets au tennis, rien pour les points du volley
+    jeux = {"nom": "Écart de jeux", "selections": [{"nom": "A gagne de 3 ou +", "cote": 1.7},
+                                                   {"nom": "B ne perd pas ou perd de 2 ou -", "cote": 2.0}]}
+    assert betclic.marches_pulse(jeux, "A", "B", "tennis")[0]["canonicalMarket"] == "GAME_HANDICAP"
+    assert betclic.marches_pulse({**jeux, "nom": "Écart de points"}, "A", "B", "volley") == []
+    assert betclic.marches_pulse({**jeux, "nom": "Écart de points (3 options)"}, "A", "B", "basket") == []
