@@ -123,12 +123,18 @@ Les simulations se recoupent et leurs mises ne s'additionnent pas.
 
 ## Mise en route
 
-Pinnacle accepte une surcharge `PINNACLE_API_KEY` : secret GitHub Actions portant ce nom,
-ou variable d’environnement locale. Les sondes et le journal papier utilisent la même configuration.
-La valeur guest historique reste le secours si cette variable est vide, pour conserver la collecte ;
-ce changement n’est donc pas une suppression complète de la valeur dans le dépôt ou son historique.
+Pinnacle cherche sa clé guest dans cet ordre, sans jamais l'écrire dans les diagnostics :
+le champ `api.haywire.apiKey` de `https://www.pinnacle.com/config/app.json` (délai court, mis en
+cache pour le cycle), puis le secret GitHub Actions ou la variable `PINNACLE_API_KEY`, puis la
+valeur guest historique du code si les deux échouent. Les sondes et le journal papier utilisent
+le même constructeur d'en-têtes. Ce secours n'est pas une suppression de la valeur dans le dépôt
+ou son historique.
+`PINNACLE_AGE_MAX_MIN` (défaut 10) est l'âge maximum, en minutes, du cache Cloudflare lu dans
+l'en-tête HTTP `Age`. Au-delà, la cote Pinnacle est marquée périmée et ne déclenche pas de pari.
+Un en-tête absent n'est pas une péremption. Les corners, les cartons et les paris pair/impair
+ne sont pas comparés aux books français (périmètre ANJ).
 `.env.example` ne contient aucune clé et les fichiers `.env` sont ignorés. Python ne les charge pas
-automatiquement : exporter les variables avant l’exécution. Les diagnostics n’affichent jamais les clés.
+automatiquement : exporter les variables avant l'exécution. Les diagnostics n'affichent jamais les clés.
 
 1. Secret `PULSESCORE_KEY` (Settings → Secrets and variables → Actions → Secrets).
 2. Settings → Pages → Source : **GitHub Actions**.

@@ -12,11 +12,11 @@ Le connecteur utilise l’endpoint `guest.api.arcadia.pinnacle.com`, sans compte
 
 La configuration évolue ainsi :
 
-- `PINNACLE_API_KEY` peut remplacer la valeur historique à l’exécution ;
+- depuis le 18/10/2026, la clé du cycle vient d'abord de `app.json` (`api.haywire.apiKey`), puis de `PINNACLE_API_KEY`, puis de la valeur historique ;
 - la collecte, la sonde et le journal papier passent par le même constructeur d’en-têtes ;
 - les workflows de collecte, de sonde et de vérification transmettent le secret optionnel portant ce nom ;
 - `.env.example` contient uniquement des emplacements vides ; `.env` et ses variantes sont ignorés par Git ;
-- `etat.json` indique seulement le mode `environnement` ou `guest_historique`, jamais la valeur ;
+- `etat.json` indique seulement le mode `site`, `environnement` ou `guest_historique`, jamais la valeur ;
 - aucun chargement automatique de `.env` ni dépendance supplémentaire n’est ajouté.
 
 **La valeur guest historique reste présente en secours lorsque la variable est vide. Ce n’est pas une suppression complète de la clé du code.** La rendre obligatoire sans configuration validée aurait coupé la principale référence. Les outils de dépôt disponibles ne permettent pas de créer ou vérifier les secrets GitHub Actions ; leur présence n’a pas été supposée.
@@ -42,7 +42,8 @@ Les messages restent génériques : aucune représentation de l’exception, URL
 
 Les diagnostics sont bornés et dédupliqués, puis remontés dans le journal du cycle. Ils contiennent la catégorie de requête et le numéro du sport, sans URL complète ni paramètres sensibles.
 
-- HTTP 401, 403 ou 429 : arrêt des appels Pinnacle restants pour le cycle.
+- HTTP 401 ou 429 : arrêt des appels Pinnacle restants pour le cycle.
+- HTTP 403 : ce sport seulement est sauté (pas de réessai, pas d'arrêt des sports suivants). Correction du 18/10/2026 : un 403 de localisation sur un sport ne doit pas couper le football et le reste du cycle. Polymarket conserve l'arrêt sur 403.
 - Autre erreur HTTP permanente : pas de réessai de cette requête.
 - HTTP 408, erreurs serveur 5xx et erreurs réseau : au plus trois essais, avec délais de 2 puis 4 secondes.
 - Aucun délai ajouté après le dernier échec.
@@ -55,7 +56,9 @@ Le délai maximal par requête reste celui du connecteur existant. Le blocage 42
 
 `americaine_vers_decimale()` refuse les valeurs absentes, vides, non numériques, booléennes, nulles ou non finies. Les conversions valides restent identiques : +150 → 2,50 ; −200 → 1,50.
 
-Un marché ordinaire avec une cote invalide est rejeté dans son ensemble : on ne retire pas la marge sur une seule issue restante. Les lignes de handicap/total sont converties de façon contrôlée. Les marchés doivent être explicitement ouverts.
+Un marché ordinaire avec une cote invalide est rejeté dans son ensemble : on ne retire pas la marge sur une seule issue restante. Les lignes de handicap/total sont converties de façon contrôlée. Un marché dont le `status` est présent et différent de `open` est ignoré. L'absence de `status` (cas des marchés spéciaux) compte comme ouvert. Un spécial avec moins de deux prix est ignoré sans diagnostic « liste de prix invalide » ; un marché ordinaire dans ce cas reste signalé.
+
+Correction du 18/10/2026 : l'en-tête `Age` est stocké (`age_cache_s`). Au-delà de `PINNACLE_AGE_MAX_MIN` (10 minutes par défaut), `cote_perimee` empêche l'usage comme référence de pari. Un en-tête absent n'est pas une péremption. La clé du cycle vient de `app.json`, puis de `PINNACLE_API_KEY`, puis de la valeur historique. Le snooker est l'identifiant 28 ; 13 est le hockey sur gazon. Esport, cricket et fléchettes ne sont plus demandés.
 
 Avant le retrait de marge, les cotes décimales doivent être numériques, finies et supérieures à 1. Les doublons d’issues, les ensembles d’issues incomplets pour les marchés connus et les groupes mélangeant des contrats différents ne reçoivent pas de probabilités justes. Un groupe refusé conserve des probabilités nulles, donc ne devient pas une référence éligible.
 

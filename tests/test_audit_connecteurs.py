@@ -18,14 +18,19 @@ def diagnostics_isoles(monkeypatch):
     for module in (P,M):
         module.ERREURS.clear()
         monkeypatch.setattr(module,'_bloque',False)
+    P._ages.clear()
+    P.oublier_cle()
+    monkeypatch.setattr(P,'_cle_dynamique',lambda: None)
     yield
     P.ERREURS.clear();M.ERREURS.clear()
+    P.oublier_cle()
 
 
 class Reponse:
-    def __init__(self, data=None, status=200, invalide=False):
+    def __init__(self, data=None, status=200, invalide=False, headers=None):
         self.data,self.status_code,self.invalide=data,status,invalide
-        self.headers={};self.json_lu=False
+        self.headers={} if headers is None else headers
+        self.json_lu=False
     def json(self):
         self.json_lu=True
         if self.invalide:
@@ -37,8 +42,7 @@ def appeler(module, essais=3):
     return module._get('/sports/29/matchups?withSpecials=true',essais=essais) if module is P else module._get('/events',{},essais=essais)
 
 
-@pytest.mark.parametrize('module',[P,M])
-@pytest.mark.parametrize('statut',[401,403,429])
+@pytest.mark.parametrize('module,statut',[(M,401),(M,403),(M,429),(P,401),(P,429)])
 def test_statut_bloquant_une_seule_requete_sans_fuite(module,statut,monkeypatch,caplog):
     calls=[];rep=Reponse(status=statut)
     monkeypatch.setenv('PINNACLE_API_KEY','secret-test-prive')
@@ -83,14 +87,19 @@ def test_json_schema_et_http_permanent_sans_reessai(module,rep,monkeypatch,caplo
 
 def test_configuration_pinnacle_dynamique_et_fichiers_env_proteges(monkeypatch):
     monkeypatch.setenv('PINNACLE_API_KEY',' secret-test-prive ')
+    P.oublier_cle()
     assert P.headers()['X-API-Key']=='secret-test-prive' and 'X-API-Key' not in P.HEADERS
+    assert P.origine_cle=='environnement'
     monkeypatch.delenv('PINNACLE_API_KEY')
+    P.oublier_cle()
     assert P.headers()['X-API-Key']==P.CLE_GUEST_PAR_DEFAUT
+    assert P.origine_cle=='guest_historique'
     racine=Path(__file__).resolve().parents[1]
     r=subprocess.run(['git','check-ignore','--stdin'],cwd=racine,input='.env\n.env.local\n.env.example\n',
                      text=True,capture_output=True)
     assert r.stdout.splitlines()==['.env','.env.local']
-    assert 'PINNACLE_API_KEY=' in (racine/'.env.example').read_text()
+    exemple=(racine/'.env.example').read_text()
+    assert 'PINNACLE_API_KEY=' in exemple and 'PINNACLE_AGE_MAX_MIN=' in exemple
     for wf in ['collecte.yml','sonde-live.yml','verif.yml']:
         assert 'PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}' in (racine/'.github/workflows'/wf).read_text()
 
@@ -267,4 +276,150 @@ def test_diagnostic_pinnacle_remonte_dans_cycle_sans_cle(monkeypatch):
     assert journal['etapes']['pinnacle']['degrade'] is True
     assert 'HTTP 429' in journal['etapes']['pinnacle']['erreurs'][0]
     assert journal['pinnacle_configuration']=={'mode':'environnement'}
+    assert journal['pinnacle_fraicheur']['seuil_min']==10
+    assert journal['pinnacle_fraicheur']['lignes_perimees']==0
     assert 'secret-test-prive' not in json.dumps(journal)
+
+
+def test_403_pinnacle_na_bloque_pas_le_sport_suivant(monkeypatch):
+    calls=[]
+    monkeypatch.setattr(P.requests,'get',lambda *a,**kw:calls.append(1) or Reponse(status=403))
+    monkeypatch.setattr(P.time,'sleep',lambda _:pytest.fail('Aucun réessai après un 403'))
+    assert appeler(P) is None and appeler(P) is None
+    assert len(calls)==2 and P._bloque is False and 'HTTP 403' in ' '.join(P.ERREURS)
+
+
+def test_403_dun_sport_laisse_passer_le_suivant(monkeypatch):
+    urls=[]
+    def get(url, **kw):
+        urls.append(url)
+        if '/sports/13/' in url:
+            return Reponse(status=403)
+        if 'matchups' in url:
+            return Reponse([matchup()])
+        return Reponse([marche_pin()])
+    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P.time,'sleep',lambda _:pytest.fail('Aucun réessai après un 403'))
+    out=P.collecter({13:'hockey_sur_gazon',29:'football'})
+    assert len(out)==2 and {l['issue'] for l in out}=={'DOM','EXT'}
+    assert P._bloque is False
+    assert any('sport 13 matchups : HTTP 403' in e for e in P.ERREURS)
+    assert any('/sports/29/' in u for u in urls)
+
+
+def test_sports_anj_ordre_et_identifiants():
+    ids=list(P.SPORTS)
+    assert ids[:8]==[29,33,4,19,18,34,27,15]
+    assert P.SPORTS[28]=='snooker' and P.SPORTS[13]=='hockey_sur_gazon'
+    assert P.SPORTS[26]=='rugby_league' and P.SPORTS[17]=='golf'
+    assert P.SPORTS[9]=='curling' and P.SPORTS[45]=='cyclisme'
+    assert {1,5,37,39}<=set(P.SPORTS)
+    assert not ({8,10,12}&set(P.SPORTS))
+
+
+def test_special_sans_statut_survit_et_prix_unique_silencieux(monkeypatch):
+    parent=matchup()
+    parent['participants']=[{'alignment':'home','name':'Lens'},{'alignment':'away','name':'Lille'}]
+    special={'id':2,'type':'special','parentId':1,'isLive':False,
+             'participants':[{'id':10,'name':'Yes'},{'id':11,'name':'No'}],
+             'special':{'category':'Game Props','description':'Both Teams To Score?'}}
+    ouvert={'matchupId':2,'key':'btts',
+            'prices':[{'participantId':10,'price':-120},{'participantId':11,'price':100}]}
+    incomplet={'matchupId':2,'key':'seul','prices':[{'participantId':10,'price':-120}]}
+    ferme={**ouvert,'key':'ferme','status':'closed'}
+    sans_statut=marche_pin()
+    del sans_statut['status']
+    values=[[parent,special],[incomplet,ferme,ouvert,sans_statut]]
+    monkeypatch.setattr(P,'_get',lambda *a:values.pop(0))
+    out=P.collecter({29:'football'})
+    assert {l['marche'] for l in out}>={'SPECIAL:Both Teams To Score?','VAINQUEUR'}
+    assert not any('liste de prix invalide' in e for e in P.ERREURS)
+    assert all(l['age_cache_s']==0 and l['cote_perimee'] is False for l in out)
+    from cotes.marches import harmoniser_pinnacle
+    assert any(l['marche']=='BOTH_TEAMS_TO_SCORE' for l in harmoniser_pinnacle(out))
+
+
+def test_marche_ordinaire_a_un_seul_prix_reste_signale(monkeypatch):
+    mauvais=marche_pin(prices=[{'designation':'home','price':-110}])
+    monkeypatch.setattr(P,'_get',lambda *a:[matchup()] if 'matchups' in a[0] else [mauvais])
+    assert P.collecter({29:'football'})==[]
+    assert any('liste de prix invalide' in e for e in P.ERREURS)
+
+
+def test_age_http_perime_frais_ou_absent(monkeypatch):
+    monkeypatch.setenv('PINNACLE_AGE_MAX_MIN','10')
+    def lire(age):
+        def get(url, **kw):
+            entetes={'Age':age} if age is not None else {}
+            if 'markets' in url:
+                return Reponse([marche_pin()], headers=entetes)
+            return Reponse([matchup()])
+        monkeypatch.setattr(P.requests,'get',get)
+        return P.collecter({29:'football'})
+    vieux=lire('601')
+    assert vieux and all(l['cote_perimee'] and l['age_cache_s']==601 for l in vieux)
+    frais=lire('600')
+    assert frais and all(l['cote_perimee'] is False and l['age_cache_s']==600 for l in frais)
+    inconnu=lire(None)
+    assert inconnu and all(l['cote_perimee'] is False and l['age_cache_s']==0 for l in inconnu)
+    illisible=lire('abc')
+    assert illisible and all(l['age_cache_s']==0 and l['cote_perimee'] is False for l in illisible)
+
+
+def test_cle_du_site_prime_sans_etre_journalisee(monkeypatch, caplog):
+    site='cle-site-ne-pas-journaliser'
+    monkeypatch.setattr(P,'_cle_dynamique',lambda: site)
+    monkeypatch.setenv('PINNACLE_API_KEY','secret-test-prive')
+    P.oublier_cle()
+    assert P.headers()['X-API-Key']==site and P.origine_cle=='site'
+    appels={'n':0}
+    def autre():
+        appels['n']+=1
+        return 'autre-cle'
+    monkeypatch.setattr(P,'_cle_dynamique',autre)
+    assert P.headers()['X-API-Key']==site and appels['n']==0
+    assert site not in caplog.text+json.dumps(P.ERREURS)
+    assert 'secret-test-prive' not in caplog.text+json.dumps(P.ERREURS)
+
+
+def test_lecture_app_json_extrait_la_cle_sans_journaliser_le_corps(monkeypatch, caplog):
+    site='cle-app-json-secrete'
+    class R:
+        status_code=200
+        text=site+' ne doit pas sortir'
+        def json(self):
+            return {'api':{'haywire':{'apiKey':'  '+site+'  '}}}
+    monkeypatch.setattr(P.requests,'get',lambda *a,**kw: R())
+    assert P._lire_cle_site()==site
+    assert P._cle_depuis_config({}) is None
+    assert P._cle_depuis_config({'api':{'haywire':{'apiKey':''}}}) is None
+    assert P._cle_depuis_config({'api':{'haywire':{'apiKey':12}}}) is None
+    def panne(*a,**kw):
+        raise requests.Timeout(site+' dans exception')
+    monkeypatch.setattr(P.requests,'get',panne)
+    assert P._lire_cle_site() is None
+    assert site not in caplog.text+json.dumps(P.ERREURS)
+
+
+def test_perimetre_anj_et_cote_perimee_ne_declenchent_pas_de_pari():
+    from cotes.comparaison import comparer, _fiable
+    from cotes.marches import cle
+    from tests.test_controle import ligne
+    ref={**ligne(),'source':'pinnacle','match_id':'p1','cote':1.9,
+         'proba_juste':.5,'marge_pinnacle':.04,'cote_perimee':True,'age_cache_s':700}
+    assert _fiable('Pinnacle', ref) is False
+    assert comparer([ligne(cote=2.2)],{'Pinnacle':[ref]})==[]
+    frais={**ref,'cote_perimee':False,'age_cache_s':30}
+    assert _fiable('Pinnacle', frais) is True
+    out=comparer([ligne(cote=2.2)],{'Pinnacle':[frais]})
+    assert any(o['reference']=='Pinnacle' and o['pariable'] for o in out)
+    brut={**frais,'cote':1.8,'proba_juste':.55}
+    for marche, libelle in (
+        ('CORNERS_TOTAL','Plus de corners'),
+        ('CARTONS_TOTAL','Nombre de cartons'),
+        ('TOTAL','Nombre de buts Pair / Impair'),
+        ('TOTAL','Goals Odd/Even'),
+    ):
+        fr=ligne(marche=marche, libelle=libelle, cote=2.2)
+        index={'Pinnacle':{fr['match_id']:{cle(fr):{**brut,'proba_juste':.55,'cote':1.8}}}}
+        assert comparer([fr],{'Pinnacle':[]},index=index)==[]

@@ -15,6 +15,15 @@ Vocabulaire des marchés (commun à toutes les sources) :
   SETS_ (tennis, volley), POINTS_ (points d'un set au volley)
 - marchés spéciaux du football (score exact, mi-temps/fin de match…) : nom normalisé de Pinnacle
 - JOUEUR:<stat> (paris joueurs, issues PLUS/MOINS, colonne joueur)
+
+Un marché sans champ ``status`` est traité comme ouvert (les spéciaux n'en ont pas).
+Seul un ``status`` présent et différent de ``open`` est ignoré. L'en-tête HTTP ``Age``
+(âge du cache Cloudflare, en secondes) est recopié sur chaque ligne (``age_cache_s``).
+Au-delà de ``PINNACLE_AGE_MAX_MIN`` minutes (10 par défaut), ``cote_perimee`` est vrai
+et la ligne ne sert pas de référence de pari. L'absence de cet en-tête n'est pas une
+péremption (âge 0). La clé guest est lue sur
+https://www.pinnacle.com/config/app.json (``api.haywire.apiKey``), puis
+``PINNACLE_API_KEY``, puis la valeur historique. Elle n'est jamais journalisée.
 """
 from __future__ import annotations
 
@@ -30,17 +39,84 @@ import requests
 from .marge import marge, proba_justes
 
 BASE = "https://guest.api.arcadia.pinnacle.com/0.1"
+URL_CONFIG = "https://www.pinnacle.com/config/app.json"
 HEADERS = {"User-Agent": "Mozilla/5.0 (cotes-value)", "Accept": "application/json",
            "Referer": "https://www.pinnacle.com/"}
 CLE_GUEST_PAR_DEFAUT = "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R"
 ERREURS: list[str] = []
 logger = logging.getLogger(__name__)
 _bloque = False
+_cle_cache: str | None = None
+_cle_resolue = False
+origine_cle = "guest_historique"
+_ages: dict[str, int | None] = {}
+
+
+def oublier_cle() -> None:
+    """Oublie la clé du cycle précédent (à appeler au début de chaque collecte)."""
+    global _cle_cache, _cle_resolue, origine_cle
+    _cle_cache, _cle_resolue, origine_cle = None, False, "guest_historique"
+
+
+def _cle_depuis_config(payload) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+    api = payload.get("api")
+    haywire = api.get("haywire") if isinstance(api, dict) else None
+    cle = haywire.get("apiKey") if isinstance(haywire, dict) else None
+    if isinstance(cle, str) and cle.strip():
+        return cle.strip()
+    return None
+
+
+def _lire_cle_site() -> str | None:
+    """Clé publique du site. Le corps de la réponse n'est jamais journalisé."""
+    try:
+        r = requests.get(URL_CONFIG, headers={"User-Agent": HEADERS["User-Agent"],
+                                              "Accept": "application/json"}, timeout=5)
+        if getattr(r, "status_code", None) != 200:
+            return None
+        return _cle_depuis_config(r.json())
+    except (requests.RequestException, ValueError, TypeError, AttributeError):
+        return None
+
+
+def _cle_dynamique() -> str | None:
+    return _lire_cle_site()
+
+
+def cle_du_cycle() -> str:
+    """Site, puis variable d'environnement, puis valeur historique. Mise en cache pour le cycle."""
+    global _cle_cache, _cle_resolue, origine_cle
+    if _cle_resolue and _cle_cache:
+        return _cle_cache
+    site = _cle_dynamique()
+    if site:
+        _cle_cache, _cle_resolue, origine_cle = site, True, "site"
+        return site
+    env = os.environ.get("PINNACLE_API_KEY", "").strip()
+    if env:
+        _cle_cache, _cle_resolue, origine_cle = env, True, "environnement"
+        return env
+    _cle_cache, _cle_resolue, origine_cle = CLE_GUEST_PAR_DEFAUT, True, "guest_historique"
+    return CLE_GUEST_PAR_DEFAUT
 
 
 def headers() -> dict:
     """Surcharge à l'exécution, y compris pour les sondes ; aucun secret dans les diagnostics."""
-    return {**HEADERS, "X-API-Key": os.environ.get("PINNACLE_API_KEY", "").strip() or CLE_GUEST_PAR_DEFAUT}
+    return {**HEADERS, "X-API-Key": cle_du_cycle()}
+
+
+def age_max_secondes() -> int:
+    """Seuil de fraîcheur du cache Pinnacle. Défaut : 10 minutes. Valeur illisible : le défaut."""
+    brut = os.environ.get("PINNACLE_AGE_MAX_MIN", "10").strip() or "10"
+    try:
+        minutes = int(brut)
+    except ValueError:
+        minutes = 10
+    if minutes < 0:
+        minutes = 10
+    return minutes * 60
 
 
 def _erreur(message: str) -> None:
@@ -48,10 +124,17 @@ def _erreur(message: str) -> None:
         ERREURS.append(message)
         logger.warning("Pinnacle : %s", message)
 
-# identifiant Pinnacle -> nom commun du sport
-SPORTS = {29: "football", 33: "tennis", 4: "basket", 19: "hockey", 15: "football_americain",
-          3: "baseball", 18: "handball", 34: "volley", 27: "rugby", 22: "mma", 6: "boxe",
-          10: "flechettes", 12: "esport", 8: "cricket", 32: "tennis_de_table", 13: "snooker"}
+# identifiant Pinnacle -> nom commun. L'ordre du dictionnaire est l'ordre des requêtes.
+# Vérifié sur GET /sports le 18/10/2026. Retirés (hors ANJ) : esport 12, cricket 8, fléchettes 10.
+# 13 est le hockey sur gazon ; le snooker est 28.
+SPORTS = {
+    29: "football", 33: "tennis", 4: "basket", 19: "hockey",
+    18: "handball", 34: "volley", 27: "rugby", 15: "football_americain",
+    3: "baseball", 22: "mma", 6: "boxe", 32: "tennis_de_table", 28: "snooker",
+    26: "rugby_league", 17: "golf", 9: "curling", 45: "cyclisme",
+    5: "beach_volley", 1: "badminton", 37: "padel", 39: "football_australien",
+    13: "hockey_sur_gazon",
+}
 
 # période Pinnacle -> période commune, par sport (le reste est ignoré)
 PERIODES = {
@@ -64,7 +147,8 @@ PERIODES = {
     "volley": {0: "MATCH", 1: "SET1", 2: "SET2", 3: "SET3"},
     "handball": {0: "MATCH", 1: "MT1"},
     "rugby": {0: "MATCH", 1: "MT1"},
-    "esport": {0: "MATCH", 1: "MAP1", 2: "MAP2", 3: "MAP3"},
+    "rugby_league": {0: "MATCH", 1: "MT1"},
+    "hockey_sur_gazon": {0: "MATCH", 1: "MT1"},
 }
 UNITES = {"Corners": "CORNERS_", "Bookings": "CARTONS_", "Games": "JEUX_", "Points": "POINTS_"}
 
@@ -85,12 +169,15 @@ def _get(path: str, essais: int = 3):
                     _erreur(f"{contexte} : JSON invalide")
                     return None
                 if isinstance(d, list):
+                    _ages[path] = _lire_age(r)
                     return d
                 _erreur(f"{contexte} : liste JSON attendue")
                 return None
             _erreur(f"{contexte} : HTTP {r.status_code}")
-            if r.status_code in (401, 403, 429):
-                _bloque = True                   # pas de rafale sur tous les autres sports du cycle
+            if r.status_code == 403:
+                return None                   # ce sport seulement ; les autres sports du cycle continuent
+            if r.status_code in (401, 429):
+                _bloque = True                # clé refusée ou quota : pas de rafale sur le reste du cycle
                 return None
             if r.status_code != 408 and not 500 <= r.status_code <= 599:
                 return None
@@ -99,6 +186,19 @@ def _get(path: str, essais: int = 3):
         if i + 1 < essais:
             time.sleep(2 * (i + 1))
     return None
+
+
+def _lire_age(r) -> int | None:
+    """Secondes de l'en-tête Age, ou None si l'en-tête manque ou n'est pas un entier positif."""
+    entetes = getattr(r, "headers", None) or {}
+    brut = entetes.get("Age")
+    if brut is None or str(brut).strip() == "":
+        return None
+    try:
+        n = int(str(brut).strip())
+    except (TypeError, ValueError):
+        return None
+    return n if n >= 0 else None
 
 
 def _nombre(x) -> float | None:
@@ -141,6 +241,8 @@ def collecter(sports: dict | None = None) -> list[dict]:
     global _bloque
     ERREURS.clear()
     _bloque = False
+    _ages.clear()
+    oublier_cle()
     sports = sports or SPORTS
     lignes: list[dict] = []
     for sid, sport in sports.items():
@@ -150,10 +252,13 @@ def collecter(sports: dict | None = None) -> list[dict]:
         if not matchups:
             continue
         requete_debut = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        marches = _get(f"/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true") or []
+        chemin_prix = f"/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true"
+        marches = _get(chemin_prix) or []
         maintenant = datetime.now(timezone.utc).isoformat(timespec="seconds")
         if not matchups or not marches:
             continue
+        age = _ages.get(chemin_prix)
+        perimee = age is not None and age > age_max_secondes()
         par_id = {m["id"]: m for m in matchups if isinstance(m, dict)
                   and isinstance(m.get("id"), (str, int)) and not isinstance(m.get("id"), bool)}
         if len(par_id) != len(matchups):
@@ -163,7 +268,8 @@ def collecter(sports: dict | None = None) -> list[dict]:
             if not isinstance(mk, dict):
                 _erreur(f"sport {sid} : marché non objet")
                 continue
-            if mk.get("status") != "open":
+            statut = mk.get("status")
+            if statut is not None and statut != "open":
                 continue
             mid = mk.get("matchupId")
             if not isinstance(mid, (str, int)) or isinstance(mid, bool):
@@ -173,14 +279,17 @@ def collecter(sports: dict | None = None) -> list[dict]:
             if mu is None or mu.get("isLive"):
                 continue
             prix = mk.get("prices")
+            special = mu.get("type") == "special"
             if not isinstance(prix, list) or len(prix) < 2 or any(not isinstance(p, dict) for p in prix):
-                _erreur(f"sport {sid} : liste de prix invalide")
+                if not special:
+                    _erreur(f"sport {sid} : liste de prix invalide")
                 continue
             limites = mk.get("limits")
             maximum = limites[0].get("amount") if isinstance(limites, list) and limites and isinstance(limites[0], dict) else None
             base = {"source": "pinnacle", "sport": sport, "collecte": maintenant,
                     "collecte_debut": requete_debut, "collecte_recue": maintenant,
-                    "mise_max": _nombre(maximum)}
+                    "mise_max": _nombre(maximum),
+                    "age_cache_s": 0 if age is None else age, "cote_perimee": perimee}
             try:
                 if mu.get("type") == "matchup":
                     lignes += _lignes_match(mu, mk, prix, par_id, periodes, base)

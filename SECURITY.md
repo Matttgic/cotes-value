@@ -8,7 +8,7 @@ Ne publiez jamais de clé de compte, de jeton GitHub, de clé privée Web Push o
 
 Les clés des fournisseurs vont dans les secrets GitHub Actions. Les variables `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` restent côté fonction serveur Supabase. Le navigateur n'a besoin d'aucune clé Supabase anon/service role : il utilise l'API de notifications. Seule la clé **publique VAPID** peut lui être transmise.
 
-**Point ouvert :** `cotes/pinnacle.py` conserve la valeur guest historique lorsque `PINNACLE_API_KEY` est vide. Cette exception est signalée par le contrôle de secrets. Pour la retirer sans couper la référence, configurer et valider une clé compatible dans le secret GitHub Actions `PINNACLE_API_KEY`, puis supprimer le secours. Ne pas coller cette clé dans le dépôt ou dans une conversation. Le présent audit ne certifie pas le statut juridique/public de la valeur guest.
+**Point ouvert :** `cotes/pinnacle.py` lit d'abord la clé guest publiée dans `https://www.pinnacle.com/config/app.json` (`api.haywire.apiKey`), puis `PINNACLE_API_KEY`, puis conserve la valeur guest historique si les deux manquent. Cette exception est signalée par le contrôle de secrets. La clé n'est pas écrite dans les diagnostics. Pour retirer le secours embarqué sans couper la référence, configurer et valider une clé compatible dans le secret GitHub Actions `PINNACLE_API_KEY` (ou s'assurer que `app.json` répond), puis supprimer le secours. Ne pas coller cette clé dans le dépôt ou dans une conversation. Le présent audit ne certifie pas le statut juridique/public de la valeur guest.
 
 ## Publication et contrôles
 

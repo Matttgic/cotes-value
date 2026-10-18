@@ -132,6 +132,16 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         fpoly = pool.submit(etape, "polymarket", journal, polymarket.collecter, HORIZON_H)
         fkal = pool.submit(etape, "kalshi", journal, kalshi.collecter, HORIZON_H)
         pin, poly = fpin.result() or [], fpoly.result() or []
+        if pinnacle._cle_resolue:
+            journal["pinnacle_configuration"] = {"mode": pinnacle.origine_cle}
+        ages = [l.get("age_cache_s") for l in pin
+                if isinstance(l, dict) and isinstance(l.get("age_cache_s"), int)
+                and not isinstance(l.get("age_cache_s"), bool)]
+        journal["pinnacle_fraicheur"] = {
+            "seuil_min": pinnacle.age_max_secondes() // 60,
+            "age_max_s": max(ages) if ages else None,
+            "lignes_perimees": sum(1 for l in pin if isinstance(l, dict) and l.get("cote_perimee")),
+        }
         signaler(journal, "pinnacle", list(pinnacle.ERREURS))
         signaler(journal, "polymarket", list(polymarket.ERREURS))
         sports = sports_des(pin + poly)
