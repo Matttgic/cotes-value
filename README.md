@@ -273,3 +273,23 @@ dans un fichier isolé de la branche données, avec délais réels et prix revus
 
 [Configuration, secrets et publication](SECURITY.md) · [Audit consolidé du 17 octobre 2026](docs/audit-final-consolide-2026-10-17.md).
 Le retrait complet de la valeur guest Pinnacle reste conditionné à une configuration de remplacement validée. La revue détaillée de cinq moteurs de sélection reste ouverte ; les rapports ne certifient pas une rentabilité future.
+
+## Règlement sans PulseScore
+
+Les scores viennent de plusieurs sources gratuites, rapprochées par noms d'équipes et heure (`cotes/resultats.py`) :
+
+| Sport | Sources | Contrôle |
+|---|---|---|
+| Football | LiveScore, ESPN, Flashscore (secours) | 99,8 % d'accord sur 2 041 matchs déjà réglés |
+| Basket | LiveScore, ESPN, API-Sports, Flashscore (secours) | ~97 % |
+| Hockey | LiveScore, NHL officiel, ESPN, API-Sports, Flashscore (secours) | 93,6 % (les écarts sont d'anciens scores du temps réglementaire) |
+| Tennis | LiveScore, ESPN, Flashscore (secours) | 96 % |
+| Baseball, football américain | ESPN, Flashscore (secours) | baseball 32/32 |
+| Handball | API-Sports, Flashscore | 56/58 |
+| Volley | Flashscore | 18/18 retrouvés (3 absents) |
+| Rugby | Flashscore | 11/13 |
+
+Une source seule ne règle qu'après 24 h (6 h pour LiveScore, ESPN, API-Sports, NHL). `donnees/resultats_a_saisir.json`
+liste les matchs qu'aucune source ne règle, avec le modèle de saisie de `resultats_manuels.json`. Le journal du
+cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non
+officiels : ils peuvent changer sans préavis.
