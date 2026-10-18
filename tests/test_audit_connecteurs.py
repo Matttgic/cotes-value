@@ -124,6 +124,28 @@ def test_collecte_pinnacle_isole_marche_invalide_et_garde_un_marche_complet(monk
     assert all(l['collecte']==l['collecte_recue'] for l in out) and P.ERREURS
 
 
+def _groupe_special(marche, issues):
+    return [{"cle_marche": "s", "marche": marche, "issue": issue, "cote": 2.1,
+             "match_id": 1, "periode": "MATCH", "ligne": None, "joueur": None} for issue in issues]
+
+
+def test_special_incomplet_ne_recoit_pas_de_proba_juste():
+    for marche, issues in (
+        ("SPECIAL:3-Way Handicap DOM -1", ["Lens (-1)", "Lille (+1)"]),
+        ("SPECIAL:Draw No Bet", ["DOM", "EXT", "NUL"]),
+        ("SPECIAL:Both Teams To Score?", ["Yes", "No", "Maybe"]),
+    ):
+        rows = _groupe_special(marche, issues)
+        P._ajouter_proba_justes(rows)
+        assert all(l["proba_juste"] is None for l in rows)
+
+
+def test_handicap_europeen_complet_garde_une_proba():
+    rows = _groupe_special("SPECIAL:3-Way Handicap DOM -1", ["Lens (-1)", "Draw", "Lille (+1)"])
+    P._ajouter_proba_justes(rows)
+    assert sum(l["proba_juste"] for l in rows) == pytest.approx(1, abs=1e-5)
+
+
 @pytest.mark.parametrize('change',[{'cote':None},{'cote':'abc'},{'cote':True},{'cote':float('inf')},
                                   {'issue':'DOM'},{'ligne':3}])
 def test_cote_ou_composition_invalide_ne_produit_pas_de_proba_juste(change):
@@ -165,6 +187,12 @@ def test_liquidite_inconnue_n_est_pas_inventee(liquidite):
 @pytest.mark.parametrize('date',[None,'invalide','2026-10-17T12:00:00','2026-10-16T12:00:00Z'])
 def test_evenement_hors_horizon_ou_sans_date(date):
     assert not M.dans_horizon({'id':'1','startTime':date},NOW)
+
+
+def test_pagination_polymarket_signale_une_liste_coupee(monkeypatch):
+    monkeypatch.setattr(M, "_get", lambda *a, **k: [{"id": i} for i in range(100)])
+    M.evenements()
+    assert "liste d'événements tronquée (plafond de pagination)" in M.ERREURS
 
 
 def test_date_et_lecture_par_page_ne_sont_pas_remplacees_par_fin_collecte(monkeypatch):

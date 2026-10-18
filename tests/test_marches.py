@@ -105,6 +105,22 @@ def test_pinnacle_specials():
         ("HALF_TIME_FULL_TIME", None, "NUL/DOM"), ("HANDICAP_3", -1.0, "NUL")]
 
 
+def test_pinnacle_dnb_score_inverse_et_handicap_decimal():
+    base = {"domicile": "Lens", "exterieur": "Lille", "periode": "MATCH", "ligne": None}
+    L = harmoniser_pinnacle([
+        {**base, "marche": "SPECIAL:Draw No Bet", "issue": "Lens"},
+        {**base, "marche": "SPECIAL:Correct Score", "issue": "Lille 1, Lens 2"},
+        {**base, "marche": "SPECIAL:3-Way Handicap DOM -1.5", "issue": "Lens (-1.5)"},
+        {**base, "marche": "SPECIAL:3-Way Handicap DOM -1.5", "issue": "Draw (Lens -1.5)"},
+    ])
+    assert [(l["marche"], l["ligne"], l["issue"]) for l in L] == [
+        ("DRAW_NO_BET", None, "DOM"),
+        ("CORRECT_SCORE", None, "2-1"),
+        ("HANDICAP_3", -1.5, "DOM"),
+        ("HANDICAP_3", -1.5, "NUL"),
+    ]
+
+
 def test_double_chance_depuis_le_1n2():
     from cotes.marches import deriver_double_chance
     base = {"match_id": "p1", "periode": "MATCH", "marche": "RESULTAT_1N2", "ligne": None, "cle_marche": "k",

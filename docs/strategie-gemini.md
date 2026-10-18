@@ -20,10 +20,10 @@ conservés lors du correctif du 14 octobre au soir.
 - Les bilans par simulation, bookmaker et cote comptent désormais la sélection
   Gemini, comme le graphique et les fiches de Paris. Le simple ajout d’un bouton
   de Bilan ne suffisait pas à alimenter ces totaux.
-- Les alias de matchs connus à la détection sont reliés entre références et
-  bookmakers, même quand la ligne est écartée car le match est déjà joué.
-  Les mêmes équipes normalisées au même instant apportent un lien supplémentaire.
-  Un nouveau bookmaker ne doit pas reprendre un événement déjà identifié comme joué.
+- Chaque bookmaker français est indépendant : si Winamax, PMU et Betclic
+  cotent mal le même match, chacun peut recevoir sa mise. Deux références du
+  même bookmaker restent une seule mise. Une cote écartée ne sert pas à bloquer
+  un autre bookmaker.
 - Le plafond journalier des rejeux tient compte de toutes les prises admissibles,
   même des matchs hors période affichée. Filtrer la période avant la sélection
   aurait libéré des places et modifié les paris affichés.
@@ -45,6 +45,6 @@ Accès : **Bilan → Gemini Argon** ; **Stratégies → Gemini Argon V1** ;
 sélections exactes pour la période affichée. Les paris d’avant 20 h ne sont pas
 réintégrés dans le bilan prospectif.
 
-Validation : tests de dates, plafonds Paris, invariance aux résultats, ponts entre
-références/bookmakers, comptabilité commune des bilans/courbes/fiches et nombre
+Validation : tests de dates, plafonds Paris, invariance aux résultats, mises
+distinctes par bookmaker, comptabilité commune des bilans/courbes/fiches et nombre
 constant de calculs de sélection pour la navigation.

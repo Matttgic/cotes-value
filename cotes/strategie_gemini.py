@@ -8,8 +8,9 @@ Principe :
 - Edge requis : 2,5 % à 12,0 %.
 - Fenêtre d'anticipation : 30 minutes à 24 heures avant le début du match.
 - Fraîcheur de la référence : <= 10 minutes.
-- Stricte indépendance par événement : 1 seule mise par match (match_id et
-  match_id_reference), tous bookmakers et toutes références confondus.
+- Une mise par bookmaker et par match. Winamax, PMU et Betclic peuvent tous
+  être joués si chacun est mal coté. Deux références du même bookmaker restent
+  une seule mise.
 - Plafond d'exposition : 8 paris maximum par jour (heure de Paris) dans l'ordre
   chronologique réel des détections.
 """
@@ -143,10 +144,11 @@ def motif_refus_gemini(p: dict, depuis: str = GEMINI["debut"]) -> str | None:
 
 @figer_selecteur("gemini")
 def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
-    """Sélectionne au plus un pari par événement sportif, dans l'ordre réel.
+    """Au plus une mise par bookmaker et par match, dans l'ordre réel.
 
     À détection simultanée, priorise l'edge le plus élevé puis la cote la plus
-    basse (minimisation de la variance). Respecte le plafond journalier Europe/Paris.
+    basse. Respecte le plafond journalier Europe/Paris. Un autre bookmaker
+    français qui cote mal le même match est une mise distincte.
     """
     candidats = [p for p in paris if motif_refus_gemini(p, depuis) is None]
     candidats.sort(
@@ -158,8 +160,6 @@ def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
             str(p.get("id") or p.get("match_id") or ""),
         )
     )
-    # Un alias rencontré sur un pari déjà écarté doit aussi être mémorisé.
-    # Sinon W/Pinnacle → W/Polymarket (écarté) → PMU/Polymarket reprend le match.
     parents, utilises, selection, par_jour = {}, {}, set(), Counter()
 
     def racine(cle):
@@ -178,14 +178,15 @@ def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
         return root
 
     for p in candidats:
-        sport = p.get("sport")
-        cles = [("reference", sport, p["reference"], str(p["preuve_prise"]["match_id_reference"]))]
+        sport, book = p.get("sport"), p.get("bookmaker")
+        # Le bookmaker fait partie de chaque clé : un alias ne traverse pas Winamax et PMU.
+        cles = [("reference", sport, book, p["reference"], str(p["preuve_prise"]["match_id_reference"]))]
         if p.get("match_id"):
-            cles.append(("bookmaker", sport, str(p["match_id"])))
+            cles.append(("bookmaker", sport, book, str(p["match_id"])))
         if p.get("domicile") and p.get("exterieur"):
             noms = tuple(sorted(normaliser(p[k])[0] for k in ("domicile", "exterieur")))
             if all(noms):
-                cles.append(("equipes", sport, _heure(p["debut"]).astimezone(timezone.utc), noms))
+                cles.append(("equipes", sport, book, _heure(p["debut"]).astimezone(timezone.utc), noms))
         root = associer(cles)
         jour = _heure(p["detecte"]).astimezone(PARIS).date()
         if utilises.get(root) or par_jour[jour] >= GEMINI["paris_max_jour"]:

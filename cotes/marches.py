@@ -38,7 +38,8 @@ def harmoniser_pinnacle(lignes: list[dict]) -> list[dict]:
         if nom == "Both Teams To Score?":
             nv = ("BOTH_TEAMS_TO_SCORE", None, {"Yes": "YES", "No": "NO"}.get(issue))
         elif nom == "Draw No Bet":
-            nv = ("DRAW_NO_BET", None, issue if issue in ("DOM", "EXT") else None)
+            i = issue if issue in ("DOM", "EXT") else _equipe(issue, dom, ext)
+            nv = ("DRAW_NO_BET", None, i if i in ("DOM", "EXT") else None)
         elif nom == "Double Chance":
             parts = [p.strip() for p in re.split(r"\s+Or\s+", issue or "")]
             codes = [_equipe(p, dom, ext) for p in parts]
@@ -52,17 +53,22 @@ def harmoniser_pinnacle(lignes: list[dict]) -> list[dict]:
                 a, b = _equipe(parts[0], dom, ext), _equipe(parts[1], dom, ext)
                 nv = ("HALF_TIME_FULL_TIME", None, f"{a}/{b}" if a and b else None)
         elif nom.startswith("3-Way Handicap DOM"):
-            h = re.search(r"([-+]\d+)$", nom)
+            h = re.search(r"([-+]?\d+(?:\.\d+)?)$", nom)
             if h:
                 if (issue or "").startswith("Draw"):
                     i = "NUL"
                 else:
-                    i = _equipe(re.sub(r"\s*\([-+]?\d+\)\s*$", "", issue or ""), dom, ext)
+                    i = _equipe(re.sub(r"\s*\([-+]?\d+(?:\.\d+)?\)\s*$", "", issue or ""), dom, ext)
                 nv = ("HANDICAP_3", float(h.group(1)), i)
         elif nom == "Correct Score":
             s = re.match(r"^(.*) (\d+), (.*) (\d+)$", issue or "")
-            if s and s.group(1).lower() == (dom or "").lower():
-                nv = ("CORRECT_SCORE", None, f"{s.group(2)}-{s.group(4)}")
+            if s:
+                gauche, droite = s.group(1).lower(), s.group(3).lower()
+                domicile, exterieur = (dom or "").lower(), (ext or "").lower()
+                if gauche == domicile and droite == exterieur:
+                    nv = ("CORRECT_SCORE", None, f"{s.group(2)}-{s.group(4)}")
+                elif gauche == exterieur and droite == domicile:
+                    nv = ("CORRECT_SCORE", None, f"{s.group(4)}-{s.group(2)}")
         if nv and nv[2]:
             out.append({**l, "marche": nv[0], "ligne": nv[1], "issue": nv[2]})
     return deriver_double_chance(out)

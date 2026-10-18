@@ -20,22 +20,31 @@ def pari(mid="m1", **changes):
     return {**p, **changes}
 
 
-def test_alias_de_reference_sur_pari_ecarte_est_memorise():
+def test_chaque_bookmaker_du_meme_match_est_joue():
     premier = pari(domicile="Paris", exterieur="Lyon")
-    preuve = {**premier["preuve_prise"], "match_id_reference": "poly1"}
-    pont = {**premier, "id": "pont", "reference": "Polymarket", "preuve_prise": preuve,
-            "domicile": "Paris Saint Germain", "detecte": "2026-10-14T18:01:00Z"}
-    autre_book = {**pont, "id": "pmu", "bookmaker": "PMU", "match_id": "pmu|different",
-                  "domicile": "PSG", "detecte": "2026-10-14T18:02:00Z"}
-    assert all(motif_refus_gemini(p) is None for p in (premier,pont,autre_book))
-    assert paris_gemini([autre_book,pont,premier]) == {id(premier)}
+    pmu = pari("pmu", bookmaker="PMU", reference="Polymarket", domicile="Lyon", exterieur="Paris",
+               detecte="2026-10-14T18:01:00Z")
+    betclic = pari("bet", bookmaker="Betclic", detecte="2026-10-14T18:02:00Z")
+    assert paris_gemini([betclic, pmu, premier]) == {id(premier), id(pmu), id(betclic)}
 
 
-def test_deux_references_et_bookmakers_meme_equipes_reste_un_pari():
+def test_deux_references_du_meme_bookmaker_restent_une_mise():
     premier = pari(domicile="Paris", exterieur="Lyon")
-    autre = pari("poly", bookmaker="PMU", reference="Polymarket", domicile="Lyon", exterieur="Paris",
-                 detecte="2026-10-14T18:01:00Z")
-    assert paris_gemini([premier,autre]) == {id(premier)}
+    autre_ref = pari(reference="Polymarket", detecte="2026-10-14T18:01:00Z",
+                     domicile="Paris", exterieur="Lyon")
+    autre_ref = {**autre_ref, "id": "poly",
+                 "preuve_prise": {**autre_ref["preuve_prise"], "match_id_reference": "poly1"}}
+    assert paris_gemini([autre_ref, premier]) == {id(premier)}
+
+
+def test_cote_ecartee_ne_bloque_pas_un_autre_bookmaker():
+    premier = pari(domicile="PSG", exterieur="OL")
+    pont = pari(reference="Polymarket", ecart=0.20, detecte="2026-10-14T18:01:00Z")
+    pont = {**pont, "id": "pont", "preuve_prise": {**pont["preuve_prise"], "match_id_reference": "poly"}}
+    pmu = {**pont, "id": "pmu", "bookmaker": "PMU", "match_id": "pmu|different", "ecart": 0.05,
+           "detecte": "2026-10-14T18:02:00Z"}
+    assert motif_refus_gemini(pont) is not None
+    assert paris_gemini([pmu, pont, premier]) == {id(premier), id(pmu)}
 
 
 def test_resultats_et_ajouts_futurs_ne_rechoisissent_pas_le_passe():
