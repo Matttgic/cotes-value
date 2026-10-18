@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T18:00:41+00:00",
+  "debut": "2026-10-18T18:02:59+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 9.1,
+    "secondes": 10.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,33 +12,33 @@
     ]
    },
    "pinnacle": {
-    "secondes": 36.6,
+    "secondes": 28.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 26 matchups : HTTP 403",
      "sport 5 matchups : HTTP 403",
-     "sport 1 matchups : HTTP 403"
+     "sport 1 matchups : HTTP 403",
+     "sport 13 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 5.2,
+    "secondes": 5.1,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.5,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 12.6,
+    "secondes": 5.2,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 17.4,
+    "secondes": 6.2,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 12.8,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 17.5,
+    "secondes": 20.1,
     "ok": true
    },
    "netbet": {
@@ -50,7 +50,7 @@
     ]
    },
    "pulsescore": {
-    "secondes": 21.5,
+    "secondes": 22.4,
     "ok": true,
     "degrade": true,
     "erreurs": {
@@ -69,11 +69,11 @@
     "desactive": true
    },
    "association": {
-    "secondes": 4.6,
+    "secondes": 8.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.4,
+    "secondes": 0.8,
     "ok": true
    },
    "cotes_cloture": {
@@ -92,8 +92,8 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 809,
-   "lignes_perimees": 5473,
+   "age_max_s": 891,
+   "lignes_perimees": 5453,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -107,10 +107,9 @@
     "head_200": 46,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "choisi_fixe": 8,
-    "reprise_403": 5,
-    "reprise_403_ok": 1
+    "choisi_autre": 8,
+    "choisi_fixe": 7,
+    "reprise_403": 3
    }
   },
   "winamax_source": "auto",
@@ -126,28 +125,26 @@
    "manques": [],
    "couverture": 1.0,
    "selections_communes": 4711,
-   "selections_egales": 4626,
-   "accord_cotes": 0.982,
+   "selections_egales": 4605,
+   "accord_cotes": 0.9775,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
    "pret_a_basculer": false,
    "diagnostic": {
     "cotes_differentes": {
-     "mouvement": 80,
-     "issues_permutees": 5
+     "cache_perime": 106
     },
     "cotes_differentes_par_marche": {
-     "mouvement": {
+     "cache_perime": {
+      "RESULTAT_1N2|MATCH": 3,
+      "TOTAL_DOM|MATCH": 9,
+      "TOTAL_EXT|MATCH": 6,
+      "CORRECT_SCORE|MATCH": 24,
       "DOUBLE_CHANCE|MATCH": 1,
-      "BOTH_TEAMS_TO_SCORE|MATCH": 2,
-      "TOTAL_DOM|MATCH": 4,
-      "TOTAL_EXT|MATCH": 5,
-      "CORRECT_SCORE|MATCH": 14,
+      "TOTAL|MATCH": 6,
       "JEUX_TOTAL|MATCH": 53,
+      "RESULTAT_1N2|TEMPS_REG": 3,
       "DOUBLE_CHANCE|TEMPS_REG": 1
-     },
-     "issues_permutees": {
-      "CORRECT_SCORE|MATCH": 5
      }
     },
     "absentes_du_direct": {
@@ -254,124 +251,124 @@
     },
     "exemples": [
      {
-      "cause": "periode_differente",
+      "cause": "cache_perime",
       "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT1",
+      "marche": "RESULTAT_1N2",
+      "periode": "MATCH",
+      "ligne": null,
+      "issue": "DOM",
+      "cote_pulsescore": 5.9,
+      "cote_direct": 6.0
+     },
+     {
+      "cause": "cache_perime",
+      "sport": "football",
+      "marche": "RESULTAT_1N2",
+      "periode": "MATCH",
+      "ligne": null,
+      "issue": "NUL",
+      "cote_pulsescore": 4.45,
+      "cote_direct": 4.6
+     },
+     {
+      "cause": "cache_perime",
+      "sport": "football",
+      "marche": "RESULTAT_1N2",
+      "periode": "MATCH",
+      "ligne": null,
+      "issue": "EXT",
+      "cote_pulsescore": 1.38,
+      "cote_direct": 1.4
+     },
+     {
+      "cause": "cache_perime",
+      "sport": "football",
+      "marche": "TOTAL_DOM",
+      "periode": "MATCH",
       "ligne": 0.5,
       "issue": "PLUS",
-      "cote_pulsescore": 1.24,
-      "cote_direct": null
+      "cote_pulsescore": 1.53,
+      "cote_direct": 1.55
      },
      {
-      "cause": "periode_differente",
+      "cause": "cache_perime",
       "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT1",
+      "marche": "TOTAL_DOM",
+      "periode": "MATCH",
       "ligne": 0.5,
       "issue": "MOINS",
-      "cote_pulsescore": 3.18,
-      "cote_direct": null
+      "cote_pulsescore": 1.98,
+      "cote_direct": 2.02
      },
      {
-      "cause": "periode_differente",
+      "cause": "cache_perime",
       "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT1",
+      "marche": "TOTAL_DOM",
+      "periode": "MATCH",
       "ligne": 1.5,
-      "issue": "PLUS",
-      "cote_pulsescore": 2.28,
-      "cote_direct": null
-     },
-     {
-      "cause": "periode_differente",
-      "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT1",
-      "ligne": 1.5,
-      "issue": "MOINS",
-      "cote_pulsescore": 1.44,
-      "cote_direct": null
-     },
-     {
-      "cause": "periode_differente",
-      "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT1",
-      "ligne": 2.5,
-      "issue": "PLUS",
-      "cote_pulsescore": 4.1,
-      "cote_direct": null
-     },
-     {
-      "cause": "periode_differente",
-      "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT1",
-      "ligne": 2.5,
-      "issue": "MOINS",
-      "cote_pulsescore": 1.09,
-      "cote_direct": null
-     },
-     {
-      "cause": "periode_differente",
-      "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT2",
-      "ligne": 0.5,
-      "issue": "PLUS",
-      "cote_pulsescore": 1.15,
-      "cote_direct": null
-     },
-     {
-      "cause": "periode_differente",
-      "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT2",
-      "ligne": 0.5,
-      "issue": "MOINS",
-      "cote_pulsescore": 4.2,
-      "cote_direct": null
-     },
-     {
-      "cause": "periode_differente",
-      "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT2",
-      "ligne": 1.5,
-      "issue": "PLUS",
-      "cote_pulsescore": 1.84,
-      "cote_direct": null
-     },
-     {
-      "cause": "periode_differente",
-      "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT2",
-      "ligne": 1.5,
-      "issue": "MOINS",
-      "cote_pulsescore": 1.67,
-      "cote_direct": null
-     },
-     {
-      "cause": "periode_differente",
-      "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT2",
-      "ligne": 2.5,
       "issue": "PLUS",
       "cote_pulsescore": 3.22,
-      "cote_direct": null
+      "cote_direct": 3.35
      },
      {
-      "cause": "periode_differente",
+      "cause": "cache_perime",
       "sport": "football",
-      "marche": "TOTAL",
-      "periode": "MT2",
+      "marche": "TOTAL_DOM",
+      "periode": "MATCH",
+      "ligne": 2.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 14.0,
+      "cote_direct": 14.5
+     },
+     {
+      "cause": "cache_perime",
+      "sport": "football",
+      "marche": "TOTAL_EXT",
+      "periode": "MATCH",
+      "ligne": 0.5,
+      "issue": "MOINS",
+      "cote_pulsescore": 6.4,
+      "cote_direct": 6.5
+     },
+     {
+      "cause": "cache_perime",
+      "sport": "football",
+      "marche": "TOTAL_EXT",
+      "periode": "MATCH",
+      "ligne": 1.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 1.42,
+      "cote_direct": 1.44
+     },
+     {
+      "cause": "cache_perime",
+      "sport": "football",
+      "marche": "TOTAL_EXT",
+      "periode": "MATCH",
+      "ligne": 1.5,
+      "issue": "MOINS",
+      "cote_pulsescore": 2.1,
+      "cote_direct": 2.15
+     },
+     {
+      "cause": "cache_perime",
+      "sport": "football",
+      "marche": "TOTAL_EXT",
+      "periode": "MATCH",
+      "ligne": 2.5,
+      "issue": "PLUS",
+      "cote_pulsescore": 2.43,
+      "cote_direct": 2.47
+     },
+     {
+      "cause": "cache_perime",
+      "sport": "football",
+      "marche": "TOTAL_EXT",
+      "periode": "MATCH",
       "ligne": 2.5,
       "issue": "MOINS",
-      "cote_pulsescore": 1.18,
-      "cote_direct": null
+      "cote_pulsescore": 1.36,
+      "cote_direct": 1.38
      }
     ]
    }
@@ -425,8 +422,8 @@
      "match": "Juventus – Lazio",
      "source": "PMU",
      "cote_olybet": 1.61,
-     "cote_reference": 1.53,
-     "ecart_relatif": 0.0523,
+     "cote_reference": 1.54,
+     "ecart_relatif": 0.0455,
      "aberrant": false
     },
     {
@@ -486,38 +483,6 @@
      "aberrant": false
     },
     {
-     "match": "Lyon – Nice",
-     "source": "Pinnacle",
-     "cote_netbet": 1.75,
-     "cote_reference": 1.901,
-     "ecart_relatif": 0.0794,
-     "aberrant": false
-    },
-    {
-     "match": "Lyon – Nice",
-     "source": "PMU",
-     "cote_netbet": 1.75,
-     "cote_reference": 1.77,
-     "ecart_relatif": 0.0113,
-     "aberrant": false
-    },
-    {
-     "match": "Real Madrid – Séville",
-     "source": "Pinnacle",
-     "cote_netbet": 1.19,
-     "cote_reference": 1.256,
-     "ecart_relatif": 0.0528,
-     "aberrant": false
-    },
-    {
-     "match": "Real Madrid – Séville",
-     "source": "PMU",
-     "cote_netbet": 1.19,
-     "cote_reference": 1.21,
-     "ecart_relatif": 0.0165,
-     "aberrant": false
-    },
-    {
      "match": "Juventus – Lazio Rome",
      "source": "Pinnacle",
      "cote_netbet": 1.57,
@@ -529,8 +494,40 @@
      "match": "Juventus – Lazio Rome",
      "source": "PMU",
      "cote_netbet": 1.57,
-     "cote_reference": 1.53,
-     "ecart_relatif": 0.0261,
+     "cote_reference": 1.54,
+     "ecart_relatif": 0.0195,
+     "aberrant": false
+    },
+    {
+     "match": "Lyon – Nice",
+     "source": "Pinnacle",
+     "cote_netbet": 1.78,
+     "cote_reference": 1.901,
+     "ecart_relatif": 0.0636,
+     "aberrant": false
+    },
+    {
+     "match": "Lyon – Nice",
+     "source": "PMU",
+     "cote_netbet": 1.78,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.022,
+     "aberrant": false
+    },
+    {
+     "match": "Burgos CF – Sabadell",
+     "source": "Pinnacle",
+     "cote_netbet": 2.57,
+     "cote_reference": 2.92,
+     "ecart_relatif": 0.1199,
+     "aberrant": false
+    },
+    {
+     "match": "Burgos CF – Sabadell",
+     "source": "PMU",
+     "cote_netbet": 2.57,
+     "cote_reference": 2.6,
+     "ecart_relatif": 0.0115,
      "aberrant": false
     }
    ],
@@ -546,11 +543,11 @@
    ]
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T18:00:51+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T18:01:06+00:00",
-   "books_premiere_lecture": "2026-10-18T16:25:27+00:00",
-   "books_derniere_lecture": "2026-10-18T18:01:56+00:00",
-   "ecart_enveloppe_secondes": 5739.0
+   "pinnacle_premiere_lecture": "2026-10-18T18:03:09+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T18:03:16+00:00",
+   "books_premiere_lecture": "2026-10-18T17:24:20+00:00",
+   "books_derniere_lecture": "2026-10-18T18:04:10+00:00",
+   "ecart_enveloppe_secondes": 2336.0
   },
   "smarkets_cache": {
    "reutilise": false,
@@ -559,10 +556,10 @@
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 516,
-   "a_verifier": 26,
+   "conforme": 523,
+   "a_verifier": 19,
    "non_conforme": 8,
-   "mesures": 14887,
+   "mesures": 14984,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -571,40 +568,27 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T17:25:21+00:00"
   },
-  "fin": "2026-10-18T18:02:05+00:00",
+  "fin": "2026-10-18T18:04:25+00:00",
   "requetes_pulsescore": {
    "betclic": 11,
    "orbitxch": 13
   },
   "cotes": {
-   "francaises": 40290,
-   "pinnacle": 95917,
-   "betfair": 10726,
-   "polymarket": 12991,
+   "francaises": 40375,
+   "pinnacle": 95873,
+   "betfair": 10787,
+   "polymarket": 12987,
    "smarkets": 0
   },
-  "matchs_francais": 753,
+  "matchs_francais": 759,
   "opportunites": 17,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "requetes_par_mois": {
-  "2026-10": 230024
+  "2026-10": 230048
  },
  "historique": [
-  {
-   "debut": "2026-10-17T16:15:39+00:00",
-   "mode": "complet",
-   "opportunites": 17,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "winamax": 21,
-    "betclic": 22,
-    "unibet-fr": 24,
-    "pmu": 18,
-    "orbitxch": 21
-   }
-  },
   {
    "debut": "2026-10-17T16:22:03+00:00",
    "mode": "complet",
@@ -3174,6 +3158,16 @@
   },
   {
    "debut": "2026-10-18T18:00:41+00:00",
+   "mode": "complet",
+   "opportunites": 17,
+   "nouveaux_paris": 0,
+   "requetes_pulsescore": {
+    "betclic": 11,
+    "orbitxch": 13
+   }
+  },
+  {
+   "debut": "2026-10-18T18:02:59+00:00",
    "mode": "complet",
    "opportunites": 17,
    "nouveaux_paris": 0,
