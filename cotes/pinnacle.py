@@ -17,13 +17,16 @@ Vocabulaire des marchés (commun à toutes les sources) :
 - JOUEUR:<stat> (paris joueurs, issues PLUS/MOINS, colonne joueur)
 
 Un marché sans champ ``status`` est traité comme ouvert (les spéciaux n'en ont pas).
-Seul un ``status`` présent et différent de ``open`` est ignoré. L'en-tête HTTP ``Age``
-(âge du cache Cloudflare, en secondes) est recopié sur chaque ligne (``age_cache_s``).
-Au-delà de ``PINNACLE_AGE_MAX_MIN`` minutes (10 par défaut), ``cote_perimee`` est vrai
-et la ligne ne sert pas de référence de pari. L'absence de cet en-tête n'est pas une
-péremption (âge 0). La clé guest est lue sur
+Seul un ``status`` présent et différent de ``open`` est ignoré. Le délai depuis le
+réchauffeur ne compte comme âge que s'il a renouvelé le cache (``fresh``). Sinon l'âge
+est l'en-tête HTTP ``Age`` de la lecture, ou à défaut ``age_s`` vu à Paris. Au-delà de
+``PINNACLE_AGE_MAX_MIN`` minutes (10 par défaut), ou si aucune de ces mesures n'existe,
+``cote_perimee`` est vrai et la cote ne sert pas de référence. La clé guest est lue sur
 https://www.pinnacle.com/config/app.json (``api.haywire.apiKey``), puis
 ``PINNACLE_API_KEY``, puis la valeur historique. Elle n'est jamais journalisée.
+``PINNACLE_RECHAUFFEUR_URL`` et ``PINNACLE_RECHAUFFEUR_SECRET`` appellent la fonction
+Supabase qui remplit le cache Cloudflare depuis Paris. ``PINNACLE_PROXY_URL`` peut
+remplacer l'hôte de l'API guest.
 """
 from __future__ import annotations
 
@@ -50,6 +53,7 @@ _cle_cache: str | None = None
 _cle_resolue = False
 origine_cle = "guest_historique"
 _ages: dict[str, int | None] = {}
+_plans: dict[int, dict] = {}
 
 
 def oublier_cle() -> None:
@@ -153,6 +157,67 @@ PERIODES = {
 UNITES = {"Corners": "CORNERS_", "Bookings": "CARTONS_", "Games": "JEUX_", "Points": "POINTS_"}
 
 
+def base_api() -> str:
+    """Hôte des lectures. PINNACLE_PROXY_URL, s'il est défini, remplace l'API guest."""
+    brut = os.environ.get("PINNACLE_PROXY_URL", "").strip().rstrip("/")
+    if brut.startswith("https://") or brut.startswith("http://"):
+        return brut
+    return BASE
+
+
+def _chemin_valide(sid: int, genre: str, chemin) -> bool:
+    if not isinstance(chemin, str) or "://" in chemin or ".." in chemin or not chemin.startswith("/"):
+        return False
+    return chemin.startswith(f"/sports/{sid}/{genre}")
+
+
+def _chemin_matchups(sid: int) -> str:
+    chemin = (_plans.get(sid) or {}).get("matchups")
+    if _chemin_valide(sid, "matchups", chemin):
+        return chemin
+    return f"/sports/{sid}/matchups?withSpecials=true"
+
+
+def _chemin_marches(sid: int) -> str:
+    chemin = (_plans.get(sid) or {}).get("markets")
+    if _chemin_valide(sid, "markets/straight", chemin):
+        return chemin
+    return f"/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true"
+
+
+def _demander_rechauffe(sports: dict) -> None:
+    """Demande à Paris de remplir le cache Cloudflare. Un échec laisse les URL habituelles."""
+    global _plans
+    _plans = {}
+    url = os.environ.get("PINNACLE_RECHAUFFEUR_URL", "").strip()
+    secret = os.environ.get("PINNACLE_RECHAUFFEUR_SECRET", "").strip()
+    if not url or not secret:
+        return
+    try:
+        r = requests.post(url, json={"sports": [int(s) for s in sports], "key": cle_du_cycle()},
+                          headers={"x-region": "eu-west-3", "x-secret": secret,
+                                   "Content-Type": "application/json"}, timeout=60)
+        if getattr(r, "status_code", None) != 200:
+            logger.warning("Pinnacle : réchauffeur indisponible")
+            return
+        payload = r.json()
+    except (requests.RequestException, ValueError, TypeError, AttributeError):
+        logger.warning("Pinnacle : réchauffeur indisponible")
+        return
+    if not isinstance(payload, dict):
+        logger.warning("Pinnacle : réchauffeur indisponible")
+        return
+    plans: dict[int, dict] = {}
+    for cle, plan in payload.items():
+        try:
+            sid = int(cle)
+        except (TypeError, ValueError):
+            continue
+        if isinstance(plan, dict):
+            plans[sid] = plan
+    _plans = plans
+
+
 def _get(path: str, essais: int = 3):
     global _bloque
     if _bloque:
@@ -161,7 +226,7 @@ def _get(path: str, essais: int = 3):
     contexte = f"sport {m[1]} {m[2]}" if m else "requête"
     for i in range(essais):
         try:
-            r = requests.get(BASE + path, headers=headers(), timeout=90)
+            r = requests.get(base_api() + path, headers=headers(), timeout=90)
             if r.status_code == 200:
                 try:
                     d = r.json()
@@ -186,6 +251,49 @@ def _get(path: str, essais: int = 3):
         if i + 1 < essais:
             time.sleep(2 * (i + 1))
     return None
+
+
+def _instant(valeur) -> datetime | None:
+    if not isinstance(valeur, str) or not valeur.strip():
+        return None
+    try:
+        d = datetime.fromisoformat(valeur.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=timezone.utc)
+    return d.astimezone(timezone.utc)
+
+
+def _entier_age(valeur) -> int | None:
+    if isinstance(valeur, bool) or not isinstance(valeur, int) or valeur < 0:
+        return None
+    return valeur
+
+
+def _age_ligne(path: str, sid: int, maintenant: datetime) -> tuple[int | None, bool]:
+    """Âge en secondes et péremption.
+
+    ``now - t`` seulement si le réchauffeur a renouvelé cette URL (``fresh``).
+    Sinon : en-tête Age de la lecture, puis ``age_s`` annoncé. Rien de connu : périmé.
+    """
+    candidats: list[int] = []
+    entete = _ages[path] if path in _ages else None
+    if _entier_age(entete) is not None:
+        candidats.append(entete)
+    plan = _plans.get(sid) or {}
+    if plan.get("markets") == path and plan.get("fresh") is True:
+        instant = _instant(plan.get("t"))
+        if instant is not None:
+            candidats.append(max(0, int((maintenant - instant).total_seconds())))
+    elif plan.get("markets") == path:
+        annonce = _entier_age(plan.get("age_s"))
+        if annonce is not None:
+            candidats.append(annonce)
+    if not candidats:
+        return None, True
+    age = max(candidats)
+    return age, age > age_max_secondes()
 
 
 def _lire_age(r) -> int | None:
@@ -244,21 +352,22 @@ def collecter(sports: dict | None = None) -> list[dict]:
     _ages.clear()
     oublier_cle()
     sports = sports or SPORTS
+    _demander_rechauffe(sports)
     lignes: list[dict] = []
     for sid, sport in sports.items():
-        matchups = _get(f"/sports/{sid}/matchups?withSpecials=true") or []
+        matchups = _get(_chemin_matchups(sid)) or []
         if _bloque:
             break
         if not matchups:
             continue
         requete_debut = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        chemin_prix = f"/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true"
+        chemin_prix = _chemin_marches(sid)
         marches = _get(chemin_prix) or []
-        maintenant = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        maintenant_dt = datetime.now(timezone.utc)
+        maintenant = maintenant_dt.isoformat(timespec="seconds")
         if not matchups or not marches:
             continue
-        age = _ages.get(chemin_prix)
-        perimee = age is not None and age > age_max_secondes()
+        age, perimee = _age_ligne(chemin_prix, sid, maintenant_dt)
         par_id = {m["id"]: m for m in matchups if isinstance(m, dict)
                   and isinstance(m.get("id"), (str, int)) and not isinstance(m.get("id"), bool)}
         if len(par_id) != len(matchups):
@@ -289,7 +398,7 @@ def collecter(sports: dict | None = None) -> list[dict]:
             base = {"source": "pinnacle", "sport": sport, "collecte": maintenant,
                     "collecte_debut": requete_debut, "collecte_recue": maintenant,
                     "mise_max": _nombre(maximum),
-                    "age_cache_s": 0 if age is None else age, "cote_perimee": perimee}
+                    "age_cache_s": age, "cote_perimee": perimee}
             try:
                 if mu.get("type") == "matchup":
                     lignes += _lignes_match(mu, mk, prix, par_id, periodes, base)

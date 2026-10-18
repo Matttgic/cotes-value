@@ -19,7 +19,11 @@ def diagnostics_isoles(monkeypatch):
         module.ERREURS.clear()
         monkeypatch.setattr(module,'_bloque',False)
     P._ages.clear()
+    P._plans.clear()
     P.oublier_cle()
+    monkeypatch.delenv('PINNACLE_RECHAUFFEUR_URL', raising=False)
+    monkeypatch.delenv('PINNACLE_RECHAUFFEUR_SECRET', raising=False)
+    monkeypatch.delenv('PINNACLE_PROXY_URL', raising=False)
     monkeypatch.setattr(P,'_cle_dynamique',lambda: None)
     yield
     P.ERREURS.clear();M.ERREURS.clear()
@@ -100,8 +104,13 @@ def test_configuration_pinnacle_dynamique_et_fichiers_env_proteges(monkeypatch):
     assert r.stdout.splitlines()==['.env','.env.local']
     exemple=(racine/'.env.example').read_text()
     assert 'PINNACLE_API_KEY=' in exemple and 'PINNACLE_AGE_MAX_MIN=' in exemple
+    assert 'PINNACLE_RECHAUFFEUR_URL=' in exemple and 'PINNACLE_RECHAUFFEUR_SECRET=' in exemple
+    assert 'PINNACLE_PROXY_URL=' in exemple
     for wf in ['collecte.yml','sonde-live.yml','verif.yml']:
-        assert 'PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}' in (racine/'.github/workflows'/wf).read_text()
+        texte=(racine/'.github/workflows'/wf).read_text()
+        assert 'PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}' in texte
+        assert 'PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}' in texte
+        assert 'PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}' in texte
 
 
 @pytest.mark.parametrize('prix,attendu',[(150,2.5),(-200,1.5),('150',2.5),
@@ -334,7 +343,7 @@ def test_special_sans_statut_survit_et_prix_unique_silencieux(monkeypatch):
     out=P.collecter({29:'football'})
     assert {l['marche'] for l in out}>={'SPECIAL:Both Teams To Score?','VAINQUEUR'}
     assert not any('liste de prix invalide' in e for e in P.ERREURS)
-    assert all(l['age_cache_s']==0 and l['cote_perimee'] is False for l in out)
+    assert all(l['age_cache_s'] is None and l['cote_perimee'] is True for l in out)
     from cotes.marches import harmoniser_pinnacle
     assert any(l['marche']=='BOTH_TEAMS_TO_SCORE' for l in harmoniser_pinnacle(out))
 
@@ -361,9 +370,9 @@ def test_age_http_perime_frais_ou_absent(monkeypatch):
     frais=lire('600')
     assert frais and all(l['cote_perimee'] is False and l['age_cache_s']==600 for l in frais)
     inconnu=lire(None)
-    assert inconnu and all(l['cote_perimee'] is False and l['age_cache_s']==0 for l in inconnu)
+    assert inconnu and all(l['cote_perimee'] is True and l['age_cache_s'] is None for l in inconnu)
     illisible=lire('abc')
-    assert illisible and all(l['age_cache_s']==0 and l['cote_perimee'] is False for l in illisible)
+    assert illisible and all(l['age_cache_s'] is None and l['cote_perimee'] is True for l in illisible)
 
 
 def test_cle_du_site_prime_sans_etre_journalisee(monkeypatch, caplog):
@@ -423,3 +432,120 @@ def test_perimetre_anj_et_cote_perimee_ne_declenchent_pas_de_pari():
         fr=ligne(marche=marche, libelle=libelle, cote=2.2)
         index={'Pinnacle':{fr['match_id']:{cle(fr):{**brut,'proba_juste':.55,'cote':1.8}}}}
         assert comparer([fr],{'Pinnacle':[]},index=index)==[]
+
+
+def test_age_max_entete_et_horodatage_rechauffeur():
+    maintenant=datetime(2026,10,18,2,tzinfo=timezone.utc)
+    chemin='/sports/29/markets/straight?withSpecials=true'
+    P._ages[chemin]=30
+    P._plans[29]={'markets':chemin,'fresh':True,'t':(maintenant-timedelta(seconds=90)).isoformat()}
+    age,perime=P._age_ligne(chemin,29,maintenant)
+    assert age==90 and perime is False
+    P._ages[chemin]=700
+    age,perime=P._age_ligne(chemin,29,maintenant)
+    assert age==700 and perime is True
+    # Un HIT sans Age ne devient pas frais parce que le réchauffeur vient de répondre.
+    P._ages[chemin]=None
+    P._plans[29]={'markets':chemin,'fresh':False,'age_s':None,
+                  't':maintenant.isoformat()}
+    age,perime=P._age_ligne(chemin,29,maintenant)
+    assert age is None and perime is True
+    P._plans[29]['age_s']=290
+    age,perime=P._age_ligne(chemin,29,maintenant)
+    assert age==290 and perime is False
+    P._plans[29]['age_s']=700
+    age,perime=P._age_ligne(chemin,29,maintenant)
+    assert age==700 and perime is True
+    P._ages['/sports/29/markets/straight']=None
+    P._plans.clear()
+    age,perime=P._age_ligne('/sports/29/markets/straight',29,maintenant)
+    assert age is None and perime is True
+
+
+def test_rechauffeur_impose_les_chemins_et_un_age_sans_entete(monkeypatch,caplog):
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    monkeypatch.setattr(P,'_cle_dynamique',lambda: 'cle-de-cycle')
+    vu={}
+    def post(url, json=None, headers=None, timeout=None):
+        vu.update(url=url, corps=json, headers=headers, timeout=timeout)
+        return Reponse({'29':{
+            'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
+            'markets':'/sports/29/markets/straight?withSpecials=true',
+            't':datetime.now(timezone.utc).isoformat(),
+            'cache':'MISS','fresh':True,'age_s':None,
+        }})
+    urls=[]
+    def get(url, **kw):
+        urls.append(url)
+        if 'matchups' in url:
+            return Reponse([matchup()])
+        return Reponse([marche_pin()])
+    monkeypatch.setattr(P.requests,'post',post)
+    monkeypatch.setattr(P.requests,'get',get)
+    out=P.collecter({29:'football'})
+    assert vu['url']=='https://exemple.test/rechauffe' and vu['timeout']==60
+    assert vu['headers']['x-region']=='eu-west-3' and vu['headers']['x-secret']=='secret-rechauffe'
+    assert vu['corps']=={'sports':[29],'key':'cle-de-cycle'}
+    assert any(u.endswith('/sports/29/matchups?withSpecials=true&_=abc') for u in urls)
+    assert any(u.endswith('/sports/29/markets/straight?withSpecials=true') for u in urls)
+    assert out and all(l['cote_perimee'] is False and 0<=l['age_cache_s']<30 for l in out)
+    assert 'cle-de-cycle' not in caplog.text+json.dumps(P.ERREURS)
+    assert 'secret-rechauffe' not in caplog.text+json.dumps(P.ERREURS)
+
+
+def test_hit_sans_age_reste_perime_et_age_s_est_utilise(monkeypatch):
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    monkeypatch.setattr(P,'_cle_dynamique',lambda: 'cle-de-cycle')
+    plans=[{'29':{'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
+                  'markets':'/sports/29/markets/straight?withSpecials=true',
+                  't':datetime.now(timezone.utc).isoformat(),'cache':'HIT','fresh':False,'age_s':None}},
+           {'29':{'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
+                  'markets':'/sports/29/markets/straight?withSpecials=true',
+                  't':datetime.now(timezone.utc).isoformat(),'cache':'HIT','fresh':False,'age_s':290}}]
+    monkeypatch.setattr(P.requests,'post',lambda *a, **k: Reponse(plans.pop(0)))
+    monkeypatch.setattr(P.requests,'get',lambda url, **kw: (
+        Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])))
+    inconnu=P.collecter({29:'football'})
+    assert inconnu and all(l['cote_perimee'] is True and l['age_cache_s'] is None for l in inconnu)
+    connu=P.collecter({29:'football'})
+    assert connu and all(l['cote_perimee'] is False and l['age_cache_s']==290 for l in connu)
+
+
+def test_rechauffeur_en_panne_garde_les_url_habituelles(monkeypatch,caplog):
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    def post(*a, **k):
+        raise requests.Timeout('secret-rechauffe dans le message')
+    urls=[]
+    def get(url, **kw):
+        urls.append(url)
+        if 'matchups' in url:
+            return Reponse([matchup()], headers={'Age':'12'})
+        return Reponse([marche_pin()], headers={'Age':'12'})
+    monkeypatch.setattr(P.requests,'post',post)
+    monkeypatch.setattr(P.requests,'get',get)
+    out=P.collecter({29:'football'})
+    assert any(u.endswith('/sports/29/matchups?withSpecials=true') for u in urls)
+    assert any(u.endswith('/sports/29/markets/straight?primaryOnly=false&withSpecials=true') for u in urls)
+    assert out and all(l['age_cache_s']==12 and l['cote_perimee'] is False for l in out)
+    assert 'secret-rechauffe' not in caplog.text+json.dumps(P.ERREURS)
+
+
+def test_chemin_rechauffe_invalide_et_proxy(monkeypatch):
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    monkeypatch.setenv('PINNACLE_PROXY_URL','https://proxy.exemple.test/pinnacle/')
+    monkeypatch.setattr(P,'_cle_dynamique',lambda: 'cle-de-cycle')
+    monkeypatch.setattr(P.requests,'post',lambda *a, **k: Reponse({'29':{
+        'matchups':'https://evil.exemple/vol','markets':'/sports/29/markets/straight?primaryOnly=false',
+        't':datetime.now(timezone.utc).isoformat(),'cache':'MISS'}}))
+    urls=[]
+    monkeypatch.setattr(P.requests,'get',lambda url, **kw: urls.append(url) or (
+        Reponse([matchup()], headers={'Age':'4'}) if 'matchups' in url else Reponse([marche_pin()], headers={'Age':'4'})))
+    out=P.collecter({29:'football'})
+    assert urls[0]=='https://proxy.exemple.test/pinnacle/sports/29/matchups?withSpecials=true'
+    assert any(u.endswith('/sports/29/markets/straight?primaryOnly=false') for u in urls)
+    assert not any('evil.exemple' in u for u in urls)
+    assert out and all(l['age_cache_s']==4 and l['cote_perimee'] is False for l in out)
