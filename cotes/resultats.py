@@ -41,10 +41,10 @@ SOURCES_MIN = 2
 MAJORITE_MIN = 3
 # une seule source suffit si elle est très fiable et que le match a commencé depuis au moins 6 heures
 # (tennis : ESPN est souvent la seule à donner les sets)
-SOURCES_FIABLES = {"espn", "orbitxch", "draftkings", "apisports", "nhl_officiel"}
+SOURCES_FIABLES = {"espn", "orbitxch", "draftkings", "apisports", "nhl_officiel", "livescore"}
 # tennis : Betfair et PMU gardent un score en cours de match (sets, voire points) sur des matchs finis
 TENNIS_EXCLUES = {"orbitxch", "pmu"}
-TENNIS_FIABLES = {"espn"}                         # seule source unique acceptée (Betfair : score figé)
+TENNIS_FIABLES = {"espn", "livescore"}                         # seule source unique acceptée (Betfair : score figé)
 DELAI_SOURCE_UNIQUE_H = 6
 # n'importe quel validateur seul (PulseScore ne liste que les matchs marqués terminés), 24 h après le début :
 # un score figé en cours de match aurait été corrigé depuis. Vérifié sur les résultats cherchés à la main
@@ -624,7 +624,7 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
     if len({_sans_zeros_finaux(r["periodes"]) for r in avec_periodes}) > 1:
         # sources en désaccord sur les périodes (détail différent, quart-temps ou mi-temps…) : celles d'une
         # source fiable (ESPN, API-Sports), sinon on s'en passe
-        avec_periodes = [r for r in avec_periodes if r["source"] in ("nhl_officiel", "espn", "apisports")][:1]
+        avec_periodes = [r for r in avec_periodes if r["source"] in ("nhl_officiel", "espn", "apisports", "livescore")][:1]
     corners = [r["corners"] for r in trouves if r["corners"] is not None and r["corners"] != (0, 0)]
     base = avec_periodes[0] if avec_periodes else None
     return {"sport": p["sport"], "score": score, "final": True,
@@ -669,3 +669,33 @@ def diagnostic(p: dict, enregistrements: list[dict], maintenant: datetime | None
             "sources": {r["source"]: {"score": r["score"], "periodes": r["periodes"]} for r in trouves},
             "retenues": sorted(r["source"] for r in retenus),
             "raison": raison, "validation_apres": validation}
+
+
+def a_saisir(paris: list[dict], enregistrements: list[dict], maintenant: datetime | None = None,
+             limite: int = 200) -> list[dict]:
+    """Les matchs que rien ne règle : de quoi remplir donnees/resultats_manuels.json sans rien chercher d'autre.
+    Pour chaque match, les paris en attente, les périodes dont ils ont besoin, ce que les sources en disent,
+    et le modèle de saisie (`modele` à copier dans resultats_manuels.json sous la clé `match_id`)."""
+    groupes: dict[str, list[dict]] = {}
+    for p in paris:
+        if p["statut"] == "a_regler":
+            groupes.setdefault(p["match_id"], []).append(p)
+    sortie = []
+    for mid, ps in sorted(groupes.items(), key=lambda kv: str(kv[1][0].get("debut"))):
+        p = ps[0]
+        periodes = sorted({x["periode"] for x in ps})
+        modele = {"score": [None, None]}
+        if any(x["periode"] in ("MT1", "MT2") or x["marche"] == "HALF_TIME_FULL_TIME" for x in ps):
+            modele["mi_temps"] = [None, None]
+        if any(x["marche"].startswith("CORNERS_") for x in ps):
+            modele["corners"] = [None, None]
+        if p["sport"] in ("hockey", "basket", "tennis", "volley", "baseball", "football_americain"):
+            modele["periodes"] = [[None, None]]
+        d = diagnostic(p, enregistrements, maintenant)
+        sortie.append({"match_id": mid, "match": f'{p["domicile"]} – {p["exterieur"]}', "sport": p["sport"],
+                       "ligue": p.get("ligue"), "debut": p.get("debut"), "paris": len(ps),
+                       "periodes_requises": periodes, "raison": d.get("raison"), "sources_vues": d.get("sources", {}),
+                       "modele": modele})
+        if len(sortie) >= limite:
+            break
+    return sortie

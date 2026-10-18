@@ -371,3 +371,7 @@ def test_ecart_est_un_handicap():
     assert betclic.marches_pulse(jeux, "A", "B", "tennis")[0]["canonicalMarket"] == "GAME_HANDICAP"
     assert betclic.marches_pulse({**jeux, "nom": "Écart de points"}, "A", "B", "volley") == []
     assert betclic.marches_pulse({**jeux, "nom": "Écart de points (3 options)"}, "A", "B", "basket") == []
+def test_ecart_de_jeux_du_premier_set_reste_un_handicap_de_jeux():
+    marche = {"nom": "1er set - Écart de jeux", "selections": [
+        {"nom": "A gagne de 2 ou +", "cote": 2.1}, {"nom": "B ne perd pas ou perd de 1 exactement", "cote": 1.7}]}
+    assert betclic.marches_pulse(marche, "A", "B", "tennis")[0]["canonicalMarket"] == "GAME_HANDICAP"
