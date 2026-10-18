@@ -330,3 +330,54 @@ def test_bilan_affiche_ecart_vs_smarkets(tmp_path):
     assert d["ecarts_references"]["Betfair"]["n"] == 1
     assert "ecart_smarkets" in d["catalogue"]["champs"]
     assert "Smarkets" in d["references"]
+
+
+class ReponseQuota(Reponse):
+    def __init__(self, doc, restant, reset=40, status=200):
+        super().__init__(doc, status)
+        self.headers = {"x-ratelimit-remaining": str(restant), "x-ratelimit-reset": str(reset)}
+
+
+def test_quota_epuise_attend_le_renouvellement_puis_continue(monkeypatch):
+    dormi = []
+    monkeypatch.setattr(smarkets.time, "sleep", lambda s: dormi.append(s))
+
+    class Session2:
+        n = 0
+
+        def get(self, url, timeout=30, headers=None):
+            Session2.n += 1
+            return ReponseQuota({"ok": True}, restant=1 if Session2.n == 1 else 50)
+
+    client = smarkets.Client(Session2(), pause=(0, 0))
+    assert client.get("a") == {"ok": True}
+    assert client.get("b") == {"ok": True}
+    assert [round(s) for s in dormi] == [41] and client.attentes == 41 and not client._bloque
+
+
+def test_quota_epuise_sans_assez_de_budget_s_arrete_sans_dormir(monkeypatch):
+    from cotes.delai import Echeance
+    dormi = []
+    monkeypatch.setattr(smarkets.time, "sleep", lambda s: dormi.append(s))
+
+    class Session3:
+        def get(self, url, timeout=30, headers=None):
+            return ReponseQuota({"ok": True}, restant=0, reset=55)
+
+    client = smarkets.Client(Session3(), pause=(0, 0), echeance=Echeance(30))
+    assert client.get("a") == {"ok": True}
+    assert client.get("b") is None and dormi == [] and client.erreurs == ["budget"]
+
+
+def test_reserve_garde_les_matchs_non_relus_et_la_liste(monkeypatch):
+    vieux = {"match_id": "smarkets|999", "debut": "2026-10-18T14:00:00+00:00", "collecte": "2026-10-18T09:40:00+00:00",
+             "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM", "cle_marche": "smarkets|m"}
+    justes, meta = smarkets.collecter({"football"}, 36, Session(), maintenant=MAINTENANT,
+                                      reserve={"lignes": [vieux]})
+    assert any(l["match_id"] == "smarkets|999" for l in justes)           # pas relu, encore frais (< 1 h)
+    assert meta["evenements"]["liste"] and meta["lus"] > 0 and meta["perime"] is False
+    # la liste mémorisée évite de la redemander ; un match déjà commencé en sort
+    session = Session()
+    smarkets.collecter({"football"}, 36, session, maintenant=MAINTENANT,
+                       reserve={"lignes": [], "evenements": meta["evenements"]})
+    assert not any(u.rstrip("/").endswith("sort=start_datetime,id") or "events/?" in u for u in session.urls)

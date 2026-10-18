@@ -46,7 +46,7 @@ def simulation_de(ecart: float, cote: float) -> str | None:
         if s["ecart"] <= ecart < s["ecart_max"] and s["cote_min"] <= cote <= s["cote_max"]:
             return code
     return None
-REFERENCES = ["Pinnacle", "Betfair", "Polymarket", "Smarkets", "Kalshi", "Consensus", "Pinnacle brut"]
+REFERENCES = ["Pinnacle", "Betfair", "Polymarket", "Smarkets", "Kalshi", "Consensus"]
 
 
 def _id(*parts) -> str:

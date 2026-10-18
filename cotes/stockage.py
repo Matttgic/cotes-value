@@ -134,3 +134,9 @@ def archiver(donnees: Path, paris: list[dict], maintenant: datetime) -> list[dic
         for tmp, _ in prets:
             tmp.unlink(missing_ok=True)
     return restent
+
+
+def retirer_reference(paris: list[dict], reference: str) -> tuple[list[dict], int]:
+    """Paris sans ceux d'une référence abandonnée (le témoin « Pinnacle brut »). Sans effet s'il n'y en a plus."""
+    restants = [p for p in paris if p.get("reference") != reference]
+    return restants, len(paris) - len(restants)

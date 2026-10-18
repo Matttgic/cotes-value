@@ -107,3 +107,18 @@ def test_commande_seulement_reglement_respecte_mode_et_preserve_le_journal(tmp_p
         assert etat['dernier_reglement']!='avant'
     else:
         assert etat['dernier_cycle_reglement']==ancien and etat['dernier_reglement']=='avant'
+
+
+def test_le_temoin_pinnacle_brut_est_retire_des_paris(tmp_path):
+    import json
+    from scripts import cycle
+    (tmp_path / "paris.json").write_text(json.dumps([
+        {"id": "a", "reference": "Pinnacle brut"}, {"id": "b", "reference": "Pinnacle"},
+        {"id": "c", "reference": "Pinnacle brut"}]), encoding="utf-8")
+    journal = {}
+    assert [p["id"] for p in cycle.charger_paris(tmp_path, journal)] == ["b"]
+    assert journal["temoin_pinnacle_brut_retires"] == 2
+    (tmp_path / "paris.json").write_text(json.dumps([{"id": "b", "reference": "Pinnacle"}]), encoding="utf-8")
+    journal = {}
+    cycle.charger_paris(tmp_path, journal)             # sans témoin à retirer : pas de trace
+    assert "temoin_pinnacle_brut_retires" not in journal
