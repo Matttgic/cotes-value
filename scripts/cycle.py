@@ -302,6 +302,16 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
     rythme = lire_json(rythme_path, {}) if rythme_path else {}
     if not isinstance(rythme, dict):
         rythme = {}
+    horizon_path = donnees / "horizon_direct.json" if donnees else None
+    horizon = lire_json(horizon_path, {}) if horizon_path else {}
+    if not isinstance(horizon, dict):
+        horizon = {}
+
+    def _reserve(nom: str) -> dict:
+        bloc = horizon.get(nom)
+        return bloc if isinstance(bloc, dict) else {}
+
+    heures_directes = 12 if mode == "test" else HORIZON_H
     with ThreadPoolExecutor(max_workers=8) as pool:
         journal["pinnacle_configuration"] = {"mode": "environnement" if os.environ.get("PINNACLE_API_KEY", "").strip()
                                                 else "guest_historique"}
@@ -340,34 +350,26 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                                       fonction, *args, **kwargs)
 
         if source_pmu != "pulsescore":
-            heures_pmu, plein_pmu = heures_ombre("pmu", source_pmu, mode, maintenant, rythme)
-            if plein_pmu:
-                rythme["pmu"] = maintenant.isoformat()
             lancer("pmu_direct", pmu_direct, BUDGETS["pmu_direct"], pmu_direct.collecter,
-                   sports, heures_pmu)
+                   sports, heures_directes, reserve=_reserve("pmu"), concurrence=2)
         source_wina = winamax_direct.mode_source()
         journal["winamax_source"] = source_wina
         if source_wina != "pulsescore":
             lancer("winamax_direct", winamax_direct, BUDGETS["winamax_direct"],
-                   winamax_direct.collecter, sports, 12 if mode == "test" else HORIZON_H,
+                   winamax_direct.collecter, sports, heures_directes,
                    maintenant=maintenant)
         source_uni = unibet_direct.mode_source()
         journal["unibet_source"] = source_uni
         if source_uni != "pulsescore":
-            heures_uni, plein_uni = heures_ombre("unibet", source_uni, mode, maintenant, rythme)
-            if plein_uni:
-                rythme["unibet"] = maintenant.isoformat()
             lancer("unibet_direct", unibet_direct, BUDGETS["unibet_direct"],
-                   unibet_direct.collecter, sports, heures_uni, maintenant=maintenant,
-                   concurrence=3, radar=_radar_depuis(pin) or None)
+                   unibet_direct.collecter, sports, heures_directes, maintenant=maintenant,
+                   concurrence=3, radar=_radar_depuis(pin) or None, reserve=_reserve("unibet"))
         source_bet = betclic_direct.mode_source()
         journal["betclic_source"] = source_bet
         if source_bet != "pulsescore":
-            heures_bet, plein_bet = heures_ombre("betclic", source_bet, mode, maintenant, rythme)
-            if plein_bet:
-                rythme["betclic"] = maintenant.isoformat()
             lancer("betclic_direct", betclic_direct, BUDGETS["betclic_direct"],
-                   betclic_direct.collecter, sports, heures_bet, maintenant=maintenant)
+                   betclic_direct.collecter, sports, heures_directes, maintenant=maintenant,
+                   reserve=_reserve("betclic"))
         source_oly = olybet_direct.mode_source()
         journal["olybet_source"] = source_oly
         if source_oly == "direct":
@@ -494,6 +496,10 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 journal["winamax_source_effective"] = "shadow"
         elif sans_wina:
             lignes = [l for l in lignes if l.get("bookmaker") != "winamax"] + list(wina_lignes)
+            journal["winamax_source_effective"] = "direct"
+        elif source_wina == "auto":
+            journal["winamax_source_effective"] = "pulsescore"
+            journal["winamax_repli"] = "Socket Winamax vide ou en échec, PulseScore décide"
         uni_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
                   or pulsescore.indisponible(erreurs.get("unibet-fr", []) if cle else ["PULSESCORE_KEY absente"]))
         if source_uni == "shadow":
@@ -541,6 +547,12 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
     mesures_delta(pin, lignes)
     if rythme_path is not None:
         ecrire_json(rythme_path, {k: rythme[k] for k in ("pmu", "unibet", "betclic") if k in rythme})
+    for nom, meta in (("pmu", direct_meta), ("unibet", uni_meta), ("betclic", bet_meta)):
+        bloc = meta.get("reserve") if isinstance(meta, dict) else None
+        if isinstance(bloc, dict):
+            horizon[nom] = bloc
+    if horizon_path is not None and any(k in horizon for k in ("pmu", "unibet", "betclic")):
+        ecrire_json(horizon_path, {k: horizon[k] for k in ("pmu", "unibet", "betclic") if k in horizon})
     return pin, poly, lignes, requetes
 
 

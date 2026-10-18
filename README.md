@@ -38,8 +38,10 @@ et le journal l'indique (`pmu_repli`). Le rapport est prêt à basculer à parti
 95 % des matchs retrouvés et 99 % des cotes communes à ±0,01. Les paris déjà pris contre
 Kalshi restent affichés ; Kalshi n'est plus interrogé.
 
-Winamax peut être lu sur son socket (`SOURCE_WINAMAX`, défaut `shadow`), avec les
-mêmes quatre modes et les mêmes seuils. Le rapport est `winamax_comparaison.json`.
+Winamax est lu sur son socket (`SOURCE_WINAMAX`, défaut `auto`) : le socket
+décide, et PulseScore ne reprend la main que si cette lecture échoue ou est
+vide. `shadow` garde l'ancien rapport. Les seuils restent 95 % des matchs et
+99 % des cotes communes à ±0,01. Le rapport est `winamax_comparaison.json`.
 Si PulseScore répond 401, 403, 402 ou quota, les cotes Winamax viennent du socket
 même en `shadow` (`winamax_repli`). La liste d'un sport arrive en une fois, puis
 les marchés comparés. Une lecture vide est un échec : le repli ne s'en sert pas.

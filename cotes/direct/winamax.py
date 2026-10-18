@@ -11,9 +11,11 @@ ne sont pas traduits : les exclusions de la comparaison restent en place.
 Une lecture sans aucun match, ou qui ne cote pas la moitié de ceux qu'elle
 vient d'annoncer, est un échec. Le repli ne s'en sert pas.
 
-``SOURCE_WINAMAX`` vaut ``pulsescore``, ``direct``, ``auto`` ou ``shadow``
-(défaut). En ``shadow``, PulseScore décide et le socket sert au rapport.
-Basculer exige 95 % des matchs retrouvés et 99 % des cotes communes à ±0,01.
+``SOURCE_WINAMAX`` vaut ``pulsescore``, ``direct``, ``auto`` (défaut) ou
+``shadow``. En ``auto``, le socket décide ; PulseScore ne sert que si la
+lecture directe échoue ou ne renvoie aucun match. En ``shadow``, PulseScore
+décide et le socket sert au rapport. Basculer depuis ``shadow`` exige 95 %
+des matchs retrouvés et 99 % des cotes communes à ±0,01.
 """
 from __future__ import annotations
 
@@ -96,8 +98,8 @@ _BTTS = {"74": "YES", "76": "NO"}
 
 
 def mode_source() -> str:
-    """``shadow`` si la variable est absente ou inconnue."""
-    valeur = os.environ.get("SOURCE_WINAMAX", "shadow").strip().lower()
+    """``auto`` si la variable est absente. Une valeur inconnue reste ``shadow``."""
+    valeur = os.environ.get("SOURCE_WINAMAX", "auto").strip().lower()
     return valeur if valeur in MODES else "shadow"
 
 

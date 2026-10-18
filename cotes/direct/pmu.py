@@ -12,21 +12,27 @@ rapport de couverture. Basculer exige au moins 95 % des matchs PulseScore
 retrouvés et 99 % des cotes communes à ±0,01.
 
 La liste ``all/all/all`` est plafonnée (le 18/10/2026 elle s'arrêtait vers 22 h
-alors que l'horizon est 36 h). Si le dernier match lu est avant cet horizon,
-chaque compétition du ``group.json`` est relue.
+alors que l'horizon est 36 h). Sans réserve, chaque compétition du ``group.json``
+est relue. Avec une réserve (le cycle), les matchs à moins de 6 h sont relus
+à chaque passage, et les compétitions plus lointaines tournent : le catalogue
+est mis en cache, quelques feuilles par cycle, deux lectures à la fois.
+Un HTTP 429 arrête cette lecture. L'union couvre les 36 h.
 """
 from __future__ import annotations
 
 import os
 import random
 import re
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 import requests
 
 from cotes.correspondance import ressemblance
+from cotes.direct.horizon import fusionner, tranche
 from cotes.pulsescore import traduire
 
 BASE = "https://eu1.offering-api.kambicdn.com/offering/v2018/pmusportsfr"
@@ -97,6 +103,12 @@ _QUEUE_PERIODE = re.compile(
     r"[1-4](?:er|re|e|ère)?\s+(?:p[eé]riode|quart-temps|set|mi-temps)"
     r")\s*$")
 MODES = ("pulsescore", "direct", "auto", "shadow")
+_PRES_H = 6
+_LOIN_EVENTS = 40
+_LOIN_COMP = 8
+_COMP_FRAIS_MIN = 45
+_PAUSE_PARALLELE = (0.4, 0.6)
+_MARGE_S = 3.0
 
 
 def mode_source() -> str:
@@ -158,6 +170,9 @@ class Client:
         self.requetes = 0
         self.erreurs: list[str] = []
         self._premier = True
+        self.stop_429 = False
+        self._bloque = False
+        self._verrou = threading.Lock()
 
     def _espacer(self) -> None:
         if self._premier:
@@ -167,29 +182,44 @@ class Client:
         _pause(haut if bas == haut else random.uniform(bas, haut))
 
     def _temps(self) -> bool:
-        if self.echeance is None or self.echeance.ok():
+        if self.echeance is None:
+            return True
+        reste = self.echeance.reste()
+        if self.echeance.ok() and (reste is None or reste >= _MARGE_S):
             return True
         self._noter("budget")
         return False
 
-    def get(self, chemin: str) -> dict | None:
-        if not self._temps():
+    def get(self, chemin: str, session=None) -> dict | None:
+        if self._bloque or not self._temps():
             return None
         url = f"{BASE}/{chemin}?{urlencode(PARAMS)}"
         dernier = "réseau"
-        delai = 30 if self.echeance is None else self.echeance.timeout(12)
+        if self.echeance is None:
+            delai = 30
+        else:
+            reste = self.echeance.reste() or 1
+            delai = min(4.0, max(1.0, reste - 1))
+        http = session or self.session
         for essai in range(4):
-            if not self._temps():
+            if self._bloque or not self._temps():
                 return None
-            self._espacer()
-            self.requetes += 1
+            with self._verrou:
+                if self._bloque:
+                    return None
+                self._espacer()
+                self.requetes += 1
             try:
-                r = self.session.get(url, timeout=delai, headers={"Accept": "application/json"})
+                r = http.get(url, timeout=delai, headers={"Accept": "application/json"})
             except requests.RequestException:
                 dernier = "réseau"
                 if essai < 3 and self._temps():
                     _pause(2 * (essai + 1))
                 continue
+            if r.status_code == 429 and self.stop_429:
+                self._bloque = True
+                self._noter("HTTP 429")
+                return None
             if r.status_code in (429, 500, 502, 503, 504):
                 dernier = f"HTTP {r.status_code}"
                 if not self._temps():
@@ -217,8 +247,9 @@ class Client:
         return None
 
     def _noter(self, message: str) -> None:
-        if message not in self.erreurs and len(self.erreurs) < 30:
-            self.erreurs.append(message)
+        with self._verrou:
+            if message not in self.erreurs and len(self.erreurs) < 30:
+                self.erreurs.append(message)
 
 
 def sports_demandes(sports: set[str] | None) -> list[tuple[str, str]]:
@@ -470,11 +501,156 @@ def _a_venir(event: dict, maintenant: datetime, heures: float) -> bool:
     return bool(debut and maintenant < debut <= maintenant + timedelta(hours=heures))
 
 
+def _events_doc(doc) -> list[dict]:
+    if not isinstance(doc, dict):
+        return []
+    out = []
+    for wrap in doc.get("events") or []:
+        ev = wrap.get("event") if isinstance(wrap, dict) else None
+        if isinstance(ev, dict):
+            out.append(ev)
+    return out
+
+
+def _lire_parallele(client: Client, chemins: list[str], concurrence: int) -> list:
+    """Quelques GET à la fois. L'écart entre deux départs reste celui du client."""
+    if not chemins:
+        return []
+    if concurrence <= 1 or len(chemins) == 1:
+        return [client.get(chemin) for chemin in chemins]
+
+    def un(chemin):
+        if client._bloque or not client._temps():
+            return None
+        return client.get(chemin, session=requests.Session())
+
+    with ThreadPoolExecutor(max_workers=min(concurrence, len(chemins))) as pool:
+        return list(pool.map(un, chemins))
+
+
+def _collecter_reserve(sports, heures, session, pause, maintenant, echeance, reserve, concurrence):
+    """Proche à chaque cycle, lointain par tranches. La réserve renvoie l'union sur 36 h."""
+    if echeance is None:
+        echeance = _echeance
+    largeur = max(1, int(concurrence or 1))
+    client = Client(session, _PAUSE_PARALLELE if largeur > 1 else pause, echeance=echeance)
+    client.stop_429 = True
+    demandes = sports_demandes(sports)
+    vide = {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0, "reserve": reserve}
+    if not demandes:
+        return [], vide
+    if echeance is not None and not echeance.ok():
+        client._noter("budget")
+        return [], {"ok": False, "erreurs": list(client.erreurs), "requetes": 0, "matchs": 0,
+                    "reserve": reserve}
+    moment = maintenant.isoformat(timespec="seconds")
+    proche_limite = maintenant + timedelta(hours=min(_PRES_H, heures))
+    comps = reserve.get("competitions") if isinstance(reserve.get("competitions"), dict) else {}
+    comp_lu = _heure(reserve.get("comp_lu"))
+    frais = comp_lu is not None and maintenant - comp_lu < timedelta(minutes=_COMP_FRAIS_MIN)
+    events: list[tuple[str, dict]] = []
+    courts = []
+    for terme, sport in demandes:
+        if client._bloque or not client._temps():
+            break
+        doc = client.get(f"listView/{terme}/all/all/all/matches.json")
+        lus = _events_doc(doc)
+        events.extend((sport, ev) for ev in lus)
+        if _liste_courte(lus, maintenant, heures):
+            courts.append((terme, sport))
+    feuilles = dict(comps)
+    comp_lu_nouveau = reserve.get("comp_lu")
+    if courts and not frais and not client._bloque and client._temps():
+        arbre = client.get("group.json") or {}
+        for terme, _sport in courts:
+            feuilles[terme] = _feuilles(arbre, terme)
+        comp_lu_nouveau = moment
+    file_comp = [(terme, sport, chemin)
+                 for terme, sport in courts
+                 for chemin in (feuilles.get(terme) or [])]
+    choisis_comp, curseur_comp = tranche(file_comp, int(reserve.get("curseur_comp") or 0), _LOIN_COMP)
+    connus = {ev.get("id") for _sport, ev in events}
+    comp_ids = set()
+    docs_comp = _lire_parallele(client, [_chemin_liste(chemin) for _t, _s, chemin in choisis_comp], largeur)
+    for (_terme, sport, _chemin), doc in zip(choisis_comp, docs_comp):
+        for ev in _events_doc(doc):
+            if ev.get("id") in connus:
+                continue
+            connus.add(ev.get("id"))
+            comp_ids.add(ev.get("id"))
+            events.append((sport, ev))
+    proches, lointains, queue_comp = [], [], []
+    for sport, ev in events:
+        if not _a_venir(ev, maintenant, heures):
+            continue
+        debut = _heure(ev.get("start"))
+        if debut and debut <= proche_limite:
+            proches.append((sport, ev))
+        elif ev.get("id") in comp_ids:
+            queue_comp.append((sport, ev))
+        else:
+            lointains.append((sport, ev))
+    proches.sort(key=lambda couple: str(couple[1].get("start") or ""))
+    lointains.sort(key=lambda couple: str(couple[1].get("start") or ""))
+    tranche_loin, curseur_loin = tranche(lointains, int(reserve.get("curseur_loin") or 0), _LOIN_EVENTS)
+    choisis = proches + queue_comp + tranche_loin
+    lots = []
+    for i in range(0, len(choisis), PAR_LOT):
+        lot = choisis[i:i + PAR_LOT]
+        ids = ",".join(str(ev["id"]) for _sport, ev in lot if ev.get("id"))
+        if ids:
+            lots.append((lot, f"betoffer/event/{ids}.json"))
+    if largeur > 1 and len(lots) > 1 and not client._bloque:
+        with ThreadPoolExecutor(max_workers=min(largeur, len(lots))) as pool:
+            offres_lots = list(pool.map(
+                lambda item: (item[0], None if client._bloque or not client._temps()
+                              else client.get(item[1], session=requests.Session())),
+                lots))
+    else:
+        offres_lots = []
+        for lot, chemin in lots:
+            if client._bloque or not client._temps():
+                break
+            offres_lots.append((lot, client.get(chemin)))
+    lignes: list[dict] = []
+    lus = 0
+    for lot, doc in offres_lots:
+        offres = (doc or {}).get("betOffers") if isinstance(doc, dict) else []
+        if not isinstance(offres, list):
+            offres = []
+        for sport, event in lot:
+            lus += 1
+            ev = evenement_depuis(event, [o for o in offres if isinstance(o, dict)
+                                          and o.get("eventId") == event.get("id")])
+            if ev:
+                lignes += _retenir(traduire(ev, "pmu", sport, moment))
+    fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures)
+    reserve_out = {
+        "competitions": feuilles,
+        "comp_lu": comp_lu_nouveau,
+        "curseur_comp": curseur_comp,
+        "curseur_loin": curseur_loin,
+        "lignes": fusion,
+    }
+    return fusion, {
+        "ok": bool(fusion) or not client.erreurs,
+        "erreurs": list(client.erreurs),
+        "requetes": client.requetes,
+        "matchs": len({l.get("match_id") for l in fusion}),
+        "lus": lus,
+        "reserve": reserve_out,
+    }
+
+
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
               pause: tuple[float, float] = (1.0, 1.5),
-              maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
+              maintenant: datetime | None = None, echeance=None,
+              reserve=None, concurrence: int = 1) -> tuple[list[dict], dict]:
     """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``pmu``)."""
     maintenant = maintenant or datetime.now(timezone.utc)
+    if reserve is not None:
+        return _collecter_reserve(sports, heures, session, pause, maintenant, echeance,
+                                  reserve if isinstance(reserve, dict) else {}, concurrence)
     if echeance is None:
         echeance = _echeance
     client = Client(session, pause, echeance=echeance)
