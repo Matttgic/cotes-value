@@ -72,6 +72,7 @@ Deno.test("HIT puis MISS : la deuxième orthographe est retenue, le corps n'est 
   const plan = corps["29"];
   egal(plan.markets, "/sports/29/markets/straight?primaryOnly=false", "orthographe suivante");
   egal(plan.cache, "MISS", "cache");
+  egal(plan.fresh, true, "renouvelé");
   if (!plan.matchups.startsWith("/sports/29/matchups?withSpecials=true&_=")) throw new Error(plan.matchups);
   if (plan.matchups.includes("cle-guest")) throw new Error("clé dans le chemin");
   if (JSON.stringify(corps).includes(cle) || JSON.stringify(corps).includes("fuite")) {
@@ -95,5 +96,32 @@ Deno.test("rechauffer direct : EXPIRED arrête, les sports avancent en parallèl
   const data = await rechauffer([4, 29], "k", 1_200_000, fetchImpl);
   egal(data["4"].markets, "/sports/4/markets/straight?withSpecials=true&primaryOnly=false", "première du cycle 4");
   egal(data["29"].cache, "EXPIRED", "statut");
+  egal(data["4"].fresh, true, "renouvelé");
   if (vus.filter((u) => u.includes("/markets/")).length !== 2) throw new Error("trop d'orthographes");
+});
+
+Deno.test("cinq HIT : plus petit Age connu, sans le faire passer pour un renouvellement", async () => {
+  const fetchImpl: typeof fetch = async (input) => {
+    const url = String(input);
+    const path = url.split("/0.1")[1] ?? url;
+    let age: string | null = null;
+    if (path.includes("/sports/29/")) {
+      if (path.endsWith("/markets/straight")) age = "294";
+      else if (path.endsWith("?primaryOnly=false")) age = null;
+      else if (path.endsWith("?withSpecials=true")) age = "287";
+      else if (path.includes("primaryOnly=false&withSpecials=true")) age = "400";
+      else if (path.includes("withSpecials=true&primaryOnly=false")) age = "290";
+    }
+    const headers = new Headers({ "cf-cache-status": "HIT" });
+    if (age != null) headers.set("Age", age);
+    return new Response("[]", { status: 200, headers });
+  };
+  const data = await rechauffer([29, 4], "k", 0, fetchImpl);
+  egal(data["29"].markets, "/sports/29/markets/straight?withSpecials=true", "plus petit Age");
+  egal(data["29"].fresh, false, "pas un renouvellement");
+  egal(data["29"].age_s, 287, "âge retenu");
+  egal(data["29"].cache, "HIT", "statut");
+  egal(data["4"].fresh, false, "sans Age");
+  egal(data["4"].age_s, null, "âge inconnu");
+  egal(data["4"].markets, "/sports/4/markets/straight", "première orthographe si tout est inconnu");
 });

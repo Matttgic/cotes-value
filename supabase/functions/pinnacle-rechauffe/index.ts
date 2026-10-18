@@ -32,36 +32,63 @@ function entetes(key: string): HeadersInit {
   };
 }
 
-async function lire(url: string, key: string, fetchImpl: typeof fetch) {
+const REMPLIS = new Set(["MISS", "EXPIRED", "DYNAMIC"]);
+
+export type VueMarche = { path: string; cache: string; age: number | null; remplir: boolean };
+
+function ageEntete(r: Response): number | null {
+  const brut = r.headers.get("Age");
+  if (brut == null || brut.trim() === "") return null;
+  const n = Number(brut);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+async function lire(url: string, path: string, key: string, fetchImpl: typeof fetch): Promise<VueMarche> {
   const r = await fetchImpl(url, {
     headers: entetes(key), redirect: "manual", signal: AbortSignal.timeout(20_000),
   });
   const cache = (r.headers.get("cf-cache-status") || "").toUpperCase();
+  const age = ageEntete(r);
   await r.arrayBuffer();
-  return { cache: cache || String(r.status), stop: r.status === 200 && cache !== "HIT" };
+  return { path, cache: cache || String(r.status), age, remplir: r.status === 200 && REMPLIS.has(cache) };
+}
+
+export function choisirMarche(vues: VueMarche[], repli: string) {
+  const neuf = vues.find((v) => v.remplir);
+  if (neuf) return { markets: neuf.path, cache: neuf.cache, fresh: true, age_s: neuf.age };
+  let meilleur: VueMarche | undefined;
+  for (const v of vues) {
+    if (v.age == null) continue;
+    if (!meilleur || meilleur.age == null || v.age < meilleur.age) meilleur = v;
+  }
+  if (meilleur && meilleur.age != null) {
+    return { markets: meilleur.path, cache: meilleur.cache, fresh: false, age_s: meilleur.age };
+  }
+  const premier = vues[0];
+  return { markets: premier?.path ?? repli, cache: premier?.cache ?? "ECHEC", fresh: false, age_s: null };
 }
 
 export async function rechauffer(sports: number[], key: string, epochMs: number, fetchImpl: typeof fetch = fetch) {
   const ordre = ordreOrthographes(epochMs);
   const t = new Date(epochMs).toISOString();
-  const sortie: Record<string, { matchups: string; markets: string; t: string; cache: string }> = {};
+  const sortie: Record<string, { matchups: string; markets: string; t: string; cache: string; fresh: boolean; age_s: number | null }> = {};
   let i = 0;
   async function un() {
     while (i < sports.length) {
       const sid = sports[i++];
       const matchups = `/sports/${sid}/matchups?withSpecials=true&_=${crypto.randomUUID().replaceAll("-", "")}`;
-      let markets = `/sports/${sid}/markets/straight${ordre[0]}`;
-      let cache = "ECHEC";
+      const repli = `/sports/${sid}/markets/straight${ordre[0]}`;
+      const vues: VueMarche[] = [];
       try {
-        await lire(BASE + matchups, key, fetchImpl);
+        await lire(BASE + matchups, matchups, key, fetchImpl);
         for (const q of ordre) {
-          markets = `/sports/${sid}/markets/straight${q}`;
-          const res = await lire(BASE + markets, key, fetchImpl);
-          cache = res.cache;
-          if (res.stop) break;
+          const path = `/sports/${sid}/markets/straight${q}`;
+          const vue = await lire(BASE + path, path, key, fetchImpl);
+          vues.push(vue);
+          if (vue.remplir) break;
         }
-      } catch { cache = "ECHEC"; }
-      sortie[String(sid)] = { matchups, markets, t, cache };
+      } catch { /* les vues déjà lues suffisent à choisir */ }
+      sortie[String(sid)] = { matchups, t, ...choisirMarche(vues, repli) };
     }
   }
   await Promise.all(Array.from({ length: Math.min(4, sports.length) }, () => un()));

@@ -17,11 +17,11 @@ Vocabulaire des marchés (commun à toutes les sources) :
 - JOUEUR:<stat> (paris joueurs, issues PLUS/MOINS, colonne joueur)
 
 Un marché sans champ ``status`` est traité comme ouvert (les spéciaux n'en ont pas).
-Seul un ``status`` présent et différent de ``open`` est ignoré. L'âge d'une cote est le
-maximum de l'en-tête HTTP ``Age`` et, si le réchauffeur parisien a fourni l'URL, du
-délai depuis son horodatage. Au-delà de ``PINNACLE_AGE_MAX_MIN`` minutes (10 par défaut),
-``cote_perimee`` est vrai. Sans réchauffeur et sans en-tête ``Age``, l'âge est inconnu :
-la cote est périmée et ne sert pas de référence. La clé guest est lue sur
+Seul un ``status`` présent et différent de ``open`` est ignoré. Le délai depuis le
+réchauffeur ne compte comme âge que s'il a renouvelé le cache (``fresh``). Sinon l'âge
+est l'en-tête HTTP ``Age`` de la lecture, ou à défaut ``age_s`` vu à Paris. Au-delà de
+``PINNACLE_AGE_MAX_MIN`` minutes (10 par défaut), ou si aucune de ces mesures n'existe,
+``cote_perimee`` est vrai et la cote ne sert pas de référence. La clé guest est lue sur
 https://www.pinnacle.com/config/app.json (``api.haywire.apiKey``), puis
 ``PINNACLE_API_KEY``, puis la valeur historique. Elle n'est jamais journalisée.
 ``PINNACLE_RECHAUFFEUR_URL`` et ``PINNACLE_RECHAUFFEUR_SECRET`` appellent la fonction
@@ -265,16 +265,31 @@ def _instant(valeur) -> datetime | None:
     return d.astimezone(timezone.utc)
 
 
+def _entier_age(valeur) -> int | None:
+    if isinstance(valeur, bool) or not isinstance(valeur, int) or valeur < 0:
+        return None
+    return valeur
+
+
 def _age_ligne(path: str, sid: int, maintenant: datetime) -> tuple[int | None, bool]:
-    """Âge en secondes et péremption. Sans Age ni réchauffeur de cette URL : inconnu, donc périmé."""
+    """Âge en secondes et péremption.
+
+    ``now - t`` seulement si le réchauffeur a renouvelé cette URL (``fresh``).
+    Sinon : en-tête Age de la lecture, puis ``age_s`` annoncé. Rien de connu : périmé.
+    """
     candidats: list[int] = []
-    if path in _ages and isinstance(_ages[path], int) and not isinstance(_ages[path], bool):
-        candidats.append(_ages[path])
+    entete = _ages[path] if path in _ages else None
+    if _entier_age(entete) is not None:
+        candidats.append(entete)
     plan = _plans.get(sid) or {}
-    if plan.get("markets") == path:
+    if plan.get("markets") == path and plan.get("fresh") is True:
         instant = _instant(plan.get("t"))
         if instant is not None:
             candidats.append(max(0, int((maintenant - instant).total_seconds())))
+    elif plan.get("markets") == path:
+        annonce = _entier_age(plan.get("age_s"))
+        if annonce is not None:
+            candidats.append(annonce)
     if not candidats:
         return None, True
     age = max(candidats)

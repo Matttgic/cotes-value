@@ -130,10 +130,11 @@ valeur guest historique du code si les deux échouent. Les sondes et le journal 
 le même constructeur d'en-têtes. Ce secours n'est pas une suppression de la valeur dans le dépôt
 ou son historique.
 `PINNACLE_AGE_MAX_MIN` (défaut 10) est l'âge maximum, en minutes, du cache Cloudflare.
-L'âge retenu est le plus grand entre l'en-tête HTTP `Age` et le délai depuis le réchauffeur.
-Au-delà, la cote Pinnacle est marquée périmée et ne déclenche pas de pari. Sans réchauffeur
-et sans en-tête `Age`, l'âge est inconnu : la cote est périmée. Les corners, les cartons et
-les paris pair/impair ne sont pas comparés aux books français (périmètre ANJ).
+Le délai depuis le réchauffeur ne compte que s'il a renouvelé l'entrée (`fresh`, statut
+`MISS`, `EXPIRED` ou `DYNAMIC`). Sinon l'âge est l'en-tête `Age` de la lecture, ou à défaut
+l'âge vu à Paris (`age_s`). Au-delà, ou si aucune mesure n'existe, la cote est périmée et ne
+déclenche pas de pari. Les corners, les cartons et les paris pair/impair ne sont pas comparés
+aux books français (périmètre ANJ).
 
 Les runners GitHub sont aux États-Unis : Pinnacle ne répond 200 que si le cache Cloudflare
 est déjà rempli (jusqu'à 900 s). La fonction `supabase/functions/pinnacle-rechauffe/index.ts`

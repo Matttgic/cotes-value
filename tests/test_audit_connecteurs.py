@@ -436,13 +436,25 @@ def test_perimetre_anj_et_cote_perimee_ne_declenchent_pas_de_pari():
 
 def test_age_max_entete_et_horodatage_rechauffeur():
     maintenant=datetime(2026,10,18,2,tzinfo=timezone.utc)
-    P._ages['/sports/29/markets/straight?withSpecials=true']=30
-    P._plans[29]={'markets':'/sports/29/markets/straight?withSpecials=true',
-                  't':(maintenant-timedelta(seconds=90)).isoformat()}
-    age,perime=P._age_ligne('/sports/29/markets/straight?withSpecials=true',29,maintenant)
+    chemin='/sports/29/markets/straight?withSpecials=true'
+    P._ages[chemin]=30
+    P._plans[29]={'markets':chemin,'fresh':True,'t':(maintenant-timedelta(seconds=90)).isoformat()}
+    age,perime=P._age_ligne(chemin,29,maintenant)
     assert age==90 and perime is False
-    P._ages['/sports/29/markets/straight?withSpecials=true']=700
-    age,perime=P._age_ligne('/sports/29/markets/straight?withSpecials=true',29,maintenant)
+    P._ages[chemin]=700
+    age,perime=P._age_ligne(chemin,29,maintenant)
+    assert age==700 and perime is True
+    # Un HIT sans Age ne devient pas frais parce que le réchauffeur vient de répondre.
+    P._ages[chemin]=None
+    P._plans[29]={'markets':chemin,'fresh':False,'age_s':None,
+                  't':maintenant.isoformat()}
+    age,perime=P._age_ligne(chemin,29,maintenant)
+    assert age is None and perime is True
+    P._plans[29]['age_s']=290
+    age,perime=P._age_ligne(chemin,29,maintenant)
+    assert age==290 and perime is False
+    P._plans[29]['age_s']=700
+    age,perime=P._age_ligne(chemin,29,maintenant)
     assert age==700 and perime is True
     P._ages['/sports/29/markets/straight']=None
     P._plans.clear()
@@ -461,7 +473,7 @@ def test_rechauffeur_impose_les_chemins_et_un_age_sans_entete(monkeypatch,caplog
             'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
             'markets':'/sports/29/markets/straight?withSpecials=true',
             't':datetime.now(timezone.utc).isoformat(),
-            'cache':'MISS',
+            'cache':'MISS','fresh':True,'age_s':None,
         }})
     urls=[]
     def get(url, **kw):
@@ -480,6 +492,25 @@ def test_rechauffeur_impose_les_chemins_et_un_age_sans_entete(monkeypatch,caplog
     assert out and all(l['cote_perimee'] is False and 0<=l['age_cache_s']<30 for l in out)
     assert 'cle-de-cycle' not in caplog.text+json.dumps(P.ERREURS)
     assert 'secret-rechauffe' not in caplog.text+json.dumps(P.ERREURS)
+
+
+def test_hit_sans_age_reste_perime_et_age_s_est_utilise(monkeypatch):
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    monkeypatch.setattr(P,'_cle_dynamique',lambda: 'cle-de-cycle')
+    plans=[{'29':{'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
+                  'markets':'/sports/29/markets/straight?withSpecials=true',
+                  't':datetime.now(timezone.utc).isoformat(),'cache':'HIT','fresh':False,'age_s':None}},
+           {'29':{'matchups':'/sports/29/matchups?withSpecials=true&_=abc',
+                  'markets':'/sports/29/markets/straight?withSpecials=true',
+                  't':datetime.now(timezone.utc).isoformat(),'cache':'HIT','fresh':False,'age_s':290}}]
+    monkeypatch.setattr(P.requests,'post',lambda *a, **k: Reponse(plans.pop(0)))
+    monkeypatch.setattr(P.requests,'get',lambda url, **kw: (
+        Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])))
+    inconnu=P.collecter({29:'football'})
+    assert inconnu and all(l['cote_perimee'] is True and l['age_cache_s'] is None for l in inconnu)
+    connu=P.collecter({29:'football'})
+    assert connu and all(l['cote_perimee'] is False and l['age_cache_s']==290 for l in connu)
 
 
 def test_rechauffeur_en_panne_garde_les_url_habituelles(monkeypatch,caplog):
