@@ -324,6 +324,26 @@ def _id_winamax(html: str) -> str | None:
     return None
 
 
+def _id_sport_winamax() -> str | None:
+    """Identifiant d'un match à venir, lu sur la route sport:1 si la page n'en a pas."""
+    from curl_cffi.requests import Session
+    url = f"wss://{WINAMAX_SOCK}/uof-sports-server/socket.io/?EIO=4&transport=websocket"
+    with Session(impersonate="chrome") as s:
+        ws = s.ws_connect(url, headers={"Origin": "https://www.winamax.fr"}, timeout=20)
+        ws.recv_str()
+        ws.send_str("40")
+        ws.recv_str()
+        ws.send_str('42["m",{"route":"sport:1"}]')
+        corps = ws.recv_str()
+        ws.close()
+    doc = json.loads(corps[2:])
+    matchs = doc[1].get("matches") if isinstance(doc, list) and isinstance(doc[1], dict) else {}
+    for mid, match in matchs.items():
+        if isinstance(match, dict) and match.get("status") == "PREMATCH":
+            return str(match.get("matchId") or mid)
+    return None
+
+
 def winamax() -> list[dict]:
     entetes = {"Accept": "text/html", "Accept-Language": "fr-FR"}
     page, brut = lire_http("Winamax page sports/1", WINAMAX_PAGE, entetes)
@@ -347,6 +367,13 @@ def winamax() -> list[dict]:
     page["detail"] = ("PRELOADED_STATE présent" if a_etat else "PRELOADED_STATE absent") + (
         f", match {ident}" if ident else ", aucun match") + (f" | {apercu}" if not ident and apercu else "")
     page["extrait"] = _extrait(apercu or html[:160])
+    origine = "page"
+    if not ident:
+        try:
+            ident = _id_sport_winamax()
+            origine = "sport:1"
+        except Exception as e:  # noqa: BLE001
+            origine = type(e).__name__
     if not ident:
         lignes.append(_mesure("Winamax socket.io match", page["client"], None, 0, time.perf_counter(),
                               "", False, "aucun matchId"))
@@ -359,7 +386,7 @@ def winamax() -> list[dict]:
             "https://www.winamax.fr", ["40", message], lire_ouverture=True, lectures_finale=3)
         ok = statut == 101 and ("42" in texte or "match" in texte.lower())
         ligne = _mesure("Winamax socket.io match", "websocket", statut, len(texte), debut,
-                        texte, ok, f"match {ident}")
+                        texte, ok, f"match {ident} via {origine}")
         if ok:
             lignes.append(ligne)
             return lignes
@@ -382,7 +409,7 @@ def winamax() -> list[dict]:
         lignes.append(_mesure(
             "Winamax socket.io match", "curl_cffi", 101, len(texte), debut, texte,
             "42" in texte or "match" in texte.lower(),
-            f"repli match {ident} après {ligne.get('status')} {ligne.get('detail')}".strip()))
+            f"repli match {ident} via {origine} après {ligne.get('status')}"))
     except Exception as e:  # noqa: BLE001
         lignes.append(_mesure("Winamax socket.io match", "curl_cffi", ligne.get("status"), 0, debut, "",
                               False, f"{ligne.get('detail')} ; repli {type(e).__name__}"))
