@@ -10,6 +10,9 @@ Les paris simulés contre Smarkets ont leur propre table, comme Betfair :
 10 € dès qu'un bookmaker français bat la cote juste. ``SMARKETS_DANS_DECISION``
 (défaut : non) ne décide que du consensus partagé. Éteint, Smarkets n'entre
 pas dans cette moyenne. L'écart affiché reste dans les deux cas.
+
+``SMARKETS_COLLECTE`` (défaut : non) coupe toute lecture. La table historique
+reste en place ; aucun appel, aucune cote nouvelle.
 """
 from __future__ import annotations
 
@@ -79,6 +82,11 @@ _echeance = None
 def dans_decision() -> bool:
     """Faux tant que la variable n'est pas explicitement oui."""
     return os.environ.get("SMARKETS_DANS_DECISION", "").strip().lower() in _OUI
+
+
+def collecte_active() -> bool:
+    """Faux par défaut : le cycle ne contacte pas Smarkets."""
+    return os.environ.get("SMARKETS_COLLECTE", "").strip().lower() in _OUI
 
 
 def ajouter_table(references: dict, lignes: list[dict]) -> dict:

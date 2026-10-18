@@ -42,7 +42,28 @@ def test_ombre_6h_puis_horizon_complet():
     assert test == 12 and du is False
 
 
+def test_smarkets_eteint_ne_fait_aucun_appel(tmp_path, monkeypatch):
+    monkeypatch.delenv("SMARKETS_COLLECTE", raising=False)
+    cycle.ecrire_json(tmp_path / "smarkets_cache.json", {
+        "lu": (NOW - timedelta(minutes=30)).isoformat(),
+        "lignes": [{"cote": 2}],
+        "perime": False,
+    })
+
+    def boom(*args, **kwargs):
+        raise AssertionError("réseau")
+
+    monkeypatch.setattr(cycle.smarkets, "collecter", boom)
+    journal = {"etapes": {}}
+    lignes, info = cycle.appliquer_smarkets(tmp_path, {"football"}, 36, [{"sport": "football"}], NOW, journal)
+    assert lignes == [] and info["requetes"] == 0 and info["desactive"] is True
+    assert journal["etapes"]["smarkets"]["desactive"] is True
+    cache = json.loads((tmp_path / "smarkets_cache.json").read_text(encoding="utf-8"))
+    assert cache["lignes"] == [{"cote": 2}]
+
+
 def test_cache_smarkets_reutilise_sans_appel(tmp_path, monkeypatch):
+    monkeypatch.setenv("SMARKETS_COLLECTE", "oui")
     cycle.ecrire_json(tmp_path / "smarkets_cache.json", {
         "lu": (NOW - timedelta(minutes=5)).isoformat(),
         "lignes": [{"cote": 1.5}],
@@ -61,6 +82,7 @@ def test_cache_smarkets_reutilise_sans_appel(tmp_path, monkeypatch):
 
 
 def test_429_garde_le_cache_perime(tmp_path, monkeypatch):
+    monkeypatch.setenv("SMARKETS_COLLECTE", "oui")
     cycle.ecrire_json(tmp_path / "smarkets_cache.json", {
         "lu": (NOW - timedelta(minutes=30)).isoformat(),
         "lignes": [{"cote": 2}],
