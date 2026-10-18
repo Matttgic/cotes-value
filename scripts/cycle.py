@@ -175,7 +175,8 @@ def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
                        maintenant: datetime, journal: dict):
     """Relit Smarkets au plus toutes les 15 min, seulement si ``SMARKETS_COLLECTE`` est oui.
 
-    Éteint (défaut) : zéro appel. La table des paris déjà pris reste celle de l'historique.
+    Éteint (``SMARKETS_COLLECTE`` autre que oui ; le workflow l'allume par défaut) : zéro appel.
+    La table des paris déjà pris reste celle de l'historique.
     Un 429 ou un budget garde le cache périmé.
     """
     if not smarkets.collecte_active():

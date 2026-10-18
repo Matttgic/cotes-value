@@ -4,8 +4,8 @@ Ajouter le secret GitHub Actions `PROPLINE_API_KEY` puis lancer le workflow
 **Règlement des paris**. Ne jamais inscrire la clé dans un fichier du dépôt.
 Les workflows de collecte et de règlement transmettent ce secret ; les comptes
 API-Sports suspendus ne sont plus interrogés par ces workflows.
-Le workflow manuel **Sonde Prop-Line** vérifie séparément la clé (`/sports`)
-et l'accès aux scores gratuits en deux appels maximum, sans afficher le secret.
+Le workflow manuel « Sonde Prop-Line » (vérification de la clé et des scores gratuits) a été
+retiré le 18/10/2026 ; sa copie est dans la branche `sauvegarde/principale-2026-10-18`.
 
 Documentation vérifiée le 15/10/2026 : https://prop-line.com/docs et
 https://api.prop-line.com/openapi.json. L'offre gratuite annonce 1 000 requêtes
