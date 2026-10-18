@@ -10,6 +10,8 @@ Les clés des fournisseurs vont dans les secrets GitHub Actions. Les variables `
 
 **Point ouvert :** `cotes/pinnacle.py` lit d'abord la clé guest publiée dans `https://www.pinnacle.com/config/app.json` (`api.haywire.apiKey`), puis `PINNACLE_API_KEY`, puis conserve la valeur guest historique si les deux manquent. Cette exception est signalée par le contrôle de secrets. La clé n'est pas écrite dans les diagnostics. Pour retirer le secours embarqué sans couper la référence, configurer et valider une clé compatible dans le secret GitHub Actions `PINNACLE_API_KEY` (ou s'assurer que `app.json` répond), puis supprimer le secours. Ne pas coller cette clé dans le dépôt ou dans une conversation. Le présent audit ne certifie pas le statut juridique/public de la valeur guest.
 
+Le réchauffeur de cache (`PINNACLE_RECHAUFFEUR_SECRET` côté Actions, `RECHAUFFEUR_SECRET` sur la fonction Supabase) est un secret distinct. Il ne figure pas dans le dépôt. La fonction a `verify_jwt = false` et refuse tout appel dont l'en-tête `x-secret` ne correspond pas.
+
 ## Publication et contrôles
 
 - Les données privées connues et certains formats de secrets bloquent la génération avant remplacement du site.

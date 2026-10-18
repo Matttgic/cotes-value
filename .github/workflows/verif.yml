@@ -27,6 +27,8 @@ jobs:
       - name: Comparer nos lectures directes et PulseScore
         env:
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
+          PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
+          PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
           PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
         run: python scripts/${{ inputs.script }}
       - name: Déposer le rapport sur la branche « verif »

@@ -129,10 +129,31 @@ cache pour le cycle), puis le secret GitHub Actions ou la variable `PINNACLE_API
 valeur guest historique du code si les deux échouent. Les sondes et le journal papier utilisent
 le même constructeur d'en-têtes. Ce secours n'est pas une suppression de la valeur dans le dépôt
 ou son historique.
-`PINNACLE_AGE_MAX_MIN` (défaut 10) est l'âge maximum, en minutes, du cache Cloudflare lu dans
-l'en-tête HTTP `Age`. Au-delà, la cote Pinnacle est marquée périmée et ne déclenche pas de pari.
-Un en-tête absent n'est pas une péremption. Les corners, les cartons et les paris pair/impair
-ne sont pas comparés aux books français (périmètre ANJ).
+`PINNACLE_AGE_MAX_MIN` (défaut 10) est l'âge maximum, en minutes, du cache Cloudflare.
+L'âge retenu est le plus grand entre l'en-tête HTTP `Age` et le délai depuis le réchauffeur.
+Au-delà, la cote Pinnacle est marquée périmée et ne déclenche pas de pari. Sans réchauffeur
+et sans en-tête `Age`, l'âge est inconnu : la cote est périmée. Les corners, les cartons et
+les paris pair/impair ne sont pas comparés aux books français (périmètre ANJ).
+
+Les runners GitHub sont aux États-Unis : Pinnacle ne répond 200 que si le cache Cloudflare
+est déjà rempli (jusqu'à 900 s). La fonction `supabase/functions/pinnacle-rechauffe/index.ts`
+(nom `pinnacle-rechauffe`) relit les mêmes URL depuis Paris et renvoie seulement le chemin
+retenu. `verify_jwt` est désactivé dans `supabase/config.toml` ; la fonction exige l'en-tête
+`x-secret`, égal au secret de fonction `RECHAUFFEUR_SECRET`.
+
+Déploiement sur le projet **EdgeScope** (ref `tapotyftgyacbnjmeovn`), exécution forcée à Paris :
+
+```bash
+supabase secrets set RECHAUFFEUR_SECRET=… --project-ref tapotyftgyacbnjmeovn
+supabase functions deploy pinnacle-rechauffe --project-ref tapotyftgyacbnjmeovn
+```
+
+Le client envoie `x-region: eu-west-3`. Secrets GitHub Actions à créer :
+`PINNACLE_RECHAUFFEUR_URL` =
+`https://tapotyftgyacbnjmeovn.supabase.co/functions/v1/pinnacle-rechauffe`
+et `PINNACLE_RECHAUFFEUR_SECRET` (la même valeur que `RECHAUFFEUR_SECRET`).
+Les deux vides : pas d'appel, la collecte continue. `PINNACLE_PROXY_URL` est un secours
+facultatif qui remplace l'hôte de l'API guest.
 `.env.example` ne contient aucune clé et les fichiers `.env` sont ignorés. Python ne les charge pas
 automatiquement : exporter les variables avant l'exécution. Les diagnostics n'affichent jamais les clés.
 
