@@ -738,7 +738,7 @@ MODELE = r"""<!doctype html>
       <a href="live_papier.json" download>Télécharger le journal JSON</a>
     </details>
     <details class="carte" id="gemini-picks">
-      <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement</summary>
+      <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement <small>(règle v2 depuis le 18/10/2026 : un pari par bookmaker et par match)</small></summary>
       <p class="aide">Pinnacle (1,30–2,15), Betfair & Polymarket (1,30–2,60) · edge 2,5–12 % · 30 min à 24 h · 1 pari/match · max 8/jour · mise fictive 10 €.</p>
       <div id="gemini-picks-list"></div>
     </details>

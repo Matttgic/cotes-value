@@ -19,6 +19,7 @@ def diagnostics_isoles(monkeypatch):
         module.ERREURS.clear()
         monkeypatch.setattr(module,'_bloque',False)
     P._ages.clear()
+    P._statuts.clear()
     P._plans.clear()
     P.oublier_cle()
     monkeypatch.delenv('PINNACLE_RECHAUFFEUR_URL', raising=False)
@@ -484,7 +485,7 @@ def test_rechauffeur_impose_les_chemins_et_un_age_sans_entete(monkeypatch,caplog
     monkeypatch.setattr(P.requests,'post',post)
     monkeypatch.setattr(P.requests,'get',get)
     out=P.collecter({29:'football'})
-    assert vu['url']=='https://exemple.test/rechauffe' and vu['timeout']==60
+    assert vu['url']=='https://exemple.test/rechauffe' and vu['timeout']==120
     assert vu['headers']['x-region']=='eu-west-3' and vu['headers']['x-secret']=='secret-rechauffe'
     assert vu['corps']=={'sports':[29],'key':'cle-de-cycle'}
     assert any(u.endswith('/sports/29/matchups?withSpecials=true&_=abc') for u in urls)
@@ -549,3 +550,62 @@ def test_chemin_rechauffe_invalide_et_proxy(monkeypatch):
     assert any(u.endswith('/sports/29/markets/straight?primaryOnly=false') for u in urls)
     assert not any('evil.exemple' in u for u in urls)
     assert out and all(l['age_cache_s']==4 and l['cote_perimee'] is False for l in out)
+
+
+def test_statut_cache_origine_est_frais_sans_entete_age():
+    maintenant=datetime(2026,10,18,2,tzinfo=timezone.utc)
+    chemin='/sports/29/markets/straight?withSpecials=true'
+    P._ages[chemin]=None
+    for statut in ('MISS','EXPIRED','DYNAMIC'):
+        P._statuts[chemin]=statut
+        age,perime=P._age_ligne(chemin,29,maintenant)
+        assert age==0 and perime is False
+    P._ages[chemin]=700
+    P._statuts[chemin]='MISS'
+    assert P._age_ligne(chemin,29,maintenant)==(700,True)
+
+
+def test_hit_sans_age_reste_perime_meme_avec_rechauffeur_frais():
+    maintenant=datetime(2026,10,18,2,tzinfo=timezone.utc)
+    chemin='/sports/29/markets/straight?withSpecials=true'
+    P._ages[chemin]=None
+    P._statuts[chemin]='HIT'
+    P._plans[29]={'markets':chemin,'fresh':True,'t':maintenant.isoformat()}
+    assert P._age_ligne(chemin,29,maintenant)==(None,True)
+    P._ages[chemin]=30
+    assert P._age_ligne(chemin,29,maintenant)[1] is False
+
+
+def test_lire_statut_cache():
+    class R:
+        headers={'cf-cache-status':' miss '}
+    assert P._lire_statut_cache(R())=='MISS'
+    class S:
+        headers={}
+    assert P._lire_statut_cache(S())==''
+
+
+def test_rechauffeur_http_refuse_et_journalise(monkeypatch):
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','http://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    appels=[]
+    monkeypatch.setattr(P.requests,'post',lambda *a,**k: appels.append(1))
+    P._demander_rechauffe({29:'football'})
+    assert appels==[] and P._plans=={} and P.etat_rechauffeur=='url_refusee'
+
+
+def test_rechauffeur_timeout_120_et_etat(monkeypatch):
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    vus={}
+    def post(url,**k):
+        vus.update(k)
+        raise P.requests.Timeout()
+    monkeypatch.setattr(P.requests,'post',post)
+    P._demander_rechauffe({29:'football'})
+    assert vus['timeout']==120 and P.etat_rechauffeur=='indisponible'
+
+
+def test_gemini_version_2_et_debut_inchange():
+    from cotes.strategie_gemini import GEMINI
+    assert GEMINI['version']=='2' and GEMINI['debut']=='2026-10-14T18:00:00+00:00'

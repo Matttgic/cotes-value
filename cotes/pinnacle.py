@@ -53,6 +53,8 @@ _cle_cache: str | None = None
 _cle_resolue = False
 origine_cle = "guest_historique"
 _ages: dict[str, int | None] = {}
+_statuts: dict[str, str] = {}
+etat_rechauffeur = "absent"      # absent | ok | indisponible | url_refusee
 _plans: dict[int, dict] = {}
 
 
@@ -187,25 +189,33 @@ def _chemin_marches(sid: int) -> str:
 
 def _demander_rechauffe(sports: dict) -> None:
     """Demande à Paris de remplir le cache Cloudflare. Un échec laisse les URL habituelles."""
-    global _plans
+    global _plans, etat_rechauffeur
     _plans = {}
+    etat_rechauffeur = "absent"
     url = os.environ.get("PINNACLE_RECHAUFFEUR_URL", "").strip()
     secret = os.environ.get("PINNACLE_RECHAUFFEUR_SECRET", "").strip()
     if not url or not secret:
         return
+    if not url.lower().startswith("https://"):
+        logger.warning("Pinnacle : URL du réchauffeur refusée (https obligatoire)")
+        etat_rechauffeur = "url_refusee"
+        return
     try:
         r = requests.post(url, json={"sports": [int(s) for s in sports], "key": cle_du_cycle()},
                           headers={"x-region": "eu-west-3", "x-secret": secret,
-                                   "Content-Type": "application/json"}, timeout=60)
+                                   "Content-Type": "application/json"}, timeout=120)
         if getattr(r, "status_code", None) != 200:
             logger.warning("Pinnacle : réchauffeur indisponible")
+            etat_rechauffeur = "indisponible"
             return
         payload = r.json()
     except (requests.RequestException, ValueError, TypeError, AttributeError):
         logger.warning("Pinnacle : réchauffeur indisponible")
+        etat_rechauffeur = "indisponible"
         return
     if not isinstance(payload, dict):
         logger.warning("Pinnacle : réchauffeur indisponible")
+        etat_rechauffeur = "indisponible"
         return
     plans: dict[int, dict] = {}
     for cle, plan in payload.items():
@@ -216,6 +226,7 @@ def _demander_rechauffe(sports: dict) -> None:
         if isinstance(plan, dict):
             plans[sid] = plan
     _plans = plans
+    etat_rechauffeur = "ok"
 
 
 def _get(path: str, essais: int = 3):
@@ -235,6 +246,7 @@ def _get(path: str, essais: int = 3):
                     return None
                 if isinstance(d, list):
                     _ages[path] = _lire_age(r)
+                    _statuts[path] = _lire_statut_cache(r)
                     return d
                 _erreur(f"{contexte} : liste JSON attendue")
                 return None
@@ -279,6 +291,11 @@ def _age_ligne(path: str, sid: int, maintenant: datetime) -> tuple[int | None, b
     """
     candidats: list[int] = []
     entete = _ages[path] if path in _ages else None
+    statut = _statuts.get(path, "")
+    if statut == "HIT" and _entier_age(entete) is None:
+        return None, True                 # servi par le cache sans âge : fraîcheur non prouvée
+    if statut in ("MISS", "EXPIRED", "DYNAMIC"):
+        candidats.append(0)               # lu à l'origine par cette requête : frais
     if _entier_age(entete) is not None:
         candidats.append(entete)
     plan = _plans.get(sid) or {}
@@ -294,6 +311,16 @@ def _age_ligne(path: str, sid: int, maintenant: datetime) -> tuple[int | None, b
         return None, True
     age = max(candidats)
     return age, age > age_max_secondes()
+
+
+def _lire_statut_cache(r) -> str:
+    """Valeur de cf-cache-status en majuscules, ou chaîne vide si absente."""
+    entetes = getattr(r, "headers", None) or {}
+    try:
+        brut = entetes.get("cf-cache-status")
+    except AttributeError:
+        return ""
+    return brut.strip().upper() if isinstance(brut, str) else ""
 
 
 def _lire_age(r) -> int | None:
@@ -350,6 +377,7 @@ def collecter(sports: dict | None = None) -> list[dict]:
     ERREURS.clear()
     _bloque = False
     _ages.clear()
+    _statuts.clear()
     oublier_cle()
     sports = sports or SPORTS
     _demander_rechauffe(sports)
