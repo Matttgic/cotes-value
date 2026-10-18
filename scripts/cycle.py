@@ -211,8 +211,9 @@ def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
         lignes, info = [], {"ok": False, "erreurs": ["budget dépassé"], "perime": True, "requetes": 0}
     else:
         lignes, info = recu
-    perime = bool(info.get("perime")) or any(
-        e in ("budget", "HTTP 429", "budget dépassé") for e in (info.get("erreurs") or []))
+    # Lecture incrémentale ("lus") : un budget ou un quota qui coupe la fin du catalogue n'est pas un cache périmé.
+    perime = bool(info.get("perime")) if "lus" in info else (bool(info.get("perime")) or any(
+        e in ("budget", "HTTP 429", "budget dépassé") for e in (info.get("erreurs") or [])))
     precedentes = cache.get("lignes") if isinstance(cache.get("lignes"), list) else []
     if perime and precedentes:
         lignes = list(precedentes)

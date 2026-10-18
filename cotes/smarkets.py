@@ -475,9 +475,11 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
             if client._bloque:
                 break
             a_lire += [(ev, sport) for ev in _evenements(client, type_event, heures, maintenant, radar, sport)]
-        evenements = {"lu": maintenant.isoformat(timespec="seconds"), "liste": [
-            {"id": ev.get("id"), "name": ev.get("name"), "start_datetime": ev.get("start_datetime"),
-             "sport_interne": sport} for ev, sport in a_lire]}
+        # Une liste coupée par le budget ou le quota n'est pas mémorisée : elle serait incomplète pendant une heure.
+        evenements = memo if client._bloque else {
+            "lu": maintenant.isoformat(timespec="seconds"), "liste": [
+                {"id": ev.get("id"), "name": ev.get("name"), "start_datetime": ev.get("start_datetime"),
+                 "sport_interne": sport} for ev, sport in a_lire]}
     matchs = len(a_lire)
     lus: dict[str, str] = {}
     for ligne in (reserve or {}).get("lignes") or []:
