@@ -1,18 +1,19 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T16:20:19+00:00",
+  "debut": "2026-10-18T16:24:59+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.5,
+    "secondes": 12.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "prix bid/ask invalides"
+     "prix bid/ask invalides",
+     "prix lu après le coup d'envoi : rejet pré-match"
     ]
    },
    "pinnacle": {
-    "secondes": 31.2,
+    "secondes": 27.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -22,30 +23,43 @@
     ]
    },
    "olybet": {
-    "secondes": 5.9,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 8.8,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 13.6,
+    "secondes": 6.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 18.0,
+    "secondes": 6.2,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau",
+     "sport:2 : réseau",
+     "sport:3 : réseau"
+    ]
+   },
+   "betclic_direct": {
+    "secondes": 10.8,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 14.3,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 30.1,
+    "secondes": 30.4,
     "ok": true
    },
    "pulsescore": {
-    "secondes": 26.1,
+    "secondes": 25.6,
     "ok": true,
     "degrade": true,
     "erreurs": {
+     "winamax": [
+      "sélection ignorée : prix/ligne/intitulé invalide",
+      "sélection ignorée : prix/ligne/intitulé invalide",
+      "sélection ignorée : prix/ligne/intitulé invalide",
+      "sélection ignorée : prix/ligne/intitulé invalide",
+      "sélection ignorée : prix/ligne/intitulé invalide"
+     ],
      "orbitxch": [
       "sélection ignorée : prix/ligne/intitulé invalide",
       "sélection ignorée : prix/ligne/intitulé invalide",
@@ -61,15 +75,15 @@
     "desactive": true
    },
    "association": {
-    "secondes": 3.3,
+    "secondes": 7.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.5,
+    "secondes": 0.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.1,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -84,8 +98,8 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 871,
-   "lignes_perimees": 81526,
+   "age_max_s": 846,
+   "lignes_perimees": 13867,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -99,8 +113,8 @@
     "head_200": 49,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 13,
-    "choisi_fixe": 3,
+    "choisi_fixe": 8,
+    "choisi_autre": 8,
     "reprise_403": 3
    }
   },
@@ -109,26 +123,27 @@
   "betclic_source": "shadow",
   "olybet_source": "direct",
   "pmu_direct_rapport": {
-   "matchs_pulsescore": 144,
-   "matchs_direct": 146,
-   "matchs_communs": 129,
-   "couverture": 0.8958,
-   "selections_communes": 9644,
-   "selections_egales": 9629,
-   "accord_cotes": 0.9984,
+   "matchs_pulsescore": 146,
+   "matchs_direct": 148,
+   "matchs_communs": 131,
+   "couverture": 0.8973,
+   "selections_communes": 9679,
+   "selections_egales": 9678,
+   "accord_cotes": 0.9999,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
    "pret_a_basculer": false
   },
-  "winamax_source_effective": "direct",
+  "winamax_source_effective": "pulsescore",
+  "winamax_repli": "Socket Winamax vide ou en échec, PulseScore décide",
   "unibet_direct_rapport": {
    "matchs_pulsescore": 173,
    "matchs_direct": 72,
    "matchs_communs": 68,
    "couverture": 0.3931,
    "selections_communes": 3791,
-   "selections_egales": 3751,
-   "accord_cotes": 0.9894,
+   "selections_egales": 3734,
+   "accord_cotes": 0.985,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
    "pret_a_basculer": false
@@ -139,8 +154,8 @@
    "matchs_communs": 47,
    "couverture": 0.2848,
    "selections_communes": 986,
-   "selections_egales": 881,
-   "accord_cotes": 0.8935,
+   "selections_egales": 922,
+   "accord_cotes": 0.9351,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
    "pret_a_basculer": false
@@ -169,17 +184,17 @@
     {
      "match": "Monterrey – Pachuca",
      "source": "Pinnacle",
-     "cote_olybet": 1.56,
-     "cote_reference": 1.645,
-     "ecart_relatif": 0.0518,
+     "cote_olybet": 1.57,
+     "cote_reference": 1.658,
+     "ecart_relatif": 0.053,
      "aberrant": false
     },
     {
      "match": "Monterrey – Pachuca",
      "source": "PMU",
-     "cote_olybet": 1.56,
+     "cote_olybet": 1.57,
      "cote_reference": 1.5,
-     "ecart_relatif": 0.04,
+     "ecart_relatif": 0.0467,
      "aberrant": false
     },
     {
@@ -218,11 +233,11 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T16:20:28+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T16:20:46+00:00",
-   "books_premiere_lecture": "2026-10-18T16:20:19+00:00",
-   "books_derniere_lecture": "2026-10-18T16:21:33+00:00",
-   "ecart_enveloppe_secondes": 65.0
+   "pinnacle_premiere_lecture": "2026-10-18T16:25:09+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T16:25:23+00:00",
+   "books_premiere_lecture": "2026-10-18T16:25:27+00:00",
+   "books_derniere_lecture": "2026-10-18T16:25:58+00:00",
+   "ecart_enveloppe_secondes": 49.0
   },
   "smarkets_cache": {
    "reutilise": false,
@@ -234,7 +249,7 @@
    "conforme": 462,
    "a_verifier": 4,
    "non_conforme": 7,
-   "mesures": 21032,
+   "mesures": 25573,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -243,42 +258,30 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T15:31:19+00:00"
   },
-  "fin": "2026-10-18T16:21:44+00:00",
+  "fin": "2026-10-18T16:26:13+00:00",
   "requetes_pulsescore": {
+   "winamax": 12,
    "betclic": 11,
    "unibet-fr": 13,
-   "pmu": 11,
+   "pmu": 12,
    "orbitxch": 15
   },
   "cotes": {
-   "francaises": 67182,
-   "pinnacle": 100476,
-   "betfair": 12029,
-   "polymarket": 16551,
+   "francaises": 81886,
+   "pinnacle": 102050,
+   "betfair": 12054,
+   "polymarket": 16545,
    "smarkets": 0
   },
-  "matchs_francais": 839,
-  "opportunites": 12,
-  "opportunites_suspectes": 2,
-  "nouveaux_paris": 3
+  "matchs_francais": 823,
+  "opportunites": 13,
+  "opportunites_suspectes": 0,
+  "nouveaux_paris": 2
  },
  "requetes_par_mois": {
-  "2026-10": 228309
+  "2026-10": 228372
  },
  "historique": [
-  {
-   "debut": "2026-10-17T13:55:02+00:00",
-   "mode": "complet",
-   "opportunites": 26,
-   "nouveaux_paris": 1,
-   "requetes_pulsescore": {
-    "winamax": 24,
-    "betclic": 25,
-    "unibet-fr": 25,
-    "pmu": 21,
-    "orbitxch": 22
-   }
-  },
   {
    "debut": "2026-10-17T14:03:38+00:00",
    "mode": "complet",
@@ -2873,6 +2876,19 @@
     "betclic": 11,
     "unibet-fr": 13,
     "pmu": 11,
+    "orbitxch": 15
+   }
+  },
+  {
+   "debut": "2026-10-18T16:24:59+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 2,
+   "requetes_pulsescore": {
+    "winamax": 12,
+    "betclic": 11,
+    "unibet-fr": 13,
+    "pmu": 12,
     "orbitxch": 15
    }
   }
