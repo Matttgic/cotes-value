@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T17:37:31+00:00",
+  "debut": "2026-10-18T17:42:04+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 10.2,
+    "secondes": 11.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,49 +12,40 @@
     ]
    },
    "pinnacle": {
-    "secondes": 31.2,
+    "secondes": 31.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "sport 5 matchups : HTTP 403",
      "sport 1 matchups : HTTP 403",
-     "sport 13 matchups : HTTP 403"
+     "sport 39 matchups : HTTP 403"
     ]
    },
-   "unibet_direct": {
-    "secondes": 5.7,
+   "olybet": {
+    "secondes": 3.9,
     "ok": true
    },
-   "olybet": {
-    "secondes": 6.4,
+   "unibet_direct": {
+    "secondes": 5.0,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 13.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 12.9,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:3 : réseau"
-    ]
+    "secondes": 17.4,
+    "ok": true
    },
-   "pmu_direct": {
-    "secondes": 13.9,
+   "betclic_direct": {
+    "secondes": 24.1,
     "ok": true
    },
    "pulsescore": {
-    "secondes": 24.0,
+    "secondes": 21.5,
     "ok": true,
     "degrade": true,
     "erreurs": {
-     "winamax": [
-      "sélection ignorée : prix/ligne/intitulé invalide",
-      "sélection ignorée : prix/ligne/intitulé invalide",
-      "sélection ignorée : prix/ligne/intitulé invalide",
-      "sélection ignorée : prix/ligne/intitulé invalide",
-      "sélection ignorée : prix/ligne/intitulé invalide"
-     ],
      "orbitxch": [
       "sélection ignorée : prix/ligne/intitulé invalide",
       "sélection ignorée : prix/ligne/intitulé invalide",
@@ -64,21 +55,13 @@
      ]
     }
    },
-   "betclic_direct": {
-    "secondes": 42.2,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
    "smarkets": {
     "secondes": 0.0,
     "ok": true,
     "desactive": true
    },
    "association": {
-    "secondes": 4.8,
+    "secondes": 10.4,
     "ok": true
    },
    "comparaison": {
@@ -101,11 +84,14 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 798,
-   "lignes_perimees": 88445,
-   "rechauffeur": "indisponible",
+   "age_max_s": 892,
+   "lignes_perimees": 2277,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
@@ -113,9 +99,9 @@
     "head_200": 48,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 13,
-    "choisi_fixe": 3,
-    "reprise_403": 3
+    "choisi_autre": 11,
+    "choisi_fixe": 5,
+    "reprise_403": 4
    }
   },
   "winamax_source": "auto",
@@ -124,27 +110,18 @@
   "olybet_source": "direct",
   "pmu_direct_rapport": {
    "matchs_pulsescore": 122,
-   "matchs_direct": 137,
-   "matchs_communs": 121,
-   "manques": [
-    {
-     "sport": "football",
-     "domicile": "Omonia Nicosia",
-     "exterieur": "Olympiakos Nicosia",
-     "ligue": "1ère Division",
-     "debut": "2026-10-19T16:00:00.000Z"
-    }
-   ],
-   "couverture": 0.9918,
-   "selections_communes": 9034,
-   "selections_egales": 8799,
-   "accord_cotes": 0.974,
+   "matchs_direct": 138,
+   "matchs_communs": 122,
+   "manques": [],
+   "couverture": 1.0,
+   "selections_communes": 9064,
+   "selections_egales": 8974,
+   "accord_cotes": 0.9901,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
-   "pret_a_basculer": false
+   "pret_a_basculer": true
   },
-  "winamax_source_effective": "pulsescore",
-  "winamax_repli": "Socket Winamax vide ou en échec, PulseScore décide",
+  "winamax_source_effective": "direct",
   "unibet_direct_rapport": {
    "matchs_pulsescore": 140,
    "matchs_direct": 156,
@@ -152,11 +129,11 @@
    "manques": [],
    "couverture": 1.0,
    "selections_communes": 293,
-   "selections_egales": 292,
-   "accord_cotes": 0.9966,
+   "selections_egales": 287,
+   "accord_cotes": 0.9795,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
-   "pret_a_basculer": true
+   "pret_a_basculer": false
   },
   "betclic_direct_rapport": {
    "matchs_pulsescore": 139,
@@ -165,8 +142,8 @@
    "manques": [],
    "couverture": 1.0,
    "selections_communes": 3000,
-   "selections_egales": 2894,
-   "accord_cotes": 0.9647,
+   "selections_egales": 2929,
+   "accord_cotes": 0.9763,
    "seuil_couverture": 0.95,
    "seuil_accord": 0.99,
    "pret_a_basculer": false
@@ -212,8 +189,8 @@
      "match": "Juventus – Lazio",
      "source": "Pinnacle",
      "cote_olybet": 1.59,
-     "cote_reference": 1.617,
-     "ecart_relatif": 0.0169,
+     "cote_reference": 1.649,
+     "ecart_relatif": 0.036,
      "aberrant": false
     },
     {
@@ -244,11 +221,11 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T17:37:42+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T17:37:58+00:00",
-   "books_premiere_lecture": "2026-10-18T17:38:03+00:00",
-   "books_derniere_lecture": "2026-10-18T17:38:39+00:00",
-   "ecart_enveloppe_secondes": 57.0
+   "pinnacle_premiere_lecture": "2026-10-18T17:42:14+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T17:42:28+00:00",
+   "books_premiere_lecture": "2026-10-18T17:42:04+00:00",
+   "books_derniere_lecture": "2026-10-18T17:43:14+00:00",
+   "ecart_enveloppe_secondes": 60.0
   },
   "smarkets_cache": {
    "reutilise": false,
@@ -260,7 +237,7 @@
    "conforme": 461,
    "a_verifier": 4,
    "non_conforme": 8,
-   "mesures": 16843,
+   "mesures": 20695,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -269,43 +246,29 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T17:25:21+00:00"
   },
-  "fin": "2026-10-18T17:38:59+00:00",
+  "fin": "2026-10-18T17:43:35+00:00",
   "requetes_pulsescore": {
-   "winamax": 11,
    "betclic": 11,
    "unibet-fr": 11,
    "pmu": 11,
    "orbitxch": 13
   },
   "cotes": {
-   "francaises": 64764,
-   "pinnacle": 95343,
-   "betfair": 11388,
-   "polymarket": 14267,
+   "francaises": 53819,
+   "pinnacle": 95267,
+   "betfair": 11480,
+   "polymarket": 14275,
    "smarkets": 0
   },
-  "matchs_francais": 677,
-  "opportunites": 6,
+  "matchs_francais": 691,
+  "opportunites": 18,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 5
  },
  "requetes_par_mois": {
-  "2026-10": 229837
+  "2026-10": 229883
  },
  "historique": [
-  {
-   "debut": "2026-10-17T15:33:37+00:00",
-   "mode": "complet",
-   "opportunites": 21,
-   "nouveaux_paris": 3,
-   "requetes_pulsescore": {
-    "winamax": 23,
-    "betclic": 24,
-    "unibet-fr": 24,
-    "pmu": 20,
-    "orbitxch": 22
-   }
-  },
   {
    "debut": "2026-10-17T15:52:15+00:00",
    "mode": "complet",
@@ -2886,6 +2849,18 @@
    "nouveaux_paris": 1,
    "requetes_pulsescore": {
     "winamax": 11,
+    "betclic": 11,
+    "unibet-fr": 11,
+    "pmu": 11,
+    "orbitxch": 13
+   }
+  },
+  {
+   "debut": "2026-10-18T17:42:04+00:00",
+   "mode": "complet",
+   "opportunites": 18,
+   "nouveaux_paris": 5,
+   "requetes_pulsescore": {
     "betclic": 11,
     "unibet-fr": 11,
     "pmu": 11,
