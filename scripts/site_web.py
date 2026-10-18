@@ -10,8 +10,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TEMOIN, TRANCHES, bilan,  # noqa: E402
-                              bilan_bookmakers, bilan_tranches, paris_strategie, premiers_par_selection,
-                              REGLES, clv_finale, segments, tranche)
+                              bilan_bookmakers, bilan_tranches, moyennes_ecarts, paris_strategie,
+                              premiers_par_selection, REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes, suivis_prudents  # noqa: E402
@@ -56,7 +56,8 @@ def cle_fiche(p: dict) -> tuple:
 
 CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
-                "ligue", "regle_le", "reporte_au", "id", "joueur", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le", "decide_le", "registre_version")
+                "ligue", "regle_le", "reporte_au", "id", "joueur", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le", "decide_le", "registre_version",
+                "ecart_betfair", "ecart_polymarket", "ecart_smarkets")
 
 
 PARIS_TZ = ZoneInfo("Europe/Paris")
@@ -549,6 +550,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
             "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste if p["a_regler"] or p.get("reference") != TEMOIN], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles, "bilan": bilan(paris),
+            "ecarts_references": moyennes_ecarts(paris),
             "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "segments": segments(paris),
             "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
             "bilan_bookmakers": bilan_bookmakers(paris), "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
@@ -651,6 +653,7 @@ MODELE = r"""<!doctype html>
     <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
     <div class="bulle" id="bulle"></div></div></details>
     <div class="tableau"><table id="liste-bilan"></table></div>
+    <p class="aide" id="bilan-ecarts">Paris uniques réglés · écart vs Betfair — · écart vs Polymarket — · écart vs Smarkets —</p>
     <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
     <h2 class="sous-titre">Par bookmaker</h2>
     <div class="tableau"><table id="bilan-books"></table></div>
@@ -921,6 +924,8 @@ const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 600
 const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
+const ecartsReferences = p => ["Betfair", "Polymarket", "Smarkets"].map(nom =>
+  `<span>écart vs ${nom} ${pct(p["ecart_" + nom.toLowerCase()])}</span>`).join(" ");
 const carteActuelle = o => `<details class="ligne-detail ligne-pari ${o.strategies.length ? "ligne-validee" : ""}" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
 <span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}${o.prix_change ? ' <small>· Prix modifié</small>' : ''}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>${horairePari(o)}${collectePari(o)}
 <span class="ligne-book" title="${e(o.bookmaker)}">${monogrammeBookmaker(o.bookmaker)}</span><b class="ligne-cote" aria-label="Cote ${cote(o.cote)}">${cote(o.cote)}</b><b class="ligne-valeur pos" aria-label="Edge ${pct(o.ecart)}">${pct(o.ecart)}</b></summary><div class="ligne-corps"><article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
@@ -934,6 +939,7 @@ ${o.prix_change ? `<p class="aide">${o.convergence_precedente ? 'Convergence ≥
 ${o.strategies.length ? `<div class="op-validation">Prise enregistrée le ${quand(o.validation_detecte)}</div>` : ""}
 <div class="op-reference">${(() => { const r=o.refs.find(r=>r.ecart===o.ecart) || o.refs[0];
   return `Cote juste <b>${cote(r.cote_juste)}</b> · ${e(r.reference)}` + (o.refs.length>1 ? `<details><summary>Les ${o.refs.length} références</summary><p>${o.refs.map(r=>`${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join(" · ")}</p></details>` : "");})()}</div>
+<div class="l4">${ecartsReferences(o)}</div>
 </article></div></details>`;
 const age = minutes(dc.debut);
 document.getElementById("jouer-quand").textContent = dc.debut ? `Relevé à ${hm(dc.debut)}` +
@@ -1028,6 +1034,12 @@ function additionner(sims, source = D.bilan, prefixe = "") {
 }
 function rendreBilan() {
   const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", ...D.references.filter(r => r !== "Pinnacle brut"), "Toutes", "Pinnacle brut"];
+  const bloc = D.ecarts_references || {};
+  document.getElementById("bilan-ecarts").textContent = "Paris uniques réglés · " +
+    ["Betfair", "Polymarket", "Smarkets"].map(nom => {
+      const x = bloc[nom] || {};
+      return `écart vs ${nom} ${x.n ? pct(x.moyenne) : "—"}` + (x.n ? ` (${x.n})` : "");
+    }).join(" · ");
   document.getElementById("puces-ref").innerHTML = refs.map(r =>
     `<button data-r="${r}" class="${r===refBilan?"actif":""}">${NOMS_REF[r] || r}</button>`).join("");
   document.getElementById("bilan-quoi").textContent = QUOI[refBilan] || `Paris repérés par ${refBilan}.`;
@@ -1170,7 +1182,7 @@ document.getElementById("reinitialiser-filtres").onclick = () => {
   for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value="";
   rendreParis();
 };
-const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","clv","statut","gain","strategies","collecte_recue","collecte_debut","prix_revu","prix_revu_le"];
+const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","ecart_betfair","ecart_polymarket","ecart_smarkets","clv","statut","gain","strategies","collecte_recue","collecte_debut","prix_revu","prix_revu_le"];
 // Les cellules texte ne doivent pas devenir des formules à l'ouverture dans un tableur.
 const celluleCSV = valeur => {
   if (valeur == null) return '""';
@@ -1202,7 +1214,7 @@ const carteParis = p => `<details class="ligne-detail ligne-pari" id="pari-${e(e
   ? "reporté au " + quand(p.reporte_au) : quand(p.debut)}</span></div>
 <div class="l2">${e(p.pari)}</div>
 <div class="l3"><span><b>${e(p.bookmaker)} ${cote(p.cote)}</b></span><span>${e(p.reference)} ${cote(p.cote_juste)}</span>
-<span class="ecart">${pct(p.ecart)}</span></div>
+<span class="ecart">${pct(p.ecart)}</span>${ecartsReferences(p)}</div>
 <div class="l4"><span class="badge ${p.statut}">${STATUTS[p.statut]||p.statut}</span>
 ${badgeStrategies(p)}
 ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}

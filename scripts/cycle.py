@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
-                   simulation, stockage)
+                   simulation, smarkets, stockage)
 from cotes.direct import olybet as olybet_direct  # noqa: E402
 from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
@@ -421,6 +421,17 @@ def main() -> int:
     francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
     betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])
     references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly}
+    # Smarkets reste hors de `francais` : bookmaker « smarkets » n'est pas un book français.
+    sports_sm = {"football"} if args.mode == "test" else {l["sport"] for l in francais if l.get("sport")}
+    sm = etape("smarkets", journal, smarkets.collecter, sports_sm,
+               12 if args.mode == "test" else HORIZON_H, maintenant=maintenant)
+    if not isinstance(sm, tuple) or len(sm) != 2:
+        sm_lignes, sm_info = [], {"ok": False, "erreurs": ["lecture interrompue"]}
+    else:
+        sm_lignes, sm_info = sm
+    signaler(journal, "smarkets", list(sm_info.get("erreurs") or []))
+    journal["smarkets_dans_decision"] = smarkets.dans_decision()
+    smarkets.ajouter_decision(references, sm_lignes)
 
     # 3. contrôle de conformité des marchés (cumulé d'un cycle à l'autre), comparaison et paris simulés :
     #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari
@@ -438,6 +449,10 @@ def main() -> int:
     opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
                          index=index, controle=(etat_controle, suspects),
                          temoin_brut=os.environ.get("TEMOIN_PINNACLE_BRUT") == "oui") or []
+    # Écarts d'affichage, y compris quand Smarkets ne décide pas. Avant le placement :
+    # le pari enregistre les trois champs.
+    comparaison.annoter_ecarts(opportunites, francais,
+                               {"Betfair": betfair, "Polymarket": poly, "Smarkets": sm_lignes})
     paris = lire_json(donnees / "paris.json", [])
     # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
     manuels = lire_json(donnees / "resultats_manuels.json", {})
@@ -478,7 +493,8 @@ def main() -> int:
     journal.update({
         "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "requetes_pulsescore": requetes, "cotes": {"francaises": len(francais), "pinnacle": len(pin),
-                                                    "betfair": len(betfair), "polymarket": len(poly)},
+                                                    "betfair": len(betfair), "polymarket": len(poly),
+                                                    "smarkets": len(sm_lignes)},
         "matchs_francais": len({l["match_id"] for l in francais}),
         "opportunites": sum(not o.get("suspect") for o in opportunites),
         "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),

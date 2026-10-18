@@ -14,6 +14,7 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 | Pinnacle | Référence | API publique du site (`cotes/pinnacle.py`) | Gratuit |
 | Polymarket | Référence | API officielle gamma (`cotes/polymarket.py`) | Gratuit |
 | Betfair Exchange | Référence | PulseScore, via Orbit Exchange | Offre PulseScore |
+| Smarkets | Référence | API publique v3, sans compte (`cotes/smarkets.py`) | Gratuit |
 | Winamax, Betclic, Unibet | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
 | PMU | Cotes à comparer | Kambi en parallèle de PulseScore (`cotes/direct/pmu.py`) | Gratuit |
 | OlyBet | Cotes à comparer | Swarm BetConstruct (`cotes/direct/olybet.py`) | Gratuit |
@@ -36,6 +37,12 @@ Kalshi restent affichés ; Kalshi n'est plus interrogé.
 OlyBet est lu en direct (`SOURCE_OLYBET`, défaut `direct`). `off` coupe cette lecture.
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
 compte restent en période `MATCH?` et ne sont pas comparés.
+
+Smarkets est lu sur son API publique, sans compte. La cote juste est le milieu
+achat/vente, comme Betfair : le spread est dans le milieu, aucune commission
+n'est retirée en plus. `SMARKETS_DANS_DECISION` vaut `non` par défaut : les cotes
+servent à l'écart affiché dans le bilan, pas à la décision. `oui` les utilise
+comme Betfair.
 
 ## Comment ça marche
 

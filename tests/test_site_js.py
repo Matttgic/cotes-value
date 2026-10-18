@@ -94,7 +94,7 @@ def test_js_recherche_filtres_export_bom_echappement_et_archive_complete():
     champs=list(rows[0]); data={"paris":[],"catalogue":{"champs":champs,"lignes":[list(p.values()) for p in rows]},
                               "strategies_badges":{"chatgpt":"ChatGPT v1"},"tranches":[],"valeurs_filtres":{},"simulations":{}}
     section=MODELE[MODELE.index("const recentes ="):MODELE.index("// --- Segments")]
-    js=DOM+"const D="+json.dumps(data)+";\nconst badgeStrategies=()=>'';\n"+section+'''
+    js=DOM+"const D="+json.dumps(data)+";\nconst badgeStrategies=()=>'';\nconst ecartsReferences=()=>'';\n"+section+'''
 assert.equal(parisFiltres.length,75);
 assert.equal((document.getElementById("liste-paris").innerHTML.match(/<article/g)||[]).length,50);
 document.getElementById("f-q").value="EQUIPE SAINT-ETIENNE";
