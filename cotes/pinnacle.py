@@ -62,6 +62,7 @@ ORTHO_PRIX = ("?primaryOnly=false&withSpecials=true", "?primaryOnly=false", "?wi
               "?withSpecials=true&primaryOnly=false", "")
 choix_prix: dict[str, int] = {}
 _choix_coupe = False
+_ortho_refusees: set[str] = set()   # orthographes refusées (403) pendant ce cycle
 _plans: dict[int, dict] = {}
 
 
@@ -194,13 +195,19 @@ def _compter(cle: str) -> None:
 
 
 def _choisir_chemin_prix(sid: int) -> str:
-    """Orthographe des prix la plus fraîche selon un HEAD ; l'URL fixe au moindre doute."""
+    """Orthographe des prix la plus fraîche selon un HEAD ; l'URL fixe au moindre doute.
+
+    Mesuré du 18/10/2026 : une orthographe absente du cache part chez Pinnacle, qui refuse GitHub
+    (403). Ce refus vise l'orthographe, pas nous : on l'écarte pour le reste du cycle. On ne coupe
+    tout qu'au vrai signal de blocage : 401, 429, ou 403 sur l'URL fixe.
+    """
     global _choix_coupe
     fixe = _chemin_marches(sid)
-    if _choix_coupe or _bloque or not choix_actif():
+    candidates = [q for q in ORTHO_PRIX if q not in _ortho_refusees]
+    if _choix_coupe or _bloque or not choix_actif() or len(candidates) <= 1:
         return fixe
     meilleur, age_min = fixe, None
-    for q in ORTHO_PRIX:
+    for q in candidates:
         chemin = f"/sports/{sid}/markets/straight{q}"
         try:
             r = requests.head(base_api() + chemin, headers=headers(), timeout=15, allow_redirects=False)
@@ -209,9 +216,13 @@ def _choisir_chemin_prix(sid: int) -> str:
             continue
         code = getattr(r, "status_code", None)
         _compter(f"head_{code}")
-        if code in (401, 403, 429):
-            _choix_coupe = True              # disjoncteur : plus de HEAD jusqu'au prochain cycle
+        if code in (401, 429) or (code == 403 and q == ORTHO_PRIX[0]):
+            _choix_coupe = True              # vrai blocage : plus de HEAD jusqu'au prochain cycle
             break
+        if code == 403:
+            _ortho_refusees.add(q)           # cette orthographe seulement, pour le reste du cycle
+            _compter("ortho_refusee")
+            continue
         if code != 200:
             continue
         statut, age = _lire_statut_cache(r), _lire_age(r)
@@ -434,6 +445,7 @@ def collecter(sports: dict | None = None) -> list[dict]:
     _statuts.clear()
     choix_prix.clear()
     _choix_coupe = False
+    _ortho_refusees.clear()
     oublier_cle()
     sports = sports or SPORTS
     _demander_rechauffe(sports)

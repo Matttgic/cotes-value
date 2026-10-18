@@ -28,6 +28,7 @@ def diagnostics_isoles(monkeypatch):
     monkeypatch.setenv('PINNACLE_CHOIX_PRIX', 'non')   # pas de HEAD réseau dans les autres tests
     P.choix_prix.clear()
     monkeypatch.setattr(P,'_choix_coupe',False)
+    P._ortho_refusees.clear()
     monkeypatch.setattr(P,'_cle_dynamique',lambda: None)
     yield
     P.ERREURS.clear();M.ERREURS.clear()
@@ -684,13 +685,37 @@ def test_choix_garde_l_url_fixe_sans_age_exploitable(monkeypatch):
     assert P.choix_prix['choisi_fixe']==1
 
 
-def test_choix_disjoncteur_au_premier_403(monkeypatch):
+def test_choix_403_sur_une_orthographe_l_ecarte_sans_couper(monkeypatch):
+    # Cas réel du 18/10 : une orthographe absente du cache renvoie 403 à GitHub, les autres répondent.
+    heads, gets = _brancher(monkeypatch, {
+        '?primaryOnly=false&withSpecials=true': Tete(200,'HIT',800),
+        '?primaryOnly=false': Tete(200,'HIT',300),
+        '?withSpecials=true': Tete(403,'BYPASS'),
+        '?withSpecials=true&primaryOnly=false': Tete(200,'HIT',40),
+        '': Tete(200,'HIT',600)})
+    P._choisir_chemin_prix(29)
+    P._choisir_chemin_prix(33)
+    assert P._choix_coupe is False
+    assert sum(h.endswith('/markets/straight?withSpecials=true') for h in heads)==1   # pas redemandée
+    assert len(heads)==5+4
+    assert P.choix_prix['ortho_refusee']==1 and P.choix_prix['choisi_autre']==2
+
+
+def test_choix_coupe_sur_403_de_l_url_fixe_ou_429(monkeypatch):
     heads, gets = _brancher(monkeypatch, {'?primaryOnly=false&withSpecials=true': Tete(403,'BYPASS')})
-    P.collecter({29:'football'})
-    assert len(heads)==1 and P._choix_coupe is True   # coupé dès le premier refus
-    assert P.choix_prix=={'head_403':1,'choisi_fixe':1}
-    assert P._choisir_chemin_prix(33)=='/sports/33/markets/straight?primaryOnly=false&withSpecials=true'
-    assert len(heads)==1                               # le sport suivant ne refait pas de HEAD
+    assert P._choisir_chemin_prix(29)==FIXE and P._choix_coupe is True and len(heads)==1
+    assert P._choisir_chemin_prix(33).startswith('/sports/33/') and len(heads)==1
+    P._choix_coupe=False; P._ortho_refusees.clear(); heads.clear()
+    heads2, _ = _brancher(monkeypatch, {'?primaryOnly=false&withSpecials=true': Tete(200,'HIT',800),
+                                        '?primaryOnly=false': Tete(429)})
+    P._choisir_chemin_prix(29)
+    assert P._choix_coupe is True and len(heads2)==2
+
+
+def test_choix_sans_head_si_toutes_les_autres_orthographes_sont_refusees(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {})
+    P._ortho_refusees.update(P.ORTHO_PRIX[1:])
+    assert P._choisir_chemin_prix(29)==FIXE and heads==[]
 
 
 def test_choix_repli_sur_l_url_fixe_si_l_orthographe_choisie_est_refusee(monkeypatch):
