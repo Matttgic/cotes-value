@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T19:41:15+00:00",
+  "debut": "2026-10-18T19:45:55+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.9,
+    "secondes": 9.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,33 +12,37 @@
     ]
    },
    "pinnacle": {
-    "secondes": 37.3,
+    "secondes": 43.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 28 markets/straight : HTTP 403",
      "sport 45 matchups : HTTP 403",
-     "sport 5 matchups : HTTP 403",
-     "sport 1 matchups : HTTP 403"
+     "sport 5 matchups : HTTP 403"
+    ]
+   },
+   "unibet_direct": {
+    "secondes": 0.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "accueil HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 4.8,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 5.3,
+    "secondes": 5.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 12.8,
+    "secondes": 11.9,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 18.1,
+    "secondes": 18.9,
     "ok": true
    },
    "pulsescore": {
-    "secondes": 16.2,
+    "secondes": 16.4,
     "ok": true,
     "degrade": true,
     "erreurs": {
@@ -49,6 +53,13 @@
       "betclic/ice-hockey/events : collecte différée (quota/refus)",
       "betclic/handball/events : collecte différée (quota/refus)"
      ],
+     "unibet-fr": [
+      "unibet-fr/soccer/events : HTTP 429",
+      "unibet-fr/basketball/events : collecte différée (quota/refus)",
+      "unibet-fr/tennis/events : collecte différée (quota/refus)",
+      "unibet-fr/ice-hockey/events : collecte différée (quota/refus)",
+      "unibet-fr/handball/events : collecte différée (quota/refus)"
+     ],
      "orbitxch": [
       "orbitxch/soccer/events : HTTP 429",
       "orbitxch/tennis/events : collecte différée (quota/refus)"
@@ -56,17 +67,17 @@
     },
     "betclic_repli": "L'API Betclic remplace PulseScore (401/403/402/quota ou lecture impossible)"
    },
-   "betclic_direct": {
-    "secondes": 36.3,
-    "ok": true
-   },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
+   },
+   "betclic_direct": {
+    "secondes": 56.0,
+    "ok": true
    },
    "smarkets": {
     "secondes": 0.0,
@@ -74,15 +85,15 @@
     "desactive": true
    },
    "association": {
-    "secondes": 2.1,
+    "secondes": 4.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.4,
+    "secondes": 0.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.0,
+    "secondes": 0.1,
     "ok": true
    }
   },
@@ -97,8 +108,8 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 841,
-   "lignes_perimees": 90383,
+   "age_max_s": 883,
+   "lignes_perimees": 5536,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -109,11 +120,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 42,
-    "head_403": 2,
+    "head_200": 33,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 8,
+    "choisi_fixe": 5,
+    "choisi_autre": 7,
     "reprise_403": 6
    }
   },
@@ -210,8 +221,8 @@
      "match": "Cerro Porteño – Sportivo Ameliano",
      "source": "Pinnacle",
      "cote_netbet": 1.53,
-     "cote_reference": 1.685,
-     "ecart_relatif": 0.0919,
+     "cote_reference": 1.61,
+     "ecart_relatif": 0.0496,
      "aberrant": false
     },
     {
@@ -225,17 +236,17 @@
     {
      "match": "Wydad Casablanca – Amal Tiznit",
      "source": "Pinnacle",
-     "cote_netbet": 1.42,
-     "cote_reference": 1.544,
-     "ecart_relatif": 0.08,
+     "cote_netbet": 1.39,
+     "cote_reference": 1.408,
+     "ecart_relatif": 0.0129,
      "aberrant": false
     },
     {
      "match": "Wydad Casablanca – Amal Tiznit",
      "source": "PMU",
-     "cote_netbet": 1.42,
+     "cote_netbet": 1.39,
      "cote_reference": 1.34,
-     "ecart_relatif": 0.0597,
+     "ecart_relatif": 0.0373,
      "aberrant": false
     },
     {
@@ -290,11 +301,11 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T19:41:24+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T19:41:31+00:00",
-   "books_premiere_lecture": "2026-10-18T18:12:14+00:00",
-   "books_derniere_lecture": "2026-10-18T19:41:53+00:00",
-   "ecart_enveloppe_secondes": 5357.0
+   "pinnacle_premiere_lecture": "2026-10-18T19:46:06+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T19:46:19+00:00",
+   "books_premiere_lecture": "2026-10-18T18:22:07+00:00",
+   "books_derniere_lecture": "2026-10-18T19:46:38+00:00",
+   "ecart_enveloppe_secondes": 5052.0
   },
   "smarkets_cache": {
    "reutilise": false,
@@ -303,10 +314,10 @@
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 549,
-   "a_verifier": 7,
+   "conforme": 550,
+   "a_verifier": 6,
    "non_conforme": 8,
-   "mesures": 7918,
+   "mesures": 12068,
    "matchs_suspects": 0
   },
   "temoin_pinnacle_brut": false,
@@ -315,40 +326,28 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T19:22:47+00:00"
   },
-  "fin": "2026-10-18T19:42:35+00:00",
+  "fin": "2026-10-18T19:47:42+00:00",
   "requetes_pulsescore": {
    "betclic": 4,
+   "unibet-fr": 4,
    "orbitxch": 4
   },
   "cotes": {
-   "francaises": 31128,
-   "pinnacle": 95919,
+   "francaises": 30648,
+   "pinnacle": 96048,
    "betfair": 0,
-   "polymarket": 11214,
+   "polymarket": 11212,
    "smarkets": 0
   },
-  "matchs_francais": 711,
-  "opportunites": 3,
-  "opportunites_suspectes": 0,
+  "matchs_francais": 547,
+  "opportunites": 8,
+  "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "requetes_par_mois": {
-  "2026-10": 230776
+  "2026-10": 230788
  },
  "historique": [
-  {
-   "debut": "2026-10-17T18:27:16+00:00",
-   "mode": "complet",
-   "opportunites": 27,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "winamax": 19,
-    "betclic": 20,
-    "unibet-fr": 23,
-    "pmu": 19,
-    "orbitxch": 22
-   }
-  },
   {
    "debut": "2026-10-17T18:33:19+00:00",
    "mode": "complet",
@@ -2866,6 +2865,17 @@
    "nouveaux_paris": 0,
    "requetes_pulsescore": {
     "betclic": 4,
+    "orbitxch": 4
+   }
+  },
+  {
+   "debut": "2026-10-18T19:45:55+00:00",
+   "mode": "complet",
+   "opportunites": 8,
+   "nouveaux_paris": 0,
+   "requetes_pulsescore": {
+    "betclic": 4,
+    "unibet-fr": 4,
     "orbitxch": 4
    }
   }
