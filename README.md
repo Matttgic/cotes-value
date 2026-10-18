@@ -1,6 +1,6 @@
 # Cotes Value
 
-Compare **toutes les cotes** des bookmakers français (Winamax, Betclic, Unibet, PMU) à la
+Compare **toutes les cotes** des bookmakers français (Winamax, Betclic, Unibet, PMU, OlyBet) à la
 **cote juste** de plusieurs références « sharp », et simule les paris qu'on prendrait à chaque erreur
 de cote : 10 € par pari, plusieurs seuils, pour savoir lesquels gagnent vraiment.
 
@@ -16,6 +16,7 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 | Betfair Exchange | Référence | PulseScore, via Orbit Exchange | Offre PulseScore |
 | Winamax, Betclic, Unibet | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
 | PMU | Cotes à comparer | Kambi en parallèle de PulseScore (`cotes/direct/pmu.py`) | Gratuit |
+| OlyBet | Cotes à comparer | Swarm BetConstruct (`cotes/direct/olybet.py`) | Gratuit |
 
 NetBet n'est pas suivi : le flux « netbet » de PulseScore est celui du site international (netbet.com), pas
 de netbet.fr (intitulés anglais, corners, handicaps asiatiques en quart, compétitions hors liste ANJ).
@@ -31,6 +32,10 @@ reste la source des paris et un rapport `pmu_comparaison.json` compare les deux 
 chez PulseScore. `pulsescore` désactive Kambi. Le rapport est prêt à basculer à partir de
 95 % des matchs retrouvés et 99 % des cotes communes à ±0,01. Les paris déjà pris contre
 Kalshi restent affichés ; Kalshi n'est plus interrogé.
+
+OlyBet est lu en direct (`SOURCE_OLYBET`, défaut `direct`). `off` coupe cette lecture.
+Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
+compte restent en période `MATCH?` et ne sont pas comparés.
 
 ## Comment ça marche
 
