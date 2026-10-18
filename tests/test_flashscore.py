@@ -140,3 +140,9 @@ def test_hockey_et_basket_periodes_reglementaires():
     b = {"AB": "3", "AC": "3", "AD": "1792087200", "AE": "A", "AF": "B", "AG": "70", "AH": "84",
          "BA": "14", "BB": "21", "BC": "23", "BD": "18", "BE": "19", "BF": "27", "BG": "14", "BH": "18"}
     assert len(flashscore.match("basket", b)["periodes"]) == 4
+
+
+def test_groupe_f_n_est_pas_une_ligue_feminine():
+    f = resultats.LIGUE_FEMININE
+    assert f.search("Tauron Liga (F)") and f.search("Liga F") and f.search("Bundesliga F")
+    assert not f.search("UEFA Champions League - Groupe F") and not f.search("Euroligue - Poule F")

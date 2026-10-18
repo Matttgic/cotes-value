@@ -423,7 +423,7 @@ def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
     bas = corps.strip().lower()
     # « Écart de buts », « Écart de points entre les équipes », « Vainqueur avec handicap » :
     # « X gagne de 2 buts ou + » est le handicap X −1,5. Selon le sport, l'unité décide du marché.
-    if re.match(r"(?:[ée]cart (?:de (?:buts|points|sets|jeux)|entre les [ée]quipes)|vainqueur avec handicap)\s*(?:\(t\.? ?r[ée]g\.?\))?\s*$", bas):
+    if re.match(r"(?:[ée]cart (?:de (?:buts|points|sets|jeux)(?: entre les [ée]quipes)?|entre les [ée]quipes)|vainqueur avec handicap)\s*(?:\(t\.? ?r[ée]g\.?\))?\s*$", bas):
         return "ECART"
     # « prolong. & pen. inclus » n'est pas une combinaison de marchés.
     sans_abrege = re.sub(r"prolong\w*\.?\s*&\s*pen\w*\.?", "prolongations", bas)
@@ -837,8 +837,11 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
         if not complet and ajoutees:
             # Onglets coupés par le budget : on garde les marchés déjà lus au cycle précédent.
             presentes = {l.get("cle_marche") for l in ajoutees}
+            # Même limite d'âge (2 h) que la fusion du reste du catalogue.
             ajoutees = ajoutees + [l for l in anciennes.get(f"betclic|{match.get('id')}", [])
-                                   if l.get("cle_marche") not in presentes]
+                                   if l.get("cle_marche") not in presentes
+                                   and (lu := _heure(l.get("collecte"))) is not None
+                                   and maintenant - lu <= timedelta(hours=2)]
         return ajoutees, lue
 
     with ThreadPoolExecutor(max(1, concurrence)) as pool:

@@ -386,3 +386,12 @@ def test_ecart_hockey_sans_mention_se_regle_sur_60_minutes():
     lignes = traduire(evenement, "betclic", "hockey", "2026-10-18T22:00:00+00:00")
     # ±0,5 : temps réglementaire ; ±1,5 : la prolongation ne change rien, donc match entier
     assert {(l["ligne"], l["periode"]) for l in lignes} == {(-0.5, "TEMPS_REG"), (-1.5, "MATCH")}
+
+
+def test_ecart_de_points_entre_les_equipes_est_un_handicap_basket():
+    assert betclic._classe("Écart de points entre les équipes", "A", "B") == "ECART"
+    marche = {"nom": "Écart de points entre les équipes", "selections": [
+        {"nom": "A gagne de 7 ou +", "cote": 1.76}, {"nom": "B ne perd pas ou perd de 6 ou -", "cote": 1.71}]}
+    traduits = betclic.marches_pulse(marche, "A", "B", "basket")
+    assert [m["canonicalMarket"] for m in traduits] == ["ASIAN_HANDICAP"]
+    assert betclic.marches_pulse({**marche, "nom": "Écart de points (3 options)"}, "A", "B", "basket") == []

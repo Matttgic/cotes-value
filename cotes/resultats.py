@@ -70,7 +70,7 @@ ESPN_NOTES_FEMININES = re.compile(r"women|^wwc|ncaaw|nwsl|usl super league|liga 
 # tennis : abandon en cours de match (règles d'abandon de chaque bookmaker, cotes/reglement.py)
 ESPN_ABANDONS = {"STATUS_RETIRED"}
 REPORT_MAX_J = 7
-LIGUE_FEMININE = re.compile(r"\((?:f|w)\)|\b(?:femmes?|women|womens|feminin|f\.)\b|\bf\.?$", re.I)
+LIGUE_FEMININE = re.compile(r"\((?:f|w)\)|\b(?:femmes?|women|womens|feminin|f\.)\b|(?<!groupe )(?<!group )(?<!poule )(?<!pool )\bf\.?$", re.I)
 
 
 def _heure(s) -> datetime | None:
