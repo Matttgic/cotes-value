@@ -676,7 +676,7 @@ MODELE = r"""<!doctype html>
     comptés seulement depuis cette date. <b>ChatGPT</b> : stratégie indépendante, règles figées le 14/10,
     une seule mise par match et cinq nouvelles mises maximum par jour (heure de Paris).
     <b>Gemini Argon</b> : stratégie multi-références à plafond de cote adaptatif (2,15 Pinnacle / 2,60 Betfair & Polymarket),
-    un seul pari par match et huit par jour maximum.
+    une mise par bookmaker et par match, huit par jour maximum.
     <b>JULES EDGE</b> : Pinnacle, cotes 1,30–2,50, edge 3–12 %, six paris par jour maximum.
     Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.</p></details>
   </section>
@@ -986,7 +986,7 @@ const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée 
     timeZone: "Europe/Paris", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit"}) : "14/10"} (Paris).
     Multi-références (Pinnacle 1,30–2,15 ; Betfair & Polymarket 1,30–2,60) ; edge 2,5 à 12 %.
     Détection entre ${GM.avance_min_minutes || 30} min et ${GM.avance_max_h || 24} h avant le match ; fraîcheur ≤ ${GM.fraicheur_max_minutes || 10} min.
-    10 € fictifs par pari, strictement 1 seul pari par match, ${GM.paris_max_jour || 8} par jour maximum.`,
+    10 € fictifs par pari, une mise par bookmaker et par match, ${GM.paris_max_jour || 8} par jour maximum.`,
   "JULES EDGE": `JULES EDGE v${JL.version || 1} — suivi depuis le ${new Date(JL.debut).toLocaleString("fr-FR", {
     timeZone: "Europe/Paris", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit"})} (Paris).
     Pinnacle sans marge ; cotes 1,30–2,50 ; edge 3–12 % ; 15 min à 12 h avant le match ; référence fraîche de 5 min maximum.
