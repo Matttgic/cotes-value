@@ -40,9 +40,11 @@ compte restent en période `MATCH?` et ne sont pas comparés.
 
 Smarkets est lu sur son API publique, sans compte. La cote juste est le milieu
 achat/vente, comme Betfair : le spread est dans le milieu, aucune commission
-n'est retirée en plus. `SMARKETS_DANS_DECISION` vaut `non` par défaut : les cotes
-servent à l'écart affiché dans le bilan, pas à la décision. `oui` les utilise
-comme Betfair.
+n'est retirée en plus. Le bilan a une table Smarkets, comme Betfair et
+Polymarket : 10 € fictifs quand un bookmaker français bat cette cote juste,
+réglés à part. L'écart affiché (écart vs Smarkets) reste à côté.
+`SMARKETS_DANS_DECISION` vaut `non` par défaut : Smarkets n'entre pas dans le
+consensus partagé. `oui` l'y ajoute, sans changer les autres tables.
 
 ## Comment ça marche
 
