@@ -84,3 +84,8 @@ def test_liste_a_saisir_pour_les_matchs_sans_source():
     assert len(liste) == 1 and liste[0]["paris"] == 2 and liste[0]["periodes_requises"] == ["MATCH", "MT1"]
     assert liste[0]["modele"] == {"score": [None, None], "mi_temps": [None, None]}
     assert liste[0]["raison"] == "aucune source"
+
+
+def test_hockey_sans_vainqueur_des_tirs_au_but_est_ignore():
+    assert livescore.match("hockey", _e(Eps="AP", Tr1="3", Tr2="3", Tr1OR="3", Tr2OR="3",
+                                        Tr1Pe1="2", Tr2Pe1="0", Tr1Pe2="1", Tr2Pe2="2", Tr1Pe3="0", Tr2Pe3="1")) == []

@@ -83,6 +83,8 @@ def match(sport: str, e: dict) -> list[dict]:
             periodes, libelles = [mt, (score[0] - mt[0], score[1] - mt[1])], ["1", "2"]
     elif sport in ("hockey", "basket"):
         score = final
+        if score[0] == score[1]:                    # tirs au but sans vainqueur renseigné : score final inconnu
+            return []
         base = ["Pe1", "Pe2", "Pe3"] if sport == "hockey" else ["Q1", "Q2", "Q3", "Q4"]
         periodes = _paires(e, base)
         if len(periodes) == len(base):
