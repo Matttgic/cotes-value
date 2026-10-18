@@ -569,6 +569,8 @@ def _marches_handicap(marche: dict, domicile: str, exterieur: str, sport: str | 
         groupes.setdefault(ligne_domicile, {})[cote] = {
             "canonicalOutcome": cote, "rawName": texte, "odds": offre["cote"], "line": valeur}
     libelle = _libelle_pulse(nom)
+    if sport == "hockey" and not _PREFIXE_PERIODE.match(nom) and "rég" not in libelle.lower():
+        libelle += " (tps rég.)"      # écarts du hockey sans mention : Betclic les règle sur 60 min
     return [{"marketId": f"{nom}|{ligne:+g}", "canonicalMarket": canon, "rawName": libelle,
              "period": "FULL_TIME", "selections": [paire["HOME"], paire["AWAY"]]}
             for ligne, paire in groupes.items() if len(paire) == 2]

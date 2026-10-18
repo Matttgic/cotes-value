@@ -375,3 +375,14 @@ def test_ecart_de_jeux_du_premier_set_reste_un_handicap_de_jeux():
     marche = {"nom": "1er set - Écart de jeux", "selections": [
         {"nom": "A gagne de 2 ou +", "cote": 2.1}, {"nom": "B ne perd pas ou perd de 1 exactement", "cote": 1.7}]}
     assert betclic.marches_pulse(marche, "A", "B", "tennis")[0]["canonicalMarket"] == "GAME_HANDICAP"
+
+
+def test_ecart_hockey_sans_mention_se_regle_sur_60_minutes():
+    from cotes.pulsescore import traduire
+    marche = {"nom": "Ecart entre les équipes", "selections": [
+        {"nom": "A gagne de 1 ou +", "cote": 2.12}, {"nom": "B ne perd pas", "cote": 1.58},
+        {"nom": "A gagne de 2 ou +", "cote": 2.72}, {"nom": "B ne perd pas ou perd de 1", "cote": 1.34}]}
+    evenement = {"eventId": 1, "home": "A", "away": "B", "markets": betclic.marches_pulse(marche, "A", "B", "hockey")}
+    lignes = traduire(evenement, "betclic", "hockey", "2026-10-18T22:00:00+00:00")
+    # ±0,5 : temps réglementaire ; ±1,5 : la prolongation ne change rien, donc match entier
+    assert {(l["ligne"], l["periode"]) for l in lignes} == {(-0.5, "TEMPS_REG"), (-1.5, "MATCH")}
