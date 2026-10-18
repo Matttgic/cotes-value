@@ -19,7 +19,9 @@ import json
 import os
 import random
 import re
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
@@ -73,6 +75,12 @@ ACCORD_MIN = 0.99
 ECART_COTE = 0.01
 MODES = ("pulsescore", "direct", "auto", "shadow")
 _PAGES_MAX = 16
+_PAGES_COURT = 3
+_HORIZON_COURT = 6
+# Une requête lancée trop près de l'échéance dépasserait le join du cycle et
+# ferait jeter les cotes déjà lues. On s'arrête avant, avec le partiel.
+_MARGE_S = 3.0
+_TIMEOUT_APPEL = 4.0
 _EXCLU = re.compile(
     r"corner|carton|\bcards?\b|booking|pair\s*/\s*impair|impair\s*/\s*pair|"
     r"odd\s*/\s*even|even\s*/\s*odd|buteur|\bscorer\b|\bjoueur\b|boost",
@@ -179,6 +187,7 @@ class Client:
         self.requetes = 0
         self.erreurs: list[str] = []
         self._premier = True
+        self._verrou = threading.Lock()
 
     def _espacer(self) -> None:
         if self._premier:
@@ -187,10 +196,30 @@ class Client:
         bas, haut = self.pause
         _pause(haut if bas == haut else random.uniform(bas, haut))
 
+    def _delai(self) -> float | None:
+        """None : ne pas lancer l'appel, l'échéance est trop proche."""
+        if self.echeance is None:
+            return 30.0
+        reste = self.echeance.reste()
+        if reste is None:
+            return 30.0
+        if reste < _MARGE_S or not self.echeance.ok():
+            self._noter("budget")
+            return None
+        return min(_TIMEOUT_APPEL, max(1.0, reste - 1))
+
     def ouvrir(self) -> bool:
         lecteur = self.page or _page_chrome()
+        delai = 8.0 if self.echeance is not None else 30.0
+        if self.echeance is not None:
+            reste = self.echeance.reste()
+            if reste is not None and (reste < _MARGE_S or not self.echeance.ok()):
+                self._noter("budget")
+                return False
+            if reste is not None:
+                delai = min(8.0, max(1.0, reste - 1))
         try:
-            r = lecteur.get(ACCUEIL, timeout=30, headers={
+            r = lecteur.get(ACCUEIL, timeout=delai, headers={
                 "Accept": "text/html", "Accept-Language": "fr-FR"})
         except (requests.RequestException, OSError):
             self._noter("accueil")
@@ -219,41 +248,44 @@ class Client:
         if isinstance(nouveau, str) and nouveau:
             self.jeton = nouveau
 
-    def _temps(self) -> bool:
-        if self.echeance is None or self.echeance.ok():
-            return True
-        self._noter("budget")
-        return False
-
-    def get(self, chemin: str, params: dict | None = None) -> dict | None:
-        if not self.jeton or not self._temps():
-            return None
+    def get(self, chemin: str, params: dict | None = None, session=None, espacer=None) -> dict | None:
         url = f"{BASE}/{chemin.lstrip('/')}"
         if params:
             url = f"{url}?{urlencode(params)}"
+        session = session or self.session
         dernier = "réseau"
-        delai = 30 if self.echeance is None else self.echeance.timeout(12)
         for essai in range(3):
-            if not self._temps():
+            delai = self._delai()
+            if delai is None:
                 return None
-            self._espacer()
-            self.requetes += 1
+            with self._verrou:
+                jeton = self.jeton
+            if not jeton:
+                return None
+            if espacer is not None:
+                espacer()
+            else:
+                self._espacer()
+            with self._verrou:
+                self.requetes += 1
+                jeton = self.jeton
             try:
-                r = self.session.get(url, timeout=delai, headers={
+                r = session.get(url, timeout=delai, headers={
                     "Accept": "application/json",
                     "Accept-Language": "fr-FR",
                     "Referer": ACCUEIL,
-                    "X-LVS-HSToken": self.jeton,
+                    "X-LVS-HSToken": jeton,
                 })
             except (requests.RequestException, OSError):
                 dernier = "réseau"
-                if self._temps():
+                if self._delai() is not None:
                     _pause(0.5 * (essai + 1))
                 continue
-            self._renouveler(getattr(r, "headers", None))
+            with self._verrou:
+                self._renouveler(getattr(r, "headers", None))
             if r.status_code in (429, 500, 502, 503, 504):
                 dernier = f"HTTP {r.status_code}"
-                if not self._temps():
+                if self._delai() is None:
                     return None
                 _pause(0.5 * (essai + 1))
                 continue
@@ -273,8 +305,9 @@ class Client:
         return None
 
     def _noter(self, message: str) -> None:
-        if message not in self.erreurs and len(self.erreurs) < 30:
-            self.erreurs.append(message)
+        with self._verrou:
+            if message not in self.erreurs and len(self.erreurs) < 30:
+                self.erreurs.append(message)
 
 
 def _cache(issue: dict) -> bool:
@@ -462,29 +495,93 @@ def _page_lointaine(sac: dict, vus: list[str], horizon: datetime) -> bool:
     return bool(debuts) and min(debuts) > horizon
 
 
+def _filtres(sport: str, heures: float) -> list[tuple]:
+    """Période principale seulement quand l'horizon est court (rafraîchissement proche)."""
+    paires = list(MARCHES.get(sport, ((None, None),)))
+    if heures > _HORIZON_COURT:
+        return paires
+    vus: set = set()
+    court = []
+    for type_id, periode in paires:
+        if type_id in vus:
+            continue
+        vus.add(type_id)
+        court.append((type_id, periode))
+    return court
+
+
+def _pages(heures: float) -> int:
+    return _PAGES_COURT if heures <= _HORIZON_COURT else _PAGES_MAX
+
+
+def _radar_par_sport(radar) -> dict[str, list]:
+    out: dict[str, list] = {}
+    for item in radar or []:
+        if not isinstance(item, dict):
+            continue
+        sport, dom, ext, debut = (item.get("sport"), item.get("domicile"),
+                                   item.get("exterieur"), item.get("debut"))
+        if sport and dom and ext and debut:
+            out.setdefault(sport, []).append(item)
+    return out
+
+
+def _correspond(event: dict, candidats: list) -> bool:
+    debut = _debut(event.get("start"))
+    if debut is None:
+        return False
+    home, away = str(event.get("home") or ""), str(event.get("away") or "")
+    for item in candidats:
+        autre = _heure(item.get("debut"))
+        if autre is None or abs((debut - autre).total_seconds()) > 90 * 60:
+            continue
+        direct = min(ressemblance(home, item.get("domicile")), ressemblance(away, item.get("exterieur")))
+        inverse = min(ressemblance(home, item.get("exterieur")), ressemblance(away, item.get("domicile")))
+        if max(direct, inverse) >= 0.85:
+            return True
+    return False
+
+
 def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
-                 type_id, periode, horizon: datetime | None = None, echeance=None) -> None:
+                 type_id, periode, horizon: datetime | None = None, echeance=None,
+                 pages_max: int = _PAGES_MAX, session=None, espacer=None,
+                 verrou_sac: threading.Lock | None = None) -> None:
     params = dict(PARAMS)
     if type_id is not None:
         params["marketTypeId"] = str(type_id)
     if periode is not None:
         params["periodId"] = str(periode)
     connus: set[str] = set()
-    for page in range(_PAGES_MAX):
+    for page in range(pages_max):
         if echeance is not None and not echeance.ok():
             client._noter("budget")
             return
         params["pageIndex"] = str(page)
-        doc = client.get(f"next/50/p{noeud}", params)
+        doc = client.get(f"next/50/p{noeud}", params, session=session, espacer=espacer)
         if not doc:
             return
         items = doc.get("items") if isinstance(doc.get("items"), dict) else {}
-        vus = _integrer(sac, items, sport)
-        if not vus or all(v in connus for v in vus):
-            return
-        if horizon is not None and _page_lointaine(sac, vus, horizon):
-            return
-        connus.update(vus)
+
+        def integrer():
+            vus = _integrer(sac, items, sport)
+            loin = bool(horizon is not None and vus and _page_lointaine(sac, vus, horizon))
+            return vus, loin
+
+        if verrou_sac is not None:
+            with verrou_sac:
+                vus, loin = integrer()
+                if not vus or all(v in connus for v in vus):
+                    return
+                if loin:
+                    return
+                connus.update(vus)
+        else:
+            vus, loin = integrer()
+            if not vus or all(v in connus for v in vus):
+                return
+            if loin:
+                return
+            connus.update(vus)
         total = doc.get("numberOfEvents")
         if isinstance(total, int) and not isinstance(total, bool) and (page + 1) * 50 >= total:
             return
@@ -492,8 +589,16 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
 
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None, page=None,
               pause: tuple[float, float] = (0.2, 0.4),
-              maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
-    """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``unibet-fr``)."""
+              maintenant: datetime | None = None, echeance=None,
+              concurrence: int = 1, radar=None) -> tuple[list[dict], dict]:
+    """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``unibet-fr``).
+
+    ``concurrence`` 1 (défaut des tests) enchaîne les filtres : le jeton renouvelé
+    sert à l'appel suivant. Au-dessus, quelques travailleurs gardent chacun leur
+    pause. ``radar`` vide ou absent ne filtre pas. Un radar non vide ne lit que
+    les sports et les matchs qui y figurent, et s'arrête après le marché principal
+    si aucun match du sport n'est sur le radar.
+    """
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
         echeance = _echeance
@@ -507,17 +612,81 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         return [], {"ok": False, "erreurs": list(client.erreurs), "requetes": client.requetes, "matchs": 0}
     sac = {"events": {}, "markets": {}, "outcomes": {}}
     horizon = maintenant + timedelta(hours=heures)
+    radar_idx = _radar_par_sport(radar)
+    filtre_radar = bool(radar_idx)
+    pages_max = _pages(heures)
+    verrou_sac = threading.Lock()
+    largeur = max(1, int(concurrence or 1))
+
+    def pause_locale():
+        etat = {"premier": True}
+
+        def espacer():
+            if etat["premier"]:
+                etat["premier"] = False
+                return
+            bas, haut = pause
+            _pause(haut if bas == haut else random.uniform(bas, haut))
+
+        return espacer
+
+    def executer(taches: list[tuple]) -> None:
+        if not taches:
+            return
+        if largeur == 1 or len(taches) == 1:
+            for noeud, sport, type_id, periode in taches:
+                if echeance is not None and not echeance.ok():
+                    client._noter("budget")
+                    return
+                _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
+                             pages_max, session=session)
+            return
+
+        def un(tache):
+            if echeance is not None and not echeance.ok():
+                client._noter("budget")
+                return
+            noeud, sport, type_id, periode = tache
+            _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
+                         pages_max, session=requests.Session(), espacer=pause_locale(),
+                         verrou_sac=verrou_sac)
+
+        with ThreadPoolExecutor(max_workers=min(largeur, len(taches))) as pool:
+            list(pool.map(un, taches))
+
+    candidats = []
     for code, interne in SPORTS.items():
         if echeance is not None and not echeance.ok():
             client._noter("budget")
             break
         if sports is not None and interne not in sports:
             continue
+        if filtre_radar and interne not in radar_idx:
+            continue
         noeud = client.noeuds.get(code)
         if noeud is None:
             continue
-        for type_id, periode in MARCHES.get(interne, ((None, None),)):
-            _lire_filtre(client, noeud, interne, sac, type_id, periode, horizon, echeance)
+        candidats.append((interne, noeud))
+    if filtre_radar:
+        primaires = []
+        for interne, noeud in candidats:
+            filtres = _filtres(interne, heures)
+            if filtres:
+                primaires.append((noeud, interne, filtres[0][0], filtres[0][1]))
+        executer(primaires)
+        suite = []
+        for interne, noeud in candidats:
+            if any(_correspond(ev, radar_idx.get(interne, []))
+                   for ev in sac["events"].values() if ev.get("sport") == interne):
+                for type_id, periode in _filtres(interne, heures)[1:]:
+                    suite.append((noeud, interne, type_id, periode))
+        executer(suite)
+    else:
+        tout = []
+        for interne, noeud in candidats:
+            for type_id, periode in _filtres(interne, heures):
+                tout.append((noeud, interne, type_id, periode))
+        executer(tout)
     _attacher(sac)
     moment = maintenant.isoformat(timespec="seconds")
     lignes: list[dict] = []
@@ -526,6 +695,8 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
     for cle, event in sac["events"].items():
         debut = _debut(event.get("start"))
         if not debut or not (maintenant < debut <= horizon):
+            continue
+        if filtre_radar and not _correspond(event, radar_idx.get(event.get("sport"), [])):
             continue
         marches = []
         home, away = str(event["home"]), str(event["away"])

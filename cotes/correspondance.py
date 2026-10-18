@@ -8,6 +8,7 @@ de prénom, ressemblance des lettres. Les marqueurs féminin / jeunes doivent co
 from __future__ import annotations
 
 import difflib
+import functools
 import re
 import unicodedata
 from datetime import datetime, timedelta
@@ -78,6 +79,7 @@ def _premiere_explicite(nom: str | None) -> bool:
     return bool(re.search(r"\b(?:equipe premiere|first team|1st team|seniors?)\b|\((?:i|1)\)", s))
 
 
+@functools.lru_cache(maxsize=65536)
 def ressemblance(a: str | None, b: str | None) -> float:
     categorie = lambda n: normaliser(re.sub(r"\b(?:u|under)[ -]?(\d{2})\b", r"u\1", n or "", flags=re.I))
     (ma, fa, ja), (mb, fb, jb) = categorie(a), categorie(b)
@@ -155,13 +157,15 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
     for r in matchs_ref.values():
         if r["debut"]:
             index.setdefault((r["sport"], int(r["debut"].timestamp() // 3600)), []).append(r)
+    # ±3 h couvre le tennis (180 min). Une heure approximative (300 min) garde ±6 h.
+    portee = 6 if any(r.get("approx") for r in matchs_ref.values()) else 3
     res = {}
     for mid, f in matchs_fr.items():
         if not f["debut"]:
             continue
         h = int(f["debut"].timestamp() // 3600)
         meilleur = None
-        for dh in range(-6, 7):
+        for dh in range(-portee, portee + 1):
             for r in index.get((f["sport"], h + dh), []):
                 ecart = abs((r["debut"] - f["debut"]).total_seconds()) / 60
                 if ecart > 300:

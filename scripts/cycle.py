@@ -60,6 +60,9 @@ BUDGETS = {
 }
 PRES_H = 6
 RYTHME_MIN = 20
+# Les lectures lointaines ne tombent pas le même cycle : PMU toutes les 20 min,
+# Unibet 27, Betclic 34. Le premier passage (aucun tampon) reste complet.
+RYTHME_SOURCE = {"pmu": 20, "unibet": 27, "betclic": 34}
 SMARKETS_FRAIS_MIN = 20
 _journal_lock = threading.Lock()
 # minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
@@ -146,12 +149,13 @@ def _instant(valeur):
 
 def heures_ombre(nom: str, mode: str, mode_collecte: str, maintenant: datetime,
                  rythme: dict) -> tuple[float, bool]:
-    """En shadow, les matchs à plus de 6 h ne sont relus que toutes les ~20 min."""
+    """En shadow, les matchs à plus de 6 h ne sont relus qu'au rythme de la source."""
     plein = 12.0 if mode_collecte == "test" else float(HORIZON_H)
     if mode != "shadow" or mode_collecte == "test":
         return plein, False
     dernier = _instant(rythme.get(nom)) if isinstance(rythme, dict) else None
-    if dernier is None or maintenant - dernier >= timedelta(minutes=RYTHME_MIN):
+    delai = RYTHME_SOURCE.get(nom, RYTHME_MIN)
+    if dernier is None or maintenant - dernier >= timedelta(minutes=delai):
         return plein, True
     return float(PRES_H), False
 
@@ -230,9 +234,24 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
         journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:3]}
 
 
+def _radar_depuis(lignes) -> list[dict]:
+    """Matchs déjà vus (Pinnacle) : sport, équipes, heure. Sert à ne pas tout relire."""
+    vus = set()
+    out = []
+    for ligne in lignes or []:
+        if not isinstance(ligne, dict):
+            continue
+        cle = (ligne.get("sport"), ligne.get("domicile"), ligne.get("exterieur"), ligne.get("debut"))
+        if not all(cle) or cle in vus:
+            continue
+        vus.add(cle)
+        out.append({"sport": cle[0], "domicile": cle[1], "exterieur": cle[2], "debut": cle[3]})
+    return out
+
+
 def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal: dict,
                       attentes: dict | None = None, donnees: Path | None = None):
-    """Pinnacle et Polymarket en parallèle, puis les books français et Betfair.
+    """Pinnacle et Polymarket d'abord, puis les books indépendants en parallèle.
 
     PMU vient de PulseScore, de Kambi, ou des deux selon SOURCE_PMU (défaut shadow :
     PulseScore décide, Kambi n'est qu'un rapport). Une panne de l'un n'arrête pas l'autre.
@@ -283,7 +302,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
     rythme = lire_json(rythme_path, {}) if rythme_path else {}
     if not isinstance(rythme, dict):
         rythme = {}
-    with ThreadPoolExecutor(max_workers=2) as pool:
+    with ThreadPoolExecutor(max_workers=8) as pool:
         journal["pinnacle_configuration"] = {"mode": "environnement" if os.environ.get("PINNACLE_API_KEY", "").strip()
                                                 else "guest_historique"}
 
@@ -314,79 +333,131 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         signaler(journal, "pinnacle", list(pinnacle.ERREURS))
         signaler(journal, "polymarket", list(polymarket.ERREURS))
         sports = sports_des(pin + poly)
-        direct_lignes, direct_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
+        futurs = {}
+
+        def lancer(nom, module, budget, fonction, *args, **kwargs):
+            futurs[nom] = pool.submit(source_bornee, module, nom, journal, budget,
+                                      fonction, *args, **kwargs)
+
         if source_pmu != "pulsescore":
             heures_pmu, plein_pmu = heures_ombre("pmu", source_pmu, mode, maintenant, rythme)
             if plein_pmu:
                 rythme["pmu"] = maintenant.isoformat()
-            recu = source_bornee(pmu_direct, "pmu_direct", journal, BUDGETS["pmu_direct"],
-                                 pmu_direct.collecter, sports, heures_pmu)
-            if recu is None:
-                direct_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
-            else:
-                direct_lignes, direct_meta = recu
-            signaler(journal, "pmu_direct", list(direct_meta.get("erreurs") or []))
-        direct_utilisable = bool(direct_meta.get("ok") and (direct_lignes or not direct_meta.get("erreurs")))
-        sans_pmu = source_pmu == "direct" or (source_pmu == "auto" and direct_utilisable)
+            lancer("pmu_direct", pmu_direct, BUDGETS["pmu_direct"], pmu_direct.collecter,
+                   sports, heures_pmu)
         source_wina = winamax_direct.mode_source()
         journal["winamax_source"] = source_wina
-        wina_lignes, wina_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
         if source_wina != "pulsescore":
-            recu = source_bornee(winamax_direct, "winamax_direct", journal, BUDGETS["winamax_direct"],
-                                 winamax_direct.collecter, sports,
-                                 12 if mode == "test" else HORIZON_H, maintenant=maintenant)
-            if recu is None:
-                wina_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
-            else:
-                wina_lignes, wina_meta = recu
-            signaler(journal, "winamax_direct", list(wina_meta.get("erreurs") or []))
-            if wina_meta.get("ok") is False and "winamax_direct" in journal["etapes"]:
-                journal["etapes"]["winamax_direct"]["ok"] = False
-        # Une lecture vide (ok, ou zéro cote) ne doit pas remplacer PulseScore.
-        wina_utilisable = bool(wina_meta.get("ok") and wina_lignes)
-        sans_wina = source_wina == "direct" or (source_wina == "auto" and wina_utilisable)
+            lancer("winamax_direct", winamax_direct, BUDGETS["winamax_direct"],
+                   winamax_direct.collecter, sports, 12 if mode == "test" else HORIZON_H,
+                   maintenant=maintenant)
         source_uni = unibet_direct.mode_source()
         journal["unibet_source"] = source_uni
-        uni_lignes, uni_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
         if source_uni != "pulsescore":
             heures_uni, plein_uni = heures_ombre("unibet", source_uni, mode, maintenant, rythme)
             if plein_uni:
                 rythme["unibet"] = maintenant.isoformat()
-            recu = source_bornee(unibet_direct, "unibet_direct", journal, BUDGETS["unibet_direct"],
-                                 unibet_direct.collecter, sports, heures_uni, maintenant=maintenant)
-            if recu is None:
-                uni_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
-            else:
-                uni_lignes, uni_meta = recu
-            signaler(journal, "unibet_direct", list(uni_meta.get("erreurs") or []))
-        uni_utilisable = bool(uni_meta.get("ok") and (uni_lignes or not uni_meta.get("erreurs")))
-        sans_uni = source_uni == "direct" or (source_uni == "auto" and uni_utilisable)
+            lancer("unibet_direct", unibet_direct, BUDGETS["unibet_direct"],
+                   unibet_direct.collecter, sports, heures_uni, maintenant=maintenant,
+                   concurrence=3, radar=_radar_depuis(pin) or None)
         source_bet = betclic_direct.mode_source()
         journal["betclic_source"] = source_bet
-        bet_lignes, bet_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
         if source_bet != "pulsescore":
             heures_bet, plein_bet = heures_ombre("betclic", source_bet, mode, maintenant, rythme)
             if plein_bet:
                 rythme["betclic"] = maintenant.isoformat()
-            recu = source_bornee(betclic_direct, "betclic_direct", journal, BUDGETS["betclic_direct"],
-                                 betclic_direct.collecter, sports, heures_bet, maintenant=maintenant)
+            lancer("betclic_direct", betclic_direct, BUDGETS["betclic_direct"],
+                   betclic_direct.collecter, sports, heures_bet, maintenant=maintenant)
+        source_oly = olybet_direct.mode_source()
+        journal["olybet_source"] = source_oly
+        if source_oly == "direct":
+            sports_oly = sports & {"football"} if mode == "test" else sports
+            lancer("olybet", olybet_direct, BUDGETS["olybet"], olybet_direct.collecter,
+                   sports_oly, 12 if mode == "test" else HORIZON_H)
+
+        recus: dict = {}
+
+        def recevoir(nom):
+            if nom in recus:
+                return recus[nom]
+            if nom not in futurs:
+                recus[nom] = ([], {"ok": False, "erreurs": [], "requetes": 0})
+                return recus[nom]
+            recu = futurs[nom].result()
             if recu is None:
-                bet_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
+                recus[nom] = ([], {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0})
             else:
-                bet_lignes, bet_meta = recu
-            signaler(journal, "betclic_direct", list(bet_meta.get("erreurs") or []))
-        bet_utilisable = bool(bet_meta.get("ok") and (bet_lignes or not bet_meta.get("erreurs")))
+                recus[nom] = recu
+            return recus[nom]
+
+        # En auto le plan PulseScore dépend du résultat. Shadow et direct sont connus tout de suite.
+        if source_pmu == "auto":
+            direct_lignes, direct_meta = recevoir("pmu_direct")
+            direct_utilisable = bool(direct_meta.get("ok") and (direct_lignes or not direct_meta.get("erreurs")))
+        else:
+            direct_lignes, direct_meta, direct_utilisable = [], {"ok": False, "erreurs": [], "requetes": 0}, False
+        sans_pmu = source_pmu == "direct" or (source_pmu == "auto" and direct_utilisable)
+        if source_wina == "auto":
+            wina_lignes, wina_meta = recevoir("winamax_direct")
+            wina_utilisable = bool(wina_meta.get("ok") and wina_lignes)
+        else:
+            wina_lignes, wina_meta, wina_utilisable = [], {"ok": False, "erreurs": [], "requetes": 0}, False
+        sans_wina = source_wina == "direct" or (source_wina == "auto" and wina_utilisable)
+        if source_uni == "auto":
+            uni_lignes, uni_meta = recevoir("unibet_direct")
+            uni_utilisable = bool(uni_meta.get("ok") and (uni_lignes or not uni_meta.get("erreurs")))
+        else:
+            uni_lignes, uni_meta, uni_utilisable = [], {"ok": False, "erreurs": [], "requetes": 0}, False
+        sans_uni = source_uni == "direct" or (source_uni == "auto" and uni_utilisable)
+        if source_bet == "auto":
+            bet_lignes, bet_meta = recevoir("betclic_direct")
+            bet_utilisable = bool(bet_meta.get("ok") and (bet_lignes or not bet_meta.get("erreurs")))
+        else:
+            bet_lignes, bet_meta, bet_utilisable = [], {"ok": False, "erreurs": [], "requetes": 0}, False
         sans_bet = source_bet == "direct" or (source_bet == "auto" and bet_utilisable)
-        lignes, requetes, erreurs = [], {}, {}
-        if cle:
-            lignes, requetes, erreurs = pulse(sports, "pulsescore", sans_pmu=sans_pmu,
-                                              sans_winamax=sans_wina, sans_unibet=sans_uni,
-                                              sans_betclic=sans_bet)
+        fpulse = pool.submit(pulse, sports, "pulsescore", sans_pmu, sans_wina, sans_uni, sans_bet) if cle else None
+        if source_pmu != "auto":
+            direct_lignes, direct_meta = recevoir("pmu_direct")
+            direct_utilisable = bool(direct_meta.get("ok") and (direct_lignes or not direct_meta.get("erreurs")))
+            sans_pmu = source_pmu == "direct" or (source_pmu == "auto" and direct_utilisable)
+        if source_wina != "auto":
+            wina_lignes, wina_meta = recevoir("winamax_direct")
+            if wina_meta.get("ok") is False and "winamax_direct" in journal["etapes"]:
+                journal["etapes"]["winamax_direct"]["ok"] = False
+            wina_utilisable = bool(wina_meta.get("ok") and wina_lignes)
+            sans_wina = source_wina == "direct" or (source_wina == "auto" and wina_utilisable)
+        elif wina_meta.get("ok") is False and "winamax_direct" in journal["etapes"]:
+            journal["etapes"]["winamax_direct"]["ok"] = False
+        if source_uni != "auto":
+            uni_lignes, uni_meta = recevoir("unibet_direct")
+            uni_utilisable = bool(uni_meta.get("ok") and (uni_lignes or not uni_meta.get("erreurs")))
+            sans_uni = source_uni == "direct" or (source_uni == "auto" and uni_utilisable)
+        if source_bet != "auto":
+            bet_lignes, bet_meta = recevoir("betclic_direct")
+            bet_utilisable = bool(bet_meta.get("ok") and (bet_lignes or not bet_meta.get("erreurs")))
+            sans_bet = source_bet == "direct" or (source_bet == "auto" and bet_utilisable)
+        if source_pmu != "pulsescore":
+            signaler(journal, "pmu_direct", list(direct_meta.get("erreurs") or []))
+        if source_wina != "pulsescore":
+            signaler(journal, "winamax_direct", list(wina_meta.get("erreurs") or []))
+            if wina_meta.get("ok") is False and "winamax_direct" in journal["etapes"]:
+                journal["etapes"]["winamax_direct"]["ok"] = False
+        if source_uni != "pulsescore":
+            signaler(journal, "unibet_direct", list(uni_meta.get("erreurs") or []))
+        if source_bet != "pulsescore":
+            signaler(journal, "betclic_direct", list(bet_meta.get("erreurs") or []))
+        if fpulse is not None:
+            lignes, requetes, erreurs = fpulse.result() or ([], {}, {})
             if erreurs and "pulsescore" in journal["etapes"]:
                 journal["etapes"]["pulsescore"] |= {"degrade": True,
                     "erreurs": {b: e[:5] for b, e in erreurs.items()}}
         else:
+            lignes, requetes, erreurs = [], {}, {}
             journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
+        if source_oly == "direct":
+            oly_lignes, oly_meta = recevoir("olybet")
+        else:
+            oly_lignes, oly_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
         pmu_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
                   or pulsescore.indisponible(erreurs.get("pmu", []) if cle else ["PULSESCORE_KEY absente"]))
         if source_pmu == "shadow":
@@ -459,18 +530,7 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 journal["betclic_source_effective"] = "shadow"
         elif sans_bet:
             lignes = [l for l in lignes if l.get("bookmaker") != "betclic"] + list(bet_lignes)
-    source_oly = olybet_direct.mode_source()
-    journal["olybet_source"] = source_oly
     if source_oly == "direct":
-        sports_oly = sports & {"football"} if mode == "test" else sports
-        recu = source_bornee(olybet_direct, "olybet", journal, BUDGETS["olybet"],
-                             olybet_direct.collecter, sports_oly,
-                             12 if mode == "test" else HORIZON_H)
-        if recu is None:
-            oly_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
-            oly_lignes = []
-        else:
-            oly_lignes, oly_meta = recu
         signaler(journal, "olybet", list(oly_meta.get("erreurs") or []))
         lignes = list(lignes) + list(oly_lignes)
         try:
@@ -761,7 +821,7 @@ def main() -> int:
     from cotes.decisions import figer_nouveaux
     figer_nouveaux(stockage.fusionner_paris(paris, stockage.lire_archives(donnees)), nouveaux)
     simulation.suivre_prix(paris, francais)
-    justes = etape("cotes_cloture", journal, comparaison.index_cotes_justes, francais, references,
+    justes = etape("cotes_cloture", journal, comparaison.cotes_justes_depuis, index,
                    hors_consensus=hors) or {}
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
 

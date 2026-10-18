@@ -40,6 +40,11 @@ def test_ombre_6h_puis_horizon_complet():
     assert direct == 36 and du is False
     test, du = cycle.heures_ombre("unibet", "shadow", "test", NOW, {})
     assert test == 12 and du is False
+    rythme = {"pmu": NOW.isoformat(), "unibet": NOW.isoformat(), "betclic": NOW.isoformat()}
+    assert cycle.heures_ombre("unibet", "shadow", "complet", NOW + timedelta(minutes=20), rythme) == (6, False)
+    assert cycle.heures_ombre("unibet", "shadow", "complet", NOW + timedelta(minutes=27), rythme) == (36, True)
+    assert cycle.heures_ombre("betclic", "shadow", "complet", NOW + timedelta(minutes=27), rythme) == (6, False)
+    assert cycle.heures_ombre("betclic", "shadow", "complet", NOW + timedelta(minutes=34), rythme) == (36, True)
 
 
 def test_smarkets_eteint_ne_fait_aucun_appel(tmp_path, monkeypatch):

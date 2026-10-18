@@ -245,20 +245,22 @@ def _controle_du_groupe(l: dict, controle: tuple[dict, dict] | None) -> dict | N
     return {k: g.get(k) for k in ("statut", "n", "mediane")} if g else None
 
 
-def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]],
-                       hors_consensus: set[str] | None = None) -> dict[tuple, dict[str, tuple]]:
-    """(match français, clé) -> {référence: (probabilité juste, heure de lecture)} : sert à suivre la cote
-    juste jusqu'au coup d'envoi (CLV) des paris déjà pris, même quand l'écart a disparu."""
+def cotes_justes_depuis(index: dict, hors_consensus: set[str] | None = None) -> dict[tuple, dict[str, tuple]]:
+    """Même table que ``index_cotes_justes``, lue sur un index déjà associé.
+
+    Évite de relancer l'association (environ une minute) à la clôture.
+    """
     out: dict[tuple, dict[str, tuple]] = {}
-    matchs_fr = C.matchs_de(francais)
-    for nom, lignes in references.items():
-        lignes = [l for l in lignes if _fiable(nom, l)]
-        par_match: dict[str, list[dict]] = {}
-        for l in lignes:
-            par_match.setdefault(l["match_id"], []).append(l)
-        for mid_fr, (mid_ref, inverse, _) in C.associer(matchs_fr, C.matchs_de(lignes)).items():
-            for l in par_match.get(mid_ref, []):
-                out.setdefault((mid_fr, cle(inverser(l) if inverse else l)), {})[nom] = (l["proba_juste"], l.get("collecte"))
+    for nom, par_match in (index or {}).items():
+        if not isinstance(par_match, dict):
+            continue
+        for mid_fr, par_cle in par_match.items():
+            if not isinstance(par_cle, dict):
+                continue
+            for k, ligne in par_cle.items():
+                if not isinstance(ligne, dict) or "proba_juste" not in ligne:
+                    continue
+                out.setdefault((mid_fr, k), {})[nom] = (ligne["proba_juste"], ligne.get("collecte"))
     hors = hors_consensus or ()
     for v in out.values():
         membres = {n: x for n, x in v.items() if n not in hors}
@@ -269,6 +271,13 @@ def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]],
         if "Pinnacle" in v:
             v[BRUT] = v["Pinnacle"]      # CLV des paris « brut » mesurée contre la cote juste : la vraie valeur
     return out
+
+
+def index_cotes_justes(francais: list[dict], references: dict[str, list[dict]],
+                       hors_consensus: set[str] | None = None) -> dict[tuple, dict[str, tuple]]:
+    """(match français, clé) -> {référence: (probabilité juste, heure de lecture)} : sert à suivre la cote
+    juste jusqu'au coup d'envoi (CLV) des paris déjà pris, même quand l'écart a disparu."""
+    return cotes_justes_depuis(indexer(francais, references), hors_consensus)
 
 
 # --------------------------------------------------------------------------- libellés
