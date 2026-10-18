@@ -167,24 +167,30 @@ def base_api() -> str:
     return BASE
 
 
-def _chemin_valide(sid: int, genre: str, chemin) -> bool:
-    if not isinstance(chemin, str) or "://" in chemin or ".." in chemin or not chemin.startswith("/"):
-        return False
-    return chemin.startswith(f"/sports/{sid}/{genre}")
-
-
 def _chemin_matchups(sid: int) -> str:
-    chemin = (_plans.get(sid) or {}).get("matchups")
-    if _chemin_valide(sid, "matchups", chemin):
-        return chemin
+    # URL fixes : le 18/10/2026, les chemins proposés par le réchauffeur (cache-buster « &_= »,
+    # orthographes tournantes) faisaient répondre Pinnacle en 204/403 et la collecte tombait à 0.
     return f"/sports/{sid}/matchups?withSpecials=true"
 
 
 def _chemin_marches(sid: int) -> str:
-    chemin = (_plans.get(sid) or {}).get("markets")
-    if _chemin_valide(sid, "markets/straight", chemin):
-        return chemin
     return f"/sports/{sid}/markets/straight?primaryOnly=false&withSpecials=true"
+
+
+def resume_rechauffeur() -> dict:
+    """Statuts HTTP vus par le réchauffeur (ex. {"matchups_403": 1}) et le premier extrait de refus."""
+    statuts: dict[str, int] = {}
+    extrait = None
+    for plan in _plans.values():
+        for genre, code in (plan.get("statuts") or {}).items():
+            if code is None or isinstance(code, bool) or not isinstance(code, int):
+                continue
+            cle = f"{genre}_{code}"
+            statuts[cle] = statuts.get(cle, 0) + 1
+        if extrait is None and isinstance(plan.get("extrait"), str):
+            extrait = plan["extrait"][:160]
+    sautes = sum(1 for plan in _plans.values() if plan.get("cache") == "SAUTE")
+    return {"statuts": statuts, "sautes": sautes, "extrait": extrait}
 
 
 def _demander_rechauffe(sports: dict) -> None:
