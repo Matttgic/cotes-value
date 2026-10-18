@@ -27,7 +27,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes import (comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
+from cotes import (livescore, comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, smarkets, stockage)
 from cotes.direct import betclic as betclic_direct  # noqa: E402
 from cotes.direct import netbet as netbet_direct  # noqa: E402
@@ -633,6 +633,12 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
             signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
         if client:
             ecrire_json(donnees / "pulsescore_attentes.json", attentes)
+        # LiveScore : gratuit, sans clé, indépendant de PulseScore (football, hockey, basket, tennis)
+        for sport, depuis in livescore.a_lire(paris, maintenant).items():
+            n = len(livescore.ERREURS)
+            enregistrements += etape(f"resultats_livescore_{sport}", journal, livescore.lire, sport,
+                                     livescore.jours_a_lire(depuis, maintenant)) or []
+            signaler(journal, f"resultats_livescore_{sport}", livescore.ERREURS[n:])
         nhl = etape("resultats_nhl_officiel", journal, resultats_nhl.collecter, paris, maintenant)
         if nhl:
             enregistrements += nhl[0]
@@ -730,6 +736,18 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
         journal["resultats"]["ignores_limite"] = resultats_mod.IGNORES_MAX
         journal["resultats"]["paris_avec_alertes"] = sum(bool(p.get("alertes")) for p in paris
                                                          if p.get("statut") in ("en_cours", "a_regler"))
+        # Indépendance vis-à-vis de PulseScore : quelles sources ont réglé les paris de ce cycle
+        sources_reglees: dict = {}
+        for p in paris:
+            if id(p) in ouverts_avant and p.get("statut") in reglement.GAIN:
+                for src in (p.get("preuve_reglement") or {}).get("sources") or ["saisie manuelle"]:
+                    sources_reglees[src] = sources_reglees.get(src, 0) + 1
+        journal["resultats"]["sources_reglement"] = sources_reglees
+        # Rien ne règle ces matchs : la liste est prête à être complétée à la main
+        ecrire_json(donnees / "resultats_a_saisir.json",
+                    {"genere": maintenant.isoformat(timespec="seconds"),
+                     "aide": "Copier `modele` dans resultats_manuels.json sous la clé `match_id`, y remplir le score.",
+                     "matchs": resultats_mod.a_saisir(paris, enregistrements, maintenant)})
     else:
         journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
 

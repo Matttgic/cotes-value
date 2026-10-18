@@ -530,7 +530,9 @@ _NE_PERD = re.compile(
 
 def _canon_handicap(nom: str, sport: str | None) -> str | None:
     """Marché canonique PulseScore d'un écart, d'après l'unité écrite et le sport (None : non comparé)."""
-    bas = nom.lower()
+    # l'unité est celle du marché, pas celle du préfixe : « 1er set - Écart de jeux » est un handicap de jeux
+    m = _PREFIXE_PERIODE.match(nom)
+    bas = (nom[m.end():] if m else nom).lower()
     if sport in ("football", "hockey", "handball"):
         return "ASIAN_HANDICAP" if "point" not in bas and "set" not in bas and "jeu" not in bas else None
     if sport == "basket":
