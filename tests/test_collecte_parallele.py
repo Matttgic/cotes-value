@@ -27,7 +27,10 @@ def _sans_reseau(monkeypatch, direct=None):
     monkeypatch.setattr(cycle.pmu_direct, "collecter", dire)
     monkeypatch.setattr(cycle.olybet_direct, "collecter",
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.setattr(cycle.winamax_direct, "collecter",
+                        lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.delenv("SOURCE_OLYBET", raising=False)
+    monkeypatch.delenv("SOURCE_WINAMAX", raising=False)
 
 
 def test_shadow_garde_pulsescore_et_ne_relit_pas_un_complement(monkeypatch):
@@ -150,6 +153,31 @@ def test_shadow_bascule_sur_kambi_si_pulsescore_refuse(monkeypatch):
     assert pmu and pmu[0]["cote"] == 1.7 and pmu[0]["match_id"] == "pmu|kambi"
     assert j["pmu_source"] == "shadow" and j["pmu_source_effective"] == "direct"
     assert "Kambi" in j["pmu_repli"] and j["etapes"]["pulsescore"]["pmu_repli"] == j["pmu_repli"]
+
+
+def test_shadow_bascule_sur_socket_si_pulsescore_refuse_winamax(monkeypatch):
+    def pulse(key, plan, *a, **kw):
+        assert "winamax" in plan
+        return [ligne("football", "winamax") | {"cote": 1.9}], {"winamax": 1}, {
+            "winamax": ["winamax/soccer/events : HTTP 401"]}
+
+    def direct(sports, heures, **kwargs):
+        return [ligne("football", "winamax") | {"cote": 1.7, "match_id": "winamax|socket"}], {
+            "ok": True, "erreurs": [], "requetes": 2, "matchs": 1}
+
+    _sans_reseau(monkeypatch)
+    monkeypatch.setattr(cycle.winamax_direct, "collecter", direct)
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
+    j = {"etapes": {}}
+    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", NOW, j)
+    wina = [l for l in lignes if l["bookmaker"] == "winamax"]
+    assert wina and wina[0]["cote"] == 1.7 and wina[0]["match_id"] == "winamax|socket"
+    assert j["winamax_source"] == "shadow" and j["winamax_source_effective"] == "direct"
+    assert "Socket" in j["winamax_repli"]
+    assert j["etapes"]["pulsescore"]["winamax_repli"] == j["winamax_repli"]
 
 
 def test_402_coupe_sans_journaliser_le_corps(monkeypatch):

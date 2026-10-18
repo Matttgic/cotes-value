@@ -15,7 +15,8 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 | Polymarket | Référence | API officielle gamma (`cotes/polymarket.py`) | Gratuit |
 | Betfair Exchange | Référence | PulseScore, via Orbit Exchange | Offre PulseScore |
 | Smarkets | Référence | API publique v3, sans compte (`cotes/smarkets.py`) | Gratuit |
-| Winamax, Betclic, Unibet | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
+| Winamax | Cotes à comparer | Socket en parallèle de PulseScore (`cotes/direct/winamax.py`) | Gratuit |
+| Betclic, Unibet | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
 | PMU | Cotes à comparer | Kambi en parallèle de PulseScore (`cotes/direct/pmu.py`) | Gratuit |
 | OlyBet | Cotes à comparer | Swarm BetConstruct (`cotes/direct/olybet.py`) | Gratuit |
 
@@ -35,6 +36,11 @@ ou quota, le cycle continue : même en `shadow`, les cotes PMU viennent de Kambi
 et le journal l'indique (`pmu_repli`). Le rapport est prêt à basculer à partir de
 95 % des matchs retrouvés et 99 % des cotes communes à ±0,01. Les paris déjà pris contre
 Kalshi restent affichés ; Kalshi n'est plus interrogé.
+
+Winamax peut être lu sur son socket (`SOURCE_WINAMAX`, défaut `shadow`), avec les
+mêmes quatre modes et les mêmes seuils. Le rapport est `winamax_comparaison.json`.
+Si PulseScore répond 401, 403, 402 ou quota, les cotes Winamax viennent du socket
+même en `shadow` (`winamax_repli`). Les routes sont espacées.
 
 OlyBet est lu en direct (`SOURCE_OLYBET`, défaut `direct`). `off` coupe cette lecture.
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
