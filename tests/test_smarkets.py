@@ -381,3 +381,17 @@ def test_reserve_garde_les_matchs_non_relus_et_la_liste(monkeypatch):
     smarkets.collecter({"football"}, 36, session, maintenant=MAINTENANT,
                        reserve={"lignes": [], "evenements": meta["evenements"]})
     assert not any(u.rstrip("/").endswith("sort=start_datetime,id") or "events/?" in u for u in session.urls)
+
+
+def test_liste_coupee_par_le_quota_n_est_pas_memorisee():
+    class Coupe:
+        n = 0
+
+        def get(self, url, timeout=30, headers=None):
+            Coupe.n += 1
+            if Coupe.n == 1:
+                return Session().get(url)
+            return Reponse({}, status=403)
+
+    _, meta = smarkets.collecter({"football"}, 36, Coupe(), maintenant=MAINTENANT, reserve={"lignes": []})
+    assert meta["evenements"] == {}                       # rien de mémorisé : la liste sera redemandée
