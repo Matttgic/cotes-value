@@ -30,7 +30,9 @@ Vérifications faites (workflow « Vérifications des sources ») :
 PMU peut être lu sur l'API Kambi (`SOURCE_PMU`, défaut `shadow`). En `shadow`, PulseScore
 reste la source des paris et un rapport `pmu_comparaison.json` compare les deux flux.
 `auto` prend Kambi et revient à PulseScore si la lecture échoue. `direct` ne lit plus PMU
-chez PulseScore. `pulsescore` désactive Kambi. Le rapport est prêt à basculer à partir de
+chez PulseScore. `pulsescore` désactive Kambi. Si PulseScore répond 401, 403, 402
+ou quota, le cycle continue : même en `shadow`, les cotes PMU viennent de Kambi
+et le journal l'indique (`pmu_repli`). Le rapport est prêt à basculer à partir de
 95 % des matchs retrouvés et 99 % des cotes communes à ±0,01. Les paris déjà pris contre
 Kalshi restent affichés ; Kalshi n'est plus interrogé.
 
