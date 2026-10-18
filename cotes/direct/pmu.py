@@ -145,12 +145,16 @@ def _pause(secondes: float) -> None:
         time.sleep(secondes)
 
 
+_echeance = None
+
+
 class Client:
     """GET espacés. Un 429 attend puis réessaie ; le corps n'est jamais journalisé."""
 
-    def __init__(self, session=None, pause: tuple[float, float] = (1.0, 1.5)):
+    def __init__(self, session=None, pause: tuple[float, float] = (1.0, 1.5), echeance=None):
         self.session = session or requests.Session()
         self.pause = pause
+        self.echeance = echeance
         self.requetes = 0
         self.erreurs: list[str] = []
         self._premier = True
@@ -162,23 +166,40 @@ class Client:
         bas, haut = self.pause
         _pause(haut if bas == haut else random.uniform(bas, haut))
 
+    def _temps(self) -> bool:
+        if self.echeance is None or self.echeance.ok():
+            return True
+        self._noter("budget")
+        return False
+
     def get(self, chemin: str) -> dict | None:
+        if not self._temps():
+            return None
         url = f"{BASE}/{chemin}?{urlencode(PARAMS)}"
         dernier = "réseau"
+        delai = 30 if self.echeance is None else self.echeance.timeout(12)
         for essai in range(4):
+            if not self._temps():
+                return None
             self._espacer()
             self.requetes += 1
             try:
-                r = self.session.get(url, timeout=30, headers={"Accept": "application/json"})
+                r = self.session.get(url, timeout=delai, headers={"Accept": "application/json"})
             except requests.RequestException:
                 dernier = "réseau"
-                if essai < 3:
+                if essai < 3 and self._temps():
                     _pause(2 * (essai + 1))
                 continue
             if r.status_code in (429, 500, 502, 503, 504):
                 dernier = f"HTTP {r.status_code}"
+                if not self._temps():
+                    return None
                 attente = _nombre(r.headers.get("Retry-After")) if r.status_code == 429 else None
-                _pause(attente if attente is not None and 0 < attente <= 30 else 2 * (essai + 1))
+                pause = attente if attente is not None and 0 < attente <= 30 else 2 * (essai + 1)
+                if self.echeance is not None and pause > (self.echeance.reste() or 0):
+                    self._noter("budget")
+                    return None
+                _pause(pause)
                 continue
             if r.status_code != 200:
                 self._noter(f"HTTP {r.status_code}")
@@ -451,10 +472,12 @@ def _a_venir(event: dict, maintenant: datetime, heures: float) -> bool:
 
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
               pause: tuple[float, float] = (1.0, 1.5),
-              maintenant: datetime | None = None) -> tuple[list[dict], dict]:
+              maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
     """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``pmu``)."""
     maintenant = maintenant or datetime.now(timezone.utc)
-    client = Client(session, pause)
+    if echeance is None:
+        echeance = _echeance
+    client = Client(session, pause, echeance=echeance)
     moment = maintenant.isoformat(timespec="seconds")
     lignes: list[dict] = []
     matchs = 0
@@ -474,6 +497,8 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
                 arbre = client.get("group.json") or {}
             connus = {e.get("id") for e in events if isinstance(e, dict)}
             for chemin in _feuilles(arbre, terme):
+                if not client._temps():
+                    break
                 extra = client.get(_chemin_liste(chemin))
                 if not extra:
                     continue
@@ -483,8 +508,11 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
                         connus.add(ev.get("id"))
                         events.append(ev)
         choisis = [e for e in events if isinstance(e, dict) and _a_venir(e, maintenant, heures)]
+        choisis.sort(key=lambda e: str(e.get("start") or ""))
         matchs += len(choisis)
         for i in range(0, len(choisis), PAR_LOT):
+            if not client._temps():
+                break
             lot = choisis[i:i + PAR_LOT]
             ids = ",".join(str(e["id"]) for e in lot)
             offres_doc = client.get(f"betoffer/event/{ids}.json")

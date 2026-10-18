@@ -49,6 +49,8 @@ CLE_GUEST_PAR_DEFAUT = "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R"
 ERREURS: list[str] = []
 logger = logging.getLogger(__name__)
 _bloque = False
+_echeance = None
+_echeance_active = None
 _cle_cache: str | None = None
 _cle_resolue = False
 origine_cle = "guest_historique"
@@ -257,9 +259,11 @@ def resume_rechauffeur() -> dict:
     return {"statuts": statuts, "sautes": sautes, "extrait": extrait}
 
 
-def _demander_rechauffe(sports: dict) -> None:
+def _demander_rechauffe(sports: dict, echeance=None) -> None:
     """Demande à Paris de remplir le cache Cloudflare. Un échec laisse les URL habituelles."""
     global _plans, etat_rechauffeur
+    if echeance is None:
+        echeance = _echeance_active
     _plans = {}
     etat_rechauffeur = "absent"
     url = os.environ.get("PINNACLE_RECHAUFFEUR_URL", "").strip()
@@ -270,10 +274,14 @@ def _demander_rechauffe(sports: dict) -> None:
         logger.warning("Pinnacle : URL du réchauffeur refusée (https obligatoire)")
         etat_rechauffeur = "url_refusee"
         return
+    if echeance is not None and not echeance.ok():
+        etat_rechauffeur = "indisponible"
+        return
+    attente = 120 if echeance is None else max(1, min(8, echeance.timeout(8)))
     try:
         r = requests.post(url, json={"sports": [int(s) for s in sports], "key": cle_du_cycle()},
                           headers={"x-region": "eu-west-3", "x-secret": secret,
-                                   "Content-Type": "application/json"}, timeout=120)
+                                   "Content-Type": "application/json"}, timeout=attente)
         if getattr(r, "status_code", None) != 200:
             logger.warning("Pinnacle : réchauffeur indisponible")
             etat_rechauffeur = "indisponible"
@@ -299,17 +307,26 @@ def _demander_rechauffe(sports: dict) -> None:
     etat_rechauffeur = "ok"
 
 
-def _get(path: str, essais: int = 3):
+def _get(path: str, essais: int = 3, echeance=None):
     global _bloque, _reprises_403
+    if echeance is None:
+        echeance = _echeance_active
+    if echeance is not None and not echeance.ok():
+        _erreur("budget")
+        return None
     if _bloque:
         return None
     reprise_403 = False
     m = re.match(r"^/sports/(\d+)/(matchups|markets/straight)(?:\?|$)", path)
     contexte = f"sport {m[1]} {m[2]}" if m else "requête"
+    delai = 90 if echeance is None else max(1, min(10, echeance.timeout(10)))
     i = 0
     while i < essais:
+        if echeance is not None and not echeance.ok():
+            _erreur("budget")
+            return None
         try:
-            r = requests.get(base_api() + path, headers=headers(), timeout=90)
+            r = requests.get(base_api() + path, headers=headers(), timeout=delai)
             if r.status_code == 200:
                 try:
                     d = r.json()
@@ -328,6 +345,9 @@ def _get(path: str, essais: int = 3):
                 _reprises_403 += 1            # refus aléatoire : un seul nouvel essai, sans noter d'erreur s'il passe
                 _compter("reprise_403")
                 reprise_403 = True
+                if echeance is not None and (echeance.reste() or 0) < PAUSE_REPRISE_403_S:
+                    _erreur("budget")
+                    return None
                 time.sleep(PAUSE_REPRISE_403_S)
                 continue
             _erreur(f"{contexte} : HTTP {r.status_code}")
@@ -342,6 +362,9 @@ def _get(path: str, essais: int = 3):
             _erreur(f"{contexte} : réseau indisponible")
         i += 1
         if i < essais:
+            if echeance is not None and (echeance.reste() or 0) < 2 * i:
+                _erreur("budget")
+                return None
             time.sleep(2 * i)
     return None
 
@@ -452,79 +475,91 @@ def _norm_special(desc: str, dom: str, ext: str) -> tuple[str, str]:
     return desc.strip(), periode
 
 
-def collecter(sports: dict | None = None) -> list[dict]:
+def collecter(sports: dict | None = None, echeance=None) -> list[dict]:
     """Toutes les cotes ouvertes (avant-match), une ligne par issue, avec probabilité juste."""
-    global _bloque, _choix_coupe, _reprises_403
-    ERREURS.clear()
-    _reprises_403 = 0
-    _bloque = False
-    _ages.clear()
-    _statuts.clear()
-    choix_prix.clear()
-    _choix_coupe = False
-    _ortho_refusees.clear()
-    oublier_cle()
-    sports = sports or SPORTS
-    _demander_rechauffe(sports)
-    lignes: list[dict] = []
-    for sid, sport in sports.items():
-        matchups = _get(_chemin_matchups(sid)) or []
-        if _bloque:
-            break
-        if not matchups:
-            continue
-        requete_debut = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        chemin_prix = _choisir_chemin_prix(sid)
-        marches = _get(chemin_prix) or []
-        if not marches and chemin_prix != _chemin_marches(sid):
-            _compter("repli_fixe")           # orthographe choisie refusée ou vide : URL fixe
-            chemin_prix = _chemin_marches(sid)
+    global _bloque, _choix_coupe, _reprises_403, _echeance_active
+    if echeance is None:
+        echeance = _echeance
+    _echeance_active = echeance
+    try:
+        ERREURS.clear()
+        _reprises_403 = 0
+        _bloque = False
+        _ages.clear()
+        _statuts.clear()
+        choix_prix.clear()
+        _choix_coupe = False
+        _ortho_refusees.clear()
+        oublier_cle()
+        sports = sports or SPORTS
+        if echeance is not None and not echeance.ok():
+            _erreur("budget")
+            return []
+        _demander_rechauffe(sports)
+        lignes: list[dict] = []
+        for sid, sport in sports.items():
+            if echeance is not None and not echeance.ok():
+                _erreur("budget")
+                break
+            matchups = _get(_chemin_matchups(sid)) or []
+            if _bloque:
+                break
+            if not matchups:
+                continue
+            requete_debut = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            chemin_prix = _choisir_chemin_prix(sid)
             marches = _get(chemin_prix) or []
-        maintenant_dt = datetime.now(timezone.utc)
-        maintenant = maintenant_dt.isoformat(timespec="seconds")
-        if not matchups or not marches:
-            continue
-        age, perimee = _age_ligne(chemin_prix, sid, maintenant_dt)
-        par_id = {m["id"]: m for m in matchups if isinstance(m, dict)
-                  and isinstance(m.get("id"), (str, int)) and not isinstance(m.get("id"), bool)}
-        if len(par_id) != len(matchups):
-            _erreur(f"sport {sid} : événements invalides ou dupliqués")
-        periodes = PERIODES.get(sport, {0: "MATCH"})
-        for mk in marches:
-            if not isinstance(mk, dict):
-                _erreur(f"sport {sid} : marché non objet")
+            if not marches and chemin_prix != _chemin_marches(sid):
+                _compter("repli_fixe")           # orthographe choisie refusée ou vide : URL fixe
+                chemin_prix = _chemin_marches(sid)
+                marches = _get(chemin_prix) or []
+            maintenant_dt = datetime.now(timezone.utc)
+            maintenant = maintenant_dt.isoformat(timespec="seconds")
+            if not matchups or not marches:
                 continue
-            statut = mk.get("status")
-            if statut is not None and statut != "open":
-                continue
-            mid = mk.get("matchupId")
-            if not isinstance(mid, (str, int)) or isinstance(mid, bool):
-                _erreur(f"sport {sid} : identifiant de marché invalide")
-                continue
-            mu = par_id.get(mid)
-            if mu is None or mu.get("isLive"):
-                continue
-            prix = mk.get("prices")
-            special = mu.get("type") == "special"
-            if not isinstance(prix, list) or len(prix) < 2 or any(not isinstance(p, dict) for p in prix):
-                if not special:
-                    _erreur(f"sport {sid} : liste de prix invalide")
-                continue
-            limites = mk.get("limits")
-            maximum = limites[0].get("amount") if isinstance(limites, list) and limites and isinstance(limites[0], dict) else None
-            base = {"source": "pinnacle", "sport": sport, "collecte": maintenant,
-                    "collecte_debut": requete_debut, "collecte_recue": maintenant,
-                    "mise_max": _nombre(maximum),
-                    "age_cache_s": age, "cote_perimee": perimee}
-            try:
-                if mu.get("type") == "matchup":
-                    lignes += _lignes_match(mu, mk, prix, par_id, periodes, base)
-                elif mu.get("type") == "special":
-                    lignes += _lignes_special(mu, mk, prix, par_id, base)
-            except (KeyError, TypeError, ValueError, AttributeError, OverflowError):
-                _erreur(f"sport {sid} : schéma de marché invalide")
-    _ajouter_proba_justes(lignes)
-    return lignes
+            age, perimee = _age_ligne(chemin_prix, sid, maintenant_dt)
+            par_id = {m["id"]: m for m in matchups if isinstance(m, dict)
+                      and isinstance(m.get("id"), (str, int)) and not isinstance(m.get("id"), bool)}
+            if len(par_id) != len(matchups):
+                _erreur(f"sport {sid} : événements invalides ou dupliqués")
+            periodes = PERIODES.get(sport, {0: "MATCH"})
+            for mk in marches:
+                if not isinstance(mk, dict):
+                    _erreur(f"sport {sid} : marché non objet")
+                    continue
+                statut = mk.get("status")
+                if statut is not None and statut != "open":
+                    continue
+                mid = mk.get("matchupId")
+                if not isinstance(mid, (str, int)) or isinstance(mid, bool):
+                    _erreur(f"sport {sid} : identifiant de marché invalide")
+                    continue
+                mu = par_id.get(mid)
+                if mu is None or mu.get("isLive"):
+                    continue
+                prix = mk.get("prices")
+                special = mu.get("type") == "special"
+                if not isinstance(prix, list) or len(prix) < 2 or any(not isinstance(p, dict) for p in prix):
+                    if not special:
+                        _erreur(f"sport {sid} : liste de prix invalide")
+                    continue
+                limites = mk.get("limits")
+                maximum = limites[0].get("amount") if isinstance(limites, list) and limites and isinstance(limites[0], dict) else None
+                base = {"source": "pinnacle", "sport": sport, "collecte": maintenant,
+                        "collecte_debut": requete_debut, "collecte_recue": maintenant,
+                        "mise_max": _nombre(maximum),
+                        "age_cache_s": age, "cote_perimee": perimee}
+                try:
+                    if mu.get("type") == "matchup":
+                        lignes += _lignes_match(mu, mk, prix, par_id, periodes, base)
+                    elif mu.get("type") == "special":
+                        lignes += _lignes_special(mu, mk, prix, par_id, base)
+                except (KeyError, TypeError, ValueError, AttributeError, OverflowError):
+                    _erreur(f"sport {sid} : schéma de marché invalide")
+        _ajouter_proba_justes(lignes)
+        return lignes
+    finally:
+        _echeance_active = None
 
 
 def _lignes_match(mu, mk, prix, par_id, periodes, base) -> list[dict]:

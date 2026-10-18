@@ -19,6 +19,7 @@ import gzip
 import json
 import os
 import sys
+import threading
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
@@ -34,6 +35,7 @@ from cotes.direct import unibet as unibet_direct  # noqa: E402
 from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline  # noqa: E402
+from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
 # NetBet retiré le 6/10/2026 : le flux « netbet » de PulseScore est le site international (netbet.com :
@@ -43,6 +45,21 @@ SPORTS_FR = ["soccer", "basketball", "tennis", "ice-hockey", "handball", "volley
              "american-football", "baseball"]
 SPORTS_BETFAIR = ["soccer", "tennis"]
 HORIZON_H = 36
+# Budgets durs : une source au-delà est sautée, le cycle de 5 min continue.
+BUDGETS = {
+    "pinnacle": 45,
+    "polymarket": 30,
+    "pulsescore": 75,
+    "pmu_direct": 75,
+    "winamax_direct": 45,
+    "unibet_direct": 75,
+    "olybet": 40,
+    "smarkets": 60,
+}
+PRES_H = 6
+RYTHME_MIN = 20
+SMARKETS_FRAIS_MIN = 20
+_journal_lock = threading.Lock()
 # minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
 REGLEMENT_MINUTES = float(os.environ.get("REGLEMENT_MINUTES", "55"))
 API ={v: k for k, v in pulsescore.SPORTS.items()}          # « football » -> « soccer »
@@ -79,6 +96,123 @@ def etape(nom: str, journal: dict, fonction, *args, **kwargs):
         return None
 
 
+def etape_bornee(nom: str, journal: dict, budget: float, fonction, *args, **kwargs):
+    """Durée maximale. Au-delà, la source est notée et le cycle continue."""
+    t = time.time()
+    boite: dict = {}
+
+    def courir():
+        try:
+            boite["r"] = fonction(*args, **kwargs)
+        except Exception as e:  # noqa: BLE001
+            boite["e"] = e
+            traceback.print_exc()
+
+    fil = threading.Thread(target=courir, name=f"source-{nom}", daemon=True)
+    fil.start()
+    fil.join(budget)
+    secondes = round(time.time() - t, 1)
+    with _journal_lock:
+        if fil.is_alive():
+            journal["etapes"][nom] = {"secondes": secondes, "ok": False, "erreur": "budget dépassé"}
+            return None
+        if "e" in boite:
+            journal["etapes"][nom] = {"secondes": secondes, "ok": False, "erreur": repr(boite["e"])[:300]}
+            return None
+        journal["etapes"][nom] = {"secondes": secondes, "ok": True}
+    return boite.get("r")
+
+
+def source_bornee(module, nom: str, journal: dict, budget: float, fonction, *args, **kwargs):
+    """Pose l'échéance lue par le connecteur, puis abandonne le fil s'il dépasse."""
+    module._echeance = Echeance(budget)
+    try:
+        return etape_bornee(nom, journal, budget, fonction, *args, **kwargs)
+    finally:
+        module._echeance = None
+
+
+def _instant(valeur):
+    try:
+        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if getattr(t, "tzinfo", None) is None:
+        return None
+    return t.astimezone(timezone.utc)
+
+
+def heures_ombre(nom: str, mode: str, mode_collecte: str, maintenant: datetime,
+                 rythme: dict) -> tuple[float, bool]:
+    """En shadow, les matchs à plus de 6 h ne sont relus que toutes les ~20 min."""
+    plein = 12.0 if mode_collecte == "test" else float(HORIZON_H)
+    if mode != "shadow" or mode_collecte == "test":
+        return plein, False
+    dernier = _instant(rythme.get(nom)) if isinstance(rythme, dict) else None
+    if dernier is None or maintenant - dernier >= timedelta(minutes=RYTHME_MIN):
+        return plein, True
+    return float(PRES_H), False
+
+
+def _cache_sm(chemin: Path) -> dict:
+    try:
+        doc = json.loads(chemin.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return doc if isinstance(doc, dict) else {}
+
+
+def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
+                       maintenant: datetime, journal: dict):
+    """Relit Smarkets au plus toutes les 20 min. Un 429 ou un budget garde le cache périmé."""
+    chemin = donnees / "smarkets_cache.json"
+    cache = _cache_sm(chemin)
+    if _instant(cache.get("lu")) and maintenant - _instant(cache.get("lu")) < timedelta(minutes=SMARKETS_FRAIS_MIN):
+        perime = bool(cache.get("perime"))
+        lu = _instant(cache.get("lu"))
+        etape_j = {"secondes": 0.0, "ok": True, "cache": True}
+        if perime:
+            etape_j["degrade"] = True
+            etape_j["erreurs"] = ["périmé"]
+        journal["etapes"]["smarkets"] = etape_j
+        journal["smarkets_cache"] = {
+            "reutilise": True, "perime": perime,
+            "age_min": round((maintenant - lu).total_seconds() / 60, 1) if lu else None,
+        }
+        return list(cache.get("lignes") or []), {
+            "ok": True, "erreurs": ["périmé"] if perime else [], "requetes": 0}
+
+    echeance = Echeance(BUDGETS["smarkets"])
+    smarkets._echeance = echeance
+    try:
+        recu = etape_bornee("smarkets", journal, BUDGETS["smarkets"], smarkets.collecter,
+                            sports, heures, maintenant=maintenant, radar=radar, echeance=echeance)
+    finally:
+        smarkets._echeance = None
+    if not isinstance(recu, tuple) or len(recu) != 2:
+        lignes, info = [], {"ok": False, "erreurs": ["budget dépassé"], "perime": True, "requetes": 0}
+    else:
+        lignes, info = recu
+    perime = bool(info.get("perime")) or any(
+        e in ("budget", "HTTP 429", "budget dépassé") for e in (info.get("erreurs") or []))
+    precedentes = cache.get("lignes") if isinstance(cache.get("lignes"), list) else []
+    if perime and precedentes:
+        lignes = list(precedentes)
+    ecrire_json(chemin, {
+        "lu": maintenant.isoformat(), "lignes": lignes, "perime": perime, "matchs": info.get("matchs"),
+    })
+    if perime and "smarkets" in journal["etapes"]:
+        et = journal["etapes"]["smarkets"]
+        et["perime"] = True
+        deja = [e for e in (et.get("erreurs") or []) if e != "périmé"]
+        deja.append("périmé")
+        et["erreurs"] = deja[:3]
+        if et.get("ok"):
+            et["degrade"] = True
+    journal["smarkets_cache"] = {"reutilise": bool(perime and precedentes), "perime": perime}
+    return lignes, info
+
+
 def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
     """Une étape qui a perdu des lectures (HTTP 500, coupure…) est marquée dégradée, pas « ok » muette :
     sinon « aucune source » pour un pari ne dit pas qu'une source était en panne."""
@@ -87,7 +221,7 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
 
 
 def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal: dict,
-                      attentes: dict | None = None):
+                      attentes: dict | None = None, donnees: Path | None = None):
     """Pinnacle et Polymarket en parallèle, puis les books français et Betfair.
 
     PMU vient de PulseScore, de Kambi, ou des deux selon SOURCE_PMU (défaut shadow :
@@ -115,8 +249,8 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                       and not (sans_unibet and b == "unibet-fr")]
             plan = {b: fr for b in livres} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in fr]}
             pages, horizon = 40, HORIZON_H
-        return etape(nom, journal, pulsescore.collecter, cle, plan, horizon, pages,
-                     etat=attentes) or ([], {}, {})
+        return etape_bornee(nom, journal, BUDGETS["pulsescore"], pulsescore.collecter, cle, plan,
+                            horizon, pages, etat=attentes) or ([], {}, {})
 
     def mesures_delta(pin, lignes):
         """Diagnostic, pas une nouvelle règle de sélection ; temps réels des lignes lues."""
@@ -134,11 +268,24 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
 
     source_pmu = pmu_direct.mode_source()
     journal["pmu_source"] = source_pmu
+    rythme_path = donnees / "rythme_sources.json" if donnees else None
+    rythme = lire_json(rythme_path, {}) if rythme_path else {}
+    if not isinstance(rythme, dict):
+        rythme = {}
     with ThreadPoolExecutor(max_workers=2) as pool:
         journal["pinnacle_configuration"] = {"mode": "environnement" if os.environ.get("PINNACLE_API_KEY", "").strip()
                                                 else "guest_historique"}
-        fpin = pool.submit(etape, "pinnacle", journal, lambda: harmoniser_pinnacle(pinnacle.collecter()))
-        fpoly = pool.submit(etape, "polymarket", journal, polymarket.collecter, HORIZON_H)
+
+        def _lire_pinnacle():
+            pinnacle._echeance = Echeance(BUDGETS["pinnacle"])
+            try:
+                return harmoniser_pinnacle(pinnacle.collecter())
+            finally:
+                pinnacle._echeance = None
+
+        fpin = pool.submit(etape_bornee, "pinnacle", journal, BUDGETS["pinnacle"], _lire_pinnacle)
+        fpoly = pool.submit(etape_bornee, "polymarket", journal, BUDGETS["polymarket"],
+                            polymarket.collecter, HORIZON_H)
         pin, poly = fpin.result() or [], fpoly.result() or []
         if pinnacle._cle_resolue:
             journal["pinnacle_configuration"] = {"mode": pinnacle.origine_cle}
@@ -158,8 +305,11 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         sports = sports_des(pin + poly)
         direct_lignes, direct_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
         if source_pmu != "pulsescore":
-            recu = etape("pmu_direct", journal, pmu_direct.collecter, sports,
-                         12 if mode == "test" else HORIZON_H)
+            heures_pmu, plein_pmu = heures_ombre("pmu", source_pmu, mode, maintenant, rythme)
+            if plein_pmu:
+                rythme["pmu"] = maintenant.isoformat()
+            recu = source_bornee(pmu_direct, "pmu_direct", journal, BUDGETS["pmu_direct"],
+                                 pmu_direct.collecter, sports, heures_pmu)
             if recu is None:
                 direct_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
             else:
@@ -171,8 +321,9 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         journal["winamax_source"] = source_wina
         wina_lignes, wina_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
         if source_wina != "pulsescore":
-            recu = etape("winamax_direct", journal, winamax_direct.collecter, sports,
-                         12 if mode == "test" else HORIZON_H, maintenant=maintenant)
+            recu = source_bornee(winamax_direct, "winamax_direct", journal, BUDGETS["winamax_direct"],
+                                 winamax_direct.collecter, sports,
+                                 12 if mode == "test" else HORIZON_H, maintenant=maintenant)
             if recu is None:
                 wina_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
             else:
@@ -184,8 +335,11 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         journal["unibet_source"] = source_uni
         uni_lignes, uni_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
         if source_uni != "pulsescore":
-            recu = etape("unibet_direct", journal, unibet_direct.collecter, sports,
-                         12 if mode == "test" else HORIZON_H, maintenant=maintenant)
+            heures_uni, plein_uni = heures_ombre("unibet", source_uni, mode, maintenant, rythme)
+            if plein_uni:
+                rythme["unibet"] = maintenant.isoformat()
+            recu = source_bornee(unibet_direct, "unibet_direct", journal, BUDGETS["unibet_direct"],
+                                 unibet_direct.collecter, sports, heures_uni, maintenant=maintenant)
             if recu is None:
                 uni_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
             else:
@@ -260,8 +414,9 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
     journal["olybet_source"] = source_oly
     if source_oly == "direct":
         sports_oly = sports & {"football"} if mode == "test" else sports
-        recu = etape("olybet", journal, olybet_direct.collecter, sports_oly,
-                     12 if mode == "test" else HORIZON_H)
+        recu = source_bornee(olybet_direct, "olybet", journal, BUDGETS["olybet"],
+                             olybet_direct.collecter, sports_oly,
+                             12 if mode == "test" else HORIZON_H)
         if recu is None:
             oly_meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
             oly_lignes = []
@@ -275,6 +430,8 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
         except Exception as e:  # noqa: BLE001
             journal["olybet_controle"] = {"ok": False, "erreur": type(e).__name__}
     mesures_delta(pin, lignes)
+    if rythme_path is not None:
+        ecrire_json(rythme_path, {k: rythme[k] for k in ("pmu", "unibet") if k in rythme})
     return pin, poly, lignes, requetes
 
 
@@ -304,6 +461,7 @@ def conserver_journal_reglement(etat: dict, journal: dict, effectue: bool) -> No
 
 def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
                         journal: dict, requetes: dict, mode_reglement: str) -> bool:
+    # Le règlement ne lit pas Smarkets : les cotes de l'échange ne servent pas à solder un pari.
     # 4. règlement (offre PulseScore PRO : requêtes illimitées). Sans clé PulseScore, ESPN
     #    et les résultats saisis à la main règlent quand même ce qu'ils peuvent.
     #    Environ une fois par heure, depuis le cron ou la collecte : voir REGLEMENT_MINUTES.
@@ -492,7 +650,8 @@ def main() -> int:
     # Références en parallèle, puis les bookmakers. PMU direct ne remplace PulseScore
     # qu'en mode direct, ou en auto quand Kambi a répondu.
     attentes = lire_json(donnees / "pulsescore_attentes.json", {})
-    pin, poly, lignes_ps, requetes = collecter_prematch(cle, args.mode, maintenant, journal, attentes)
+    pin, poly, lignes_ps, requetes = collecter_prematch(
+        cle, args.mode, maintenant, journal, attentes, donnees)
     ecrire_json(donnees / "pulsescore_attentes.json", attentes)
     if "pmu_direct_rapport" in journal:
         ecrire_json(donnees / "pmu_comparaison.json", journal["pmu_direct_rapport"])
@@ -506,13 +665,13 @@ def main() -> int:
     references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly}
     # Smarkets reste hors de `francais` : bookmaker « smarkets » n'est pas un book français.
     sports_sm = {"football"} if args.mode == "test" else {l["sport"] for l in francais if l.get("sport")}
-    sm = etape("smarkets", journal, smarkets.collecter, sports_sm,
-               12 if args.mode == "test" else HORIZON_H, maintenant=maintenant)
-    if not isinstance(sm, tuple) or len(sm) != 2:
-        sm_lignes, sm_info = [], {"ok": False, "erreurs": ["lecture interrompue"]}
-    else:
-        sm_lignes, sm_info = sm
-    signaler(journal, "smarkets", list(sm_info.get("erreurs") or []))
+    sm_lignes, sm_info = appliquer_smarkets(
+        donnees, sports_sm, 12 if args.mode == "test" else HORIZON_H,
+        smarkets.radar_depuis(francais), maintenant, journal)
+    erreurs_sm = list(sm_info.get("erreurs") or [])
+    if journal.get("smarkets_cache", {}).get("perime") and "périmé" not in erreurs_sm:
+        erreurs_sm.append("périmé")
+    signaler(journal, "smarkets", erreurs_sm)
     journal["smarkets_dans_decision"] = smarkets.dans_decision()
     # Table propre, comme Betfair. Le drapeau ne retire que le consensus partagé.
     smarkets.ajouter_table(references, sm_lignes)
