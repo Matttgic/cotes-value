@@ -31,7 +31,9 @@ FENETRE_MIN = CT.FENETRE_MIN
 MARGE_MAX_PINNACLE = 0.12
 ECART_ACHAT_VENTE_MAX = 0.05
 ECART_RELATIF_MAX = 0.25       # écart achat/vente rapporté au prix : 0,01/0,03 n'est pas un prix fiable
-LIQUIDITE_MIN = {"Betfair": 20.0, "Polymarket": 100.0}
+LIQUIDITE_MIN = {"Betfair": 20.0, "Polymarket": 100.0, "Smarkets": 20.0}
+ECARTS_AFFICHES = (("Betfair", "ecart_betfair"), ("Polymarket", "ecart_polymarket"),
+                   ("Smarkets", "ecart_smarkets"))
 ECART_MIN = 0.02
 # Au-delà, une « erreur de cote » est presque toujours un marché mal reconnu (statistique prise pour des
 # buts, série prise pour un match…) : l'opportunité est gardée pour contrôle mais marquée suspecte, sans pari.
@@ -61,8 +63,12 @@ def _t(s) -> datetime | None:
 
 # --------------------------------------------------------------------------- références
 
-def reference_betfair(lignes: list[dict]) -> list[dict]:
-    """Betfair (Orbit) : probabilité = milieu entre meilleur achat et meilleure vente, renormalisée."""
+def reference_echange(lignes: list[dict], source: str = "Betfair") -> list[dict]:
+    """Exchange : probabilité = milieu entre meilleur achat et meilleure vente, renormalisée.
+
+    Même traitement pour Betfair et Smarkets. Le spread est dans le milieu ;
+    aucune commission n'est retirée en plus (Betfair ne le fait pas non plus).
+    """
     groupes: dict[tuple, list[dict]] = {}
     for l in lignes:
         groupes.setdefault((l["cle_marche"], l["marche"], l["periode"], l.get("ligne")), []).append(l)
@@ -93,8 +99,13 @@ def reference_betfair(lignes: list[dict]) -> list[dict]:
         # mi-temps/fin…) et gonfler les autres créerait de fausses erreurs de cote
         s = max(sum(probs), 1.0)
         for l, p in zip(g, probs):
-            out.append({**l, "source": "Betfair", "proba_juste": round(p / s, 6), "cote_juste": round(s / p, 4)})
+            out.append({**l, "source": source, "proba_juste": round(p / s, 6), "cote_juste": round(s / p, 4)})
     return deriver_double_chance(out)
+
+
+def reference_betfair(lignes: list[dict]) -> list[dict]:
+    """Betfair (Orbit), même milieu achat/vente que les autres exchanges."""
+    return reference_echange(lignes, "Betfair")
 
 
 def _fiable(nom: str, l: dict) -> bool:
@@ -111,6 +122,27 @@ def _fiable(nom: str, l: dict) -> bool:
 
 
 # --------------------------------------------------------------------------- comparaison
+
+def annoter_ecarts(opportunites: list[dict], francais: list[dict],
+                   references: dict[str, list[dict]]) -> list[dict]:
+    """Écart de chaque cote française contre Betfair, Polymarket et Smarkets.
+
+    Ces champs servent au bilan. Ils ne créent pas de pari : seules les clés
+    présentes dans le dictionnaire passé à ``comparer`` décident.
+    """
+    index = indexer(francais, {n: references.get(n) or [] for n, _ in ECARTS_AFFICHES})
+    for o in opportunites:
+        if not o.get("cote"):
+            continue
+        k = cle(o)
+        for nom, champ in ECARTS_AFFICHES:
+            r = index.get(nom, {}).get(o.get("match_id"), {}).get(k)
+            if not r or not CT.contemporaines({"collecte": o.get("detecte")}, r):
+                o[champ] = None
+                continue
+            o[champ] = round(o["cote"] * r["proba_juste"] - 1, 4)
+    return opportunites
+
 
 def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str, dict]:
     """nom de la référence -> {match français: {clé de marché: ligne de référence fiable}}."""
