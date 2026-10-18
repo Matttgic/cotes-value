@@ -30,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
                    simulation, smarkets, stockage)
 from cotes.direct import betclic as betclic_direct  # noqa: E402
+from cotes.direct import netbet as netbet_direct  # noqa: E402
 from cotes.direct import olybet as olybet_direct  # noqa: E402
 from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes.direct import unibet as unibet_direct  # noqa: E402
@@ -41,6 +42,7 @@ from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
 # NetBet retiré le 6/10/2026 : le flux « netbet » de PulseScore est le site international (netbet.com :
 # intitulés anglais, corners, handicaps asiatiques en quart, compétitions hors liste ANJ), pas netbet.fr.
+# netbet.fr est lu à part (cotes/direct/netbet.py) et n'entre pas dans ce plan PulseScore.
 FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu"]
 SPORTS_FR = ["soccer", "basketball", "tennis", "ice-hockey", "handball", "volleyball", "rugby-union",
              "american-football", "baseball"]
@@ -55,6 +57,7 @@ BUDGETS = {
     "winamax_direct": 45,
     "unibet_direct": 75,
     "olybet": 40,
+    "netbet": 40,
     "betclic_direct": 45,
     "smarkets": 60,
 }
@@ -374,6 +377,12 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             sports_oly = sports & {"football"} if mode == "test" else sports
             lancer("olybet", olybet_direct, BUDGETS["olybet"], olybet_direct.collecter,
                    sports_oly, 12 if mode == "test" else HORIZON_H)
+        source_net = netbet_direct.mode_source()
+        journal["netbet_source"] = source_net
+        if source_net == "direct":
+            sports_net = sports & {"football"} if mode == "test" else sports
+            lancer("netbet", netbet_direct, BUDGETS["netbet"], netbet_direct.collecter,
+                   sports_net, 12 if mode == "test" else HORIZON_H)
 
         recus: dict = {}
 
@@ -458,6 +467,10 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             oly_lignes, oly_meta = recevoir("olybet")
         else:
             oly_lignes, oly_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
+        if source_net == "direct":
+            net_lignes, net_meta = recevoir("netbet")
+        else:
+            net_lignes, net_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
         pmu_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
                   or pulsescore.indisponible(erreurs.get("pmu", []) if cle else ["PULSESCORE_KEY absente"]))
         if source_pmu == "shadow":
@@ -538,6 +551,14 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             journal["olybet_controle"] = olybet_direct.controle_prix(oly_lignes, refs)
         except Exception as e:  # noqa: BLE001
             journal["olybet_controle"] = {"ok": False, "erreur": type(e).__name__}
+    if source_net == "direct":
+        signaler(journal, "netbet", list(net_meta.get("erreurs") or []))
+        lignes = list(lignes) + list(net_lignes)
+        try:
+            refs = list(pin) + [l for l in lignes if l.get("bookmaker") == "pmu"]
+            journal["netbet_controle"] = netbet_direct.controle_prix(net_lignes, refs)
+        except Exception as e:  # noqa: BLE001
+            journal["netbet_controle"] = {"ok": False, "erreur": type(e).__name__}
     mesures_delta(pin, lignes)
     if rythme_path is not None:
         ecrire_json(rythme_path, {k: rythme[k] for k in ("pmu", "unibet", "betclic") if k in rythme})
