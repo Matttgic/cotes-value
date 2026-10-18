@@ -421,6 +421,10 @@ def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
     m = _PREFIXE_PERIODE.match(nom)
     corps = nom[m.end():] if m else nom
     bas = corps.strip().lower()
+    # « Écart de buts », « Écart de points entre les équipes », « Vainqueur avec handicap » :
+    # « X gagne de 2 buts ou + » est le handicap X −1,5. Selon le sport, l'unité décide du marché.
+    if re.match(r"(?:[ée]cart (?:de (?:buts|points|sets|jeux)|entre les [ée]quipes)|vainqueur avec handicap)\s*(?:\(t\.? ?r[ée]g\.?\))?\s*$", bas):
+        return "ECART"
     # « prolong. & pen. inclus » n'est pas une combinaison de marchés.
     sans_abrege = re.sub(r"prolong\w*\.?\s*&\s*pen\w*\.?", "prolongations", bas)
     if any(mot in sans_abrege for mot in _EXCLU):
@@ -518,6 +522,56 @@ def _double_chance(nom: str, domicile: str, exterieur: str) -> str | None:
             frozenset({"HOME", "AWAY"}): "HOME_AWAY"}.get(frozenset(issues))
 
 
+_GAGNE = re.compile(r"^(.+?)\s+gagne de\s+(\d+)\s*(?:buts?|points?|sets?|jeux)?\s*ou\s*\+\s*$", re.I)
+_NE_PERD = re.compile(
+    r"^(.+?)\s+ne perd pas(?:\s+ou perd de\s+(\d+)\s*(?:buts?|points?|sets?|jeux)?"
+    r"\s*(?:exactement|ou\s*-)?)?\s*$", re.I)
+
+
+def _canon_handicap(nom: str, sport: str | None) -> str | None:
+    """Marché canonique PulseScore d'un écart, d'après l'unité écrite et le sport (None : non comparé)."""
+    bas = nom.lower()
+    if sport in ("football", "hockey", "handball"):
+        return "ASIAN_HANDICAP" if "point" not in bas and "set" not in bas and "jeu" not in bas else None
+    if sport == "basket":
+        return "ASIAN_HANDICAP" if "point" in bas else None
+    if sport == "tennis":
+        return "SET_HANDICAP" if "set" in bas else "GAME_HANDICAP" if "jeu" in bas else None
+    if sport == "volley":
+        return "SET_HANDICAP" if "set" in bas and "point" not in bas else None
+    return None
+
+
+def _marches_handicap(marche: dict, domicile: str, exterieur: str, sport: str | None) -> list[dict]:
+    """« X gagne de N ou + » = X −(N−0,5) ; « Y ne perd pas ou perd de M ou - » = Y +(M+0,5).
+    Les deux issues complémentaires forment un marché à deux voies, un par ligne (celle du domicile)."""
+    nom = marche.get("nom") or ""
+    canon = _canon_handicap(nom, sport)
+    if not canon:
+        return []
+    groupes: dict = {}
+    for offre in marche.get("selections") or []:
+        texte = str(offre.get("nom") or "").strip()
+        gagne = _GAGNE.match(texte)
+        if gagne:
+            equipe, valeur = gagne.group(1), -(int(gagne.group(2)) - 0.5)
+        else:
+            perd = _NE_PERD.match(texte)
+            if not perd:
+                continue
+            equipe, valeur = perd.group(1), (int(perd.group(2)) if perd.group(2) else 0) + 0.5
+        cote = _issue(equipe, domicile, exterieur)
+        if cote not in ("HOME", "AWAY"):
+            continue
+        ligne_domicile = valeur if cote == "HOME" else -valeur
+        groupes.setdefault(ligne_domicile, {})[cote] = {
+            "canonicalOutcome": cote, "rawName": texte, "odds": offre["cote"], "line": valeur}
+    libelle = _libelle_pulse(nom)
+    return [{"marketId": f"{nom}|{ligne:+g}", "canonicalMarket": canon, "rawName": libelle,
+             "period": "FULL_TIME", "selections": [paire["HOME"], paire["AWAY"]]}
+            for ligne, paire in groupes.items() if len(paire) == 2]
+
+
 TOTAUX = ("OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER", "TOTAL_SETS")
 
 
@@ -526,13 +580,15 @@ def _libelle_pulse(nom: str) -> str:
     return re.sub(r"\b([1-4])\s*(?:er|è|e|ème|eme)?\s*QT\b", r"\1er quart-temps", nom, flags=re.I)
 
 
-def marches_pulse(marche: dict, domicile: str, exterieur: str) -> list[dict]:
+def marches_pulse(marche: dict, domicile: str, exterieur: str, sport: str | None = None) -> list[dict]:
     """Marchés au format PulseScore. Un total Betclic regroupe toutes ses lignes
     dans un seul marché : on en fait un marché par ligne, sinon la traduction
     ne garderait que la dernière (la plus haute)."""
     canon = _classe(marche.get("nom") or "", domicile, exterieur)
     if not canon:
         return []
+    if canon == "ECART":
+        return _marches_handicap(marche, domicile, exterieur, sport)
     selections = []
     for offre in marche.get("selections") or []:
         nom = str(offre.get("nom") or "")
@@ -697,7 +753,7 @@ def _detailler(client: Client, match: dict, moment: str,
             offres = dedoublonner(offres + marches_du_detail(suite))
     marches = []
     for offre in offres:
-        for traduit in marches_pulse(offre, match["domicile"], match["exterieur"]):
+        for traduit in marches_pulse(offre, match["domicile"], match["exterieur"], match["sport"]):
             # Au hockey le score exact de Betclic n'est pas celui de Pinnacle (+180 % de cote).
             if traduit["canonicalMarket"] == "CORRECT_SCORE" and match["sport"] != "football":
                 continue
@@ -706,7 +762,13 @@ def _detailler(client: Client, match: dict, moment: str,
         return [], bool(trame), complet
     evenement = {"eventId": match["id"], "home": match["domicile"], "away": match["exterieur"],
                  "league": match.get("competition"), "startTime": match.get("debut"), "markets": marches}
-    return traduire(evenement, "betclic", match["sport"], moment), bool(trame), complet
+    lignes, vus = [], set()
+    for ligne in traduire(evenement, "betclic", match["sport"], moment):
+        cle = (ligne["match_id"], ligne["marche"], ligne["periode"], ligne["ligne"], ligne["issue"])
+        if cle not in vus:     # « Écart de buts » et « Ecart entre les équipes » donnent les mêmes handicaps
+            vus.add(cle)
+            lignes.append(ligne)
+    return lignes, bool(trame), complet
 
 
 def _collecter_reserve(client: Client, demandes, heures: float, maintenant: datetime,
