@@ -6,7 +6,7 @@ from cotes.delai import Echeance
 from cotes.direct import netbet
 
 NOW = datetime(2026, 10, 18, 12, 0, tzinfo=timezone.utc)
-SECRET = "SECRET-COOKIE-NE-PAS-JOURNALISER"
+JETON_FICTIF = "SECRET-COOKIE-NE-PAS-JOURNALISER"
 
 
 def _script(events: list, liens: list | None = None) -> str:
@@ -26,7 +26,7 @@ def _script(events: list, liens: list | None = None) -> str:
     return (
         "window.__NUXT__=(function(a,b){fp={csrf_token:a};return "
         + json.dumps(corps).replace('"a"', "a")
-        + '}("' + SECRET + '","Saint-\\u00c9tienne",.1,Array(0)));'
+        + '}("' + JETON_FICTIF + '","Saint-\\u00c9tienne",.1,Array(0)));'
     )
 
 
@@ -118,7 +118,7 @@ def test_collecte_traduit_et_laisse_le_jeton_dehors():
     assert any(l["marche"] == "HANDICAP" and l["issue"] == "DOM" and l["ligne"] == -0.5 for l in lignes)
     assert all(l["cote"] != 9.99 for l in lignes)
     assert "corners" not in json.dumps([l["libelle"] for l in lignes]).lower()
-    assert SECRET not in json.dumps({"lignes": lignes, "meta": meta})
+    assert JETON_FICTIF not in json.dumps({"lignes": lignes, "meta": meta})
 
 
 def test_budget_rend_les_cotes_deja_lues():
@@ -141,7 +141,7 @@ def test_budget_rend_les_cotes_deja_lues():
     assert session.urls == ["https://www.netbet.fr/football"]
     assert meta["matchs"] == 1 and lignes
     assert "budget" in meta["erreurs"] and meta["ok"] is True
-    assert SECRET not in json.dumps(meta)
+    assert JETON_FICTIF not in json.dumps(meta)
 
 
 def test_echeance_deja_depassee_n_appelle_pas():
@@ -164,11 +164,11 @@ def test_429_arrete_sans_reprendre():
 def test_panne_reseau_ne_propage_pas_le_message():
     class Panne:
         def get(self, *args, **kwargs):
-            raise OSError(SECRET)
+            raise OSError(JETON_FICTIF)
 
     lignes, meta = netbet.collecter({"football"}, session=Panne(), pause=(0, 0), maintenant=NOW)
     assert lignes == [] and meta["erreurs"] == ["réseau"]
-    assert SECRET not in json.dumps(meta)
+    assert JETON_FICTIF not in json.dumps(meta)
 
 
 def test_controle_signale_un_ecart():
