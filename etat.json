@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T23:10:14+00:00",
+  "debut": "2026-10-18T23:18:23+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 6.8,
+    "secondes": 7.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,33 +12,29 @@
     ]
    },
    "pinnacle": {
-    "secondes": 36.2,
+    "secondes": 39.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 17 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "sport 5 matchups : HTTP 403"
     ]
    },
-   "olybet": {
-    "secondes": 3.7,
+   "unibet_direct": {
+    "secondes": 5.2,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 3.9,
+   "olybet": {
+    "secondes": 5.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 11.5,
+    "secondes": 12.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 16.6,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 31.9,
+    "secondes": 19.8,
     "ok": true
    },
    "pulsescore": {
@@ -61,24 +57,31 @@
     "betclic_repli": "L'API Betclic remplace PulseScore (401/403/402/quota ou lecture impossible)"
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "betclic_direct": {
+    "secondes": 53.8,
+    "ok": true
+   },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.4,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 4.8,
+    "secondes": 5.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.4,
+    "secondes": 0.5,
     "ok": true
    },
    "cotes_cloture": {
@@ -97,8 +100,8 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 701,
-   "lignes_perimees": 13100,
+   "age_max_s": 789,
+   "lignes_perimees": 4979,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -112,8 +115,8 @@
     "head_200": 39,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 5,
+    "choisi_autre": 7,
+    "choisi_fixe": 6,
     "reprise_403": 6
    }
   },
@@ -125,7 +128,7 @@
   "winamax_source_effective": "direct",
   "betclic_direct_rapport": {
    "matchs_pulsescore": 0,
-   "matchs_direct": 119,
+   "matchs_direct": 118,
    "matchs_communs": 0,
    "manques": [],
    "couverture": null,
@@ -207,22 +210,6 @@
    "examines": 6,
    "comparaisons": [
     {
-     "match": "Belgrano – River Plate",
-     "source": "Pinnacle",
-     "cote_netbet": 3.4,
-     "cote_reference": 3.9,
-     "ecart_relatif": 0.1282,
-     "aberrant": false
-    },
-    {
-     "match": "Belgrano – River Plate",
-     "source": "PMU",
-     "cote_netbet": 3.4,
-     "cote_reference": 3.4,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
      "match": "Monterrey – Pachuca",
      "source": "Pinnacle",
      "cote_netbet": 1.53,
@@ -253,69 +240,71 @@
      "cote_reference": 1.926,
      "ecart_relatif": 0.0758,
      "aberrant": false
+    },
+    {
+     "match": "Universitatea Cluj – Arges Pitesti",
+     "source": "Pinnacle",
+     "cote_netbet": 1.65,
+     "cote_reference": 1.741,
+     "ecart_relatif": 0.0521,
+     "aberrant": false
+    },
+    {
+     "match": "Universitatea Cluj – Arges Pitesti",
+     "source": "PMU",
+     "cote_netbet": 1.65,
+     "cote_reference": 1.68,
+     "ecart_relatif": 0.0179,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T23:10:24+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T23:10:32+00:00",
+   "pinnacle_premiere_lecture": "2026-10-18T23:18:33+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T23:18:44+00:00",
    "books_premiere_lecture": "2026-10-18T22:59:12+00:00",
-   "books_derniere_lecture": "2026-10-18T23:10:51+00:00",
-   "ecart_enveloppe_secondes": 680.0
+   "books_derniere_lecture": "2026-10-18T23:19:03+00:00",
+   "ecart_enveloppe_secondes": 1172.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 11.5
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 553,
    "a_verifier": 10,
    "non_conforme": 8,
-   "mesures": 8272,
+   "mesures": 9651,
    "matchs_suspects": 0
   },
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-18T22:15:34+00:00"
+   "dernier_reglement": "2026-10-18T23:11:41+00:00"
   },
-  "fin": "2026-10-18T23:11:35+00:00",
+  "fin": "2026-10-18T23:20:24+00:00",
   "requetes_pulsescore": {
    "betclic": 4,
    "orbitxch": 4
   },
   "cotes": {
-   "francaises": 25430,
-   "pinnacle": 94396,
+   "francaises": 25562,
+   "pinnacle": 94873,
    "betfair": 0,
-   "polymarket": 9043,
-   "smarkets": 3695
+   "polymarket": 8953,
+   "smarkets": 3574
   },
-  "matchs_francais": 702,
-  "opportunites": 7,
+  "matchs_francais": 691,
+  "opportunites": 8,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "requetes_par_mois": {
-  "2026-10": 231464
+  "2026-10": 231472
  },
  "historique": [
-  {
-   "debut": "2026-10-17T23:09:15+00:00",
-   "mode": "complet",
-   "opportunites": 26,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "winamax": 19,
-    "betclic": 19,
-    "unibet-fr": 19,
-    "pmu": 17,
-    "orbitxch": 22
-   }
-  },
   {
    "debut": "2026-10-17T23:14:51+00:00",
    "mode": "complet",
@@ -2704,6 +2693,16 @@
    "debut": "2026-10-18T23:10:14+00:00",
    "mode": "complet",
    "opportunites": 7,
+   "nouveaux_paris": 0,
+   "requetes_pulsescore": {
+    "betclic": 4,
+    "orbitxch": 4
+   }
+  },
+  {
+   "debut": "2026-10-18T23:18:23+00:00",
+   "mode": "complet",
+   "opportunites": 8,
    "nouveaux_paris": 0,
    "requetes_pulsescore": {
     "betclic": 4,
