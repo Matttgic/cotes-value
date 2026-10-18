@@ -66,6 +66,7 @@ _PAR_SPORT = {
         459: "DRAW_NO_BET", 460: "ASIAN_HANDICAP",
     },
 }
+_echeance = None
 _HUIT = {"1": "HOME", "2": "AWAY", "x": "DRAW", "X": "DRAW"}
 _DOUBLES = {"9": "HOME_DRAW", "10": "HOME_AWAY", "11": "DRAW_AWAY"}
 _TOTAUX = {"over": "OVER", "under": "UNDER"}
@@ -113,6 +114,7 @@ class Socket:
         self._ws = None
         self._session = None
         self._premier = True
+        self.echeance = None
 
     def fermer(self) -> None:
         try:
@@ -161,6 +163,9 @@ class Socket:
         return ""
 
     def demander(self, route: str) -> dict | None:
+        if self.echeance is not None and not self.echeance.ok():
+            self._noter("budget")
+            return None
         if not _ROUTE.fullmatch(route):
             self._noter("route ignorée")
             return None
@@ -380,13 +385,26 @@ def _retenir(lignes: list[dict]) -> list[dict]:
     return [gardes[cle] for cle in ordre]
 
 
+def _noter_budget(client) -> None:
+    erreurs = getattr(client, "erreurs", None)
+    if isinstance(erreurs, list) and "budget" not in erreurs:
+        erreurs.append("budget")
+    noter = getattr(client, "_noter", None)
+    if noter and (not isinstance(erreurs, list) or "budget" not in erreurs):
+        noter("budget")
+
+
 def collecter(sports: set[str] | None = None, heures: float = 36, transport=None,
               pause: tuple[float, float] = (0.35, 0.6),
-              maintenant: datetime | None = None) -> tuple[list[dict], dict]:
+              maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
     """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``winamax``)."""
     maintenant = maintenant or datetime.now(timezone.utc)
+    if echeance is None:
+        echeance = _echeance
     propre = transport is None
     client = transport or Socket(pause=pause)
+    if hasattr(client, "echeance"):
+        client.echeance = echeance
     moment = maintenant.isoformat(timespec="seconds")
     lignes: list[dict] = []
     matchs = 0
@@ -396,14 +414,21 @@ def collecter(sports: set[str] | None = None, heures: float = 36, transport=None
         if not demandes:
             return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
         for ident, sport in demandes:
+            if echeance is not None and not echeance.ok():
+                _noter_budget(client)
+                break
             doc = client.demander(f"sport:{ident}")
             if not doc:
                 continue
             lectures += 1
             bruts = [m for m in (doc.get("matches") or {}).values()
                      if isinstance(m, dict) and _a_venir(m, maintenant, heures)]
+            bruts.sort(key=lambda m: m.get("matchStart") or 0)
             matchs += len(bruts)
             for match in bruts:
+                if echeance is not None and not echeance.ok():
+                    _noter_budget(client)
+                    break
                 detail = client.demander(f"match:{match.get('matchId')}")
                 if not detail:
                     continue

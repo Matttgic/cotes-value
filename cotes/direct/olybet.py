@@ -39,6 +39,7 @@ TYPES = (
     "Team2OverUnder", "HalfTimeResult", "DrawNoBet",
 )
 PAR_LOT = 20
+_echeance = None
 ECART_RELATIF = 0.15
 ECHANTILLON = 5
 MODES = ("direct", "off")
@@ -218,13 +219,22 @@ class Swarm:
         self._rid = 0
         self.requetes = 0
         self.erreurs: list[str] = []
+        self.echeance = None
 
     def appel(self, commande: str, params: dict):
+        if self.echeance is not None and not self.echeance.ok():
+            if "budget" not in self.erreurs:
+                self.erreurs.append("budget")
+            return None
         self._rid += 1
         rid = str(self._rid)
         self.requetes += 1
         self.ws.send_str(json.dumps({"command": commande, "params": params, "rid": rid}))
         for _ in range(40):
+            if self.echeance is not None and not self.echeance.ok():
+                if "budget" not in self.erreurs:
+                    self.erreurs.append("budget")
+                return None
             message = json.loads(self.ws.recv_str())
             if str(message.get("rid")) != rid:
                 continue
@@ -248,15 +258,20 @@ def _lots(ids: list, taille: int):
 
 
 def collecter(sports: set[str] | None = None, heures: float = 36, client=None,
-              maintenant: datetime | None = None) -> tuple[list[dict], dict]:
+              maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
     """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``olybet``)."""
     maintenant = maintenant or datetime.now(timezone.utc)
+    if echeance is None:
+        echeance = _echeance
     moment = maintenant.isoformat(timespec="seconds")
     demandes = sports_demandes(sports)
     if not demandes:
         return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
     propre = client is None
-    swarm = client or Swarm()
+    delai = 40 if echeance is None else max(5, int(min(20, echeance.reste() or 5)))
+    swarm = client or Swarm(timeout=delai)
+    if hasattr(swarm, "echeance"):
+        swarm.echeance = echeance
     try:
         if not swarm.appel("request_session", {"site_id": SITE_ID, "language": "fra", "source": 42}):
             return [], {"ok": False, "erreurs": list(getattr(swarm, "erreurs", [])) or ["session"],
@@ -264,6 +279,10 @@ def collecter(sports: set[str] | None = None, heures: float = 36, client=None,
         lignes: list[dict] = []
         matchs = 0
         for alias, sport in demandes:
+            if echeance is not None and not echeance.ok():
+                if "budget" not in swarm.erreurs:
+                    swarm.erreurs.append("budget")
+                break
             liste = swarm.appel("get", {
                 "source": "betting",
                 "what": {"sport": ["alias"], "competition": ["name"],
@@ -275,6 +294,10 @@ def collecter(sports: set[str] | None = None, heures: float = 36, client=None,
             choisis = [j for j in jeux_depuis(liste) if _a_venir(j, maintenant, heures)]
             matchs += len(choisis)
             for lot in _lots(choisis, PAR_LOT):
+                if echeance is not None and not echeance.ok():
+                    if "budget" not in swarm.erreurs:
+                        swarm.erreurs.append("budget")
+                    break
                 detail = swarm.appel("get", {
                     "source": "betting",
                     "what": {"game": ["id"], "market": ["id", "type", "name", "base"],

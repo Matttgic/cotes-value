@@ -163,13 +163,17 @@ def _etat(html: str) -> tuple[str | None, dict[str, int]]:
     return jeton, sports
 
 
+_echeance = None
+
+
 class Client:
     """GET espacés. Le jeton de la réponse, s'il change, remplace le précédent."""
 
-    def __init__(self, session=None, page=None, pause: tuple[float, float] = (0.2, 0.4)):
+    def __init__(self, session=None, page=None, pause: tuple[float, float] = (0.2, 0.4), echeance=None):
         self.session = session or requests.Session()
         self.page = page
         self.pause = pause
+        self.echeance = echeance
         self.jeton: str | None = None
         self.noeuds: dict[str, int] = {}
         self.requetes = 0
@@ -215,18 +219,27 @@ class Client:
         if isinstance(nouveau, str) and nouveau:
             self.jeton = nouveau
 
+    def _temps(self) -> bool:
+        if self.echeance is None or self.echeance.ok():
+            return True
+        self._noter("budget")
+        return False
+
     def get(self, chemin: str, params: dict | None = None) -> dict | None:
-        if not self.jeton:
+        if not self.jeton or not self._temps():
             return None
         url = f"{BASE}/{chemin.lstrip('/')}"
         if params:
             url = f"{url}?{urlencode(params)}"
         dernier = "réseau"
+        delai = 30 if self.echeance is None else self.echeance.timeout(12)
         for essai in range(3):
+            if not self._temps():
+                return None
             self._espacer()
             self.requetes += 1
             try:
-                r = self.session.get(url, timeout=30, headers={
+                r = self.session.get(url, timeout=delai, headers={
                     "Accept": "application/json",
                     "Accept-Language": "fr-FR",
                     "Referer": ACCUEIL,
@@ -234,11 +247,14 @@ class Client:
                 })
             except (requests.RequestException, OSError):
                 dernier = "réseau"
-                _pause(0.5 * (essai + 1))
+                if self._temps():
+                    _pause(0.5 * (essai + 1))
                 continue
             self._renouveler(getattr(r, "headers", None))
             if r.status_code in (429, 500, 502, 503, 504):
                 dernier = f"HTTP {r.status_code}"
+                if not self._temps():
+                    return None
                 _pause(0.5 * (essai + 1))
                 continue
             if r.status_code != 200:
@@ -435,8 +451,19 @@ def _attacher(sac: dict) -> None:
         event["markets"][mid] = {**offre, "outcomes": sac["outcomes"].get(mid, [])}
 
 
+def _page_lointaine(sac: dict, vus: list[str], horizon: datetime) -> bool:
+    """Vrai si les nouveaux matchs de la page commencent tous après l'horizon."""
+    debuts = []
+    for cle in vus:
+        ev = sac["events"].get(cle) or {}
+        debut = _debut(ev.get("start"))
+        if debut is not None:
+            debuts.append(debut)
+    return bool(debuts) and min(debuts) > horizon
+
+
 def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
-                 type_id, periode) -> None:
+                 type_id, periode, horizon: datetime | None = None, echeance=None) -> None:
     params = dict(PARAMS)
     if type_id is not None:
         params["marketTypeId"] = str(type_id)
@@ -444,6 +471,9 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
         params["periodId"] = str(periode)
     connus: set[str] = set()
     for page in range(_PAGES_MAX):
+        if echeance is not None and not echeance.ok():
+            client._noter("budget")
+            return
         params["pageIndex"] = str(page)
         doc = client.get(f"next/50/p{noeud}", params)
         if not doc:
@@ -451,6 +481,8 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
         items = doc.get("items") if isinstance(doc.get("items"), dict) else {}
         vus = _integrer(sac, items, sport)
         if not vus or all(v in connus for v in vus):
+            return
+        if horizon is not None and _page_lointaine(sac, vus, horizon):
             return
         connus.update(vus)
         total = doc.get("numberOfEvents")
@@ -460,23 +492,32 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
 
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None, page=None,
               pause: tuple[float, float] = (0.2, 0.4),
-              maintenant: datetime | None = None) -> tuple[list[dict], dict]:
+              maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
     """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``unibet-fr``)."""
     maintenant = maintenant or datetime.now(timezone.utc)
+    if echeance is None:
+        echeance = _echeance
     if sports is not None and not (set(SPORTS.values()) & set(sports)):
         return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
-    client = Client(session, page, pause)
+    client = Client(session, page, pause, echeance=echeance)
+    if echeance is not None and not echeance.ok():
+        client._noter("budget")
+        return [], {"ok": False, "erreurs": list(client.erreurs), "requetes": 0, "matchs": 0}
     if not client.ouvrir():
         return [], {"ok": False, "erreurs": list(client.erreurs), "requetes": client.requetes, "matchs": 0}
     sac = {"events": {}, "markets": {}, "outcomes": {}}
+    horizon = maintenant + timedelta(hours=heures)
     for code, interne in SPORTS.items():
+        if echeance is not None and not echeance.ok():
+            client._noter("budget")
+            break
         if sports is not None and interne not in sports:
             continue
         noeud = client.noeuds.get(code)
         if noeud is None:
             continue
         for type_id, periode in MARCHES.get(interne, ((None, None),)):
-            _lire_filtre(client, noeud, interne, sac, type_id, periode)
+            _lire_filtre(client, noeud, interne, sac, type_id, periode, horizon, echeance)
     _attacher(sac)
     moment = maintenant.isoformat(timespec="seconds")
     lignes: list[dict] = []

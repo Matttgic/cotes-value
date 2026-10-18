@@ -246,6 +246,59 @@ def test_403_coupe_sans_rafale(monkeypatch):
     assert all("football_match" in u for u in appels)
 
 
+def test_429_coupe_sans_attendre(monkeypatch):
+    appels = []
+    dormi = []
+
+    class Quota:
+        def get(self, url, timeout=30, headers=None):
+            appels.append((url, timeout))
+
+            class R:
+                status_code = 429
+                headers = {"Retry-After": "30"}
+                text = "secret-ne-pas-journaliser"
+
+                def json(self):
+                    return {"secret": "HsToken secret-ne-pas-journaliser"}
+
+            return R()
+
+    monkeypatch.setattr(smarkets.time, "sleep", lambda s: dormi.append(s))
+    lignes, meta = smarkets.collecter({"football", "tennis"}, 12, Quota(), maintenant=MAINTENANT)
+    assert lignes == []
+    assert meta["erreurs"] == ["HTTP 429"] and meta["perime"] is True
+    assert len(appels) == 1 and dormi == []
+    assert "secret" not in json.dumps(meta)
+
+
+def test_radar_ne_lit_que_les_matchs_connus():
+    session = Session()
+    autre = [{"sport": "football", "domicile": "Arsenal", "exterieur": "Chelsea",
+              "debut": "2026-10-18T15:00:00+00:00"}]
+    lignes, meta = smarkets.collecter({"football"}, 36, session, maintenant=MAINTENANT, radar=autre)
+    assert lignes == [] and meta["requetes"] >= 1
+    assert not any("/markets/" in u for u in session.urls)
+    session = Session()
+    meme = [{"sport": "football", "domicile": "Fulham", "exterieur": "Crystal Palace",
+             "debut": "2026-10-18T15:00:00+00:00"}]
+    lignes, meta = smarkets.collecter({"football"}, 36, session, maintenant=MAINTENANT, radar=meme)
+    assert meta["ok"] and any("/markets/" in u for u in session.urls)
+    assert any(l["domicile"] == "Fulham" for l in lignes)
+
+
+def test_budget_n_envoie_pas_de_requete():
+    from cotes.delai import Echeance
+
+    class Boom:
+        def get(self, *args, **kwargs):
+            raise AssertionError("réseau")
+
+    lignes, meta = smarkets.collecter({"football"}, 12, Boom(), maintenant=MAINTENANT,
+                                      echeance=Echeance(0))
+    assert lignes == [] and "budget" in meta["erreurs"] and meta["perime"] is True
+
+
 def test_sports_vides_ne_contactent_pas_le_reseau():
     class Boom:
         def get(self, *args, **kwargs):

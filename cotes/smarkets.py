@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 from cotes.comparaison import reference_echange
+from cotes.correspondance import ressemblance
 
 BASE = "https://api.smarkets.com/v3"
 _OUI = {"1", "oui", "on", "true", "yes"}
@@ -71,6 +72,8 @@ _ISSUE = {
 }
 _HTFT = {"HOME": "DOM", "AWAY": "EXT", "DRAW": "NUL"}
 _PROLONGATION = ("hockey", "basket", "football_americain", "baseball")
+_ECART_RADAR_S = 90 * 60
+_echeance = None
 
 
 def dans_decision() -> bool:
@@ -147,9 +150,10 @@ class Client:
     requête. Le corps n'est jamais journalisé.
     """
 
-    def __init__(self, session=None, pause: tuple[float, float] = (0.2, 0.4)):
+    def __init__(self, session=None, pause: tuple[float, float] = (0.2, 0.4), echeance=None):
         self.session = session if session is not None else _session_chrome()
         self.pause = pause
+        self.echeance = echeance
         self.requetes = 0
         self.erreurs: list[str] = []
         self._bloque = False
@@ -163,20 +167,39 @@ class Client:
         if haut > 0:
             time.sleep(haut if bas == haut else random.uniform(bas, haut))
 
+    def _temps(self) -> bool:
+        if self.echeance is None or self.echeance.ok():
+            return True
+        self._bloque = True
+        self._noter("budget")
+        return False
+
     def get(self, chemin: str):
-        if self._bloque:
+        if self._bloque or not self._temps():
             return None
         url = chemin if chemin.startswith("http") else f"{BASE}/{chemin.lstrip('/')}"
         dernier = "réseau"
         for essai in range(3):
+            if not self._temps():
+                return None
             self._espacer()
             self.requetes += 1
+            delai = 30 if self.echeance is None else self.echeance.timeout(8)
             try:
-                r = self.session.get(url, timeout=30, headers={"Accept": "application/json"})
+                r = self.session.get(url, timeout=delai, headers={"Accept": "application/json"})
             except (requests.RequestException, OSError):
                 dernier = "réseau"
+                if self.echeance is not None and not self.echeance.ok():
+                    self._bloque = True
+                    self._noter("budget")
+                    return None
                 time.sleep(0.5 * (essai + 1))
                 continue
+            if r.status_code == 429:
+                # Retry-After n'est pas attendu : on s'arrête et le cycle garde le cache.
+                self._bloque = True
+                self._noter("HTTP 429")
+                return None
             if r.status_code == 403:
                 # Pas une demande d'identifiants : la même URL répond 200 ailleurs.
                 if essai == 0:
@@ -185,8 +208,12 @@ class Client:
                 self._bloque = True
                 self._noter("HTTP 403")
                 return None
-            if r.status_code in (429, 500, 502, 503, 504):
+            if r.status_code in (500, 502, 503, 504):
                 dernier = f"HTTP {r.status_code}"
+                if self.echeance is not None and not self.echeance.ok():
+                    self._bloque = True
+                    self._noter("budget")
+                    return None
                 time.sleep(0.5 * (essai + 1))
                 continue
             if r.status_code != 200:
@@ -278,19 +305,80 @@ def _equipes(event: dict, contrats: list[dict]) -> tuple[str | None, str | None]
     return None, None
 
 
-def _evenements(client: Client, type_event: str, heures: float, maintenant: datetime) -> list[dict]:
+def radar_depuis(lignes: list[dict] | None) -> list[dict]:
+    """Un repère par match déjà lu chez les books français (sport, équipes, coup d'envoi)."""
+    vus = {}
+    for ligne in lignes or []:
+        if not isinstance(ligne, dict):
+            continue
+        sport, dom, ext = ligne.get("sport"), ligne.get("domicile"), ligne.get("exterieur")
+        debut = _heure(ligne.get("debut"))
+        if not sport or not dom or not ext or debut is None:
+            continue
+        vus[(sport, str(dom), str(ext), debut.isoformat())] = {
+            "sport": sport, "domicile": str(dom), "exterieur": str(ext), "debut": debut,
+        }
+    return list(vus.values())
+
+
+def _aligne(event: dict, sport: str, radar: list[dict]) -> bool:
+    """Même sport, noms ≥ 0,85, coup d'envoi à ±90 min. Pas d'inversion domicile/extérieur."""
+    debut = _heure(event.get("start_datetime"))
+    home, away = _equipes(event, [])
+    if debut is None or not home or not away:
+        return False
+    for repere in radar:
+        repere_debut = repere.get("debut")
+        if not isinstance(repere_debut, datetime):
+            repere_debut = _heure(repere_debut)
+        if repere.get("sport") != sport or repere_debut is None:
+            continue
+        if abs((debut - repere_debut).total_seconds()) > _ECART_RADAR_S:
+            continue
+        if min(ressemblance(home, repere["domicile"]),
+               ressemblance(away, repere["exterieur"])) >= 0.85:
+            return True
+    return False
+
+
+def _evenements(client: Client, type_event: str, heures: float, maintenant: datetime,
+                radar: list[dict] | None, sport: str) -> list[dict]:
+    if radar is not None and not any(r.get("sport") == sport for r in radar):
+        return []
+    borne = None
+    if radar is not None:
+        debuts = []
+        for repere in radar:
+            if repere.get("sport") != sport:
+                continue
+            debut = repere.get("debut")
+            if not isinstance(debut, datetime):
+                debut = _heure(debut)
+            if debut is not None:
+                debuts.append(debut)
+        borne = max(debuts) + timedelta(minutes=90) if debuts else None
     chemin = f"events/?states=upcoming&limit=100&type={type_event}&sort=start_datetime,id"
     out = []
+    horizon = maintenant + timedelta(hours=heures)
     for _ in range(6):
         doc = client.get(chemin)
         if not isinstance(doc, dict):
             break
+        depasse = False
         for ev in doc.get("events") or []:
             if not isinstance(ev, dict) or ev.get("hidden") or ev.get("state") not in (None, "upcoming"):
                 continue
             debut = _heure(ev.get("start_datetime"))
-            if debut and maintenant < debut <= maintenant + timedelta(hours=heures):
-                out.append(ev)
+            if debut is not None and (debut > horizon or (borne is not None and debut > borne)):
+                depasse = True
+                break
+            if not debut or not (maintenant < debut <= horizon):
+                continue
+            if radar is not None and not _aligne(ev, sport, radar):
+                continue
+            out.append(ev)
+        if depasse or client._bloque:
+            break
         nxt = (doc.get("pagination") or {}).get("next_page")
         if not nxt:
             break
@@ -299,18 +387,29 @@ def _evenements(client: Client, type_event: str, heures: float, maintenant: date
 
 
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
-              maintenant: datetime | None = None) -> tuple[list[dict], dict]:
-    """Lignes au format référence (probabilité juste déjà calculée)."""
+              maintenant: datetime | None = None, radar: list[dict] | None = None,
+              echeance=None) -> tuple[list[dict], dict]:
+    """Lignes au format référence (probabilité juste déjà calculée).
+
+    ``radar`` limite aux matchs déjà vus chez les books français. ``None`` garde
+    l'ancien parcours (fixtures). Une liste vide ne contacte pas l'API.
+    """
     maintenant = maintenant or datetime.now(timezone.utc)
-    client = Client(session)
+    if echeance is None:
+        echeance = _echeance
+    client = Client(session, echeance=echeance)
     moment = maintenant.isoformat(timespec="seconds")
     demandes = [(t, s) for t, s in EVENEMENTS.items() if sports is None or s in sports]
     if not demandes:
         return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
+    if radar is not None and not radar:
+        return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0, "perime": False}
     bruts: list[dict] = []
     matchs = 0
     for type_event, sport in demandes:
-        events = _evenements(client, type_event, heures, maintenant)
+        if client._bloque:
+            break
+        events = _evenements(client, type_event, heures, maintenant, radar, sport)
         matchs += len(events)
         for lot in _lots(events, 10):
             ids = ",".join(str(e["id"]) for e in lot if e.get("id"))
@@ -375,5 +474,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
                     achat, vente = carnet
                     bruts.append({**base, "issue": issue, "achat": [achat], "vente": [vente]})
     justes = reference_echange(bruts, "Smarkets")
+    perime = any(e in ("budget", "HTTP 429") for e in client.erreurs) or (
+        echeance is not None and not echeance.ok())
     return justes, {"ok": not client.erreurs or bool(justes), "erreurs": list(client.erreurs),
-                    "requetes": client.requetes, "matchs": matchs}
+                    "requetes": client.requetes, "matchs": matchs, "perime": perime}
