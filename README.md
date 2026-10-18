@@ -16,7 +16,8 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 | Betfair Exchange | Référence | PulseScore, via Orbit Exchange | Offre PulseScore |
 | Smarkets | Référence | API publique v3, sans compte (`cotes/smarkets.py`) | Gratuit |
 | Winamax | Cotes à comparer | Socket en parallèle de PulseScore (`cotes/direct/winamax.py`) | Gratuit |
-| Betclic, Unibet | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
+| Betclic | Cotes à comparer | PulseScore (`cotes/pulsescore.py`) | Offre PulseScore |
+| Unibet | Cotes à comparer | API LVS en parallèle de PulseScore (`cotes/direct/unibet.py`) | Gratuit |
 | PMU | Cotes à comparer | Kambi en parallèle de PulseScore (`cotes/direct/pmu.py`) | Gratuit |
 | OlyBet | Cotes à comparer | Swarm BetConstruct (`cotes/direct/olybet.py`) | Gratuit |
 
@@ -41,6 +42,11 @@ Winamax peut être lu sur son socket (`SOURCE_WINAMAX`, défaut `shadow`), avec 
 mêmes quatre modes et les mêmes seuils. Le rapport est `winamax_comparaison.json`.
 Si PulseScore répond 401, 403, 402 ou quota, les cotes Winamax viennent du socket
 même en `shadow` (`winamax_repli`). Les routes sont espacées.
+
+Unibet.fr peut être lu sur son API (`SOURCE_UNIBET`, défaut `shadow`), avec les
+mêmes quatre modes et les mêmes seuils. Le rapport est `unibet_comparaison.json`.
+Si PulseScore répond 401, 403, 402 ou quota, les cotes Unibet viennent de l'API
+même en `shadow` (`unibet_repli`). Seuls les marchés comparés sont demandés.
 
 OlyBet est lu en direct (`SOURCE_OLYBET`, défaut `direct`). `off` coupe cette lecture.
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
