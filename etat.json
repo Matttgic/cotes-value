@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-18T22:49:27+00:00",
+  "debut": "2026-10-18T22:54:10+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 7.3,
+    "secondes": 7.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,27 +12,39 @@
     ]
    },
    "pinnacle": {
-    "secondes": 29.1,
+    "secondes": 26.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 1 matchups : HTTP 403"
+    ]
+   },
+   "unibet_direct": {
+    "secondes": 4.7,
     "ok": true
    },
    "olybet": {
-    "secondes": 3.8,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 4.2,
+    "secondes": 5.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 12.5,
+    "secondes": 13.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 17.8,
+    "secondes": 18.8,
     "ok": true
    },
+   "netbet": {
+    "secondes": 37.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
    "pulsescore": {
-    "secondes": 16.2,
+    "secondes": 18.4,
     "ok": true,
     "degrade": true,
     "erreurs": {
@@ -51,16 +63,8 @@
     "betclic_repli": "L'API Betclic remplace PulseScore (401/403/402/quota ou lecture impossible)"
    },
    "betclic_direct": {
-    "secondes": 34.4,
+    "secondes": 52.5,
     "ok": true
-   },
-   "netbet": {
-    "secondes": 37.2,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -68,11 +72,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 5.7,
+    "secondes": 3.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.5,
+    "secondes": 0.3,
     "ok": true
    },
    "cotes_cloture": {
@@ -91,8 +95,8 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 4,
-   "lignes_perimees": 0,
+   "age_max_s": 643,
+   "lignes_perimees": 9900,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -103,8 +107,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 65,
-    "choisi_autre": 13
+    "head_200": 47,
+    "choisi_autre": 7,
+    "choisi_fixe": 6,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "reprise_403": 1
    }
   },
   "winamax_source": "auto",
@@ -199,33 +207,33 @@
     {
      "match": "Llaneros FC – Independiente Santa Fe",
      "source": "Pinnacle",
-     "cote_netbet": 2.62,
+     "cote_netbet": 2.7,
      "cote_reference": 2.96,
-     "ecart_relatif": 0.1149,
+     "ecart_relatif": 0.0878,
      "aberrant": false
     },
     {
      "match": "Llaneros FC – Independiente Santa Fe",
      "source": "PMU",
-     "cote_netbet": 2.62,
+     "cote_netbet": 2.7,
      "cote_reference": 2.75,
-     "ecart_relatif": 0.0473,
+     "ecart_relatif": 0.0182,
      "aberrant": false
     },
     {
      "match": "Belgrano – River Plate",
      "source": "Pinnacle",
-     "cote_netbet": 3.3,
+     "cote_netbet": 3.35,
      "cote_reference": 3.88,
-     "ecart_relatif": 0.1495,
+     "ecart_relatif": 0.1366,
      "aberrant": false
     },
     {
      "match": "Belgrano – River Plate",
      "source": "PMU",
-     "cote_netbet": 3.3,
+     "cote_netbet": 3.35,
      "cote_reference": 3.25,
-     "ecart_relatif": 0.0154,
+     "ecart_relatif": 0.0308,
      "aberrant": false
     },
     {
@@ -256,23 +264,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-18T22:49:41+00:00",
-   "pinnacle_derniere_lecture": "2026-10-18T22:49:54+00:00",
+   "pinnacle_premiere_lecture": "2026-10-18T22:54:20+00:00",
+   "pinnacle_derniere_lecture": "2026-10-18T22:54:31+00:00",
    "books_premiere_lecture": "2026-10-18T22:40:50+00:00",
-   "books_derniere_lecture": "2026-10-18T22:49:56+00:00",
-   "ecart_enveloppe_secondes": 544.0
+   "books_derniere_lecture": "2026-10-18T22:54:37+00:00",
+   "ecart_enveloppe_secondes": 821.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 14.0
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 551,
    "a_verifier": 10,
    "non_conforme": 8,
-   "mesures": 10667,
+   "mesures": 8553,
    "matchs_suspects": 0
   },
   "reglement": false,
@@ -280,40 +288,27 @@
    "saute": true,
    "dernier_reglement": "2026-10-18T22:15:34+00:00"
   },
-  "fin": "2026-10-18T22:50:42+00:00",
+  "fin": "2026-10-18T22:55:35+00:00",
   "requetes_pulsescore": {
    "betclic": 4,
    "orbitxch": 4
   },
   "cotes": {
-   "francaises": 26318,
-   "pinnacle": 95174,
+   "francaises": 26302,
+   "pinnacle": 94982,
    "betfair": 0,
-   "polymarket": 9118,
+   "polymarket": 9135,
    "smarkets": 3708
   },
-  "matchs_francais": 713,
-  "opportunites": 9,
+  "matchs_francais": 705,
+  "opportunites": 7,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "requetes_par_mois": {
-  "2026-10": 231340
+  "2026-10": 231348
  },
  "historique": [
-  {
-   "debut": "2026-10-17T22:41:23+00:00",
-   "mode": "complet",
-   "opportunites": 26,
-   "nouveaux_paris": 1,
-   "requetes_pulsescore": {
-    "winamax": 18,
-    "betclic": 19,
-    "unibet-fr": 19,
-    "pmu": 17,
-    "orbitxch": 23
-   }
-  },
   {
    "debut": "2026-10-17T22:47:20+00:00",
    "mode": "complet",
@@ -2717,6 +2712,16 @@
    "debut": "2026-10-18T22:49:27+00:00",
    "mode": "complet",
    "opportunites": 9,
+   "nouveaux_paris": 0,
+   "requetes_pulsescore": {
+    "betclic": 4,
+    "orbitxch": 4
+   }
+  },
+  {
+   "debut": "2026-10-18T22:54:10+00:00",
+   "mode": "complet",
+   "opportunites": 7,
    "nouveaux_paris": 0,
    "requetes_pulsescore": {
     "betclic": 4,
