@@ -26,6 +26,7 @@ from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REG
                               evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
 from cotes.securite import json_public
 from cotes import notifications as notifications_mod  # noqa: E402
+from cotes import ordres as ordres_mod  # noqa: E402
 
 
 # Les variantes sont des comparateurs supplémentaires, jamais des votes de base.
@@ -584,7 +585,9 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
     donnees_json = json_public(data)
-    alertes_json = json_public(notifications_mod.flux(actuelles, paris, retenus))
+    flux_alertes = notifications_mod.flux(actuelles, paris, retenus)
+    alertes_json = json_public(flux_alertes)
+    ordres_json = json_public(ordres_mod.construire(flux_alertes, actuelles))
     sortie.mkdir(parents=True, exist_ok=True)
     web = Path(__file__).resolve().parent.parent / "web"
     html = MODELE
@@ -605,6 +608,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     (sortie / "verification-responsive.html").write_text((web / "verification-responsive.html").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
+    (sortie / "ordres.json").write_text(ordres_json, encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
     return sortie / "index.html"
 
