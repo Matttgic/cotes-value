@@ -128,9 +128,24 @@ function initialiserTheme() {
 }
 function connexion() {document.getElementById('hors-ligne').hidden=navigator.onLine!==false;}
 window.addEventListener('online',connexion);window.addEventListener('offline',connexion);connexion();
+// Toucher une notification ouvre le site avec ?alerte=<id> : bandeau « Parier chez … » avec le lien du bookmaker.
+async function bandeauAlerte() {
+  const id=new URLSearchParams(location.search).get('alerte');
+  if(!id) return;
+  const place=document.getElementById('o-paris');if(!place) return;
+  let html='<b>Alerte expirée</b><small>Le prix n’est plus valable ou l’alerte est trop ancienne.</small>';
+  try {
+    const o=((await (await fetch('ordres.json',{cache:'no-store'})).json()).ordres||[]).find(x=>x.id===id);
+    if(o) {
+      const lien=o.lien?`<a class="btn" href="${e(o.lien)}" target="_blank" rel="noopener noreferrer">Ouvrir chez ${e(o.bookmaker)} ›</a>`:`<small>Pas de lien : chercher « ${e(o.recherche)} »</small>`;
+      html=`<b>${e(o.domicile)} – ${e(o.exterieur)}</b><span>${e(o.pari)} · cote ${cote(o.cote_relevee)} chez ${e(o.bookmaker)}</span><small>Jouer seulement si la cote reste ≥ ${cote(o.cote_min)} · mise ${e(o.mise)} € · avant ${hm(o.expire_le)}</small>${lien}`;
+    }
+  } catch {html='<b>Alerte indisponible</b><small>Réessayez dans un instant.</small>';}
+  const div=document.createElement('div');div.className='bandeau-alerte';div.innerHTML=html;place.prepend(div);
+}
 // Appelé à la fin du rendu : les utilitaires du modèle sont alors initialisés.
 function initialiserInterface() {
-  initialiserPalette();initialiserTheme();compacterFiltres();adapterTableaux();actualiserFraicheur();setInterval(actualiserFraicheur,60000);
+  initialiserPalette();initialiserTheme();bandeauAlerte();compacterFiltres();adapterTableaux();actualiserFraicheur();setInterval(actualiserFraicheur,60000);
   // Rapidité des alertes : délai d'envoi et trous entre relevés, puis les dernières alertes envoyées.
   const r=D.rapidite || {}, min=x=>x==null?'—':x<10?x.toFixed(1).replace('.',',')+' min':Math.round(x)+' min';
   document.getElementById('notif-rapidite').innerHTML=[
