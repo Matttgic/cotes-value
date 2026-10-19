@@ -43,7 +43,8 @@ class Session:
 @pytest.fixture(autouse=True)
 def cle(monkeypatch):
     monkeypatch.setenv("PINNODDS_API_KEY", "cle-de-test-pinnodds")
-    for nom in ("PINNODDS_HANDICAPS", "PINNODDS_LIMITE_JOUR", "PINNODDS_PAUSE_MIN"):
+    for nom in ("PINNODDS_HANDICAPS", "PINNODDS_LIMITE_JOUR", "PINNODDS_PAUSE_MIN", "PINBOOK_API_KEY",
+                "PINBOOK_SPORTS", "PINBOOK_LIMITE_JOUR", "PINBOOK_PAUSE_MIN"):
         monkeypatch.delenv(nom, raising=False)
 
 
@@ -214,3 +215,81 @@ def test_essai_pinbook_analyse_le_format_documente():
     r = T.analyser(corps, "football", NOW)
     assert r["evenements"] == 1 and r["matchs_36h"] == 1 and r["age_last_call_min"] == 2.0
     assert r["lignes_avec_proba"] > 0 and "RESULTAT_1N2" in r["marches"] and r["avec_home_team_type"] == 1
+
+
+def test_heure_sans_fuseau_est_lue_comme_gmt():
+    futur = (NOW + timedelta(hours=5)).replace(tzinfo=None).isoformat()        # style PinBook : « 2026-10-19T17:00:00 »
+    lignes = S.collecter({29}, NOW, None, Session(Reponse([evenement(starts=futur)])))
+    assert lignes and lignes[0]["debut"].endswith("Z")
+    passe = (NOW - timedelta(hours=1)).replace(tzinfo=None).isoformat()
+    assert S.collecter({29}, NOW, None, Session(Reponse([evenement(starts=passe)]))) == []
+
+
+class ReponsePinBook:
+    """Format PinBook : heures sans fuseau, fraîcheur dans last_call, aucun en-tête X-Data-*."""
+
+    def __init__(self, evenements=None, statut=200, age_s=20):
+        import time
+        self.status_code, self.headers = statut, {}
+        debut = (NOW + timedelta(hours=5)).replace(tzinfo=None).isoformat()
+        self._corps = {"sport_id": 1, "last_call": int(time.time()) - age_s,
+                       "events": evenements if evenements is not None else [evenement(starts=debut, home_team_type="Team1")]}
+
+    def json(self):
+        return self._corps
+
+
+class Routeur:
+    """Envoie chaque requête au bon faux fournisseur et garde la trace des appels."""
+
+    def __init__(self, pinnodds=None, pinbook=None):
+        self.pinnodds, self.pinbook, self.appels = pinnodds, pinbook, []
+
+    def get(self, url, params=None, headers=None, timeout=None):
+        nom = "pinbook" if "rapidapi" in url else "pinnodds"
+        self.appels.append((nom, url, params, headers))
+        return (self.pinbook if nom == "pinbook" else self.pinnodds)
+
+
+def test_pinbook_seul_comble_football_avec_la_fraicheur_de_last_call(monkeypatch):
+    monkeypatch.delenv("PINNODDS_API_KEY")
+    monkeypatch.setenv("PINBOOK_API_KEY", "cle-pinbook")
+    r = Routeur(pinbook=ReponsePinBook())
+    lignes = S.collecter({29, 33, 4, 19}, NOW, None, r)
+    assert [a[0] for a in r.appels] == ["pinbook"] * 3                       # football, tennis, basket ; pas le hockey
+    assert r.appels[0][3]["x-rapidapi-key"] == "cle-pinbook" and r.appels[0][2]["event_type"] == "prematch"
+    assert lignes and all(l["origine"] == "pinbook" and not l["cote_perimee"] for l in lignes)
+    assert lignes[0]["debut"].endswith("Z") and 15 <= lignes[0]["age_cache_s"] <= 40
+
+
+def test_pinbook_ne_sert_pas_quand_pinnodds_donne_des_lignes_fraiches(monkeypatch):
+    monkeypatch.setenv("PINBOOK_API_KEY", "cle-pinbook")
+    r = Routeur(pinnodds=Reponse(), pinbook=ReponsePinBook())
+    lignes = S.collecter({29}, NOW, None, r)
+    assert {a[0] for a in r.appels} == {"pinnodds"} and {l["origine"] for l in lignes} == {"pinnodds"}
+
+
+def test_pinbook_comble_les_trous_avec_sa_pause_et_son_budget(tmp_path, monkeypatch):
+    monkeypatch.setenv("PINBOOK_API_KEY", "cle-pinbook")
+    monkeypatch.setenv("PINBOOK_LIMITE_JOUR", "2")
+    monkeypatch.setenv("PINNODDS_PAUSE_MIN", "1000")                         # pinnodds muet après sa première lecture
+    r = Routeur(pinnodds=Reponse(entetes={"X-Data-Age-Ms": "1000"}), pinbook=ReponsePinBook())
+    S.collecter({29}, NOW, tmp_path, r)                                      # pinnodds lit, football frais
+    assert [a[0] for a in r.appels] == ["pinnodds"]
+    lignes = S.collecter({29}, NOW + timedelta(minutes=12), tmp_path, r)     # cache périmé : PinBook comble
+    assert [a[0] for a in r.appels] == ["pinnodds", "pinbook"] and {l["origine"] for l in lignes} == {"pinbook"}
+    S.collecter({29}, NOW + timedelta(minutes=30), tmp_path, r)              # pause de 60 minutes de PinBook
+    assert [a[0] for a in r.appels].count("pinbook") == 1
+    S.collecter({29}, NOW + timedelta(minutes=80), tmp_path, r)              # une seconde lecture, puis budget de 2 épuisé
+    S.collecter({29}, NOW + timedelta(minutes=200), tmp_path, r)
+    assert [a[0] for a in r.appels].count("pinbook") == 2 and "pinbook : limite" in " ".join(S.ERREURS)
+    assert json.loads((tmp_path / "pinnacle_secours.json").read_text())["pinbook"]["requetes"] == 2
+
+
+def test_pinbook_erreurs_et_donnees_absentes_ne_donnent_rien(monkeypatch):
+    monkeypatch.delenv("PINNODDS_API_KEY")
+    monkeypatch.setenv("PINBOOK_API_KEY", "cle-pinbook")
+    assert S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(statut=429))) == [] and "429" in S.ERREURS[0]
+    assert S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(statut=403))) == [] and "403" in S.ERREURS[0]
+    vieux = S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(age_s=3600)))
+    assert vieux and all(l["cote_perimee"] for l in vieux)                   # last_call vieux d'une heure : jamais une référence

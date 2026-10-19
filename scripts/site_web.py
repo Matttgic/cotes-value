@@ -1572,7 +1572,7 @@ function rendreSante(maintenant=Date.now()) {
   const secours = dc.pinnacle_secours;
   document.getElementById("sante-cotes").innerHTML = SOURCES_COTES.filter(([k]) => etapes[k]).map(([k,nom]) =>
     ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus" : detailEtape(etapes[k]), niveauEtape(etapes[k]))
-      + (k === "pinnacle" && secours ? ligneSante("Pinnacle · secours pinnodds", secours.lignes ? `${secours.lignes} cotes · ${(secours.sports || []).length} sport${(secours.sports || []).length > 1 ? "s" : ""}` : secours.pause ? "En pause entre deux lectures" : (secours.erreurs || [])[0] || "Aucune cote reprise", secours.lignes ? "alerte" : "panne") : "")).join("")
+      + (k === "pinnacle" && secours ? ligneSante("Pinnacle · secours (pinnodds, PinBook)", secours.lignes ? `${secours.lignes} cotes · ${(secours.sports || []).length} sport${(secours.sports || []).length > 1 ? "s" : ""}` : secours.pause ? "En pause entre deux lectures" : (secours.erreurs || [])[0] || "Aucune cote reprise", secours.lignes ? "alerte" : "panne") : "")).join("")
     || '<p class="aide sante-vide">Aucune lecture enregistrée.</p>';
   const parSource = new Map();
   for (const [k,v] of Object.entries(jr.etapes || {})) {

@@ -8,6 +8,7 @@ s'ajoute au résumé du job. La clé n'est jamais affichée.
 import json
 import os
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -42,7 +43,10 @@ def analyser(corps: dict, sport: str, maintenant: datetime) -> dict:
             "dernier_match_h": round((futurs[-1] - maintenant).total_seconds() / 3600, 1) if futurs else None,
             "lignes": len(lignes), "lignes_avec_proba": len(sures),
             "marches": sorted({l["marche"] for l in sures}), "age_last_call_min": age_min,
-            "avec_home_team_type": sum(1 for e in evenements if e.get("home_team_type"))}
+            "avec_home_team_type": sum(1 for e in evenements if e.get("home_team_type")),
+            "home_team_type": dict(Counter(str(e.get("home_team_type")) for e in evenements)),
+            "echantillon_team2": [f'{e.get("league_name")} | {e.get("home")} - {e.get("away")} | {e.get("starts")}'
+                                  for e in evenements if e.get("home_team_type") == "Team2"][:4]}
 
 
 def main(ids: list[int]) -> int:
@@ -61,8 +65,8 @@ def main(ids: list[int]) -> int:
         if r.status_code == 200:
             try:
                 bloc.update(analyser(r.json(), SPORTS.get(sid, str(sid)), maintenant))
-            except ValueError:
-                bloc["erreur"] = "JSON invalide"
+            except Exception as e:                       # un sport illisible ne cache pas les autres
+                bloc["erreur"] = f"{type(e).__name__} : {str(e)[:120]}"
         else:
             bloc["erreur"] = r.text[:150].replace(cle, "***")
         rapport[SPORTS.get(sid, str(sid))] = bloc
@@ -71,7 +75,7 @@ def main(ids: list[int]) -> int:
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
             f.write("### Essai PinBook\n```json\n" + texte + "\n```\n")
-    return 0 if all(b["http"] == 200 for b in rapport.values()) else 1
+    return 0 if all(b["http"] == 200 and "erreur" not in b for b in rapport.values()) else 1
 
 
 if __name__ == "__main__":

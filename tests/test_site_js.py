@@ -263,7 +263,7 @@ rendreSante(t0);
 const h=id=>document.getElementById(id).innerHTML;
 assert.ok(h("sante-cotes").includes("Refus (403) sur 2 requêtes") && h("sante-cotes").includes("limite de temps"));
 assert.ok(h("sante-cotes").includes("Lu normalement") && !h("sante-cotes").includes("PulseScore"));
-assert.ok(h("sante-cotes").includes("Pinnacle · secours pinnodds") && h("sante-cotes").includes("120 cotes · 2 sports"));
+assert.ok(h("sante-cotes").includes("Pinnacle · secours (pinnodds, PinBook)") && h("sante-cotes").includes("120 cotes · 2 sports"));
 assert.ok(h("sante-auto").includes("Collecte et comparaison") && h("sante-auto").includes("5 enregistrements réglés"));
 assert.ok(h("sante-resultats").includes("ESPN") && h("sante-resultats").includes("5 enregistrements réglés"));
 assert.ok(h("sante-resultats").includes("sante-mot-panne"));
