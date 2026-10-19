@@ -776,7 +776,9 @@ MODELE = r"""<!doctype html>
     <p>Toucher un segment affiche ses paris : d'abord ceux à venir (pas encore commencés, du plus proche au plus lointain), puis ceux déjà réglés. Le toucher à nouveau les replie. Un pari à venir n'entre dans les chiffres du segment qu'une fois réglé.</p></details>
   </section>
   <section class="onglet" id="o-paris">
-    <div class="page-tete"><div><p class="surtitre">Toutes les prises enregistrées</p><h2>Le journal des paris</h2><p class="sous-texte">Retrouve un pari et suis son règlement.</p></div></div>
+    <div class="page-tete"><div><h2>Paris</h2></div></div>
+    <button type="button" class="paris-sante" id="paris-sante"></button>
+    <div class="paris-puces" id="paris-puces" role="group" aria-label="Statut des paris"></div>
     <div id="paris-strategie-banner" class="carte" hidden></div>
     <div class="filtres recherche"><input type="search" id="f-q" placeholder="Rechercher équipe, ligue, pari…" aria-label="Rechercher équipe, ligue ou pari">
       <button class="btn" id="export-csv">Exporter CSV</button></div>
@@ -795,6 +797,8 @@ MODELE = r"""<!doctype html>
     </div>
     <div class="outils-paris"><button class="btn secondaire" id="reinitialiser-filtres">Réinitialiser les filtres</button>
     <details class="mode-emploi"><summary>Comptage et export CSV</summary><p class="aide">Une prise par référence, au prix enregistré. L’export inclut tous les paris filtrés. Écarts et CLV en ratios dans le CSV.</p></details></div>
+    <p class="paris-resume" id="paris-resume" aria-live="polite"></p>
+    <div class="paris-colonnes" aria-hidden="true"><span>Sport · match · pari</span><span>Book · envoi<br>Cote (réf.)</span><span>Écart<br>Net</span></div>
     <div id="liste-paris"></div>
     <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
   </section>
@@ -1166,7 +1170,7 @@ let limite = 50;
 let strategieChoisie = null;
 document.getElementById("f-q").oninput = () => { limite=50; rendreParis(); };
 document.getElementById("reinitialiser-filtres").onclick = () => {
-  strategieChoisie=null; limite=50;
+  strategieChoisie=null; limite=50; puceStatut="";
   document.getElementById("f-q").value="";
   document.getElementById("paris-horaire").value="";
   document.getElementById("paris-tri").value="";
@@ -1197,12 +1201,27 @@ document.getElementById("export-csv").onclick = () => {
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url),1000);
 };
-const carteParis = p => `<details class="ligne-detail ligne-pari" id="pari-${e(encodeURIComponent(JSON.stringify([p.id,p.bookmaker,p.match_id,p.pari,p.detecte,p.reference])))}"><summary>
-<span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span><span class="pari-bookmaker">${e(p.bookmaker)}</span>${horairePari(p)}${collectePari(p)}
-<span class="ligne-book" title="${e(p.bookmaker)}">${e((p.bookmaker || '?').slice(0,1))}</span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b>
-<span class="ligne-valeur ${signe(p.gain)}" title="${e(STATUTS[p.statut]||p.statut)}">${p.gain!=null?eur(p.gain):e(p.a_regler?'À régler':'En cours')}</span></summary><div class="ligne-corps"><article class="carte">
-<div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="quand">${p.reporte_au && p.statut === "en_cours"
-  ? "reporté au " + quand(p.reporte_au) : quand(p.debut)}</span></div>
+// Une ligne par pari : couleur selon le règlement, cote française suivie de la cote de référence.
+const ETAT_LIGNE = {gagne:["gagne","✓ Gagné"], demi_gagne:["gagne","✓ ½ gagné"], perdu:["perdu","✗ Perdu"],
+  demi_perdu:["perdu","✗ ½ perdu"], rembourse:["rembourse","Remboursé"], a_regler:["regler","À régler"]};
+const etatLigne = p => ETAT_LIGNE[p.statut] || (p.a_regler ? ETAT_LIGNE.a_regler : ["cours","En cours"]);
+const REF_COURTE = {Pinnacle:"", Polymarket:"Poly ", Consensus:"Cons. ", Smarkets:"Sm. "};
+const heureEnvoi = p => {
+  const t = new Date(p.alerte_demande_le || p.detecte || "");
+  if (!Number.isFinite(t.getTime())) return "";
+  const opts = {timeZone:"Europe/Paris",hour:"2-digit",minute:"2-digit"};
+  return jourParis(t) === jourParis(new Date()) ? t.toLocaleTimeString("fr-FR",opts)
+    : t.toLocaleString("fr-FR",{...opts,day:"2-digit",month:"2-digit"});
+};
+const nomSport = s => (typeof nomsSports !== "undefined" && nomsSports[s]) || s || "Sport";
+const carteParis = p => { const [etat,libelle] = etatLigne(p); return `<details class="ligne-detail ligne-pari pari-ligne etat-${etat}" id="pari-${e(encodeURIComponent(JSON.stringify([p.id,p.bookmaker,p.match_id,p.pari,p.detecte,p.reference])))}"><summary>
+<span class="pari-gauche"><span class="pari-tete"><span class="puce-sport">${e(nomSport(p.sport))}</span><span class="pari-ligue">${e(p.ligue)}</span></span>
+<span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span></span>
+<span class="pari-milieu"><span class="pari-bookmaker">${e(p.bookmaker)}${heureEnvoi(p) ? " · "+heureEnvoi(p) : ""}</span>
+<span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b> <span class="pari-ref" title="Cote ${e(p.reference)} sans marge">(${e(REF_COURTE[p.reference] ?? (p.reference||"")+" ")}${cote(p.cote_juste)})</span></span></span>
+<span class="pari-droite"><b class="ligne-valeur">${p.gain!=null ? eur(p.gain) : pct(p.ecart)}</b><span class="pari-etat">${libelle}</span></span></summary><div class="ligne-corps"><article class="carte">
+<div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span>${horairePari(p)}</div>
+<div class="l1">${collectePari(p)}</div>
 <div class="l2">${e(p.pari)}</div>
 <div class="l3"><span><b>${e(p.bookmaker)} ${cote(p.cote)}</b></span><span>${e(p.reference)} ${cote(p.cote_juste)}</span>
 <span class="ecart">${pct(p.ecart)}</span>${ecartsReferences(p)}</div>
@@ -1211,8 +1230,28 @@ ${badgeStrategies(p)}
 ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
 <span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span></div>
 ${(p.trace||[]).length ? `<details class="trace"><summary>Détails</summary>${p.trace.map(t => `<p>${e(t)}</p>`).join("")}</details>` : ""}
-</article></div></details>`;
+</article></div></details>`; };
+// Puces de statut : les demi-règlements rejoignent les gagnés ou les perdus.
+const PUCES = [["","Tous"],["en_cours","En cours"],["a_regler","À régler"],["gagne","Gagnés"],["perdu","Perdus"]];
+let puceStatut = "";
+const accepteePuce = p => !puceStatut || (puceStatut === "gagne" ? ["gagne","demi_gagne"].includes(p.statut)
+  : puceStatut === "perdu" ? ["perdu","demi_perdu"].includes(p.statut)
+  : puceStatut === "a_regler" ? p.statut === "a_regler" || (p.a_regler && p.statut === "en_cours")
+  : puceStatut === "en_cours" ? p.statut === "en_cours" && !p.a_regler : true);
+document.getElementById("paris-puces").onclick = ev => {
+  const b = ev.target?.closest?.("button[data-puce]");
+  if (!b) return;
+  puceStatut = b.dataset.puce; limite = 50; rendreParis();
+};
+const resumeParis = L => {
+  const regles = L.filter(p => p.gain != null), net = regles.reduce((s,p) => s+p.gain, 0),
+    mises = regles.reduce((s,p) => s+(p.mise ?? 10), 0);
+  return `<span><b>${regles.length}</b> réglé${regles.length>1?"s":""} sur ${L.length}</span>
+<span>Net <b class="${signe(net)}">${eur(net)}</b></span><span>ROI <b class="${signe(net)}">${mises ? pct(net/mises) : "—"}</b></span>`;
+};
 function rendreParis() {
+  document.getElementById("paris-puces").innerHTML = PUCES.map(([v,t]) =>
+    `<button type="button" data-puce="${v}" aria-pressed="${v===puceStatut}">${t}</button>`).join("");
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
   const navigation = D.laboratoire?.navigation;
   const ids = strategieChoisie ? (navigation?.selections?.[strategieChoisie.id]?.[strategieChoisie.periode] || []) : null;
@@ -1224,10 +1263,11 @@ function rendreParis() {
   }) : fiches;
   const q = normaliserRecherche(document.getElementById("f-q").value).trim();
   const maintenant=Date.now(),triHoraire=document.getElementById('paris-tri').value;
-  const L = trierHoraires(source.filter(p => accepteHoraire(p,document.getElementById('paris-horaire').value,maintenant) &&
+  const L = trierHoraires(source.filter(p => accepteHoraire(p,document.getElementById('paris-horaire').value,maintenant) && accepteePuce(p) &&
     (!q || normaliserRecherche([p.domicile,p.exterieur,p.ligue,p.pari].join(" ")).includes(q)) &&
     Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v)) : p[k]===v))),triHoraire);
   parisFiltres = L;
+  document.getElementById("paris-resume").innerHTML = resumeParis(L);
   document.getElementById("paris-compte").textContent = `${L.length} prise(s) · ${Math.min(limite,L.length)} affichées · export des ${L.length} prises filtrées.`;
   const banner = document.getElementById("paris-strategie-banner");
   const plus = document.getElementById("plus");
@@ -1269,6 +1309,27 @@ function rendreParis() {
   plus.onclick = () => { limite += 50; rendreParis(); };
 }
 for(const id of ['paris-horaire','paris-tri']) document.getElementById(id).onchange=()=>{limite=50;rendreParis();};
+// Bandeau de santé : âge du dernier relevé et étapes en panne (une étape désactivée n'est pas une panne).
+function rendreSanteParis(maintenant=Date.now()) {
+  const dc = (D.etat||{}).dernier_cycle || {};
+  const etapes = Object.entries(dc.etapes || {}).filter(([,v]) => !v.desactive);
+  const pannes = etapes.filter(([,v]) => !v.ok).map(([k]) => k.replace(/^resultats_/,"").replace(/_direct$/,""));
+  const mineures = etapes.filter(([,v]) => v.ok && v.degrade).length;
+  const t = new Date(dc.fin || dc.debut || "").getTime();
+  const age = Number.isFinite(t) ? Math.max(0, Math.round((maintenant-t)/60000)) : null;
+  const depuis = age == null ? "" : age < 1 ? "à l’instant" : age < 60 ? `il y a ${age} min` : `il y a ${Math.floor(age/60)} h ${String(age%60).padStart(2,"0")}`;
+  const [niveau,texte] = age == null ? ["alerte","Pas encore de relevé"]
+    : pannes.length ? ["panne",`En panne : ${pannes.join(", ")} · relevé ${depuis}`]
+    : age > 60 ? ["panne",`Relevés arrêtés · dernier ${depuis}`]
+    : age > 15 ? ["alerte",`Relevés en retard · dernier ${depuis}`]
+    : ["ok",`Tout fonctionne · relevé ${depuis}`];
+  const b = document.getElementById("paris-sante");
+  b.className = "paris-sante sante-"+niveau;
+  b.innerHTML = `<span class="sante-point" aria-hidden="true"></span><span class="sante-texte">${e(texte)}</span>`+
+    `<span class="sante-suite">${mineures ? mineures+" alerte"+(mineures>1?"s":"")+" mineure"+(mineures>1?"s":"") : "Détails"} ›</span>`;
+  b.onclick = () => { ouvrir("controle"); window.scrollTo(0,0); };
+}
+rendreSanteParis();
 rendreParis();
 document.getElementById("voir-chatgpt").onclick = () => {
   strategieChoisie = null;

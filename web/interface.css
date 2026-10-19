@@ -388,3 +388,44 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 
 .ligne-strategie .ligne-volume{width:48px;line-height:1.15}.ligne-volume>small{display:block;font-size:9px;white-space:nowrap;font-weight:400;margin-top:3px}
 .bilan-exposition{display:block;font-size:9px;font-weight:400;color:var(--doux);margin-top:3px}
+
+/* Paris : une ligne par pari, verte si gagné, rouge si perdu (couleurs propres, indépendantes de la palette). */
+:root{--gagne:#0b5d2e;--gagne-f:#e3f4e8;--gagne-b:#bfe0c9;--perdu:#9f1c1c;--perdu-f:#fbe7e7;--perdu-b:#f0c4c4;
+--regler:#7a5600;--regler-f:#fff6e0;--regler-b:#efd9a4;--sante-ok:#15803d;--sante-alerte:#b7791f;--sante-panne:#c02626}
+@media(prefers-color-scheme:dark){:root{--gagne:#7fdc9f;--gagne-f:#12301e;--gagne-b:#1f4a2f;--perdu:#ff9c9c;--perdu-f:#3a1719;--perdu-b:#5a2528;
+--regler:#f2ca7e;--regler-f:#352a12;--regler-b:#54431e;--sante-ok:#4ec88a;--sante-alerte:#f0c35a;--sante-panne:#ff8080}}
+.paris-sante{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0 0 10px;padding:10px 12px;border:1px solid var(--ligne);border-radius:10px;background:var(--carte);color:var(--texte);font:inherit;text-align:left;cursor:pointer}
+.sante-point{width:10px;height:10px;border-radius:50%;flex:none;background:var(--sante-ok)}
+.sante-alerte .sante-point{background:var(--sante-alerte)}.sante-panne .sante-point{background:var(--sante-panne)}.sante-panne{border-color:var(--sante-panne)}
+.sante-texte{flex:1;min-width:0;font-size:14px;font-weight:600;overflow-wrap:anywhere}.sante-suite{flex:none;font-size:12px;color:var(--doux)}
+.paris-puces{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
+.paris-puces button{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--ligne);background:var(--carte);color:var(--texte);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.paris-puces button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--carte)}
+.paris-resume{display:flex;justify-content:space-between;gap:10px;margin:12px 0 0;font-size:13px;color:var(--doux);font-variant-numeric:tabular-nums}
+.paris-resume b{color:var(--texte)}.paris-resume b.pos{color:var(--gagne)}.paris-resume b.neg{color:var(--perdu)}
+.paris-colonnes,#liste-paris .pari-ligne>summary{display:grid;grid-template-columns:minmax(0,1fr) 118px 64px;gap:8px}
+.paris-colonnes{margin-top:10px;padding:6px 10px;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--doux);border-block:1px solid var(--ligne)}
+.paris-colonnes>span:not(:first-child){text-align:right}
+#liste-paris .pari-ligne{border-bottom:1px solid var(--ligne);background:var(--carte)}
+#liste-paris .pari-ligne>summary{align-items:center;padding:9px 10px;min-height:0;white-space:normal;font-size:13px;color:var(--texte)}
+#liste-paris .pari-ligne>summary::before{display:none}
+#liste-paris .pari-ligne>summary:hover{background:transparent;filter:brightness(.97)}
+.pari-gauche,.pari-milieu,.pari-droite{display:flex;flex-direction:column;min-width:0;gap:1px}
+.pari-milieu,.pari-droite{text-align:right;align-items:flex-end}.pari-ligne .pari-bookmaker{white-space:nowrap}
+.pari-tete{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:2px}
+.puce-sport{flex:none;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--accent-f);color:var(--texte)}
+.pari-ligue,.pari-ligne .pari-bookmaker,.pari-ref,.pari-etat{font-size:12px;color:var(--doux)}
+.pari-ligue{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+#liste-paris .pari-ligne .pari-match{font-size:14px;font-weight:600;color:inherit;white-space:normal;overflow-wrap:anywhere}
+#liste-paris .pari-ligne .pari-selection{font-size:13px;font-weight:400;color:var(--doux);overflow-wrap:anywhere}
+.pari-ligne .ligne-cote{width:auto;font-size:14px;font-weight:700}.pari-ref{font-size:13px}
+.pari-ligne .ligne-valeur{width:auto;font-size:14px;font-weight:700}.pari-etat{font-weight:600}
+#liste-paris .etat-gagne{background:var(--gagne-f);border-color:var(--gagne-b)}
+#liste-paris .etat-perdu{background:var(--perdu-f);border-color:var(--perdu-b)}
+#liste-paris .etat-regler{background:var(--regler-f);border-color:var(--regler-b)}
+#liste-paris .etat-gagne>summary,#liste-paris .etat-gagne>summary *{color:var(--gagne)}
+#liste-paris .etat-perdu>summary,#liste-paris .etat-perdu>summary *{color:var(--perdu)}
+#liste-paris .etat-regler>summary :is(.pari-ligue,.pari-bookmaker,.pari-ref,.pari-etat,.pari-selection){color:var(--regler)}
+.etat-gagne .puce-sport{background:var(--gagne-b)}.etat-perdu .puce-sport{background:var(--perdu-b)}.etat-regler .puce-sport{background:var(--regler-b)}
+.etat-rembourse .pari-etat{font-style:italic}
+@media(min-width:1000px){#liste-paris{display:block}}
