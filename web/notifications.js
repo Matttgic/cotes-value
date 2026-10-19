@@ -8,10 +8,26 @@
   let device;
   try {device=JSON.parse(lire(key)||'null');} catch {}
   const supported=isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-  const noms=D.notifications.strategies;
+  const noms=D.notifications.strategies, details=D.notifications.details||{};
   const selected=new Set(device?.strategies || ['claude_prudent']);
-  document.getElementById('notif-strategies').innerHTML='<legend>Stratégies à suivre</legend>'+Object.entries(noms).map(([k,v])=>
-    `<label class="notif-choix"><span>${e(v)}${k==='claude_prudent'?'<small>1 pari par match, 10 par jour au plus</small>':''}${k==='m3'?'<small>Exploratoire</small>':''}</span><input type="checkbox" role="switch" class="interrupteur" value="${e(k)}" ${selected.has(k)?'checked':''}></label>`).join('');
+  // Toutes les stratégies du site : comparateurs, puis règles Pinnacle et Polymarket (numérotées comme la page Stratégies).
+  const futur=new Map((D.laboratoire?.futur||[]).map(r=>['labo:'+r.id,r]));
+  const bilanRegle=k=>{
+    const r=futur.get(k);
+    if(!r?.regles) return 'Aucun pari réglé depuis le 14/10';
+    return `${r.regles} réglé${r.regles>1?'s':''} · ${Math.round(100*r.gagnes/r.regles)} % gagnés · ROI ${r.roi>0?'+':''}${r.roi.toFixed(1).replace('.',',')} %`;
+  };
+  const choix=([k,v])=>{
+    const aide=k==='claude_prudent'?['1 pari par match, 10 par jour au plus']:k==='m3'?['Exploratoire']:
+      details[k]?[details[k],bilanRegle(k)]:[];
+    return `<label class="notif-choix"><span>${e(v)}${aide.length?`<small>${aide.map(e).join('<br>')}</small>`:''}</span><input type="checkbox" role="switch" class="interrupteur" value="${e(k)}" ${selected.has(k)?'checked':''}></label>`;
+  };
+  const groupes=[['Comparateurs',k=>!k.startsWith('labo:')],['Règles Pinnacle',k=>k.startsWith('labo:PIN-')],['Règles Polymarket',k=>k.startsWith('labo:POL-')]]
+    .map(([titre,f])=>[titre,Object.entries(noms).filter(([k])=>f(k))]).filter(([,l])=>l.length);
+  document.getElementById('notif-strategies').innerHTML='<legend>Stratégies à suivre</legend>'+groupes.map(([titre,l],i)=>{
+    const n=l.filter(([k])=>selected.has(k)).length;
+    return `<details class="notif-groupe"${i===0||n?' open':''}><summary>${e(titre)} <small>${n?n+' suivie'+(n>1?'s':''):l.length+' au choix'}</small></summary>${l.map(choix).join('')}</details>`;
+  }).join('');
   const choices=()=>[...document.querySelectorAll('#notif-strategies input:checked')].map(x=>x.value);
   const say=(s,bad=false)=>{message.textContent=s;message.classList.toggle('neg',bad);};
   function render() {

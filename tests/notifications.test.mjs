@@ -38,7 +38,7 @@ test('les dates et votes propres à chaque stratégie empêchent les alertes ré
   assert.equal(alertsFor({...device,strategies:['strategie'],since_at:iso(now-45000)},[alert],now).length,0);
   assert.equal(alertsFor({...device,strategies:['gemini'],since_at:iso(now-45000)},[alert],now).length,1);
   for(const change of [{debut:iso(now-1)},{detecte:iso(now-16*60000)},
-    {cote:NaN},{strategies:['inconnue']},{labels:undefined},{validations:{}}]) assert.equal(validAlert({...alert,...change},now),false);
+    {cote:NaN},{strategies:['Inconnue !']},{strategies:['labo:x']},{strategies:Array(65).fill('strategie')},{labels:undefined},{validations:{}}]) assert.equal(validAlert({...alert,...change},now),false);
 });
 test('seul le workflow de collecte du dépôt et de la branche autorisés est accepté',()=>{
   const p={repository_id:'1404917041',repository_owner_id:'183744829',repository:'Matttgic/cotes-value',
@@ -106,6 +106,19 @@ test('M3 Max 3 est un choix distinct, sans abonnement automatique',()=>{
   assert.equal(alertsFor({...device,strategies:['m3_structure']},[a],now).length,1);
 });
 
+
+test('Eden et les règles du laboratoire (Pinnacle 2…) sont acceptées sans liste figée',async()=>{
+  const a={...alert,strategies:['eden','labo:PIN-1.3-2-e2-h36'],labels:['Eden','Pinnacle 2'],
+    validations:{eden:iso(now-30000),'labo:PIN-1.3-2-e2-h36':iso(now-30000)}};
+  assert.ok(validAlert(a,now));
+  assert.equal(alertsFor({...device,strategies:['labo:PIN-1.3-2-e2-h36']},[a],now).length,1);
+  assert.equal(alertsFor({...device,strategies:['labo:PIN-1.3-2-e2-h12']},[a],now).length,0);
+  let saved;
+  const handler=app({db:async(path,method,body)=>{saved=body;return true;}});
+  const r=await handler(req('subscribe',{id,token,strategies:['labo:POL-2-5-e5-h36','eden'],subscription:sub()}));
+  assert.equal(r.status,200);assert.deepEqual(saved.p_strategies,['labo:POL-2-5-e5-h36','eden']);
+  assert.equal((await handler(req('subscribe',{id,token,strategies:['labo:../x'],subscription:sub()}))).status,400);
+});
 
 test('le corps est limité en octets avant lecture complète, même avec une taille mensongère',async()=>{
   for(const contentLength of [undefined,'0']) {

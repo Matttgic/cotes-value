@@ -24,7 +24,7 @@ SPORTS = {1: "football", 2: "tennis", 3: "basket"}
 def analyser(corps: dict, sport: str, maintenant: datetime) -> dict:
     evenements = [e for e in (corps.get("events") or []) if isinstance(e, dict)]
     base = {"source": "pinnacle", "origine": "pinbook", "sport": sport, "age_cache_s": 0, "cote_perimee": False}
-    lignes = [l for e in evenements for l in pinnacle_secours._lignes_evenement(e, sport, base, True)]
+    lignes = [l for e in evenements for l in pinnacle_secours._lignes_evenement(e, sport, base, True, maintenant)]
     pinnacle._ajouter_proba_justes(lignes)
     sures = [l for l in lignes if l.get("proba_juste")]
     debuts = []

@@ -1,6 +1,10 @@
 export const ORIGIN = 'https://matttgic.github.io';
 export const SITE = ORIGIN + '/cotes-value/';
-export const STRATEGIES = ['strategie','chatgpt','gemini','jules','jules_v2','m3','convergence','claude_prudent','convergence_3','m3_structure'];
+// Toute stratégie du site, sans liste figée ici (Eden, ajoutée côté site, était refusée) :
+// un comparateur (« strategie », « m3_structure »…) ou une règle du laboratoire (« labo:PIN-1.3-2-e2-h36 »).
+export const CLE_STRATEGIE = /^(?:[a-z][a-z0-9_]{0,39}|labo:[A-Z]{3}-\d+(?:\.\d+)?-\d+(?:\.\d+)?-e\d{1,2}-h\d{1,3})$/;
+export const MAX_STRATEGIES = 64;
+const cleValide = s => typeof s==='string' && CLE_STRATEGIE.test(s);
 export const hash = async s => [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,'0')).join('');
 const date = x => typeof x==='string' ? Date.parse(x) : NaN;
 export function validSubscription(s) {
@@ -18,8 +22,8 @@ export function validSubscription(s) {
 }
 export function validAlert(a,now=Date.now()) {
   return a && /^[a-f0-9]{64}$/.test(a.id) && Array.isArray(a.strategies) &&
-    a.strategies.length>0 && a.strategies.every(s=>STRATEGIES.includes(s)) &&
-    Array.isArray(a.labels) && a.labels.length<=STRATEGIES.length && a.labels.every(s=>typeof s==='string' && s.length<=80) &&
+    a.strategies.length>0 && a.strategies.length<=MAX_STRATEGIES && a.strategies.every(cleValide) &&
+    Array.isArray(a.labels) && a.labels.length<=MAX_STRATEGIES && a.labels.every(s=>typeof s==='string' && s.length<=80) &&
     a.validations && a.strategies.every(s=>Number.isFinite(date(a.validations[s]))) &&
     Number.isFinite(a.cote) && a.cote>1 && a.cote<=100 &&
     ['match','pari','bookmaker'].every(k=>typeof a[k]==='string' && a[k].length>0 && a[k].length<=250) &&
@@ -62,7 +66,7 @@ export function createHandler({db,config,authorize,send,clock=Date.now}) {
     const action=new URL(req.url).pathname.split('/').pop();
     try {
       if(req.method==='GET' && action==='config') {
-        const c=await config(); return reply({publicKey:c.publicKey,strategies:STRATEGIES});
+        const c=await config(); return reply({publicKey:c.publicKey});
       }
       if(req.method!=='POST') return reply({error:'Méthode refusée'},405);
       if(action==='dispatch') {
@@ -104,7 +108,7 @@ export function createHandler({db,config,authorize,send,clock=Date.now}) {
       const token=await hash(body.token);
       if(action==='subscribe') {
         if(!validSubscription(body.subscription) || !Array.isArray(body.strategies) ||
-          body.strategies.length<1 || body.strategies.length>STRATEGIES.length || body.strategies.some(s=>!STRATEGIES.includes(s)))
+          body.strategies.length<1 || body.strategies.length>MAX_STRATEGIES || !body.strategies.every(cleValide))
           return reply({error:'Abonnement ou stratégies invalides'},400);
         const ok=await db('rpc/cv_push_register','POST',{p_id:body.id,p_token:token,
           p_endpoint:await hash(body.subscription.endpoint),p_subscription:body.subscription,p_strategies:[...new Set(body.strategies)]});

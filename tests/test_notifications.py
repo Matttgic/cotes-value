@@ -52,3 +52,16 @@ def test_identite_github_et_aucun_secret_dans_le_diagnostic():
     assert appels[1].get_header('Authorization')=='Bearer jeton-secret'
     assert 'secret' not in json.dumps(r)
     assert not transmettre({},env={})['ok']
+
+
+def test_regles_du_laboratoire_alertent_avec_le_nom_de_la_page_strategies(monkeypatch):
+    from cotes import notifications as N
+    p = selection(); o = dict(p)
+    a = flux([o], [p], {"labo:PIN-1.3-2-e2-h36": {id(p)}}, NOW)["alertes"][0]
+    assert a["strategies"] == ["labo:PIN-1.3-2-e2-h36"] and a["labels"] == ["Pinnacle 2"]
+    assert N.NOMS["labo:PIN-1.3-2-e2-h12"] == "Pinnacle 1" and N.NOMS["labo:POL-1.3-2-e2-h12"] == "Polymarket 1"
+    assert N.DETAILS["labo:PIN-1.3-2-e2-h36"] == "Cotes 1,30–2,00 · edge ≥ 2 % · ≤ 36 h avant le match"
+    vus = []
+    monkeypatch.setattr(N, "selectionner", lambda paris, r, depuis: vus.append((r.id, depuis)) or [p])
+    assert N.selections_labo([p])["labo:PIN-1.3-2-e2-h36"] == {id(p)}
+    assert len(vus) == 24 and {d for _, d in vus} == {N.DEBUT_SUIVI}
