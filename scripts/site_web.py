@@ -633,131 +633,143 @@ MODELE = r"""<!doctype html>
     <div id="liste-jouer"></div>
   </section>
   <section class="onglet" id="o-bilan">
-    <div class="page-tete"><div><p class="surtitre">Résultats enregistrés</p><h2>Ton bilan</h2><p class="sous-texte">Gains, mises et qualité des prix pris.</p></div></div>
-    <p class="aide"><a href="#strategies">Comparer les 36 stratégies, Claude, ChatGPT V1, Gemini Argon, Jules v1/v2 et M3</a></p>
-    <div class="puces" id="puces-ref"></div>
-    <details class="mode-emploi"><summary>Comprendre cette sélection</summary><p class="aide" id="bilan-quoi"></p></details>
-    <button id="voir-chatgpt" hidden>Voir les paris ChatGPT</button>
-    <button id="voir-gemini" hidden>Voir les paris Gemini Argon</button>
-    <button id="voir-jules" hidden>Voir les paris JULES EDGE</button>
-    <button id="voir-jules-v2" hidden>Voir les paris JULES EDGE v2</button>
-    <details id="bilan-evolution" class="mode-emploi"><summary>Évolution du bilan</summary><div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
-    </div><div class="legende" id="legende"></div>
-    <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
-    <div class="bulle" id="bulle"></div></div></details>
-    <div class="tableau"><table id="liste-bilan"></table></div>
-    <p class="aide" id="bilan-ecarts">Paris uniques réglés · écart vs Betfair — · écart vs Polymarket — · écart vs Smarkets —</p>
-    <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
-    <h2 class="sous-titre">Par bookmaker</h2>
-    <div class="tableau"><table id="bilan-books"></table></div>
-    <p class="aide" style="margin-top:8px">Selon la sélection du Total (A, A+B…).</p>
-    <h2 class="sous-titre">Par tranche de cote</h2>
-    <div class="tableau"><table id="bilan-tranches"></table></div>
-    <details class="aide" style="margin-top:12px"><summary>Comment lire ces tableaux</summary>
-    <p>10 € par pari. <b>Gain</b> et <b>ROI</b> : sur les paris réglés. Sous le nombre de paris : les gagnés et le
-    <b>% de réussite</b> (gagnés / réglés ; à comparer avec la cote : à 2,00 il faut plus de 50 % pour gagner de l'argent). <b>A à E, X</b> : tranches d'écart entre la
-    cote française et la cote juste, au moment où l'erreur est repérée (X : cotes au-dessus de 10).</p>
-    <p><b>Selon la CLV</b> : pour les paris dont la CLV est mesurée, le gain réel comparé au gain <b>espéré</b>
-    (10 € × CLV) ; un réel sous l'espéré peut n'être que de la malchance, surtout avec des grosses cotes. <b>Sans
-    CLV</b> : la cote de référence a disparu avant le match ; si ces paris perdent toujours, il faut les éviter.</p>
-    <p><b>CLV</b> : la cote prise comparée à la cote juste relevée juste avant le match (moins de 30 min). Positive =
-    on a pris un meilleur prix que le marché final ; c’est un indice favorable, sans garantie de rentabilité. Sous la
-    CLV : paris mesurés / paris réglés.</p>
-    <p><b>Par match</b> : moyenne des CLV valides dans chaque événement relié, puis moyenne entre ces événements. Chaque match pèse autant. Couverture : matchs mesurés / matchs avec tickets réglés. Les identités non reliées peuvent rester séparées.</p>
-    <p><b>Paris uniques</b> : chaque cote française comptée une fois, même si plusieurs références l'ont signalée.
-    <b>Pinnacle, Betfair…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
-    <b>Toutes réf.</b> : la somme des références (une même cote peut y compter plusieurs fois).
-    <b>Stratégie</b> : les paris qui suivent les critères choisis le 11/10 (voir le texte au-dessus du graphique),
-    comptés seulement depuis cette date. <b>ChatGPT</b> : stratégie indépendante, règles figées le 14/10,
-    une seule mise par match et cinq nouvelles mises maximum par jour (heure de Paris).
-    <b>Gemini Argon</b> : stratégie multi-références à plafond de cote adaptatif (2,15 Pinnacle / 2,60 Betfair & Polymarket),
-    une mise par bookmaker et par match, huit par jour maximum.
-    <b>JULES EDGE</b> : Pinnacle, cotes 1,30–2,50, edge 3–12 %, six paris par jour maximum.
-    Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.</p></details>
-  </section>
-  <section class="onglet" id="o-strategies">
-    <div class="raccourci-analyses"><a href="#analyses">Analyses et graphiques <span aria-hidden="true">↗</span></a></div>
-    <div class="page-tete tete-strategies"><div><h2>Stratégies</h2><p class="sous-texte">Suivi simulé · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
-    <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
-    <div class="filtres filtres-strategies">
-      <div class="champ"><label for="strategies-ref">Afficher</label>
-      <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Betfair</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option></select></div>
-      <div class="champ"><label for="strategies-tri">Classer par</label>
-      <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
+    <div class="page-tete"><div><h2>Bilan</h2></div></div>
+    <div class="bilan-onglets" role="tablist" aria-label="Vue du bilan">
+      <button type="button" role="tab" id="bt-uniques" data-bilan="uniques" aria-controls="bilan-uniques">Paris uniques</button>
+      <button type="button" role="tab" id="bt-strategies" data-bilan="strategies" aria-controls="o-strategies">Stratégies</button>
     </div>
-    <p class="aide" id="strategies-total"></p>
-    <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
-      <button data-vue-strategies="liste" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Comparaison</button>
-      <button data-vue-strategies="graphiques" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 6-6 4 3 8-10M3 21h18"/></svg>Graphiques</button>
-    </div>
-    <div id="strategies-vue-liste">
-    <div class="ligne-colonnes" aria-hidden="true"><span>Stratégie</span><span>Réglés</span><span>ROI</span><span>Net</span></div>
-    <div id="strategies-mobile" class="strategies-mobile" aria-label="Comparaison des stratégies"></div>
-    <div class="tableau comparaison-bureau" aria-label="Comparaison des stratégies"><table class="strategies-table" id="strategies-table"></table></div>
-    <details class="mode-emploi"><summary>Comment lire les chiffres</summary><p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
-      ROI sur mises réglées. Gains et pertes : résultats nets des paris gagnants et perdants ; net = gains − pertes.
-      Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p></details>
-    </div>
-    <div id="strategies-vue-graphiques" hidden>
-    <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
-    <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
-    Jules v1/v2 représentent une seule famille. Convergence ≥ 2 inclut M3 et reste exploratoire ; Convergence ≥ 3 hors M3 exclut cette stratégie optimisée sur le passé. Un accord ne prouve pas la rentabilité.</p>
-    <div class="carte"><div class="puces" id="strategies-legende"></div>
-      <div id="strategies-courbes-vide" class="aide"></div>
-      <svg id="strategies-courbes" viewBox="0 0 760 300" role="img" aria-label="Courbes comparées des gains cumulés en euros" style="width:100%;height:auto"></svg>
-    </div>
-    <h2 class="sous-titre">Gain net par stratégie</h2>
-    <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
-    <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
-    </div>
-    <details class="mode-emploi"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
-    <details class="carte">
-      <summary><b>Variantes à exposition encadrée · suivis séparés</b></summary>
-      <p class="aide"><b>Claude 1/match · max 10/j</b> : critères Claude, première prise par événement, dix prises maximum par jour.</p>
-      <p class="aide"><b>Convergence ≥3 hors M3</b> : accord d'au moins trois familles parmi Claude, ChatGPT, Gemini et Jules, puis un seul pari par match. Jules v1/v2 donnent un seul vote.</p>
-      <p class="aide"><b>M3 Max 3/match</b> : à partir du 17/10 à 03 h (Paris), un vainqueur, un handicap et un total maximum par événement relié, sans rejeu historique.</p>
-      <p class="aide">Mises fictives uniformes de 10 €. Le rejeu est exploratoire et ne valide pas leur rentabilité.
-      Déplie leur ligne, puis touche « Les paris » pour voir les prises de la période choisie.
-      <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/variantes-prudentes.md" target="_blank" rel="noopener">Règles figées</a>.</p>
-      <div id="prudentes-picks"></div>
-      <details><summary>Reconstitution exploratoire depuis le 14/10 à 14 h</summary>
-        <p class="aide">Ces règles ont été figées le 15/10. Cette reconstitution n'est pas un suivi prospectif et ne modifie aucun bilan officiel.</p>
-        <div id="prudentes-reconstitution"></div>
+    <div id="bilan-uniques" role="tabpanel" aria-labelledby="bt-uniques">
+      <div class="puces bu-periodes" id="bu-periodes" aria-label="Période"></div>
+      <div class="bu-kpis" id="bu-kpis"></div>
+      <p class="aide" id="bu-note"></p>
+      <h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div>
+      <p class="aide">★ meilleur ROI parmi les lignes de 50 paris ou plus.</p>
+      <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
+      <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
+      <details class="mode-emploi bilan-avance"><summary>Bilan détaillé : références, CLV et courbe</summary>
+      <div class="puces" id="puces-ref"></div>
+      <details class="mode-emploi"><summary>Comprendre cette sélection</summary><p class="aide" id="bilan-quoi"></p></details>
+      <button id="voir-chatgpt" hidden>Voir les paris ChatGPT</button>
+      <button id="voir-gemini" hidden>Voir les paris Gemini Argon</button>
+      <button id="voir-jules" hidden>Voir les paris JULES EDGE</button>
+      <button id="voir-jules-v2" hidden>Voir les paris JULES EDGE v2</button>
+      <details id="bilan-evolution" class="mode-emploi"><summary>Évolution du bilan</summary><div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
+      </div><div class="legende" id="legende"></div>
+      <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
+      <div class="bulle" id="bulle"></div></div></details>
+      <div class="tableau"><table id="liste-bilan"></table></div>
+      <p class="aide" id="bilan-ecarts">Paris uniques réglés · écart vs Betfair — · écart vs Polymarket — · écart vs Smarkets —</p>
+      <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
+      <div hidden><table id="bilan-books"></table></div>
+      <h2 class="sous-titre">Par tranche de cote</h2>
+      <div class="tableau"><table id="bilan-tranches"></table></div>
+      <details class="aide" style="margin-top:12px"><summary>Comment lire ces tableaux</summary>
+      <p>10 € par pari. <b>Gain</b> et <b>ROI</b> : sur les paris réglés. Sous le nombre de paris : les gagnés et le
+      <b>% de réussite</b> (gagnés / réglés ; à comparer avec la cote : à 2,00 il faut plus de 50 % pour gagner de l'argent). <b>A à E, X</b> : tranches d'écart entre la
+      cote française et la cote juste, au moment où l'erreur est repérée (X : cotes au-dessus de 10).</p>
+      <p><b>Selon la CLV</b> : pour les paris dont la CLV est mesurée, le gain réel comparé au gain <b>espéré</b>
+      (10 € × CLV) ; un réel sous l'espéré peut n'être que de la malchance, surtout avec des grosses cotes. <b>Sans
+      CLV</b> : la cote de référence a disparu avant le match ; si ces paris perdent toujours, il faut les éviter.</p>
+      <p><b>CLV</b> : la cote prise comparée à la cote juste relevée juste avant le match (moins de 30 min). Positive =
+      on a pris un meilleur prix que le marché final ; c’est un indice favorable, sans garantie de rentabilité. Sous la
+      CLV : paris mesurés / paris réglés.</p>
+      <p><b>Par match</b> : moyenne des CLV valides dans chaque événement relié, puis moyenne entre ces événements. Chaque match pèse autant. Couverture : matchs mesurés / matchs avec tickets réglés. Les identités non reliées peuvent rester séparées.</p>
+      <p><b>Paris uniques</b> : chaque cote française comptée une fois, même si plusieurs références l'ont signalée.
+      <b>Pinnacle, Betfair…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
+      <b>Toutes réf.</b> : la somme des références (une même cote peut y compter plusieurs fois).
+      <b>Stratégie</b> : les paris qui suivent les critères choisis le 11/10 (voir le texte au-dessus du graphique),
+      comptés seulement depuis cette date. <b>ChatGPT</b> : stratégie indépendante, règles figées le 14/10,
+      une seule mise par match et cinq nouvelles mises maximum par jour (heure de Paris).
+      <b>Gemini Argon</b> : stratégie multi-références à plafond de cote adaptatif (2,15 Pinnacle / 2,60 Betfair & Polymarket),
+      une mise par bookmaker et par match, huit par jour maximum.
+      <b>JULES EDGE</b> : Pinnacle, cotes 1,30–2,50, edge 3–12 %, six paris par jour maximum.
+      Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.</p></details>
       </details>
-    </details>
-    <details class="carte" id="live-papier">
-      <summary><b>Journal papier Live · pauses réglementaires</b></summary>
-      <p class="aide">Football, hockey, basket et handball. Simulation isolée, sans mise ni notification.
-        Les prix à +15/+30 s sont des observations, pas des preuves d'acceptation ou de liquidité.</p>
-      <div id="live-papier-contenu"></div>
-      <a href="live_papier.json" download>Télécharger le journal JSON</a>
-    </details>
-    <details class="carte" id="gemini-picks">
-      <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement <small>(règle v2 depuis le 18/10/2026 : un pari par bookmaker et par match)</small></summary>
-      <p class="aide">Pinnacle (1,30–2,15), Betfair & Polymarket (1,30–2,60) · edge 2,5–12 % · 30 min à 24 h · 1 pari/match · max 8/jour · mise fictive 10 €.</p>
-      <div id="gemini-picks-list"></div>
-    </details>
-    <details class="carte" id="jules-picks">
-      <summary><b>JULES EDGE v1</b> — voir les paris depuis le lancement</summary>
-      <p class="aide">Pinnacle · cotes 1,30–2,50 · edge 3–12 % · 15 min à 12 h · 1 pari/match · max 6/jour · 10 € fictifs.
-      Suivi depuis le 14/10 à 23 h 04 (Paris). Rejeu historique séparé, rentabilité future non démontrée.
-      <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-jules.md" target="_blank" rel="noopener">Règles et audit reproductible</a>.</p>
-      <div id="jules-picks-list"></div>
-    </details>
-    <details class="carte" id="jules-v2-picks">
-      <summary><b>JULES EDGE v2 reconstruite</b> — voir les paris depuis le lancement</summary>
-      <p class="aide">Pinnacle, Betfair et Polymarket · cotes 1,30–2,80 · edge 2,5–12 % · 15 min à 18 h · max 8/jour · 10 € fictifs.
-      Une mise par événement identifiable, sources reliées sans consulter les résultats. Suivi à partir du 15/10 à 00 h 30 (Paris).
-      <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-jules-v2.md" target="_blank" rel="noopener">Audit et limites</a>.</p>
-      <div id="jules-v2-picks-list"></div>
-    </details>
-    <details class="carte" id="m3-picks">
-      <summary><b>M3 · MultiSport Value</b> — voir les paris depuis le lancement</summary>
-      <p class="aide">Basket, baseball, handball · cotes 1,30–3,00 · edge 2–12 % · mise fictive 10 €.
-      Optimisée sur le passé : aucune rentabilité future démontrée. Les sélections d'un même match peuvent être corrélées.</p>
-      <div id="m3-picks-list"></div>
-    </details>
-    <div class="carte" id="laboratoire"></div>
+    </div>
+    <div id="o-strategies" role="tabpanel" aria-labelledby="bt-strategies" hidden>
+      <div class="raccourci-analyses"><a href="#analyses">Analyses et graphiques <span aria-hidden="true">↗</span></a></div>
+      <div class="page-tete tete-strategies"><div><h2>Stratégies</h2><p class="sous-texte">Suivi simulé · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
+      <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
+      <div class="filtres filtres-strategies">
+        <div class="champ"><label for="strategies-ref">Afficher</label>
+        <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option></select></div>
+        <div class="champ"><label for="strategies-tri">Classer par</label>
+        <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
+      </div>
+      <p class="aide" id="strategies-total"></p>
+      <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
+        <button data-vue-strategies="liste" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Comparaison</button>
+        <button data-vue-strategies="graphiques" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 6-6 4 3 8-10M3 21h18"/></svg>Graphiques</button>
+      </div>
+      <div id="strategies-vue-liste">
+      <div class="ligne-colonnes" aria-hidden="true"><span>Stratégie</span><span>Réglés</span><span>ROI</span><span>Net</span></div>
+      <div id="strategies-mobile" class="strategies-mobile" aria-label="Comparaison des stratégies"></div>
+      <div class="tableau comparaison-bureau" aria-label="Comparaison des stratégies"><table class="strategies-table" id="strategies-table"></table></div>
+      <details class="mode-emploi"><summary>Comment lire les chiffres</summary><p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
+        ROI sur mises réglées. Gains et pertes : résultats nets des paris gagnants et perdants ; net = gains − pertes.
+        Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p></details>
+      </div>
+      <div id="strategies-vue-graphiques" hidden>
+      <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
+      <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
+      Jules v1/v2 représentent une seule famille. Convergence ≥ 2 inclut M3 et reste exploratoire ; Convergence ≥ 3 hors M3 exclut cette stratégie optimisée sur le passé. Un accord ne prouve pas la rentabilité.</p>
+      <div class="carte"><div class="puces" id="strategies-legende"></div>
+        <div id="strategies-courbes-vide" class="aide"></div>
+        <svg id="strategies-courbes" viewBox="0 0 760 300" role="img" aria-label="Courbes comparées des gains cumulés en euros" style="width:100%;height:auto"></svg>
+      </div>
+      <h2 class="sous-titre">Gain net par stratégie</h2>
+      <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
+      <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
+      </div>
+      <details class="mode-emploi"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
+      <details class="carte">
+        <summary><b>Variantes à exposition encadrée · suivis séparés</b></summary>
+        <p class="aide"><b>Claude 1/match · max 10/j</b> : critères Claude, première prise par événement, dix prises maximum par jour.</p>
+        <p class="aide"><b>Convergence ≥3 hors M3</b> : accord d'au moins trois familles parmi Claude, ChatGPT, Gemini et Jules, puis un seul pari par match. Jules v1/v2 donnent un seul vote.</p>
+        <p class="aide"><b>M3 Max 3/match</b> : à partir du 17/10 à 03 h (Paris), un vainqueur, un handicap et un total maximum par événement relié, sans rejeu historique.</p>
+        <p class="aide">Mises fictives uniformes de 10 €. Le rejeu est exploratoire et ne valide pas leur rentabilité.
+        Déplie leur ligne, puis touche « Les paris » pour voir les prises de la période choisie.
+        <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/variantes-prudentes.md" target="_blank" rel="noopener">Règles figées</a>.</p>
+        <div id="prudentes-picks"></div>
+        <details><summary>Reconstitution exploratoire depuis le 14/10 à 14 h</summary>
+          <p class="aide">Ces règles ont été figées le 15/10. Cette reconstitution n'est pas un suivi prospectif et ne modifie aucun bilan officiel.</p>
+          <div id="prudentes-reconstitution"></div>
+        </details>
+      </details>
+      <details class="carte" id="live-papier">
+        <summary><b>Journal papier Live · pauses réglementaires</b></summary>
+        <p class="aide">Football, hockey, basket et handball. Simulation isolée, sans mise ni notification.
+          Les prix à +15/+30 s sont des observations, pas des preuves d'acceptation ou de liquidité.</p>
+        <div id="live-papier-contenu"></div>
+        <a href="live_papier.json" download>Télécharger le journal JSON</a>
+      </details>
+      <details class="carte" id="gemini-picks">
+        <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement <small>(règle v2 depuis le 18/10/2026 : un pari par bookmaker et par match)</small></summary>
+        <p class="aide">Pinnacle (1,30–2,15), Betfair & Polymarket (1,30–2,60) · edge 2,5–12 % · 30 min à 24 h · 1 pari/match · max 8/jour · mise fictive 10 €.</p>
+        <div id="gemini-picks-list"></div>
+      </details>
+      <details class="carte" id="jules-picks">
+        <summary><b>JULES EDGE v1</b> — voir les paris depuis le lancement</summary>
+        <p class="aide">Pinnacle · cotes 1,30–2,50 · edge 3–12 % · 15 min à 12 h · 1 pari/match · max 6/jour · 10 € fictifs.
+        Suivi depuis le 14/10 à 23 h 04 (Paris). Rejeu historique séparé, rentabilité future non démontrée.
+        <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-jules.md" target="_blank" rel="noopener">Règles et audit reproductible</a>.</p>
+        <div id="jules-picks-list"></div>
+      </details>
+      <details class="carte" id="jules-v2-picks">
+        <summary><b>JULES EDGE v2 reconstruite</b> — voir les paris depuis le lancement</summary>
+        <p class="aide">Pinnacle, Betfair et Polymarket · cotes 1,30–2,80 · edge 2,5–12 % · 15 min à 18 h · max 8/jour · 10 € fictifs.
+        Une mise par événement identifiable, sources reliées sans consulter les résultats. Suivi à partir du 15/10 à 00 h 30 (Paris).
+        <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-jules-v2.md" target="_blank" rel="noopener">Audit et limites</a>.</p>
+        <div id="jules-v2-picks-list"></div>
+      </details>
+      <details class="carte" id="m3-picks">
+        <summary><b>M3 · MultiSport Value</b> — voir les paris depuis le lancement</summary>
+        <p class="aide">Basket, baseball, handball · cotes 1,30–3,00 · edge 2–12 % · mise fictive 10 €.
+        Optimisée sur le passé : aucune rentabilité future démontrée. Les sélections d'un même match peuvent être corrélées.</p>
+        <div id="m3-picks-list"></div>
+      </details>
+      <div class="carte" id="laboratoire"></div>
+    </div>
   </section>
   <section class="onglet" id="o-segments">
     <div class="page-tete"><div><p class="surtitre">Explorer les résultats</p><h2>Les segments</h2><p class="sous-texte">Sport, bookmaker, référence : touche un groupe pour voir ses paris.</p></div></div>
@@ -888,19 +900,36 @@ __INTERFACE_JS__
 // --- en-tête et onglets
 const dc = (D.etat||{}).dernier_cycle || {};
 document.getElementById("maj").textContent = dc.debut ? "mis à jour " + quand(dc.debut) + (dc.mode==="test" ? " · test" : "") : "pas encore de données";
-function ouvrir(o) {
-  document.querySelectorAll("nav button[data-o]").forEach(b => {
-    b.classList.toggle("actif", b.dataset.o===o);
-    if (b.dataset.o===o) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
-  });
-  menuPlus.classList.toggle("actif", ["analyses","segments","notifications","regler","controle"].includes(o));
-  fermerMenu();
-  document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+o));
-  ecrire("onglet", o); history.replaceState(null, "", "#"+o);
-  if (o === "strategies") requestAnimationFrame(() => rendreStrategies());
-  if (o === "analyses") requestAnimationFrame(() => rendreAnalyses());
-  if (o === "bilan") requestAnimationFrame(() => rendreCourbe());
+// Le bilan a deux vues : les paris uniques et les stratégies (ancienne page Stratégies).
+let vueBilan = "uniques";
+function montrerVueBilan(v) {
+  vueBilan = v;
+  document.querySelectorAll("[data-bilan]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.bilan===v)));
+  document.getElementById("bilan-uniques").hidden = v !== "uniques";
+  document.getElementById("o-strategies").hidden = v !== "strategies";
+  if (v === "strategies") requestAnimationFrame(() => rendreStrategies());
+  else requestAnimationFrame(() => rendreCourbe());
 }
+function ouvrir(o) {
+  // « #strategies » ouvre la vue Stratégies du bilan ; « #bilan », les paris uniques.
+  if (o === "strategies" || o === "bilan") vueBilan = o === "strategies" ? "strategies" : "uniques";
+  const page = o === "strategies" ? "bilan" : o, nom = page === "bilan" && vueBilan === "strategies" ? "strategies" : page;
+  document.querySelectorAll("nav button[data-o]").forEach(b => {
+    b.classList.toggle("actif", b.dataset.o===nom);
+    if (b.dataset.o===nom) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+  });
+  menuPlus.classList.toggle("actif", ["analyses","segments","notifications","regler","controle"].includes(page));
+  fermerMenu();
+  document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+page));
+  ecrire("onglet", nom); history.replaceState(null, "", "#"+nom);
+  if (page === "bilan") montrerVueBilan(vueBilan);
+  if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
+}
+document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
+  montrerVueBilan(b.dataset.bilan); history.replaceState(null, "", "#"+(b.dataset.bilan === "strategies" ? "strategies" : "bilan"));
+  ecrire("onglet", b.dataset.bilan === "strategies" ? "strategies" : "bilan");
+  document.querySelectorAll("nav button[data-o]").forEach(n => n.classList.toggle("actif", n.dataset.o === (b.dataset.bilan === "strategies" ? "strategies" : "bilan")));
+});
 document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => {ouvrir(b.dataset.o);window.scrollTo(0,0);});
 
 // --- À jouer
@@ -1331,6 +1360,51 @@ function rendreSanteParis(maintenant=Date.now()) {
 }
 rendreSanteParis();
 rendreParis();
+
+// --- Bilan, paris uniques : chaque cote française comptée une fois, par écart, par cote et par sport
+const BU_PERIODES = [["7","7 j"],["30","30 j"],["","Tout"]];
+let periodeBU = "";
+const NOMS_ECART = {A:"A · 2 à 3 %",B:"B · 3 à 4 %",C:"C · 4 à 5 %",D:"D · 5 à 7 %",E:"E · 7 % et +",X:"X · cote > 10"};
+const statsBU = L => {
+  const net = L.reduce((s,p) => s+p.gain, 0), mises = L.reduce((s,p) => s+(p.mise ?? 10), 0);
+  const gagnes = L.filter(p => ["gagne","demi_gagne"].includes(p.statut)).length;
+  return {n:L.length, net, mises, roi:mises ? net/mises : null, reussite:L.length ? gagnes/L.length : null};
+};
+const pctEntier = x => x==null ? "—" : Math.round(100*x)+" %";
+function tableBU(groupes) {
+  const lignes = groupes.map(([nom,L]) => ({nom, ...statsBU(L)})).filter(r => r.n);
+  if (!lignes.length) return '<p class="aide">Aucun pari réglé sur cette période.</p>';
+  const eligibles = lignes.filter(r => r.n >= 50);
+  const meilleur = eligibles.length ? eligibles.reduce((a,b) => b.roi > a.roi ? b : a) : null;
+  return `<div class="bu-ligne bu-entete"><span></span><span>Paris</span><span>Réuss.</span><span>Net</span><span>ROI</span></div>` +
+    lignes.map(r => `<div class="bu-ligne"><span>${e(r.nom)}${r===meilleur ? ' <b class="bu-etoile" title="Meilleur ROI, 50 paris ou plus">★</b>' : ""}</span>
+<span>${r.n}</span><span>${pctEntier(r.reussite)}</span><span class="${signe(r.net)}">${eurC(r.net)}</span><b class="${signe(r.net)}">${pct(r.roi)}</b></div>`).join("");
+}
+function rendreBilanUniques(maintenant=Date.now()) {
+  const depuis = maintenant - Number(periodeBU)*86400000;
+  const L = fiches.filter(p => p.unique_bilan && p.gain != null &&
+    (!periodeBU || Date.parse(p.regle_le || p.debut || p.detecte) >= depuis));
+  const periodes = document.getElementById("bu-periodes");
+  periodes.innerHTML = BU_PERIODES.map(([v,t]) => `<button type="button" data-periode="${v}" aria-pressed="${v===periodeBU}">${t}</button>`).join("");
+  periodes.onclick = ev => {
+    const b = ev.target?.closest?.("button[data-periode]");
+    if (b) { periodeBU = b.dataset.periode; rendreBilanUniques(); }
+  };
+  const s = statsBU(L);
+  document.getElementById("bu-kpis").innerHTML = [["Gain net",eur(s.net),signe(s.net)],["ROI",pct(s.roi),signe(s.net)],
+    ["Réussite",pctEntier(s.reussite),""]].map(([t,v,c]) => `<div><span>${t}</span><b class="${c}">${v}</b></div>`).join("");
+  document.getElementById("bu-note").textContent =
+    `${s.n} paris réglés · mise ${Math.round(s.mises).toLocaleString("fr-FR")} € · chaque cote française comptée une fois`;
+  document.getElementById("bu-ecart").innerHTML = tableBU(Object.entries(NOMS_ECART).map(([k,nom]) => [nom, L.filter(p => p.simulation===k)]));
+  document.getElementById("bu-cote").innerHTML = tableBU((D.tranches || []).map(t => [t, L.filter(p => p.tranche===t)]));
+  const parSport = new Map();
+  for (const p of L) parSport.set(p.sport, [...(parSport.get(p.sport) || []), p]);
+  const sports = [...parSport].sort((a,b) => b[1].length-a[1].length);
+  const autres = sports.slice(5).flatMap(([,l]) => l);
+  document.getElementById("bu-sport").innerHTML = tableBU([...sports.slice(0,5).map(([sp,l]) => [nomSport(sp),l]),
+    ...(autres.length ? [["Autres",autres]] : [])]);
+}
+rendreBilanUniques();
 document.getElementById("voir-chatgpt").onclick = () => {
   strategieChoisie = null;
   document.getElementById("f-q").value = "";
@@ -1572,8 +1646,10 @@ function rendreStrategies() {
   const pp = n => n == null ? "—" : pct(n/100);
   const bornes = n => String(n).replace(".",",");
   const futur = new Map((L.futur || []).map(r => [r.id,r]));
-  let rows = (L.resultats || []).map(r => ({id:r.regle.id, nom:r.regle.reference+" · "+r.regle.id, reference:r.regle.reference,
-    nomCourt:`${({Pinnacle:"PIN",Betfair:"BET",Polymarket:"POL"})[r.regle.reference] || r.regle.reference} ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ${r.regle.edge_min*100}%/${r.regle.avance_max_h}h`,
+  // Règles numérotées par référence (Pinnacle 1, 2…) ; le détail reste dans la fiche. Betfair n'est plus lu.
+  const numeros = {};
+  let rows = (L.resultats || []).filter(r => r.regle.reference !== "Betfair").map(r => ({id:r.regle.id,
+    nom:`${r.regle.reference} ${numeros[r.regle.reference] = (numeros[r.regle.reference] || 0) + 1}`, reference:r.regle.reference,
     detail:`Cotes ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · edge ≥ ${r.regle.edge_min*100} % · ≤ ${r.regle.avance_max_h} h`,
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
     stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
@@ -1606,6 +1682,17 @@ function rendreStrategies() {
       graphe:"Comparateur", stats:periodeStrategies === "futur" ? L.comparateurs_futur?.[id] : per[periodeStrategies]});
   }
   rows = rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
+  // Courbe d'une règle reconstituée depuis ses paris réglés (les comparateurs ont la leur, calculée au relevé).
+  const courbeDe = r => L.navigation?.courbes?.[r.id]?.[periodeStrategies] || (() => {
+    let total = 0;
+    return (L.navigation?.selections?.[r.id]?.[periodeStrategies] || []).map(id => L.navigation.paris[id])
+      .filter(p => p && p.gain != null && p.regle_le).sort((a,b) => Date.parse(a.regle_le)-Date.parse(b.regle_le))
+      .map(p => [Math.floor(Date.parse(p.regle_le)/1000), total = Math.round((total+p.gain)*100)/100]);
+  })();
+  // ★ : meilleur ROI parmi les stratégies d'au moins 30 paris réglés sur la période.
+  const eligibles = rows.filter(r => r.stats.regles >= 30 && r.stats.roi != null);
+  const meilleure = eligibles.length ? eligibles.reduce((a,b) => b.stats.roi > a.stats.roi ? b : a) : null;
+  if (meilleure) meilleure.nomCourt = meilleure.nom + " ★";
   const ref = document.getElementById("strategies-ref").value;
   if (ref) rows = rows.filter(r => r.reference === ref);
   const tri = document.getElementById("strategies-tri").value;
@@ -1678,7 +1765,7 @@ function rendreStrategies() {
     ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, M3, convergence ≥ 2 et trois variantes encadrées) ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
-    return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nom)}</b><span class="mini-courbe-table">${miniCourbe(L.navigation?.courbes?.[r.id]?.[periodeStrategies],COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
+    return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nomCourt || r.nom)}</b><span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
       <td>${s.paris}<small>${s.regles} réglés (${s.evenements_regles ?? "—"} matchs) · ${s.attente} en attente</small></td><td>${s.gagnes}</td><td>${s.perdus}</td>
       <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}</td>
       <td class="${signe(s.clv)}">${pp(s.clv)}<small>${s.clv_n || 0}/${s.regles} tickets mesurés</small><small>Par match ${pp(s.clv_evenement)} · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"}</small></td>
@@ -1686,7 +1773,7 @@ function rendreStrategies() {
       <td class="${signe(s.gain)}"><b>${s.regles ? eur(s.gain) : "—"}</b></td></tr>`;
   }).join("") + `</tbody>`;
   document.getElementById("strategies-mobile").innerHTML=rows.length ? rows.map(r =>
-    carteStrategieVisuelle(r,L.navigation?.courbes?.[r.id]?.[periodeStrategies],COULEURS_COMPARATEURS[r.id] || "var(--accent)")).join("")
+    carteStrategieVisuelle(r,courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")).join("")
     : '<div class="vide">Aucune stratégie pour ces filtres. Choisis une autre référence.</div>';
   for(const d of document.querySelectorAll("#strategies-mobile > details")) d.open=lignesOuvertes.has(d.id);
   // Le résumé déplie la ligne ; seul le bouton explicite ouvre la liste des paris.
@@ -1868,7 +1955,7 @@ installerActualisation({
     periodeStrategies = s.periodeStrategies in STRAT_PERIODES ? s.periodeStrategies : "futur";
     courbesMasquees.clear();
     for (const id of s.courbes || []) courbesMasquees.add(id);
-    rendreJouer(); rendreBilan(); rendreParis(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
+    rendreJouer(); rendreBilan(); rendreBilanUniques(); rendreParis(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
     document.getElementById("labo-regle")?.onchange?.();
     adapterTableaux();
     for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));

@@ -429,3 +429,29 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .etat-gagne .puce-sport{background:var(--gagne-b)}.etat-perdu .puce-sport{background:var(--perdu-b)}.etat-regler .puce-sport{background:var(--regler-b)}
 .etat-rembourse .pari-etat{font-style:italic}
 @media(min-width:1000px){#liste-paris{display:block}}
+
+/* Bilan : deux vues (paris uniques, stratégies), tableaux compacts sans défilement horizontal. */
+.bilan-onglets{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:0 0 12px;border-radius:12px;background:var(--ligne)}
+.bilan-onglets button{min-height:44px;border:0;border-radius:9px;background:transparent;color:var(--doux);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.bilan-onglets button[aria-selected=true]{background:var(--carte);color:var(--accent);font-weight:700;box-shadow:0 1px 3px #0f172a2e}
+.bu-periodes{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.bu-periodes button{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--ligne);background:var(--carte);color:var(--texte);font:inherit;font-size:14px;font-weight:600}
+.bu-periodes button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--carte)}
+.bu-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.bu-kpis>div{background:var(--carte);border:1px solid var(--ligne);border-radius:10px;padding:10px 12px;min-width:0}
+.bu-kpis span{display:block;font-size:12px;color:var(--doux)}.bu-kpis b{display:block;font-size:clamp(16px,5vw,21px);margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bu-kpis b.pos,.bu-ligne .pos{color:var(--gagne)}.bu-kpis b.neg,.bu-ligne .neg{color:var(--perdu)}
+#bu-note{margin:6px 0 0}
+.bu-titre{margin:16px 0 6px;font-size:16px}
+.bu-table{background:var(--carte);border:1px solid var(--ligne);border-radius:10px;overflow:hidden}
+.bu-ligne{display:grid;grid-template-columns:minmax(0,1fr) 38px 42px 66px 62px;gap:4px;align-items:center;padding:8px 12px;border-top:1px solid var(--ligne);font-size:13px;font-variant-numeric:tabular-nums}
+.bu-ligne>:not(:first-child){text-align:right;color:var(--doux);white-space:nowrap}.bu-ligne>span:first-child{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.bu-ligne>b{font-size:14px}.bu-ligne>.pos,.bu-ligne>.neg{font-weight:600}
+.bu-entete{border-top:0;background:var(--fond);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--doux)}
+.bu-etoile{color:var(--accent)}
+.bilan-avance{margin-top:18px}
+.strategie-regle{margin:2px 0 10px;font-size:13px;color:var(--doux)}
+.strategie-visuelle .strategie-trajectoire{width:100%;text-align:left;margin:0 0 12px}
+.grande-courbe{display:block;width:100%;height:auto}.grande-courbe text{font:10px system-ui;fill:var(--doux)}
+#o-strategies .tete-strategies h2,#o-strategies .tete-strategies .sous-texte{display:none}
+#o-strategies .tete-strategies{justify-content:flex-end;margin-bottom:6px}

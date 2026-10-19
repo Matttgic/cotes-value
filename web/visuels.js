@@ -33,6 +33,25 @@ function miniCourbe(points, couleur='var(--accent)') {
     <circle cx="${x(pts.at(-1)[0])}" cy="${y(pts.at(-1)[1])}" r="2.5" fill="${e(couleur)}"/>
     <title>Gain cumulé observé · échelle propre · ${pts.length} règlements</title></svg>`;
 }
+// Courbe lisible d'une stratégie : gain cumulé en euros, avec zéro, extrêmes et dates.
+function grandeCourbe(points, couleur='var(--accent)') {
+  const pts=(points || []).filter(p=>Number.isFinite(p[0]) && Number.isFinite(p[1]));
+  if (pts.length<2) return '<span class="courbe-absente">Courbe disponible après deux règlements</span>';
+  const W=320,H=150,g=44,d=8,h=10,b=20;
+  const t0=pts[0][0],t1=pts.at(-1)[0],x=t=>g+(t-t0)/(t1-t0 || 1)*(W-g-d);
+  const lo=Math.min(0,...pts.map(p=>p[1])),hi=Math.max(0,...pts.map(p=>p[1]));
+  const y=v=>H-b-(v-lo)/(hi-lo || 1)*(H-b-h);
+  let path=`M ${g} ${y(0)}`;
+  for(const [t,v] of pts) path+=` H ${x(t).toFixed(1)} V ${y(v).toFixed(1)}`;
+  const jour=t=>new Date(t*1000).toLocaleDateString('fr-FR',{timeZone:'Europe/Paris',day:'numeric',month:'short'});
+  const euros=v=>(v>0?'+':'')+Math.round(v)+' €';
+  const graduations=[...new Set([hi,0,lo])].map(v=>`<line x1="${g}" x2="${W-d}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ligne)"${v?'':' stroke-dasharray="3 3"'}/>
+    <text x="${g-4}" y="${y(v)+3}" text-anchor="end">${euros(v)}</text>`).join('');
+  return `<svg class="grande-courbe" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gain cumulé : ${euros(pts.at(-1)[1])} après ${pts.length} règlements">
+    ${graduations}<path d="${path}" fill="none" stroke="${e(couleur)}" stroke-width="2"/>
+    <circle cx="${x(pts.at(-1)[0])}" cy="${y(pts.at(-1)[1])}" r="3.5" fill="${e(couleur)}"/>
+    <text x="${g}" y="${H-4}">${jour(t0)}</text><text x="${W-d}" y="${H-4}" text-anchor="end">${jour(t1)}</text></svg>`;
+}
 function repartitionResultats(s) {
   const n=s.regles || 0;
   if (!n) return '<div class="resultats-vides">Aucun pari réglé sur cette période</div>';
@@ -55,8 +74,9 @@ function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><span class="strategie-avatar" aria-hidden="true">${code}</span><h3>${e(r.nom)}</h3></div>
     <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button></div>
-    <div class="strategie-apercu"><div><span class="libelle-gain">Gain net simulé</span><strong class="${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</strong></div>
-    <div class="strategie-trajectoire">${miniCourbe(points,couleur)}<span>Trajectoire · échelle propre</span></div></div>
+    <p class="strategie-regle">${e(r.detail)}</p>
+    <div class="strategie-apercu"><div><span class="libelle-gain">Gain net simulé</span><strong class="${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</strong></div></div>
+    <div class="strategie-trajectoire">${grandeCourbe(points,couleur)}<span>Gain cumulé par date de règlement</span></div>
     <dl class="strat-chiffres">
       <div><dt>ROI</dt><dd class="${signe(s.roi)}">${pp(s.roi)}</dd><small>${r.reussite==null?'—':r.reussite.toFixed(1).replace('.',',')+' %'} de réussite</small></div>
       <div><dt>CLV moyenne</dt><dd class="${signe(s.clv)}">${pp(s.clv)}</dd>${couvertureCLV(s)}<small>Par match <b class="${signe(s.clv_evenement)}">${pp(s.clv_evenement)}</b> · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"} mesurés</small></div>
