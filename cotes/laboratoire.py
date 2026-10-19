@@ -66,8 +66,10 @@ class Regle:
         return {**asdict(self), "nom": self.nom}
 
 
+# Betfair retiré : son flux (Orbit, via PulseScore) n'existe plus. L'étude figée garde ses règles BET-*
+# dans docs/comparaison-strategies.json ; le site ne retient que les règles ci-dessous.
 REGLES = tuple(Regle(f"{code}-{bas:g}-{haut:g}-e{round(edge*100)}-h{h}", ref, bas, haut, edge, h)
-               for code, ref in (("PIN", "Pinnacle"), ("BET", "Betfair"), ("POL", "Polymarket"))
+               for code, ref in (("PIN", "Pinnacle"), ("POL", "Polymarket"))
                for bas, haut in ((1.3, 2.0), (1.5, 3.0), (2.0, 5.0))
                for edge in (.02, .05) for h in (12, 36))
 

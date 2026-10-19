@@ -20,7 +20,8 @@ def pari(id="a", **changes):
 
 
 def test_famille_figee_et_selection_sans_resultat():
-    assert len(REGLES) == len({r.id for r in REGLES}) == 36
+    assert len(REGLES) == len({r.id for r in REGLES}) == 24
+    assert {r.reference for r in REGLES} == {"Pinnacle", "Polymarket"}
     p = pari()
     later = {**p, "id": "b", "detecte": "2026-10-10T18:01:00Z", "ecart": .10, "cote": 2.2}
     assert [p["id"] for p in selectionner([later, p], R)] == ["a"]
@@ -154,7 +155,7 @@ def test_site_strategies_et_comparateurs_meme_date(tmp_path, monkeypatch):
     html = site_web.construire(tmp_path, tmp_path / "site").read_text()
     data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
     assert 'data-bilan="strategies"' in html and 'id="o-strategies"' in html
-    assert len(data["laboratoire"]["resultats"]) == 36
+    assert len(data["laboratoire"]["resultats"]) == 24
     for nom in ("Claude (rejeu)", "ChatGPT v1 (rejeu)"):
         s = data["laboratoire"]["comparateurs_futur"][nom]
         assert s["paris"] == s["regles"] == 1

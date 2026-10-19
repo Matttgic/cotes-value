@@ -324,7 +324,7 @@ def test_bilan_affiche_ecart_vs_smarkets(tmp_path):
             "exterieur": "Crystal Palace", "pari": "Plus de 2,5"}
     (tmp_path / "paris.json").write_text(json.dumps([pari]), encoding="utf-8")
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
-    assert "écart vs Smarkets" in html and "écart vs Betfair" in html and "écart vs Polymarket" in html
+    assert "écart vs Smarkets" in html and "écart vs Polymarket" in html and "écart vs Betfair" not in html
     d = json.loads(__import__("re").search(r"const D = (\{.*?\});\n", html, __import__("re").S).group(1).replace("<\\/", "</"))
     assert d["ecarts_references"]["Smarkets"] == {"moyenne": 0.03, "n": 1}
     assert d["ecarts_references"]["Betfair"]["n"] == 1
