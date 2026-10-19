@@ -139,3 +139,23 @@ marge comprise), `ecart` (edge) et `recheck`.
 - Les id déjà envoyés sont gardés trois jours dans `webhook_envoyes.json` (branche `donnees`) : pas de doublon.
 - Délai de 5 s par requête et 25 s au total, 20 alertes au plus par passage. Une erreur est comptée dans
   `notifications_diagnostic.json` (champ `webhook`, sans URL ni clé) et ne bloque ni le scan ni les alertes Chrome.
+
+### ntfy.sh
+
+Si `ALERTE_WEBHOOK_URL` est sur `ntfy.sh` (ex. `https://ntfy.sh/<canal>`), le corps n'est plus du JSON mais du texte
+brut, avec les en-têtes `Title` (« Pinnacle 2 – Betclic 1,93 », encodé en RFC 2047 car le tiret n'est pas du latin-1),
+`Priority: high` et `Tags: moneybag` :
+
+```
+Galatasaray SK – Strasbourg (Ligue des Champions)
+20/10 à 19:00
+HANDICAP : Galatasaray SK -7,5
+Cote 1,93 – min 1,872 – edge 5,2 %
+Re-check : vérifier le prix        ← seulement pour un pari re-décidé
+```
+
+L'heure est celle de Paris. `ALERTE_WEBHOOK_KEY` est facultative : sans elle, aucun en-tête d'authentification n'est
+envoyé (pour un canal ntfy protégé, mettre `Authorization` dans `ALERTE_WEBHOOK_CLE_ENTETE` et `Bearer <jeton>` dans
+le secret). Les autres URL reçoivent toujours le JSON. Timeouts, mémoire des id et journalisation sans URL ni clé sont
+identiques. Attention : un canal ntfy.sh public est lisible par quiconque en connaît le nom, choisis un nom long
+et aléatoire.
