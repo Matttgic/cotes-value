@@ -101,9 +101,9 @@ def motif_refus_eden(p: dict, depuis: str = EDEN["debut"]) -> str | None:
     if not EDEN["avance_min_minutes"] <= avance_min <= EDEN["avance_max_h"] * 60:
         return "détection hors fenêtre de 30 min à 24 h avant match"
 
-    fraicheur_sec = (t - lu).total_seconds()
-    if not 0 <= fraicheur_sec <= EDEN["fraicheur_max_minutes"] * 60:
-        return "référence absente, future ou vieille de plus de 15 minutes"
+    fraicheur_sec = abs((t - lu).total_seconds())      # lecture Pinnacle avant ou après la détection FR
+    if not fraicheur_sec <= EDEN["fraicheur_max_minutes"] * 60:
+        return "référence absente ou éloignée de plus de 15 minutes"
 
     cote, juste, edge = (_nombre(p.get(k)) for k in ("cote", "cote_juste", "ecart"))
     if cote is None or not EDEN["cote_min"] <= cote <= EDEN["cote_max"]:

@@ -46,8 +46,8 @@ def motif_refus_jules_v2(p, depuis=JULES_V2["debut"]):
         return "détection antérieure au lancement"
     if not JULES_V2["avance_min_minutes"]*60 <= (d-t).total_seconds() <= JULES_V2["avance_max_h"]*3600:
         return "détection hors fenêtre de 15 minutes à 18 heures"
-    if not lu or not 0 <= (t-lu).total_seconds() <= JULES_V2["fraicheur_max_minutes"]*60:
-        return "référence absente, future ou périmée"
+    if not lu or abs((t-lu).total_seconds()) > JULES_V2["fraicheur_max_minutes"]*60:
+        return "référence absente ou éloignée"
     cote, juste, edge = (_nombre(p.get(k)) for k in ("cote", "cote_juste", "ecart"))
     if (cote is None or juste is None or edge is None or juste <= 1
             or not JULES_V2["cote_min"] <= cote <= JULES_V2["cote_max"]

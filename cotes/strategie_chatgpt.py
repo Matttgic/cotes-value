@@ -63,8 +63,8 @@ def motif_refus(p: dict, depuis: str = CHATGPT["debut"]) -> str | None:
     if not edge_coherent(cote, juste, edge):
         return "edge incohérent avec la cote juste"
     lu = _heure(p.get("lu_reference"))
-    if not lu or not 0 <= (t - lu).total_seconds() <= CHATGPT["fraicheur_max_minutes"] * 60:
-        return "référence absente, future ou vieille de plus de 5 minutes"
+    if not lu or abs((t - lu).total_seconds()) > CHATGPT["fraicheur_max_minutes"] * 60:
+        return "référence absente ou éloignée de plus de 5 minutes"
     if not correspondance_prouvee(p, 0.85):
         return "preuve de correspondance ou de conformité insuffisante"
     marche = p.get("marche")

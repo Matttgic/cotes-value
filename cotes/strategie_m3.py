@@ -61,7 +61,7 @@ def motif_refus_m3(p: dict, depuis: str | None = None) -> str | None:
         return "date invalide ou detection avant lancement"
     if not (0 < (d-t).total_seconds() <= 3600 * M3["avance_max_h"]):
         return "match trop lointain ou deja commence"
-    if not (0 <= (t-lu).total_seconds() <= 60 * M3["fraicheur_max_minutes"]):
+    if not (abs((t-lu).total_seconds()) <= 60 * M3["fraicheur_max_minutes"]):
         return "reference trop ancienne"
     cote, juste, edge = (_nombre(p.get(k)) for k in ("cote", "cote_juste", "ecart"))
     if (cote is None or juste is None or edge is None or juste <= 1

@@ -35,7 +35,7 @@ def test_regles_figees_et_exclusion_historique():
     {"ecart": float("inf")}, {"cote_juste": 3}, {"suspect": "désaccord"},
     {"debut": "2026-10-14T10:14:59+00:00"}, {"debut": "2026-10-14T16:00:01+00:00"},
     {"detecte": "2026-10-14T10:00:00"}, {"detecte": None},
-    {"lu_reference": "2026-10-14T09:54:59+00:00"}, {"lu_reference": "2026-10-14T10:00:01+00:00"},
+    {"lu_reference": "2026-10-14T09:54:59+00:00"}, {"lu_reference": "2026-10-14T10:05:01+00:00"},
     {"preuve_prise": {}}, {"periode": "MT1"}, {"marche": "BOTH_TEAMS_TO_SCORE"},
     {"ligne": 2.25}, {"ligne": 2.75}, {"ligne": None}, {"issue": "YES"}, {"sport": "volley"},
 ])

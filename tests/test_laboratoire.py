@@ -43,7 +43,7 @@ def test_un_match_plusieurs_books_et_egalite_deterministe():
 
 @pytest.mark.parametrize("changes", [
     {"ecart": float("nan")}, {"cote": float("inf")}, {"ligne": 2.25},
-    {"lu_reference": "2026-10-10T17:44:59Z"}, {"lu_reference": "2026-10-10T18:00:01Z"},
+    {"lu_reference": "2026-10-10T17:44:59Z"}, {"lu_reference": "2026-10-10T18:15:01Z"},
     {"detecte": "2026-10-10T18:00:00"}, {"preuve_prise": {}}, {"cote_juste": 3},
     {"issue": "YES"}, {"periode": "MT1"}, {"sport": "tennis"}, {"reference": "Pinnacle brut"},
 ])
@@ -164,3 +164,11 @@ def test_site_strategies_et_comparateurs_meme_date(tmp_path, monkeypatch):
     m3 = data["laboratoire"]["comparateurs_futur"]["M3 (rejeu)"]
     assert m3["paris"] == m3["regles"] == 0
     assert data["laboratoire"]["m3_paris"] == []
+
+
+def test_reference_lue_apres_la_detection_francaise_reste_acceptee_dans_la_fenetre():
+    """Betclic n'est relu que toutes les 34 min alors que Pinnacle l'est à chaque cycle : la lecture de
+    référence peut suivre la cote française (Galatasaray, 19/10 : 18:19:16 contre 18:28:47)."""
+    assert selectionner([pari(lu_reference="2026-10-10T18:09:31Z")], R)
+    assert selectionner([pari(lu_reference="2026-10-10T18:15:00Z")], R)
+    assert not selectionner([pari(lu_reference="2026-10-10T18:15:01Z")], R)

@@ -78,7 +78,7 @@ def refus_qualite(p: dict) -> str | None:
     if p.get("bookmaker") not in BOOKMAKERS or p.get("suspect"):
         return "bookmaker_ou_suspect"
     t, debut, lu = (heure(p.get(k)) for k in ("detecte", "debut", "lu_reference"))
-    if not t or not debut or not lu or not 0 <= (t-lu).total_seconds() <= 900 or debut <= t:
+    if not t or not debut or not lu or abs((t-lu).total_seconds()) > 900 or debut <= t:
         return "dates_ou_fraicheur"
     cote, juste, edge = (nombre(p.get(k)) for k in ("cote", "cote_juste", "ecart"))
     if cote is None or juste is None or edge is None or cote <= 1 or juste <= 1:

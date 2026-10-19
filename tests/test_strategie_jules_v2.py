@@ -99,7 +99,7 @@ def test_ancien_rejeu_exclu_du_suivi():
 
 
 @pytest.mark.parametrize("kw", [{"cote":float("nan")}, {"ecart":float("inf")}, {"cote":True},
-    {"lu_reference":"2026-10-15T09:01:00Z"}, {"lu_reference":"2026-10-15T08:54:59Z"},
+    {"lu_reference":"2026-10-15T09:05:01Z"}, {"lu_reference":"2026-10-15T08:54:59Z"},
     {"marche":"TOTAL","issue":"PLUS","ligne":2.25},
     {"sport":"tennis","periode":"TEMPS_REG"}, {"reference":"Pinnacle brut"}])
 def test_donnees_ou_marches_invalides_refuses(kw):
