@@ -122,3 +122,20 @@ service Push accepte cette nouvelle clé ; les abonnements existants gardent
 leurs choix. La variante ne donne aucun vote supplémentaire aux convergences.
 Les nouvelles prises enregistrent leurs sélections et leurs refus avant la
 sauvegarde utilisée par l’envoi. Le registre n’est pas rempli rétroactivement.
+
+## Webhook Pinnacle 2
+
+En plus des alertes Chrome, chaque nouvelle prise de la stratégie `labo:PIN-1.3-2-e2-h36` (Pinnacle 2) est
+envoyée en JSON, une requête par alerte, à l'URL du secret GitHub `ALERTE_WEBHOOK_URL` (la clé du secret
+`ALERTE_WEBHOOK_KEY` est envoyée dans l'en-tête `x-api-key`, ou celui de la variable de dépôt
+`ALERTE_WEBHOOK_CLE_ENTETE`). Sans `ALERTE_WEBHOOK_URL`, rien n'est envoyé. L'URL doit être en https.
+
+Corps : `id`, `match`, `ligue`, `debut` (UTC), `marche`, `selection`, `bookmaker`, `cote`, `cote_min`
+(max(1,30 ; cote juste × 1,02) : en dessous, l'edge tombe sous 2 %), `cote_juste`, `cote_pinnacle` (cote brute,
+marge comprise), `ecart` (edge) et `recheck`.
+
+- Les paris ajoutés par la re-décision (`redecider_ouverts`) sont envoyés avec `recheck: true`, tant que le match
+  n'a pas commencé, même s'ils datent de plus de 15 minutes : le prix a pu bouger, à revérifier contre `cote_min`.
+- Les id déjà envoyés sont gardés trois jours dans `webhook_envoyes.json` (branche `donnees`) : pas de doublon.
+- Délai de 5 s par requête et 25 s au total, 20 alertes au plus par passage. Une erreur est comptée dans
+  `notifications_diagnostic.json` (champ `webhook`, sans URL ni clé) et ne bloque ni le scan ni les alertes Chrome.

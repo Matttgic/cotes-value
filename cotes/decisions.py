@@ -112,7 +112,9 @@ def redecider_ouverts(paris, maintenant, depuis_jours=7):
     ajoutees = 0
     for p in cibles:
         figees = p['selections_figees']
-        ajoutees += sum(cle not in anciennes[id(p)] for cle in figees)
+        nouvelles = sorted(cle for cle in figees if cle not in anciennes[id(p)])
+        ajoutees += len(nouvelles)
+        p['redecision_ajoutees'] = nouvelles
         for cle, valeur in anciennes[id(p)].items():
             figees.setdefault(cle, valeur)
         p[REDECISION] = maintenant.isoformat(timespec='seconds')
