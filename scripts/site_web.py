@@ -43,6 +43,33 @@ def _lire(chemin: Path, defaut):
     return json.loads(texte)
 
 
+def _instant(texte):
+    try:
+        t = datetime.fromisoformat(str(texte).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+
+
+def rapidite_alertes(historique: list[dict], cycles_alertes: list[dict]) -> dict:
+    """Délais réels : envoi après la lecture du prix, et écarts entre deux relevés (cause des alertes ratées)."""
+    debuts = sorted(t for t in (_instant(h.get("debut")) for h in historique) if t)
+    ecarts = sorted((b - a).total_seconds() / 60 for a, b in zip(debuts, debuts[1:]))
+    delais, dernieres = [], []
+    for c in cycles_alertes:
+        envoi = _instant(c.get("envoi_demande_le"))
+        for a in c.get("alertes", []):
+            lu = _instant(a.get("collecte_le") or a.get("detecte"))
+            if envoi and lu:
+                delais.append((envoi - lu).total_seconds())
+            dernieres.append({**{k: a.get(k) for k in ("match", "pari", "bookmaker", "cote")},
+                              "envoi": c.get("envoi_demande_le")})
+    mediane = lambda v: sorted(v)[len(v) // 2] if v else None
+    return {"releves": len(debuts), "ecart_median_min": mediane(ecarts),
+            "ecarts_plus_8_min": sum(e > 8 for e in ecarts), "plus_long_trou_min": max(ecarts, default=None),
+            "envoi_median_s": mediane(delais), "dernieres": dernieres[-5:][::-1]}
+
+
 EN_COURS_AFFICHES = 400        # paris en cours les plus récents
 REGLES_AFFICHES = 600          # paris réglés les plus récemment (+ tous ceux à régler à la main)
 CHAMPS_FILTRES = {"sims": "simulation", "reference": "reference", "statut": "statut", "bookmaker": "bookmaker",
@@ -537,6 +564,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             ("strategies_historiques", "convergence_historique", "tranche", "cote", "strategies", "jules_v2")}
             for pid, p in laboratoire["navigation"]["paris"].items()}
     data = {"live_papier": live_vue, "diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
+            "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
             "catalogue": catalogue_paris(paris, retenus),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
@@ -591,12 +619,13 @@ MODELE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value</title>
+<script>try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}</script>
 <style>__INTERFACE_CSS__</style>
 </head>
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
 <header class="haut">
-  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><label class="signature palette-label">Couleurs <select id="palette-site" aria-label="Couleurs du site"><option value="bleu">Bleu</option><option value="violet">Violet</option><option value="graphite">Graphite</option></select></label></div></div>
+  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><label class="signature palette-label">Couleurs <select id="palette-site" aria-label="Couleurs du site"><option value="bleu">Bleu</option><option value="violet">Violet</option><option value="graphite">Graphite</option></select></label><label class="signature palette-label">Mode <select id="theme-site" aria-label="Mode jour ou nuit"><option value="auto">Auto</option><option value="nuit">Nuit</option><option value="jour">Jour</option></select></label></div></div>
     <div class="mise-a-jour"><span class="maj" id="maj"></span><span id="fraicheur" class="fraicheur"></span></div></div>
   <nav id="onglets" aria-label="Navigation principale">
     <button data-o="jouer"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 15 9-15 9V3Z"/></svg><span>À jouer<span class="nb" id="nb-jouer"></span></span></button>
@@ -834,19 +863,24 @@ MODELE = r"""<!doctype html>
     </details>
   </section>
   <section class="onglet" id="o-notifications">
-    <div class="page-tete"><div><p class="surtitre">Tes stratégies, au bon moment</p><h2>Les notifications</h2><p class="sous-texte">Choisis les alertes à recevoir sur cet appareil.</p></div></div>
-    <p class="aide">Reçois les nouvelles sélections des stratégies choisies, même lorsque cet onglet est fermé.
-    Les alertes partent après la sauvegarde des prises, avant les résultats et la construction du site. Les prix de plus de 5 minutes à la préparation sont écartés. Vérifie la cote : elle peut changer avant ton clic.</p>
-    <details class="mode-emploi"><summary>Délais et derniers envois</summary><div id="notif-diagnostic"></div><p class="aide">Une réponse du service Push ne confirme pas la réception sur le téléphone. Chrome, le réseau et l’économie de batterie peuvent retarder l’affichage. L’heure de réception API ne certifie pas l’heure de mise à jour interne du fournisseur.</p></details>
-    <p class="carte" id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
+    <div class="page-tete"><div><h2>Notifications</h2></div></div>
+    <div class="carte notif-appareil">
+      <p id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
+      <div class="notif-boutons"><button class="btn" id="notif-activer">Activer les notifications</button>
+        <button class="btn secondaire" id="notif-test" disabled>Envoyer un test</button>
+        <button class="btn secondaire" id="notif-arreter" hidden>Désactiver</button></div>
+    </div>
+    <h3 class="bu-titre">Rapidité des alertes</h3>
+    <div class="bu-table notif-rapidite" id="notif-rapidite"></div>
+    <p class="aide">Chiffres réels des derniers relevés. Pendant un trou entre deux relevés, aucune opportunité n’est vue : c’est la cause des alertes ratées, pas l’envoi.</p>
+    <h3 class="bu-titre">Me prévenir pour</h3>
     <fieldset class="carte" id="notif-strategies"><legend>Stratégies à suivre</legend></fieldset>
-    <div class="filtres"><button class="btn" id="notif-activer">Activer les notifications</button>
-      <button class="btn" id="notif-sauver" disabled>Enregistrer les stratégies</button>
-      <button class="btn" id="notif-test" disabled>Envoyer un test</button>
-      <button class="btn" id="notif-arreter" hidden>Désactiver</button></div>
+    <p><button class="btn" id="notif-sauver" disabled>Enregistrer mes choix</button></p>
     <p class="aide" id="notif-message" role="status" aria-live="polite"></p>
-    <p class="aide">Une seule alerte si plusieurs stratégies retiennent le même pari au même prix.
-    Seules les nouvelles prises après activation ou changement de tes choix sont notifiées. Les plafonds des stratégies restent appliqués.</p>
+    <h3 class="bu-titre">Dernières alertes</h3>
+    <div class="bu-table" id="notif-dernieres"></div>
+    <p class="aide">Une seule alerte si plusieurs stratégies retiennent le même pari au même prix. Les prix de plus de 5 minutes sont écartés ; vérifie la cote, elle peut changer avant ton clic.</p>
+    <details class="mode-emploi"><summary>Délais et derniers envois</summary><div id="notif-diagnostic"></div><p class="aide">Une réponse du service Push ne confirme pas la réception sur le téléphone. Chrome, le réseau et l’économie de batterie peuvent retarder l’affichage. L’heure de réception API ne certifie pas l’heure de mise à jour interne du fournisseur.</p></details>
     <details class="aide"><summary>Si tu ne reçois rien</summary>
       <p>Utilise Chrome sur Android et autorise les notifications du site et de Chrome dans les paramètres du téléphone.
       L’économie de batterie, une coupure réseau ou un arrêt forcé de Chrome peuvent retarder les alertes.

@@ -62,7 +62,9 @@ def test_site_echappe_donnees_sans_perdre_match_ou_pari(tmp_path):
     p = pari(pari='<!--<script>alert("test")</script><img src=x onerror="test">')
     (tmp_path/'paris.json').write_text(json.dumps([p]))
     html = construire(tmp_path, tmp_path/'site').read_text()
-    assert html.count('<script>') == html.count('</script>') == 1
+    # Deux scripts seulement : le thème jour/nuit lu avant l'affichage, puis la page.
+    assert html.count('<script>') == html.count('</script>') == 2
+    assert html.index('<script>try{const t=localStorage.getItem("cv-theme-v1")') < html.index('<style>')
     assert p['pari'] not in html
     assert '\\u003c!--\\u003cscript\\u003e' in html
 
