@@ -468,7 +468,8 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                     "erreurs": {b: e[:5] for b, e in erreurs.items()}}
         else:
             lignes, requetes, erreurs = [], {}, {}
-            journal["etapes"]["pulsescore"] = {"ok": False, "erreur": "PULSESCORE_KEY absente"}
+            # Sans clé (plus d'abonnement) : étape désactivée, pas en panne ; les lecteurs directs décident.
+            journal["etapes"]["pulsescore"] = {"secondes": 0.0, "ok": True, "desactive": True}
         if source_oly == "direct":
             oly_lignes, oly_meta = recevoir("olybet")
         else:

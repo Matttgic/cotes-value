@@ -89,9 +89,32 @@ def test_echec_reference_isole_et_shadow_sans_cle_ne_plante_pas(monkeypatch):
     pin, poly, lignes, compte = cycle.collecter_prematch(None, "complet", NOW, j)
     assert pin == [] and not lignes and not compte
     assert j["etapes"]["pinnacle"]["ok"] is False
-    assert j["etapes"]["pulsescore"]["ok"] is False
+    assert j["etapes"]["pulsescore"]["ok"] is True and j["etapes"]["pulsescore"]["desactive"] is True   # pas « en panne »
+    assert not j["etapes"]["pulsescore"].get("degrade")
     assert j["pmu_direct_rapport"]["matchs_pulsescore"] == 0
     assert "pulsescore_complement" not in j["etapes"]
+
+
+def test_sans_pulsescore_toutes_les_cotes_francaises_viennent_des_lecteurs_directs(monkeypatch):
+    def direct(bookmaker):
+        return lambda *a, **k: ([ligne("football", bookmaker)], {"ok": True, "erreurs": [], "requetes": 1, "matchs": 1})
+
+    _sans_reseau(monkeypatch)
+    for nom, module in (("pmu", cycle.pmu_direct), ("winamax", cycle.winamax_direct),
+                        ("unibet-fr", cycle.unibet_direct), ("betclic", cycle.betclic_direct)):
+        monkeypatch.setattr(module, "collecter", direct(nom))
+    for variable in ("SOURCE_PMU", "SOURCE_WINAMAX", "SOURCE_UNIBET", "SOURCE_BETCLIC"):
+        monkeypatch.setenv(variable, "direct")
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football", "pinnacle")])
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pulsescore, "collecter",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("PulseScore appelé sans abonnement")))
+    j = {"etapes": {}}
+    _, _, lignes, _ = cycle.collecter_prematch(None, "complet", NOW, j)
+    assert {l["bookmaker"] for l in lignes} == {"pmu", "winamax", "unibet-fr", "betclic"}
+    concernees = {k: e for k, e in j["etapes"].items() if k == "pulsescore" or k.endswith("_direct")}
+    assert concernees and all(e["ok"] and not e.get("degrade") for e in concernees.values())   # rien « en panne »
 
 
 def test_auto_bascule_sur_pulsescore_si_kambi_echoue(monkeypatch):

@@ -28,7 +28,6 @@ jobs:
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
           PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
-          PULSESCORE_KEY: ${{ secrets.PULSESCORE_KEY }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
         run: python scripts/sonde_live_pauses.py --sortie /tmp/audit-live.json
       - name: Afficher le diagnostic sans secrets
