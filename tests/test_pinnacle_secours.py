@@ -204,3 +204,13 @@ def test_cache_ignore_les_matchs_commences_et_les_caches_trop_vieux(tmp_path):
     assert S.collecter({33}, NOW + timedelta(minutes=10), tmp_path, Session(Reponse(statut=503))) == []           # autre sport
     (tmp_path / "pinnacle_secours_cache.json").write_text("{pas du json")
     assert S.collecter({29}, NOW + timedelta(minutes=10), tmp_path, Session(Reponse(statut=503))) == []
+
+
+def test_essai_pinbook_analyse_le_format_documente():
+    from scripts import tester_pinbook as T
+
+    ev = evenement(home_team_type="Team1")
+    corps = {"sport_id": 1, "last": 1, "last_call": int(NOW.timestamp()) - 120, "events": [ev]}
+    r = T.analyser(corps, "football", NOW)
+    assert r["evenements"] == 1 and r["matchs_36h"] == 1 and r["age_last_call_min"] == 2.0
+    assert r["lignes_avec_proba"] > 0 and "RESULTAT_1N2" in r["marches"] and r["avec_home_team_type"] == 1
