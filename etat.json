@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-19T22:47:38+00:00",
+  "debut": "2026-10-19T22:52:14+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 11.6,
+    "secondes": 11.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,7 +12,7 @@
     ]
    },
    "pinnacle": {
-    "secondes": 41.4,
+    "secondes": 39.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -21,24 +21,30 @@
      "sport 5 matchups : HTTP 403"
     ]
    },
-   "olybet": {
-    "secondes": 5.7,
+   "unibet_direct": {
+    "secondes": 3.9,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 5.9,
+   "olybet": {
+    "secondes": 6.1,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 13.1,
+    "secondes": 11.2,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 21.7,
-    "ok": true
+    "secondes": 13.4,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau",
+     "sport:2 : réseau",
+     "sport:3 : réseau"
+    ]
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -46,48 +52,39 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 70.4,
+    "secondes": 64.2,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.0,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 8.1,
+    "secondes": 2.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.7,
+    "secondes": 0.3,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.1,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 27793,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 840,
-   "age_min_s": 367,
-   "lignes": 105632,
-   "lignes_perimees": 79611,
+   "age_max_s": 690,
+   "age_min_s": 204,
+   "lignes": 105630,
+   "lignes_perimees": 26021,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -101,8 +98,8 @@
     "head_200": 33,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 2,
-    "choisi_autre": 9,
+    "choisi_autre": 7,
+    "choisi_fixe": 4,
     "reprise_403": 6
    }
   },
@@ -197,8 +194,8 @@
      "match": "Corinthians – EC Vitoria BA",
      "source": "Pinnacle",
      "cote_netbet": 1.53,
-     "cote_reference": 1.633,
-     "ecart_relatif": 0.063,
+     "cote_reference": 1.637,
+     "ecart_relatif": 0.0653,
      "aberrant": false
     },
     {
@@ -213,8 +210,8 @@
      "match": "Deportivo Riestra – Unión de Santa Fe",
      "source": "Pinnacle",
      "cote_netbet": 2.12,
-     "cote_reference": 2.33,
-     "ecart_relatif": 0.0901,
+     "cote_reference": 2.37,
+     "ecart_relatif": 0.1055,
      "aberrant": false
     },
     {
@@ -229,8 +226,8 @@
      "match": "Deportivo Pasto – Alianza FC Valledupar",
      "source": "Pinnacle",
      "cote_netbet": 1.58,
-     "cote_reference": 1.704,
-     "ecart_relatif": 0.0729,
+     "cote_reference": 1.709,
+     "ecart_relatif": 0.0756,
      "aberrant": false
     },
     {
@@ -261,23 +258,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-19T22:47:48+00:00",
-   "pinnacle_derniere_lecture": "2026-10-19T22:48:20+00:00",
+   "pinnacle_premiere_lecture": "2026-10-19T22:52:24+00:00",
+   "pinnacle_derniere_lecture": "2026-10-19T22:52:30+00:00",
    "books_premiere_lecture": "2026-10-19T21:24:45+00:00",
-   "books_derniere_lecture": "2026-10-19T22:48:22+00:00",
-   "ecart_enveloppe_secondes": 5015.0
+   "books_derniere_lecture": "2026-10-19T22:52:54+00:00",
+   "ecart_enveloppe_secondes": 5265.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 561,
    "a_verifier": 9,
    "non_conforme": 9,
-   "mesures": 12194,
+   "mesures": 7105,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -288,26 +284,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-19T22:39:53+00:00"
   },
-  "fin": "2026-10-19T22:49:44+00:00",
+  "fin": "2026-10-19T22:54:24+00:00",
   "cotes": {
-   "francaises": 41093,
-   "pinnacle": 133425,
-   "polymarket": 11302,
-   "smarkets": 3963
+   "francaises": 36993,
+   "pinnacle": 105630,
+   "polymarket": 11179,
+   "smarkets": 3955
   },
-  "matchs_francais": 905,
-  "opportunites": 3,
-  "opportunites_suspectes": 1,
+  "matchs_francais": 743,
+  "opportunites": 1,
+  "opportunites_suspectes": 3,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-19T07:20:30+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {}
-  },
   {
    "debut": "2026-10-19T07:25:07+00:00",
    "mode": "complet",
@@ -1561,6 +1550,12 @@
    "debut": "2026-10-19T22:47:38+00:00",
    "mode": "complet",
    "opportunites": 3,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-19T22:52:14+00:00",
+   "mode": "complet",
+   "opportunites": 1,
    "nouveaux_paris": 0
   }
  ],
