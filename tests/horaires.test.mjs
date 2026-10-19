@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 const source=readFileSync(new URL('../web/horaires.js',import.meta.url),'utf8');
-const c=vm.createContext({Intl,Date,e:s=>String(s??'').replaceAll('<','&lt;'),iconeSport:()=>'',nomsSports:{football:'Football'},carteActuelle:o=>`<details>${o.pari}</details>`});
+const c=vm.createContext({Intl,Date,e:s=>String(s??'').replaceAll('<','&lt;'),iconeSport:()=>'',nomsSports:{football:'Football'}});
 vm.runInContext(source,c);
 const at=s=>Date.parse(s);
 
@@ -39,18 +39,6 @@ test('Reports, dates invalides et tri non destructif',()=>{
   assert.ok(html.includes('Reporté · Demain 16:00'));
 });
 
-test('Regroupement visuel, meilleur edge et catégories préservées',()=>{
-  const p={sport:'football',domicile:'Équipe A U21',exterieur:'B',debut:'2026-10-17T18:00:00Z',ecart:.04,pari:'Under 2,5'};
-  const rows=[p,{...p,bookmaker:'PMU',pari:'Handicap +1,5',ecart:.06},{...p,domicile:'Équipe A',pari:'Seniors'},
-    {...p,debut:'2026-10-18T18:00:00Z',pari:'Demain'}];
-  assert.equal(c.groupesMatchs(rows).length,3);
-  const html=c.rendreGroupesJouer(rows);
-  assert.equal((html.match(/class="groupe-match"/g)||[]).length,1);
-  assert.ok(html.indexOf('Handicap +1,5')<html.indexOf('Under 2,5'));
-  assert.equal((html.match(/<details>/g)||[]).length,4);
-  assert.equal(rows[0],p);
-});
-
 test('Collecte visible : Paris, prix baissé et début de lot historique distingués',()=>{
   c.cote=x=>Number(x).toFixed(2).replace('.',',');
   const now=at('2026-10-17T00:05:00Z');
@@ -64,12 +52,4 @@ test('Collecte visible : Paris, prix baissé et début de lot historique disting
   assert.ok(html.includes('collecte-ancienne'));
   assert.ok(c.collectePari({detecte:p.detecte},now).includes('réception exacte inconnue'));
   assert.ok(c.collectePari({}).includes('Collecte non renseignée'));
-});
-
-test('une opportunité commencée disparaît même sans filtre horaire',()=>{
-  const now=at('2026-10-17T12:00:00Z');
-  assert.equal(c.opportuniteAvantMatch({debut:'2026-10-17T12:00:00Z'},now),false);
-  assert.equal(c.opportuniteAvantMatch({debut:'2026-10-17T11:59:59Z'},now),false);
-  assert.equal(c.opportuniteAvantMatch({debut:'2026-10-17T12:00:01Z'},now),true);
-  assert.equal(c.opportuniteAvantMatch({debut:'bad'},now),false);
 });

@@ -20,7 +20,7 @@ main{padding:20px;display:flex;justify-content:center;overflow:auto}iframe{borde
 <script>
 const cadre=document.querySelector('iframe');
 // Chaque vérification doit charger le HTML publié, sans reprendre l'ancien index du cache.
-cadre.src='./?_apercu='+Date.now()+'#jouer';
+cadre.src='./?_apercu='+Date.now()+'#paris';
 for(const b of document.querySelectorAll('[data-largeur]')) b.onclick=()=>{
   cadre.style.width=b.dataset.largeur+'px';
   for(const c of document.querySelectorAll('[data-largeur]')) c.setAttribute('aria-pressed',String(c===b));

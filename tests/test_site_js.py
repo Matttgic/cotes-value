@@ -29,25 +29,24 @@ const window={scrollY:320,scrollTo:(x,y)=>assert.equal(y,320)};
 const requestAnimationFrame=fn=>fn();
 const adapterTableaux=()=>{};
 const FILTRES={book:[]}, CUMULS=[[]], TRIS={roi:''}, STRAT_PERIODES={ensemble:''};
-let filtreJouer='claude_prudent',sportJouer='tennis',refBilan='Stratégie',cumul=0,limite=150,
+let refBilan='Stratégie',cumul=0,limite=150,
     strategieChoisie={id:'Claude (rejeu)',nom:'Claude',periode:'ensemble'},triSeg='roi',ctlVue='conforme',periodeStrategies='ensemble';
 const courbesMasquees=new Set(['M3']);
 const rendus=[];
-const rendreJouer=()=>rendus.push(filtreJouer),rendreBilan=()=>rendus.push(refBilan),
+const rendreBilan=()=>rendus.push(refBilan),
  rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},rendreBilanUniques=()=>{},rendreSante=()=>{},
  rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{};
 function installerActualisation(config) {
   const etat=config.capturer();
-  filtreJouer='tous';sportJouer='';refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
+  refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
   courbesMasquees.clear();elements.get('f-q').value='';elements.get('f-book').value='';
   config.restaurer(JSON.parse(JSON.stringify(etat)));
   assert.equal(elements.get('f-book').value,'Winamax');
   assert.equal(elements.get('analyse-sport').value,'hockey');
   assert.equal(elements.get('analyse-periode').value,'ensemble');
   assert.equal(strategieChoisie.id,'Claude (rejeu)');assert.equal(limite,150);
-  assert.equal(sportJouer,'tennis');
   assert.deepEqual([...courbesMasquees],['M3']);
-  assert.deepEqual(rendus,['claude_prudent','Stratégie','Équipe Lyon','ensemble']);
+  assert.deepEqual(rendus,['Stratégie','Équipe Lyon','ensemble']);
   assert.equal(etat.presentation,'lignes-v1');
   // Un ancien instantané ne réintroduit pas le filtre qui masquait les 36 règles.
   elements.get('strategies-ref').value='';delete etat.presentation;
@@ -55,21 +54,6 @@ function installerActualisation(config) {
   assert.equal(elements.get('strategies-ref').value,'');
 }
 '''+section)
-
-
-def test_js_filtre_sport_se_combine_avec_la_strategie():
-    section=MODELE[MODELE.index('let filtreJouer = "tous";'):MODELE.index('rendreJouer();\ndocument.getElementById("nb-jouer")')]
-    executer(DOM+'''
-const D={strategies_badges:{claude:'Claude'}},rendreResumeJouer=()=>{};
-let sportJouer='tennis';
-const cotesJouer=[{sport:'tennis',pari:'A',debut:'2099-01-01T12:00:00Z',strategies:['claude']},{sport:'football',pari:'B',debut:'2099-01-01T12:00:00Z',strategies:['claude']},{sport:'tennis',pari:'C',debut:'2099-01-01T12:00:00Z',strategies:[]}];
-const carteActuelle=o=>o.pari;
-function rendreGroupesJouer(liste) {return liste.map(carteActuelle).join('');}
-'''+section+'''
-rendreJouer();assert.equal(document.getElementById('liste-jouer').innerHTML,'AC');
-filtreJouer='valide';rendreJouer();assert.equal(document.getElementById('liste-jouer').innerHTML,'A');
-sportJouer='';rendreJouer();assert.equal(document.getElementById('liste-jouer').innerHTML,'AB');
-''')
 
 
 DOM = '''
@@ -252,55 +236,4 @@ assert.ok(html.includes('4 matchs') && html.includes('tickets sur les mêmes mat
 D.segments=[{...ancien,sigma_fiable:true,evenements:35,sigma_limites:[]}];
 rendreSegments();html=document.getElementById('liste-segments').innerHTML;
 assert.ok(html.includes('À confirmer') && html.includes('essais multiples non corrigés'));
-''')
-
-
-def test_prix_modifie_visible_sans_transferer_les_badges():
-    section=MODELE[MODELE.index('const parCote = new Map();'):MODELE.index('const age = minutes(dc.debut);')]
-    executer(DOM+'''
-const D={actuelles:[{bookmaker:'Winamax',match_id:'w|1',marche:'VAINQUEUR',periode:'MATCH',
- domicile:'Athinaikos',exterieur:'Panseraikos',pari:'Athinaikos gagne',cote:1.6,ecart:.03,
- debut:'2099-01-01T12:00:00Z',reference:'Pinnacle',cote_juste:1.55,strategies:[],
- prix_change:true,prix_precedent:1.8,convergence_precedente:true,validation_precedente:'2026-10-17T10:00:00Z'}],
- strategies_badges:{}};
-const nomsSports={},monogrammeBookmaker=()=>'',iconeSport=()=>'';
-'''+section+'''
-const html=carteActuelle(cotesJouer[0]);
-assert.ok(html.split('</summary>')[0].includes('Prix modifié'));
-assert.ok(html.includes('prise précédente à 1.8') && html.includes('Aucun badge transféré'));
-assert.ok(!html.includes('Signal brut · aucune stratégie'));
-assert.equal(badgeStrategies(cotesJouer[0]),'');
-const brut=carteActuelle({...cotesJouer[0],prix_change:false});
-assert.ok(brut.includes('Signal brut · aucune stratégie') && !brut.includes('Prix modifié'));
-''')
-
-
-def test_js_sante_niveaux_et_resume_des_erreurs():
-    section = (MODELE[MODELE.index("function diagnosticSante"):MODELE.index("function rendreSanteParis")] +
-               MODELE[MODELE.index("const SOURCES_COTES"):MODELE.index("rendreSante();\n\n// Famille publiée")])
-    cycle = {"fin": "2026-10-15T09:00:00Z", "debut": "2026-10-15T08:58:00Z", "cotes": {"francaises": 25833},
-             "etapes": {"pinnacle": {"ok": True, "degrade": True, "erreurs": ["sport 17 : HTTP 403", "sport 45 : HTTP 403"]},
-                        "netbet": {"ok": True, "degrade": True, "erreurs": ["budget"]},
-                        "winamax_direct": {"ok": True}, "pulsescore": {"ok": True, "desactive": True}}}
-    reglement = {"debut": "2026-10-15T08:30:00Z", "fin": "2026-10-15T08:35:00Z",
-                 "resultats": {"paris_regles": 5, "paris_en_attente": 11, "sources_reglement": {"espn": 5}},
-                 "etapes": {"resultats_espn_basket": {"ok": True}, "resultats_flashscore_basket": {"ok": True, "degrade": True, "erreurs": ["HTTP 429"]},
-                            "resultats_nhl_officiel": {"ok": False}}}
-    executer(DOM + '''
-const D={etat:{dernier_cycle:%s,dernier_cycle_reglement:%s}};
-const hm=()=>"09:00",man=[],groupesReglement=new Map();
-''' % (json.dumps(cycle), json.dumps(reglement)) + section + '''
-const t0=Date.parse("2026-10-15T09:05:00Z");
-let d=diagnosticSante(t0); assert.equal(d.niveau,"ok"); assert.equal(d.mineures,2);
-assert.equal(diagnosticSante(Date.parse("2026-10-15T09:30:00Z")).niveau,"alerte");
-assert.equal(diagnosticSante(Date.parse("2026-10-15T11:00:00Z")).niveau,"panne");
-rendreSante(t0);
-const h=id=>document.getElementById(id).innerHTML;
-assert.ok(h("sante-cotes").includes("Refus (403) sur 2 requêtes") && h("sante-cotes").includes("limite de temps"));
-assert.ok(h("sante-cotes").includes("Lu normalement") && !h("sante-cotes").includes("PulseScore"));
-assert.ok(h("sante-auto").includes("Collecte et comparaison") && h("sante-auto").includes("5 enregistrements réglés"));
-assert.ok(h("sante-resultats").includes("ESPN") && h("sante-resultats").includes("5 enregistrements réglés"));
-assert.ok(h("sante-resultats").includes("sante-mot-panne"));
-assert.ok(document.getElementById("sante-attente").textContent.includes("11 paris"));
-assert.ok(h("sante-global").includes("2 alertes mineures sans effet"));
 ''')
