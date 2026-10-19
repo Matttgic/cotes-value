@@ -6,6 +6,7 @@ Une panne de notification ne doit pas interrompre la collecte ni le règlement.
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import sys
@@ -13,7 +14,8 @@ import time
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
+from zoneinfo import ZoneInfo
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -53,6 +55,38 @@ def charge_utile(a: dict) -> dict:
     return out
 
 
+def est_ntfy(url: str) -> bool:
+    """ntfy.sh (ou un sous-domaine) : le corps est du texte, pas du JSON."""
+    h = (urlparse(url).hostname or "").lower()
+    return h == "ntfy.sh" or h.endswith(".ntfy.sh")
+
+
+def _fr(x, decimales: int) -> str:
+    return f"{x:.{decimales}f}".replace(".", ",") if isinstance(x, (int, float)) and not isinstance(x, bool) else "—"
+
+
+def message_ntfy(a: dict) -> tuple[str, str]:
+    """(titre, corps) lisibles sur un téléphone ; l'heure du match est celle de Paris."""
+    c = charge_utile(a)
+    try:
+        d = datetime.fromisoformat(str(c["debut"]).replace("Z", "+00:00")).astimezone(ZoneInfo("Europe/Paris"))
+        heure = d.strftime("%d/%m à %H:%M")
+    except ValueError:
+        heure = "heure inconnue"
+    edge = f'{_fr(100 * c["ecart"], 1)} %' if isinstance(c.get("ecart"), (int, float)) else "—"
+    ligue = f' ({c["ligue"]})' if c.get("ligue") else ""
+    corps = (f'{c["match"]}{ligue}\n{heure}\n{c["marche"]} : {c["selection"]}\n'
+             f'Cote {_fr(c["cote"], 2)} – min {_fr(c["cote_min"], 3)} – edge {edge}')
+    if c["recheck"]:
+        corps += "\nRe-check : vérifier le prix"
+    return f'Pinnacle 2 – {c["bookmaker"]} {_fr(c["cote"], 2)}', corps
+
+
+def _entete_utf8(texte: str) -> str:
+    """En-tête HTTP non latin-1 (tiret demi-cadratin) : encodage RFC 2047, lu par ntfy."""
+    return "=?UTF-8?B?" + base64.b64encode(texte.encode()).decode() + "?="
+
+
 def alertes_webhook(flux: dict, paris: list[dict], envoyes: dict, maintenant: datetime | None = None) -> list[dict]:
     """Alertes Pinnacle 2 pas encore envoyées : celles du scan, puis les paris re-décidés (même s'ils datent)."""
     from cotes.notifications import alertes_recheck
@@ -74,16 +108,24 @@ def poster_webhook(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.m
     if not url.startswith("https://"):
         return {**bilan, "actif": False, "erreurs": ["URL refusée (https obligatoire)"]}
     entete = env.get("ALERTE_WEBHOOK_CLE_ENTETE", "").strip() or "x-api-key"
+    ntfy = est_ntfy(url)
     debut = horloge()
     for a in alertes[:WEBHOOK_MAX]:
         if horloge() - debut > WEBHOOK_BUDGET_S:
             bilan["erreurs"].append("budget de temps atteint")
             break
         en_tetes = {"Content-Type": "application/json", "User-Agent": "cotes-value"}
-        if cle:
+        if cle:                                   # clé facultative : sans elle, aucun en-tête d'authentification
             en_tetes[entete] = cle
         try:
-            requete = Request(url, data=json.dumps(charge_utile(a), ensure_ascii=False).encode(), headers=en_tetes, method="POST")
+            if ntfy:
+                titre, corps = message_ntfy(a)
+                en_tetes.update({"Content-Type": "text/plain; charset=utf-8", "Title": _entete_utf8(titre),
+                                 "Priority": "high", "Tags": "moneybag"})
+                donnees = corps.encode()
+            else:
+                donnees = json.dumps(charge_utile(a), ensure_ascii=False).encode()
+            requete = Request(url, data=donnees, headers=en_tetes, method="POST")
             with ouvrir(requete, timeout=WEBHOOK_TIMEOUT_S) as r:
                 code = getattr(r, "status", 200)
             if 200 <= code < 300:

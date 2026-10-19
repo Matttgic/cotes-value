@@ -198,3 +198,84 @@ def test_webhook_pinnacle_2_memorise_les_id_et_ne_bloque_jamais(tmp_path, monkey
     assert E.webhook_pinnacle2(tmp_path, {"alertes": []})["envoyees"] == 0 and len(envoyees) == 1      # pas de doublon
     (tmp_path / "paris.json").write_text("{illisible")
     assert E.webhook_pinnacle2(tmp_path, {"alertes": []})["envoyees"] == 0                            # erreur avalée
+
+
+# --- ntfy.sh ----------------------------------------------------------------------------------------------------
+def _alerte_ntfy(**kw):
+    return {"id": "n" * 64, "match": "Galatasaray SK – Strasbourg", "ligue": "Ligue des Champions",
+            "debut": "2026-10-20T17:00:00Z", "marche": "HANDICAP", "selection": "Galatasaray SK -7,5",
+            "bookmaker": "Betclic", "cote": 1.93, "cote_min": 1.872, "cote_juste": 1.835, "cote_pinnacle": 1.80,
+            "ecart": .0516, "recheck": False, **kw}
+
+
+class _Rep:
+    status = 200
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def test_ntfy_texte_brut_titre_priorite_et_tags_sans_cle():
+    import email.header
+    from scripts.envoyer_notifications import est_ntfy, message_ntfy, poster_webhook
+    assert est_ntfy("https://ntfy.sh/mon-canal") and est_ntfy("https://www.ntfy.sh/x")
+    assert not est_ntfy("https://ntfy.sh.autre.test/x") and not est_ntfy("https://hooks.example.test/ntfy.sh")
+    titre, corps = message_ntfy(_alerte_ntfy())
+    assert titre == "Pinnacle 2 – Betclic 1,93"
+    assert corps == ("Galatasaray SK – Strasbourg (Ligue des Champions)\n20/10 à 19:00\nHANDICAP : Galatasaray SK -7,5\n"
+                     "Cote 1,93 – min 1,872 – edge 5,2 %")
+    assert message_ntfy(_alerte_ntfy(recheck=True))[1].endswith("\nRe-check : vérifier le prix")
+    assert "()" not in message_ntfy(_alerte_ntfy(ligue=None))[1]
+    appels = []
+    r = poster_webhook([_alerte_ntfy()], {"ALERTE_WEBHOOK_URL": "https://ntfy.sh/mon-canal"},
+                       lambda req, timeout: appels.append((req, timeout)) or _Rep())
+    assert r["envoyees"] == ["n" * 64] and r["echecs"] == 0
+    req, timeout = appels[0]
+    assert timeout <= 10 and req.full_url == "https://ntfy.sh/mon-canal"
+    en_tetes = {k.lower(): v for k, v in req.header_items()}
+    assert en_tetes["priority"] == "high" and en_tetes["tags"] == "moneybag"
+    assert en_tetes["content-type"].startswith("text/plain")
+    assert str(email.header.make_header(email.header.decode_header(en_tetes["title"]))) == titre
+    en_tetes["title"].encode("latin-1")                      # valide pour http.client
+    assert req.data.decode() == corps and "x-api-key" not in en_tetes and "authorization" not in en_tetes
+    assert "mon-canal" not in json.dumps(r)
+
+
+def test_ntfy_avec_cle_envoie_l_en_tete_choisi_et_autre_url_reste_en_json():
+    from scripts.envoyer_notifications import poster_webhook
+    appels = []
+    ouvrir = lambda req, timeout: appels.append(req) or _Rep()
+    env = {"ALERTE_WEBHOOK_URL": "https://ntfy.sh/prive", "ALERTE_WEBHOOK_KEY": "Bearer tk_secret",
+           "ALERTE_WEBHOOK_CLE_ENTETE": "Authorization"}
+    poster_webhook([_alerte_ntfy()], env, ouvrir)
+    assert appels[0].get_header("Authorization") == "Bearer tk_secret"
+    poster_webhook([_alerte_ntfy()], {"ALERTE_WEBHOOK_URL": "https://hooks.example.test/x"}, ouvrir)
+    autre = appels[1]
+    assert autre.get_header("Content-type") == "application/json" and json.loads(autre.data)["id"] == "n" * 64
+    assert autre.get_header("Title") is None and autre.get_header("X-api-key") is None       # clé absente : rien
+
+
+def test_ntfy_erreurs_sans_fuite_et_pas_de_doublon(tmp_path, monkeypatch):
+    from urllib.error import HTTPError
+    from scripts import envoyer_notifications as E
+    env = {"ALERTE_WEBHOOK_URL": "https://ntfy.sh/canal-secret-123"}
+
+    def refus(req, timeout):
+        raise HTTPError("https://ntfy.sh/canal-secret-123", 429, "trop", {}, None)
+
+    r = E.poster_webhook([_alerte_ntfy()], env, refus)
+    assert r["echecs"] == 1 and r["erreurs"] == ["HTTP 429"] and "canal-secret-123" not in json.dumps(r)
+    # la mémoire des id est la même qu'en JSON : un envoi réussi n'est pas renvoyé
+    p = prise_pin2(detecte=(NOW - timedelta(hours=1)).isoformat(), debut=(NOW + timedelta(hours=20)).isoformat(),
+                   selections_figees={PIN2: {}}, redecision_lecture_posterieure=NOW.isoformat())
+    (tmp_path / "paris.json").write_text(json.dumps([p]))
+    monkeypatch.setenv("ALERTE_WEBHOOK_URL", "https://ntfy.sh/canal-secret-123")
+    envoyes = []
+    monkeypatch.setattr(E, "poster_webhook", lambda al, *a, **k: envoyes.extend(al) or
+                        {"actif": True, "envoyees": [x["id"] for x in al], "echecs": 0, "erreurs": []})
+    monkeypatch.setattr(E, "datetime", type("D", (E.datetime,), {"now": staticmethod(lambda tz=None: NOW)}))
+    assert E.webhook_pinnacle2(tmp_path, {"alertes": []})["envoyees"] == 1
+    assert E.webhook_pinnacle2(tmp_path, {"alertes": []})["envoyees"] == 0 and len(envoyes) == 1
