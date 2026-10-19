@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-19T21:56:38+00:00",
+  "debut": "2026-10-19T22:01:18+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 9.6,
+    "secondes": 11.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,33 +12,33 @@
     ]
    },
    "pinnacle": {
-    "secondes": 39.5,
+    "secondes": 37.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 matchups : HTTP 403",
-     "sport 6 matchups : HTTP 403",
-     "sport 26 matchups : HTTP 403"
+     "sport 9 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "sport 5 matchups : HTTP 403"
     ]
    },
-   "olybet": {
-    "secondes": 4.7,
+   "unibet_direct": {
+    "secondes": 4.8,
     "ok": true
    },
-   "unibet_direct": {
+   "olybet": {
     "secondes": 5.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 12.0,
+    "secondes": 12.7,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 20.9,
+    "secondes": 21.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -46,23 +46,20 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 62.8,
+    "secondes": 72.9,
     "ok": true
    },
    "smarkets": {
-    "secondes": 21.2,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 3.9,
+    "secondes": 5.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.4,
+    "secondes": 0.5,
     "ok": true
    },
    "cotes_cloture": {
@@ -74,20 +71,23 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 22,
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 27696,
    "erreurs": [],
-   "pause": true,
-   "cache_lignes": 22,
-   "retard": []
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 538,
-   "age_min_s": 36,
-   "lignes": 105142,
-   "lignes_perimees": 0,
+   "age_max_s": 815,
+   "age_min_s": 295,
+   "lignes": 105164,
+   "lignes_perimees": 79891,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -98,12 +98,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 27,
+    "head_200": 33,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "reprise_403": 6,
-    "choisi_fixe": 1
+    "choisi_fixe": 5,
+    "choisi_autre": 6,
+    "reprise_403": 6
    }
   },
   "olybet_source": "direct",
@@ -191,40 +191,8 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
-    {
-     "match": "Club Atletico Sarmiento De Junin – Barracas Central",
-     "source": "Pinnacle",
-     "cote_netbet": 2.17,
-     "cote_reference": 2.4,
-     "ecart_relatif": 0.0958,
-     "aberrant": false
-    },
-    {
-     "match": "Club Atletico Sarmiento De Junin – Barracas Central",
-     "source": "PMU",
-     "cote_netbet": 2.17,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0637,
-     "aberrant": false
-    },
-    {
-     "match": "Newell's Old Boys – Central Córdoba",
-     "source": "Pinnacle",
-     "cote_netbet": 1.53,
-     "cote_reference": 1.645,
-     "ecart_relatif": 0.07,
-     "aberrant": false
-    },
-    {
-     "match": "Newell's Old Boys – Central Córdoba",
-     "source": "PMU",
-     "cote_netbet": 1.53,
-     "cote_reference": 1.58,
-     "ecart_relatif": 0.0316,
-     "aberrant": false
-    },
     {
      "match": "Corinthians – EC Vitoria BA",
      "source": "Pinnacle",
@@ -272,27 +240,44 @@
      "cote_reference": 1.57,
      "ecart_relatif": 0.0255,
      "aberrant": false
+    },
+    {
+     "match": "Al Diriyah – Al-Riyadh SC",
+     "source": "Pinnacle",
+     "cote_netbet": 1.43,
+     "cote_reference": 1.532,
+     "ecart_relatif": 0.0665,
+     "aberrant": false
+    },
+    {
+     "match": "Al Taawon – Al Qadisiya Al Khubar",
+     "source": "PMU",
+     "cote_netbet": 5.1,
+     "cote_reference": 5.3,
+     "ecart_relatif": 0.0377,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-19T20:57:23+00:00",
-   "pinnacle_derniere_lecture": "2026-10-19T21:56:58+00:00",
+   "pinnacle_premiere_lecture": "2026-10-19T22:01:28+00:00",
+   "pinnacle_derniere_lecture": "2026-10-19T22:01:57+00:00",
    "books_premiere_lecture": "2026-10-19T21:06:05+00:00",
-   "books_derniere_lecture": "2026-10-19T21:57:18+00:00",
-   "ecart_enveloppe_secondes": 3595.0
+   "books_derniere_lecture": "2026-10-19T22:01:59+00:00",
+   "ecart_enveloppe_secondes": 3352.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 561,
    "a_verifier": 9,
    "non_conforme": 9,
-   "mesures": 12812,
+   "mesures": 11844,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -303,26 +288,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-19T21:44:42+00:00"
   },
-  "fin": "2026-10-19T21:58:49+00:00",
+  "fin": "2026-10-19T22:03:20+00:00",
   "cotes": {
-   "francaises": 39240,
-   "pinnacle": 105164,
-   "polymarket": 9909,
+   "francaises": 40703,
+   "pinnacle": 132860,
+   "polymarket": 11138,
    "smarkets": 3903
   },
-  "matchs_francais": 861,
-  "opportunites": 4,
+  "matchs_francais": 894,
+  "opportunites": 3,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-19T06:29:16+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {}
-  },
   {
    "debut": "2026-10-19T06:33:56+00:00",
    "mode": "complet",
@@ -1587,6 +1565,12 @@
    "debut": "2026-10-19T21:56:38+00:00",
    "mode": "complet",
    "opportunites": 4,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-19T22:01:18+00:00",
+   "mode": "complet",
+   "opportunites": 3,
    "nouveaux_paris": 0
   }
  ],
