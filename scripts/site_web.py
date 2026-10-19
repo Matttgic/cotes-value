@@ -21,6 +21,7 @@ from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
 from cotes.strategie_jules import JULES, paris_jules  # noqa: E402
 from cotes.strategie_jules_v2 import JULES_V2, paris_jules_v2  # noqa: E402
+from cotes.strategie_eden import EDEN, paris_eden  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
                               evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
@@ -165,6 +166,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     gemini = paris_gemini(paris)
     jules = paris_jules(paris)
     jules_v2 = paris_jules_v2(paris)
+    eden = paris_eden(paris)
     for p in paris:
         groupes.setdefault(cle_fiche(p), []).append(p)
     fiches = []
@@ -179,6 +181,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
         f["gemini"] = any(id(r) in gemini for r in lignes)
         f["jules"] = any(id(r) in jules for r in lignes)
         f["jules_v2"] = any(id(r) in jules_v2 for r in lignes)
+        f["eden"] = any(id(r) in eden for r in lignes)
         f["tranche"] = tranche(f["cote"]) if f.get("cote") else None
         fiches.append(f)
     recents = lambda champ: lambda f: f.get(champ) or ""      # noqa: E731
@@ -189,7 +192,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     # Les filtres ChatGPT et Gemini donnent accès à l'ensemble de leurs paris, même si les
     # simulations très volumineuses ont repoussé une fiche hors des plus récentes.
     deja = {id(f) for f in gardees}
-    gardees += [f for f in fiches if (f["chatgpt"] or f["gemini"] or f["jules"] or f["jules_v2"]) and id(f) not in deja]
+    gardees += [f for f in fiches if (f["chatgpt"] or f["gemini"] or f["jules"] or f["jules_v2"] or f["eden"]) and id(f) not in deja]
     gardees.sort(key=recents("detecte"), reverse=True)
     valeurs = {f: sorted({str(p.get(c)) for p in paris if p.get(c) is not None}) for f, c in CHAMPS_FILTRES.items()}
     return gardees, len(fiches), valeurs
@@ -205,6 +208,7 @@ def courbes(paris: list[dict]) -> dict[str, list]:
     gemini = paris_gemini(paris)
     jules = paris_jules(paris)
     jules_v2 = paris_jules_v2(paris)
+    eden = paris_eden(paris)
     out: dict[str, list] = {}
     regles = [p for p in paris if p.get("statut") not in ("en_cours", "a_regler") and p.get("regle_le")]
     regles.sort(key=lambda p: (p["regle_le"], p.get("debut") or ""))
@@ -222,7 +226,8 @@ def courbes(paris: list[dict]) -> dict[str, list]:
                 + ([CHATGPT["nom"]] if id(p) in chatgpt else [])
                 + ([GEMINI["nom"]] if id(p) in gemini else [])
                 + ([JULES["nom"]] if id(p) in jules else [])
-                + ([JULES_V2["nom"]] if id(p) in jules_v2 else []))
+                + ([JULES_V2["nom"]] if id(p) in jules_v2 else [])
+                + ([EDEN["nom"]] if id(p) in eden else []))
         for v in vues:
             out.setdefault(v, []).append(point)
     return out
@@ -362,6 +367,7 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         "Gemini Argon v1 (rejeu)": paris_gemini(observes, depuis=DEBUT_ETUDE),
         "JULES EDGE v1 (rejeu)": paris_jules(observes, depuis=DEBUT_ETUDE),
         "JULES EDGE v2 (rejeu)": paris_jules_v2(observes, depuis=DEBUT_ETUDE),
+        "Eden (rejeu)": paris_eden(observes, depuis=DEBUT_ETUDE),
         "M3 (rejeu)": paris_m3(observes, depuis=DEBUT_ETUDE),
     }
     officiels = {
@@ -370,6 +376,7 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         "Gemini Argon v1 (rejeu)": paris_gemini(paris),
         "JULES EDGE v1 (rejeu)": paris_jules(paris),
         "JULES EDGE v2 (rejeu)": paris_jules_v2(paris),
+        "Eden (rejeu)": paris_eden(paris),
         "M3 (rejeu)": paris_m3(paris),
     }
     cles = {nom: cle for cle, _, _, nom, _ in STRATEGIES}
@@ -511,12 +518,14 @@ def construire(donnees: Path, sortie: Path) -> Path:
         gemini_ids = paris_gemini(paris)
         jules_ids = paris_jules(paris)
         jules_v2_ids = paris_jules_v2(paris)
+        eden_ids = paris_eden(paris)
         officiels = {
             "Claude (rejeu)": paris_strategie(paris),
             "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
             "Gemini Argon v1 (rejeu)": gemini_ids,
             "JULES EDGE v1 (rejeu)": jules_ids,
             "JULES EDGE v2 (rejeu)": jules_v2_ids,
+            "Eden (rejeu)": eden_ids,
             "M3 (rejeu)": m3_ids,
         }
         laboratoire["m3_paris"] = [{k: p.get(k) for k in
@@ -539,6 +548,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
              "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
             for p in sorted((p for p in paris if id(p) in jules_v2_ids),
                             key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+        laboratoire["eden_paris"] = [{k: p.get(k) for k in
+            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
+            for p in sorted((p for p in paris if id(p) in eden_ids),
+                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
         officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
         prudentes = selections_prudentes(paris, bases={cle: officiels[nom] for cle, _, _, nom, _ in STRATEGIES})
         officiels.update({v["nom"]: prudentes[v["cle"]] for v in VARIANTES})
@@ -559,7 +573,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     # ici que ses étiquettes historiques ; le client partage les mêmes fiches.
     if laboratoire.get("navigation"):
         laboratoire["navigation"]["paris"] = {pid: {k: p.get(k) for k in
-            ("strategies_historiques", "convergence_historique", "tranche", "cote", "strategies", "jules_v2")}
+            ("strategies_historiques", "convergence_historique", "tranche", "cote", "strategies", "jules_v2", "eden")}
             for pid, p in laboratoire["navigation"]["paris"].items()}
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
@@ -579,6 +593,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "gemini": GEMINI,
             "jules": JULES,
             "jules_v2": JULES_V2,
+            "eden": EDEN,
             "m3": M3,
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
@@ -655,6 +670,7 @@ MODELE = r"""<!doctype html>
       <button id="voir-gemini" hidden>Voir les paris Gemini Argon</button>
       <button id="voir-jules" hidden>Voir les paris JULES EDGE</button>
       <button id="voir-jules-v2" hidden>Voir les paris JULES EDGE v2</button>
+      <button id="voir-eden" hidden>Voir les paris Eden</button>
       <details id="bilan-evolution" class="mode-emploi"><summary>Évolution du bilan</summary><div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
       </div><div class="legende" id="legende"></div>
       <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
@@ -684,7 +700,10 @@ MODELE = r"""<!doctype html>
       <b>Gemini Argon</b> : stratégie multi-références à plafond de cote adaptatif (2,15 Pinnacle / 2,60 Betfair & Polymarket),
       une mise par bookmaker et par match, huit par jour maximum.
       <b>JULES EDGE</b> : Pinnacle, cotes 1,30–2,50, edge 3–12 %, six paris par jour maximum.
-      Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.</p></details>
+      Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.
+      <b>Eden</b> : Pinnacle, cotes 1,30–2,00, edge 2–8 %, 30 min à 12 h, une mise par bookmaker et par match,
+      six par jour maximum. Suivi depuis le 19/10 à 16 h (Paris). Le passé est un rejeu descriptif ;
+      aucune rentabilité n'est annoncée.</p></details>
       </details>
     </div>
     <div id="o-strategies" role="tabpanel" aria-labelledby="bt-strategies" hidden>
@@ -713,7 +732,7 @@ MODELE = r"""<!doctype html>
       <div id="strategies-vue-graphiques" hidden>
       <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
       <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
-      Jules v1/v2 représentent une seule famille. Convergence ≥ 2 inclut M3 et reste exploratoire ; Convergence ≥ 3 hors M3 exclut cette stratégie optimisée sur le passé. Un accord ne prouve pas la rentabilité.</p>
+      Jules v1/v2 représentent une seule famille. Convergence ≥ 2 inclut M3, et Eden à partir du 19/10 ; elle reste exploratoire. Convergence ≥ 3 hors M3 ne compte ni M3 ni Eden. Un accord ne prouve pas la rentabilité.</p>
       <div class="carte"><div class="puces" id="strategies-legende"></div>
         <div id="strategies-courbes-vide" class="aide"></div>
         <svg id="strategies-courbes" viewBox="0 0 760 300" role="img" aria-label="Courbes comparées des gains cumulés en euros" style="width:100%;height:auto"></svg>
@@ -736,6 +755,13 @@ MODELE = r"""<!doctype html>
           <p class="aide">Ces règles ont été figées le 15/10. Cette reconstitution n'est pas un suivi prospectif et ne modifie aucun bilan officiel.</p>
           <div id="prudentes-reconstitution"></div>
         </details>
+      </details>
+      <details class="carte" id="eden-picks">
+        <summary><b>Eden</b> — voir les paris depuis le lancement</summary>
+        <p class="aide">Pinnacle · cotes 1,30–2,00 · edge 2–8 % · 30 min à 12 h · une mise par bookmaker et par match · max 6/jour · 10 € fictifs.
+        Suivi depuis le 19/10 à 16 h (Paris). Le protocole du 14 octobre n'a retenu aucune règle ; ce filtre ne promet pas de gain.
+        <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-eden.md" target="_blank" rel="noopener">Règles et limites</a>.</p>
+        <div id="eden-picks-list"></div>
       </details>
       <details class="carte" id="gemini-picks">
         <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement <small>(règle v2 depuis le 18/10/2026 : un pari par bookmaker et par match)</small></summary>
@@ -958,6 +984,7 @@ const CG = D.chatgpt || {};
 const GM = D.gemini || {};
 const JL = D.jules || {};
 const JV2 = D.jules_v2 || {};
+const ED = D.eden || {};
 const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée une seule fois (10 € par pari).",
   Toutes: "Somme des références : une même cote repérée par plusieurs références compte plusieurs fois.",
   "Stratégie": `Stratégie testée depuis le ${ST.debut ? new Date(ST.debut).toLocaleString("fr-FR", {day: "numeric",
@@ -984,7 +1011,12 @@ const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée 
   "JULES EDGE v2": `JULES EDGE v2 reconstruite — suivi à partir du ${new Date(JV2.debut).toLocaleString("fr-FR", {
     timeZone:"Europe/Paris", day:"numeric", month:"numeric", hour:"2-digit", minute:"2-digit"})} (Paris).
     Pinnacle, Betfair et Polymarket ; cotes 1,30–2,80 ; edge 2,5–12 % ; 15 min à 18 h avant le match ; référence de 5 min maximum.
-    Une mise par événement identifiable, huit par jour maximum, à 10 € fictifs. Historique séparé ; rentabilité future non démontrée.`};
+    Une mise par événement identifiable, huit par jour maximum, à 10 € fictifs. Historique séparé ; rentabilité future non démontrée.`,
+  "Eden": `Eden v${ED.version || 1} — suivi à partir du ${ED.debut ? new Date(ED.debut).toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit"}) : "19/10 16:00"} (Paris).
+    Pinnacle sans marge ; cotes 1,30–2,00 ; edge 2–8 % ; détection de 30 min à 12 h ; référence de 10 min maximum.
+    Une mise fictive de 10 € par bookmaker français et par match, ${ED.paris_max_jour || 6} prises maximum par jour.
+    Le rejeu d'avant le lancement est descriptif. Le protocole du 14 octobre n'a retenu aucune candidate. Rentabilité future non démontrée.`};
 // ligne « Total » : cumul des simulations choisies (A, A+B, A+B+C…), par défaut toutes
 const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
@@ -1016,7 +1048,7 @@ function additionner(sims, source = D.bilan, prefixe = "") {
   return t;
 }
 function rendreBilan() {
-  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", ...D.references, "Toutes"];
+  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", ...D.references, "Toutes"];
   const bloc = D.ecarts_references || {};
   document.getElementById("bilan-ecarts").textContent = "Paris uniques réglés · " +
     ["Polymarket", "Smarkets"].map(nom => {
@@ -1030,13 +1062,14 @@ function rendreBilan() {
   document.getElementById("voir-gemini").hidden = refBilan !== "Gemini Argon";
   document.getElementById("voir-jules").hidden = refBilan !== "JULES EDGE";
   document.getElementById("voir-jules-v2").hidden = refBilan !== "JULES EDGE v2";
+  document.getElementById("voir-eden").hidden = refBilan !== "Eden";
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
     : `<tr><td>${titre}</td><td>${b.regles}<small>${b.evenements_regles ?? "—"} matchs</small>${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""} · <b>${Math.round(100 * b.gagnes / b.regles)} %</b></small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
 <td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles} tickets</small><small>Par match ${pctC(b.clv_evenement)} · ${b.clv_evenements_n ?? 0}/${b.evenements_regles ?? "—"}</small>` : ""}</td></tr>`;
   document.getElementById("liste-bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
-    Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "M3", "Convergence ≥ 2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
+    Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "M3", "Convergence ≥ 2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
       additionner(CUMULS[cumul])).replace("<tr>", '<tr class="total">');
@@ -1144,7 +1177,7 @@ const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], s
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
   // cotes : les tranches du bilan ; simulations : + « Stratégie », « ChatGPT », « Gemini Argon »
   const vals = champ === "tranche" ? D.tranches || [] : [...((D.valeurs_filtres || {})[champ] || []),
-    ...(champ === "sims" ? ["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "M3", "Convergence ≥ 2", ...Object.keys(D.variantes || {})] : [])];
+    ...(champ === "sims" ? ["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "M3", "Convergence ≥ 2", ...Object.keys(D.variantes || {})] : [])];
   const sel = document.getElementById("f-" + id);
   sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
     champ==="statut" ? STATUTS[v]||v : champ==="sims" && D.simulations[v] ? v + " " + D.simulations[v] : v)}</option>`).join("");
@@ -1250,7 +1283,7 @@ function rendreParis() {
   const maintenant=Date.now(),triHoraire=document.getElementById('paris-tri').value;
   const L = trierHoraires(source.filter(p => accepteHoraire(p,document.getElementById('paris-horaire').value,maintenant) && accepteePuce(p) &&
     (!q || normaliserRecherche([p.domicile,p.exterieur,p.ligue,p.pari].join(" ")).includes(q)) &&
-    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v)) : p[k]===v))),triHoraire);
+    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="Eden" ? p.eden : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v)) : p[k]===v))),triHoraire);
   parisFiltres = L;
   document.getElementById("paris-resume").innerHTML = resumeParis(L);
   document.getElementById("paris-compte").textContent = `${L.length} prise(s) · ${Math.min(limite,L.length)} affichées · export des ${L.length} prises filtrées.`;
@@ -1389,6 +1422,15 @@ document.getElementById("voir-jules").onclick = () => {
   document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
   document.getElementById("f-sim").value = "JULES EDGE";
+  limite = 50;
+  rendreParis();
+  ouvrir("paris");
+};
+document.getElementById("voir-eden").onclick = () => {
+  strategieChoisie = null;
+  document.getElementById("f-q").value = "";
+  for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
+  document.getElementById("f-sim").value = "Eden";
   limite = 50;
   rendreParis();
   ouvrir("paris");
@@ -1598,13 +1640,13 @@ const STRAT_PERIODES = {futur:"Depuis le lancement", ensemble:"Historique 7–13
 const courbesMasquees = new Set();
 const COULEURS_COMPARATEURS = {"Claude (rejeu)":"var(--courbe-claude,#2675ce)", "ChatGPT v1 (rejeu)":"var(--courbe-chatgpt,#d15b13)",
   "Gemini Argon v1 (rejeu)":"var(--courbe-gemini,#16884c)", "JULES EDGE v1 (rejeu)":"var(--courbe-jules1,#b04baf)",
-  "JULES EDGE v2 (rejeu)":"var(--courbe-jules2,#865fe0)", "M3 (rejeu)":"var(--courbe-m3,#16838b)", "Convergence ≥ 2":"var(--courbe-convergence2,#c44862)", "Claude 1/match · max 10/j":"var(--courbe-claudeprudent,#b47b00)", "Convergence ≥ 3 hors M3":"var(--courbe-convergence3,#d13f8c)", "M3 · Max 3/match":"var(--courbe-m3structure,#7f9225)"};
+  "JULES EDGE v2 (rejeu)":"var(--courbe-jules2,#865fe0)", "Eden (rejeu)":"var(--courbe-eden,#1a7a6d)", "M3 (rejeu)":"var(--courbe-m3,#16838b)", "Convergence ≥ 2":"var(--courbe-convergence2,#c44862)", "Claude 1/match · max 10/j":"var(--courbe-claudeprudent,#b47b00)", "Convergence ≥ 3 hors M3":"var(--courbe-convergence3,#d13f8c)", "M3 · Max 3/match":"var(--courbe-m3structure,#7f9225)"};
 function rendreCourbesStrategies(rows) {
   const legend = document.getElementById("strategies-legende"), svg = document.getElementById("strategies-courbes");
   const toutes = rows.map(r => ({...r, points:D.laboratoire.navigation?.courbes?.[r.id]?.[periodeStrategies] || []}));
   const nomsCourts = {"M3 (rejeu)":"M3", "Convergence ≥ 2":"Conv. ≥ 2",
     "JULES EDGE v1 (rejeu)":"Jules v1", "JULES EDGE v2 (rejeu)":"Jules v2",
-    "ChatGPT v1 (rejeu)":"ChatGPT v1", "Gemini Argon v1 (rejeu)":"Gemini v1"};
+    "ChatGPT v1 (rejeu)":"ChatGPT v1", "Gemini Argon v1 (rejeu)":"Gemini v1", "Eden (rejeu)":"Eden"};
   legend.innerHTML = toutes.map(r => {
     const gain = r.points.length ? r.points.at(-1)[1] : (r.stats?.regles ? r.stats.gain : null);
     return `<button data-courbe="${e(r.id)}" aria-label="${e(r.nom)} : ${e(eurC(gain))}" aria-pressed="${!courbesMasquees.has(r.id)}" class="${courbesMasquees.has(r.id) ? "" : "actif"}"><span style="color:${COULEURS_COMPARATEURS[r.id] || "var(--texte)"}">●</span> ${e(D.variantes?.[r.id]?.court || nomsCourts[r.id] || r.nom)} ${e(eurC(gain))}</button>`;
@@ -1680,21 +1722,24 @@ function rendreStrategies() {
     : id.startsWith("Claude") ? "Claude"
       : id.startsWith("M3") ? "M3 · MultiSport"
       : id.startsWith("Gemini") ? "Gemini Argon V1"
+      : id.startsWith("Eden") ? "Eden"
       : "ChatGPT V1";
     const detailComp = variante ? (periodeStrategies === "futur"
       ? `Depuis le ${quand(variante.debut)} · ${variante.regles}`
       : `Rejeu exploratoire après audit · ${variante.regles}`) : periodeStrategies === "futur"
-      ? (id.startsWith("Convergence") ? "Depuis le 15/10 à 01 h · 2 familles minimum · M3 incluse"
+      ? (id.startsWith("Convergence") ? "Depuis le 15/10 à 01 h · 2 familles minimum · M3 incluse · Eden à partir du 19/10"
          : id.startsWith("JULES EDGE v2") ? "Depuis le 15/10 à 00 h 30 · multi-réf. · max 8/j"
          : id.startsWith("JULES") ? "Depuis le 14/10 à 23 h 04 · 1 pari/match · max 6/j"
          : id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection"
          : id.startsWith("Gemini") ? "Multi-réf. adaptative · 1 pari/match · max 8/j"
+         : id.startsWith("Eden") ? "Depuis le 19/10 à 16 h · Pinnacle · 1,30–2,00 · max 6/j"
          : "Nouvelles prises officielles depuis le 14/10 à 14 h")
       : (id.startsWith("Convergence") ? "Rejeu exploratoire · même prise, prix et instant · 2 familles minimum"
          : id.startsWith("JULES EDGE v2") ? "Rejeu a posteriori · multi-réf. · 1,30–2,80 · edge 2,5–12 % · max 8/j"
          : id.startsWith("JULES") ? "Rejeu a posteriori · Pinnacle · 1,30–2,50 · edge 3–12 % · max 6/j"
          : id.startsWith("M3") ? "Optimisation a posteriori · 3 sports · 1,30–3,00 · 2–12 % d’edge"
          : id.startsWith("Gemini") ? "Rejeu hypothétique · Pin ≤ 2,15 / Bet+Poly ≤ 2,60 · edge ≥ 2,5 %"
+         : id.startsWith("Eden") ? "Rejeu descriptif · Pinnacle · 1,30–2,00 · edge 2–8 % · 30 min–12 h"
          : "Rejeu hypothétique · mêmes dates que la famille");
     rows.push({id, nom:nomComp, reference:"comparateurs", detail:detailComp,
       graphe:"Comparateur", stats:periodeStrategies === "futur" ? L.comparateurs_futur?.[id] : per[periodeStrategies]});
@@ -1726,6 +1771,14 @@ function rendreStrategies() {
   contexte.textContent=periodeStrategies==="futur" ? "Suivi prospectif" : "Rejeu historique";
   contexte.classList.toggle("historique",periodeStrategies!=="futur");
   for (const b of document.querySelectorAll("#strategies-periodes button")) b.onclick = () => { periodeStrategies=b.dataset.p; rendreStrategies(); };
+  const edenPicks = L.eden_paris || [];
+  document.getElementById("eden-picks-list").innerHTML = edenPicks.length
+    ? edenPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
+       <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
+       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
+       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
+       </article>`).join("")
+    : '<p class="aide">Aucune nouvelle sélection Eden depuis le 19/10 à 16 h (Paris).</p>';
   const gemPicks = L.gemini_paris || [];
   const suivis = L.suivis_prudents || {};
   const navPrudent = L.navigation?.paris || {};
@@ -1772,7 +1825,7 @@ function rendreStrategies() {
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
   document.getElementById("strategies-total").textContent = `${rows.length} stratégies · ${reglees.length} avec des règlements · résultats non cumulables.`;
   const descriptions = {
-    futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h (Paris). Les décisions sont figées à partir de la mise en service du registre ; les prises antérieures restent des reconstructions. Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
+    futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h, Eden le 19/10 à 16 h (Paris). Les décisions sont figées à partir de la mise en service du registre ; les prises antérieures restent des reconstructions. Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
     ensemble:"Historique figé : matchs du 7 au 13 octobre, règlements disponibles au relevé du 14/10 à 12 h 09 (Paris), y compris les règlements tardifs. Rejeu rétrospectif, distinct du suivi depuis lancement.",
     construction:"Construction : matchs du 7 au 10 octobre ; seuls les règlements connus avant le 11 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
     validation:"Validation : matchs des 11 et 12 octobre ; seuls les règlements connus avant le 13 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
@@ -1780,7 +1833,7 @@ function rendreStrategies() {
   };
   document.getElementById("strategies-quoi").textContent = descriptions[periodeStrategies] +
     (periodeStrategies === "futur" && !active.length ? " Aucune nouvelle sélection enregistrée : la dernière collecte disponible précède ce lancement. Le bouton Historique affiche la comparaison existante." : "") +
-    ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, M3, convergence ≥ 2 et trois variantes encadrées) ; aucune rentabilité future démontrée.`;
+    ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, Eden, M3, convergence ≥ 2 et trois variantes encadrées) ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
     return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nomCourt || r.nom)}</b><span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
@@ -1861,7 +1914,7 @@ function rendreLaboratoire() {
     <p class="aide">Chaque cellule affiche le ROI sur mises réglées, puis les effectifs. Ordre fixe, sans tri selon la période de test.</p>
     <div class="tableau"><table><tr><th>Règle</th><th>7–10 oct.</th><th>11–12 oct.</th><th>13 oct.</th></tr>
     ${L.resultats.map(r => `<tr><td>${e(r.regle.id)}</td>${["construction","validation","test"].map(p => `<td>${metrique(r[p])}</td>`).join("")}</tr>`).join("")}</table></div></details>
-    <details style="margin-top:12px"><summary>Comparateurs : Claude, ChatGPT V1, Gemini Argon V1, JULES EDGE V1/V2 et M3</summary>
+    <details style="margin-top:12px"><summary>Comparateurs : Claude, ChatGPT V1, Gemini Argon V1, JULES EDGE V1/V2, Eden et M3</summary>
     <p class="aide">Rejeux hypothétiques avant leurs lancements, distincts des bilans officiels ci-dessous.
     Claude et M3 peuvent sélectionner plusieurs paris par match ; l’exposition diffère. Aucun comparateur ne participe au classement.</p>
     <div class="tableau"><table><tr><th>Rejeu</th><th>7–10 oct.</th><th>11–12 oct.</th><th>13 oct.</th></tr>

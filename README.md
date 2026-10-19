@@ -232,6 +232,16 @@ python scripts/cycle.py --mode test     # cycle réduit, sans clé
 [Critères et audit de Gemini Argon V1](docs/strategie-gemini.md), suivie depuis
 le 14 octobre à 20 h (Paris), dans Bilan, Stratégies et Paris. Rentabilité non démontrée.
 
+### Eden
+
+**Bilan → Eden** et **Stratégies → Eden** suivent les nouvelles détections depuis
+le **19 octobre 2026 à 16 h (Paris)**. Pinnacle seulement, cotes 1,30–2,00,
+edge 2–8 %, 30 minutes à 12 heures avant le match, une mise fictive de 10 €
+par bookmaker français et par match, six prises maximum par jour.
+Le protocole du 14 octobre n'a retenu aucune des 36 règles. Le rejeu d'Eden
+sur cet historique est descriptif et ne démontre pas de rentabilité.
+[Règles et limites](docs/strategie-eden.md).
+
 ## Sécurité et audit
 
 [Configuration, secrets et publication](SECURITY.md).

@@ -6,13 +6,16 @@ import json
 import pytest
 
 from cotes.strategie_chatgpt import CHATGPT, motif_refus, paris_chatgpt
+from cotes.strategie_eden import motif_refus_eden, paris_eden
 from cotes.strategie_jules_v2 import (JULES_V2, _cles, analyser_jules_v2,
     diagnostic_jules_v2, motif_refus_jules_v2, paris_jules_v2)
 from cotes.strategie_commune import edge_coherent, ligne_non_quart, issue_valide
 from tests.test_strategie_chatgpt import pari as chatgpt
+from tests.test_strategie_eden import pari as eden
 from tests.test_strategie_jules_v2 import pari as jules, ref
 
-SELECTEURS = [(chatgpt, motif_refus, paris_chatgpt), (jules, motif_refus_jules_v2, paris_jules_v2)]
+SELECTEURS = [(chatgpt, motif_refus, paris_chatgpt), (jules, motif_refus_jules_v2, paris_jules_v2),
+              (eden, motif_refus_eden, paris_eden)]
 
 
 @pytest.mark.parametrize('fabrique,motif,selectionner', SELECTEURS)
@@ -116,7 +119,8 @@ def test_diagnostic_fusion_tardive_preserve_chaque_prefixe():
     assert diagnostic_jules_v2(rows)['fusions_tardives'] == 1
 
 
-@pytest.mark.parametrize('fabrique,selectionner,maximum', [(chatgpt, paris_chatgpt, 5), (jules, paris_jules_v2, 8)])
+@pytest.mark.parametrize('fabrique,selectionner,maximum', [
+    (chatgpt, paris_chatgpt, 5), (jules, paris_jules_v2, 8), (eden, paris_eden, 6)])
 def test_plafond_reinitialise_a_minuit_paris_en_hiver(fabrique, selectionner, maximum):
     # UTC+1 après le changement d'heure : le jour français change à 23h UTC.
     t = datetime(2026, 11, 1, 22, tzinfo=timezone.utc)

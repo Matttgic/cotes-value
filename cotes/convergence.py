@@ -15,6 +15,7 @@ from cotes.strategie_chatgpt import paris_chatgpt
 from cotes.strategie_gemini import paris_gemini
 from cotes.strategie_jules import paris_jules
 from cotes.strategie_jules_v2 import paris_jules_v2
+from cotes.strategie_eden import paris_eden
 from cotes.strategie_m3 import paris_m3
 
 CONVERGENCE = {"nom": "Convergence ≥ 2", "debut": "2026-10-14T23:00:00+00:00"}
@@ -25,6 +26,7 @@ STRATEGIES = (
     ("gemini", "gemini", "Gemini Argon v1", "Gemini Argon v1 (rejeu)", paris_gemini),
     ("jules", "jules", "Jules v1", "JULES EDGE v1 (rejeu)", paris_jules),
     ("jules_v2", "jules", "Jules v2", "JULES EDGE v2 (rejeu)", paris_jules_v2),
+    ("eden", "eden", "Eden", "Eden (rejeu)", paris_eden),
     ("m3", "m3", "M3", "M3 (rejeu)", paris_m3),
 )
 
