@@ -75,6 +75,11 @@ jobs:
           PINNODDS_LIMITE_JOUR: ${{ vars.PINNODDS_LIMITE_JOUR || '90' }}
           PINNODDS_PAUSE_MIN: ${{ vars.PINNODDS_PAUSE_MIN || '30' }}
           PINNODDS_HANDICAPS: ${{ vars.PINNODDS_HANDICAPS || 'non' }}
+          # Second secours (PinBook, offre gratuite de 550 requêtes par mois) : inactif sans ce secret
+          PINBOOK_API_KEY: ${{ secrets.PINBOOK_API_KEY }}
+          PINBOOK_LIMITE_JOUR: ${{ vars.PINBOOK_LIMITE_JOUR || '16' }}
+          PINBOOK_PAUSE_MIN: ${{ vars.PINBOOK_PAUSE_MIN || '60' }}
+          PINBOOK_SPORTS: ${{ vars.PINBOOK_SPORTS || 'football,tennis,basket' }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
           THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
           THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
