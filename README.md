@@ -27,6 +27,9 @@ par lui) est arrêté depuis le 18/10/2026. `cotes/pulsescore.py` ne fait plus d
 
 Les paris déjà pris contre Betfair ou Kalshi restent dans les bilans ; ces sources ne sont plus interrogées.
 
+Pinnacle a un **secours** facultatif (pinnodds, clé gratuite) quand sa lecture directe échoue : voir
+[docs/pinnacle-secours.md](docs/pinnacle-secours.md).
+
 OlyBet et NetBet peuvent être coupés (`SOURCE_OLYBET` ou `SOURCE_NETBET` = `off`).
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
 compte restent en période `MATCH?` et ne sont pas comparés.

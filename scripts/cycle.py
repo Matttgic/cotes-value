@@ -36,7 +36,7 @@ from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes.direct import unibet as unibet_direct  # noqa: E402
 from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
-from cotes import theodds, resultats_nhl, propline  # noqa: E402
+from cotes import theodds, resultats_nhl, propline, pinnacle_secours  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
@@ -304,6 +304,12 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         fpoly = pool.submit(etape_bornee, "polymarket", journal, BUDGETS["polymarket"],
                             polymarket.collecter, HORIZON_H)
         pin, poly = fpin.result() or [], fpoly.result() or []
+        # Secours : seulement pour les sports où Pinnacle a répondu en erreur HTTP, et seulement avec une clé.
+        if pinnacle_secours.disponible():
+            a_secourir = pinnacle_secours.sports_a_secourir(list(pinnacle.ERREURS), pin)
+            if a_secourir:
+                pin = pin + pinnacle_secours.collecter(a_secourir, maintenant, donnees)
+                journal["pinnacle_secours"] = {**pinnacle_secours.RESUME, "erreurs": list(pinnacle_secours.ERREURS)}
         if pinnacle._cle_resolue:
             journal["pinnacle_configuration"] = {"mode": pinnacle.origine_cle}
         ages = [l.get("age_cache_s") for l in pin

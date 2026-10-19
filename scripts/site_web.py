@@ -1569,8 +1569,10 @@ function rendreSante(maintenant=Date.now()) {
     ligneSante("Collecte et comparaison", dc.debut ? `Dernier relevé ${hm(dc.debut)}${duree != null ? " · "+duree+" s" : ""} · toutes les 5 min environ` : "Aucun relevé", age == null ? "panne" : age > 60 ? "panne" : age > 15 ? "alerte" : "ok") +
     ligneSante("Règlement des paris", jr.debut ? `Dernier passage ${quand(jr.debut)}${Number.isInteger(nReglements) ? " · "+nReglements+" enregistrement"+(nReglements>1?"s":"")+" réglé"+(nReglements>1?"s":"") : ""}` : "Aucun passage enregistré",
       ageReglement == null ? "alerte" : ageReglement > 720 ? "panne" : ageReglement > 180 ? "alerte" : "ok");
+  const secours = dc.pinnacle_secours;
   document.getElementById("sante-cotes").innerHTML = SOURCES_COTES.filter(([k]) => etapes[k]).map(([k,nom]) =>
-    ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus" : detailEtape(etapes[k]), niveauEtape(etapes[k]))).join("")
+    ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus" : detailEtape(etapes[k]), niveauEtape(etapes[k]))
+      + (k === "pinnacle" && secours ? ligneSante("Pinnacle · secours pinnodds", secours.lignes ? `${secours.lignes} cotes · ${(secours.sports || []).length} sport${(secours.sports || []).length > 1 ? "s" : ""}` : secours.pause ? "En pause entre deux lectures" : (secours.erreurs || [])[0] || "Aucune cote reprise", secours.lignes ? "alerte" : "panne") : "")).join("")
     || '<p class="aide sante-vide">Aucune lecture enregistrée.</p>';
   const parSource = new Map();
   for (const [k,v] of Object.entries(jr.etapes || {})) {
