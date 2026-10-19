@@ -619,7 +619,6 @@ MODELE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value</title>
-<script>try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}</script>
 <style>__INTERFACE_CSS__</style>
 </head>
 <body>
@@ -916,6 +915,8 @@ MODELE = r"""<!doctype html>
   </section>
 </main>
 <script>
+// Mode jour/nuit appliqué dès le début du script unique de la page (les contrôles de publication exigent un seul script).
+try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}
 const D = __DONNEES__;
 const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cote = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
