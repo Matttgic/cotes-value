@@ -153,7 +153,7 @@ def test_site_strategies_et_comparateurs_meme_date(tmp_path, monkeypatch):
     (tmp_path / "paris.json").write_text(json.dumps(rows))
     html = site_web.construire(tmp_path, tmp_path / "site").read_text()
     data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
-    assert 'data-o="strategies"' in html and 'id="o-strategies"' in html
+    assert 'data-bilan="strategies"' in html and 'id="o-strategies"' in html
     assert len(data["laboratoire"]["resultats"]) == 36
     for nom in ("Claude (rejeu)", "ChatGPT v1 (rejeu)"):
         s = data["laboratoire"]["comparateurs_futur"][nom]

@@ -27,8 +27,8 @@ def test_document_autonome_navigation_unique_et_apercu(tmp_path):
     p = Elements()
     p.feed(html)
     assert not [k for k, n in Counter(p.ids).items() if n > 1]
-    assert set(p.onglets) == {"jouer", "strategies", "paris", "bilan", "segments", "notifications", "regler", "controle", "analyses"}
-    assert len(p.onglets) == 9
+    # Quatre onglets : « À jouer », Stratégies, Analyses, Segments et À régler vivent sous Paris, Bilan et Santé.
+    assert p.onglets == ["paris", "bilan", "notifications", "controle"]
     assert {"nav-plus-toggle", "nav-secondaires", "strategies-mobile", "fraicheur"} <= set(p.ids)
     assert set(p.labels) <= set(p.ids)
     # Les fragments servent au routeur, jamais à une ancre située sous les filtres.

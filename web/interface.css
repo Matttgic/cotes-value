@@ -193,7 +193,7 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 @media(max-width:1000px){.strategies-table{font-size:11px}.strategies-table th,.strategies-table td{padding:12px 5px}nav button{padding:12px 10px;font-size:12px}nav .icone{width:17px}}
 @media(max-width:760px){
   .haut{z-index:10}.titre{padding:13px 18px}.monogramme{width:34px;height:34px;border-radius:10px;font-size:22px}.marque{gap:9px}h1{font-size:19px}.signature{font-size:9px}.maj{font-size:9px}.fraicheur{font-size:10px}
-  nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--carte);border-top:1px solid var(--ligne);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:4px 6px calc(5px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px #172b3506}
+  nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--carte);border-top:1px solid var(--ligne);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:4px 6px calc(5px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px #172b3506}
   nav button{flex-direction:column;gap:4px;min-height:58px;font-size:10px;font-weight:550;padding:6px 0;border:0;border-radius:10px;line-height:1.2;background:transparent!important;min-width:0}
   nav button>span{position:relative;white-space:nowrap}nav .icone{width:21px;height:21px}nav .nb{font-size:8px;position:absolute;top:-30px;left:calc(50% + 5px);margin:0;padding:1px 3px;line-height:1.3;min-width:14px;border:1px solid var(--carte);background:var(--fond);color:var(--doux)}
   nav button.actif{color:var(--accent);background:var(--accent-f)!important}#nav-plus-toggle{display:flex}
@@ -484,3 +484,15 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .interrupteur::after{content:'';position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0003;transition:transform .15s}
 #notif-strategies .notif-choix .interrupteur:checked,.interrupteur:checked{background:var(--accent)}.interrupteur:checked::after{transform:translateX(20px)}
 .interrupteur:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.bilan-liens{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}
+
+/* Santé : état lisible en un coup d'œil. */
+.sante-global{display:flex;flex-direction:column;gap:4px;border-left:4px solid var(--sante-ok)}
+.sante-global.sante-alerte{border-left-color:var(--sante-alerte)}.sante-global.sante-panne{border-left-color:var(--sante-panne)}
+.sante-global-titre{display:flex;align-items:center;gap:10px;font-size:16px}.sante-global .aide{margin:0}
+.sante-ligne{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;min-height:52px;border-top:1px solid var(--ligne)}
+.sante-ligne:first-child{border-top:0}.sante-ligne>div{min-width:0}.sante-ligne b{display:block;font-size:14px}
+.sante-ligne small{display:block;font-size:12px;color:var(--doux);overflow-wrap:anywhere}
+.sante-mot{flex:none;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+.sante-mot-ok{background:var(--gagne-f);color:var(--gagne)}.sante-mot-alerte{background:var(--regler-f);color:var(--regler)}.sante-mot-panne{background:var(--perdu-f);color:var(--perdu)}
+.sante-vide{padding:10px 12px;margin:0}.sante-controle{margin-top:18px}
