@@ -115,10 +115,14 @@ def test_budget_journalier_et_pause(tmp_path, monkeypatch):
     assert len(session.appels) == 2 and "limite journalière" in S.ERREURS[0]
     etat = json.loads((tmp_path / "pinnacle_secours.json").read_text())
     assert etat["requetes"] == 2 and etat["jour"] == "2026-10-19"
-    # dans la pause de 30 minutes : aucune requête, et pas d'erreur
-    assert S.collecter({29}, NOW + timedelta(minutes=10), tmp_path, session) == [] and len(session.appels) == 2
-    assert S.RESUME["pause"] is True and not S.ERREURS
-    # budget épuisé le même jour, même après la pause
+    # dans la pause de 30 minutes : aucune requête, le dernier passage est rejoué avec son âge réel
+    frais = S.collecter({29}, NOW + timedelta(minutes=5), tmp_path, session)
+    assert len(session.appels) == 2 and S.RESUME["pause"] is True and not S.ERREURS
+    assert frais and S.RESUME["cache_lignes"] == len(frais) and not any(l["cote_perimee"] for l in frais)
+    assert {l["age_cache_s"] for l in frais} == {4 + 300}
+    vieux = S.collecter({29}, NOW + timedelta(minutes=10, seconds=1), tmp_path, session)
+    assert vieux and all(l["cote_perimee"] for l in vieux)                  # au-delà de 10 minutes : plus de référence
+    # budget épuisé le même jour, même après la pause : toujours aucune requête
     S.collecter({29}, NOW + timedelta(minutes=40), tmp_path, session)
     assert len(session.appels) == 2
     # le lendemain, le compteur repart de zéro
@@ -190,3 +194,13 @@ def test_cycle_sans_secours_quand_pinnacle_va_bien_ou_sans_cle(monkeypatch):
     monkeypatch.delenv("PINNODDS_API_KEY")
     cycle.collecter_prematch("complet", NOW, journal)
     assert "pinnacle_secours" not in journal
+
+
+def test_cache_ignore_les_matchs_commences_et_les_caches_trop_vieux(tmp_path):
+    S.collecter({29}, NOW, tmp_path, Session(Reponse()))
+    assert S.collecter({29}, NOW + timedelta(minutes=10), tmp_path, Session(Reponse())) != []
+    assert S.collecter({29}, NOW + timedelta(hours=5, minutes=1), tmp_path, Session(Reponse(statut=503))) == []   # match commencé
+    assert S.collecter({29}, NOW + timedelta(hours=3, minutes=1), tmp_path, Session(Reponse(statut=503))) == []   # cache trop vieux
+    assert S.collecter({33}, NOW + timedelta(minutes=10), tmp_path, Session(Reponse(statut=503))) == []           # autre sport
+    (tmp_path / "pinnacle_secours_cache.json").write_text("{pas du json")
+    assert S.collecter({29}, NOW + timedelta(minutes=10), tmp_path, Session(Reponse(statut=503))) == []

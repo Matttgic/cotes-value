@@ -13,7 +13,9 @@ Prudence :
   ne renvoie alors rien, jamais de vieilles cotes ;
 - l'offre gratuite plafonne à 100 requêtes par jour : ``PINNODDS_LIMITE_JOUR`` (90 par défaut) et
   ``PINNODDS_PAUSE_MIN`` (30 minutes entre deux lectures par défaut). Avec un abonnement, relever la
-  limite et mettre la pause à 0.
+  limite et mettre la pause à 0 ;
+- entre deux lectures, le dernier passage est rejoué avec son âge réel (``pinnacle_secours_cache.json``) :
+  une ligne plus vieille que ``PINNACLE_AGE_MAX_MIN`` reste marquée périmée et ne sert pas de référence.
 """
 from __future__ import annotations
 
@@ -32,6 +34,7 @@ BASE = "https://pinnodds.com"
 SPORTS_PINNODDS = {29: 1, 33: 2, 4: 3, 19: 4, 15: 5, 3: 6, 22: 8, 6: 9, 34: 14, 18: 15}
 LIMITE_JOUR_DEFAUT = 90
 PAUSE_MIN_DEFAUT = 30
+CACHE_MAX_H = 3                    # au-delà, le cache n'est plus rejoué du tout
 ERREURS: list[str] = []
 RESUME: dict = {}
 
@@ -161,7 +164,7 @@ def _etat_budget(chemin: Path | None, maintenant: datetime) -> dict:
 
 def collecter(sports: set[int], maintenant: datetime | None = None, donnees: Path | None = None,
               session=None) -> list[dict]:
-    """Lignes de secours pour les sports Pinnacle demandés ; [] sans clé, pendant la pause ou hors budget."""
+    """Lignes de secours pour les sports Pinnacle demandés ; [] sans clé. Pause ou budget épuisé : dernier passage rejoué."""
     ERREURS.clear()
     RESUME.clear()
     maintenant = maintenant or datetime.now(timezone.utc)
@@ -169,21 +172,25 @@ def collecter(sports: set[int], maintenant: datetime | None = None, donnees: Pat
     if not disponible():
         return []
     chemin = donnees / "pinnacle_secours.json" if donnees is not None else None
+    chemin_cache = donnees / "pinnacle_secours_cache.json" if donnees is not None else None
     etat = _etat_budget(chemin, maintenant)
     pause = _entier_env("PINNODDS_PAUSE_MIN", PAUSE_MIN_DEFAUT)
+    en_pause = False
     if etat.get("dernier"):
         try:
             depuis = (maintenant - datetime.fromisoformat(etat["dernier"])).total_seconds() / 60
         except (TypeError, ValueError):
             depuis = None
-        if depuis is not None and depuis < pause:
-            RESUME["pause"] = True
-            return []
+        en_pause = depuis is not None and depuis < pause
+    if en_pause:
+        RESUME["pause"] = True
     limite = _entier_env("PINNODDS_LIMITE_JOUR", LIMITE_JOUR_DEFAUT)
     handicaps = os.environ.get("PINNODDS_HANDICAPS", "").strip().lower() == "oui"
     session = session or requests.Session()
-    lignes: list[dict] = []
+    par_sport: dict[int, list[dict]] = {}
     for sid in sorted(sports & set(SPORTS_PINNODDS)):
+        if en_pause:
+            break
         if etat["requetes"] >= limite:
             ERREURS.append("pinnodds : limite journalière du secours atteinte")
             break
@@ -202,15 +209,72 @@ def collecter(sports: set[int], maintenant: datetime | None = None, donnees: Pat
                 "collecte_debut": instant, "collecte_recue": instant, "age_cache_s": age,
                 "cote_perimee": age is None or age > pinnacle.age_max_secondes()}
         lues = [l for ev in evenements if isinstance(ev, dict) for l in _lignes_evenement(ev, sport, base, handicaps)]
-        lignes += lues
+        pinnacle._ajouter_proba_justes(lues)
+        par_sport[sid] = [l for l in lues if l.get("proba_juste")]      # un marché incomplet ou incohérent ne sert pas
         RESUME["sports"].append(sport)
-    pinnacle._ajouter_proba_justes(lignes)
-    lignes = [l for l in lignes if l.get("proba_juste")]      # un marché incomplet ou incohérent ne sert pas
-    etat["dernier"] = maintenant.isoformat(timespec="seconds")
-    if chemin is not None:
-        chemin.write_text(json.dumps(etat), encoding="utf-8")
+    lignes = [l for ls in par_sport.values() for l in ls]
+    if not en_pause and RESUME["requetes"]:
+        etat["dernier"] = maintenant.isoformat(timespec="seconds")
+        if chemin is not None:
+            chemin.write_text(json.dumps(etat), encoding="utf-8")
+    # pas de lecture fraîche pour ce sport : le dernier passage, avec son âge réel
+    rejoues = _lire_cache(chemin_cache, (sports & set(SPORTS_PINNODDS)) - set(par_sport), maintenant)
+    _ecrire_cache(chemin_cache, {sid: [l for l in ls if isinstance(l.get("age_cache_s"), int)] for sid, ls in par_sport.items()}, maintenant)
+    RESUME["cache_lignes"] = len(rejoues)
+    lignes += rejoues
     RESUME["lignes"] = len(lignes)
     return lignes
+
+
+def _lire_cache(chemin: Path | None, sports: set[int], maintenant: datetime) -> list[dict]:
+    """Lignes du dernier passage des sports demandés, avec leur âge réel ; [] si rien d'exploitable."""
+    if chemin is None or not chemin.exists():
+        return []
+    try:
+        cache = json.loads(chemin.read_text(encoding="utf-8")).get("sports", {})
+    except (OSError, ValueError, AttributeError):
+        return []
+    out: list[dict] = []
+    for sid in sports:
+        bloc = cache.get(str(sid)) if isinstance(cache, dict) else None
+        try:
+            lu = datetime.fromisoformat(bloc["lu"])
+            ecoule = (maintenant - lu).total_seconds()
+            lignes = bloc["lignes"]
+        except (TypeError, KeyError, ValueError):
+            continue
+        if not isinstance(lignes, list) or not 0 <= ecoule <= CACHE_MAX_H * 3600:
+            continue
+        for l in lignes:
+            if not isinstance(l, dict) or not isinstance(l.get("age_cache_s"), int):
+                continue
+            debut = _debut(l)
+            if debut is None or debut <= maintenant:
+                continue
+            age = l["age_cache_s"] + int(ecoule)
+            out.append({**l, "age_cache_s": age, "cote_perimee": age > pinnacle.age_max_secondes()})
+    return out
+
+
+def _debut(ligne: dict):
+    try:
+        return datetime.fromisoformat(str(ligne.get("debut")).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _ecrire_cache(chemin: Path | None, par_sport: dict[int, list[dict]], maintenant: datetime) -> None:
+    if chemin is None or not par_sport:
+        return
+    try:
+        cache = json.loads(chemin.read_text(encoding="utf-8")).get("sports", {}) if chemin.exists() else {}
+    except (OSError, ValueError, AttributeError):
+        cache = {}
+    if not isinstance(cache, dict):
+        cache = {}
+    for sid, lignes in par_sport.items():
+        cache[str(sid)] = {"lu": maintenant.isoformat(timespec="seconds"), "lignes": lignes}
+    chemin.write_text(json.dumps({"sports": cache}, separators=(",", ":")), encoding="utf-8")
 
 
 def comparer(direct: list[dict], secours: list[dict]) -> dict:

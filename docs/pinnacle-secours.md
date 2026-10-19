@@ -42,3 +42,7 @@ PINNODDS_API_KEY=... PINNODDS_HANDICAPS=oui python scripts/comparer_secours_pinn
 La couverture et la part de cotes à ±1 % doivent être très élevées. Tant que ce n'est pas vérifié,
 laisser `PINNODDS_HANDICAPS` à `non` : le signe du handicap et les périodes de pinnodds n'ont pas été
 confrontés à la lecture directe.
+
+## Entre deux lectures
+
+Le secours ne lit que toutes les 30 minutes (offre gratuite). Entre deux lectures, le dernier passage est rejoué depuis `pinnacle_secours_cache.json` avec son âge réel : une ligne plus vieille que `PINNACLE_AGE_MAX_MIN` (10 minutes par défaut) reste marquée périmée et ne sert pas de référence, un match commencé est retiré, et le cache est ignoré au-delà de 3 heures. Limite : avec 90 requêtes par jour, l'offre gratuite ne donne une référence fraîche que quelques dizaines de minutes par jour.
