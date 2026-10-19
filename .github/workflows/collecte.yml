@@ -70,6 +70,11 @@ jobs:
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
           PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
+          # Secours Pinnacle (pinnodds) : inactif sans ce secret ; voir docs/pinnacle-secours.md
+          PINNODDS_API_KEY: ${{ secrets.PINNODDS_API_KEY }}
+          PINNODDS_LIMITE_JOUR: ${{ vars.PINNODDS_LIMITE_JOUR || '90' }}
+          PINNODDS_PAUSE_MIN: ${{ vars.PINNODDS_PAUSE_MIN || '30' }}
+          PINNODDS_HANDICAPS: ${{ vars.PINNODDS_HANDICAPS || 'non' }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
           THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
           THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}

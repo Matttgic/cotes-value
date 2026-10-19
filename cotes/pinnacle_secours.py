@@ -1,0 +1,228 @@
+"""Secours Pinnacle : les cotes d'avant-match de pinnodds, quand l'API publique de Pinnacle échoue.
+
+pinnodds revend le flux de Pinnacle (REST, sans compte Pinnacle). Le secours ne s'allume que si
+``PINNODDS_API_KEY`` existe et seulement pour les sports où la lecture directe a répondu en erreur
+HTTP (403, 503…) : tant que Pinnacle répond, aucune requête n'est faite. Les lignes ont le même format
+que ``pinnacle.collecter`` (``source`` « pinnacle », ``origine`` « pinnodds »), avec leur probabilité juste.
+
+Prudence :
+- seuls les marchés sans ambiguïté sont repris : résultat, vainqueur et totaux (période et sport selon
+  ``pinnacle.PERIODES``). Les handicaps et les totaux par équipe ne le sont qu'avec
+  ``PINNODDS_HANDICAPS=oui``, après comparaison avec la lecture directe (scripts/comparer_secours_pinnacle.py) ;
+- pinnodds retient sa grille quand ses données sont périmées (``X-Data-Status: stale``) : le secours
+  ne renvoie alors rien, jamais de vieilles cotes ;
+- l'offre gratuite plafonne à 100 requêtes par jour : ``PINNODDS_LIMITE_JOUR`` (90 par défaut) et
+  ``PINNODDS_PAUSE_MIN`` (30 minutes entre deux lectures par défaut). Avec un abonnement, relever la
+  limite et mettre la pause à 0.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+
+import requests
+
+from . import pinnacle
+
+BASE = "https://pinnodds.com"
+# sport Pinnacle -> identifiant pinnodds (volley et handball ont chacun leur identifiant)
+SPORTS_PINNODDS = {29: 1, 33: 2, 4: 3, 19: 4, 15: 5, 3: 6, 22: 8, 6: 9, 34: 14, 18: 15}
+LIMITE_JOUR_DEFAUT = 90
+PAUSE_MIN_DEFAUT = 30
+ERREURS: list[str] = []
+RESUME: dict = {}
+
+
+def cle() -> str:
+    return os.environ.get("PINNODDS_API_KEY", "").strip()
+
+
+def disponible() -> bool:
+    return bool(cle())
+
+
+def _entier_env(nom: str, defaut: int) -> int:
+    try:
+        return max(0, int(os.environ.get(nom, "").strip() or defaut))
+    except ValueError:
+        return defaut
+
+
+def sports_a_secourir(erreurs: list[str], pin: list[dict]) -> set[int]:
+    """Sports de Pinnacle en échec HTTP ; tous si la lecture directe n'a rien rendu et signale une erreur."""
+    if not pin and erreurs:
+        return set(SPORTS_PINNODDS)
+    en_echec = {int(m.group(1)) for e in erreurs if (m := re.match(r"sport (\d+) .*HTTP \d{3}", str(e)))}
+    return en_echec & set(SPORTS_PINNODDS)
+
+
+def _cote(x) -> float | None:
+    if isinstance(x, bool) or not isinstance(x, (int, float)):
+        return None
+    return float(x) if 1.0 < x < 1000 and x == x else None
+
+
+def _lignes_evenement(ev: dict, sport: str, base: dict, handicaps: bool) -> list[dict]:
+    dom, ext = ev.get("home"), ev.get("away")
+    if (not isinstance(dom, str) or not isinstance(ext, str) or not dom or not ext or dom == ext
+            or ev.get("special") or not ev.get("is_have_odds") or ev.get("event_type", "prematch") != "prematch"):
+        return []
+    try:
+        debut = datetime.fromisoformat(str(ev.get("starts")).replace("Z", "+00:00"))
+    except ValueError:
+        return []
+    if debut <= datetime.now(timezone.utc):
+        return []
+    eid = ev.get("event_id")
+    if isinstance(eid, bool) or not isinstance(eid, (int, str)):
+        return []
+    periodes = pinnacle.PERIODES.get(sport, {0: "MATCH"})
+    commun = {**base, "ligue": ev.get("league_name"), "match_id": eid, "domicile": dom, "exterieur": ext,
+              "debut": ev.get("starts"), "joueur": None}
+    out = []
+
+    def ajouter(cle_marche, marche, periode, ligne, issues, maximum):
+        for issue, cote in issues:
+            out.append({**commun, "marche": marche, "periode": periode, "ligne": ligne, "issue": issue,
+                        "cote": cote, "cle_marche": f"{eid}|{cle_marche}", "mise_max": pinnacle._nombre(maximum)})
+
+    for nom, p in (ev.get("periods") or {}).items():
+        m = re.fullmatch(r"num_(\d+)", str(nom))
+        periode = periodes.get(int(m.group(1))) if m and isinstance(p, dict) else None
+        if periode is None:
+            continue
+        num = m.group(1)
+        ml = p.get("money_line") or {}
+        d, h, a = _cote(ml.get("draw")), _cote(ml.get("home")), _cote(ml.get("away"))
+        if h and a:
+            issues = [("DOM", h), ("NUL", d), ("EXT", a)] if d else [("DOM", h), ("EXT", a)]
+            ajouter(f"{num}|ml", "RESULTAT_1N2" if d else "VAINQUEUR", periode, None, issues, None)
+        if sport == "tennis":
+            continue                   # en tennis, handicaps et totaux principaux sont en sets ou en jeux : non repris
+        for pts, t in (p.get("totals") or {}).items():
+            ligne, o, u = pinnacle._nombre(t.get("points")), _cote(t.get("over")), _cote(t.get("under"))
+            if ligne is not None and o and u:
+                ajouter(f"{num}|total|{ligne}", "TOTAL", periode, ligne, [("PLUS", o), ("MOINS", u)], t.get("max"))
+        if not handicaps:
+            continue
+        for hdp, s in (p.get("spreads") or {}).items():
+            ligne, h2, a2 = pinnacle._nombre(s.get("hdp")), _cote(s.get("home")), _cote(s.get("away"))
+            if ligne is not None and h2 and a2:       # ligne = handicap de l'équipe à domicile
+                ajouter(f"{num}|spread|{ligne}", "HANDICAP", periode, ligne, [("DOM", h2), ("EXT", a2)], s.get("max"))
+        for cote_eq, marche in (("home", "TOTAL_DOM"), ("away", "TOTAL_EXT")):
+            lignes_eq = ((p.get("team_totals") or {}).get(cote_eq)
+                         or ({"x": (p.get("team_total") or {}).get(cote_eq)} if (p.get("team_total") or {}).get(cote_eq) else {}))
+            for t in lignes_eq.values():
+                ligne, o, u = pinnacle._nombre(t.get("points")), _cote(t.get("over")), _cote(t.get("under"))
+                if ligne is not None and o and u:
+                    ajouter(f"{num}|tt{cote_eq}|{ligne}", marche, periode, ligne, [("PLUS", o), ("MOINS", u)], t.get("max"))
+    return out
+
+
+def _lire_sport(session, sid_pinnodds: int):
+    """(événements, âge en secondes) ou (None, None) ; une réponse périmée ou en erreur ne donne rien."""
+    r = session.get(f"{BASE}/kit/v1/prematch/fixtures", params={"sport_id": sid_pinnodds},
+                    headers={"x-portal-apikey": cle(), "Accept": "application/json"}, timeout=25)
+    if r.status_code == 429:
+        ERREURS.append("pinnodds : limite de requêtes atteinte (HTTP 429)")
+        return None, None
+    if r.status_code != 200:
+        ERREURS.append(f"pinnodds sport {sid_pinnodds} : HTTP {r.status_code}")
+        return None, None
+    if str(r.headers.get("X-Data-Status", "fresh")).lower() == "stale":
+        ERREURS.append(f"pinnodds sport {sid_pinnodds} : données périmées chez pinnodds")
+        return None, None
+    try:
+        evenements = r.json().get("events") or []
+    except (ValueError, AttributeError):
+        ERREURS.append(f"pinnodds sport {sid_pinnodds} : JSON invalide")
+        return None, None
+    try:
+        age = int(r.headers.get("X-Data-Age-Ms")) // 1000
+    except (TypeError, ValueError):
+        age = None
+    return evenements, age
+
+
+def _etat_budget(chemin: Path | None, maintenant: datetime) -> dict:
+    etat = {}
+    if chemin is not None and chemin.exists():
+        try:
+            etat = json.loads(chemin.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            etat = {}
+    if not isinstance(etat, dict) or etat.get("jour") != f"{maintenant:%Y-%m-%d}":
+        etat = {"jour": f"{maintenant:%Y-%m-%d}", "requetes": 0, "dernier": None}
+    return etat
+
+
+def collecter(sports: set[int], maintenant: datetime | None = None, donnees: Path | None = None,
+              session=None) -> list[dict]:
+    """Lignes de secours pour les sports Pinnacle demandés ; [] sans clé, pendant la pause ou hors budget."""
+    ERREURS.clear()
+    RESUME.clear()
+    maintenant = maintenant or datetime.now(timezone.utc)
+    RESUME.update({"sports": [], "requetes": 0, "lignes": 0, "erreurs": ERREURS})
+    if not disponible():
+        return []
+    chemin = donnees / "pinnacle_secours.json" if donnees is not None else None
+    etat = _etat_budget(chemin, maintenant)
+    pause = _entier_env("PINNODDS_PAUSE_MIN", PAUSE_MIN_DEFAUT)
+    if etat.get("dernier"):
+        try:
+            depuis = (maintenant - datetime.fromisoformat(etat["dernier"])).total_seconds() / 60
+        except (TypeError, ValueError):
+            depuis = None
+        if depuis is not None and depuis < pause:
+            RESUME["pause"] = True
+            return []
+    limite = _entier_env("PINNODDS_LIMITE_JOUR", LIMITE_JOUR_DEFAUT)
+    handicaps = os.environ.get("PINNODDS_HANDICAPS", "").strip().lower() == "oui"
+    session = session or requests.Session()
+    lignes: list[dict] = []
+    for sid in sorted(sports & set(SPORTS_PINNODDS)):
+        if etat["requetes"] >= limite:
+            ERREURS.append("pinnodds : limite journalière du secours atteinte")
+            break
+        etat["requetes"] += 1
+        RESUME["requetes"] += 1
+        try:
+            evenements, age = _lire_sport(session, SPORTS_PINNODDS[sid])
+        except requests.RequestException as e:
+            ERREURS.append(f"pinnodds sport {sid} : {type(e).__name__}")
+            continue
+        if evenements is None:
+            continue
+        instant = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        sport = pinnacle.SPORTS[sid]
+        base = {"source": "pinnacle", "origine": "pinnodds", "sport": sport, "collecte": instant,
+                "collecte_debut": instant, "collecte_recue": instant, "age_cache_s": age,
+                "cote_perimee": age is None or age > pinnacle.age_max_secondes()}
+        lues = [l for ev in evenements if isinstance(ev, dict) for l in _lignes_evenement(ev, sport, base, handicaps)]
+        lignes += lues
+        RESUME["sports"].append(sport)
+    pinnacle._ajouter_proba_justes(lignes)
+    lignes = [l for l in lignes if l.get("proba_juste")]      # un marché incomplet ou incohérent ne sert pas
+    etat["dernier"] = maintenant.isoformat(timespec="seconds")
+    if chemin is not None:
+        chemin.write_text(json.dumps(etat), encoding="utf-8")
+    RESUME["lignes"] = len(lignes)
+    return lignes
+
+
+def comparer(direct: list[dict], secours: list[dict]) -> dict:
+    """Couverture et écarts de cotes entre la lecture directe et le secours (mêmes match, marché, ligne, issue)."""
+    def cle_ligne(l):
+        return (l["match_id"], l["marche"], l["periode"], l.get("ligne"), l["issue"])
+
+    ref = {cle_ligne(l): l["cote"] for l in direct}
+    communes = [(ref[cle_ligne(l)], l["cote"]) for l in secours if cle_ligne(l) in ref]
+    ecarts = sorted(abs(a - b) / a for a, b in communes)
+    return {"secours": len(secours), "communes": len(communes),
+            "couverture": round(len(communes) / len(secours), 3) if secours else None,
+            "ecart_median": round(ecarts[len(ecarts) // 2], 4) if ecarts else None,
+            "ecart_max": round(ecarts[-1], 4) if ecarts else None,
+            "identiques_1pct": round(sum(e <= 0.01 for e in ecarts) / len(ecarts), 3) if ecarts else None}
