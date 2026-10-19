@@ -81,8 +81,8 @@ def test_mesure_seulement_avec_une_reference_lue_au_meme_moment():
     frais = {**ligne(), "proba_juste": 0.47, "collecte": "2030-01-01T17:48:00+00:00"}
     k = CT.cle(fr)
     assert CT.mesurer([fr], {"Pinnacle": {"m1": {k: vieux}}}) == []
-    m = CT.mesurer([fr], {"Pinnacle": {"m1": {k: vieux}}, "Betfair": {"m1": {k: frais}}})
-    assert [(nom, round(r, 2)) for _, nom, _, r, _ in m] == [("Betfair", 0.94)]
+    m = CT.mesurer([fr], {"Pinnacle": {"m1": {k: vieux}}, "Polymarket": {"m1": {k: frais}}})
+    assert [(nom, round(r, 2)) for _, nom, _, r, _ in m] == [("Polymarket", 0.94)]
     assert CT.mesurer([fr], {"Pinnacle": {"m1": {k: frais}}})[0][1] == "Pinnacle"
 
 

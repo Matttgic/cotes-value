@@ -66,11 +66,11 @@ def test_prix_publics_milieu_identique_a_betfair():
     assert comparaison._fiable("Smarkets", dom)
     brut = [{k: l[k] for k in ("cle_marche", "marche", "periode", "ligne", "issue", "achat", "vente", "match_id")}
             for l in gagnant]
-    betfair = {l["issue"]: l["proba_juste"] for l in comparaison.reference_betfair(brut)}
+    autre = {l["issue"]: l["proba_juste"] for l in comparaison.reference_echange(brut, "Autre")}
     sm = {l["issue"]: l["proba_juste"] for l in comparaison.reference_echange(brut, "Smarkets")}
-    assert sm == betfair
+    assert sm == autre
     assert all(l["source"] == "Smarkets" for l in comparaison.reference_echange(brut, "Smarkets"))
-    assert all(l["source"] == "Betfair" for l in comparaison.reference_betfair(brut))
+    assert all(l["source"] == "Autre" for l in comparaison.reference_echange(brut, "Autre"))
 
 
 def test_vente_absente_retire_le_marche_spread_et_liquidite_restent_lisibles():
@@ -190,9 +190,9 @@ def test_ecart_affiche_meme_hors_decision():
           "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None, "issue": "DOM",
           "proba_juste": 0.48, "cote_juste": 2.0833, "ecart_achat_vente": 0.02, "liquidite": 50}
     opp = {**fr, "detecte": moment, "reference": "Pinnacle", "ecart": 0.05}
-    comparaison.annoter_ecarts([opp], [fr], {"Betfair": [], "Polymarket": [], "Smarkets": [sm]})
+    comparaison.annoter_ecarts([opp], [fr], {"Polymarket": [], "Smarkets": [sm]})
     assert opp["ecart_smarkets"] == round(2.20 * 0.48 - 1, 4)
-    assert opp["ecart_betfair"] is None and opp["ecart_polymarket"] is None
+    assert opp["ecart_polymarket"] is None and "ecart_betfair" not in opp
     assert opp["reference"] == "Pinnacle"
 
 
@@ -200,14 +200,14 @@ def test_moyenne_des_paris_regles_reutilise_lancien_ecart():
     base = {"simulation": "A", "mise": 10, "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None,
             "issue": "DOM", "joueur": None, "cote": 2.2, "bookmaker": "Winamax",
             "detecte": "2026-10-01T10:00:00+00:00"}
-    ancien = {**base, "match_id": "m1", "reference": "Betfair", "ecart": 0.04, "statut": "gagne", "gain": 12}
+    ancien = {**base, "match_id": "m1", "reference": "Polymarket", "ecart": 0.04, "statut": "gagne", "gain": 12}
     nouveau = {**base, "match_id": "m2", "reference": "Pinnacle", "ecart": 0.05, "statut": "perdu",
-               "gain": -10, "ecart_betfair": 0.02, "ecart_smarkets": 0.03}
+               "gain": -10, "ecart_polymarket": 0.02, "ecart_smarkets": 0.03}
     cours = {**base, "match_id": "m3", "reference": "Smarkets", "ecart": 0.9, "statut": "en_cours"}
     out = moyennes_ecarts([ancien, nouveau, cours])
-    assert out["Betfair"] == {"moyenne": round((0.04 + 0.02) / 2, 4), "n": 2}
+    assert out["Polymarket"] == {"moyenne": round((0.04 + 0.02) / 2, 4), "n": 2}
     assert out["Smarkets"] == {"moyenne": 0.03, "n": 1}
-    assert out["Polymarket"] == {"moyenne": None, "n": 0}
+    assert "Betfair" not in out
 
 
 def test_erreur_http_ne_journalise_pas_le_corps():
@@ -317,7 +317,7 @@ def test_sports_vides_ne_contactent_pas_le_reseau():
 def test_bilan_affiche_ecart_vs_smarkets(tmp_path):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
     import site_web
-    pari = {"id": "p1", "simulation": "A", "reference": "Betfair", "match_id": "m1", "marche": "TOTAL",
+    pari = {"id": "p1", "simulation": "A", "reference": "Polymarket", "match_id": "m1", "marche": "TOTAL",
             "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "detecte": "2026-10-01T10:00:00+00:00",
             "statut": "gagne", "cote": 2.1, "bookmaker": "Winamax", "sport": "football", "mise": 10,
             "gain": 11, "clv": 0.02, "ecart": 0.04, "ecart_smarkets": 0.03, "domicile": "Fulham",
@@ -327,7 +327,7 @@ def test_bilan_affiche_ecart_vs_smarkets(tmp_path):
     assert "écart vs Smarkets" in html and "écart vs Polymarket" in html and "écart vs Betfair" not in html
     d = json.loads(__import__("re").search(r"const D = (\{.*?\});\n", html, __import__("re").S).group(1).replace("<\\/", "</"))
     assert d["ecarts_references"]["Smarkets"] == {"moyenne": 0.03, "n": 1}
-    assert d["ecarts_references"]["Betfair"]["n"] == 1
+    assert d["ecarts_references"]["Polymarket"]["n"] == 1
     assert "ecart_smarkets" in d["catalogue"]["champs"]
     assert "Smarkets" in d["references"]
 

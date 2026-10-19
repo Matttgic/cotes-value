@@ -1,30 +1,14 @@
 """Traçabilité du prix et chemin d'alerte, sans toucher à la mise historique."""
 import json
 from copy import deepcopy
-from datetime import datetime,timezone,timedelta
+from datetime import timedelta
 from pathlib import Path
 
-from cotes import pulsescore,simulation
+from cotes import simulation
 from cotes.notifications import flux
 from scripts import envoyer_notifications as envoi
 from tests.test_notifications import selection
 from tests.test_theodds import NOW
-
-
-def test_reception_par_page_transmise_a_la_traduction(monkeypatch):
-    captures=[]
-    def get(self,chemin,params):
-        page=params['page']
-        self.derniere_reception=f'2026-10-17T00:00:0{page}Z'
-        return {'events':[{'eventId':str(page),'startTime':'2099-01-01T12:00:00Z'}], 'hasNextPage':page==1}
-    monkeypatch.setattr(pulsescore.Client,'get',get)
-    def traduire(e,bm,sport,moment,**kwargs):
-        captures.append((e['eventId'],moment,e['_collecte_debut']))
-        return []
-    monkeypatch.setattr(pulsescore,'traduire',traduire)
-    pulsescore.collecter('factice',{'winamax':['soccer']},heures=1e7)
-    assert [x[1] for x in captures]==['2026-10-17T00:00:01Z','2026-10-17T00:00:02Z']
-    assert all(x[2] for x in captures)
 
 
 def test_relecture_preserve_prise_et_ignore_autre_contrat_et_retour_arriere():

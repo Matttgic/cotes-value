@@ -1,182 +1,21 @@
-"""Collecte PulseScore (bookmakers français + Betfair via Orbit Exchange) et traduction des marchés.
+"""Traduction des marchés des bookmakers vers le vocabulaire commun (voir cotes/pinnacle.py).
 
-Listes paginées par 30 matchs, triées par heure de début : on lit les pages jusqu'à dépasser
-l'horizon voulu. Limite de l'offre : 1 requête par seconde et par bookmaker en PRO (1 par minute
-en STARTER), réglable par la variable PULSESCORE_PAUSE (secondes entre deux pages).
-
-La traduction vers le vocabulaire commun (voir cotes/pinnacle.py) s'appuie sur le marché
-normalisé de PulseScore (canonicalMarket) mais vérifie le libellé d'origine (rawName) : période
-écrite dans le libellé, ligne de handicap notée différemment selon les sites, règles du hockey
-(temps réglementaire ou prolongation incluse), marchés mal classés (breaks au tennis…).
+Ce module venait de la collecte PulseScore, arrêtée avec l'abonnement : il ne lit plus rien
+sur le réseau. Les lecteurs directs (cotes/direct/*) produisent des événements au même format
+et passent par ``traduire``, qui s'appuie sur le marché normalisé (canonicalMarket) mais vérifie
+le libellé d'origine (rawName) : période écrite dans le libellé, ligne de handicap notée
+différemment selon les sites, règles du hockey (temps réglementaire ou prolongation incluse),
+marchés mal classés (breaks au tennis…).
 """
 from __future__ import annotations
 
-import hashlib
-import os
 import re
-import time
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
-from email.utils import parsedate_to_datetime
+from datetime import datetime, timezone
 from math import isfinite
 
-import requests
-
 BASE = "https://api.pulsescore.net/api"
-FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu"]   # NetBet retiré : flux netbet.com, pas netbet.fr
 NOMS = {"winamax": "Winamax", "betclic": "Betclic", "unibet-fr": "Unibet", "pmu": "PMU",
         "olybet": "OlyBet", "netbet": "NetBet", "orbitxch": "Betfair"}
-SPORTS = {"soccer": "football", "basketball": "basket", "tennis": "tennis", "ice-hockey": "hockey",
-          "handball": "handball", "volleyball": "volley", "rugby-union": "rugby", "american-football":
-          "football_americain", "baseball": "baseball", "mma": "mma", "table-tennis": "tennis_de_table"}
-
-
-# --------------------------------------------------------------------------- collecte
-
-class Client:
-    def __init__(self, cle: str, pause: float | None = None, etat: dict | None = None):
-        self.s = requests.Session()
-        self.s.headers.update({"X-Secret": cle, "Accept-Encoding": "gzip", "Accept": "application/json"})
-        self.requetes = 0
-        self.derniere_reception = None
-        self.erreurs: list[str] = []
-        self.pause = _decimal(os.environ.get("PULSESCORE_PAUSE", "1.1") if pause is None else pause)
-        if self.pause is None or self.pause < 0:
-            self.pause = 1.1
-            self.erreurs.append("PULSESCORE_PAUSE invalide : défaut 1,1 s")
-        self.etat = etat if etat is not None else {}
-        empreinte = hashlib.sha256(cle.encode()).hexdigest()[:16]
-        if self.etat.get("empreinte") != empreinte:
-            self.etat.clear()
-            self.etat["empreinte"] = empreinte
-
-    def get(self, chemin: str, params: dict | None = None):
-        """Réponse objet JSON ; aucun texte d'exception/URL authentifiée journalisé.
-
-        Les délais longs sont persistés pour ne pas bloquer le cycle ni retenter
-        avant Retry-After. Un refus coupe les autres sports du même bookmaker.
-        """
-        contexte = chemin if re.fullmatch(r"[a-z0-9-]+/(?:[a-z0-9-]+/events|results)", chemin) else "requête"
-        bookmaker = chemin.split("/", 1)[0]
-        bookmaker = bookmaker if bookmaker in NOMS else "autres"
-        attente = self.etat.setdefault("bookmakers", {}).setdefault(bookmaker, {})
-        bloque = _heure(attente.get("reessai_apres"))
-        if bloque and datetime.now(timezone.utc) < bloque:
-            message = f"{contexte} : collecte différée (quota/refus)"
-            if message not in self.erreurs:
-                self.erreurs.append(message)
-            return None
-        derniere = "erreur réseau"
-        for essai in range(4):
-            self.derniere_reception = None
-            try:
-                r = self.s.get(f"{BASE}/{chemin}", params=params, timeout=90)
-                maintenant = datetime.now(timezone.utc)
-                self.derniere_reception = maintenant.isoformat(timespec="seconds")
-            except requests.RequestException:
-                self.requetes += 1  # Un timeout peut aussi avoir consommé un crédit.
-                if essai < 3:
-                    time.sleep(2 * (essai + 1) + self.pause)
-                continue
-            self.requetes += 1
-            if r.status_code in (401, 402, 403):
-                # Compte, paiement ou quota refusé : on n'insiste pas sur les autres sports.
-                attente["reessai_apres"] = (maintenant + timedelta(hours=1)).isoformat()
-                self.erreurs.append(f"{contexte} : HTTP {r.status_code}")
-                return None
-            if r.status_code == 429:
-                delai = _retry_after(r.headers.get("Retry-After"), maintenant, 2 * (essai + 1))
-                # Une valeur invalide est remplacée par le backoff ; jamais NaN/inf dans sleep().
-                attente["reessai_apres"] = (maintenant + timedelta(seconds=delai)).isoformat()
-                derniere = "HTTP 429"
-                if delai > 60 or essai == 3:
-                    break
-                time.sleep(delai + self.pause)
-                continue
-            time.sleep(self.pause)
-            if r.status_code != 200:
-                if r.status_code != 404:
-                    self.erreurs.append(f"{contexte} : HTTP {r.status_code}")
-                return None
-            try:
-                d = r.json()
-            except ValueError:
-                self.erreurs.append(f"{contexte} : JSON invalide")
-                return None
-            if not isinstance(d, dict):
-                self.erreurs.append(f"{contexte} : objet JSON attendu")
-                return None
-            attente.pop("reessai_apres", None)
-            return d
-        self.erreurs.append(f"{contexte} : {derniere}")
-        return None
-
-    def matchs(self, bookmaker: str, sport: str, heures: float, pages_max: int = 40) -> list[dict]:
-        """Matchs d'avant-match commençant dans les `heures` prochaines heures."""
-        limite = datetime.now(timezone.utc) + timedelta(hours=heures)
-        out = []
-        for page in range(1, pages_max + 1):
-            requete_debut = datetime.now(timezone.utc).isoformat(timespec="seconds")
-            self.derniere_reception = None
-            d = self.get(f"{bookmaker}/{sport}/events", {"page": page, "limit": 30})
-            recue = self.derniere_reception or datetime.now(timezone.utc).isoformat(timespec="seconds")
-            if not d or not d.get("events"):
-                break
-            if not isinstance(d["events"], list):
-                self.erreurs.append(f"{bookmaker}/{sport}/events : liste attendue")
-                break
-            maintenant = datetime.now(timezone.utc)
-            for e in d["events"]:
-                if not isinstance(e, dict):
-                    continue
-                debut = _heure(e.get("startTime"))
-                if not e.get("live") and not e.get("suspended") and debut and debut > maintenant:
-                    out.append({**e, "_collecte_debut": requete_debut, "_collecte_recue": recue})
-            dernier = _heure(d["events"][-1].get("startTime")) if isinstance(d["events"][-1], dict) else None
-            if not d.get("hasNextPage") or (dernier and dernier > limite):
-                break
-        return [e for e in out if (_heure(e["startTime"]) or limite) <= limite]
-
-
-_INDISPONIBLE = re.compile(r"HTTP (?:401|402|403)|\bquota\b", re.I)
-
-
-def indisponible(erreurs) -> bool:
-    """401, 403, 402 ou quota : PulseScore ne peut pas servir de source à ce cycle."""
-    if isinstance(erreurs, dict):
-        textes = [e for liste in erreurs.values() for e in (liste or [])]
-    else:
-        textes = list(erreurs or [])
-    return any(_INDISPONIBLE.search(str(e)) for e in textes)
-
-
-def collecter(cle: str, plan: dict[str, list[str]], heures: float = 36,
-              pages_max: int = 40, etat: dict | None = None) -> tuple[list[dict], dict[str, int], dict[str, list[str]]]:
-    """plan : bookmaker -> sports (noms PulseScore). Les bookmakers sont lus en parallèle (la limite de
-    débit est par bookmaker). Renvoie (lignes, requêtes par bookmaker, erreurs par bookmaker) : une panne
-    sur un bookmaker ou un sport n'efface pas ce qui a été lu ailleurs."""
-    etat = etat if etat is not None else {}
-    # Initialisation séquentielle de l'empreinte, puis un client et une entrée
-    # de quota par bookmaker : un 429 Winamax ne bloque jamais Betclic.
-    clients = {bm: Client(cle, etat=etat) for bm in plan}
-
-    def un_bookmaker(bm: str):
-        c = clients[bm]
-        lignes = []
-        for sp in plan[bm]:
-            try:
-                moment = datetime.now(timezone.utc).isoformat(timespec="seconds")
-                for e in c.matchs(bm, sp, heures, pages_max):
-                    lignes += traduire(e, bm, SPORTS.get(sp, sp), e.get("_collecte_recue") or moment,
-                                       erreurs=c.erreurs)
-            except Exception as e:                                   # noqa: BLE001
-                c.erreurs.append(f"{sp} : {type(e).__name__}")
-        return bm, lignes, c.requetes, c.erreurs
-
-    with ThreadPoolExecutor(max_workers=max(1, len(plan))) as pool:
-        res = list(pool.map(un_bookmaker, list(plan)))
-    return ([l for _, r, _, _ in res for l in r], {bm: n for bm, _, n, _ in res},
-            {bm: err for bm, _, _, err in res if err})
 
 
 # --------------------------------------------------------------------------- traduction
@@ -197,20 +36,6 @@ def _decimal(x) -> float | None:
         return n if isfinite(n) else None
     except (TypeError, ValueError, OverflowError):
         return None
-
-
-def _retry_after(valeur, maintenant: datetime, defaut: float) -> float:
-    n = _decimal(valeur)
-    if n is not None and 0 <= n <= 365 * 86400:
-        return n
-    try:
-        t = parsedate_to_datetime(str(valeur))
-        n = (t - maintenant).total_seconds()
-        if t.tzinfo is not None and 0 <= n <= 365 * 86400:
-            return n
-    except (TypeError, ValueError, OverflowError):
-        pass
-    return defaut
 
 
 def _nombre(s) -> float | None:

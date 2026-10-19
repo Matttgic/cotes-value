@@ -1128,10 +1128,9 @@ function rendreCourbe() {
 }
 window.addEventListener("resize", () => { rendreCourbe(); if (document.getElementById("o-strategies").classList.contains("actif")) rendreStrategies(); });
 rendreBilan();
-const mois = new Date().toISOString().slice(0,7);
 document.getElementById("infos").innerHTML = [
   ["Cotes françaises lues", (dc.cotes||{}).francaises], ["Matchs comparés", dc.matchs_francais],
-  ["Erreurs au dernier passage", dc.opportunites], ["Requêtes PulseScore ce mois", ((D.etat||{}).requetes_par_mois||{})[mois] || 0],
+  ["Erreurs au dernier passage", dc.opportunites],
   // sources en panne ou incomplètes au dernier passage (une absence de résultat n'est pas toujours normale)
   ["Sources en panne", Object.entries(dc.etapes || {}).filter(([k, v]) => !v.ok || v.degrade)
     .map(([k]) => e(k.replace(/^resultats_/, ""))).join(", ") || "aucune"]

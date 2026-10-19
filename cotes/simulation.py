@@ -87,7 +87,7 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
              "issue": o["issue"], "pari": o["pari"], "libelle_bookmaker": o.get("libelle_bookmaker"),
              "cote": o["cote"], "cote_juste": o["cote_juste"], "cote_reference": o.get("cote_reference"),
              "lu_reference": o.get("lu_reference"), "ecart": o["ecart"], "mise": MISE,
-             "ecart_betfair": o.get("ecart_betfair"), "ecart_polymarket": o.get("ecart_polymarket"),
+             "ecart_polymarket": o.get("ecart_polymarket"),
              "ecart_smarkets": o.get("ecart_smarkets"),
              "statut": "en_cours", "gain": None, "cote_juste_cloture": o["cote_juste"], "clv": None,
              "match_reference": o.get("match_reference"), "lien": o.get("lien"),
@@ -375,8 +375,7 @@ def moyennes_ecarts(paris: list[dict]) -> dict:
     son ``ecart`` est alors l'écart contre elle.
     """
     uniques = premiers_par_selection(paris)
-    specs = (("Betfair", "ecart_betfair"), ("Polymarket", "ecart_polymarket"),
-             ("Smarkets", "ecart_smarkets"))
+    specs = (("Polymarket", "ecart_polymarket"), ("Smarkets", "ecart_smarkets"))
     out = {}
     for nom, champ in specs:
         valeurs = []

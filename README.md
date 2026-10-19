@@ -9,63 +9,32 @@ Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
 
 ## Sources
 
-**Sans PulseScore depuis le 18/10/2026** (plus d'abonnement) : le workflow de collecte ne reçoit plus
-`PULSESCORE_KEY` et fixe `SOURCE_PMU`, `SOURCE_WINAMAX`, `SOURCE_UNIBET` et `SOURCE_BETCLIC` à `direct`. Les
-cotes viennent toutes des lecteurs directs ; Betfair, qui n'existait que via PulseScore, n'est plus une
-référence. `cotes/pulsescore.py` reste dans le dépôt pour son **traducteur** (`traduire`), que tous les lecteurs
-directs utilisent. Son client réseau et les modes `shadow` / `auto` / `pulsescore` ne servent plus qu'à relire
-d'anciennes données. Les sections ci-dessous qui parlent de PulseScore décrivent cet ancien fonctionnement.
+Toutes les cotes sont lues **directement**, sans abonnement : PulseScore (et Betfair, qui n'existait que
+par lui) est arrêté depuis le 18/10/2026. `cotes/pulsescore.py` ne fait plus d'appel réseau : il garde le
+**traducteur** (`traduire`) qui met les marchés de tous les lecteurs directs dans un vocabulaire commun.
 
 | Source | Rôle | Accès | Coût |
 |---|---|---|---|
 | Pinnacle | Référence | API publique du site (`cotes/pinnacle.py`) | Gratuit |
 | Polymarket | Référence | API officielle gamma (`cotes/polymarket.py`) | Gratuit |
-| Betfair Exchange | Référence (arrêtée) | PulseScore, via Orbit Exchange | Plus disponible |
-| Smarkets | Référence | API publique v3, sans compte (`cotes/smarkets.py`) | Gratuit |
+| Smarkets | Affiché, hors décision | API publique v3, sans compte (`cotes/smarkets.py`) | Gratuit |
 | Winamax | Cotes à comparer | Socket (`cotes/direct/winamax.py`) | Gratuit |
 | Betclic | Cotes à comparer | API gRPC-web (`cotes/direct/betclic.py`) | Gratuit |
 | Unibet | Cotes à comparer | API LVS (`cotes/direct/unibet.py`) | Gratuit |
 | PMU | Cotes à comparer | Kambi (`cotes/direct/pmu.py`) | Gratuit |
 | OlyBet | Cotes à comparer | Swarm BetConstruct (`cotes/direct/olybet.py`) | Gratuit |
+| NetBet | Cotes à comparer | État Nuxt de netbet.fr (`cotes/direct/netbet.py`) | Gratuit |
 
-NetBet n'est pas suivi : le flux « netbet » de PulseScore est celui du site international (netbet.com), pas
-de netbet.fr (intitulés anglais, corners, handicaps asiatiques en quart, compétitions hors liste ANJ).
+Les paris déjà pris contre Betfair ou Kalshi restent dans les bilans ; ces sources ne sont plus interrogées.
 
-Vérifications faites (sondes du 8/10/2026, retirées depuis) :
-- Pinnacle lu directement = PS3838 de PulseScore : 98 % des 4 161 cotes à moins de 1 % d'écart ;
-- Polymarket lu directement = PulseScore : 87 % des marchés strictement identiques
-  (les écarts restants : marchés sans échanges, écartés par le comparateur).
-
-PMU peut être lu sur l'API Kambi (`SOURCE_PMU`, défaut `auto`). `auto` prend Kambi et revient à PulseScore
-si la lecture échoue. En `shadow`, PulseScore reste la source des paris et un rapport
-`pmu_comparaison.json` compare les deux flux. `direct` ne lit plus PMU
-chez PulseScore. `pulsescore` désactive Kambi. Si PulseScore répond 401, 403, 402
-ou quota, le cycle continue : même en `shadow`, les cotes PMU viennent de Kambi
-et le journal l'indique (`pmu_repli`). Le rapport est prêt à basculer à partir de
-95 % des matchs retrouvés et 99 % des cotes communes à ±0,01. Les paris déjà pris contre
-Kalshi restent affichés ; Kalshi n'est plus interrogé.
-
-Winamax est lu sur son socket (`SOURCE_WINAMAX`, défaut `auto`) : le socket
-décide, et PulseScore ne reprend la main que si cette lecture échoue ou est
-vide. `shadow` garde l'ancien rapport. Les seuils restent 95 % des matchs et
-99 % des cotes communes à ±0,01. Le rapport est `winamax_comparaison.json`.
-Si PulseScore répond 401, 403, 402 ou quota, les cotes Winamax viennent du socket
-même en `shadow` (`winamax_repli`). La liste d'un sport arrive en une fois, puis
-les marchés comparés. Une lecture vide est un échec : le repli ne s'en sert pas.
-
-Unibet.fr peut être lu sur son API (`SOURCE_UNIBET`, défaut `auto`), avec les
-mêmes quatre modes et les mêmes seuils. Le rapport est `unibet_comparaison.json`.
-Si PulseScore répond 401, 403, 402 ou quota, les cotes Unibet viennent de l'API
-même en `shadow` (`unibet_repli`). Seuls les marchés comparés sont demandés.
-
-OlyBet est lu en direct (`SOURCE_OLYBET`, défaut `direct`). `off` coupe cette lecture.
+OlyBet et NetBet peuvent être coupés (`SOURCE_OLYBET` ou `SOURCE_NETBET` = `off`).
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
 compte restent en période `MATCH?` et ne sont pas comparés.
 
 Smarkets est lu sur son API publique, sans compte. La cote juste est le milieu
-achat/vente, comme Betfair : le spread est dans le milieu, aucune commission
-n'est retirée en plus. Le bilan a une table Smarkets, comme Betfair et
-Polymarket : 10 € fictifs quand un bookmaker français bat cette cote juste,
+achat/vente : le spread est dans le milieu, aucune commission
+n'est retirée en plus. Le bilan a une table Smarkets, comme Polymarket :
+10 € fictifs quand un bookmaker français bat cette cote juste,
 réglés à part. L'écart affiché (écart vs Smarkets) reste à côté.
 `SMARKETS_DANS_DECISION` vaut `non` par défaut : Smarkets n'entre pas dans le
 consensus partagé. `oui` l'y ajoute, sans changer les autres tables.
@@ -74,7 +43,7 @@ consensus partagé. `oui` l'y ajoute, sans changer les autres tables.
 
 Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois par heure :
 
-1. **Collecte** des références, puis des bookmakers français et de Betfair sur les 36 prochaines heures,
+1. **Collecte** des références, puis des bookmakers français sur les 36 prochaines heures,
    seulement pour les sports où une référence a des matchs.
 2. **Traduction** des marchés dans un vocabulaire commun (`cotes/marches.py`) : résultat, vainqueur,
    remboursé si nul, double chance, handicaps (asiatique et à 3 issues), totaux, totaux par équipe,
@@ -88,10 +57,11 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
 5. **Paris simulés** (`cotes/simulation.py`) : 10 € à la première détection, un pari par référence,
    bookmaker et sélection, rangé dans la tranche de son écart : **A** 2 à 3 %, **B** 3 à 4 %, **C** 4 à 5 %,
    **D** 5 à 7 %, **E** 7 % et plus (cotes ≤ 10), **X** cotes > 10 (≥ 3 %). La cote juste est suivie jusqu'au coup d'envoi (**CLV**).
-6. **Règlement** (`cotes/reglement.py`) avec les résultats PulseScore du bookmaker du pari, selon son
+6. **Règlement** (`cotes/reglement.py`) avec les scores validés par plusieurs sources gratuites (voir
+   « Règlement » plus bas), selon le
    règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
-7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages, en onglets : À jouer, Bilan, Paris, À régler.
+7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages, en quatre onglets : Paris, Bilan, Notifications, Santé.
 
 ### Deux stratégies suivies séparément
 
@@ -201,10 +171,9 @@ facultatif qui remplace l'hôte de l'API guest.
 `.env.example` ne contient aucune clé et les fichiers `.env` sont ignorés. Python ne les charge pas
 automatiquement : exporter les variables avant l'exécution. Les diagnostics n'affichent jamais les clés.
 
-1. Secret `PULSESCORE_KEY` (Settings → Secrets and variables → Actions → Secrets).
-2. Settings → Pages → Source : **GitHub Actions**.
-3. Test : Actions → « Collecte et comparaison » → Run workflow → mode `test` (≈ 4 requêtes).
-4. Collecte automatique (avec PulseScore PRO) : variable de dépôt `COLLECTE_AUTO` = `oui`
+1. Settings → Pages → Source : **GitHub Actions**.
+2. Test : Actions → « Collecte et comparaison » → Run workflow → mode `test`.
+3. Collecte automatique : variable de dépôt `COLLECTE_AUTO` = `oui`
    (et `MODE_COLLECTE` = `complet`, valeur par défaut), puis lancer un cycle à la main une fois.
    Chaque cycle relance le suivant 5 minutes après son début (GitHub saute trop souvent les tâches
    planifiées) ; la tâche planifiée horaire redémarre la chaîne si elle s'arrête. Pour arrêter :
@@ -212,8 +181,8 @@ automatiquement : exporter les variables avant l'exécution. Les diagnostics n'a
 
 
 Le workflow horaire **Règlement des paris** utilise aussi les secrets optionnels
-`THE_ODDS_API_KEY_1` à `THE_ODDS_API_KEY_4` pour les scores manquants, après PulseScore,
-ESPN et la source NHL officielle. Chaque compte est vérifié par `/sports` (gratuit), puis les scores
+`THE_ODDS_API_KEY_1` à `THE_ODDS_API_KEY_4` pour les scores manquants, après LiveScore,
+ESPN, Flashscore et la source NHL officielle. Chaque compte est vérifié par `/sports` (gratuit), puis les scores
 sont lus uniquement pour les compétitions identifiées et les paris compatibles.
 Cache partagé `theodds.json`, lecture au plus toutes les 3 heures par compétition,
 16 crédits/jour et 500/mois par compte, au plus 4 appels scores par cycle.
@@ -242,7 +211,7 @@ suivent les scans et ne garantissent pas que la cote reste disponible.
   de l'intitulé, version du moteur) et `preuve_reglement` (score retenu, ses sources ou la saisie manuelle,
   scores par période comparés à la ligne) ;
 - `opportunites/AAAA-MM-JJ.jsonl.gz` : toutes les erreurs de cote détectées ;
-- `etat.json` : dernier cycle, requêtes PulseScore par mois ;
+- `etat.json` : dernier cycle, dernier règlement et historique des 200 derniers relevés ;
 - `theodds.json` : scores de secours en cache et compteurs de crédits, sans clés API ;
 - `resultats_manuels.json` : règlements à la main, par exemple
   `{"winamax|72036146": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3]}}` ; `periodes` donne le
@@ -253,7 +222,7 @@ suivent les scans et ne garantissent pas que la cote reste disponible.
 ```bash
 pip install -r requirements-dev.txt
 python -m pytest -q tests
-python scripts/cycle.py --mode test     # nécessite PULSESCORE_KEY ; sans clé : références seules
+python scripts/cycle.py --mode test     # cycle réduit, sans clé
 ```
 
 ### Gemini Argon
@@ -268,16 +237,15 @@ Le module `cotes/live_pauses.py` calcule L1/L2 uniquement sur des observations v
 Il n’est relié ni au cycle de production, ni aux mises, ni aux notifications.
 Une sonde ponctuelle est disponible dans `scripts/sonde_live_pauses.py`.
 
-Le [journal papier Live](docs/journal-live-papier.md) observe les pauses longues
-dans un fichier isolé de la branche données, avec délais réels et prix revus à
-+15/+30 s. Les données non vérifiées restent des observations refusées.
+Le [journal papier Live](docs/journal-live-papier.md) observait les pauses longues avec les flux live de
+PulseScore : il est à l'arrêt depuis la fin de l'abonnement, et le cycle ne le lance plus.
 
 ## Sécurité et audit
 
 [Configuration, secrets et publication](SECURITY.md).
 Le retrait complet de la valeur guest Pinnacle reste conditionné à une configuration de remplacement validée. La revue détaillée de cinq moteurs de sélection reste ouverte ; les rapports ne certifient pas une rentabilité future.
 
-## Règlement sans PulseScore
+## Règlement
 
 Les scores viennent de plusieurs sources gratuites, rapprochées par noms d'équipes et heure (`cotes/resultats.py`) :
 

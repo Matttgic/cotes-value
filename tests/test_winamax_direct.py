@@ -103,21 +103,6 @@ def test_tennis_separe_sets_et_jeux():
     assert ("VAINQUEUR", "SET1", "EXT", None) in cles
 
 
-def test_rapport_seuils():
-    pulse = [{"bookmaker": "winamax", "match_id": "w|1", "sport": "football",
-              "domicile": "Domicile", "exterieur": "Exterieur", "debut": "2026-10-18T18:00:00+00:00",
-              "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "cote": 1.9}]
-    direct = [{"bookmaker": "winamax", "match_id": "winamax|100", "sport": "football",
-               "domicile": "Domicile", "exterieur": "Exterieur", "debut": "2026-10-18T18:00:00+00:00",
-               "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "cote": 1.91}]
-    rapport = winamax.rapport(pulse, direct)
-    assert rapport["couverture"] == 1 and rapport["accord_cotes"] == 1
-    assert rapport["pret_a_basculer"] is True
-    assert rapport["seuil_couverture"] == 0.95 and rapport["seuil_accord"] == 0.99
-    direct[0]["cote"] = 2.2
-    assert winamax.rapport(pulse, direct)["pret_a_basculer"] is False
-
-
 def test_pause_entre_les_routes(monkeypatch):
     pauses = []
     monkeypatch.setattr(winamax.time, "sleep", lambda s: pauses.append(s))
@@ -198,15 +183,6 @@ def test_erreur_reseau_sans_corps():
     assert "secret" not in " ".join(client.erreurs)
 
 
-def test_mode_par_defaut(monkeypatch):
-    monkeypatch.delenv("SOURCE_WINAMAX", raising=False)
-    assert winamax.mode_source() == "auto"
-    monkeypatch.setenv("SOURCE_WINAMAX", "direct")
-    assert winamax.mode_source() == "direct"
-    monkeypatch.setenv("SOURCE_WINAMAX", "autre")
-    assert winamax.mode_source() == "shadow"
-
-
 def test_poussee_sans_identifiant_est_ignoree(monkeypatch):
     monkeypatch.setattr(winamax.time, "sleep", lambda s: None)
 
@@ -274,80 +250,3 @@ def test_lecture_incompletee_est_un_echec(monkeypatch):
     assert "lecture incomplète" in meta["erreurs"]
 
 
-def test_repli_ignore_une_lecture_vide(monkeypatch):
-    from datetime import datetime, timezone
-    from scripts import cycle
-    from tests.test_collecte_parallele import _sans_reseau, ligne
-    maintenant = datetime(2026, 10, 17, tzinfo=timezone.utc)
-
-    def pulse(key, plan, *a, **kw):
-        return [ligne("football", "winamax") | {"cote": 1.9}], {"winamax": 1}, {
-            "winamax": ["winamax/soccer/events : HTTP 401"]}
-
-    def direct(sports, heures, **kwargs):
-        return [], {"ok": False, "erreurs": ["lecture vide"], "requetes": 1, "matchs": 0}
-
-    _sans_reseau(monkeypatch)
-    monkeypatch.setattr(cycle.winamax_direct, "collecter", direct)
-    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
-    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
-    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
-    j = {"etapes": {}}
-    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", maintenant, j)
-    wina = [l for l in lignes if l["bookmaker"] == "winamax"]
-    assert wina and wina[0]["cote"] == 1.9
-    assert j["winamax_source"] == "auto"
-    assert j["winamax_source_effective"] == "pulsescore"
-    assert "PulseScore" in j["winamax_repli"]
-    assert j["etapes"]["winamax_direct"]["ok"] is False
-
-
-def test_auto_decide_avec_le_socket_et_le_pari_reste_bilan(monkeypatch):
-    from datetime import datetime, timedelta, timezone
-    from cotes import simulation
-    from scripts import cycle
-    from tests.test_collecte_parallele import _sans_reseau, ligne
-    maintenant = datetime(2026, 10, 18, 12, tzinfo=timezone.utc)
-    debut = "2026-10-18T18:00:00+00:00"
-    plans = []
-
-    def pulse(key, plan, *a, **kw):
-        plans.append(plan)
-        return [ligne("football", "pmu")], {"pmu": 1}, {}
-
-    def direct(sports, heures, **kwargs):
-        return [{
-            "sport": "football", "debut": debut, "bookmaker": "winamax", "source": "Winamax",
-            "match_id": "winamax|1", "domicile": "Lens", "exterieur": "Lille",
-            "cote": 2.1, "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM",
-            "collecte": maintenant.isoformat(),
-        }], {"ok": True, "erreurs": [], "requetes": 1, "matchs": 1}
-
-    _sans_reseau(monkeypatch)
-    monkeypatch.delenv("SOURCE_WINAMAX", raising=False)
-    monkeypatch.setattr(cycle.winamax_direct, "collecter", direct)
-    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football") | {"debut": debut}])
-    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
-    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
-    j = {"etapes": {}}
-    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", maintenant, j)
-    assert plans and "winamax" not in plans[0]
-    wina = [l for l in lignes if l["bookmaker"] == "winamax"]
-    assert wina and wina[0]["cote"] == 2.1 and wina[0]["match_id"] == "winamax|1"
-    assert j["winamax_source"] == "auto" and j["winamax_source_effective"] == "direct"
-    ecart = round(2.1 / 1.9 - 1, 4)
-    opp = {
-        "reference": "Pinnacle", "bookmaker": "winamax", "sport": "football",
-        "marche": "VAINQUEUR", "periode": "MATCH", "issue": "DOM", "ligne": None,
-        "match_id": "winamax|1", "domicile": "Lens", "exterieur": "Lille", "pari": "Lens",
-        "detecte": maintenant.isoformat(), "debut": debut,
-        "lu_reference": (maintenant - timedelta(minutes=2)).isoformat(),
-        "cote": 2.1, "cote_juste": 1.9, "ecart": ecart,
-    }
-    paris = []
-    nouveaux = simulation.placer([opp], paris, maintenant)
-    assert len(nouveaux) == 1 and nouveaux[0]["bookmaker"] == "winamax" and nouveaux[0]["mise"] == 10
-    bilan = simulation.bilan(paris)
-    assert bilan["E|Pinnacle"]["paris"] == 1 and bilan["E|Pinnacle"]["en_cours"] == 1

@@ -1,8 +1,7 @@
 name: Collecte et comparaison
 
 # Toutes les 5 minutes (règlement horaire avec reprise automatique dans la collecte), seulement si la variable de dépôt COLLECTE_AUTO vaut « oui »
-# (Settings → Secrets and variables → Actions → Variables). À activer avec l'offre PulseScore PRO :
-# l'offre gratuite (500 requêtes/mois) ne tient pas un cycle complet toutes les 5 minutes.
+# (Settings → Secrets and variables → Actions → Variables). Les bookmakers français sont lus en direct, sans abonnement.
 #
 # GitHub saute ou retarde souvent les tâches planifiées (2 lancements en 16 h constatés) : chaque cycle
 # relance donc lui-même le suivant, 5 minutes après son début (tout de suite s'il a duré plus). La tâche planifiée (toutes les heures) ne
@@ -19,7 +18,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "complet = 4 bookmakers français + Betfair sur 36 h ; test = Winamax + Betclic, foot, 1 page (≈ 4 requêtes)"
+        description: "complet = bookmakers français sur 36 h ; test = cycle réduit (horizon 12 h)"
         type: choice
         options: [test, complet]
         default: test
@@ -79,16 +78,9 @@ jobs:
           # Le cron horaire peut être retardé de plusieurs heures : le cycle prend le relais
           # si le dernier règlement date d'au moins 55 min. Même verrou « donnees ».
           REGLEMENT: auto
-          # Activation explicite seulement après validation des timestamps et des clôtures Live.
-          LIVE_PAPIER: ${{ vars.LIVE_PAPIER || 'non' }}
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
           # Smarkets (quota de 60 requêtes par minute, lecture en plusieurs passages) ; variable de dépôt SMARKETS_COLLECTE=non pour couper
           SMARKETS_COLLECTE: ${{ vars.SMARKETS_COLLECTE || 'oui' }}
-          # Plus d'abonnement PulseScore : les cotes françaises viennent toutes des lecteurs directs.
-          SOURCE_PMU: direct
-          SOURCE_WINAMAX: direct
-          SOURCE_UNIBET: direct
-          SOURCE_BETCLIC: direct
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
         run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
 

@@ -157,10 +157,6 @@ def test_cycle_enregistre_l_horizon(monkeypatch, tmp_path):
                         "reserve": {"curseur": 3, "lignes": [{"match_id": nom}]}}
         return f
 
-    monkeypatch.delenv("SOURCE_PMU", raising=False)
-    monkeypatch.delenv("SOURCE_UNIBET", raising=False)
-    monkeypatch.delenv("SOURCE_BETCLIC", raising=False)
-    monkeypatch.delenv("SOURCE_WINAMAX", raising=False)
     monkeypatch.delenv("SOURCE_OLYBET", raising=False)
     monkeypatch.setattr(cycle.pmu_direct, "collecter", capter("pmu"))
     monkeypatch.setattr(cycle.unibet_direct, "collecter", capter("unibet"))
@@ -172,14 +168,13 @@ def test_cycle_enregistre_l_horizon(monkeypatch, tmp_path):
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
     monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
-    monkeypatch.setattr(cycle.pulsescore, "collecter", lambda *a, **k: ([], {}, {}))
     maintenant = datetime(2026, 10, 17, tzinfo=timezone.utc)
-    cycle.collecter_prematch("cle", "complet", maintenant, {"etapes": {}}, donnees=tmp_path)
+    cycle.collecter_prematch("complet", maintenant, {"etapes": {}}, donnees=tmp_path)
     assert vus["pmu"][0][1] == 36 and vus["pmu"][1]["reserve"] == {} and vus["pmu"][1]["concurrence"] == 2
     assert vus["unibet"][0][1] == 36 and vus["unibet"][1]["reserve"] == {}
     assert vus["betclic"][0][1] == 36 and vus["betclic"][1]["reserve"] == {}
     sauve = json.loads((tmp_path / "horizon_direct.json").read_text())
     assert sauve["pmu"]["curseur"] == 3 and sauve["unibet"]["lignes"][0]["match_id"] == "unibet"
-    cycle.collecter_prematch("cle", "complet", maintenant, {"etapes": {}}, donnees=tmp_path)
+    cycle.collecter_prematch("complet", maintenant, {"etapes": {}}, donnees=tmp_path)
     assert vus["pmu"][1]["reserve"]["curseur"] == 3
     assert vus["betclic"][1]["reserve"]["lignes"][0]["match_id"] == "betclic"

@@ -1,7 +1,7 @@
 """Règlement des paris simulés à partir des scores.
 
-Source des scores : les résultats PulseScore du bookmaker du pari (même identifiant de match, pas de
-comparaison de noms), avec le score par période. À défaut, le fichier donnees/resultats_manuels.json
+Source des scores : les résultats validés par cotes/resultats.py (ESPN, LiveScore, Flashscore, NHL,
+API-Sports et secours), avec le score par période. À défaut, le fichier donnees/resultats_manuels.json
 (résultats retrouvés à la main) : {"<id du pari>": "gagne" | "perdu" | "rembourse"} ou
 {"<match_id>": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3]}}.
 

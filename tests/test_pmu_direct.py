@@ -3,8 +3,6 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import pytest
-
 from cotes.direct import pmu
 from cotes.simulation import REFERENCES, bilan
 
@@ -97,26 +95,6 @@ def test_echec_total_nest_pas_ok_et_un_sport_hors_catalogue_nest_pas_demande():
     assert pmu.sports_demandes({"football", "formule_1", "darts"}) == [("football", "football")]
     assert "cricket" not in pmu.SPORTS and "esports" not in pmu.SPORTS
     assert session.urls
-
-
-def test_rapport_shadow_et_cotes_a_un_centime():
-    base = {"bookmaker": "pmu", "sport": "football", "domicile": "Lens", "exterieur": "Lille",
-            "debut": "2026-10-18T20:00:00Z", "marche": "TOTAL", "periode": "MATCH", "issue": "PLUS"}
-    pulse = [{**base, "match_id": "pmu|ps", "ligne": 2.5, "cote": 1.85},
-             {**base, "match_id": "pmu|ps", "issue": "MOINS", "ligne": 2.5, "cote": 1.95},
-             {**base, "match_id": "pmu|manque", "domicile": "Nice", "exterieur": "Rennes", "cote": 2.1}]
-    direct = [{**base, "match_id": "pmu|k", "ligne": 2.5, "cote": 1.86},
-              {**base, "match_id": "pmu|k", "issue": "MOINS", "ligne": 2.5, "cote": 2.10}]
-    r = pmu.rapport(pulse, direct)
-    assert r["matchs_pulsescore"] == 2 and r["matchs_communs"] == 1
-    assert r["couverture"] == 0.5
-    assert r["selections_communes"] == 2 and r["selections_egales"] == 1
-    assert r["accord_cotes"] == 0.5 and r["pret_a_basculer"] is False
-    parfait = pmu.rapport(pulse[:1], [{**direct[0], "cote": 1.85}])
-    assert parfait["couverture"] == 1 and parfait["accord_cotes"] == 1
-    assert parfait["pret_a_basculer"] is True
-    vide = pmu.rapport([], direct)
-    assert vide["couverture"] is None and vide["pret_a_basculer"] is False
 
 
 def _offre(type_en, label, anglais, issues, lifetime="FULL_TIME"):
@@ -272,15 +250,6 @@ def test_liste_qui_atteint_l_horizon_ne_relit_pas_les_competitions():
     lignes, meta, session = _collecter([(200, liste), (200, offres)])
     assert meta["matchs"] == 1 and any(l["domicile"] == "Lens" for l in lignes)
     assert not any("group.json" in u for u in session.urls)
-
-
-def test_mode_par_defaut_auto(monkeypatch):
-    monkeypatch.delenv("SOURCE_PMU", raising=False)
-    assert pmu.mode_source() == "auto"
-    monkeypatch.setenv("SOURCE_PMU", "AUTO")
-    assert pmu.mode_source() == "auto"
-    monkeypatch.setenv("SOURCE_PMU", "ailleurs")
-    assert pmu.mode_source() == "shadow"
 
 
 def test_pari_kalshi_historique_reste_dans_le_bilan():

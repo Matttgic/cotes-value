@@ -289,12 +289,11 @@ def test_diagnostic_pinnacle_remonte_dans_cycle_sans_cle(monkeypatch):
     monkeypatch.setattr(cycle.betclic_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
     monkeypatch.setattr(cycle.olybet_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
     monkeypatch.setattr(cycle.netbet_direct,'collecter',lambda *a,**k:([], {'ok':True,'erreurs':[],'requetes':0,'matchs':0}))
-    monkeypatch.delenv('SOURCE_PMU', raising=False)
     monkeypatch.delenv('SOURCE_OLYBET', raising=False)
     monkeypatch.delenv('SOURCE_NETBET', raising=False)
     monkeypatch.setenv('PINNACLE_API_KEY','secret-test-prive')
     journal={'etapes':{}}
-    cycle.collecter_prematch(None,'test',NOW,journal)
+    cycle.collecter_prematch('test',NOW,journal)
     assert journal['etapes']['pinnacle']['degrade'] is True
     assert 'HTTP 429' in journal['etapes']['pinnacle']['erreurs'][0]
     assert journal['pinnacle_configuration']=={'mode':'environnement'}

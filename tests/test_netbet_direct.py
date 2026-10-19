@@ -197,9 +197,8 @@ def test_mode_et_sports_anj(monkeypatch):
 def test_cycle_ajoute_netbet_par_defaut(monkeypatch):
     from scripts import cycle
     monkeypatch.delenv("SOURCE_NETBET", raising=False)
-    monkeypatch.delenv("SOURCE_PMU", raising=False)
     monkeypatch.delenv("SOURCE_OLYBET", raising=False)
-    for nom in ("pmu_direct", "winamax_direct", "unibet_direct", "betclic_direct", "olybet_direct"):
+    for nom in ("winamax_direct", "unibet_direct", "betclic_direct", "olybet_direct"):
         monkeypatch.setattr(getattr(cycle, nom), "collecter",
                             lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [{
@@ -208,15 +207,10 @@ def test_cycle_ajoute_netbet_par_defaut(monkeypatch):
         "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM", "match_id": "pin|1"}])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
     monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
-    plans = []
-
-    def pulse(key, plan, *a, **k):
-        plans.append(plan)
-        return ([{"bookmaker": "pmu", "sport": "football", "debut": "2026-10-18T18:45:00Z",
-                  "domicile": "Lyon", "exterieur": "Nice", "cote": 1.85, "marche": "RESULTAT_1N2",
-                  "periode": "MATCH", "issue": "DOM", "match_id": "pmu|1"}], {"pmu": 1}, {})
-
-    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
+    monkeypatch.setattr(cycle.pmu_direct, "collecter", lambda *a, **k: ([{
+        "bookmaker": "pmu", "sport": "football", "debut": "2026-10-18T18:45:00Z",
+        "domicile": "Lyon", "exterieur": "Nice", "cote": 1.85, "marche": "RESULTAT_1N2",
+        "periode": "MATCH", "issue": "DOM", "match_id": "pmu|1"}], {"ok": True, "erreurs": [], "requetes": 1, "matchs": 1}))
 
     def lire(sports, heures, **kwargs):
         assert "football" in sports
@@ -228,9 +222,8 @@ def test_cycle_ajoute_netbet_par_defaut(monkeypatch):
 
     monkeypatch.setattr(cycle.netbet_direct, "collecter", lire)
     journal = {"etapes": {}}
-    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", NOW, journal)
+    _, _, lignes = cycle.collecter_prematch("complet", NOW, journal)
     assert journal["netbet_source"] == "direct"
     assert any(l["bookmaker"] == "netbet" for l in lignes)
     assert journal["etapes"]["netbet"]["ok"] is True
     assert [a["source"] for a in journal["netbet_controle"]["aberrants"]] == ["Pinnacle"]
-    assert plans and all("netbet" not in plan for plan in plans)
