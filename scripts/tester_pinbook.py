@@ -8,6 +8,7 @@ s'ajoute au résumé du job. La clé n'est jamais affichée.
 import json
 import os
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -42,7 +43,10 @@ def analyser(corps: dict, sport: str, maintenant: datetime) -> dict:
             "dernier_match_h": round((futurs[-1] - maintenant).total_seconds() / 3600, 1) if futurs else None,
             "lignes": len(lignes), "lignes_avec_proba": len(sures),
             "marches": sorted({l["marche"] for l in sures}), "age_last_call_min": age_min,
-            "avec_home_team_type": sum(1 for e in evenements if e.get("home_team_type"))}
+            "avec_home_team_type": sum(1 for e in evenements if e.get("home_team_type")),
+            "home_team_type": dict(Counter(str(e.get("home_team_type")) for e in evenements)),
+            "echantillon_team2": [f'{e.get("league_name")} | {e.get("home")} - {e.get("away")} | {e.get("starts")}'
+                                  for e in evenements if e.get("home_team_type") == "Team2"][:4]}
 
 
 def main(ids: list[int]) -> int:
