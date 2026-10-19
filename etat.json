@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-19T10:57:30+00:00",
+  "debut": "2026-10-19T11:02:11+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.3,
+    "secondes": 9.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,33 +12,33 @@
     ]
    },
    "pinnacle": {
-    "secondes": 32.0,
+    "secondes": 45.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 9 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403",
-     "sport 5 matchups : HTTP 403"
+     "sport 9 matchups : HTTP 503",
+     "sport 45 matchups : HTTP 503",
+     "sport 5 matchups : HTTP 503"
     ]
    },
-   "unibet_direct": {
-    "secondes": 5.2,
+   "olybet": {
+    "secondes": 5.1,
     "ok": true
    },
-   "olybet": {
+   "unibet_direct": {
     "secondes": 5.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 13.0,
+    "secondes": 12.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 21.8,
+    "secondes": 19.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -46,7 +46,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 38.1,
+    "secondes": 49.0,
     "ok": true
    },
    "pulsescore": {
@@ -55,23 +55,20 @@
     "desactive": true
    },
    "smarkets": {
-    "secondes": 20.7,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 4.3,
+    "secondes": 6.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.7,
+    "secondes": 0.6,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.1,
+    "secondes": 0.2,
     "ok": true
    }
   },
@@ -86,24 +83,24 @@
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 761,
-   "lignes_perimees": 82812,
+   "age_max_s": 842,
+   "lignes_perimees": 15081,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
+     "matchups_503": 3,
+     "matchups_200": 19,
+     "markets_200": 15,
+     "markets_503": 4
     },
     "sautes": 0,
-    "extrait": null
+    "extrait": "{\"type\": \"about:blank\", \"title\": \"MAINTENANCE\", \"detail\": \"API is currently undergoing maintenance, try again later\", \"status\": 503}"
    },
    "choix_prix": {
-    "head_200": 36,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_fixe": 4,
-    "choisi_autre": 8,
-    "reprise_403": 5
+    "head_200": 42,
+    "head_503": 18,
+    "choisi_autre": 9,
+    "choisi_fixe": 3
    }
   },
   "winamax_source": "direct",
@@ -249,22 +246,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-19T10:57:40+00:00",
-   "pinnacle_derniere_lecture": "2026-10-19T10:57:44+00:00",
+   "pinnacle_premiere_lecture": "2026-10-19T11:02:21+00:00",
+   "pinnacle_derniere_lecture": "2026-10-19T11:02:32+00:00",
    "books_premiere_lecture": "2026-10-19T08:42:39+00:00",
-   "books_derniere_lecture": "2026-10-19T10:58:03+00:00",
-   "ecart_enveloppe_secondes": 8105.0
+   "books_derniere_lecture": "2026-10-19T11:02:56+00:00",
+   "ecart_enveloppe_secondes": 8393.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 559,
    "a_verifier": 9,
    "non_conforme": 9,
-   "mesures": 12433,
+   "mesures": 12144,
    "matchs_suspects": 0
   },
   "reglement": false,
@@ -272,34 +270,24 @@
    "saute": true,
    "dernier_reglement": "2026-10-19T10:26:31+00:00"
   },
-  "fin": "2026-10-19T10:59:10+00:00",
+  "fin": "2026-10-19T11:03:55+00:00",
   "requetes_pulsescore": {},
   "cotes": {
-   "francaises": 41115,
-   "pinnacle": 102974,
+   "francaises": 41731,
+   "pinnacle": 102457,
    "betfair": 0,
-   "polymarket": 13049,
+   "polymarket": 13177,
    "smarkets": 2971
   },
-  "matchs_francais": 927,
+  "matchs_francais": 934,
   "opportunites": 2,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 0
  },
  "requetes_par_mois": {
   "2026-10": 231552
  },
  "historique": [
-  {
-   "debut": "2026-10-18T19:21:23+00:00",
-   "mode": "complet",
-   "opportunites": 8,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "betclic": 4,
-    "orbitxch": 4
-   }
-  },
   {
    "debut": "2026-10-18T19:32:00+00:00",
    "mode": "complet",
@@ -1878,6 +1866,13 @@
    "mode": "complet",
    "opportunites": 2,
    "nouveaux_paris": 1,
+   "requetes_pulsescore": {}
+  },
+  {
+   "debut": "2026-10-19T11:02:11+00:00",
+   "mode": "complet",
+   "opportunites": 2,
+   "nouveaux_paris": 0,
    "requetes_pulsescore": {}
   }
  ],
