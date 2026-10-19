@@ -115,6 +115,40 @@ assert.equal(normaliserRecherche("CONFÉRENCE"),"conference");
     executer(js)
 
 
+def test_js_paris_lignes_colorees_puces_resume_et_sante():
+    base={"reference":"Pinnacle","sport":"volley","bookmaker":"Unibet","domicile":"Galatasaray","exterieur":"Fenerbahçe",
+          "ligue":"Ligue turque","pari":"Galatasaray gagne","cote":1.9,"cote_juste":1.78,"ecart":.067,"mise":10,
+          "detecte":"2026-10-15T09:00:00Z","strategies":[],"convergence":False,"simulation":"D","tranche":""}
+    rows=[{**base,"id":"g","statut":"gagne","gain":9.0},{**base,"id":"d","statut":"demi_perdu","gain":-5.0},
+          {**base,"id":"p","statut":"perdu","gain":-10.0},{**base,"id":"c","statut":"en_cours","gain":None},
+          {**base,"id":"r","statut":"a_regler","gain":None}]
+    champs=list(rows[0]); data={"paris":[],"catalogue":{"champs":champs,"lignes":[list(p.values()) for p in rows]},
+        "strategies_badges":{},"tranches":[],"valeurs_filtres":{},"simulations":{},
+        "etat":{"dernier_cycle":{"fin":"2026-10-15T09:00:00Z","etapes":{"pinnacle":{"ok":True,"degrade":True},
+                "pulsescore":{"ok":True,"desactive":True},"netbet":{"ok":False}}}}}
+    section=MODELE[MODELE.index("const recentes ="):MODELE.index("// --- Segments")]
+    executer(DOM+"const D="+json.dumps(data)+";\nconst badgeStrategies=()=>'';\nconst ecartsReferences=()=>'';\n"+section+'''
+const html=()=>document.getElementById("liste-paris").innerHTML;
+assert.equal((html().match(/etat-gagne/g)||[]).length,1);
+assert.equal((html().match(/etat-perdu/g)||[]).length,2);
+assert.ok(html().includes("etat-regler") && html().includes("etat-cours"));
+assert.ok(html().includes('class="puce-sport"') && html().includes("(1.78)"));
+const resume=document.getElementById("paris-resume").innerHTML;
+assert.ok(resume.includes("<b>3</b> réglés sur 5"));
+assert.ok(resume.includes("-6"));
+puceStatut="perdu"; rendreParis(); assert.deepEqual(parisFiltres.map(p=>p.id),["d","p"]);
+puceStatut="gagne"; rendreParis(); assert.deepEqual(parisFiltres.map(p=>p.id),["g"]);
+puceStatut="a_regler"; rendreParis(); assert.deepEqual(parisFiltres.map(p=>p.id),["r"]);
+document.getElementById("reinitialiser-filtres").onclick(); assert.equal(parisFiltres.length,5);
+rendreSanteParis(Date.parse("2026-10-15T09:05:00Z"));
+const s=document.getElementById("paris-sante");
+assert.equal(s.className,"paris-sante sante-panne");
+assert.ok(s.innerHTML.includes("netbet") && !s.innerHTML.includes("pulsescore") && s.innerHTML.includes("1 alerte mineure"));
+D.etat.dernier_cycle.etapes.netbet.ok=true;
+rendreSanteParis(Date.parse("2026-10-15T09:30:00Z")); assert.equal(s.className,"paris-sante sante-alerte");
+''')
+
+
 def test_js_courbes_legend_masquage_et_periode_vide():
     outils = MODELE[MODELE.index("const eurC ="):MODELE.index("\n", MODELE.index("const eurC ="))] + "\n"
     outils += MODELE[MODELE.index("function pas("):MODELE.index("function rendreCourbe()")]
