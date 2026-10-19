@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-19T12:28:35+00:00",
+  "debut": "2026-10-19T12:33:10+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.4,
+    "secondes": 8.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -22,24 +22,24 @@
      "sport 4 matchups : HTTP 503"
     ]
    },
-   "olybet": {
-    "secondes": 4.1,
+   "unibet_direct": {
+    "secondes": 5.1,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 5.6,
+   "olybet": {
+    "secondes": 5.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 10.8,
+    "secondes": 11.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 20.5,
+    "secondes": 18.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.5,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -47,19 +47,16 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 38.3,
+    "secondes": 44.1,
     "ok": true
    },
    "smarkets": {
-    "secondes": 27.4,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 2.4,
+    "secondes": 8.2,
     "ok": true
    },
    "comparaison": {
@@ -67,7 +64,7 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.0,
+    "secondes": 0.1,
     "ok": true
    }
   },
@@ -75,15 +72,25 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 0,
-   "erreurs": [],
-   "pause": true
+   "sports": [
+    "baseball",
+    "basket",
+    "boxe",
+    "football_americain",
+    "handball",
+    "hockey",
+    "mma",
+    "football",
+    "tennis",
+    "volley"
+   ],
+   "requetes": 10,
+   "lignes": 36479,
+   "erreurs": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": null,
+   "age_max_s": 0,
    "lignes_perimees": 0,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
@@ -100,8 +107,16 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 3,
+   "examines": 6,
    "comparaisons": [
+    {
+     "match": "Braga – Gil Vicente",
+     "source": "Pinnacle",
+     "cote_olybet": 1.49,
+     "cote_reference": 1.54,
+     "ecart_relatif": 0.0325,
+     "aberrant": false
+    },
     {
      "match": "Braga – Gil Vicente",
      "source": "PMU",
@@ -112,10 +127,26 @@
     },
     {
      "match": "Chivas de Guadalajara – Club Necaxa",
+     "source": "Pinnacle",
+     "cote_olybet": 1.36,
+     "cote_reference": 1.411,
+     "ecart_relatif": 0.0361,
+     "aberrant": false
+    },
+    {
+     "match": "Chivas de Guadalajara – Club Necaxa",
      "source": "PMU",
      "cote_olybet": 1.36,
      "cote_reference": 1.32,
      "ecart_relatif": 0.0303,
+     "aberrant": false
+    },
+    {
+     "match": "AC Monza – Cagliari",
+     "source": "Pinnacle",
+     "cote_olybet": 2.21,
+     "cote_reference": 2.31,
+     "ecart_relatif": 0.0433,
      "aberrant": false
     },
     {
@@ -132,14 +163,30 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 9,
    "comparaisons": [
+    {
+     "match": "Daugavpils – Auda",
+     "source": "Pinnacle",
+     "cote_netbet": 2.77,
+     "cote_reference": 2.83,
+     "ecart_relatif": 0.0212,
+     "aberrant": false
+    },
     {
      "match": "Daugavpils – Auda",
      "source": "PMU",
      "cote_netbet": 2.77,
      "cote_reference": 2.95,
      "ecart_relatif": 0.061,
+     "aberrant": false
+    },
+    {
+     "match": "Dila Gori – Iberia",
+     "source": "Pinnacle",
+     "cote_netbet": 2.45,
+     "cote_reference": 2.73,
+     "ecart_relatif": 0.1026,
      "aberrant": false
     },
     {
@@ -152,10 +199,26 @@
     },
     {
      "match": "Pafos FC – APOEL Nicosia",
+     "source": "Pinnacle",
+     "cote_netbet": 1.78,
+     "cote_reference": 1.884,
+     "ecart_relatif": 0.0552,
+     "aberrant": false
+    },
+    {
+     "match": "Pafos FC – APOEL Nicosia",
      "source": "PMU",
      "cote_netbet": 1.78,
      "cote_reference": 1.71,
      "ecart_relatif": 0.0409,
+     "aberrant": false
+    },
+    {
+     "match": "Universitatea Cluj – Arges Pitesti",
+     "source": "Pinnacle",
+     "cote_netbet": 1.53,
+     "cote_reference": 1.617,
+     "ecart_relatif": 0.0538,
      "aberrant": false
     },
     {
@@ -178,22 +241,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": null,
-   "pinnacle_derniere_lecture": null,
+   "pinnacle_premiere_lecture": "2026-10-19T12:33:55+00:00",
+   "pinnacle_derniere_lecture": "2026-10-19T12:33:57+00:00",
    "books_premiere_lecture": "2026-10-19T09:33:47+00:00",
-   "books_derniere_lecture": "2026-10-19T12:29:20+00:00",
-   "ecart_enveloppe_secondes": null
+   "books_derniere_lecture": "2026-10-19T12:33:57+00:00",
+   "ecart_enveloppe_secondes": 10810.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 560,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 7513,
+   "mesures": 10001,
    "matchs_suspects": 0
   },
   "reglement": false,
@@ -201,29 +265,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-19T12:20:53+00:00"
   },
-  "fin": "2026-10-19T12:30:31+00:00",
+  "fin": "2026-10-19T12:34:52+00:00",
   "cotes": {
-   "francaises": 42770,
-   "pinnacle": 0,
-   "polymarket": 13170,
+   "francaises": 43130,
+   "pinnacle": 36479,
+   "polymarket": 13240,
    "smarkets": 3887
   },
-  "matchs_francais": 881,
-  "opportunites": 5,
-  "opportunites_suspectes": 0,
+  "matchs_francais": 899,
+  "opportunites": 6,
+  "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-18T21:03:21+00:00",
-   "mode": "complet",
-   "opportunites": 8,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {
-    "betclic": 4,
-    "orbitxch": 4
-   }
-  },
   {
    "debut": "2026-10-18T21:07:57+00:00",
    "mode": "complet",
@@ -1728,6 +1782,12 @@
    "debut": "2026-10-19T12:28:35+00:00",
    "mode": "complet",
    "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-19T12:33:10+00:00",
+   "mode": "complet",
+   "opportunites": 6,
    "nouveaux_paris": 0
   }
  ],
