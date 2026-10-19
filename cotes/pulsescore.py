@@ -13,7 +13,6 @@ import re
 from datetime import datetime, timezone
 from math import isfinite
 
-BASE = "https://api.pulsescore.net/api"
 NOMS = {"winamax": "Winamax", "betclic": "Betclic", "unibet-fr": "Unibet", "pmu": "PMU",
         "olybet": "OlyBet", "netbet": "NetBet", "orbitxch": "Betfair"}
 

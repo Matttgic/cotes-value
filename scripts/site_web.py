@@ -555,18 +555,13 @@ def construire(donnees: Path, sortie: Path) -> Path:
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     actuelles = valider_actuelles(actuelles, paris, retenus)
-    live = _lire(donnees / "docs/live_papier.json", {"cycles": [], "observations": [], "signaux": []})
-    # Résumé léger ; le journal intégral reste disponible dans son propre JSON.
-    live_vue = {**live, "cycles": live.get("cycles", [])[-3:],
-                "total_signaux": len(live.get("signaux", [])),
-                "observations": live.get("observations", [])[-12:], "signaux": live.get("signaux", [])[-12:]}
     # Une seule copie des contrats dans le catalogue. La navigation ne garde
     # ici que ses étiquettes historiques ; le client partage les mêmes fiches.
     if laboratoire.get("navigation"):
         laboratoire["navigation"]["paris"] = {pid: {k: p.get(k) for k in
             ("strategies_historiques", "convergence_historique", "tranche", "cote", "strategies", "jules_v2")}
             for pid, p in laboratoire["navigation"]["paris"].items()}
-    data = {"live_papier": live_vue, "diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
+    data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
             "catalogue": catalogue_paris(paris, retenus),
@@ -589,7 +584,6 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
     donnees_json = json_public(data)
-    live_json = json_public(live)
     alertes_json = json_public(notifications_mod.flux(actuelles, paris, retenus))
     sortie.mkdir(parents=True, exist_ok=True)
     web = Path(__file__).resolve().parent.parent / "web"
@@ -610,7 +604,6 @@ def construire(donnees: Path, sortie: Path) -> Path:
     (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
     (sortie / "verification-responsive.html").write_text((web / "verification-responsive.html").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
-    (sortie / "live_papier.json").write_text(live_json, encoding="utf-8")
     (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
     return sortie / "index.html"
@@ -743,13 +736,6 @@ MODELE = r"""<!doctype html>
           <p class="aide">Ces règles ont été figées le 15/10. Cette reconstitution n'est pas un suivi prospectif et ne modifie aucun bilan officiel.</p>
           <div id="prudentes-reconstitution"></div>
         </details>
-      </details>
-      <details class="carte" id="live-papier">
-        <summary><b>Journal papier Live · pauses réglementaires</b></summary>
-        <p class="aide">Football, hockey, basket et handball. Simulation isolée, sans mise ni notification.
-          Les prix à +15/+30 s sont des observations, pas des preuves d'acceptation ou de liquidité.</p>
-        <div id="live-papier-contenu"></div>
-        <a href="live_papier.json" download>Télécharger le journal JSON</a>
       </details>
       <details class="carte" id="gemini-picks">
         <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement <small>(règle v2 depuis le 18/10/2026 : un pari par bookmaker et par match)</small></summary>
@@ -1668,7 +1654,6 @@ function rendreCourbesStrategies(rows) {
 let periodeStrategies = "futur";
 function rendreStrategies() {
   const lignesOuvertes=new Set([...document.querySelectorAll("#strategies-mobile > details[open]")].map(d=>d.id));
-  rendreLivePapier();
   const L = D.laboratoire;
   if (!L || (!L.resultats?.length && !Object.keys(L.comparateurs || {}).length)) {
     document.getElementById("strategies-quoi").textContent = "Aucune comparaison disponible.";
@@ -1848,34 +1833,6 @@ function rendreStrategies() {
 document.getElementById("strategies-ref").onchange = rendreStrategies;
 document.getElementById("strategies-tri").onchange = rendreStrategies;
 rendreStrategies();
-
-function rendreLivePapier() {
-  const j = D.live_papier || {}, last = (j.cycles || []).slice(-1)[0];
-  const host = document.getElementById("live-papier-contenu");
-  const pause=D.etat?.dernier_cycle?.live_papier?.actif===false;
-  const avertissement=pause?'<p class="aide"><b>Collecte Live en pause.</b> Les flux doivent fournir des horodatages source vérifiables et des clôtures complètes avant réactivation. Les anciennes observations sont conservées.</p>':'';
-  if (!last) { host.innerHTML = avertissement || '<p class="aide">En attente du premier cycle papier Live.</p>'; return; }
-  const counts = last.compteurs || {};
-  host.innerHTML = avertissement+`<p>Dernière observation : ${quand(last.fin)} · rafale ${Number(last.rafale_secondes).toFixed(1)} s
-    ${last.rafale_sous_20s ? "" : "· délai supérieur à 20 s : signaux refusés"}.</p>
-    <p>${counts.prix_lus || 0} prix lus · ${counts.prix_en_pause || 0} prix en pause reconnue ·
-      ${j.total_signaux || 0} signaux vérifiés conservés.</p>
-    <p class="aide">${counts.pause_non_confirmee || 0} prix sans pause confirmée ·
-      ${counts.references_non_verifiees || 0} marchés de référence non vérifiés.
-      Sans score, clôture ou fraîcheur vérifiés, aucun edge n'est annoncé.</p>`;
-  if ((last.erreurs || []).length) host.innerHTML += `<p class="aide">Lecture partielle : ${e(last.erreurs.join(" · "))}</p>`;
-  const rows = [...(j.observations || [])].reverse();
-  if (!rows.length) host.innerHTML += '<p class="aide">Aucune observation exploitable de pause lors des derniers cycles.</p>';
-  host.innerHTML += rows.map(o => {
-    const prix = target => { const p = o.prix_suivants?.[target];
-      return !p ? "non relevé" : `${p.cote == null ? "prix absent" : cote(p.cote)} à +${p.delai_reel_secondes} s${p.hors_fenetre ? " (retard)" : ""}`; };
-    return `<article class="carte"><b>${e(o.match)}</b> · ${e(o.sport)} · ${e(o.pause)}
-      <div>${e(o.pari)} · ${e(o.bookmaker)} · cote ${cote(o.cote)} · ${o.signal ? "signal papier" : "observation refusée"}</div>
-      <small>${quand(o.observe_le)} · edge ${pct(o.edge)} · +15 s : ${e(prix("15"))} · +30 s : ${e(prix("30"))}</small>
-      <p class="aide">${o.timestamp_source_verifie ? "" : "Fraîcheur source non vérifiée. "}
-        ${o.l1?.accepted ? "L1 retenu. " : "L1 non validé. "}${o.l2?.accepted ? "L2 retenu." : "L2 non validé : clôture, profil ou contexte insuffisant."}</p></article>`;
-  }).join("");
-}
 
 function rendreLaboratoire() {
   const L = D.laboratoire;

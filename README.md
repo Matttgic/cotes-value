@@ -139,8 +139,7 @@ Les simulations se recoupent et leurs mises ne s'additionnent pas.
 Pinnacle cherche sa clé guest dans cet ordre, sans jamais l'écrire dans les diagnostics :
 le champ `api.haywire.apiKey` de `https://www.pinnacle.com/config/app.json` (délai court, mis en
 cache pour le cycle), puis le secret GitHub Actions ou la variable `PINNACLE_API_KEY`, puis la
-valeur guest historique du code si les deux échouent. Les sondes et le journal papier utilisent
-le même constructeur d'en-têtes. Ce secours n'est pas une suppression de la valeur dans le dépôt
+valeur guest historique du code si les deux échouent. Ce secours n'est pas une suppression de la valeur dans le dépôt
 ou son historique.
 `PINNACLE_AGE_MAX_MIN` (défaut 10) est l'âge maximum, en minutes, du cache Cloudflare.
 Le délai depuis le réchauffeur ne compte que s'il a renouvelé l'entrée (`fresh`, statut
@@ -229,16 +228,6 @@ python scripts/cycle.py --mode test     # cycle réduit, sans clé
 
 [Critères et audit de Gemini Argon V1](docs/strategie-gemini.md), suivie depuis
 le 14 octobre à 20 h (Paris), dans Bilan, Stratégies et Paris. Rentabilité non démontrée.
-
-### Recherche live pendant les pauses
-
-L’audit des flux et l’architecture sont décrits dans [docs/live-pauses.md](docs/live-pauses.md).
-Le module `cotes/live_pauses.py` calcule L1/L2 uniquement sur des observations vérifiées, en mode papier.
-Il n’est relié ni au cycle de production, ni aux mises, ni aux notifications.
-Une sonde ponctuelle est disponible dans `scripts/sonde_live_pauses.py`.
-
-Le [journal papier Live](docs/journal-live-papier.md) observait les pauses longues avec les flux live de
-PulseScore : il est à l'arrêt depuis la fin de l'abonnement, et le cycle ne le lance plus.
 
 ## Sécurité et audit
 

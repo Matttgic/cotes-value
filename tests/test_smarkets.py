@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from cotes import comparaison, smarkets
-from cotes.live_pauses import REFERENCES as LIVE_REFERENCES
 from cotes.simulation import STRATEGIE, moyennes_ecarts
 from cotes.strategie_gemini import GEMINI
 from cotes.strategie_jules_v2 import JULES_V2
@@ -125,7 +124,6 @@ def test_drapeau_eteint_par_defaut_et_allume_seulement_si_oui(monkeypatch):
     assert "Smarkets" not in GEMINI["references"]
     assert "Smarkets" not in JULES_V2["references"]
     assert "Smarkets" not in M3["references"]
-    assert "Smarkets" not in LIVE_REFERENCES
 
 
 def test_table_smarkets_separee_du_consensus(monkeypatch):
