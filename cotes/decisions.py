@@ -68,3 +68,52 @@ def figer_nouveaux(paris, nouveaux):
         p['selections_figees'] = {cle: {'version': versions.get(cle, '1'), 'decide_le': p['decide_le']}
                                   for cle, ids in retenus.items() if id(p) in ids}
         p['registre_version'] = '1'
+
+
+REDECISION = "redecision_lecture_posterieure"
+
+
+def redecider_ouverts(paris, maintenant, depuis_jours=7):
+    """Correction unique des refus dus à la règle de fraîcheur à sens unique (corrigée le 19/10/2026).
+
+    Les stratégies refusaient toute référence lue après la cote française, ce qui écartait presque tous les
+    paris Betclic, Unibet et PMU (relus moins souvent que Pinnacle). Seuls les paris dont le match n'a pas
+    commencé sont revus : la décision ne peut dépendre d'aucun résultat. Elle est recalculée sur les seules
+    données de la prise (comme à la prise), ne retire jamais une sélection déjà figée, et n'a lieu qu'une fois
+    par pari (marque ``REDECISION``). Retourne le nombre de sélections ajoutées.
+    """
+    from datetime import datetime, timedelta
+    from .laboratoire import heure
+
+    def date(valeur):
+        try:
+            d = datetime.fromisoformat(str(valeur).replace('Z', '+00:00'))
+            return d if d.tzinfo else None
+        except ValueError:
+            return None
+
+    limite = maintenant - timedelta(days=depuis_jours)
+    cibles = [p for p in paris
+              if isinstance(p.get('selections_figees'), dict) and not p.get(REDECISION)
+              and p.get('statut') == 'en_cours' and date(p.get('decide_le')) is not None
+              and (heure(p.get('debut')) or maintenant) > maintenant
+              and (heure(p.get('detecte')) or maintenant) >= limite]
+    if not cibles:
+        return 0
+    anciennes = {id(p): p['selections_figees'] for p in cibles}
+    for p in cibles:
+        del p['selections_figees']
+    try:
+        figer_nouveaux(paris, cibles)
+    except Exception:
+        for p in cibles:
+            p['selections_figees'] = anciennes[id(p)]
+        raise
+    ajoutees = 0
+    for p in cibles:
+        figees = p['selections_figees']
+        ajoutees += sum(cle not in anciennes[id(p)] for cle in figees)
+        for cle, valeur in anciennes[id(p)].items():
+            figees.setdefault(cle, valeur)
+        p[REDECISION] = maintenant.isoformat(timespec='seconds')
+    return ajoutees
