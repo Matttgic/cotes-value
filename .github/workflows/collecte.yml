@@ -117,6 +117,8 @@ jobs:
           ALERTE_WEBHOOK_URL: ${{ secrets.ALERTE_WEBHOOK_URL }}
           ALERTE_WEBHOOK_KEY: ${{ secrets.ALERTE_WEBHOOK_KEY }}
           ALERTE_WEBHOOK_CLE_ENTETE: ${{ vars.ALERTE_WEBHOOK_CLE_ENTETE || 'x-api-key' }}
+          # Bookmakers admis au webhook : Betclic seul par défaut (« tous » pour ne pas filtrer)
+          ALERTE_WEBHOOK_BOOKMAKERS: ${{ vars.ALERTE_WEBHOOK_BOOKMAKERS || 'Betclic' }}
         run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
 
       - name: Règlement après les alertes et construction du site
