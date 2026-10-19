@@ -112,6 +112,11 @@ jobs:
 
       - name: Envoyer les nouvelles alertes Chrome
         continue-on-error: true
+        env:
+          # Webhook Pinnacle 2 : inactif sans ALERTE_WEBHOOK_URL ; l'en-tête de la clé vaut x-api-key par défaut
+          ALERTE_WEBHOOK_URL: ${{ secrets.ALERTE_WEBHOOK_URL }}
+          ALERTE_WEBHOOK_KEY: ${{ secrets.ALERTE_WEBHOOK_KEY }}
+          ALERTE_WEBHOOK_CLE_ENTETE: ${{ vars.ALERTE_WEBHOOK_CLE_ENTETE || 'x-api-key' }}
         run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
 
       - name: Règlement après les alertes et construction du site

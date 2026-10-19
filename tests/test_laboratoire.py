@@ -189,6 +189,7 @@ def test_redecision_unique_des_paris_ouverts_refuses_par_l_ancienne_regle():
     paris = [ouvert, deja_joue, accepte]
     assert redecider_ouverts(paris, now) > 0
     assert "labo:PIN-1.3-2-e2-h36" in ouvert["selections_figees"] and ouvert[REDECISION]
+    assert "labo:PIN-1.3-2-e2-h36" in ouvert["redecision_ajoutees"]                    # liste des ajouts (webhook)
     assert deja_joue["selections_figees"] == {} and REDECISION not in deja_joue      # match commencé : intact
     assert "labo:autre" in accepte["selections_figees"]                              # jamais de retrait
     figees = dict(ouvert["selections_figees"])
