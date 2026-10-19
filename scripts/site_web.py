@@ -84,7 +84,7 @@ def cle_fiche(p: dict) -> tuple:
 CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
                 "ligue", "regle_le", "reporte_au", "id", "joueur", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le", "decide_le", "registre_version",
-                "ecart_betfair", "ecart_polymarket", "ecart_smarkets")
+                "ecart_polymarket", "ecart_smarkets")
 
 
 PARIS_TZ = ZoneInfo("Europe/Paris")
@@ -316,7 +316,7 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]]) -> dict:
 def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str) -> dict:
     """Relie les lignes du laboratoire aux paris exacts, sans perdre les anciens paris.
 
-    Les IDs historiques des 36 règles viennent du relevé *figé* ; les sélections
+    Les IDs historiques des règles viennent du relevé *figé* ; les sélections
     prospectives sont recalculées sur les prises, jamais sur les résultats.
     Les comparateurs historiques sont des rejeux et restent distingués de leurs
     sélections officielles. Le dictionnaire envoyé au mobile ne contient que les
@@ -484,6 +484,9 @@ def construire(donnees: Path, sortie: Path) -> Path:
     liste, fiches_total, valeurs = selection_paris(paris)
     laboratoire = _lire(Path(__file__).resolve().parent.parent / "docs/comparaison-strategies.json", {})
     if laboratoire:
+        # L'étude figée contient encore les règles Betfair (BET-*) : seules les règles actuelles sont gardées.
+        ids_regles = {r.id for r in REGLES_LABO}
+        laboratoire["resultats"] = [r for r in laboratoire.get("resultats", []) if r["regle"]["id"] in ids_regles]
         maintenant = datetime.now(timezone.utc).isoformat()
         releve_str = laboratoire.get("releve") or maintenant
         m3_ids = paris_m3(paris)
@@ -664,7 +667,7 @@ MODELE = r"""<!doctype html>
       <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
       <div class="bulle" id="bulle"></div></div></details>
       <div class="tableau"><table id="liste-bilan"></table></div>
-      <p class="aide" id="bilan-ecarts">Paris uniques réglés · écart vs Betfair — · écart vs Polymarket — · écart vs Smarkets —</p>
+      <p class="aide" id="bilan-ecarts">Paris uniques réglés · écart vs Polymarket — · écart vs Smarkets —</p>
       <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
       <h2 class="sous-titre">Par tranche de cote</h2>
       <div class="tableau"><table id="bilan-tranches"></table></div>
@@ -680,7 +683,7 @@ MODELE = r"""<!doctype html>
       CLV : paris mesurés / paris réglés.</p>
       <p><b>Par match</b> : moyenne des CLV valides dans chaque événement relié, puis moyenne entre ces événements. Chaque match pèse autant. Couverture : matchs mesurés / matchs avec tickets réglés. Les identités non reliées peuvent rester séparées.</p>
       <p><b>Paris uniques</b> : chaque cote française comptée une fois, même si plusieurs références l'ont signalée.
-      <b>Pinnacle, Betfair…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
+      <b>Pinnacle, Polymarket…</b> : les paris repérés par cette référence, pour comparer les références entre elles.
       <b>Toutes réf.</b> : la somme des références (une même cote peut y compter plusieurs fois).
       <b>Stratégie</b> : les paris qui suivent les critères choisis le 11/10 (voir le texte au-dessus du graphique),
       comptés seulement depuis cette date. <b>ChatGPT</b> : stratégie indépendante, règles figées le 14/10,
@@ -1030,7 +1033,7 @@ function rendreBilan() {
   const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", ...D.references, "Toutes"];
   const bloc = D.ecarts_references || {};
   document.getElementById("bilan-ecarts").textContent = "Paris uniques réglés · " +
-    ["Betfair", "Polymarket", "Smarkets"].map(nom => {
+    ["Polymarket", "Smarkets"].map(nom => {
       const x = bloc[nom] || {};
       return `écart vs ${nom} ${x.n ? pct(x.moyenne) : "—"}` + (x.n ? ` (${x.n})` : "");
     }).join(" · ");
@@ -1174,7 +1177,7 @@ document.getElementById("reinitialiser-filtres").onclick = () => {
   for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value="";
   rendreParis();
 };
-const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","ecart_betfair","ecart_polymarket","ecart_smarkets","clv","statut","gain","strategies","collecte_recue","collecte_debut","prix_revu","prix_revu_le"];
+const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","ecart_polymarket","ecart_smarkets","clv","statut","gain","strategies","collecte_recue","collecte_debut","prix_revu","prix_revu_le"];
 // Les cellules texte ne doivent pas devenir des formules à l'ouverture dans un tableur.
 const celluleCSV = valeur => {
   if (valeur == null) return '""';
@@ -1675,9 +1678,9 @@ function rendreStrategies() {
   const pp = n => n == null ? "—" : pct(n/100);
   const bornes = n => String(n).replace(".",",");
   const futur = new Map((L.futur || []).map(r => [r.id,r]));
-  // Règles numérotées par référence (Pinnacle 1, 2…) ; le détail reste dans la fiche. Betfair n'est plus lu.
+  // Règles numérotées par référence (Pinnacle 1, 2…) ; le détail reste dans la fiche.
   const numeros = {};
-  let rows = (L.resultats || []).filter(r => r.regle.reference !== "Betfair").map(r => ({id:r.regle.id,
+  let rows = (L.resultats || []).map(r => ({id:r.regle.id,
     nom:`${r.regle.reference} ${numeros[r.regle.reference] = (numeros[r.regle.reference] || 0) + 1}`, reference:r.regle.reference,
     detail:`Cotes ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · edge ≥ ${r.regle.edge_min*100} % · ≤ ${r.regle.avance_max_h} h`,
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,

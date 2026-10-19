@@ -48,7 +48,7 @@ function installerActualisation(config) {
   assert.deepEqual([...courbesMasquees],['M3']);
   assert.deepEqual(rendus,['Stratégie','Équipe Lyon','ensemble']);
   assert.equal(etat.presentation,'lignes-v1');
-  // Un ancien instantané ne réintroduit pas le filtre qui masquait les 36 règles.
+  // Un ancien instantané ne réintroduit pas le filtre qui masquait les règles.
   elements.get('strategies-ref').value='';delete etat.presentation;
   config.restaurer(etat);
   assert.equal(elements.get('strategies-ref').value,'');
