@@ -631,9 +631,6 @@ def main() -> int:
                           "etapes": journal.get("etapes", {})}, ensure_ascii=False))
         return 0
 
-    # Journal papier live : il lisait les flux live de PulseScore, arrêté avec l'abonnement.
-    journal["live_papier"] = {"mode": "papier", "actif": False, "raison": "flux live PulseScore arrêté"}
-
     pin, poly, francais = collecter_prematch(args.mode, maintenant, journal, donnees)
     references = {"Pinnacle": pin, "Polymarket": poly}
     # Smarkets reste hors de `francais` : bookmaker « smarkets » n'est pas un book français.
