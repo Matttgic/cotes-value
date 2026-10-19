@@ -75,6 +75,8 @@ jobs:
           PINNODDS_LIMITE_JOUR: ${{ vars.PINNODDS_LIMITE_JOUR || '90' }}
           PINNODDS_PAUSE_MIN: ${{ vars.PINNODDS_PAUSE_MIN || '30' }}
           PINNODDS_HANDICAPS: ${{ vars.PINNODDS_HANDICAPS || 'non' }}
+          # Sports relus chez pinnodds quand Pinnacle ne rend que des cotes de plus de 10 min (« non » coupe)
+          PINNACLE_SECOURS_PERIME: ${{ vars.PINNACLE_SECOURS_PERIME || 'football' }}
           # Second secours (PinBook, offre gratuite de 550 requêtes par mois) : inactif sans ce secret
           PINBOOK_API_KEY: ${{ secrets.PINBOOK_API_KEY }}
           PINBOOK_LIMITE_JOUR: ${{ vars.PINBOOK_LIMITE_JOUR || '16' }}

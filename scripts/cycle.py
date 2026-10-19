@@ -304,21 +304,28 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         fpoly = pool.submit(etape_bornee, "polymarket", journal, BUDGETS["polymarket"],
                             polymarket.collecter, HORIZON_H)
         pin, poly = fpin.result() or [], fpoly.result() or []
-        # Secours : seulement pour les sports où Pinnacle a répondu en erreur HTTP, et seulement avec une clé.
-        if pinnacle_secours.disponible():
-            a_secourir = pinnacle_secours.sports_a_secourir(list(pinnacle.ERREURS), pin)
-            if a_secourir:
-                pin = pin + pinnacle_secours.collecter(a_secourir, maintenant, donnees)
-                journal["pinnacle_secours"] = {**pinnacle_secours.RESUME, "erreurs": list(pinnacle_secours.ERREURS)}
-        if pinnacle._cle_resolue:
-            journal["pinnacle_configuration"] = {"mode": pinnacle.origine_cle}
+        # Fraîcheur de la lecture directe seule (avant le secours) : c'est elle que la page Santé affiche.
         ages = [l.get("age_cache_s") for l in pin
                 if isinstance(l, dict) and isinstance(l.get("age_cache_s"), int)
                 and not isinstance(l.get("age_cache_s"), bool)]
+        perimees = sum(1 for l in pin if isinstance(l, dict) and l.get("cote_perimee"))
+        lues = len(pin)
+        # Secours : sports en erreur HTTP, ou en retard (aucune cote directe fraîche), et seulement avec une clé.
+        if pinnacle_secours.disponible():
+            a_secourir = pinnacle_secours.sports_a_secourir(list(pinnacle.ERREURS), pin)
+            en_retard = pinnacle_secours.sports_en_retard(pin) & a_secourir
+            if a_secourir:
+                pin = pin + pinnacle_secours.collecter(a_secourir, maintenant, donnees)
+                journal["pinnacle_secours"] = {**pinnacle_secours.RESUME, "erreurs": list(pinnacle_secours.ERREURS),
+                                               "retard": sorted(pinnacle.SPORTS[s] for s in en_retard)}
+        if pinnacle._cle_resolue:
+            journal["pinnacle_configuration"] = {"mode": pinnacle.origine_cle}
         journal["pinnacle_fraicheur"] = {
             "seuil_min": pinnacle.age_max_secondes() // 60,
             "age_max_s": max(ages) if ages else None,
-            "lignes_perimees": sum(1 for l in pin if isinstance(l, dict) and l.get("cote_perimee")),
+            "age_min_s": min(ages) if ages else None,
+            "lignes": lues,
+            "lignes_perimees": perimees,
             "rechauffeur": pinnacle.etat_rechauffeur,
             "rechauffeur_detail": pinnacle.resume_rechauffeur(),
             "choix_prix": dict(pinnacle.choix_prix),

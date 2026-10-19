@@ -1599,6 +1599,22 @@ function detailEtape(v) {
   return v.degrade ? "Lecture partielle" : v.cache ? "Données gardées en mémoire" : "Lu normalement";
 }
 const niveauEtape = v => !v || !v.ok ? "panne" : v.degrade ? "alerte" : "ok";
+// Âge des cotes Pinnacle lues en direct : au-delà du seuil, elles ne servent pas de référence.
+function ligneFraicheurPinnacle(fr) {
+  if (!fr || !fr.lignes || !Number.isFinite(fr.age_max_s)) return "";
+  const mn = s => Math.round(s/60), p = fr.lignes_perimees || 0, seuil = fr.seuil_min;
+  const de = Number.isFinite(fr.age_min_s) && mn(fr.age_min_s) !== mn(fr.age_max_s) ? `${mn(fr.age_min_s)} à ${mn(fr.age_max_s)}` : `${mn(fr.age_max_s)}`;
+  const detail = !p ? `Cotes de ${de} min (limite ${seuil} min)`
+    : p >= fr.lignes ? `En retard : cotes de ${de} min, toutes écartées (limite ${seuil} min) · Pinnacle ne les renouvelle que toutes les 15 min`
+    : `${Math.max(1, Math.round(100*p/fr.lignes))} % des cotes écartées : plus de ${seuil} min`;
+  return ligneSante("Pinnacle · fraîcheur", detail, p ? "alerte" : "ok");
+}
+function ligneSecoursPinnacle(secours) {
+  const nb = (secours.sports || []).length, retard = (secours.retard || []).length ? `Pinnacle en retard (${secours.retard.join(", ")}) · ` : "";
+  const detail = secours.lignes ? `${retard}${secours.lignes} cotes · ${nb} sport${nb > 1 ? "s" : ""}`
+    : secours.pause ? `${retard}En pause entre deux lectures` : (secours.erreurs || [])[0] || "Aucune cote reprise";
+  return ligneSante("Pinnacle · secours (pinnodds, PinBook)", detail, secours.lignes || secours.pause ? "alerte" : "panne");
+}
 const PIRE = ["ok","alerte","panne"];
 function rendreSante(maintenant=Date.now()) {
   const {dc, niveau, texte, mineures, age} = diagnosticSante(maintenant);
@@ -1618,7 +1634,7 @@ function rendreSante(maintenant=Date.now()) {
   const secours = dc.pinnacle_secours;
   document.getElementById("sante-cotes").innerHTML = SOURCES_COTES.filter(([k]) => etapes[k]).map(([k,nom]) =>
     ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus" : detailEtape(etapes[k]), niveauEtape(etapes[k]))
-      + (k === "pinnacle" && secours ? ligneSante("Pinnacle · secours (pinnodds, PinBook)", secours.lignes ? `${secours.lignes} cotes · ${(secours.sports || []).length} sport${(secours.sports || []).length > 1 ? "s" : ""}` : secours.pause ? "En pause entre deux lectures" : (secours.erreurs || [])[0] || "Aucune cote reprise", secours.lignes ? "alerte" : "panne") : "")).join("")
+      + (k === "pinnacle" ? ligneFraicheurPinnacle(dc.pinnacle_fraicheur) + (secours ? ligneSecoursPinnacle(secours) : "") : "")).join("")
     || '<p class="aide sante-vide">Aucune lecture enregistrée.</p>';
   const parSource = new Map();
   for (const [k,v] of Object.entries(jr.etapes || {})) {
