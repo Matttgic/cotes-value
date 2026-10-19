@@ -578,7 +578,8 @@ def construire(donnees: Path, sortie: Path) -> Path:
             for pid, p in laboratoire["navigation"]["paris"].items()}
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
-            "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
+            "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS,
+                              "details": notifications_mod.DETAILS},
             "catalogue": catalogue_paris(paris, retenus),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},

@@ -5,6 +5,15 @@ puis **Activer les notifications** et accepter la permission Chrome. Le bouton
 **Envoyer un test** vérifie la réception sur cet appareil. Aucune installation
 d'application n'est nécessaire. Les choix sont propres à chaque appareil.
 
+Toutes les stratégies du site peuvent être suivies, en trois groupes : les comparateurs
+(Claude, ChatGPT, Gemini, Jules, Eden, M3, variantes et convergences), puis les 12 règles
+Pinnacle et les 12 règles Polymarket de la page Stratégies, avec la même numérotation
+(« Pinnacle 2 » = cotes 1,30–2,00, edge ≥ 2 %, jusqu'à 36 h avant le match). Chaque règle
+affiche ses paris réglés, sa réussite et son ROI depuis le 14/10. Une règle du laboratoire
+garde ses prises depuis ce début de suivi, une par match. Le service Supabase accepte toute
+clé de stratégie bien formée (comparateur ou `labo:<règle>`) : ajouter une stratégie au site
+ne demande plus de le redéployer.
+
 Les nouvelles sélections sont transmises à la fin des scans (environ cinq
 minutes, parfois davantage si GitHub ou les API retardent un cycle). Une cote
 peut bouger entre sa détection et l'ouverture du bookmaker. Cette fonctionnalité

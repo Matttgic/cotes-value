@@ -11,13 +11,35 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from .convergence import STRATEGIES, cle_selection, paris_convergence
-from .laboratoire import heure
+from .laboratoire import DEBUT_SUIVI, REGLES, heure, selectionner
 from .strategies_prudentes import VARIANTES
 
 API = "https://tapotyftgyacbnjmeovn.supabase.co/functions/v1/cv-notifications"
 AGE_PRIX_MAX_MINUTES = 5
+
+
+def _noms_labo() -> dict[str, str]:
+    """« labo:PIN-1.3-2-e2-h36 » -> « Pinnacle 2 » : même numérotation que la page Stratégies."""
+    numeros, noms = {}, {}
+    for r in REGLES:
+        numeros[r.reference] = numeros.get(r.reference, 0) + 1
+        noms["labo:" + r.id] = f"{r.reference} {numeros[r.reference]}"
+    return noms
+
+
+def _bornes(x: float) -> str:
+    return f"{x:.2f}".replace(".", ",")
+
+
 NOMS = {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
-        **{v["cle"]: v["court"] for v in VARIANTES}, "convergence": "Convergence ≥ 2"}
+        **{v["cle"]: v["court"] for v in VARIANTES}, "convergence": "Convergence ≥ 2", **_noms_labo()}
+DETAILS = {"labo:" + r.id: f"Cotes {_bornes(r.cote_min)}–{_bornes(r.cote_max)} · edge ≥ {100*r.edge_min:g} % · "
+                           f"≤ {r.avance_max_h} h avant le match" for r in REGLES}
+
+
+def selections_labo(paris: list[dict]) -> dict[str, set[int]]:
+    """Prises de chaque règle du laboratoire depuis le début du suivi, comme sur la page Stratégies."""
+    return {"labo:" + r.id: {id(p) for p in selectionner(paris, r, DEBUT_SUIVI)} for r in REGLES}
 
 
 def empreinte_prix(p: dict) -> str:
