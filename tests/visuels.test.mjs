@@ -59,7 +59,7 @@ test('une stratégie se déplie sur place, avec un bouton distinct pour ses pari
   assert.ok(summary.includes('Betfair · B01') && summary.includes('10 paris réglés'));
   assert.ok(!summary.includes('<button') && !summary.includes('<svg'));
   assert.ok(html.includes('data-strategie="Betfair &lt;1>"'));
-  assert.ok(html.indexOf('mini-courbe')>html.indexOf('ligne-corps'));
+  assert.ok(html.indexOf('grande-courbe')>html.indexOf('ligne-corps') && html.includes('Critères complets</p>'));
   assert.ok(html.includes('8/10 mesurés') && html.includes('6 gagnés, 4 perdus'));
 });
 

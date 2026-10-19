@@ -34,7 +34,7 @@ let filtreJouer='claude_prudent',sportJouer='tennis',refBilan='Stratégie',cumul
 const courbesMasquees=new Set(['M3']);
 const rendus=[];
 const rendreJouer=()=>rendus.push(filtreJouer),rendreBilan=()=>rendus.push(refBilan),
- rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},
+ rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},rendreBilanUniques=()=>{},
  rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{};
 function installerActualisation(config) {
   const etat=config.capturer();
@@ -146,6 +146,33 @@ assert.equal(s.className,"paris-sante sante-panne");
 assert.ok(s.innerHTML.includes("netbet") && !s.innerHTML.includes("pulsescore") && s.innerHTML.includes("1 alerte mineure"));
 D.etat.dernier_cycle.etapes.netbet.ok=true;
 rendreSanteParis(Date.parse("2026-10-15T09:30:00Z")); assert.equal(s.className,"paris-sante sante-alerte");
+''')
+
+
+def test_js_bilan_paris_uniques_tranches_etoile_et_periode():
+    def pari(i, sim, statut, gain, regle, unique=True, sport="football"):
+        return {"id":str(i),"simulation":sim,"statut":statut,"gain":gain,"mise":10,"unique_bilan":unique,"sport":sport,
+                "tranche":"1,51 – 2,00","regle_le":regle,"detecte":regle,"reference":"Pinnacle","strategies":[]}
+    rows=([pari(i,"A","gagne",8,"2026-10-18T10:00:00Z") for i in range(30)]+
+          [pari(100+i,"A","perdu",-10,"2026-10-18T10:00:00Z") for i in range(20)]+
+          [pari(200,"B","gagne",15,"2026-09-01T10:00:00Z",sport="tennis"),
+           pari(201,"B","perdu",-10,"2026-10-18T10:00:00Z",unique=False),
+           pari(202,"C","en_cours",None,None)])
+    champs=list(rows[0]); data={"paris":[],"catalogue":{"champs":champs,"lignes":[list(p.values()) for p in rows]},
+        "strategies_badges":{},"tranches":["1,01 – 1,50","1,51 – 2,00"],"valeurs_filtres":{},"simulations":{}}
+    section=MODELE[MODELE.index("const recentes ="):MODELE.index("// --- Segments")]
+    executer(DOM+"const D="+json.dumps(data)+";\nconst eurC=e;\nconst badgeStrategies=()=>'';\nconst ecartsReferences=()=>'';\n"+section+'''
+const h=id=>document.getElementById(id).innerHTML;
+assert.equal(document.getElementById("bu-note").textContent.split(" ")[0],"51");
+assert.ok(h("bu-ecart").includes("A · 2 à 3 %") && h("bu-ecart").includes("B · 3 à 4 %") && !h("bu-ecart").includes("C · 4"));
+assert.equal((h("bu-ecart").match(/★/g)||[]).length,1);
+assert.ok(h("bu-ecart").indexOf("★")<h("bu-ecart").indexOf("B · 3"));
+assert.ok(h("bu-cote").includes("1,51 – 2,00") && !h("bu-cote").includes("1,01 – 1,50"));
+assert.ok(h("bu-sport").includes("tennis") || h("bu-sport").includes("Tennis"));
+assert.ok(h("bu-kpis").includes(">55<"));
+periodeBU="30"; rendreBilanUniques(Date.parse("2026-10-19T00:00:00Z"));
+assert.equal(document.getElementById("bu-note").textContent.split(" ")[0],"50");
+assert.ok(!h("bu-ecart").includes("B · 3"));
 ''')
 
 
