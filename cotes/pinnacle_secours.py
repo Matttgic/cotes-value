@@ -73,18 +73,15 @@ def _lignes_evenement(ev: dict, sport: str, base: dict, handicaps: bool) -> list
     if (not isinstance(dom, str) or not isinstance(ext, str) or not dom or not ext or dom == ext
             or ev.get("special") or not ev.get("is_have_odds") or ev.get("event_type", "prematch") != "prematch"):
         return []
-    try:
-        debut = datetime.fromisoformat(str(ev.get("starts")).replace("Z", "+00:00"))
-    except ValueError:
-        return []
-    if debut <= datetime.now(timezone.utc):
+    debut = _heure(ev.get("starts"))
+    if debut is None or debut <= datetime.now(timezone.utc):
         return []
     eid = ev.get("event_id")
     if isinstance(eid, bool) or not isinstance(eid, (int, str)):
         return []
     periodes = pinnacle.PERIODES.get(sport, {0: "MATCH"})
     commun = {**base, "ligue": ev.get("league_name"), "match_id": eid, "domicile": dom, "exterieur": ext,
-              "debut": ev.get("starts"), "joueur": None}
+              "debut": debut.isoformat().replace("+00:00", "Z"), "joueur": None}
     out = []
 
     def ajouter(cle_marche, marche, periode, ligne, issues, maximum):
@@ -256,11 +253,17 @@ def _lire_cache(chemin: Path | None, sports: set[int], maintenant: datetime) -> 
     return out
 
 
-def _debut(ligne: dict):
+def _heure(valeur):
+    """Heure ISO en UTC ; sans fuseau (PinBook), l'heure est déjà en GMT."""
     try:
-        return datetime.fromisoformat(str(ligne.get("debut")).replace("Z", "+00:00"))
+        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
     except ValueError:
         return None
+    return t.replace(tzinfo=timezone.utc) if t.tzinfo is None else t
+
+
+def _debut(ligne: dict):
+    return _heure(ligne.get("debut"))
 
 
 def _ecrire_cache(chemin: Path | None, par_sport: dict[int, list[dict]], maintenant: datetime) -> None:

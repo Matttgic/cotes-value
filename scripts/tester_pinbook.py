@@ -61,8 +61,8 @@ def main(ids: list[int]) -> int:
         if r.status_code == 200:
             try:
                 bloc.update(analyser(r.json(), SPORTS.get(sid, str(sid)), maintenant))
-            except ValueError:
-                bloc["erreur"] = "JSON invalide"
+            except Exception as e:                       # un sport illisible ne cache pas les autres
+                bloc["erreur"] = f"{type(e).__name__} : {str(e)[:120]}"
         else:
             bloc["erreur"] = r.text[:150].replace(cle, "***")
         rapport[SPORTS.get(sid, str(sid))] = bloc
@@ -71,7 +71,7 @@ def main(ids: list[int]) -> int:
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
             f.write("### Essai PinBook\n```json\n" + texte + "\n```\n")
-    return 0 if all(b["http"] == 200 for b in rapport.values()) else 1
+    return 0 if all(b["http"] == 200 and "erreur" not in b for b in rapport.values()) else 1
 
 
 if __name__ == "__main__":
