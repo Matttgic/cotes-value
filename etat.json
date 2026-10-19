@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-19T17:37:17+00:00",
+  "debut": "2026-10-19T17:41:55+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 11.6,
+    "secondes": 12.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,33 +12,30 @@
     ]
    },
    "pinnacle": {
-    "secondes": 42.6,
-    "ok": true,
+    "secondes": 45.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "sport 9 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403",
-     "sport 5 matchups : HTTP 403"
-    ]
-   },
-   "unibet_direct": {
-    "secondes": 1.1,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "accueil HTTP 403"
+     "sport 32 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403",
+     "sport 17 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 6.3,
+    "secondes": 5.4,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 6.2,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 13.6,
+    "secondes": 12.2,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 23.0,
+    "secondes": 20.4,
     "ok": true
    },
    "netbet": {
@@ -50,16 +47,19 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 68.0,
+    "secondes": 63.3,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.7,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 5.1,
+    "secondes": 6.8,
     "ok": true
    },
    "comparaison": {
@@ -67,19 +67,38 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.1,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "baseball",
+    "basket",
+    "boxe",
+    "football_americain",
+    "handball",
+    "hockey",
+    "mma",
+    "football",
+    "tennis",
+    "volley"
+   ],
+   "requetes": 10,
+   "lignes": 35808,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": []
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 812,
-   "age_min_s": 587,
-   "lignes": 103549,
-   "lignes_perimees": 22748,
+   "age_max_s": null,
+   "age_min_s": null,
+   "lignes": 0,
+   "lignes_perimees": 0,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -93,8 +112,8 @@
     "head_200": 37,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 2,
+    "choisi_fixe": 3,
+    "choisi_autre": 9,
     "reprise_403": 6
    }
   },
@@ -109,8 +128,8 @@
      "match": "Braga – Gil Vicente",
      "source": "Pinnacle",
      "cote_olybet": 1.59,
-     "cote_reference": 1.649,
-     "ecart_relatif": 0.036,
+     "cote_reference": 1.671,
+     "ecart_relatif": 0.0485,
      "aberrant": false
     },
     {
@@ -126,7 +145,7 @@
      "source": "Pinnacle",
      "cote_olybet": 1.36,
      "cote_reference": 1.411,
-     "ecart_relatif": 0.0365,
+     "ecart_relatif": 0.0361,
      "aberrant": false
     },
     {
@@ -174,7 +193,7 @@
      "source": "Pinnacle",
      "cote_olybet": 1.79,
      "cote_reference": 1.877,
-     "ecart_relatif": 0.0465,
+     "ecart_relatif": 0.0464,
      "aberrant": false
     },
     {
@@ -197,24 +216,24 @@
      "match": "Al Hilal – Al-Hazm",
      "source": "Pinnacle",
      "cote_netbet": 1.01,
-     "cote_reference": 1.052,
-     "ecart_relatif": 0.0403,
+     "cote_reference": 1.068,
+     "ecart_relatif": 0.0543,
      "aberrant": false
     },
     {
      "match": "Al Shabab Riyadh – Al Faisaly Harmah",
      "source": "Pinnacle",
      "cote_netbet": 1.55,
-     "cote_reference": 1.641,
-     "ecart_relatif": 0.0555,
+     "cote_reference": 1.684,
+     "ecart_relatif": 0.0796,
      "aberrant": false
     },
     {
      "match": "FC Voluntari – FCSB",
      "source": "Pinnacle",
      "cote_netbet": 4.5,
-     "cote_reference": 4.69,
-     "ecart_relatif": 0.0405,
+     "cote_reference": 4.96,
+     "ecart_relatif": 0.0927,
      "aberrant": false
     },
     {
@@ -237,23 +256,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-19T17:37:28+00:00",
-   "pinnacle_derniere_lecture": "2026-10-19T17:37:36+00:00",
+   "pinnacle_premiere_lecture": "2026-10-19T17:42:41+00:00",
+   "pinnacle_derniere_lecture": "2026-10-19T17:42:44+00:00",
    "books_premiere_lecture": "2026-10-19T17:19:22+00:00",
-   "books_derniere_lecture": "2026-10-19T17:38:00+00:00",
-   "ecart_enveloppe_secondes": 1094.0
+   "books_derniere_lecture": "2026-10-19T17:42:47+00:00",
+   "ecart_enveloppe_secondes": 1402.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 561,
    "a_verifier": 9,
    "non_conforme": 9,
-   "mesures": 10131,
+   "mesures": 9362,
    "matchs_suspects": 0
   },
   "reglement": false,
@@ -261,26 +279,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-19T17:02:12+00:00"
   },
-  "fin": "2026-10-19T17:39:17+00:00",
+  "fin": "2026-10-19T17:44:21+00:00",
   "cotes": {
-   "francaises": 40761,
-   "pinnacle": 103549,
-   "polymarket": 11298,
-   "smarkets": 3996
+   "francaises": 40457,
+   "pinnacle": 35808,
+   "polymarket": 11299,
+   "smarkets": 3873
   },
-  "matchs_francais": 900,
+  "matchs_francais": 864,
   "opportunites": 2,
-  "opportunites_suspectes": 0,
+  "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-19T02:09:24+00:00",
-   "mode": "complet",
-   "opportunites": 8,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {}
-  },
   {
    "debut": "2026-10-19T02:14:04+00:00",
    "mode": "complet",
@@ -1599,6 +1610,12 @@
   },
   {
    "debut": "2026-10-19T17:37:17+00:00",
+   "mode": "complet",
+   "opportunites": 2,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-19T17:41:55+00:00",
    "mode": "complet",
    "opportunites": 2,
    "nouveaux_paris": 0
