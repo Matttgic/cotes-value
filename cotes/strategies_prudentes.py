@@ -130,7 +130,9 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
         claude = paris_strategie(paris, depuis=depart)
     prudent = selection_unique(paris, claude, depart, CLAUDE_PRUDENT["maximum_jour"])["selection"]
     bases = bases if bases is not None else selections(paris, depuis=depuis)
-    familles = {cle for cle, famille, *_ in STRATEGIES if famille != "m3"}
+    # Eden ne rejoint pas cette variante : le texte figé ne nomme que Claude,
+    # ChatGPT, Gemini et Jules. L'y ajouter changerait une règle déjà lancée.
+    familles = {cle for cle, famille, *_ in STRATEGIES if famille not in ("m3", "eden")}
     retenus = {cle: ids for cle, ids in bases.items() if cle in familles}
     ordre = {ref: i for i, ref in enumerate(REFERENCES)}
     candidats = set()

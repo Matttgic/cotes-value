@@ -232,6 +232,15 @@ python scripts/cycle.py --mode test     # cycle réduit, sans clé
 [Critères et audit de Gemini Argon V1](docs/strategie-gemini.md), suivie depuis
 le 14 octobre à 20 h (Paris), dans Bilan, Stratégies et Paris. Rentabilité non démontrée.
 
+### Eden
+
+**Bilan → Eden** et **Stratégies → Eden** suivent les nouvelles détections depuis
+le **19 octobre 2026 à 20 h (Paris)**. Pinnacle et Polymarket, cotes 1,30–2,00,
+edge 2–12 %, 30 minutes à 24 heures avant le match, une mise fictive de 10 €
+par bookmaker français et par match. Le rejeu est positif sur la validation et
+sur le test du 17–19 octobre. Cela ne démontre pas une rentabilité future.
+[Règles et limites](docs/strategie-eden.md).
+
 ## Sécurité et audit
 
 [Configuration, secrets et publication](SECURITY.md).

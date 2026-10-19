@@ -24,6 +24,7 @@ from .strategie_chatgpt import CHATGPT, paris_chatgpt
 from .strategie_gemini import GEMINI, paris_gemini
 from .strategie_jules import JULES, paris_jules
 from .strategie_jules_v2 import JULES_V2, paris_jules_v2
+from .strategie_eden import EDEN, paris_eden
 
 MISE = 10.0
 INF = float("inf")
@@ -306,6 +307,7 @@ def _cumuler(paris: list[dict], groupe) -> dict:
     gemini = paris_gemini(paris)
     jules = paris_jules(paris)
     jules_v2 = paris_jules_v2(paris)
+    eden = paris_eden(paris)
     for p in paris:
         clefs = [f'{groupe(p)}|{p["reference"]}', f'{groupe(p)}|Toutes']
         if id(p) in uniques:
@@ -320,6 +322,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
             clefs.append(f'{groupe(p)}|{JULES["nom"]}')
         if id(p) in jules_v2:
             clefs.append(f'{groupe(p)}|{JULES_V2["nom"]}')
+        if id(p) in eden:
+            clefs.append(f'{groupe(p)}|{EDEN["nom"]}')
         for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
                                       "clv_somme": 0.0, "clv_n": 0, "gagnes": 0,

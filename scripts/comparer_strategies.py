@@ -20,6 +20,7 @@ from cotes.strategie_chatgpt import paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import paris_gemini  # noqa: E402
 from cotes.strategie_jules import paris_jules  # noqa: E402
 from cotes.strategie_jules_v2 import paris_jules_v2  # noqa: E402
+from cotes.strategie_eden import paris_eden  # noqa: E402
 from cotes.strategies_prudentes import suivis_prudents  # noqa: E402
 
 
@@ -61,6 +62,8 @@ def comparer(paris: list[dict], releve: str) -> dict:
     jules_rows = [p for p in paris if id(p) in jules_ids]
     jules_v2_ids = paris_jules_v2(paris, depuis=DEBUT_ETUDE)
     jules_v2_rows = [p for p in paris if id(p) in jules_v2_ids]
+    eden_ids = paris_eden(paris, depuis=DEBUT_ETUDE)
+    eden_rows = [p for p in paris if id(p) in eden_ids]
     claude_rows = claude_rejouee(paris)
     claude = {**evaluer(claude_rows, releve), "ensemble": ensemble(claude_rows)}
     # Plusieurs paris corrélés par rencontre : ne pas présenter un bootstrap par
@@ -72,12 +75,17 @@ def comparer(paris: list[dict], releve: str) -> dict:
     # ici que les rencontres d'une même journée sont indépendantes.
     for periode in jules_v2.values():
         periode["ic95"] = None
+    eden = {**evaluer(eden_rows, releve), "ensemble": ensemble(eden_rows)}
+    # Plusieurs bookmakers sur un même match : pas d'intervalle par pari.
+    for periode in eden.values():
+        periode["ic95"] = None
     return {"schema": 1, "releve": releve, "audit": qualite, "resultats": resultats,
             "suivis_prudents": suivis_prudents(paris, releve),
             "registre": {"figes": sum("selections_figees" in p for p in paris),
                          "reconstruits": sum("selections_figees" not in p for p in paris)},
             "decision": classer(resultats),
-            "comparateurs": {"JULES EDGE v2 (rejeu)": jules_v2,
+            "comparateurs": {"Eden (rejeu)": eden,
+                             "JULES EDGE v2 (rejeu)": jules_v2,
                              "JULES EDGE v1 (rejeu)": {**evaluer(jules_rows, releve), "ensemble": ensemble(jules_rows)},
                              "ChatGPT v1 (rejeu)": {**evaluer(v1_rows, releve), "ensemble": ensemble(v1_rows)},
                              "Gemini Argon v1 (rejeu)": {**evaluer(gemini_rows, releve), "ensemble": ensemble(gemini_rows)},

@@ -53,7 +53,7 @@ function adapterTableaux() {
       tableauxCompactes.set(table,{source:table.firstChild,host});
     }
     // Listes secondaires : mêmes lignes dépliables, sans modifier leurs données.
-    for (const conteneur of document.querySelectorAll('#ctl-liste, #gemini-picks-list, #jules-picks-list, #jules-v2-picks-list, #m3-picks-list, #prudentes-picks, .seg-paris')) {
+    for (const conteneur of document.querySelectorAll('#ctl-liste, #eden-picks-list, #gemini-picks-list, #jules-picks-list, #jules-v2-picks-list, #m3-picks-list, #prudentes-picks, .seg-paris')) {
       for (const [i,carte] of [...conteneur.querySelectorAll('article, .sp')].entries()) {
         if(carte.closest('.ligne-detail')) {
           if(!carte.classList.contains('sp')) continue;

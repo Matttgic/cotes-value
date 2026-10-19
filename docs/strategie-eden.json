@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "strategie": {
+    "nom": "Eden",
+    "version": "1",
+    "debut": "2026-10-19T18:00:00+00:00",
+    "references": ["Pinnacle", "Polymarket"],
+    "bookmakers": ["Winamax", "Betclic", "Unibet", "PMU"],
+    "sports": [
+      "football", "basket", "hockey", "baseball", "rugby",
+      "handball", "football_americain", "tennis", "volley"
+    ],
+    "marches": [
+      "RESULTAT_1N2", "VAINQUEUR", "DOUBLE_CHANCE", "DRAW_NO_BET",
+      "TOTAL", "HANDICAP"
+    ],
+    "cote_min": 1.3,
+    "cote_max": 2.0,
+    "edge_min": 0.02,
+    "edge_max": 0.12,
+    "avance_min_minutes": 30,
+    "avance_max_h": 24,
+    "fraicheur_max_minutes": 15,
+    "ressemblance_min": 0.85,
+    "mise": 10.0
+  },
+  "grille": {
+    "combinaisons_principales": 1260,
+    "famille": "reference x cotes x edge x horizon, sport et marche libres, univers de qualite",
+    "construction": "debut de match avant 2026-10-14T00:00:00+02:00",
+    "validation": "2026-10-14 a 2026-10-16, heure de Paris",
+    "test": "2026-10-17 a 2026-10-19, heure de Paris"
+  },
+  "releve": {
+    "branche": "donnees",
+    "commit": "a13b37bd9dd7408621e745b370bdc0b2f8289dcb",
+    "derniere_detection": "2026-10-19T13:36:23+00:00",
+    "paris_json_sha256": "d68b163039f0af297746b571bd91667271909668fa29fe8703166374bb32676a"
+  },
+  "depuis_rejeu": "2026-10-07T00:00:00+02:00",
+  "nature": "Regle choisie sur construction et validation, puis confirmée sur le test. La validation est sensible au basket. Aucune rentabilite future n'est demontree.",
+  "suivi_officiel_sur_ce_releve": 0,
+  "construction": {"regles": 48, "gain": 112.2, "roi": 23.38, "roi_sans_meilleur": 21.74, "clv": 2.4, "clv_n": 37, "couverture_clv": 77.1, "drawdown": 35.9},
+  "validation": {"regles": 41, "gain": 71.5, "roi": 17.44, "roi_sans_meilleur": 15.38, "clv": 0.93, "clv_n": 33, "couverture_clv": 80.5, "drawdown": 40.0},
+  "test": {"regles": 45, "attente": 6, "gain": 89.9, "roi": 19.98, "roi_sans_meilleur": 18.2, "clv": 0.87, "clv_n": 29, "couverture_clv": 64.4, "drawdown": 21.9},
+  "sensibilite": {
+    "validation_sans_basket": {"regles": 24, "roi": -5.12, "clv": 0.45},
+    "test_sans_basket": {"regles": 42, "roi": 20.14, "clv": 0.72},
+    "construction_sans_basket": {"regles": 41, "roi": 16.63, "clv": 3.57},
+    "validation_sans_intitules_feminins": {"regles": 25, "roi": -5.96, "clv": 0.97}
+  }
+}
