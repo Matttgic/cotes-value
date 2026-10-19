@@ -172,3 +172,26 @@ def test_reference_lue_apres_la_detection_francaise_reste_acceptee_dans_la_fenet
     assert selectionner([pari(lu_reference="2026-10-10T18:09:31Z")], R)
     assert selectionner([pari(lu_reference="2026-10-10T18:15:00Z")], R)
     assert not selectionner([pari(lu_reference="2026-10-10T18:15:01Z")], R)
+
+
+def test_redecision_unique_des_paris_ouverts_refuses_par_l_ancienne_regle():
+    from datetime import datetime, timezone
+    from cotes.decisions import REDECISION, redecider_ouverts
+
+    now = datetime(2026, 10, 19, 19, 0, tzinfo=timezone.utc)
+    base = dict(bookmaker="Betclic", detecte="2026-10-19T18:19:16Z", lu_reference="2026-10-19T18:28:47Z",
+                debut="2026-10-20T17:00:00Z", cote=1.93, cote_juste=1.835, ecart=.0516, statut="en_cours",
+                gain=None, regle_le=None, decide_le="2026-10-19T18:30:00+00:00", selections_figees={},
+                registre_version="1")
+    ouvert = pari("ouvert", **base)
+    deja_joue = pari("joue", **{**base, "debut": "2026-10-19T18:45:00Z"})
+    accepte = pari("accepte", **{**base, "selections_figees": {"labo:autre": {"version": "1"}}})
+    paris = [ouvert, deja_joue, accepte]
+    assert redecider_ouverts(paris, now) > 0
+    assert "labo:PIN-1.3-2-e2-h36" in ouvert["selections_figees"] and ouvert[REDECISION]
+    assert deja_joue["selections_figees"] == {} and REDECISION not in deja_joue      # match commencé : intact
+    assert "labo:autre" in accepte["selections_figees"]                              # jamais de retrait
+    figees = dict(ouvert["selections_figees"])
+    assert redecider_ouverts(paris, now) == 0 and ouvert["selections_figees"] == figees   # une seule fois
+    assert [p["id"] for p in selectionner(paris, next(r for r in REGLES if r.id == "PIN-1.3-2-e2-h36"),
+                                          "2026-10-14T12:00:00+00:00")] == ["ouvert", "accepte"]

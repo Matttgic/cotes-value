@@ -687,8 +687,13 @@ def main() -> int:
     manuels = lire_json(donnees / "resultats_manuels.json", {})
     paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
     nouveaux = simulation.placer(opportunites, paris)
-    from cotes.decisions import figer_nouveaux
-    figer_nouveaux(stockage.fusionner_paris(paris, stockage.lire_archives(donnees)), nouveaux)
+    from cotes.decisions import figer_nouveaux, redecider_ouverts
+    registre = stockage.fusionner_paris(paris, stockage.lire_archives(donnees))
+    figer_nouveaux(registre, nouveaux)
+    try:
+        journal["redecision"] = {"ajoutees": redecider_ouverts(registre, maintenant)}
+    except Exception as e:      # une correction ratée ne doit jamais arrêter la collecte
+        journal["redecision"] = {"erreur": f"{type(e).__name__}: {e}"[:200]}
     simulation.suivre_prix(paris, francais)
     justes = etape("cotes_cloture", journal, comparaison.cotes_justes_depuis, index,
                    hors_consensus=hors) or {}
