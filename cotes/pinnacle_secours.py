@@ -2,8 +2,11 @@
 
 pinnodds revend le flux de Pinnacle (REST, sans compte Pinnacle). Le secours ne s'allume que si
 ``PINNODDS_API_KEY`` existe et seulement pour les sports où la lecture directe a répondu en erreur
-HTTP (403, 503…) : tant que Pinnacle répond, aucune requête n'est faite. Les lignes ont le même format
-que ``pinnacle.collecter`` (``source`` « pinnacle », ``origine`` « pinnodds »), avec leur probabilité juste.
+HTTP (403, 503…), ou n'a rendu que des cotes périmées pour un sport de ``PINNACLE_SECOURS_PERIME``
+(football par défaut ; « non » coupe) : tant que Pinnacle répond à temps, aucune requête n'est faite.
+Depuis la maintenance du 19/10/2026, toute l'API invitée est servie avec ``max-age=905`` : chaque
+lecture a de 0 à 15 minutes, et un cycle sur trois environ n'a que des cotes de plus de 10 minutes.
+Les lignes ont le même format que ``pinnacle.collecter`` (``source`` « pinnacle », ``origine`` « pinnodds »), avec leur probabilité juste.
 
 Prudence :
 - seuls les marchés sans ambiguïté sont repris : résultat, vainqueur et totaux (période et sport selon
@@ -42,6 +45,9 @@ HOTE_PINBOOK = "pinbook-odds.p.rapidapi.com"
 SPORTS_PINBOOK_DEFAUT = "football,tennis,basket"
 PINBOOK_LIMITE_JOUR_DEFAUT = 16     # 550 requêtes par mois en gratuit : 16 par jour en laisse environ 50 de marge
 PINBOOK_PAUSE_MIN_DEFAUT = 60
+# Sports relus quand toutes leurs cotes directes sont périmées. Football seul par défaut : une requête
+# toutes les 30 minutes au plus, soit 48 par jour, ce qui laisse l'autre moitié du quota aux pannes.
+SPORTS_SI_PERIME_DEFAUT = "football"
 CACHE_MAX_H = 3                    # au-delà, le cache n'est plus rejoué du tout
 ERREURS: list[str] = []
 RESUME: dict = {}
@@ -72,12 +78,31 @@ def _entier_env(nom: str, defaut: int) -> int:
         return defaut
 
 
+def sports_si_perime() -> set[int]:
+    """Sports Pinnacle de PINNACLE_SECOURS_PERIME (noms séparés par des virgules, « non » pour couper)."""
+    brut = os.environ.get("PINNACLE_SECOURS_PERIME", "").strip().lower() or SPORTS_SI_PERIME_DEFAUT
+    if brut in ("non", "0", "false", "off"):
+        return set()
+    noms = {n.strip() for n in brut.split(",")}
+    return {sid for sid, nom in pinnacle.SPORTS.items() if nom in noms and sid in SPORTS_PINNODDS}
+
+
+def sports_en_retard(pin: list[dict]) -> set[int]:
+    """Sports de PINNACLE_SECOURS_PERIME lus en direct mais sans aucune cote fraîche."""
+    out = set()
+    for sid in sports_si_perime():
+        lignes = [l for l in pin if isinstance(l, dict) and l.get("sport") == pinnacle.SPORTS[sid]]
+        if lignes and all(l.get("cote_perimee") for l in lignes):
+            out.add(sid)
+    return out
+
+
 def sports_a_secourir(erreurs: list[str], pin: list[dict]) -> set[int]:
-    """Sports de Pinnacle en échec HTTP ; tous si la lecture directe n'a rien rendu et signale une erreur."""
+    """Sports de Pinnacle en échec HTTP ou en retard ; tous si la lecture directe n'a rien rendu et signale une erreur."""
     if not pin and erreurs:
         return set(SPORTS_PINNODDS)
     en_echec = {int(m.group(1)) for e in erreurs if (m := re.match(r"sport (\d+) .*HTTP \d{3}", str(e)))}
-    return en_echec & set(SPORTS_PINNODDS)
+    return (en_echec | sports_en_retard(pin)) & set(SPORTS_PINNODDS)
 
 
 def _cote(x) -> float | None:

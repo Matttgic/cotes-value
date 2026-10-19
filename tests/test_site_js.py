@@ -243,7 +243,8 @@ def test_js_sante_niveaux_et_resume_des_erreurs():
     section = (MODELE[MODELE.index("function diagnosticSante"):MODELE.index("function rendreSanteParis")] +
                MODELE[MODELE.index("const SOURCES_COTES"):MODELE.index("rendreSante();\n\n// Famille publiée")])
     cycle = {"fin": "2026-10-15T09:00:00Z", "debut": "2026-10-15T08:58:00Z", "cotes": {"francaises": 25833},
-             "pinnacle_secours": {"lignes": 120, "sports": ["football", "tennis"], "erreurs": []},
+             "pinnacle_secours": {"lignes": 120, "sports": ["football", "tennis"], "erreurs": [], "retard": ["football"]},
+             "pinnacle_fraicheur": {"seuil_min": 10, "lignes": 1000, "lignes_perimees": 1000, "age_min_s": 650, "age_max_s": 880},
              "etapes": {"pinnacle": {"ok": True, "degrade": True, "erreurs": ["sport 17 : HTTP 403", "sport 45 : HTTP 403"]},
                         "netbet": {"ok": True, "degrade": True, "erreurs": ["budget"]},
                         "winamax_direct": {"ok": True}, "pulsescore": {"ok": True, "desactive": True}}}
@@ -263,7 +264,12 @@ rendreSante(t0);
 const h=id=>document.getElementById(id).innerHTML;
 assert.ok(h("sante-cotes").includes("Refus (403) sur 2 requêtes") && h("sante-cotes").includes("limite de temps"));
 assert.ok(h("sante-cotes").includes("Lu normalement") && !h("sante-cotes").includes("PulseScore"));
-assert.ok(h("sante-cotes").includes("Pinnacle · secours (pinnodds, PinBook)") && h("sante-cotes").includes("120 cotes · 2 sports"));
+assert.ok(h("sante-cotes").includes("Pinnacle · secours (pinnodds, PinBook)") && h("sante-cotes").includes("Pinnacle en retard (football) · 120 cotes · 2 sports"));
+assert.ok(h("sante-cotes").includes("Pinnacle · fraîcheur") && h("sante-cotes").includes("En retard : cotes de 11 à 15 min, toutes écartées (limite 10 min)"));
+assert.equal(ligneFraicheurPinnacle({seuil_min:10,lignes:10,lignes_perimees:0,age_min_s:30,age_max_s:240}).includes("Cotes de 1 à 4 min (limite 10 min)"), true);
+assert.ok(ligneFraicheurPinnacle({seuil_min:10,lignes:200,lignes_perimees:50,age_max_s:700}).includes("25 % des cotes écartées"));
+assert.equal(ligneFraicheurPinnacle({lignes:0}), "");
+assert.ok(ligneSecoursPinnacle({pause:true,lignes:0}).includes("sante-mot-alerte"));
 assert.ok(h("sante-auto").includes("Collecte et comparaison") && h("sante-auto").includes("5 enregistrements réglés"));
 assert.ok(h("sante-resultats").includes("ESPN") && h("sante-resultats").includes("5 enregistrements réglés"));
 assert.ok(h("sante-resultats").includes("sante-mot-panne"));

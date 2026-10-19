@@ -44,7 +44,7 @@ class Session:
 def cle(monkeypatch):
     monkeypatch.setenv("PINNODDS_API_KEY", "cle-de-test-pinnodds")
     for nom in ("PINNODDS_HANDICAPS", "PINNODDS_LIMITE_JOUR", "PINNODDS_PAUSE_MIN", "PINBOOK_API_KEY",
-                "PINBOOK_SPORTS", "PINBOOK_LIMITE_JOUR", "PINBOOK_PAUSE_MIN"):
+                "PINBOOK_SPORTS", "PINBOOK_LIMITE_JOUR", "PINBOOK_PAUSE_MIN", "PINNACLE_SECOURS_PERIME"):
         monkeypatch.delenv(nom, raising=False)
 
 
@@ -139,6 +139,17 @@ def test_sports_a_secourir():
     assert S.sports_a_secourir(["budget"], []) == set(S.SPORTS_PINNODDS)
 
 
+def test_sports_en_retard_seulement_sans_aucune_cote_fraiche(monkeypatch):
+    vieux = [{"sport": "football", "cote_perimee": True}] * 2
+    assert S.sports_en_retard(vieux) == {29} and S.sports_a_secourir([], vieux) == {29}
+    assert S.sports_en_retard(vieux + [{"sport": "football", "cote_perimee": False}]) == set()
+    assert S.sports_en_retard([{"sport": "tennis", "cote_perimee": True}]) == set()     # hors liste par défaut
+    monkeypatch.setenv("PINNACLE_SECOURS_PERIME", "football,tennis")
+    assert S.sports_en_retard(vieux + [{"sport": "tennis", "cote_perimee": True}]) == {29, 33}
+    monkeypatch.setenv("PINNACLE_SECOURS_PERIME", "non")
+    assert S.sports_en_retard(vieux) == set() and S.sports_a_secourir([], vieux) == set()
+
+
 def test_comparaison_avec_la_lecture_directe():
     def l(cote, issue="DOM"):
         return {"match_id": 1, "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None, "issue": issue, "cote": cote}
@@ -180,6 +191,27 @@ def test_cycle_utilise_le_secours_pour_les_sports_en_echec(monkeypatch):
     pin, _, _ = cycle.collecter_prematch("complet", NOW, journal)
     assert appels == [{29}] and [l.get("origine") for l in pin] == [None, "pinnodds"]
     assert journal["pinnacle_secours"]["lignes"] == 1
+
+
+def test_cycle_utilise_le_secours_quand_pinnacle_est_en_retard(monkeypatch):
+    from tests.test_collecte_parallele import ligne
+
+    vieilles = [ligne("football", "pinnacle") | {"cote_perimee": True, "age_cache_s": 700}]
+    _cycle_sans_reseau(monkeypatch, [], vieilles)
+    appels = []
+
+    def secours(sports, maintenant, donnees):
+        appels.append(sports)
+        S.RESUME.update({"sports": ["football"], "requetes": 1, "lignes": 1})
+        return [ligne("football", "pinnacle") | {"origine": "pinnodds", "cote_perimee": False, "age_cache_s": 0}]
+
+    monkeypatch.setattr(cycle.pinnacle_secours, "collecter", secours)
+    journal = {"etapes": {}}
+    pin, _, _ = cycle.collecter_prematch("complet", NOW, journal)
+    assert appels == [{29}] and [l.get("origine") for l in pin] == [None, "pinnodds"]
+    assert journal["pinnacle_secours"]["retard"] == ["football"]
+    f = journal["pinnacle_fraicheur"]                      # lecture directe seule, avant le secours
+    assert (f["lignes"], f["lignes_perimees"], f["age_min_s"], f["age_max_s"]) == (1, 1, 700, 700)
 
 
 def test_cycle_sans_secours_quand_pinnacle_va_bien_ou_sans_cle(monkeypatch):
