@@ -72,7 +72,7 @@ def test_site_echappe_donnees_sans_perdre_match_ou_pari(tmp_path):
 def test_configuration_locale_ignoree_sans_mauvaises_variables():
     root = Path(__file__).resolve().parent.parent
     exemple = (root/'.env.example').read_text()
-    assert 'PULSESCORE_PAUSE=1.1' in exemple
+    assert 'PULSESCORE' not in exemple          # abonnement arrêté : plus aucune variable à remplir
     assert 'THE_ODDS_API_KEY_1=' in exemple and 'THE_ODDS_API_KEYS=' not in exemple
     assert '!.env.example' in (root/'.gitignore').read_text()
 

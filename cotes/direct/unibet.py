@@ -8,15 +8,10 @@ Seuls les marchés comparés sont demandés (type + période), pas la fiche comp
 d'un match : Unibet est la source la plus lourde. Corners, cartons, buteurs et
 cotes boostées sont écartés. Les sports sont ceux déjà suivis (liste ANJ),
 lus dans l'état de la page, pas des identifiants figés.
-
-``SOURCE_UNIBET`` vaut ``pulsescore``, ``direct``, ``auto`` (défaut) ou
-``shadow``. En ``shadow``, PulseScore décide et ce flux sert au rapport.
-Basculer exige 95 % des matchs retrouvés et 99 % des cotes communes à ±0,01.
 """
 from __future__ import annotations
 
 import json
-import os
 import random
 import re
 import threading
@@ -71,10 +66,6 @@ MARCHES = {
     "baseball": ((19, 205),),
 }
 PARAMS = {"lineId": "1", "originId": "3", "breakdownEventsIntoDays": "true", "showPromotions": "true"}
-COUVERTURE_MIN = 0.95
-ACCORD_MIN = 0.99
-ECART_COTE = 0.01
-MODES = ("pulsescore", "direct", "auto", "shadow")
 _PAGES_MAX = 16
 _PAGES_COURT = 3
 _HORIZON_COURT = 6
@@ -89,12 +80,6 @@ _EXCLU = re.compile(
 _SCRIPT = re.compile(r'<script[^>]*id="serverApp-state"[^>]*>(.*?)</script>', re.S)
 _NOMBRE = re.compile(r"[-+]?\d+(?:[.,]\d+)?")
 _CROCHET = re.compile(r"[\[(]\s*([-+]?\d+(?:[.,]\d+)?)\s*[\])]")
-
-
-def mode_source() -> str:
-    """``auto`` si la variable est absente. Une valeur inconnue reste ``shadow``."""
-    valeur = os.environ.get("SOURCE_UNIBET", "auto").strip().lower()
-    return valeur if valeur in MODES else "shadow"
 
 
 def _pause(secondes: float) -> None:
@@ -781,83 +766,3 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
     return fusion, meta
 
 
-def _cle_selection(ligne: dict):
-    valeur = ligne.get("ligne")
-    if isinstance(valeur, bool):
-        valeur = None
-    elif isinstance(valeur, (int, float)):
-        valeur = round(float(valeur), 2)
-    return (ligne.get("marche"), ligne.get("periode"), valeur, ligne.get("issue"))
-
-
-def rapport(pulse: list[dict], direct: list[dict]) -> dict:
-    """Couverture des matchs PulseScore et part des cotes communes à ±0,01."""
-    ps = [l for l in pulse if isinstance(l, dict) and l.get("bookmaker") == "unibet-fr"]
-    di = [l for l in direct if isinstance(l, dict) and l.get("bookmaker") == "unibet-fr"]
-    matchs_ps, matchs_di = {}, {}
-    for ligne in ps:
-        matchs_ps.setdefault(ligne.get("match_id"), ligne)
-    for ligne in di:
-        matchs_di.setdefault(ligne.get("match_id"), ligne)
-    couples = []
-    pris = set()
-    for mid, a in matchs_ps.items():
-        meilleur = None
-        for did, b in matchs_di.items():
-            if did in pris or a.get("sport") != b.get("sport"):
-                continue
-            ta, tb = _heure(a.get("debut")), _heure(b.get("debut"))
-            if not ta or not tb or abs((ta - tb).total_seconds()) > 90 * 60:
-                continue
-            score = min(ressemblance(a.get("domicile"), b.get("domicile")),
-                        ressemblance(a.get("exterieur"), b.get("exterieur")))
-            if meilleur is None or score > meilleur[0]:
-                meilleur = (score, did)
-        if meilleur and meilleur[0] >= 0.85:
-            pris.add(meilleur[1])
-            couples.append((mid, meilleur[1]))
-    couverture = len(couples) / len(matchs_ps) if matchs_ps else None
-    index = {}
-    for ligne in di:
-        index.setdefault(ligne.get("match_id"), {})[_cle_selection(ligne)] = ligne
-    communs = egaux = 0
-    for mid_ps, mid_di in couples:
-        offres = index.get(mid_di, {})
-        for ligne in ps:
-            if ligne.get("match_id") != mid_ps:
-                continue
-            autre = offres.get(_cle_selection(ligne))
-            if not autre:
-                continue
-            communs += 1
-            ca, cb = _nombre(ligne.get("cote")), _nombre(autre.get("cote"))
-            if ca is not None and cb is not None and abs(ca - cb) <= ECART_COTE + 1e-9:
-                egaux += 1
-    accord = egaux / communs if communs else None
-    pret = bool(couverture is not None and accord is not None
-                and couverture + 1e-9 >= COUVERTURE_MIN and accord + 1e-9 >= ACCORD_MIN)
-    associes = {mid for mid, _did in couples}
-    manques = []
-    for mid, ligne in matchs_ps.items():
-        if mid in associes or len(manques) >= 20:
-            continue
-        manques.append({
-            "sport": ligne.get("sport"),
-            "domicile": ligne.get("domicile"),
-            "exterieur": ligne.get("exterieur"),
-            "ligue": ligne.get("ligue"),
-            "debut": ligne.get("debut"),
-        })
-    return {
-        "matchs_pulsescore": len(matchs_ps),
-        "matchs_direct": len(matchs_di),
-        "matchs_communs": len(couples),
-        "manques": manques,
-        "couverture": None if couverture is None else round(couverture, 4),
-        "selections_communes": communs,
-        "selections_egales": egaux,
-        "accord_cotes": None if accord is None else round(accord, 4),
-        "seuil_couverture": COUVERTURE_MIN,
-        "seuil_accord": ACCORD_MIN,
-        "pret_a_basculer": pret,
-    }

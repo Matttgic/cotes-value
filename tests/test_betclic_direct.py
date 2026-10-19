@@ -91,15 +91,6 @@ def test_combinaison_n_est_pas_les_deux_equipes_marquent():
     assert not betclic._a_venir({"debut": "2026-10-18T08:00:00Z", "direct": False}, MAINTENANT, 36)
 
 
-def test_mode_par_defaut_shadow(monkeypatch):
-    monkeypatch.delenv("SOURCE_BETCLIC", raising=False)
-    assert betclic.mode_source() == "shadow"
-    monkeypatch.setenv("SOURCE_BETCLIC", "DIRECT")
-    assert betclic.mode_source() == "direct"
-    monkeypatch.setenv("SOURCE_BETCLIC", "ailleurs")
-    assert betclic.mode_source() == "shadow"
-
-
 def test_premiere_trame_ignore_la_suivante():
     premiere = _liste(_match(1, "Lens", "Lille"))
     suite = _liste(_match(2, "Nice", "Rennes"))
@@ -179,67 +170,6 @@ def test_429_coupe_sans_deuxieme_appel():
     assert "429" not in str(session.urls)
 
 
-def test_rapport_shadow():
-    base = {"bookmaker": "betclic", "sport": "football", "domicile": "Lens", "exterieur": "Lille",
-            "debut": DEBUT, "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None}
-    pulse = [{**base, "match_id": "betclic|ps", "issue": "DOM", "cote": 1.80}]
-    direct = [{**base, "match_id": "betclic|grpc", "issue": "DOM", "cote": 1.80}]
-    rapport = betclic.rapport(pulse, direct)
-    assert rapport["couverture"] == 1 and rapport["accord_cotes"] == 1
-    assert rapport["pret_a_basculer"] is True
-
-
-def test_shadow_garde_pulsescore(monkeypatch):
-    from scripts import cycle
-    from tests.test_collecte_parallele import _sans_reseau, ligne
-
-    def pulse(key, plan, *a, **kw):
-        assert "betclic" in plan
-        return [ligne("football", "betclic") | {"cote": 1.9}], {"betclic": 1}, {}
-
-    _sans_reseau(monkeypatch)
-    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
-    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
-    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
-    monkeypatch.setattr(cycle.betclic_direct, "collecter", lambda *a, **k: (
-        [ligne("football", "betclic") | {"cote": 1.7, "match_id": "betclic|grpc"}],
-        {"ok": True, "erreurs": [], "requetes": 2, "matchs": 1}))
-    journal = {"etapes": {}}
-    _, _, lignes, _ = cycle.collecter_prematch(
-        "cle", "complet", datetime(2026, 10, 17, tzinfo=timezone.utc), journal)
-    bet = [l for l in lignes if l["bookmaker"] == "betclic"]
-    assert bet and bet[0]["cote"] == 1.9 and bet[0]["match_id"] == "betclic|football"
-    assert journal["betclic_source"] == "shadow" and "betclic_repli" not in journal
-    assert journal["betclic_direct_rapport"]["matchs_communs"] == 1
-
-
-def test_shadow_bascule_si_pulsescore_refuse(monkeypatch):
-    from scripts import cycle
-    from tests.test_collecte_parallele import _sans_reseau, ligne
-
-    def pulse(key, plan, *a, **kw):
-        assert "betclic" in plan
-        return [ligne("football", "betclic") | {"cote": 1.9}], {"betclic": 1}, {
-            "betclic": ["betclic/soccer/events : HTTP 401"]}
-
-    _sans_reseau(monkeypatch)
-    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
-    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
-    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
-    monkeypatch.setattr(cycle.betclic_direct, "collecter", lambda *a, **k: (
-        [ligne("football", "betclic") | {"cote": 1.7, "match_id": "betclic|grpc"}],
-        {"ok": True, "erreurs": [], "requetes": 2, "matchs": 1}))
-    journal = {"etapes": {}}
-    _, _, lignes, _ = cycle.collecter_prematch(
-        "cle", "complet", datetime(2026, 10, 17, tzinfo=timezone.utc), journal)
-    bet = [l for l in lignes if l["bookmaker"] == "betclic"]
-    assert bet and bet[0]["cote"] == 1.7 and bet[0]["match_id"] == "betclic|grpc"
-    assert journal["betclic_source_effective"] == "direct"
-    assert "Betclic" in journal["betclic_repli"]
-
-
 def test_total_multi_lignes_donne_un_marche_par_ligne():
     marche = {"nom": "Nombre total de buts (t. rég)", "selections": [
         {"nom": "+ de 1,5", "cote": 1.4}, {"nom": "- de 1,5", "cote": 2.9},
@@ -286,31 +216,6 @@ def test_429_en_parallele_arrete_la_suite():
                                      reserve={"lignes": []}, concurrence=1)
     assert lignes == [] and "HTTP 429" in meta["erreurs"]
     assert meta["requetes"] == 2
-
-
-def test_rapport_classe_les_ecarts():
-    base = {"bookmaker": "betclic", "sport": "football", "domicile": "Lens", "exterieur": "Lille",
-            "debut": DEBUT}
-    def l(mid, marche, ligne, issue, cote, collecte="2026-10-18T12:00:00+00:00", periode="MATCH"):
-        return {**base, "match_id": mid, "marche": marche, "periode": periode, "ligne": ligne,
-                "issue": issue, "cote": cote, "collecte": collecte}
-    pulse = [l("betclic|ps", "RESULTAT_1N2", None, "DOM", 1.8),
-             l("betclic|ps", "RESULTAT_1N2", None, "NUL", 3.4),
-             l("betclic|ps", "RESULTAT_1N2", None, "EXT", 4.5),
-             l("betclic|ps", "TOTAL", 2.5, "PLUS", 1.9, collecte="2026-10-18T12:05:00+00:00"),
-             l("betclic|ps", "HANDICAP", -1.5, "DOM", 2.2),
-             l("betclic|ps", "TOTAL", 3.5, "PLUS", 3.0),
-             l("betclic|ps", "TOTAL", 3.5, "MOINS", 1.3, periode="MT1"),
-             l("betclic|ps", "DOUBLE_CHANCE", None, "HOME_DRAW", 1.2)]
-    direct = [l("betclic|g", "RESULTAT_1N2", None, "DOM", 4.5),
-              l("betclic|g", "RESULTAT_1N2", None, "NUL", 3.4),
-              l("betclic|g", "RESULTAT_1N2", None, "EXT", 1.8),
-              l("betclic|g", "TOTAL", 2.5, "PLUS", 2.1),
-              l("betclic|g", "TOTAL", -3.5, "PLUS", 3.0),
-              l("betclic|g", "TOTAL", 3.5, "MOINS", 1.3)]
-    diag = betclic.rapport(pulse, direct)["diagnostic"]
-    assert diag["cotes_differentes"] == {"issues_permutees": 2, "cache_perime": 1}
-    assert diag["absentes_du_direct"] == {"marche_absent": 2, "signe_ligne": 1, "periode_differente": 1}
 
 
 def test_classement_des_marches_par_periode():

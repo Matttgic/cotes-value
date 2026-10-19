@@ -201,28 +201,6 @@ def test_jeton_absent(monkeypatch):
     assert lignes == [] and meta["ok"] is False and meta["erreurs"] == ["jeton absent"]
 
 
-def test_mode_par_defaut_auto(monkeypatch):
-    monkeypatch.delenv("SOURCE_UNIBET", raising=False)
-    assert unibet.mode_source() == "auto"
-    monkeypatch.setenv("SOURCE_UNIBET", "DIRECT")
-    assert unibet.mode_source() == "direct"
-    monkeypatch.setenv("SOURCE_UNIBET", "ailleurs")
-    assert unibet.mode_source() == "shadow"
-
-
-def test_rapport_shadow_et_cotes_a_un_centime():
-    base = {"bookmaker": "unibet-fr", "sport": "football", "domicile": "Lens", "exterieur": "Lille",
-            "debut": "2026-10-18T20:00:00Z", "marche": "TOTAL", "periode": "MATCH", "issue": "PLUS"}
-    pulse = [{**base, "match_id": "unibet-fr|ps", "ligne": 2.5, "cote": 1.85},
-             {**base, "match_id": "unibet-fr|manque", "domicile": "Nice", "exterieur": "Rennes", "cote": 2.1}]
-    direct = [{**base, "match_id": "unibet-fr|k", "ligne": 2.5, "cote": 2.10}]
-    r = unibet.rapport(pulse, direct)
-    assert r["matchs_pulsescore"] == 2 and r["matchs_communs"] == 1
-    assert r["couverture"] == 0.5 and r["accord_cotes"] == 0 and r["pret_a_basculer"] is False
-    parfait = unibet.rapport(pulse[:1], [{**direct[0], "cote": 1.85}])
-    assert parfait["couverture"] == 1 and parfait["accord_cotes"] == 1 and parfait["pret_a_basculer"] is True
-
-
 def _collecte(items, heures=36, echeance=None, radar=None, plan=None):
     if plan is None:
         plan = [(200, {"items": items, "numberOfEvents": 1}, {})]
@@ -315,31 +293,3 @@ def test_budget_rend_les_cotes_deja_lues(monkeypatch):
     assert JETON not in json.dumps(meta)
 
 
-def test_shadow_bascule_si_pulsescore_refuse(monkeypatch):
-    monkeypatch.setenv("SOURCE_UNIBET", "shadow")
-    monkeypatch.setenv("SOURCE_PMU", "shadow")
-    from datetime import datetime, timezone
-    from scripts import cycle
-    from tests.test_collecte_parallele import _sans_reseau, ligne
-
-    def pulse(key, plan, *a, **kw):
-        assert "unibet-fr" in plan
-        return [ligne("football", "unibet-fr") | {"cote": 1.9}], {"unibet-fr": 1}, {
-            "unibet-fr": ["unibet-fr/soccer/events : HTTP 401"]}
-
-    def direct(sports, heures, **kwargs):
-        return [ligne("football", "unibet-fr") | {"cote": 1.7, "match_id": "unibet-fr|lvs"}], {
-            "ok": True, "erreurs": [], "requetes": 2, "matchs": 1}
-
-    _sans_reseau(monkeypatch)
-    monkeypatch.setattr(cycle.unibet_direct, "collecter", direct)
-    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
-    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
-    monkeypatch.setattr(cycle.pulsescore, "collecter", pulse)
-    j = {"etapes": {}}
-    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", datetime(2026, 10, 17, tzinfo=timezone.utc), j)
-    uni = [l for l in lignes if l["bookmaker"] == "unibet-fr"]
-    assert uni and uni[0]["cote"] == 1.7 and uni[0]["match_id"] == "unibet-fr|lvs"
-    assert j["unibet_source"] == "shadow" and j["unibet_source_effective"] == "direct"
-    assert "Unibet" in j["unibet_repli"]

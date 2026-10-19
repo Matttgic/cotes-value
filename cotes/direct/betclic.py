@@ -5,13 +5,9 @@ Une requête de liste par sport, page de 40 (le serveur n'en met pas plus dans
 la première trame), puis un détail par match encore à venir, les plus proches
 d'abord. Chaque réponse est un flux de notification : on le ferme dès la
 première trame, sans pagination et sans attendre la suite.
-
-``SOURCE_BETCLIC`` vaut ``pulsescore``, ``direct``, ``auto`` ou ``shadow``
-(défaut). En shadow, PulseScore reste la source des décisions.
 """
 from __future__ import annotations
 
-import os
 import re
 import struct
 import threading
@@ -20,7 +16,6 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-from cotes.correspondance import ressemblance
 from cotes.direct.horizon import fusionner
 from cotes.pulsescore import traduire
 
@@ -29,7 +24,6 @@ LISTE = "GetMatchesBySportWithNotifications"
 DETAIL = "GetMatchWithNotification"
 PAGE = 40
 _LISTE_MAX = 640
-_PRES_H = 6
 # Un détail relu il y a moins longtemps reste en cache : le budget sert
 # d'abord aux matchs encore jamais lus. Le cycle dure 5 min : au-delà de 3 min
 # de cache, des cotes de 10 min d'âge décidaient des paris.
@@ -38,10 +32,6 @@ _FRAIS_MIN = 3
 _CONCURRENCE = 4
 # Onglets lus en plus de « Le Top » : demi-temps, périodes, quarts-temps, sets, jeux.
 LIBELLES_ONGLETS = {"résultats", "buts", "points", "sets", "jeux"}
-COUVERTURE_MIN = 0.95
-ACCORD_MIN = 0.99
-ECART_COTE = 0.01
-MODES = ("pulsescore", "direct", "auto", "shadow")
 # sport interne -> slug Betclic
 SPORTS = {
     "football": "football",
@@ -68,12 +58,6 @@ ENTETES = {
     "Accept-Language": "fr-FR,fr;q=0.9",
 }
 _echeance = None
-
-
-def mode_source() -> str:
-    """``shadow`` si la variable est absente ou inconnue."""
-    valeur = os.environ.get("SOURCE_BETCLIC", "shadow").strip().lower()
-    return valeur if valeur in MODES else "shadow"
 
 
 def sports_demandes(sports: set[str] | None) -> list[tuple[str, str]]:
@@ -910,169 +894,3 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
                     "requetes": client.requetes, "matchs": len(candidats)}
 
 
-def _cle_selection(ligne: dict):
-    valeur = ligne.get("ligne")
-    if isinstance(valeur, bool):
-        valeur = None
-    elif isinstance(valeur, (int, float)):
-        valeur = round(float(valeur), 2)
-    return (ligne.get("marche"), ligne.get("periode"), valeur, ligne.get("issue"))
-
-
-class Compteur:
-    """Classe les cotes qui ne collent pas, pour savoir quoi corriger.
-
-    Cotes différentes : ``cache_perime`` (la lecture directe date de plus de deux
-    minutes de plus que celle de PulseScore), ``issues_permutees`` (le prix
-    PulseScore est celui d'une autre issue du même marché, ordre des issues),
-    ``mouvement`` (même âge : la cote a bougé, ou l'écart reste à expliquer).
-    Sélections PulseScore sans équivalent direct : ``signe_ligne`` (même ligne
-    de signe opposé), ``ligne_differente``, ``periode_differente``,
-    ``marche_absent``, ``issue_absente``. Aucune clé ni URL n'y figure.
-    """
-
-    def __init__(self):
-        self.cotes: dict = {}
-        self.absentes: dict = {}
-        self.exemples: list[dict] = []
-
-    @staticmethod
-    def _ajouter(table: dict, cause: str, marche, periode) -> None:
-        cle = f"{marche}|{periode}"
-        table.setdefault(cause, {})
-        table[cause][cle] = table[cause].get(cle, 0) + 1
-
-    def _exemple(self, cause: str, ligne: dict, autre: dict | None) -> None:
-        if len(self.exemples) >= 12:
-            return
-        self.exemples.append({
-            "cause": cause, "sport": ligne.get("sport"), "marche": ligne.get("marche"),
-            "periode": ligne.get("periode"), "ligne": ligne.get("ligne"), "issue": ligne.get("issue"),
-            "cote_pulsescore": ligne.get("cote"),
-            "cote_direct": None if autre is None else autre.get("cote"),
-        })
-
-    def different(self, ligne: dict, autre: dict, propres: list[dict], offres: dict) -> None:
-        cause = "mouvement"
-        ta, tb = _heure(ligne.get("collecte")), _heure(autre.get("collecte"))
-        if ta and tb and (ta - tb).total_seconds() > 120:
-            cause = "cache_perime"
-        else:
-            cote = _nombre(ligne.get("cote"))
-            for voisine in propres:
-                if (voisine is ligne or voisine.get("marche") != ligne.get("marche")
-                        or voisine.get("periode") != ligne.get("periode")
-                        or voisine.get("ligne") != ligne.get("ligne")
-                        or voisine.get("issue") == ligne.get("issue")):
-                    continue
-                reste = offres.get(_cle_selection(voisine))
-                valeur = _nombre(reste.get("cote")) if reste else None
-                if cote is not None and valeur is not None and abs(cote - valeur) <= ECART_COTE + 1e-9:
-                    cause = "issues_permutees"
-                    break
-        self._ajouter(self.cotes, cause, ligne.get("marche"), ligne.get("periode"))
-        self._exemple(cause, ligne, autre)
-
-    def absente(self, ligne: dict, offres: dict) -> None:
-        marche, periode = ligne.get("marche"), ligne.get("periode")
-        valeur, issue = ligne.get("ligne"), ligne.get("issue")
-        causes = set()
-        for (m, p, v, i) in offres:
-            if m != marche:
-                continue
-            causes.add("issue_absente")
-            if i != issue:
-                continue
-            if p != periode and v == valeur:
-                causes.add("periode_differente")
-            elif p == periode and isinstance(v, (int, float)) and isinstance(valeur, (int, float)):
-                causes.add("signe_ligne" if v != 0 and abs(v + valeur) < 1e-9 else "ligne_differente")
-        cause = next((c for c in ("signe_ligne", "periode_differente", "ligne_differente", "issue_absente")
-                      if c in causes), "marche_absent")
-        self._ajouter(self.absentes, cause, marche, periode)
-        if cause != "marche_absent":
-            self._exemple(cause, ligne, None)
-
-    def resume(self) -> dict:
-        def total(table):
-            return {cause: sum(par.values()) for cause, par in table.items()}
-        return {"cotes_differentes": total(self.cotes), "cotes_differentes_par_marche": self.cotes,
-                "absentes_du_direct": total(self.absentes), "absentes_par_marche": self.absentes,
-                "exemples": self.exemples}
-
-
-def rapport(pulse: list[dict], direct: list[dict]) -> dict:
-    """Couverture des matchs PulseScore et part des cotes communes à ±0,01."""
-    ps = [l for l in pulse if isinstance(l, dict) and l.get("bookmaker") == "betclic"]
-    di = [l for l in direct if isinstance(l, dict) and l.get("bookmaker") == "betclic"]
-    matchs_ps, matchs_di = {}, {}
-    for ligne in ps:
-        matchs_ps.setdefault(ligne.get("match_id"), ligne)
-    for ligne in di:
-        matchs_di.setdefault(ligne.get("match_id"), ligne)
-    couples = []
-    pris = set()
-    for mid, a in matchs_ps.items():
-        meilleur = None
-        for did, b in matchs_di.items():
-            if did in pris or a.get("sport") != b.get("sport"):
-                continue
-            ta, tb = _heure(a.get("debut")), _heure(b.get("debut"))
-            if not ta or not tb or abs((ta - tb).total_seconds()) > 90 * 60:
-                continue
-            score = min(ressemblance(a.get("domicile"), b.get("domicile")),
-                        ressemblance(a.get("exterieur"), b.get("exterieur")))
-            if meilleur is None or score > meilleur[0]:
-                meilleur = (score, did)
-        if meilleur and meilleur[0] >= 0.85:
-            pris.add(meilleur[1])
-            couples.append((mid, meilleur[1]))
-    couverture = len(couples) / len(matchs_ps) if matchs_ps else None
-    index = {}
-    for ligne in di:
-        index.setdefault(ligne.get("match_id"), {})[_cle_selection(ligne)] = ligne
-    communs = egaux = 0
-    ecarts = Compteur()
-    for mid_ps, mid_di in couples:
-        offres = index.get(mid_di, {})
-        propres = [l for l in ps if l.get("match_id") == mid_ps]
-        for ligne in propres:
-            autre = offres.get(_cle_selection(ligne))
-            if not autre:
-                ecarts.absente(ligne, offres)
-                continue
-            communs += 1
-            ca, cb = _nombre(ligne.get("cote")), _nombre(autre.get("cote"))
-            if ca is not None and cb is not None and abs(ca - cb) <= ECART_COTE + 1e-9:
-                egaux += 1
-            else:
-                ecarts.different(ligne, autre, propres, offres)
-    accord = egaux / communs if communs else None
-    pret = bool(couverture is not None and accord is not None
-                and couverture + 1e-9 >= COUVERTURE_MIN and accord + 1e-9 >= ACCORD_MIN)
-    associes = {mid for mid, _did in couples}
-    manques = []
-    for mid, ligne in matchs_ps.items():
-        if mid in associes or len(manques) >= 20:
-            continue
-        manques.append({
-            "sport": ligne.get("sport"),
-            "domicile": ligne.get("domicile"),
-            "exterieur": ligne.get("exterieur"),
-            "ligue": ligne.get("ligue"),
-            "debut": ligne.get("debut"),
-        })
-    return {
-        "matchs_pulsescore": len(matchs_ps),
-        "matchs_direct": len(matchs_di),
-        "matchs_communs": len(couples),
-        "manques": manques,
-        "couverture": None if couverture is None else round(couverture, 4),
-        "selections_communes": communs,
-        "selections_egales": egaux,
-        "accord_cotes": None if accord is None else round(accord, 4),
-        "seuil_couverture": COUVERTURE_MIN,
-        "seuil_accord": ACCORD_MIN,
-        "pret_a_basculer": pret,
-        "diagnostic": ecarts.resume(),
-    }

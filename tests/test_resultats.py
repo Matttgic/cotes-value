@@ -178,35 +178,6 @@ def test_resultat_a_l_heure_la_plus_proche():
         assert R.consensus(pari, E)["score"] == (1, 0)
 
 
-def test_panne_d_un_validateur_visible_dans_le_journal(monkeypatch):
-    # revue externe (R6) : un HTTP 500 sur draftkings/results apparaissait comme une lecture saine et vide
-    import sys
-    from pathlib import Path
-    from cotes import pulsescore as P
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-    import cycle
-    monkeypatch.setattr(P.time, "sleep", lambda s: None)
-
-    class Rep:
-        def __init__(self, code, corps=None):
-            self.status_code, self.headers, self.corps = code, {}, corps
-
-        def json(self):
-            return self.corps
-
-    c = P.Client("cle", pause=0)
-    reponses = [Rep(500), Rep(200, {"results": []})]
-    monkeypatch.setattr(c.s, "get", lambda *a, **k: reponses.pop(0))
-    journal = {"etapes": {}}
-    for bm in ("draftkings", "betmgm"):
-        n = len(c.erreurs)
-        assert cycle.etape(f"resultats_{bm}_football", journal, R.lire, c, bm, "soccer", "football", T) == []
-        cycle.signaler(journal, f"resultats_{bm}_football", c.erreurs[n:])
-    assert journal["etapes"]["resultats_draftkings_football"]["degrade"]
-    assert "HTTP 500" in journal["etapes"]["resultats_draftkings_football"]["erreurs"][0]
-    assert "degrade" not in journal["etapes"]["resultats_betmgm_football"]        # vraie liste vide : saine
-
-
 def test_tennis_heure_annoncee_tres_differente():
     from datetime import timedelta
     pari = {"sport": "tennis", "domicile": "Alina Charaeva", "exterieur": "Qinwen Zheng", "debut": "2026-10-06T02:00:00Z"}

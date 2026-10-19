@@ -260,7 +260,7 @@ def test_cycle_branche_les_quatre_secrets_et_persiste_cache_et_diagnostic(tmp_pa
     monkeypatch.setattr(O, "collecter", collecter)
     journal = {"etapes": {}}
     p = pari()
-    assert cycle.effectuer_reglement([p], tmp_path, NOW, "", journal, {}, "oui")
+    assert cycle.effectuer_reglement([p], tmp_path, NOW, journal, "oui")
     assert p["statut"] == "gagne" and journal["theodds"]["cles_valides"] == 4
     assert journal["resultats"]["matchs_valides"] == 1
     assert json.loads((tmp_path / "theodds.json").read_text())["ligues"][KEY]["matchs"]

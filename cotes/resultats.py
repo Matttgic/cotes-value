@@ -1,19 +1,15 @@
 """Résultats des matchs pour le règlement des paris, validés par des sources fiables.
 
-Les flux de résultats PulseScore des bookmakers français ne disent pas quand un match est fini (Winamax,
-Unibet : dernier score vu en direct ; Betclic, NetBet : aucun état ; Unibet : champ score parfois faux).
-On règle donc avec des « validateurs », des bookmakers dont le flux marque explicitement les matchs
-terminés (sonde du 6/10/2026) : Betfair (Orbit, terminé quand tous ses marchés sont réglés), DraftKings,
-Unibet UK, Interwetten, BetMGM (« Finished ») et PMU quand il marque le match terminé.
+Sources : ESPN (API publique, sans clé ; aussi la source des scores par période : mi-temps au football,
+quart-temps NFL, tiers-temps NHL…), LiveScore, Flashscore, la NHL officielle, API-Sports, puis les secours
+(The Odds API, Prop-Line). Les validateurs PulseScore (Betfair, DraftKings, Unibet UK, Interwetten, BetMGM,
+PMU) ont disparu avec l'abonnement ; certaines règles ci-dessous gardent leurs noms, sans effet.
 
-ESPN (API publique, sans clé) est un validateur de plus et la source des scores par période (mi-temps au
-football : fiche du match ouverte seulement quand un pari en a besoin ; quart-temps NFL, tiers-temps NHL…).
-
-Un match est retrouvé chez chaque validateur par les noms d'équipes (dans un sens ou l'autre) et l'heure
-de début. Le score n'est retenu que si au moins SOURCES_MIN validateurs ont le match terminé et qu'ils
-donnent tous le même score (ou une nette majorité d'entre eux, voir MAJORITE_MIN) ; les corners, seulement si au moins SOURCES_MIN sources les donnent identiques
-(Betfair renvoie 0-0 quand il ne les compte pas). Une source seule suffit 6 h après le début si elle est
-fiable (ESPN, Betfair…), 24 h après pour la plupart des validateurs si le score est plausible (pas au tennis ni au hockey).
+Un match est retrouvé chez chaque source par les noms d'équipes (dans un sens ou l'autre) et l'heure de
+début. Le score n'est retenu que si au moins SOURCES_MIN sources ont le match terminé et qu'elles donnent
+toutes le même score (ou une nette majorité d'entre elles, voir MAJORITE_MIN) ; les corners, seulement si
+au moins SOURCES_MIN sources les donnent identiques. Une source seule suffit 6 h après le début si elle est
+fiable (ESPN, LiveScore…), 24 h après pour les autres si le score est plausible (pas au tennis ni au hockey).
 Sinon le pari attend, puis passe « à régler à la main ».
 """
 from __future__ import annotations
@@ -26,7 +22,6 @@ import requests
 
 from .correspondance import normaliser, ressemblance
 
-VALIDATEURS = ["orbitxch", "draftkings", "unibet-uk", "interwetten-de", "betmgm", "pmu"]
 ECART_HEURE_MIN = 45
 SECOURS_HEURE_MIN = 15
 SECOURS_NOM_MIN = 0.95
@@ -35,7 +30,6 @@ RESSEMBLANCE_MIN = 0.75
 # deux joueurs sont clairement les mêmes (cas réel : Charaeva – Zheng annoncé 02:00, joué à 11:05)
 ECART_TENNIS_H = 12
 RESSEMBLANCE_TENNIS_LOIN = 0.9
-PAGES_MAX = 30          # 30 résultats par page : 15 ne couvraient pas une journée de football ; +2 min par règlement (cycle limité à 20 min)
 SOURCES_MIN = 2
 # sources en désaccord : le score majoritaire l'emporte s'il est donné par au moins MAJORITE_MIN sources et
 # au moins 3 fois plus de sources que les autres scores (une source isolée se trompe : Unibet UK 0-0 au lieu
@@ -81,20 +75,6 @@ def _heure(s) -> datetime | None:
         return None
 
 
-def termine(r: dict) -> bool:
-    st = r.get("settlement") or {}
-    info = str((r.get("score") or {}).get("info") or "").strip().lower()
-    return bool(st.get("final")) or info in ("final", "finished", "ended", "ft")
-
-
-def _corners(r: dict) -> tuple[int, int] | None:
-    foot = (r.get("statistics") or {}).get("football") or {}
-    try:
-        return int(foot["home"]["corners"]), int(foot["away"]["corners"])
-    except (KeyError, TypeError, ValueError):
-        return None
-
-
 def libelles_periodes(sport: str, libelles: list | None, n: int) -> list[str]:
     """Libellés des périodes ; quand la source n'en donne pas, déduits du rang (au-delà du temps
     réglementaire : prolongation, tirs au but, manches supplémentaires)."""
@@ -113,33 +93,6 @@ def libelles_periodes(sport: str, libelles: list | None, n: int) -> list[str]:
             out.append("ET" if i < reg + 2 else "PEN")
         else:
             out.append("OT")
-    return out
-
-
-def lire(client, bookmaker: str, sport_api: str, sport: str, depuis: datetime) -> list[dict]:
-    """Matchs terminés d'un validateur, du plus récent jusqu'à `depuis` (début des matchs)."""
-    out = []
-    for page in range(1, PAGES_MAX + 1):
-        d = client.get(f"{bookmaker}/results", {"sport": sport_api, "page": page, "limit": 30})
-        if not d or not d.get("results"):
-            break
-        for r in d["results"]:
-            sc = r.get("score") or {}
-            try:
-                score = (int(sc.get("home")), int(sc.get("away")))
-            except (TypeError, ValueError):
-                continue
-            if not termine(r):
-                continue
-            ps = r.get("periodScores") or {}
-            periodes = list(zip(ps.get("home") or [], ps.get("away") or []))
-            out.append({"source": bookmaker, "sport": sport, "domicile": r.get("home"), "exterieur": r.get("away"),
-                        "debut": _heure(r.get("startTime")), "score": score, "periodes": periodes,
-                        "libelles": libelles_periodes(sport, ps.get("labels"), len(periodes)),
-                        "corners": _corners(r)})
-        dernier = _heure(d["results"][-1].get("startTime"))
-        if not d.get("hasNextPage") or (dernier and dernier < depuis):
-            break
     return out
 
 

@@ -2,7 +2,7 @@
 
 Lancé toutes les 5 minutes par GitHub Actions (.github/workflows/collecte.yml).
 
-    python scripts/cycle.py                 # cycle complet (4 bookmakers français + Betfair, 36 h)
+    python scripts/cycle.py                 # cycle complet (bookmakers français lus en direct, 36 h)
     python scripts/cycle.py --mode test     # cycle réduit : Winamax + Betclic, foot, 1 page
     python scripts/cycle.py --reglement oui # forcer le règlement des paris à ce cycle
 
@@ -27,7 +27,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes import (flashscore, livescore, comparaison, controle, pinnacle, polymarket, pulsescore, reglement,  # noqa: E402
+from cotes import (flashscore, livescore, comparaison, controle, pinnacle, polymarket, reglement,  # noqa: E402
                    simulation, smarkets, stockage)
 from cotes.direct import betclic as betclic_direct  # noqa: E402
 from cotes.direct import netbet as netbet_direct  # noqa: E402
@@ -40,19 +40,11 @@ from cotes import theodds, resultats_nhl, propline  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
-# NetBet retiré le 6/10/2026 : le flux « netbet » de PulseScore est le site international (netbet.com :
-# intitulés anglais, corners, handicaps asiatiques en quart, compétitions hors liste ANJ), pas netbet.fr.
-# netbet.fr est lu à part (cotes/direct/netbet.py) et n'entre pas dans ce plan PulseScore.
-FRANCAIS = ["winamax", "betclic", "unibet-fr", "pmu"]
-SPORTS_FR = ["soccer", "basketball", "tennis", "ice-hockey", "handball", "volleyball", "rugby-union",
-             "american-football", "baseball"]
-SPORTS_BETFAIR = ["soccer", "tennis"]
 HORIZON_H = 36
 # Budgets durs : une source au-delà est sautée, le cycle de 5 min continue.
 BUDGETS = {
     "pinnacle": 45,
     "polymarket": 30,
-    "pulsescore": 75,
     "pmu_direct": 75,
     "winamax_direct": 45,
     "unibet_direct": 75,
@@ -70,7 +62,6 @@ SMARKETS_FRAIS_MIN = 15
 _journal_lock = threading.Lock()
 # minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
 REGLEMENT_MINUTES = float(os.environ.get("REGLEMENT_MINUTES", "55"))
-API ={v: k for k, v in pulsescore.SPORTS.items()}          # « football » -> « soccer »
 
 
 def lire_json(chemin: Path, defaut):
@@ -256,12 +247,11 @@ def _radar_depuis(lignes) -> list[dict]:
     return out
 
 
-def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal: dict,
-                      attentes: dict | None = None, donnees: Path | None = None):
-    """Pinnacle et Polymarket d'abord, puis les books indépendants en parallèle.
+def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: Path | None = None):
+    """Pinnacle et Polymarket d'abord, puis les bookmakers français en parallèle.
 
-    PMU vient de PulseScore, de Kambi, ou des deux selon SOURCE_PMU (défaut shadow :
-    PulseScore décide, Kambi n'est qu'un rapport). Une panne de l'un n'arrête pas l'autre.
+    Chaque bookmaker est lu directement sur son site (PulseScore n'existe plus) ; la panne
+    d'un lecteur n'arrête pas les autres.
     """
     limite = maintenant + timedelta(hours=HORIZON_H)
 
@@ -270,24 +260,6 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 and (maintenant - timedelta(hours=5) if l.get("debut_approximatif") else maintenant)
                     < comparaison._t(l["debut"])
                     <= limite + (timedelta(hours=5) if l.get("debut_approximatif") else timedelta())}
-
-    def pulse(sports, nom, sans_pmu=False, sans_winamax=False, sans_unibet=False, sans_betclic=False):
-        if mode == "test":
-            livres = [b for b in ("winamax", "betclic")
-                      if not (sans_winamax and b == "winamax") and not (sans_betclic and b == "betclic")]
-            plan = {b: ["soccer"] for b in livres} | {"orbitxch": ["soccer"]}
-            pages, horizon = 1, 12
-        else:
-            fr = [s for s in SPORTS_FR if pulsescore.SPORTS[s] in sports]
-            if not fr:
-                return [], {}, {}
-            livres = [b for b in FRANCAIS
-                      if not (sans_pmu and b == "pmu") and not (sans_winamax and b == "winamax")
-                      and not (sans_unibet and b == "unibet-fr") and not (sans_betclic and b == "betclic")]
-            plan = {b: fr for b in livres} | {"orbitxch": [s for s in SPORTS_BETFAIR if s in fr]}
-            pages, horizon = 40, HORIZON_H
-        return etape_bornee(nom, journal, BUDGETS["pulsescore"], pulsescore.collecter, cle, plan,
-                            horizon, pages, etat=attentes) or ([], {}, {})
 
     def mesures_delta(pin, lignes):
         """Diagnostic, pas une nouvelle règle de sélection ; temps réels des lignes lues."""
@@ -303,8 +275,6 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                                                for r in (min(refs), max(refs))), 1) if refs and books else None,
         }
 
-    source_pmu = pmu_direct.mode_source()
-    journal["pmu_source"] = source_pmu
     rythme_path = donnees / "rythme_sources.json" if donnees else None
     rythme = lire_json(rythme_path, {}) if rythme_path else {}
     if not isinstance(rythme, dict):
@@ -356,27 +326,16 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             futurs[nom] = pool.submit(source_bornee, module, nom, journal, budget,
                                       fonction, *args, **kwargs)
 
-        if source_pmu != "pulsescore":
-            lancer("pmu_direct", pmu_direct, BUDGETS["pmu_direct"], pmu_direct.collecter,
-                   sports, heures_directes, reserve=_reserve("pmu"), concurrence=2)
-        source_wina = winamax_direct.mode_source()
-        journal["winamax_source"] = source_wina
-        if source_wina != "pulsescore":
-            lancer("winamax_direct", winamax_direct, BUDGETS["winamax_direct"],
-                   winamax_direct.collecter, sports, heures_directes,
-                   maintenant=maintenant)
-        source_uni = unibet_direct.mode_source()
-        journal["unibet_source"] = source_uni
-        if source_uni != "pulsescore":
-            lancer("unibet_direct", unibet_direct, BUDGETS["unibet_direct"],
-                   unibet_direct.collecter, sports, heures_directes, maintenant=maintenant,
-                   concurrence=3, radar=_radar_depuis(pin) or None, reserve=_reserve("unibet"))
-        source_bet = betclic_direct.mode_source()
-        journal["betclic_source"] = source_bet
-        if source_bet != "pulsescore":
-            lancer("betclic_direct", betclic_direct, BUDGETS["betclic_direct"],
-                   betclic_direct.collecter, sports, heures_directes, maintenant=maintenant,
-                   reserve=_reserve("betclic"))
+        lancer("pmu_direct", pmu_direct, BUDGETS["pmu_direct"], pmu_direct.collecter,
+               sports, heures_directes, reserve=_reserve("pmu"), concurrence=2)
+        lancer("winamax_direct", winamax_direct, BUDGETS["winamax_direct"],
+               winamax_direct.collecter, sports, heures_directes, maintenant=maintenant)
+        lancer("unibet_direct", unibet_direct, BUDGETS["unibet_direct"],
+               unibet_direct.collecter, sports, heures_directes, maintenant=maintenant,
+               concurrence=3, radar=_radar_depuis(pin) or None, reserve=_reserve("unibet"))
+        lancer("betclic_direct", betclic_direct, BUDGETS["betclic_direct"],
+               betclic_direct.collecter, sports, heures_directes, maintenant=maintenant,
+               reserve=_reserve("betclic"))
         source_oly = olybet_direct.mode_source()
         journal["olybet_source"] = source_oly
         if source_oly == "direct":
@@ -405,71 +364,16 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
                 recus[nom] = recu
             return recus[nom]
 
-        # En auto le plan PulseScore dépend du résultat. Shadow et direct sont connus tout de suite.
-        if source_pmu == "auto":
-            direct_lignes, direct_meta = recevoir("pmu_direct")
-            direct_utilisable = bool(direct_meta.get("ok") and (direct_lignes or not direct_meta.get("erreurs")))
-        else:
-            direct_lignes, direct_meta, direct_utilisable = [], {"ok": False, "erreurs": [], "requetes": 0}, False
-        sans_pmu = source_pmu == "direct" or (source_pmu == "auto" and direct_utilisable)
-        if source_wina == "auto":
-            wina_lignes, wina_meta = recevoir("winamax_direct")
-            wina_utilisable = bool(wina_meta.get("ok") and wina_lignes)
-        else:
-            wina_lignes, wina_meta, wina_utilisable = [], {"ok": False, "erreurs": [], "requetes": 0}, False
-        sans_wina = source_wina == "direct" or (source_wina == "auto" and wina_utilisable)
-        if source_uni == "auto":
-            uni_lignes, uni_meta = recevoir("unibet_direct")
-            uni_utilisable = bool(uni_meta.get("ok") and (uni_lignes or not uni_meta.get("erreurs")))
-        else:
-            uni_lignes, uni_meta, uni_utilisable = [], {"ok": False, "erreurs": [], "requetes": 0}, False
-        sans_uni = source_uni == "direct" or (source_uni == "auto" and uni_utilisable)
-        if source_bet == "auto":
-            bet_lignes, bet_meta = recevoir("betclic_direct")
-            bet_utilisable = bool(bet_meta.get("ok") and (bet_lignes or not bet_meta.get("erreurs")))
-        else:
-            bet_lignes, bet_meta, bet_utilisable = [], {"ok": False, "erreurs": [], "requetes": 0}, False
-        sans_bet = source_bet == "direct" or (source_bet == "auto" and bet_utilisable)
-        fpulse = pool.submit(pulse, sports, "pulsescore", sans_pmu, sans_wina, sans_uni, sans_bet) if cle else None
-        if source_pmu != "auto":
-            direct_lignes, direct_meta = recevoir("pmu_direct")
-            direct_utilisable = bool(direct_meta.get("ok") and (direct_lignes or not direct_meta.get("erreurs")))
-            sans_pmu = source_pmu == "direct" or (source_pmu == "auto" and direct_utilisable)
-        if source_wina != "auto":
-            wina_lignes, wina_meta = recevoir("winamax_direct")
-            if wina_meta.get("ok") is False and "winamax_direct" in journal["etapes"]:
-                journal["etapes"]["winamax_direct"]["ok"] = False
-            wina_utilisable = bool(wina_meta.get("ok") and wina_lignes)
-            sans_wina = source_wina == "direct" or (source_wina == "auto" and wina_utilisable)
-        elif wina_meta.get("ok") is False and "winamax_direct" in journal["etapes"]:
-            journal["etapes"]["winamax_direct"]["ok"] = False
-        if source_uni != "auto":
-            uni_lignes, uni_meta = recevoir("unibet_direct")
-            uni_utilisable = bool(uni_meta.get("ok") and (uni_lignes or not uni_meta.get("erreurs")))
-            sans_uni = source_uni == "direct" or (source_uni == "auto" and uni_utilisable)
-        if source_bet != "auto":
-            bet_lignes, bet_meta = recevoir("betclic_direct")
-            bet_utilisable = bool(bet_meta.get("ok") and (bet_lignes or not bet_meta.get("erreurs")))
-            sans_bet = source_bet == "direct" or (source_bet == "auto" and bet_utilisable)
-        if source_pmu != "pulsescore":
-            signaler(journal, "pmu_direct", list(direct_meta.get("erreurs") or []))
-        if source_wina != "pulsescore":
-            signaler(journal, "winamax_direct", list(wina_meta.get("erreurs") or []))
-            if wina_meta.get("ok") is False and "winamax_direct" in journal["etapes"]:
-                journal["etapes"]["winamax_direct"]["ok"] = False
-        if source_uni != "pulsescore":
-            signaler(journal, "unibet_direct", list(uni_meta.get("erreurs") or []))
-        if source_bet != "pulsescore":
-            signaler(journal, "betclic_direct", list(bet_meta.get("erreurs") or []))
-        if fpulse is not None:
-            lignes, requetes, erreurs = fpulse.result() or ([], {}, {})
-            if erreurs and "pulsescore" in journal["etapes"]:
-                journal["etapes"]["pulsescore"] |= {"degrade": True,
-                    "erreurs": {b: e[:5] for b, e in erreurs.items()}}
-        else:
-            lignes, requetes, erreurs = [], {}, {}
-            # Sans clé (plus d'abonnement) : étape désactivée, pas en panne ; les lecteurs directs décident.
-            journal["etapes"]["pulsescore"] = {"secondes": 0.0, "ok": True, "desactive": True}
+        lignes = []
+        metas = {}
+        for nom in ("pmu_direct", "winamax_direct", "unibet_direct", "betclic_direct"):
+            lues, meta = recevoir(nom)
+            signaler(journal, nom, list(meta.get("erreurs") or []))
+            # Le socket Winamax renvoie ok=False quand la lecture est incomplète : l'étape l'indique.
+            if nom == "winamax_direct" and meta.get("ok") is False and nom in journal["etapes"]:
+                journal["etapes"][nom]["ok"] = False
+            lignes += list(lues)
+            metas[nom] = meta
         if source_oly == "direct":
             oly_lignes, oly_meta = recevoir("olybet")
         else:
@@ -478,82 +382,6 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
             net_lignes, net_meta = recevoir("netbet")
         else:
             net_lignes, net_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
-        pmu_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
-                  or pulsescore.indisponible(erreurs.get("pmu", []) if cle else ["PULSESCORE_KEY absente"]))
-        if source_pmu == "shadow":
-            try:
-                journal["pmu_direct_rapport"] = pmu_direct.rapport(lignes, direct_lignes)
-            except Exception as e:  # noqa: BLE001
-                journal["pmu_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
-            if pmu_ko and direct_utilisable:
-                lignes = [l for l in lignes if l.get("bookmaker") != "pmu"] + list(direct_lignes)
-                journal["pmu_repli"] = "Kambi remplace PulseScore (401/403/402/quota ou lecture impossible)"
-                journal["pmu_source_effective"] = "direct"
-                if "pulsescore" in journal["etapes"]:
-                    journal["etapes"]["pulsescore"]["pmu_repli"] = journal["pmu_repli"]
-            elif pmu_ko:
-                journal["pmu_repli"] = "PulseScore indisponible, Kambi sans cote utilisable"
-                journal["pmu_source_effective"] = "shadow"
-        elif sans_pmu:
-            lignes = [l for l in lignes if l.get("bookmaker") != "pmu"] + list(direct_lignes)
-        wina_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
-                   or pulsescore.indisponible(erreurs.get("winamax", []) if cle else ["PULSESCORE_KEY absente"]))
-        if source_wina == "shadow":
-            try:
-                journal["winamax_direct_rapport"] = winamax_direct.rapport(lignes, wina_lignes)
-            except Exception as e:  # noqa: BLE001
-                journal["winamax_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
-            if wina_ko and wina_utilisable:
-                lignes = [l for l in lignes if l.get("bookmaker") != "winamax"] + list(wina_lignes)
-                journal["winamax_repli"] = "Socket Winamax remplace PulseScore (401/403/402/quota ou lecture impossible)"
-                journal["winamax_source_effective"] = "direct"
-                if "pulsescore" in journal["etapes"]:
-                    journal["etapes"]["pulsescore"]["winamax_repli"] = journal["winamax_repli"]
-            elif wina_ko:
-                journal["winamax_repli"] = "PulseScore indisponible, socket Winamax sans cote utilisable"
-                journal["winamax_source_effective"] = "shadow"
-        elif sans_wina:
-            lignes = [l for l in lignes if l.get("bookmaker") != "winamax"] + list(wina_lignes)
-            journal["winamax_source_effective"] = "direct"
-        elif source_wina == "auto":
-            journal["winamax_source_effective"] = "pulsescore"
-            journal["winamax_repli"] = "Socket Winamax vide ou en échec, PulseScore décide"
-        uni_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
-                  or pulsescore.indisponible(erreurs.get("unibet-fr", []) if cle else ["PULSESCORE_KEY absente"]))
-        if source_uni == "shadow":
-            try:
-                journal["unibet_direct_rapport"] = unibet_direct.rapport(lignes, uni_lignes)
-            except Exception as e:  # noqa: BLE001
-                journal["unibet_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
-            if uni_ko and uni_utilisable:
-                lignes = [l for l in lignes if l.get("bookmaker") != "unibet-fr"] + list(uni_lignes)
-                journal["unibet_repli"] = "L'API Unibet remplace PulseScore (401/403/402/quota ou lecture impossible)"
-                journal["unibet_source_effective"] = "direct"
-                if "pulsescore" in journal["etapes"]:
-                    journal["etapes"]["pulsescore"]["unibet_repli"] = journal["unibet_repli"]
-            elif uni_ko:
-                journal["unibet_repli"] = "PulseScore indisponible, API Unibet sans cote utilisable"
-                journal["unibet_source_effective"] = "shadow"
-        elif sans_uni:
-            lignes = [l for l in lignes if l.get("bookmaker") != "unibet-fr"] + list(uni_lignes)
-        bet_ko = (not cle or journal["etapes"].get("pulsescore", {}).get("ok") is False
-                  or pulsescore.indisponible(erreurs.get("betclic", []) if cle else ["PULSESCORE_KEY absente"]))
-        if source_bet == "shadow":
-            try:
-                journal["betclic_direct_rapport"] = betclic_direct.rapport(lignes, bet_lignes)
-            except Exception as e:  # noqa: BLE001
-                journal["betclic_direct_rapport"] = {"ok": False, "erreur": type(e).__name__}
-            if bet_ko and bet_utilisable:
-                lignes = [l for l in lignes if l.get("bookmaker") != "betclic"] + list(bet_lignes)
-                journal["betclic_repli"] = "L'API Betclic remplace PulseScore (401/403/402/quota ou lecture impossible)"
-                journal["betclic_source_effective"] = "direct"
-                if "pulsescore" in journal["etapes"]:
-                    journal["etapes"]["pulsescore"]["betclic_repli"] = journal["betclic_repli"]
-            elif bet_ko:
-                journal["betclic_repli"] = "PulseScore indisponible, API Betclic sans cote utilisable"
-                journal["betclic_source_effective"] = "shadow"
-        elif sans_bet:
-            lignes = [l for l in lignes if l.get("bookmaker") != "betclic"] + list(bet_lignes)
     if source_oly == "direct":
         signaler(journal, "olybet", list(oly_meta.get("erreurs") or []))
         lignes = list(lignes) + list(oly_lignes)
@@ -573,13 +401,14 @@ def collecter_prematch(cle: str | None, mode: str, maintenant: datetime, journal
     mesures_delta(pin, lignes)
     if rythme_path is not None:
         ecrire_json(rythme_path, {k: rythme[k] for k in ("pmu", "unibet", "betclic") if k in rythme})
-    for nom, meta in (("pmu", direct_meta), ("unibet", uni_meta), ("betclic", bet_meta)):
+    for nom, meta in (("pmu", metas["pmu_direct"]), ("unibet", metas["unibet_direct"]),
+                      ("betclic", metas["betclic_direct"])):
         bloc = meta.get("reserve") if isinstance(meta, dict) else None
         if isinstance(bloc, dict):
             horizon[nom] = bloc
     if horizon_path is not None and any(k in horizon for k in ("pmu", "unibet", "betclic")):
         ecrire_json(horizon_path, {k: horizon[k] for k in ("pmu", "unibet", "betclic") if k in horizon})
-    return pin, poly, lignes, requetes
+    return pin, poly, lignes
 
 
 def reglement_echu(etat: dict, maintenant: datetime, mode: str) -> bool:
@@ -619,12 +448,10 @@ def charger_paris(donnees: Path, journal: dict) -> list[dict]:
     return paris
 
 
-def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
-                        journal: dict, requetes: dict, mode_reglement: str) -> bool:
+def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dict, mode_reglement: str) -> bool:
     # Le règlement ne lit pas Smarkets : les cotes de l'échange ne servent pas à solder un pari.
-    # 4. règlement (offre PulseScore PRO : requêtes illimitées). Sans clé PulseScore, ESPN
-    #    et les résultats saisis à la main règlent quand même ce qu'ils peuvent.
-    #    Environ une fois par heure, depuis le cron ou la collecte : voir REGLEMENT_MINUTES.
+    # 4. règlement : ESPN, LiveScore, Flashscore, NHL, API-Sports et les secours, plus les résultats
+    #    saisis à la main. Environ une fois par heure, depuis le cron ou la collecte : voir REGLEMENT_MINUTES.
     etat_avant = lire_json(donnees / "etat.json", {})
     dernier_reglement = etat_avant.get("dernier_reglement")
     regler = reglement_echu(etat_avant, maintenant, mode_reglement)
@@ -636,22 +463,12 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
         # Les corrections vérifiées sont disponibles sans nouvelle requête réseau.
         reglement.appliquer(paris, {}, manuels, maintenant)
         enregistrements = []
-        attentes = lire_json(donnees / "pulsescore_attentes.json", {})
-        client = pulsescore.Client(cle, etat=attentes) if cle else None
         for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
-            # résultats validés par des bookmakers dont le flux marque les matchs terminés (cotes/resultats.py)
-            for bm in (resultats_mod.VALIDATEURS if client and sport in API else []):
-                n = len(client.erreurs)
-                enregistrements += etape(f"resultats_{bm}_{sport}", journal, resultats_mod.lire,
-                                         client, bm, API[sport], sport, depuis) or []
-                signaler(journal, f"resultats_{bm}_{sport}", client.erreurs[n:])
             n = len(resultats_mod.ERREURS_ESPN)
             enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
                                      sport, depuis, datetime.now(timezone.utc)) or []
             signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
-        if client:
-            ecrire_json(donnees / "pulsescore_attentes.json", attentes)
-        # LiveScore : gratuit, sans clé, indépendant de PulseScore (football, hockey, basket, tennis)
+        # LiveScore : gratuit, sans clé (football, hockey, basket, tennis)
         for sport, depuis in livescore.a_lire(paris, maintenant).items():
             n = len(livescore.ERREURS)
             enregistrements += etape(f"resultats_livescore_{sport}", journal, livescore.lire, sport,
@@ -738,8 +555,6 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
                 journal["propline"] = secours[1]
                 signaler(journal, "resultats_propline", secours[1]["erreurs"])
         journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
-        if client:
-            requetes["resultats"] = client.requetes
         # matchs reportés (vus « à venir » chez ESPN à une date plus tardive) : ils restent en cours
         reportes = {p["match_id"]: d for p in paris
                     if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats
@@ -763,7 +578,7 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, cle: str,
         journal["resultats"]["ignores_limite"] = resultats_mod.IGNORES_MAX
         journal["resultats"]["paris_avec_alertes"] = sum(bool(p.get("alertes")) for p in paris
                                                          if p.get("statut") in ("en_cours", "a_regler"))
-        # Indépendance vis-à-vis de PulseScore : quelles sources ont réglé les paris de ce cycle
+        # Quelles sources ont réglé les paris de ce cycle
         sources_reglees: dict = {}
         for p in paris:
             if id(p) in ouverts_avant and p.get("statut") in reglement.GAIN:
@@ -793,7 +608,6 @@ def main() -> int:
     a.add_argument("--seulement-reglement", action="store_true",
                    help="Régler les paris sans interroger les cotes ni créer de nouveaux paris")
     args = a.parse_args()
-    cle = os.environ.get("PULSESCORE_KEY", "").strip()
     donnees = Path(args.donnees)
     maintenant = datetime.now(timezone.utc)
     journal = {"debut": maintenant.isoformat(timespec="seconds"), "mode": args.mode, "etapes": {}}
@@ -803,16 +617,11 @@ def main() -> int:
         paris = charger_paris(donnees, journal)
         manuels = lire_json(donnees / "resultats_manuels.json", {})
         paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
-        requetes = {}
         journal["mode"] = "reglement"
-        regler = effectuer_reglement(paris, donnees, maintenant, cle, journal, requetes, args.reglement)
+        regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)
         paris = stockage.archiver(donnees, paris, maintenant)
         ecrire_json(donnees / "paris.json", paris)
         etat = lire_json(donnees / "etat.json", {})
-        compteur = etat.get("requetes_par_mois", {})
-        mois = f"{maintenant:%Y-%m}"
-        compteur[mois] = compteur.get(mois, 0) + sum(requetes.values())
-        etat["requetes_par_mois"] = compteur
         journal["fin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         conserver_journal_reglement(etat, journal, regler)
         ecrire_json(donnees / "etat.json", etat)
@@ -822,36 +631,11 @@ def main() -> int:
                           "etapes": journal.get("etapes", {})}, ensure_ascii=False))
         return 0
 
-    # Rafale live isolée AVANT les sources lentes. Les mesures +15/+30 s se font
-    # pendant les lectures pré-match, sans changer leur sélection ni les bilans.
-    terminer_live = None
-    journal["live_papier"] = {"mode": "papier", "actif": False,
-        "raison": "désactivé par défaut : fraîcheur source et clôtures complètes requises"}
-    if cle and os.environ.get("LIVE_PAPIER") == "oui" and args.mode == "complet":
-        try:
-            from cotes.live_papier import lancer
-            terminer_live = lancer(donnees, cle)
-        except Exception:  # un échec live ne bloque jamais le scanner pré-match
-            journal["live_papier"] = {"erreur": "initialisation_indisponible", "mode": "papier"}
+    # Journal papier live : il lisait les flux live de PulseScore, arrêté avec l'abonnement.
+    journal["live_papier"] = {"mode": "papier", "actif": False, "raison": "flux live PulseScore arrêté"}
 
-    # Références en parallèle, puis les bookmakers. PMU direct ne remplace PulseScore
-    # qu'en mode direct, ou en auto quand Kambi a répondu.
-    attentes = lire_json(donnees / "pulsescore_attentes.json", {})
-    pin, poly, lignes_ps, requetes = collecter_prematch(
-        cle, args.mode, maintenant, journal, attentes, donnees)
-    ecrire_json(donnees / "pulsescore_attentes.json", attentes)
-    if "pmu_direct_rapport" in journal:
-        ecrire_json(donnees / "pmu_comparaison.json", journal["pmu_direct_rapport"])
-    if "winamax_direct_rapport" in journal:
-        ecrire_json(donnees / "winamax_comparaison.json", journal["winamax_direct_rapport"])
-    if "unibet_direct_rapport" in journal:
-        ecrire_json(donnees / "unibet_comparaison.json", journal["unibet_direct_rapport"])
-    if "betclic_direct_rapport" in journal:
-        ecrire_json(donnees / "betclic_comparaison.json", journal["betclic_direct_rapport"])
-
-    francais = [l for l in lignes_ps if l["bookmaker"] != "orbitxch"]
-    betfair = comparaison.reference_betfair([l for l in lignes_ps if l["bookmaker"] == "orbitxch"])
-    references = {"Pinnacle": pin, "Betfair": betfair, "Polymarket": poly}
+    pin, poly, francais = collecter_prematch(args.mode, maintenant, journal, donnees)
+    references = {"Pinnacle": pin, "Polymarket": poly}
     # Smarkets reste hors de `francais` : bookmaker « smarkets » n'est pas un book français.
     sports_sm = {"football"} if args.mode == "test" else {l["sport"] for l in francais if l.get("sport")}
     sm_lignes, sm_info = appliquer_smarkets(
@@ -862,7 +646,7 @@ def main() -> int:
         erreurs_sm.append("périmé")
     signaler(journal, "smarkets", erreurs_sm)
     journal["smarkets_dans_decision"] = smarkets.dans_decision()
-    # Table propre, comme Betfair. Le drapeau ne retire que le consensus partagé.
+    # Table propre. Le drapeau ne retire que le consensus partagé.
     smarkets.ajouter_table(references, sm_lignes)
     hors = smarkets.hors_consensus()
 
@@ -887,8 +671,7 @@ def main() -> int:
                          hors_consensus=hors) or []
     # Écarts d'affichage, y compris quand Smarkets ne décide pas. Avant le placement :
     # le pari enregistre les trois champs.
-    comparaison.annoter_ecarts(opportunites, francais,
-                               {"Betfair": betfair, "Polymarket": poly, "Smarkets": sm_lignes})
+    comparaison.annoter_ecarts(opportunites, francais, {"Polymarket": poly, "Smarkets": sm_lignes})
     paris = charger_paris(donnees, journal)
     # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
     manuels = lire_json(donnees / "resultats_manuels.json", {})
@@ -902,16 +685,9 @@ def main() -> int:
     simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
 
     # La collecte reprend le règlement si le workflow horaire a été retardé.
-    regler = effectuer_reglement(paris, donnees, maintenant, cle, journal, requetes, args.reglement)
+    regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)
 
     # 5. sauvegarde
-    if terminer_live:
-        try:
-            journal["live_papier"] = terminer_live()
-            for bm, n in journal["live_papier"].get("requetes_pulsescore", {}).items():
-                requetes[bm] = requetes.get(bm, 0) + n
-        except Exception:
-            journal["live_papier"] = {"erreur": "suivi_indisponible", "mode": "papier"}
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
     ecrire_json(donnees / "paris.json", paris)
     ecrire_json(donnees / "controle.json", etat_controle)
@@ -923,22 +699,19 @@ def main() -> int:
             for o in opportunites:
                 f.write(json.dumps(o, ensure_ascii=False) + "\n")
     etat = lire_json(donnees / "etat.json", {})
-    mois = f"{maintenant:%Y-%m}"
-    compteur = etat.get("requetes_par_mois", {})
-    compteur[mois] = compteur.get(mois, 0) + sum(requetes.values())
     journal.update({
         "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "requetes_pulsescore": requetes, "cotes": {"francaises": len(francais), "pinnacle": len(pin),
-                                                    "betfair": len(betfair), "polymarket": len(poly),
-                                                    "smarkets": len(sm_lignes)},
+        "cotes": {"francaises": len(francais), "pinnacle": len(pin), "polymarket": len(poly),
+                  "smarkets": len(sm_lignes)},
         "matchs_francais": len({l["match_id"] for l in francais}),
         "opportunites": sum(not o.get("suspect") for o in opportunites),
         "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),
         "nouveaux_paris": len(nouveaux)})
-    etat.update({"dernier_cycle": journal, "requetes_par_mois": compteur})
+    etat.pop("requetes_par_mois", None)     # compteur de l'ancien abonnement PulseScore
+    etat.update({"dernier_cycle": journal})
     conserver_journal_reglement(etat, journal, regler)
     historique = etat.get("historique", [])[-200:] + [{k: journal[k] for k in ("debut", "mode", "opportunites",
-                                                                                "nouveaux_paris", "requetes_pulsescore")}]
+                                                                                "nouveaux_paris")}]
     etat["historique"] = historique
     ecrire_json(donnees / "etat.json", etat)
 
@@ -947,7 +720,7 @@ def main() -> int:
         from site_web import construire                                 # noqa: E402
         construire(donnees, Path(args.site))
     print(json.dumps({k: journal[k] for k in ("mode", "cotes", "matchs_francais", "opportunites", "nouveaux_paris",
-                                               "requetes_pulsescore", "controle", "etapes")}, ensure_ascii=False, indent=1))
+                                               "controle", "etapes")}, ensure_ascii=False, indent=1))
     return 0
 
 

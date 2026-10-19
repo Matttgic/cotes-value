@@ -182,54 +182,6 @@ def test_ordre_inverse_face_a_pinnacle():
     assert associer(fr, ref)["n1"][:2] == ("p1", True)
 
 
-def test_panne_d_un_bookmaker_n_efface_pas_les_autres(monkeypatch):
-    # revue externe (B3) : un timeout chez Betclic faisait perdre toute la collecte PulseScore
-    from cotes import pulsescore as P
-
-    def matchs(self, bm, sport, heures, pages_max=40):
-        self.requetes += 1
-        if bm == "betclic":
-            raise TimeoutError("lecture trop longue")
-        return []
-
-    monkeypatch.setattr(P.Client, "matchs", matchs)
-    monkeypatch.setattr(P, "traduire", lambda e, bm, sp, moment: [])
-    lignes, requetes, erreurs = P.collecter("cle", {"winamax": ["soccer", "tennis"], "betclic": ["soccer"]})
-    assert requetes == {"winamax": 2, "betclic": 1}
-    assert list(erreurs) == ["betclic"] and "TimeoutError" in erreurs["betclic"][0]
-
-
-def test_client_reessaie_les_erreurs_reseau(monkeypatch):
-    import requests
-    from cotes import pulsescore as P
-    monkeypatch.setattr(P.time, "sleep", lambda s: None)
-
-    class Rep:
-        status_code = 200
-        headers = {}
-
-        def __init__(self, corps):
-            self.corps = corps
-
-        def json(self):
-            if self.corps is None:
-                raise ValueError("pas du JSON")
-            return self.corps
-
-    reponses = [requests.ConnectionError("coupure"), Rep({"events": []}), Rep(None)]
-
-    def get(*a, **k):
-        r = reponses.pop(0)
-        if isinstance(r, Exception):
-            raise r
-        return r
-
-    c = P.Client("cle", pause=0)
-    monkeypatch.setattr(c.s, "get", get)
-    assert c.get("winamax/soccer/events") == {"events": []} and c.requetes == 2
-    assert c.get("winamax/soccer/events") is None and c.erreurs == ["winamax/soccer/events : JSON invalide"]
-
-
 def test_double_rencontre_le_meme_jour():
     # revue externe (8.6) : deux matchs des mêmes équipes le même jour (baseball) ; à noms égaux, l'heure
     # la plus proche l'emporte, pas le premier match rencontré

@@ -126,7 +126,6 @@ def test_session_en_echec_ne_propage_pas_le_message():
 def test_cycle_ajoute_olybet_par_defaut(monkeypatch):
     from scripts import cycle
     monkeypatch.delenv("SOURCE_OLYBET", raising=False)
-    monkeypatch.delenv("SOURCE_PMU", raising=False)
     monkeypatch.setattr(cycle.pmu_direct, "collecter",
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.winamax_direct, "collecter",
@@ -144,7 +143,6 @@ def test_cycle_ajoute_olybet_par_defaut(monkeypatch):
         "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM", "match_id": "pin|1"}])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
     monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
-    monkeypatch.setattr(cycle.pulsescore, "collecter", lambda *a, **k: ([], {}, {}))
 
     def lire(sports, heures):
         return ([{
@@ -155,7 +153,7 @@ def test_cycle_ajoute_olybet_par_defaut(monkeypatch):
 
     monkeypatch.setattr(cycle.olybet_direct, "collecter", lire)
     journal = {"etapes": {}}
-    _, _, lignes, _ = cycle.collecter_prematch("cle", "complet", NOW, journal)
+    _, _, lignes = cycle.collecter_prematch("complet", NOW, journal)
     assert journal["olybet_source"] == "direct"
     assert any(l["bookmaker"] == "olybet" for l in lignes)
     assert journal["olybet_controle"]["aberrants"] == []

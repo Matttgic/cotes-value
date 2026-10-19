@@ -1,4 +1,4 @@
-"""Comparaison des cotes françaises aux cotes justes des références (Pinnacle, Betfair, Polymarket).
+"""Comparaison des cotes françaises aux cotes justes des références (Pinnacle, Polymarket ; Smarkets affiché).
 
 Pour chaque cote d'un bookmaker français : on retrouve le même match chez chaque référence
 (cotes/correspondance.py), puis le même pari (marché, période, ligne, issue). Écart :
@@ -10,7 +10,7 @@ Une référence n'est utilisée que si elle est fiable à cet instant :
   fausse erreur) ;
 - Pinnacle : marge du marché ≤ 12 % (au-delà, retirer la marge devient imprécis) et cache
   pas plus vieux que `PINNACLE_AGE_MAX_MIN` (``cote_perimee`` faux) ;
-- Betfair et Polymarket : écart achat/vente ≤ 5 points et ≤ 25 % du prix, et un minimum d'argent
+- Polymarket et Smarkets : écart achat/vente ≤ 5 points et ≤ 25 % du prix, et un minimum d'argent
   engagé.
 Corners, cartons et paris pair/impair ne sont pas comparés : l'ANJ ne les autorise pas chez les
 bookmakers français.
@@ -31,9 +31,8 @@ FENETRE_MIN = CT.FENETRE_MIN
 MARGE_MAX_PINNACLE = 0.12
 ECART_ACHAT_VENTE_MAX = 0.05
 ECART_RELATIF_MAX = 0.25       # écart achat/vente rapporté au prix : 0,01/0,03 n'est pas un prix fiable
-LIQUIDITE_MIN = {"Betfair": 20.0, "Polymarket": 100.0, "Smarkets": 20.0}
-ECARTS_AFFICHES = (("Betfair", "ecart_betfair"), ("Polymarket", "ecart_polymarket"),
-                   ("Smarkets", "ecart_smarkets"))
+LIQUIDITE_MIN = {"Polymarket": 100.0, "Smarkets": 20.0}
+ECARTS_AFFICHES = (("Polymarket", "ecart_polymarket"), ("Smarkets", "ecart_smarkets"))
 ECART_MIN = 0.02
 # Au-delà, une « erreur de cote » est presque toujours un marché mal reconnu (statistique prise pour des
 # buts, série prise pour un match…) : l'opportunité est gardée pour contrôle mais marquée suspecte, sans pari.
@@ -62,11 +61,10 @@ def _t(s) -> datetime | None:
 
 # --------------------------------------------------------------------------- références
 
-def reference_echange(lignes: list[dict], source: str = "Betfair") -> list[dict]:
-    """Exchange : probabilité = milieu entre meilleur achat et meilleure vente, renormalisée.
+def reference_echange(lignes: list[dict], source: str) -> list[dict]:
+    """Exchange (Smarkets) : probabilité = milieu entre meilleur achat et meilleure vente, renormalisée.
 
-    Même traitement pour Betfair et Smarkets. Le spread est dans le milieu ;
-    aucune commission n'est retirée en plus (Betfair ne le fait pas non plus).
+    Le spread est dans le milieu ; aucune commission n'est retirée en plus.
     """
     groupes: dict[tuple, list[dict]] = {}
     for l in lignes:
@@ -102,11 +100,6 @@ def reference_echange(lignes: list[dict], source: str = "Betfair") -> list[dict]
     return deriver_double_chance(out)
 
 
-def reference_betfair(lignes: list[dict]) -> list[dict]:
-    """Betfair (Orbit), même milieu achat/vente que les autres exchanges."""
-    return reference_echange(lignes, "Betfair")
-
-
 def _fiable(nom: str, l: dict) -> bool:
     if not l.get("proba_juste") or not (0 < l["proba_juste"] < 1):
         return False
@@ -124,7 +117,7 @@ def _fiable(nom: str, l: dict) -> bool:
 
 def annoter_ecarts(opportunites: list[dict], francais: list[dict],
                    references: dict[str, list[dict]]) -> list[dict]:
-    """Écart de chaque cote française contre Betfair, Polymarket et Smarkets.
+    """Écart de chaque cote française contre Polymarket et Smarkets.
 
     Ces champs servent au bilan. Ils ne créent pas de pari : seules les clés
     présentes dans le dictionnaire passé à ``comparer`` décident.

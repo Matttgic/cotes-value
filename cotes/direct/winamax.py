@@ -9,24 +9,16 @@ elles sont ignorées, seule la trame qui porte l'identifiant demandé est lue.
 ne sont pas traduits : les exclusions de la comparaison restent en place.
 
 Une lecture sans aucun match, ou qui ne cote pas la moitié de ceux qu'elle
-vient d'annoncer, est un échec. Le repli ne s'en sert pas.
-
-``SOURCE_WINAMAX`` vaut ``pulsescore``, ``direct``, ``auto`` (défaut) ou
-``shadow``. En ``auto``, le socket décide ; PulseScore ne sert que si la
-lecture directe échoue ou ne renvoie aucun match. En ``shadow``, PulseScore
-décide et le socket sert au rapport. Basculer depuis ``shadow`` exige 95 %
-des matchs retrouvés et 99 % des cotes communes à ±0,01.
+vient d'annoncer, est un échec : l'étape du cycle est alors notée en échec.
 """
 from __future__ import annotations
 
 import json
-import os
 import random
 import re
 import time
 from datetime import datetime, timedelta, timezone
 
-from cotes.correspondance import ressemblance
 from cotes.pulsescore import traduire
 
 URL = "wss://sports-eu-west-3.winamax.fr/uof-sports-server/socket.io/?EIO=4&transport=websocket"
@@ -38,10 +30,6 @@ SPORTS = {
     16: "football_americain", 17: "cyclisme", 19: "snooker", 23: "volley",
     31: "badminton", 117: "mma", 9992: "rugby_league",
 }
-COUVERTURE_MIN = 0.95
-ACCORD_MIN = 0.99
-ECART_COTE = 0.01
-MODES = ("pulsescore", "direct", "auto", "shadow")
 _ROUTE = re.compile(r"^(?:sport|match):\d+$")
 _EXCLU = re.compile(
     r"corner|carton|\bcards?\b|booking|pair\s*/\s*impair|impair\s*/\s*pair|"
@@ -95,12 +83,6 @@ _HUIT = {"1": "HOME", "2": "AWAY", "x": "DRAW", "X": "DRAW"}
 _DOUBLES = {"9": "HOME_DRAW", "10": "HOME_AWAY", "11": "DRAW_AWAY"}
 _TOTAUX = {"over": "OVER", "under": "UNDER"}
 _BTTS = {"74": "YES", "76": "NO"}
-
-
-def mode_source() -> str:
-    """``auto`` si la variable est absente. Une valeur inconnue reste ``shadow``."""
-    valeur = os.environ.get("SOURCE_WINAMAX", "auto").strip().lower()
-    return valeur if valeur in MODES else "shadow"
 
 
 def _pause(secondes: float) -> None:
@@ -533,15 +515,6 @@ def collecter(sports: set[str] | None = None, heures: float = 36, transport=None
             client.fermer()
 
 
-def _cle_selection(ligne: dict):
-    valeur = ligne.get("ligne")
-    if isinstance(valeur, bool):
-        valeur = None
-    elif isinstance(valeur, (int, float)):
-        valeur = round(float(valeur), 2)
-    return (ligne.get("marche"), ligne.get("periode"), valeur, ligne.get("issue"))
-
-
 def _heure(valeur):
     try:
         t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
@@ -550,61 +523,3 @@ def _heure(valeur):
         return None
 
 
-def rapport(pulse: list[dict], direct: list[dict]) -> dict:
-    """Couverture des matchs PulseScore et part des cotes communes à ±0,01."""
-    ps = [l for l in pulse if isinstance(l, dict) and l.get("bookmaker") == "winamax"]
-    di = [l for l in direct if isinstance(l, dict) and l.get("bookmaker") == "winamax"]
-    matchs_ps, matchs_di = {}, {}
-    for ligne in ps:
-        matchs_ps.setdefault(ligne.get("match_id"), ligne)
-    for ligne in di:
-        matchs_di.setdefault(ligne.get("match_id"), ligne)
-    couples = []
-    pris = set()
-    for mid, a in matchs_ps.items():
-        meilleur = None
-        for did, b in matchs_di.items():
-            if did in pris or a.get("sport") != b.get("sport"):
-                continue
-            ta, tb = _heure(a.get("debut")), _heure(b.get("debut"))
-            if not ta or not tb or abs((ta - tb).total_seconds()) > 90 * 60:
-                continue
-            score = min(ressemblance(a.get("domicile"), b.get("domicile")),
-                        ressemblance(a.get("exterieur"), b.get("exterieur")))
-            if meilleur is None or score > meilleur[0]:
-                meilleur = (score, did)
-        if meilleur and meilleur[0] >= 0.85:
-            pris.add(meilleur[1])
-            couples.append((mid, meilleur[1]))
-    couverture = len(couples) / len(matchs_ps) if matchs_ps else None
-    index = {}
-    for ligne in di:
-        index.setdefault(ligne.get("match_id"), {})[_cle_selection(ligne)] = ligne
-    communs = egaux = 0
-    for mid_ps, mid_di in couples:
-        offres = index.get(mid_di, {})
-        for ligne in ps:
-            if ligne.get("match_id") != mid_ps:
-                continue
-            autre = offres.get(_cle_selection(ligne))
-            if not autre:
-                continue
-            communs += 1
-            ca, cb = _nombre(ligne.get("cote")), _nombre(autre.get("cote"))
-            if ca is not None and cb is not None and abs(ca - cb) <= ECART_COTE + 1e-9:
-                egaux += 1
-    accord = egaux / communs if communs else None
-    pret = bool(couverture is not None and accord is not None
-                and couverture + 1e-9 >= COUVERTURE_MIN and accord + 1e-9 >= ACCORD_MIN)
-    return {
-        "matchs_pulsescore": len(matchs_ps),
-        "matchs_direct": len(matchs_di),
-        "matchs_communs": len(couples),
-        "couverture": None if couverture is None else round(couverture, 4),
-        "selections_communes": communs,
-        "selections_egales": egaux,
-        "accord_cotes": None if accord is None else round(accord, 4),
-        "seuil_couverture": COUVERTURE_MIN,
-        "seuil_accord": ACCORD_MIN,
-        "pret_a_basculer": pret,
-    }

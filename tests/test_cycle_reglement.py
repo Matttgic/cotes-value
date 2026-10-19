@@ -46,7 +46,7 @@ def test_aucune_requete_scores_avant_le_delai(tmp_path,monkeypatch):
         pytest.fail('Une nouvelle requête de scores a été lancée avant le délai')
     monkeypatch.setattr(cycle.resultats_mod,'a_lire',interdit)
     journal={'etapes':{}}
-    assert cycle.effectuer_reglement([],tmp_path,NOW,'',journal,{},'auto') is False
+    assert cycle.effectuer_reglement([],tmp_path,NOW,journal,'auto') is False
     assert journal['resultats']['saute'] is True
 
 
@@ -79,7 +79,7 @@ def test_un_passage_regle_ce_qui_est_prouve_et_compte_les_selections_en_attente(
         pari(id='autre-ref',reference='Betfair',match_id='pmu|absent',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler'),
         pari(id='seul',reference='Pinnacle',match_id='pmu|autre',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler')]
     j={'etapes':{}}
-    assert cycle.effectuer_reglement(ps,tmp_path,NOW,'',j,{},'auto')
+    assert cycle.effectuer_reglement(ps,tmp_path,NOW,j,'auto')
     assert ps[0]['statut']=='gagne' and all(p['statut']=='a_regler' for p in ps[1:])
     assert j['resultats']['paris_regles']==1
     assert j['resultats']['paris_en_attente']==3
@@ -93,7 +93,7 @@ def test_commande_seulement_reglement_respecte_mode_et_preserve_le_journal(tmp_p
     ancien={'debut':'avant','resultats':{'paris_en_attente':260}}
     (tmp_path/'paris.json').write_text('[]')
     (tmp_path/'etat.json').write_text(json.dumps({'dernier_reglement':'avant','dernier_cycle_reglement':ancien}))
-    def regler(ps,chemin,now,cle,j,requetes,choix):
+    def regler(ps,chemin,now,j,choix):
         assert choix==mode
         j['resultats']={'paris_en_attente':40} if effectue else {'saute':True}
         return effectue

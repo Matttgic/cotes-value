@@ -62,8 +62,8 @@ def test_betfair_carnet_croise_et_cotes_invalides_refuses():
         return {**base,'issue':issue,'achat':[{'price':achat,'liquidity':100}],
                 'vente':[{'price':vente,'liquidity':100}]}
     for achat, vente in [(2.1,2.0),(1,2),(0,2),('bad',2),(float('nan'),2)]:
-        assert comparaison.reference_betfair([ligne('DOM',achat,vente),ligne('EXT',2,2.02)])==[]
-    assert comparaison.reference_betfair([ligne('DOM',2,2.02),ligne('EXT',2,2.02)])
+        assert comparaison.reference_echange([ligne('DOM',achat,vente),ligne('EXT',2,2.02)],'Smarkets')==[]
+    assert comparaison.reference_echange([ligne('DOM',2,2.02),ligne('EXT',2,2.02)],'Smarkets')
     assert not comparaison._fiable('Betfair',{'proba_juste':.5,'liquidite':100,'ecart_achat_vente':-.01})
 
 
