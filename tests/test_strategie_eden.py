@@ -139,3 +139,9 @@ def test_navigation_exclut_lavant_lancement_du_suivi():
     assert sel["futur"] == ["officiel"]
     assert nav["paris"]["officiel"]["eden"]
     assert not nav["paris"]["ancien"]["eden"]
+
+
+def test_reference_lue_apres_la_detection_francaise_reste_acceptee_dans_la_fenetre():
+    # détection 18:30, Pinnacle relu 9 min 31 s plus tard : le livre français est relu moins souvent
+    assert motif_refus_eden(pari(lu_reference="2026-10-19T18:39:31+00:00")) is None
+    assert motif_refus_eden(pari(lu_reference="2026-10-19T18:45:01+00:00")) is not None
