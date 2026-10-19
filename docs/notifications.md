@@ -159,3 +159,10 @@ envoyé (pour un canal ntfy protégé, mettre `Authorization` dans `ALERTE_WEBHO
 le secret). Les autres URL reçoivent toujours le JSON. Timeouts, mémoire des id et journalisation sans URL ni clé sont
 identiques. Attention : un canal ntfy.sh public est lisible par quiconque en connaît le nom, choisis un nom long
 et aléatoire.
+
+### Bookmakers admis
+
+Le webhook (ntfy compris) ne reçoit que les alertes Pinnacle 2 dont le bookmaker est **Betclic** : les autres
+(Winamax, Unibet, PMU…) ne passent plus par lui, y compris les paris re-décidés. Variable de dépôt facultative
+`ALERTE_WEBHOOK_BOOKMAKERS` : noms séparés par des virgules (`Betclic,Winamax`), ou `tous` pour ne pas filtrer.
+Les alertes Chrome ne sont pas concernées.

@@ -279,3 +279,21 @@ def test_ntfy_erreurs_sans_fuite_et_pas_de_doublon(tmp_path, monkeypatch):
     monkeypatch.setattr(E, "datetime", type("D", (E.datetime,), {"now": staticmethod(lambda tz=None: NOW)}))
     assert E.webhook_pinnacle2(tmp_path, {"alertes": []})["envoyees"] == 1
     assert E.webhook_pinnacle2(tmp_path, {"alertes": []})["envoyees"] == 0 and len(envoyes) == 1
+
+
+def test_webhook_ne_garde_que_betclic_par_defaut(monkeypatch):
+    from scripts.envoyer_notifications import alertes_webhook, bookmakers_webhook
+    monkeypatch.delenv("ALERTE_WEBHOOK_BOOKMAKERS", raising=False)
+    assert bookmakers_webhook() == {"betclic"}
+    betclic, pmu = prise_pin2(), prise_pin2(id="pmu", match_id="pmu|1", bookmaker="PMU", pari="Autre")
+    f = flux([dict(betclic), dict(pmu)], [betclic, pmu], {PIN2: {id(betclic), id(pmu)}}, NOW)
+    assert {a["bookmaker"] for a in f["alertes"]} == {"Betclic", "PMU"}          # Chrome : tout
+    assert [a["bookmaker"] for a in alertes_webhook(f, [], {}, NOW)] == ["Betclic"]
+    vieux = dict(detecte=(NOW - timedelta(hours=1)).isoformat(), debut=(NOW + timedelta(hours=20)).isoformat(),
+                 selections_figees={PIN2: {}}, redecision_lecture_posterieure=NOW.isoformat())
+    recheck = [prise_pin2(**vieux), prise_pin2(id="r2", match_id="pmu|2", bookmaker="Winamax", pari="Z", **vieux)]
+    assert [a["bookmaker"] for a in alertes_webhook({"alertes": []}, recheck, {}, NOW)] == ["Betclic"]
+    monkeypatch.setenv("ALERTE_WEBHOOK_BOOKMAKERS", " betclic , PMU ")
+    assert {a["bookmaker"] for a in alertes_webhook(f, [], {}, NOW)} == {"Betclic", "PMU"}
+    monkeypatch.setenv("ALERTE_WEBHOOK_BOOKMAKERS", "tous")
+    assert len(alertes_webhook({"alertes": []}, recheck, {}, NOW)) == 2

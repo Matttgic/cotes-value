@@ -87,11 +87,27 @@ def _entete_utf8(texte: str) -> str:
     return "=?UTF-8?B?" + base64.b64encode(texte.encode()).decode() + "?="
 
 
-def alertes_webhook(flux: dict, paris: list[dict], envoyes: dict, maintenant: datetime | None = None) -> list[dict]:
-    """Alertes Pinnacle 2 pas encore envoyées : celles du scan, puis les paris re-décidés (même s'ils datent)."""
+BOOKMAKERS_WEBHOOK_DEFAUT = "Betclic"
+
+
+def bookmakers_webhook(env=None) -> set[str]:
+    """Bookmakers admis au webhook (minuscules). ALERTE_WEBHOOK_BOOKMAKERS : noms séparés par des virgules,
+    « tous » pour ne pas filtrer ; Betclic seul par défaut."""
+    env = os.environ if env is None else env
+    brut = env.get("ALERTE_WEBHOOK_BOOKMAKERS", "").strip() or BOOKMAKERS_WEBHOOK_DEFAUT
+    return set() if brut.lower() == "tous" else {b.strip().lower() for b in brut.split(",") if b.strip()}
+
+
+def alertes_webhook(flux: dict, paris: list[dict], envoyes: dict, maintenant: datetime | None = None,
+                    bookmakers: set[str] | None = None) -> list[dict]:
+    """Alertes Pinnacle 2 pas encore envoyées, d'un bookmaker admis : celles du scan, puis les paris re-décidés
+    (même s'ils datent). Les autres bookmakers ne passent pas par le webhook."""
     from cotes.notifications import alertes_recheck
+    admis = bookmakers_webhook() if bookmakers is None else bookmakers
     vues, out = set(envoyes), []
     for a in [x for x in flux.get("alertes", []) if PIN2 in x.get("strategies", [])] + alertes_recheck(paris, PIN2, maintenant):
+        if admis and str(a.get("bookmaker", "")).strip().lower() not in admis:
+            continue
         if a["id"] not in vues:
             vues.add(a["id"])
             out.append(a)
