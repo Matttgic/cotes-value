@@ -13,7 +13,7 @@ GUEST_SHA256 = '03afa65b49aead916fb17e5e7a075af6ee3a75755838eccd8a3fc8cc562dabc6
 CHAMPS_PRIVES = frozenset(('subscription', 'token', 'tokenhash', 'endpointhash', 'endpoint',
     'p256dh', 'auth', 'authorization', 'apikey', 'xapikey', 'xsecret', 'privatekey',
     'servicerolekey', 'supabaseservicerolekey', 'supabasesecretkey', 'secret',
-    'pinnacleapikey', 'pinnoddsapikey', 'pulsescorekey', 'proplineapikey', 'apisportskey',
+    'pinnacleapikey', 'pinnoddsapikey', 'pinbookapikey', 'pulsescorekey', 'proplineapikey', 'apisportskey',
     'theoddsapikey', 'theoddsapikey1', 'theoddsapikey2', 'theoddsapikey3', 'theoddsapikey4',
     'password', 'accesstoken', 'refreshtoken'))
 FORMATS = {
@@ -81,7 +81,7 @@ def verifier_public(data, env=None) -> None:
     env = os.environ if env is None else env
     # Complément exact pour les secrets configurés dans le processus courant.
     for nom, valeur in env.items():
-        if re.fullmatch(r'(?:PINNACLE_API_KEY|PINNODDS_API_KEY|PULSESCORE_KEY|PROPLINE_API_KEY|API_SPORTS_KEY|'
+        if re.fullmatch(r'(?:PINNACLE_API_KEY|PINNODDS_API_KEY|PINBOOK_API_KEY|PULSESCORE_KEY|PROPLINE_API_KEY|API_SPORTS_KEY|'
                         r'THE_ODDS_API_KEY(?:_[1-4])?|SUPABASE_SERVICE_ROLE_KEY)', nom):
             if isinstance(valeur, str) and len(valeur) >= 8 and valeur in texte:
                 raise ValueError('Publication bloquée : secret configuré')
