@@ -11,7 +11,7 @@
   const noms=D.notifications.strategies;
   const selected=new Set(device?.strategies || ['claude_prudent']);
   document.getElementById('notif-strategies').innerHTML='<legend>Stratégies à suivre</legend>'+Object.entries(noms).map(([k,v])=>
-    `<label class="notif-choix"><input type="checkbox" value="${e(k)}" ${selected.has(k)?'checked':''}> <span>${e(v)}${k==='claude_prudent'?' · 1/match, max 10/j':''}${k==='m3'?' · exploratoire':''}</span></label>`).join('');
+    `<label class="notif-choix"><span>${e(v)}${k==='claude_prudent'?'<small>1 pari par match, 10 par jour au plus</small>':''}${k==='m3'?'<small>Exploratoire</small>':''}</span><input type="checkbox" role="switch" class="interrupteur" value="${e(k)}" ${selected.has(k)?'checked':''}></label>`).join('');
   const choices=()=>[...document.querySelectorAll('#notif-strategies input:checked')].map(x=>x.value);
   const say=(s,bad=false)=>{message.textContent=s;message.classList.toggle('neg',bad);};
   function render() {

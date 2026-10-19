@@ -146,11 +146,31 @@ function initialiserPalette() {
   document.documentElement.dataset.palette=sel.value;
   sel.onchange=()=>{document.documentElement.dataset.palette=sel.value;ecrire('cv-palette-v1',sel.value);};
 }
+// Mode nuit : automatique (réglage du téléphone), ou forcé jour / nuit.
+function initialiserTheme() {
+  const sel=document.getElementById('theme-site');
+  if(!sel) return;
+  const appliquer=v=>{if(v==='auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=v==='jour'?'light':'dark';};
+  const choix=lire('cv-theme-v1');sel.value=['nuit','jour'].includes(choix)?choix:'auto';
+  appliquer(sel.value);
+  sel.onchange=()=>{appliquer(sel.value);ecrire('cv-theme-v1',sel.value);};
+}
 function connexion() {document.getElementById('hors-ligne').hidden=navigator.onLine!==false;}
 window.addEventListener('online',connexion);window.addEventListener('offline',connexion);connexion();
 // Appelé à la fin du rendu : les utilitaires du modèle sont alors initialisés.
 function initialiserInterface() {
-  initialiserPalette();compacterFiltres();adapterTableaux();actualiserFraicheur();setInterval(actualiserFraicheur,60000);
+  initialiserPalette();initialiserTheme();compacterFiltres();adapterTableaux();actualiserFraicheur();setInterval(actualiserFraicheur,60000);
+  // Rapidité des alertes : délai d'envoi et trous entre relevés, puis les dernières alertes envoyées.
+  const r=D.rapidite || {}, min=x=>x==null?'—':x<10?x.toFixed(1).replace('.',',')+' min':Math.round(x)+' min';
+  document.getElementById('notif-rapidite').innerHTML=[
+    ['Envoi après lecture du prix',r.envoi_median_s==null?'—':r.envoi_median_s<90?'≈ '+Math.round(r.envoi_median_s)+' s':min(r.envoi_median_s/60),r.envoi_median_s==null?'':'pos'],
+    ['Écart habituel entre deux relevés',min(r.ecart_median_min),''],
+    ['Relevés espacés de plus de 8 min',r.releves?`${r.ecarts_plus_8_min} sur ${r.releves}`:'—',r.ecarts_plus_8_min?'neg':''],
+    ['Plus long trou',min(r.plus_long_trou_min),r.plus_long_trou_min>15?'neg':'']
+  ].map(([t,v,c])=>`<div class="notif-mesure"><span>${t}</span><b class="${c}">${e(v)}</b></div>`).join('');
+  document.getElementById('notif-dernieres').innerHTML=(r.dernieres || []).length?r.dernieres.map(a=>
+    `<div class="notif-alerte"><span><b>${e(a.match)}</b><small>${e(a.pari)}</small></span><span><b>${cote(a.cote)}</b><small>${e(a.bookmaker)} · ${hm(a.envoi)}</small></span></div>`).join('')
+    :'<p class="aide notif-vide">Aucune alerte envoyée récemment.</p>';
   const diagnostics=D.diagnostic_alertes || [];
   document.getElementById('notif-diagnostic').innerHTML=diagnostics.length?diagnostics.slice().reverse().map(c=>
     `<p>Demande ${quand(c.envoi_demande_le)} · ${(c.alertes || []).length} signal(s) préparé(s) · ${c.resultat?.sent || 0} notification(s) acceptée(s) par le service Push${c.resultat?.ok===false?' · envoi en erreur':''}.</p>`).join(''):'<p>Aucun diagnostic d’envoi disponible pour les anciennes alertes.</p>';

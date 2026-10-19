@@ -43,6 +43,33 @@ def _lire(chemin: Path, defaut):
     return json.loads(texte)
 
 
+def _instant(texte):
+    try:
+        t = datetime.fromisoformat(str(texte).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+
+
+def rapidite_alertes(historique: list[dict], cycles_alertes: list[dict]) -> dict:
+    """Délais réels : envoi après la lecture du prix, et écarts entre deux relevés (cause des alertes ratées)."""
+    debuts = sorted(t for t in (_instant(h.get("debut")) for h in historique) if t)
+    ecarts = sorted((b - a).total_seconds() / 60 for a, b in zip(debuts, debuts[1:]))
+    delais, dernieres = [], []
+    for c in cycles_alertes:
+        envoi = _instant(c.get("envoi_demande_le"))
+        for a in c.get("alertes", []):
+            lu = _instant(a.get("collecte_le") or a.get("detecte"))
+            if envoi and lu:
+                delais.append((envoi - lu).total_seconds())
+            dernieres.append({**{k: a.get(k) for k in ("match", "pari", "bookmaker", "cote")},
+                              "envoi": c.get("envoi_demande_le")})
+    mediane = lambda v: sorted(v)[len(v) // 2] if v else None
+    return {"releves": len(debuts), "ecart_median_min": mediane(ecarts),
+            "ecarts_plus_8_min": sum(e > 8 for e in ecarts), "plus_long_trou_min": max(ecarts, default=None),
+            "envoi_median_s": mediane(delais), "dernieres": dernieres[-5:][::-1]}
+
+
 EN_COURS_AFFICHES = 400        # paris en cours les plus récents
 REGLES_AFFICHES = 600          # paris réglés les plus récemment (+ tous ceux à régler à la main)
 CHAMPS_FILTRES = {"sims": "simulation", "reference": "reference", "statut": "statut", "bookmaker": "bookmaker",
@@ -537,6 +564,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             ("strategies_historiques", "convergence_historique", "tranche", "cote", "strategies", "jules_v2")}
             for pid, p in laboratoire["navigation"]["paris"].items()}
     data = {"live_papier": live_vue, "diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
+            "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS},
             "catalogue": catalogue_paris(paris, retenus),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
@@ -591,26 +619,23 @@ MODELE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value</title>
+<script>try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}</script>
 <style>__INTERFACE_CSS__</style>
 </head>
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
 <header class="haut">
-  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><label class="signature palette-label">Couleurs <select id="palette-site" aria-label="Couleurs du site"><option value="bleu">Bleu</option><option value="violet">Violet</option><option value="graphite">Graphite</option></select></label></div></div>
+  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><label class="signature palette-label">Couleurs <select id="palette-site" aria-label="Couleurs du site"><option value="bleu">Bleu</option><option value="violet">Violet</option><option value="graphite">Graphite</option></select></label><label class="signature palette-label">Mode <select id="theme-site" aria-label="Mode jour ou nuit"><option value="auto">Auto</option><option value="nuit">Nuit</option><option value="jour">Jour</option></select></label></div></div>
     <div class="mise-a-jour"><span class="maj" id="maj"></span><span id="fraicheur" class="fraicheur"></span></div></div>
   <nav id="onglets" aria-label="Navigation principale">
-    <button data-o="jouer"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 15 9-15 9V3Z"/></svg><span>À jouer<span class="nb" id="nb-jouer"></span></span></button>
-    <button data-o="strategies"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9m8 10V4m8 15v-7"/><path d="M2 21h20"/></svg><span>Stratégies</span></button>
     <button data-o="paris"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h4"/></svg><span>Paris<span class="nb" id="nb-paris"></span></span></button>
     <button data-o="bilan"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11l4 3 8-11M16 3h5v5M3 21h18"/></svg><span>Bilan</span></button>
-    <button id="nav-plus-toggle" aria-expanded="false" aria-controls="nav-secondaires"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>Plus</span></button>
-    <div class="nav-secondaires" id="nav-secondaires">
-    <button data-o="analyses"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9h9A9 9 0 1 1 12 3Z"/><path d="M15 3.5A8 8 0 0 1 20.5 9H15Z"/></svg><span>Analyses</span></button>
-    <button data-o="segments"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>Segments</span></button>
-    <button data-o="notifications"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Notifications</span></button>
-    <button data-o="regler"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>À régler<span class="nb" id="nb-regler"></span></span></button>
-    <button data-o="controle"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/></svg><span>Contrôle<span class="nb" id="nb-controle"></span></span></button>
-    </div>
+    <button data-o="notifications"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Notifs</span></button>
+    <button data-o="controle"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Santé</span></button>
+    <!-- Éléments conservés pour les compteurs et le menu historique ; le menu « Plus » n'existe plus. -->
+    <button id="nav-plus-toggle" aria-expanded="false" aria-controls="nav-secondaires" hidden></button>
+    <div class="nav-secondaires" id="nav-secondaires" hidden></div>
+    <span hidden id="nb-jouer"></span><span hidden id="nb-regler"></span><span hidden id="nb-controle"></span>
   </nav>
 </header>
 <main id="contenu" tabindex="-1">
@@ -646,6 +671,8 @@ MODELE = r"""<!doctype html>
       <p class="aide">★ meilleur ROI parmi les lignes de 50 paris ou plus.</p>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
+      <p class="bilan-liens"><button type="button" class="btn secondaire" data-aller="analyses">Analyses et graphiques ›</button>
+        <button type="button" class="btn secondaire" data-aller="segments">Segments ›</button></p>
       <details class="mode-emploi bilan-avance"><summary>Bilan détaillé : références, CLV et courbe</summary>
       <div class="puces" id="puces-ref"></div>
       <details class="mode-emploi"><summary>Comprendre cette sélection</summary><p class="aide" id="bilan-quoi"></p></details>
@@ -834,19 +861,24 @@ MODELE = r"""<!doctype html>
     </details>
   </section>
   <section class="onglet" id="o-notifications">
-    <div class="page-tete"><div><p class="surtitre">Tes stratégies, au bon moment</p><h2>Les notifications</h2><p class="sous-texte">Choisis les alertes à recevoir sur cet appareil.</p></div></div>
-    <p class="aide">Reçois les nouvelles sélections des stratégies choisies, même lorsque cet onglet est fermé.
-    Les alertes partent après la sauvegarde des prises, avant les résultats et la construction du site. Les prix de plus de 5 minutes à la préparation sont écartés. Vérifie la cote : elle peut changer avant ton clic.</p>
-    <details class="mode-emploi"><summary>Délais et derniers envois</summary><div id="notif-diagnostic"></div><p class="aide">Une réponse du service Push ne confirme pas la réception sur le téléphone. Chrome, le réseau et l’économie de batterie peuvent retarder l’affichage. L’heure de réception API ne certifie pas l’heure de mise à jour interne du fournisseur.</p></details>
-    <p class="carte" id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
+    <div class="page-tete"><div><h2>Notifications</h2></div></div>
+    <div class="carte notif-appareil">
+      <p id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
+      <div class="notif-boutons"><button class="btn" id="notif-activer">Activer les notifications</button>
+        <button class="btn secondaire" id="notif-test" disabled>Envoyer un test</button>
+        <button class="btn secondaire" id="notif-arreter" hidden>Désactiver</button></div>
+    </div>
+    <h3 class="bu-titre">Rapidité des alertes</h3>
+    <div class="bu-table notif-rapidite" id="notif-rapidite"></div>
+    <p class="aide">Chiffres réels des derniers relevés. Pendant un trou entre deux relevés, aucune opportunité n’est vue : c’est la cause des alertes ratées, pas l’envoi.</p>
+    <h3 class="bu-titre">Me prévenir pour</h3>
     <fieldset class="carte" id="notif-strategies"><legend>Stratégies à suivre</legend></fieldset>
-    <div class="filtres"><button class="btn" id="notif-activer">Activer les notifications</button>
-      <button class="btn" id="notif-sauver" disabled>Enregistrer les stratégies</button>
-      <button class="btn" id="notif-test" disabled>Envoyer un test</button>
-      <button class="btn" id="notif-arreter" hidden>Désactiver</button></div>
+    <p><button class="btn" id="notif-sauver" disabled>Enregistrer mes choix</button></p>
     <p class="aide" id="notif-message" role="status" aria-live="polite"></p>
-    <p class="aide">Une seule alerte si plusieurs stratégies retiennent le même pari au même prix.
-    Seules les nouvelles prises après activation ou changement de tes choix sont notifiées. Les plafonds des stratégies restent appliqués.</p>
+    <h3 class="bu-titre">Dernières alertes</h3>
+    <div class="bu-table" id="notif-dernieres"></div>
+    <p class="aide">Une seule alerte si plusieurs stratégies retiennent le même pari au même prix. Les prix de plus de 5 minutes sont écartés ; vérifie la cote, elle peut changer avant ton clic.</p>
+    <details class="mode-emploi"><summary>Délais et derniers envois</summary><div id="notif-diagnostic"></div><p class="aide">Une réponse du service Push ne confirme pas la réception sur le téléphone. Chrome, le réseau et l’économie de batterie peuvent retarder l’affichage. L’heure de réception API ne certifie pas l’heure de mise à jour interne du fournisseur.</p></details>
     <details class="aide"><summary>Si tu ne reçois rien</summary>
       <p>Utilise Chrome sur Android et autorise les notifications du site et de Chrome dans les paramètres du téléphone.
       L’économie de batterie, une coupure réseau ou un arrêt forcé de Chrome peuvent retarder les alertes.
@@ -864,7 +896,14 @@ MODELE = r"""<!doctype html>
     <div id="liste-regler"></div>
   </section>
   <section class="onglet" id="o-controle">
-    <div class="page-tete"><div><p class="surtitre">Qualité des données</p><h2>Le contrôle des sources</h2></div></div>
+    <div class="page-tete"><div><h2>Santé</h2></div></div>
+    <div class="carte sante-global" id="sante-global" role="status"></div>
+    <h3 class="bu-titre">Automatismes</h3><div class="bu-table" id="sante-auto"></div>
+    <h3 class="bu-titre">Sources de cotes</h3><div class="bu-table" id="sante-cotes"></div>
+    <h3 class="bu-titre">Sources de résultats</h3><div class="bu-table" id="sante-resultats"></div>
+    <p class="aide" id="sante-attente"></p>
+    <p><button type="button" class="btn secondaire" data-aller="regler" id="sante-saisie">Matchs à saisir à la main ›</button></p>
+    <details class="mode-emploi sante-controle"><summary>Contrôle des intitulés des bookmakers</summary>
     <p class="aide">Chaque type d'intitulé de chaque bookmaker est comparé à la référence à chaque passage. Bien
     traduit, un marché est en général un peu sous la cote juste (marge) : rapport médian cote / cote juste entre
     0,70 et 1,02, et moins de 10 % des cotes au-dessus de 1,12. Seuls les intitulés <b>conformes</b> donnent des paris.</p>
@@ -873,6 +912,7 @@ MODELE = r"""<!doctype html>
     <div id="ctl-liste"></div>
     <h2 class="sous-titre">Dernier passage</h2>
     <div class="infos" id="infos" style="margin-top:0"></div>
+    </details>
   </section>
 </main>
 <script>
@@ -910,15 +950,17 @@ function montrerVueBilan(v) {
   if (v === "strategies") requestAnimationFrame(() => rendreStrategies());
   else requestAnimationFrame(() => rendreCourbe());
 }
+// Quatre onglets : « À jouer » rejoint Paris, la saisie à la main rejoint Santé, Analyses et Segments restent sous Bilan.
+const GROUPES = {jouer:"paris", regler:"controle", strategies:"bilan", segments:"bilan", analyses:"bilan"};
 function ouvrir(o) {
   // « #strategies » ouvre la vue Stratégies du bilan ; « #bilan », les paris uniques.
   if (o === "strategies" || o === "bilan") vueBilan = o === "strategies" ? "strategies" : "uniques";
-  const page = o === "strategies" ? "bilan" : o, nom = page === "bilan" && vueBilan === "strategies" ? "strategies" : page;
+  const page = o === "strategies" ? "bilan" : o === "jouer" ? "paris" : o, groupe = GROUPES[page] || page;
+  const nom = page === "bilan" && vueBilan === "strategies" ? "strategies" : page;
   document.querySelectorAll("nav button[data-o]").forEach(b => {
-    b.classList.toggle("actif", b.dataset.o===nom);
-    if (b.dataset.o===nom) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+    b.classList.toggle("actif", b.dataset.o===groupe);
+    if (b.dataset.o===groupe) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
   });
-  menuPlus.classList.toggle("actif", ["analyses","segments","notifications","regler","controle"].includes(page));
   fermerMenu();
   document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+page));
   ecrire("onglet", nom); history.replaceState(null, "", "#"+nom);
@@ -928,8 +970,8 @@ function ouvrir(o) {
 document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
   montrerVueBilan(b.dataset.bilan); history.replaceState(null, "", "#"+(b.dataset.bilan === "strategies" ? "strategies" : "bilan"));
   ecrire("onglet", b.dataset.bilan === "strategies" ? "strategies" : "bilan");
-  document.querySelectorAll("nav button[data-o]").forEach(n => n.classList.toggle("actif", n.dataset.o === (b.dataset.bilan === "strategies" ? "strategies" : "bilan")));
 });
+document.querySelectorAll("[data-aller]").forEach(b => b.onclick = () => {ouvrir(b.dataset.aller);window.scrollTo(0,0);});
 document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => {ouvrir(b.dataset.o);window.scrollTo(0,0);});
 
 // --- À jouer
@@ -1339,7 +1381,8 @@ function rendreParis() {
 }
 for(const id of ['paris-horaire','paris-tri']) document.getElementById(id).onchange=()=>{limite=50;rendreParis();};
 // Bandeau de santé : âge du dernier relevé et étapes en panne (une étape désactivée n'est pas une panne).
-function rendreSanteParis(maintenant=Date.now()) {
+// Santé du système : une seule lecture pour le bandeau de Paris et la page Santé.
+function diagnosticSante(maintenant=Date.now()) {
   const dc = (D.etat||{}).dernier_cycle || {};
   const etapes = Object.entries(dc.etapes || {}).filter(([,v]) => !v.desactive);
   const pannes = etapes.filter(([,v]) => !v.ok).map(([k]) => k.replace(/^resultats_/,"").replace(/_direct$/,""));
@@ -1352,6 +1395,10 @@ function rendreSanteParis(maintenant=Date.now()) {
     : age > 60 ? ["panne",`Relevés arrêtés · dernier ${depuis}`]
     : age > 15 ? ["alerte",`Relevés en retard · dernier ${depuis}`]
     : ["ok",`Tout fonctionne · relevé ${depuis}`];
+  return {dc, niveau, texte, mineures, age, depuis};
+}
+function rendreSanteParis(maintenant=Date.now()) {
+  const {niveau, texte, mineures} = diagnosticSante(maintenant);
   const b = document.getElementById("paris-sante");
   b.className = "paris-sante sante-"+niveau;
   b.innerHTML = `<span class="sante-point" aria-hidden="true"></span><span class="sante-texte">${e(texte)}</span>`+
@@ -1571,6 +1618,64 @@ ${(g.exemples||[]).map(x => `<div class="l4"><span>${e(x.match)}</span><span>${e
   document.getElementById("ctl-liste").innerHTML = html;
 }
 rendreControle();
+
+// --- Santé : état des automatismes et des sources, en mots simples
+const SOURCES_COTES = [["pinnacle","Pinnacle"],["polymarket","Polymarket"],["netbet","NetBet"],["winamax_direct","Winamax"],
+  ["betclic_direct","Betclic"],["unibet_direct","Unibet"],["pmu_direct","PMU"],["olybet","OlyBet"],["smarkets","Smarkets"]];
+const SOURCES_RESULTATS = [["espn","ESPN"],["flashscore","Flashscore"],["livescore","LiveScore"],["nhl","NHL officiel"],
+  ["theodds","The Odds API"],["propline","Propline"]];
+const MOTS_SANTE = {ok:"✓ OK", alerte:"! Alerte", panne:"✗ En panne"};
+const ligneSante = (nom, detail, niveau) => `<div class="sante-ligne"><div><b>${e(nom)}</b><small>${e(detail)}</small></div>`+
+  `<span class="sante-mot sante-mot-${niveau}">${MOTS_SANTE[niveau]}</span></div>`;
+function detailEtape(v) {
+  if (!v) return "Pas de lecture au dernier relevé";
+  if (!v.ok) return "Arrêtée au dernier passage";
+  const err = Array.isArray(v.erreurs) ? v.erreurs : [];
+  if (v.degrade && err.length) {
+    const http = err.map(t => /HTTP (\d{3})/.exec(t)?.[1]).filter(Boolean);
+    if (http.length === err.length) return `Refus (${[...new Set(http)].join(", ")}) sur ${err.length} requête${err.length>1?"s":""} · reprise automatique`;
+    if (err.some(t => /budget/i.test(t))) return "Lecture partielle : limite de temps atteinte";
+    if (err.some(t => /bid\/ask/i.test(t))) return "Prix invalides sur quelques marchés, ignorés";
+    return err[0] + (err.length>1 ? ` (+${err.length-1})` : "");
+  }
+  return v.degrade ? "Lecture partielle" : v.cache ? "Données gardées en mémoire" : "Lu normalement";
+}
+const niveauEtape = v => !v || !v.ok ? "panne" : v.degrade ? "alerte" : "ok";
+const PIRE = ["ok","alerte","panne"];
+function rendreSante(maintenant=Date.now()) {
+  const {dc, niveau, texte, mineures, age} = diagnosticSante(maintenant);
+  const etapes = dc.etapes || {}, jr = (D.etat||{}).dernier_cycle_reglement || {};
+  const cotes = dc.cotes?.francaises, duree = dc.debut && dc.fin ? Math.round((new Date(dc.fin)-new Date(dc.debut))/1000) : null;
+  const g = document.getElementById("sante-global");
+  g.className = "carte sante-global sante-"+niveau;
+  g.innerHTML = `<div class="sante-global-titre"><span class="sante-point" aria-hidden="true"></span><b>${e(texte)}</b></div>`+
+    `<p class="aide">${[cotes ? cotes.toLocaleString("fr-FR")+" cotes françaises" : "", duree != null ? duree+" s" : "",
+      mineures ? mineures+" alerte"+(mineures>1?"s":"")+" mineure"+(mineures>1?"s":"")+(niveau==="ok" ? " sans effet sur les paris" : "") : ""].filter(Boolean).join(" · ")}</p>`;
+  const ageReglement = jr.debut ? Math.round((maintenant-new Date(jr.fin || jr.debut))/60000) : null;
+  const nReglements = jr.resultats?.paris_regles;
+  document.getElementById("sante-auto").innerHTML =
+    ligneSante("Collecte et comparaison", dc.debut ? `Dernier relevé ${hm(dc.debut)}${duree != null ? " · "+duree+" s" : ""} · toutes les 5 min environ` : "Aucun relevé", age == null ? "panne" : age > 60 ? "panne" : age > 15 ? "alerte" : "ok") +
+    ligneSante("Règlement des paris", jr.debut ? `Dernier passage ${quand(jr.debut)}${Number.isInteger(nReglements) ? " · "+nReglements+" enregistrement"+(nReglements>1?"s":"")+" réglé"+(nReglements>1?"s":"") : ""}` : "Aucun passage enregistré",
+      ageReglement == null ? "alerte" : ageReglement > 720 ? "panne" : ageReglement > 180 ? "alerte" : "ok");
+  document.getElementById("sante-cotes").innerHTML = SOURCES_COTES.filter(([k]) => etapes[k]).map(([k,nom]) =>
+    ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus" : detailEtape(etapes[k]), niveauEtape(etapes[k]))).join("")
+    || '<p class="aide sante-vide">Aucune lecture enregistrée.</p>';
+  const parSource = new Map();
+  for (const [k,v] of Object.entries(jr.etapes || {})) {
+    const m = /^resultats_([^_]+(?:-[^_]+)*)(?:_|$)/.exec(k);
+    if (m) parSource.set(m[1], [...(parSource.get(m[1]) || []), v]);
+  }
+  const reglesPar = jr.resultats?.sources_reglement || {};
+  document.getElementById("sante-resultats").innerHTML = SOURCES_RESULTATS.filter(([k]) => parSource.has(k)).map(([k,nom]) => {
+    const vs = parSource.get(k), pire = vs.map(niveauEtape).reduce((a,b) => PIRE.indexOf(b) > PIRE.indexOf(a) ? b : a, "ok");
+    const n = reglesPar[k];
+    return ligneSante(nom, n ? `${n} enregistrement${n>1?"s":""} réglé${n>1?"s":""} au dernier passage` : pire === "ok" ? "Lu normalement" : detailEtape(vs.find(v => niveauEtape(v) === pire)), pire);
+  }).join("") || '<p class="aide sante-vide">Aucun passage de règlement enregistré.</p>';
+  const attente = jr.resultats?.paris_en_attente;
+  document.getElementById("sante-attente").textContent = Number.isInteger(attente) ? `${attente} paris attendent un résultat.` : "";
+  document.getElementById("sante-saisie").textContent = `Matchs à saisir à la main${man.length ? " ("+groupesReglement.size+")" : ""} ›`;
+}
+rendreSante();
 
 // Famille publiée une fois : aucun nouveau classement choisi selon le test final.
 // Comparaison complète : même ligne de données pour le tableau et le graphique.
@@ -1917,10 +2022,10 @@ function rendreLaboratoire() {
 rendreLaboratoire();
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
-const depart = location.hash.slice(1) || lire("onglet") || "jouer";
+const depart = location.hash.slice(1) || lire("onglet") || "paris";
 __NOTIFICATIONS_JS__
 const ONGLETS = ["jouer","bilan","strategies","segments","paris","notifications","regler","controle","analyses"];
-ouvrir(ONGLETS.includes(depart) ? depart : "jouer");
+ouvrir(ONGLETS.includes(depart) ? depart : "paris");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 
 __ANALYSES_JS__
@@ -1955,7 +2060,7 @@ installerActualisation({
     periodeStrategies = s.periodeStrategies in STRAT_PERIODES ? s.periodeStrategies : "futur";
     courbesMasquees.clear();
     for (const id of s.courbes || []) courbesMasquees.add(id);
-    rendreJouer(); rendreBilan(); rendreBilanUniques(); rendreParis(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
+    rendreJouer(); rendreBilan(); rendreBilanUniques(); rendreParis(); rendreSante(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
     document.getElementById("labo-regle")?.onchange?.();
     adapterTableaux();
     for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));

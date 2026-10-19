@@ -34,7 +34,7 @@ let filtreJouer='claude_prudent',sportJouer='tennis',refBilan='Stratégie',cumul
 const courbesMasquees=new Set(['M3']);
 const rendus=[];
 const rendreJouer=()=>rendus.push(filtreJouer),rendreBilan=()=>rendus.push(refBilan),
- rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},rendreBilanUniques=()=>{},
+ rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},rendreBilanUniques=()=>{},rendreSante=()=>{},
  rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{};
 function installerActualisation(config) {
   const etat=config.capturer();
@@ -272,4 +272,35 @@ assert.ok(!html.includes('Signal brut · aucune stratégie'));
 assert.equal(badgeStrategies(cotesJouer[0]),'');
 const brut=carteActuelle({...cotesJouer[0],prix_change:false});
 assert.ok(brut.includes('Signal brut · aucune stratégie') && !brut.includes('Prix modifié'));
+''')
+
+
+def test_js_sante_niveaux_et_resume_des_erreurs():
+    section = (MODELE[MODELE.index("function diagnosticSante"):MODELE.index("function rendreSanteParis")] +
+               MODELE[MODELE.index("const SOURCES_COTES"):MODELE.index("rendreSante();\n\n// Famille publiée")])
+    cycle = {"fin": "2026-10-15T09:00:00Z", "debut": "2026-10-15T08:58:00Z", "cotes": {"francaises": 25833},
+             "etapes": {"pinnacle": {"ok": True, "degrade": True, "erreurs": ["sport 17 : HTTP 403", "sport 45 : HTTP 403"]},
+                        "netbet": {"ok": True, "degrade": True, "erreurs": ["budget"]},
+                        "winamax_direct": {"ok": True}, "pulsescore": {"ok": True, "desactive": True}}}
+    reglement = {"debut": "2026-10-15T08:30:00Z", "fin": "2026-10-15T08:35:00Z",
+                 "resultats": {"paris_regles": 5, "paris_en_attente": 11, "sources_reglement": {"espn": 5}},
+                 "etapes": {"resultats_espn_basket": {"ok": True}, "resultats_flashscore_basket": {"ok": True, "degrade": True, "erreurs": ["HTTP 429"]},
+                            "resultats_nhl_officiel": {"ok": False}}}
+    executer(DOM + '''
+const D={etat:{dernier_cycle:%s,dernier_cycle_reglement:%s}};
+const hm=()=>"09:00",man=[],groupesReglement=new Map();
+''' % (json.dumps(cycle), json.dumps(reglement)) + section + '''
+const t0=Date.parse("2026-10-15T09:05:00Z");
+let d=diagnosticSante(t0); assert.equal(d.niveau,"ok"); assert.equal(d.mineures,2);
+assert.equal(diagnosticSante(Date.parse("2026-10-15T09:30:00Z")).niveau,"alerte");
+assert.equal(diagnosticSante(Date.parse("2026-10-15T11:00:00Z")).niveau,"panne");
+rendreSante(t0);
+const h=id=>document.getElementById(id).innerHTML;
+assert.ok(h("sante-cotes").includes("Refus (403) sur 2 requêtes") && h("sante-cotes").includes("limite de temps"));
+assert.ok(h("sante-cotes").includes("Lu normalement") && !h("sante-cotes").includes("PulseScore"));
+assert.ok(h("sante-auto").includes("Collecte et comparaison") && h("sante-auto").includes("5 enregistrements réglés"));
+assert.ok(h("sante-resultats").includes("ESPN") && h("sante-resultats").includes("5 enregistrements réglés"));
+assert.ok(h("sante-resultats").includes("sante-mot-panne"));
+assert.ok(document.getElementById("sante-attente").textContent.includes("11 paris"));
+assert.ok(h("sante-global").includes("2 alertes mineures sans effet"));
 ''')
