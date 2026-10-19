@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bilan,  # noqa: E402
-                              bilan_bookmakers, bilan_tranches, moyennes_ecarts, paris_strategie,
+                              bilan_tranches, moyennes_ecarts, paris_strategie,
                               premiers_par_selection, REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
@@ -570,11 +570,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
-            "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "actuelles": actuelles, "bilan": bilan(paris),
+            "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "bilan": bilan(paris),
             "ecarts_references": moyennes_ecarts(paris),
             "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "segments": segments(paris),
             "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
-            "bilan_bookmakers": bilan_bookmakers(paris), "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
+            "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
             "chatgpt": CHATGPT,
@@ -631,31 +631,11 @@ MODELE = r"""<!doctype html>
     <button data-o="bilan"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11l4 3 8-11M16 3h5v5M3 21h18"/></svg><span>Bilan</span></button>
     <button data-o="notifications"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Notifs</span></button>
     <button data-o="controle"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Santé</span></button>
-    <!-- Éléments conservés pour les compteurs et le menu historique ; le menu « Plus » n'existe plus. -->
-    <button id="nav-plus-toggle" aria-expanded="false" aria-controls="nav-secondaires" hidden></button>
-    <div class="nav-secondaires" id="nav-secondaires" hidden></div>
-    <span hidden id="nb-jouer"></span><span hidden id="nb-regler"></span><span hidden id="nb-controle"></span>
   </nav>
 </header>
 <main id="contenu" tabindex="-1">
   <div class="message-reseau" id="hors-ligne" role="status" hidden>Connexion indisponible. Le dernier relevé reste consultable.</div>
   <noscript><p class="vide">Active JavaScript dans Chrome pour afficher les paris et les stratégies.</p></noscript>
-  <section class="onglet" id="o-jouer" aria-label="À jouer">
-    <div class="page-tete tete-compacte"><h2>À jouer</h2><div class="compteurs" id="jouer-resume"></div></div>
-    <p class="aide releve-ligne"><span id="jouer-quand"></span></p>
-    <div class="outils-horaires" aria-label="Horaires des opportunités">
-      <label>Début du match<select id="jouer-horaire"><option value="">Tous les horaires</option><option value="imminent">Imminent · moins de 2 h</option><option value="aujourdhui">Aujourd’hui</option><option value="demain">Demain</option></select></label>
-      <label>Ordre des matchs<select id="jouer-tri"><option value="heure">Heure de match</option><option value="edge">Meilleur edge</option></select></label>
-    </div>
-    <p class="aide" id="jouer-compte" aria-live="polite"></p>
-    <div class="puces sports-puces" id="jouer-sports" aria-label="Filtrer les opportunités par sport"></div>
-    <div class="puces" id="jouer-filtres" aria-label="Filtrer les opportunités par stratégie"></div>
-    <details class="mode-emploi"><summary>Comment lire les sélections</summary><p class="aide">Badges = sélections enregistrées au prix affiché, avec leur date de prise. Les plafonds de chaque stratégie sont respectés.
-    Convergence = même pari, même prix et même instant de prise ; Jules v1/v2 comptent pour une seule famille. Les nouvelles variantes ne donnent pas de votes supplémentaires.
-    « Prix modifié » signifie qu'une prise antérieure existe à une autre cote : ses badges ne sont pas transférés au nouveau prix.</p></details>
-    <details class="mode-emploi"><summary>Fraîcheur des prix</summary><p>« Cote relevée » indique l’heure enregistrée pour ce prix. Les nouvelles prises utilisent la réception API ; les anciennes gardent l’heure du lot. Ce n’est pas une preuve de mise à jour du bookmaker. Une cote peut baisser immédiatement. La cote simulée reste celle de la prise ; une baisse observée ensuite est indiquée séparément.</p></details>
-    <div id="liste-jouer"></div>
-  </section>
   <section class="onglet" id="o-bilan">
     <div class="page-tete"><div><h2>Bilan</h2></div></div>
     <div class="bilan-onglets" role="tablist" aria-label="Vue du bilan">
@@ -686,7 +666,6 @@ MODELE = r"""<!doctype html>
       <div class="tableau"><table id="liste-bilan"></table></div>
       <p class="aide" id="bilan-ecarts">Paris uniques réglés · écart vs Betfair — · écart vs Polymarket — · écart vs Smarkets —</p>
       <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
-      <div hidden><table id="bilan-books"></table></div>
       <h2 class="sous-titre">Par tranche de cote</h2>
       <div class="tableau"><table id="bilan-tranches"></table></div>
       <details class="aide" style="margin-top:12px"><summary>Comment lire ces tableaux</summary>
@@ -962,7 +941,6 @@ function ouvrir(o) {
     b.classList.toggle("actif", b.dataset.o===groupe);
     if (b.dataset.o===groupe) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
   });
-  fermerMenu();
   document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+page));
   ecrire("onglet", nom); history.replaceState(null, "", "#"+nom);
   if (page === "bilan") montrerVueBilan(vueBilan);
@@ -975,64 +953,13 @@ document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
 document.querySelectorAll("[data-aller]").forEach(b => b.onclick = () => {ouvrir(b.dataset.aller);window.scrollTo(0,0);});
 document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => {ouvrir(b.dataset.o);window.scrollTo(0,0);});
 
-// --- À jouer
-// une carte par cote française (bookmaker, match, pari), avec les références qui la signalent
-const parCote = new Map();
-for (const o of D.actuelles) {
-  const k = JSON.stringify([o.bookmaker,o.match_id,o.marche,o.periode,o.ligne,o.issue,o.joueur,o.cote]);
-  if (!parCote.has(k)) parCote.set(k, {...o, refs: [], strategies: new Set()});
-  const c = parCote.get(k);
-  c.refs.push(o);
-  for (const cle of o.strategies || []) c.strategies.add(cle);
-  c.convergence ||= o.convergence;
-  c.ecart = Math.max(c.ecart, o.ecart);
-}
-const cotesJouer = [...parCote.values()].map(o => ({...o,strategies:[...o.strategies]})).sort((a, b) => b.ecart - a.ecart);
+// --- Outils partagés par Paris et Bilan
 const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 60000)) : null;
 const badgeStrategies = p => (p.strategies || []).map(cle =>
   `<span class="badge">${e(D.strategies_badges?.[cle] || cle)}</span>`).join("") +
   (p.convergence ? '<span class="badge en_cours">Convergence ≥ 2</span>' : "");
-const ecartsReferences = p => ["Betfair", "Polymarket", "Smarkets"].map(nom =>
+const ecartsReferences = p => ["Polymarket", "Smarkets"].map(nom =>
   `<span>écart vs ${nom} ${pct(p["ecart_" + nom.toLowerCase()])}</span>`).join(" ");
-const carteActuelle = o => `<details class="ligne-detail ligne-pari ${o.strategies.length ? "ligne-validee" : ""}" id="op-${e(encodeURIComponent(JSON.stringify([o.bookmaker,o.match_id,o.pari,o.cote])))}"><summary>
-<span class="ligne-nom pari-match">${e(o.domicile)} – ${e(o.exterieur)}</span><span class="pari-selection">${e(o.pari)}${o.prix_change ? ' <small>· Prix modifié</small>' : ''}</span><span class="pari-bookmaker">${e(o.bookmaker)}</span>${horairePari(o)}${collectePari(o)}
-<span class="ligne-book" title="${e(o.bookmaker)}">${monogrammeBookmaker(o.bookmaker)}</span><b class="ligne-cote" aria-label="Cote ${cote(o.cote)}">${cote(o.cote)}</b><b class="ligne-valeur pos" aria-label="Edge ${pct(o.ecart)}">${pct(o.ecart)}</b></summary><div class="ligne-corps"><article class="carte opportunite ${o.strategies.length ? "op-validee" : ""}">
-<div class="op-meta"><span class="sport-identite">${iconeSport(o.sport)}${e(nomsSports[o.sport] || o.sport || "Sport")}${o.ligue ? " · "+e(o.ligue) : ""}</span><time datetime="${e(o.debut)}">${quand(o.debut)}</time></div>
-<h3 class="op-match">${e(o.domicile)} – ${e(o.exterieur)}</h3>
-<p class="op-pari">${e(o.pari)}</p>
-<div class="op-offre"><div class="op-prix">${monogrammeBookmaker(o.bookmaker)}<span>${e(o.bookmaker)}<small>Cote proposée</small></span><b>${cote(o.cote)}</b></div>
-<div class="op-edge">${pct(o.ecart)}<small>Écart à la cote juste</small></div></div>
-<div class="l4">${badgeStrategies(o) || (o.prix_change ? `<span class="signal-brut">Prix différent · prise précédente à ${cote(o.prix_precedent)}</span>` : '<span class="signal-brut">Signal brut · aucune stratégie</span>')}</div>
-${o.prix_change ? `<p class="aide">${o.convergence_precedente ? 'Convergence ≥ 2 enregistrée' : 'Sélection enregistrée'} le ${quand(o.validation_precedente)} à ${cote(o.prix_precedent)}. Aucun badge transféré à la cote actuelle.</p>` : ''}
-${o.strategies.length ? `<div class="op-validation">Prise enregistrée le ${quand(o.validation_detecte)}</div>` : ""}
-<div class="op-reference">${(() => { const r=o.refs.find(r=>r.ecart===o.ecart) || o.refs[0];
-  return `Cote juste <b>${cote(r.cote_juste)}</b> · ${e(r.reference)}` + (o.refs.length>1 ? `<details><summary>Les ${o.refs.length} références</summary><p>${o.refs.map(r=>`${e(r.reference)} <b>${cote(r.cote_juste)}</b>`).join(" · ")}</p></details>` : "");})()}</div>
-<div class="l4">${ecartsReferences(o)}</div>
-</article></div></details>`;
-const age = minutes(dc.debut);
-document.getElementById("jouer-quand").textContent = dc.debut ? `Relevé à ${hm(dc.debut)}` +
-  (age != null ? ` (il y a ${age} min)` : "") + `. La cote a pu bouger depuis : vérifie-la avant de jouer.` : "";
-let filtreJouer = "tous";
-function rendreJouer() {
-  const maintenant=Date.now();
-  const disponibles=cotesJouer.filter(o => opportuniteAvantMatch(o,maintenant));
-  document.getElementById("nb-jouer").textContent=disponibles.length || "";
-  rendreResumeJouer(disponibles);
-  const sport=sportJouer;
-  const choix = [["tous","Tous"],["valide","Validés ≥ 1"],["convergence","Convergence ≥ 2"],
-    ...Object.entries(D.strategies_badges || {}).filter(([cle]) => disponibles.some(o => o.strategies.includes(cle)))];
-  const accepte = (o,cle) => cle === "tous" || (cle === "valide" ? o.strategies.length > 0 : cle === "convergence" ? o.convergence : o.strategies.includes(cle));
-  document.getElementById("jouer-filtres").innerHTML = choix.map(([cle,nom]) =>
-    `<button data-filtre="${e(cle)}" class="${filtreJouer===cle ? "actif" : ""}" aria-pressed="${filtreJouer===cle}">${e(nom)} (${disponibles.filter(o => accepte(o,cle) && (!sport || o.sport===sport)).length})</button>`).join("");
-  for (const b of document.querySelectorAll("#jouer-filtres button")) b.onclick = () => { filtreJouer=b.dataset.filtre; rendreJouer(); };
-  const liste = trierHoraires(disponibles.filter(o => accepte(o,filtreJouer) && (!sport || o.sport===sport) &&
-    accepteHoraire(o,document.getElementById('jouer-horaire').value,maintenant)),document.getElementById('jouer-tri').value==='edge'?'':'heure');
-  document.getElementById('jouer-compte').textContent=`${liste.length} offres · ${groupesMatchs(liste).length} matchs · horaires de Paris`;
-  document.getElementById("liste-jouer").innerHTML = liste.length ? rendreGroupesJouer(liste) : '<div class="vide">Aucune opportunité pour ces filtres. Essaie « Tous », « Tous les sports » et « Tous les horaires ».</div>';
-}
-for(const id of ['jouer-horaire','jouer-tri']) document.getElementById(id).onchange=()=>rendreJouer();
-rendreJouer();
-document.getElementById("nb-jouer").textContent = cotesJouer.filter(o=>opportuniteAvantMatch(o)).length || "";
 
 // --- Bilan
 let refBilan = "Uniques";
@@ -1133,8 +1060,6 @@ function rendreBilan() {
 <td class="${signe(tc.gains_avec_clv)}">${eurC(tc.gains_avec_clv)}</td><td class="${signe(tc.espere_clv)}">${eurC(tc.espere_clv)}</td></tr>
 <tr><td><b>Sans CLV</b><small>référence absente avant le match</small></td><td>${tc.regles_sans_clv}</td>
 <td class="${signe(tc.gains_sans_clv)}">${eurC(tc.gains_sans_clv)}</td><td>—</td></tr>`;
-  document.getElementById("bilan-books").innerHTML = `<tr><th>Bookmaker</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
-    (D.bookmakers || []).map(bm => ligne(`<b>${e(bm)}</b>`, additionner(CUMULS[cumul], D.bilan_bookmakers, bm + "·"))).join("");
   rendreCourbe();
   document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     (D.tranches || []).map(t => ligne(`<b>${e(t)}</b>`, (D.bilan_tranches || {})[t + "|" + refBilan])).join("");
@@ -1553,7 +1478,6 @@ D.paris.filter(p => p.a_regler).forEach(p => {
   if (!manUniques.has(cle)) manUniques.set(cle,p);
 });
 const man = [...manUniques.values()];
-document.getElementById("nb-regler").textContent = man.length || "";
 const jr = (D.etat||{}).dernier_cycle_reglement || {}, diagnostics = ((jr.resultats||{}).non_regles||[]);
 const dr = new Map(diagnostics.map(x => [x.match+"|"+x.sport+"|"+x.debut,x]));
 const groupesReglement = new Map();
@@ -1590,7 +1514,6 @@ document.getElementById("copier").onclick = () => {
 const CTL = {non_conforme:"Non conformes", a_verifier:"À vérifier", conforme:"Conformes"};
 const cg = (D.controle||{}).groupes || [], cm = (D.controle||{}).matchs || [];
 const nbc = s => cg.filter(g => g.statut===s).length;
-document.getElementById("nb-controle").textContent = nbc("non_conforme") || "";
 document.getElementById("ctl-resume").innerHTML = [["Conformes", nbc("conforme")], ["À vérifier", nbc("a_verifier")],
   ["Non conformes", nbc("non_conforme")], ["Matchs mal associés ?", cm.length]].map(([a,b]) => `<div>${a}<b>${b}</b></div>`).join("");
 let ctlVue = nbc("non_conforme") ? "non_conforme" : "a_verifier";
@@ -2022,7 +1945,7 @@ function rendreLaboratoire() {
 }
 rendreLaboratoire();
 
-// onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon « À jouer »
+// onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon Paris (« #jouer » reste un ancien raccourci vers Paris)
 const depart = location.hash.slice(1) || lire("onglet") || "paris";
 __NOTIFICATIONS_JS__
 const ONGLETS = ["jouer","bilan","strategies","segments","paris","notifications","regler","controle","analyses"];
@@ -2033,14 +1956,14 @@ __ANALYSES_JS__
 initialiserAnalyses();
 initialiserInterface();
 __ACTUALISATION_JS__
-const champsVue = ["f-q", "jouer-horaire", "jouer-tri", "paris-horaire", "paris-tri", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
+const champsVue = ["f-q", "paris-horaire", "paris-tri", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
 const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +
   (d.querySelector("summary")?.textContent || "").replace(/\d+/g,"#").trim();
 installerActualisation({
   version:"__VERSION_SITE__",
   // Les choix de notification restent sous le contrôle de leur formulaire.
   protegee:() => document.getElementById("o-notifications").classList.contains("actif"),
-  capturer:() => ({presentation:"lignes-v1", filtreJouer, sportJouer, refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
+  capturer:() => ({presentation:"lignes-v1", refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
     courbes:[...courbesMasquees], champs:Object.fromEntries(champsVue.map(id => [id,document.getElementById(id)?.value])),
     details:[...document.querySelectorAll("details[open]")].map(cleDetail), y:window.scrollY,
     defilements:[...document.querySelectorAll("[id]")].filter(x => x.scrollLeft > 0).map(x => [x.id,x.scrollLeft])}),
@@ -2050,8 +1973,6 @@ installerActualisation({
       const el = document.getElementById(id), valeur = s.champs?.[id];
       if (el && typeof valeur === "string" && (el.tagName !== "SELECT" || [...el.options].some(o => o.value===valeur))) el.value = valeur;
     }
-    filtreJouer = typeof s.filtreJouer === "string" ? s.filtreJouer : "tous";
-    if (typeof s.sportJouer === "string") sportJouer = s.sportJouer;
     refBilan = typeof s.refBilan === "string" ? s.refBilan : "Uniques";
     cumul = Number.isInteger(s.cumul) && CUMULS[s.cumul] ? s.cumul : CUMULS.length-1;
     limite = Number.isInteger(s.limite) && s.limite >= 50 ? s.limite : 50;
@@ -2061,7 +1982,7 @@ installerActualisation({
     periodeStrategies = s.periodeStrategies in STRAT_PERIODES ? s.periodeStrategies : "futur";
     courbesMasquees.clear();
     for (const id of s.courbes || []) courbesMasquees.add(id);
-    rendreJouer(); rendreBilan(); rendreBilanUniques(); rendreParis(); rendreSante(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
+    rendreBilan(); rendreBilanUniques(); rendreParis(); rendreSante(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
     document.getElementById("labo-regle")?.onchange?.();
     adapterTableaux();
     for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));

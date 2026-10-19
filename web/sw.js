@@ -39,7 +39,7 @@ self.addEventListener('push',event=>event.waitUntil((async()=>{
 self.addEventListener('notificationclick',event=>{
   event.notification.close();
   event.waitUntil((async()=>{
-    const url=new URL('./',self.registration.scope);url.searchParams.set('alerte',event.notification.data?.id||'');url.hash='jouer';
+    const url=new URL('./',self.registration.scope);url.searchParams.set('alerte',event.notification.data?.id||'');url.hash='paris';
     for(const c of await self.clients.matchAll({type:'window',includeUncontrolled:true})) {
       if(c.url.startsWith(self.registration.scope) && 'focus' in c) {await c.navigate(url.href);return c.focus();}
     }

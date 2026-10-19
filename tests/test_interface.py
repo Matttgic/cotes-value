@@ -29,7 +29,7 @@ def test_document_autonome_navigation_unique_et_apercu(tmp_path):
     assert not [k for k, n in Counter(p.ids).items() if n > 1]
     # Quatre onglets : « À jouer », Stratégies, Analyses, Segments et À régler vivent sous Paris, Bilan et Santé.
     assert p.onglets == ["paris", "bilan", "notifications", "controle"]
-    assert {"nav-plus-toggle", "nav-secondaires", "strategies-mobile", "fraicheur"} <= set(p.ids)
+    assert {"strategies-mobile", "fraicheur", "liste-paris"} <= set(p.ids)
     assert set(p.labels) <= set(p.ids)
     # Les fragments servent au routeur, jamais à une ancre située sous les filtres.
     assert not set(p.onglets) & set(p.ids)
@@ -45,7 +45,7 @@ def test_lignes_compactes_et_toutes_les_references_par_defaut():
     assert '<option value="" selected>Toutes</option>' in MODELE
     assert '<option value="comparateurs" selected>' not in MODELE
     # Les deux listes principales utilisent un dépliage natif, pas une modale.
-    for nom in ('carteActuelle', 'carteParis'):
+    for nom in ('carteParis',):
         debut = MODELE.index('const '+nom)
         bloc = MODELE[debut:MODELE.index('`;', debut)]
         assert '<details class="ligne-detail ligne-pari' in bloc

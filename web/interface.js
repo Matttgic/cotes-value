@@ -1,16 +1,4 @@
 // Présentation uniquement : aucune règle de sélection ou statistique n'est recalculée.
-const menuPlus = document.getElementById('nav-plus-toggle');
-function fermerMenu() {
-  document.getElementById('onglets').classList.remove('menu-ouvert');
-  menuPlus.setAttribute('aria-expanded','false');
-}
-menuPlus.onclick = () => {
-  const ouvert=document.getElementById('onglets').classList.toggle('menu-ouvert');
-  menuPlus.setAttribute('aria-expanded',String(ouvert));
-};
-document.addEventListener('click', ev => {if (!ev.target.closest('#onglets')) fermerMenu();});
-document.addEventListener('keydown', ev => {if (ev.key==='Escape') {fermerMenu();menuPlus.focus();}});
-
 // Les cellules originales sont déplacées,
 // sans clonage des contrôles, pour conserver leurs identifiants et événements.
 const tableauxCompactes=new WeakMap();
@@ -35,7 +23,7 @@ function adapterTableaux() {
         const titre=textePrincipal(cellules[0]);
         const resume=document.createElement('summary');
         const nom=document.createElement('span');nom.className='ligne-nom';nom.textContent=titre;nom.title=titre;resume.append(nom);
-        if(['liste-bilan','bilan-books','bilan-tranches'].includes(table.id)) {
+        if(['liste-bilan','bilan-tranches'].includes(table.id)) {
           const volume=cellules.find((td,j)=>/^Paris/i.test(noms[j] || ''));
           if(volume) {
             const matchs=[...volume.querySelectorAll('small')].find(el=>/matchs$/.test(el.textContent.trim()));
@@ -104,22 +92,6 @@ function actualiserFraicheur() {
   const info=document.getElementById('fraicheur');
   info.textContent=age==null ? 'En attente d’un relevé' : age<1 ? 'Relevé à l’instant' : `Relevé il y a ${age} min`;
   info.classList.toggle('ancien',age!=null && age>15);
-  document.getElementById('jouer-quand').textContent=debut ?
-    `Relevé à ${hm(debut)} · ${age<1 ? 'à l’instant' : 'il y a '+age+' min'}. Vérifie la cote avant de jouer.` : 'Aucune collecte disponible pour le moment.';
-}
-let sportJouer=lire('cv-sport-jouer') || '';
-function rendreResumeJouer(liste) {
-  const validees=liste.filter(o=>o.strategies.length>0).length;
-  const sports=[...new Set(liste.map(o=>o.sport).filter(Boolean))].sort();
-  document.getElementById('jouer-resume').innerHTML=`<div class="resume-cotes">
-    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27" fill="none" stroke="var(--ligne)" stroke-width="4"/>
-    <circle cx="32" cy="32" r="27" fill="none" stroke="var(--accent)" stroke-width="4" pathLength="100" stroke-dasharray="${liste.length?100*validees/liste.length:0} 100" transform="rotate(-90 32 32)"/>
-    <text x="32" y="36" text-anchor="middle">${liste.length}</text></svg>
-    <div><b>${validees} validée${validees>1?'s':''} par stratégie</b><span>${liste.length} cotes · ${sports.length} sports · ${new Set(liste.map(o=>o.bookmaker)).size} bookmakers</span></div></div>`;
-  const choisi=sportJouer;
-  document.getElementById('jouer-sports').innerHTML=[['','Tous les sports'],...sports.map(s=>[s,nomsSports[s] || s])].map(([s,nom])=>
-    `<button data-sport="${e(s)}" class="sport-puce ${choisi===s?'actif':''}" aria-pressed="${choisi===s}">${s?iconeSport(s):''}<span>${e(nom)}</span>${s?`<b>${liste.filter(o=>o.sport===s).length}</b>`:''}</button>`).join('');
-  for(const b of document.querySelectorAll('#jouer-sports button')) b.onclick=()=>{sportJouer=b.dataset.sport;ecrire('cv-sport-jouer',sportJouer);rendreJouer();};
 }
 function choisirVueStrategies(vue) {
   const graphiques=vue==='graphiques';
@@ -130,7 +102,6 @@ function choisirVueStrategies(vue) {
 }
 function compacterFiltres() {
   for(const [id,selecteur,titre] of [
-    ['filtres-jouer','#jouer-sports, #jouer-filtres','Filtrer les opportunités'],
     ['filtres-bilan','#puces-ref','Choisir la référence ou la stratégie'],
     ['filtres-paris','.grille-filtres','Filtres des paris']
   ]) {
@@ -176,12 +147,10 @@ function initialiserInterface() {
     `<p>Demande ${quand(c.envoi_demande_le)} · ${(c.alertes || []).length} signal(s) préparé(s) · ${c.resultat?.sent || 0} notification(s) acceptée(s) par le service Push${c.resultat?.ok===false?' · envoi en erreur':''}.</p>`).join(''):'<p>Aucun diagnostic d’envoi disponible pour les anciennes alertes.</p>';
   setInterval(()=>{
     actualiserHoraires();
-    const actif=document.querySelector('.onglet.actif')?.id;
-    const prefixe=actif==='o-jouer'?'jouer':actif==='o-paris'?'paris':null;
-    if(!prefixe || (prefixe!=='jouer' && !document.getElementById(prefixe+'-horaire').value)) return;
-    const conteneur=document.getElementById('liste-'+prefixe);
+    if(document.querySelector('.onglet.actif')?.id!=='o-paris' || !document.getElementById('paris-horaire').value) return;
+    const conteneur=document.getElementById('liste-paris');
     const ouverts=new Set([...conteneur.querySelectorAll('details[open]')].map(d=>d.id));
-    if(prefixe==='jouer') rendreJouer();else rendreParis();
+    rendreParis();
     for(const d of conteneur.querySelectorAll('details')) d.open=ouverts.has(d.id);
   },60000);
   document.getElementById('bilan-evolution').ontoggle=()=>{if(document.getElementById('bilan-evolution').open) rendreCourbe();};

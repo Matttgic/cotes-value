@@ -136,12 +136,9 @@ a{color:var(--accent);text-underline-offset:3px}
 h1{font-size:21px;letter-spacing:-.7px;font-weight:750}.signature{font-size:11px;color:var(--doux);letter-spacing:.2px}
 .mise-a-jour{text-align:right;display:flex;flex-direction:column;gap:3px}.maj{font-size:11px}.fraicheur{font-size:12px;color:var(--accent);font-weight:600}.fraicheur.ancien{color:var(--jaune)}
 nav{max-width:1240px;overflow:visible;padding:0 20px;gap:2px}
-.nav-secondaires{display:contents}
 nav button{display:flex;align-items:center;justify-content:center;gap:7px;border:0;background:transparent;border-radius:0;font-size:13px;padding:12px 13px;color:var(--doux);border-bottom:3px solid transparent;min-height:52px}
 nav button.actif{background:transparent;color:var(--accent);border-color:var(--accent);font-weight:700}
 nav button:hover{background:var(--accent-f)}.icone{width:19px;height:19px;flex:none}nav .nb{margin-left:5px;font-size:10px;opacity:1;background:var(--fond);padding:2px 5px;border-radius:6px}
-#nav-plus-toggle{display:none}
-nav.menu-ouvert #nav-plus-toggle{color:var(--accent);background:var(--accent-f)!important}
 main{max-width:1240px;padding:30px 28px 70px;min-height:80vh}
 .page-tete{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:0 0 24px}
 .surtitre{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--accent);margin:0 0 7px}
@@ -152,8 +149,6 @@ main{max-width:1240px;padding:30px 28px 70px;min-height:80vh}
 .puces{flex-wrap:wrap;overflow:visible;gap:7px;margin-bottom:16px}.puces button{padding:9px 12px;border-radius:9px;font-size:12px;white-space:normal;text-align:left;line-height:1.35}
 .puces button.actif{background:var(--accent-f);border-color:var(--accent);color:var(--accent)}
 .carte{padding:18px;border-radius:14px;border-color:var(--ligne);box-shadow:var(--ombre);margin-bottom:12px}
-#liste-jouer{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
-#liste-jouer>.vide{grid-column:1/-1}
 .opportunite{margin:0;padding:20px}.op-meta{display:flex;justify-content:space-between;gap:12px;color:var(--doux);font-size:11px;margin-bottom:12px}.op-meta span{text-transform:capitalize;overflow-wrap:anywhere}.op-meta time{flex:none;text-align:right}
 .op-match{font-size:16px;line-height:1.4;font-weight:550;margin:0 0 7px;overflow-wrap:anywhere}.op-pari{font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:1.35;margin:0 0 18px;overflow-wrap:anywhere}
 .op-offre{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne)}
@@ -196,12 +191,10 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
   nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--carte);border-top:1px solid var(--ligne);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:4px 6px calc(5px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px #172b3506}
   nav button{flex-direction:column;gap:4px;min-height:58px;font-size:10px;font-weight:550;padding:6px 0;border:0;border-radius:10px;line-height:1.2;background:transparent!important;min-width:0}
   nav button>span{position:relative;white-space:nowrap}nav .icone{width:21px;height:21px}nav .nb{font-size:8px;position:absolute;top:-30px;left:calc(50% + 5px);margin:0;padding:1px 3px;line-height:1.3;min-width:14px;border:1px solid var(--carte);background:var(--fond);color:var(--doux)}
-  nav button.actif{color:var(--accent);background:var(--accent-f)!important}#nav-plus-toggle{display:flex}
-  .nav-secondaires{display:none;position:absolute;bottom:calc(100% + 8px);right:10px;left:10px;background:var(--carte);border:1px solid var(--ligne);border-radius:16px;padding:12px;grid-template-columns:repeat(2,minmax(0,1fr));box-shadow:0 8px 30px #0002;gap:6px}
-  .menu-ouvert .nav-secondaires{display:grid}.nav-secondaires button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:13px;padding:12px;min-height:52px}.nav-secondaires button>span{white-space:normal}.nav-secondaires .nb{position:static;display:inline-block;margin-left:6px;font-size:10px;min-width:0}
+  nav button.actif{color:var(--accent);background:var(--accent-f)!important}
   main{padding:24px 18px calc(100px + env(safe-area-inset-bottom))}.page-tete{align-items:start;flex-direction:column;gap:16px;margin-bottom:20px}.page-tete h2{font-size:27px}.surtitre{font-size:9px}.sous-texte{font-size:12px}
   .compteurs{width:100%;gap:0;padding-top:14px;border-top:1px solid var(--ligne);justify-content:space-between}.compteurs span{flex:1}.compteurs span+span{border-left:1px solid var(--ligne);padding-left:18px}.compteurs b{font-size:22px}.compteurs{font-size:10px}
-  #liste-jouer{grid-template-columns:1fr;gap:12px}.opportunite{padding:18px}.op-pari{font-size:19px}.op-match{font-size:14px}.op-prix b{font-size:28px}.carte{padding:16px}.puces button{font-size:11px;padding:9px 10px;min-height:42px}
+  .opportunite{padding:18px}.op-pari{font-size:19px}.op-match{font-size:14px}.op-prix b{font-size:28px}.carte{padding:16px}.puces button{font-size:11px;padding:9px 10px;min-height:42px}
   .l1{font-size:12px}.l3{font-size:13px}.l4{font-size:11px}.l2{font-size:15px}.mode-emploi{font-size:11px;margin:10px 0 18px}.aide{font-size:11px}
   .comparaison-bureau{display:none}.strategies-mobile{display:block}.strategie-ligne{padding:18px 0;border-bottom:1px solid var(--ligne)}.strategie-ligne:first-child{padding-top:4px}.strategie-ligne:last-child{border:0}
   .strategie-entete{display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:14px}.strategie-entete h3{font-size:16px;letter-spacing:-.3px;margin:0;line-height:1.4}.strategie-entete .btn{flex:none;font-size:10px;min-height:36px;padding:8px 10px}
@@ -255,8 +248,6 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
   main{padding-top:17px}.signature{display:none}.titre{padding-top:11px;padding-bottom:11px}.maj{font-size:10px}.fraicheur{font-size:11px}.page-tete{gap:10px;margin-bottom:16px}.page-tete .surtitre{display:none}
   .tete-compacte{display:block}.tete-compacte h2{font-size:24px;margin-bottom:10px}.tete-compacte .compteurs{width:100%;padding:0;border:0}.resume-cotes{gap:10px}.resume-cotes svg{width:48px;height:48px}.resume-cotes b{font-size:13px}.resume-cotes>div>span{font-size:11px;padding:0;border:0}.compteurs .resume-cotes>div{padding:0;border:0}
   .sports-puces{gap:6px;margin-bottom:10px}.sports-puces button{font-size:11px;padding:7px 9px;min-height:38px}.sport-puce .sport-icone{width:17px;height:17px}
-  #jouer-filtres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:6px}#jouer-filtres button{font-size:11px;min-height:42px;padding:6px 5px;text-align:center}#o-jouer>.mode-emploi{margin-top:3px;margin-bottom:10px}#o-jouer>.mode-emploi summary{min-height:28px}
-  .opportunite{padding:14px}.op-meta{font-size:11px;margin-bottom:6px}.op-match{font-size:14px}.op-pari{font-size:18px;margin-bottom:10px}.op-prix{gap:7px}.op-prix b{font-size:25px;margin-left:4px}.op-prix span{font-size:11px}.op-prix small{font-size:10px}.op-prix .book-monogramme{width:26px;height:28px;font-size:14px}.op-edge{font-size:14px;padding:4px 6px}.op-edge small{font-size:9px}.op-reference{font-size:11px}.opportunite .l4{margin-top:7px}
   .tete-strategies{flex-direction:row;align-items:center;gap:8px;margin-bottom:13px}.tete-strategies h2{font-size:25px;margin-bottom:4px}.tete-strategies .sous-texte{font-size:11px}.tete-strategies .periode-badge{font-size:10px;white-space:normal;text-align:center;max-width:105px}
   #strategies-periodes{gap:6px;margin-bottom:6px}#strategies-periodes button{min-height:42px;font-size:12px}#strategies-periodes .periodes-detail summary{padding:5px 0;min-height:28px}
   .filtres-strategies{grid-template-columns:minmax(0,1fr) 120px;margin:8px 0 12px;gap:10px}.filtres-strategies label{font-size:11px}.filtres-strategies select{font-size:12px;padding-right:22px;padding-left:8px;min-height:42px}
@@ -267,7 +258,7 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 
 /* Vue quotidienne dense : un résumé par ligne, détails ouverts sur place. */
 [hidden]{display:none!important}
-#liste-jouer,#liste-paris,#liste-regler{display:block}
+#liste-paris,#liste-regler{display:block}
 .strategies-mobile{display:block}.comparaison-bureau{display:none}
 .ligne-detail{margin:0;border:0;border-bottom:1px solid var(--ligne);background:transparent;border-radius:0;min-width:0}
 .ligne-detail>summary{display:flex;align-items:center;gap:8px;min-height:46px;padding:8px 2px;list-style:none;font-size:12px;line-height:1.35;font-weight:500;white-space:nowrap;cursor:pointer}

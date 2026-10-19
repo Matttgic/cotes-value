@@ -57,9 +57,6 @@ function collectePari(p, maintenant=Date.now()) {
   }
   return `<span class="pari-collecte${c.ancien?' collecte-ancienne':''}" title="${e(precision)}" data-collecte="${e(p.collecte_recue || p.detecte || '')}" data-precision="${p.collecte_recue?'api':'lot'}" data-statut="${e(p.statut || '')}"><span class="collecte-date">${e(c.texte)}</span>${suite}</span>`;
 }
-function opportuniteAvantMatch(p,maintenant=Date.now()) {
-  const debut=heureMatch(p);return Boolean(debut && debut.getTime()>maintenant);
-}
 function accepteHoraire(p, filtre, maintenant=Date.now()) {
   if(!filtre) return true;
   const date=heureMatch(p);if(!date) return false;
@@ -75,29 +72,6 @@ function trierHoraires(liste, ordre) {
     if(x==null) return y==null?0:1;if(y==null) return -1;
     return ordre==='recent'?y-x:x-y;
   });
-}
-function groupesMatchs(liste) {
-  const groupes=new Map();
-  for(const p of liste) {
-    // Regroupement visuel prudent : ni rapprochement flou, ni fusion de catégories d'équipes.
-    const nom=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
-    const date=heureMatch(p);
-    const cle=JSON.stringify([p.sport,date?.toISOString(),nom(p.domicile),nom(p.exterieur),
-      !date||!p.domicile||!p.exterieur ? p.match_id : '']);
-    if(!groupes.has(cle)) groupes.set(cle,[]);
-    groupes.get(cle).push(p);
-  }
-  return [...groupes.values()];
-}
-function rendreGroupesJouer(liste) {
-  return groupesMatchs(liste).map(paris=>{
-    const tries=[...paris].sort((a,b)=>b.ecart-a.ecart),p=tries[0];
-    if(paris.length===1) return carteActuelle(p);
-    return `<section class="groupe-match" aria-label="${e(p.domicile)} – ${e(p.exterieur)}">
-      <header><div class="groupe-sport">${iconeSport(p.sport)}${e(nomsSports[p.sport]||p.sport||'Sport')}${p.ligue?' · '+e(p.ligue):''}</div>
-      <h3>${e(p.domicile)} – ${e(p.exterieur)}</h3><div class="groupe-horaire">${horairePari(p)}<span>${paris.length} offre${paris.length>1?'s':''}</span></div></header>
-      ${tries.map((o,i)=>`<div class="offre-match${i===0 && tries.length>1?' meilleur-edge':''}">${i===0 && tries.length>1?'<span class="meilleur-libelle">Edge le plus élevé</span>':''}${carteActuelle(o)}</div>`).join('')}</section>`;
-  }).join('');
 }
 function actualiserHoraires() {
   for(const el of document.querySelectorAll('time[data-horaire]')) {
