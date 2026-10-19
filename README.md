@@ -235,11 +235,10 @@ le 14 octobre à 20 h (Paris), dans Bilan, Stratégies et Paris. Rentabilité no
 ### Eden
 
 **Bilan → Eden** et **Stratégies → Eden** suivent les nouvelles détections depuis
-le **19 octobre 2026 à 16 h (Paris)**. Pinnacle seulement, cotes 1,30–2,00,
-edge 2–8 %, 30 minutes à 12 heures avant le match, une mise fictive de 10 €
-par bookmaker français et par match, six prises maximum par jour.
-Le protocole du 14 octobre n'a retenu aucune des 36 règles. Le rejeu d'Eden
-sur cet historique est descriptif et ne démontre pas de rentabilité.
+le **19 octobre 2026 à 20 h (Paris)**. Pinnacle et Polymarket, cotes 1,30–2,00,
+edge 2–12 %, 30 minutes à 24 heures avant le match, une mise fictive de 10 €
+par bookmaker français et par match. Le rejeu est positif sur la validation et
+sur le test du 17–19 octobre. Cela ne démontre pas une rentabilité future.
 [Règles et limites](docs/strategie-eden.md).
 
 ## Sécurité et audit

@@ -1,6 +1,6 @@
 """Invariants Eden : exposition par bookmaker, dates et vues du site."""
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import json
 import re
 
@@ -13,8 +13,8 @@ def pari(mid="m1", **changes):
          "bookmaker": "Winamax", "sport": "football", "ligue": "Ligue 1",
          "domicile": "Paris " + mid, "exterieur": "Lyon " + mid, "marche": "TOTAL",
          "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "pari": "Plus de 2,5 buts",
-         "detecte": "2026-10-19T15:00:00+00:00", "debut": "2026-10-19T18:00:00+00:00",
-         "lu_reference": "2026-10-19T14:55:00+00:00",
+         "detecte": "2026-10-19T18:30:00+00:00", "debut": "2026-10-19T22:00:00+00:00",
+         "lu_reference": "2026-10-19T18:25:00+00:00",
          "cote": cote, "cote_juste": cote / 1.04, "ecart": 0.04, "mise": 10,
          "statut": "en_cours", "gain": None, "clv": None,
          "preuve_prise": {"match_id_reference": mid, "ressemblance_noms": .9,
@@ -25,14 +25,15 @@ def pari(mid="m1", **changes):
 def test_chaque_bookmaker_du_meme_match_est_joue():
     premier = pari(domicile="Paris", exterieur="Lyon")
     pmu = pari("pmu", bookmaker="PMU", domicile="Lyon", exterieur="Paris",
-               detecte="2026-10-19T15:01:00+00:00")
-    betclic = pari("bet", bookmaker="Betclic", detecte="2026-10-19T15:02:00+00:00")
+               detecte="2026-10-19T18:31:00+00:00")
+    betclic = pari("bet", bookmaker="Betclic", detecte="2026-10-19T18:32:00+00:00")
     assert paris_eden([betclic, pmu, premier]) == {id(premier), id(pmu), id(betclic)}
 
 
 def test_deux_references_du_meme_bookmaker_restent_une_mise():
     premier = pari(domicile="Paris", exterieur="Lyon")
-    autre = pari(domicile="Paris", exterieur="Lyon", detecte="2026-10-19T15:01:00+00:00")
+    autre = pari(domicile="Paris", exterieur="Lyon", reference="Polymarket",
+                 detecte="2026-10-19T18:31:00+00:00")
     autre = {**autre, "id": "poly",
              "preuve_prise": {**autre["preuve_prise"], "match_id_reference": "poly1"}}
     assert paris_eden([autre, premier]) == {id(premier)}
@@ -40,59 +41,57 @@ def test_deux_references_du_meme_bookmaker_restent_une_mise():
 
 def test_cote_ecartee_ne_bloque_pas_un_autre_bookmaker():
     premier = pari(domicile="PSG", exterieur="OL")
-    pont = pari(ecart=0.20, detecte="2026-10-19T15:01:00+00:00")
+    pont = pari(ecart=0.20, detecte="2026-10-19T18:31:00+00:00")
     pont = {**pont, "id": "pont", "preuve_prise": {**pont["preuve_prise"], "match_id_reference": "autre"}}
     pmu = {**pont, "id": "pmu", "bookmaker": "PMU", "match_id": "pmu|different", "ecart": 0.04,
-           "detecte": "2026-10-19T15:02:00+00:00"}
+           "detecte": "2026-10-19T18:32:00+00:00"}
     assert motif_refus_eden(pont) is not None
     assert paris_eden([pmu, pont, premier]) == {id(premier), id(pmu)}
 
 
 def test_resultats_ne_rechoisissent_pas_le_passe():
-    p, q = pari(), pari("q", detecte="2026-10-19T15:01:00+00:00")
+    p, q = pari(), pari("q", detecte="2026-10-19T18:31:00+00:00")
     avant = deepcopy([p, q])
     assert paris_eden([p, q]) == {id(p), id(q)}
-    p.update(statut="perdu", gain=-10, clv=-.7, regle_le="2026-10-19T20:00:00+00:00")
-    q.update(statut="gagne", gain=8, clv=.7, regle_le="2026-10-19T20:00:00+00:00")
+    p.update(statut="perdu", gain=-10, clv=-.7, regle_le="2026-10-19T23:00:00+00:00")
+    q.update(statut="gagne", gain=8, clv=.7, regle_le="2026-10-19T23:00:00+00:00")
     assert paris_eden([q, p]) == {id(p), id(q)}
     assert avant[0]["statut"] == "en_cours"
 
 
-def test_plafond_6_et_changement_de_jour_paris():
-    rows = []
-    for i in range(7):
-        t = (datetime(2026, 10, 19, 15, tzinfo=timezone.utc) + timedelta(minutes=i)).isoformat()
-        rows.append(pari(str(i), detecte=t, lu_reference=t))
-    suivant = pari("jour2", detecte="2026-10-19T22:01:00+00:00",
-                   lu_reference="2026-10-19T22:01:00+00:00", debut="2026-10-20T01:00:00+00:00")
-    assert paris_eden(rows + [suivant]) == {id(p) for p in rows[:6] + [suivant]}
-    assert EDEN["paris_max_jour"] == 6
+def test_pas_de_plafond_journalier():
+    rows = [pari(str(i), detecte=f"2026-10-19T18:{30+i:02d}:00+00:00",
+                 lu_reference=f"2026-10-19T18:{30+i:02d}:00+00:00")
+            for i in range(8)]
+    assert paris_eden(rows) == {id(p) for p in rows}
+    assert "paris_max_jour" not in EDEN
 
 
 def test_historique_exclu_et_bornes():
-    ancien = pari(detecte="2026-10-19T13:59:00+00:00", lu_reference="2026-10-19T13:55:00+00:00",
-                  debut="2026-10-19T16:00:00+00:00")
+    ancien = pari(detecte="2026-10-19T17:59:00+00:00", lu_reference="2026-10-19T17:50:00+00:00",
+                  debut="2026-10-19T20:00:00+00:00")
     assert not paris_eden([ancien])
     assert paris_eden([ancien], depuis="2026-10-07T00:00:00+00:00") == {id(ancien)}
     assert motif_refus_eden(pari(cote=2.01, cote_juste=2.01 / 1.04)) is not None
     assert motif_refus_eden(pari(cote=2.00, cote_juste=2.00 / 1.04)) is None
     assert motif_refus_eden(pari(cote=1.29, cote_juste=1.29 / 1.04)) is not None
     assert motif_refus_eden(pari(ecart=0.019, cote_juste=1.80 / 1.019)) is not None
-    assert motif_refus_eden(pari(ecart=0.08, cote_juste=1.80 / 1.08)) is None
-    assert motif_refus_eden(pari(ecart=0.081, cote_juste=1.80 / 1.081)) is not None
+    assert motif_refus_eden(pari(ecart=0.12, cote_juste=1.80 / 1.12)) is None
+    assert motif_refus_eden(pari(ecart=0.121, cote_juste=1.80 / 1.121)) is not None
     assert motif_refus_eden(pari(reference="Betfair")) is not None
-    assert motif_refus_eden(pari(reference="Polymarket")) is not None
+    assert motif_refus_eden(pari(reference="Polymarket")) is None
     assert motif_refus_eden(pari(bookmaker="OlyBet")) is not None
     assert motif_refus_eden(pari(suspect=True)) is not None
     assert motif_refus_eden(pari(ligne=2.25)) is not None
-    assert motif_refus_eden(pari(lu_reference="2026-10-19T14:49:59+00:00")) is not None
-    assert motif_refus_eden(pari(debut="2026-10-19T15:29:00+00:00")) is not None
-    assert motif_refus_eden(pari(debut="2026-10-20T03:01:00+00:00")) is not None
-    assert motif_refus_eden(pari(debut="2026-10-19T15:30:00+00:00")) is None
+    assert motif_refus_eden(pari(lu_reference="2026-10-19T18:14:59+00:00")) is not None
+    assert motif_refus_eden(pari(debut="2026-10-19T18:59:00+00:00")) is not None
+    assert motif_refus_eden(pari(debut="2026-10-20T18:31:00+00:00")) is not None
+    assert motif_refus_eden(pari(debut="2026-10-19T19:00:00+00:00")) is None
+    assert motif_refus_eden(pari(debut="2026-10-20T18:30:00+00:00")) is None
     assert motif_refus_eden(pari(sport="tennis", marche="TOTAL")) is not None
     assert motif_refus_eden(pari(sport="tennis", marche="VAINQUEUR", issue="DOM", ligne=None)) is None
     assert motif_refus_eden(pari(domicile="Paris U19")) is not None
-    assert motif_refus_eden(pari(ligue="Ligue 1 féminine")) is not None
+    assert motif_refus_eden(pari(ligue="Ligue 1 féminine")) is None
     assert motif_refus_eden(pari()) is None
 
 
@@ -103,11 +102,11 @@ def test_bilan_courbe_fiches_et_navigation(tmp_path, monkeypatch):
     class Horloge(datetime):
         @classmethod
         def now(cls, tz=None):
-            return datetime(2026, 10, 19, 18, tzinfo=timezone.utc)
+            return datetime(2026, 10, 19, 23, tzinfo=timezone.utc)
 
     monkeypatch.setattr(site_web, "datetime", Horloge)
-    rows = [pari("alpha", statut="gagne", gain=8, regle_le="2026-10-19T16:00:00+00:00"),
-            pari("bravo", statut="perdu", gain=-10, regle_le="2026-10-19T16:30:00+00:00")]
+    rows = [pari("alpha", statut="gagne", gain=8, regle_le="2026-10-19T22:30:00+00:00"),
+            pari("bravo", statut="perdu", gain=-10, regle_le="2026-10-19T22:40:00+00:00")]
     avant = deepcopy(rows)
     b = bilan(rows)
     assert b["C|Eden"]["regles"] == 2 and b["C|Eden"]["gains"] == -2
@@ -134,7 +133,7 @@ def test_navigation_exclut_lavant_lancement_du_suivi():
     officiel = pari("officiel")
     labo = {"releve": "2026-10-14T10:09:28+00:00", "resultats": [],
             "comparateurs": {"Eden (rejeu)": {}}}
-    nav = navigation_strategies([ancien, officiel], labo, "2026-10-19T18:00:00+00:00")
+    nav = navigation_strategies([ancien, officiel], labo, "2026-10-19T23:00:00+00:00")
     sel = nav["selections"]["Eden (rejeu)"]
     assert sel["ensemble"] == ["ancien"]
     assert sel["futur"] == ["officiel"]

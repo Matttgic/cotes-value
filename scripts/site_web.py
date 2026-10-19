@@ -701,9 +701,9 @@ MODELE = r"""<!doctype html>
       une mise par bookmaker et par match, huit par jour maximum.
       <b>JULES EDGE</b> : Pinnacle, cotes 1,30–2,50, edge 3–12 %, six paris par jour maximum.
       Suivi depuis sa première publication du 14/10 à 23 h 04 (Paris). Le passé est un rejeu séparé.
-      <b>Eden</b> : Pinnacle, cotes 1,30–2,00, edge 2–8 %, 30 min à 12 h, une mise par bookmaker et par match,
-      six par jour maximum. Suivi depuis le 19/10 à 16 h (Paris). Le passé est un rejeu descriptif ;
-      aucune rentabilité n'est annoncée.</p></details>
+      <b>Eden</b> : Pinnacle et Polymarket, cotes 1,30–2,00, edge 2–12 %, 30 min à 24 h,
+      une mise par bookmaker et par match, sans plafond journalier. Suivi depuis le 19/10 à 20 h (Paris).
+      Le passé est un rejeu descriptif ; le test historique est positif, aucune rentabilité future n'est annoncée.</p></details>
       </details>
     </div>
     <div id="o-strategies" role="tabpanel" aria-labelledby="bt-strategies" hidden>
@@ -758,8 +758,8 @@ MODELE = r"""<!doctype html>
       </details>
       <details class="carte" id="eden-picks">
         <summary><b>Eden</b> — voir les paris depuis le lancement</summary>
-        <p class="aide">Pinnacle · cotes 1,30–2,00 · edge 2–8 % · 30 min à 12 h · une mise par bookmaker et par match · max 6/jour · 10 € fictifs.
-        Suivi depuis le 19/10 à 16 h (Paris). Le protocole du 14 octobre n'a retenu aucune règle ; ce filtre ne promet pas de gain.
+        <p class="aide">Pinnacle et Polymarket · cotes 1,30–2,00 · edge 2–12 % · 30 min à 24 h · une mise par bookmaker et par match · 10 € fictifs.
+        Suivi depuis le 19/10 à 20 h (Paris). Le rejeu est positif sur la validation et le test ; cela ne promet pas un gain futur.
         <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-eden.md" target="_blank" rel="noopener">Règles et limites</a>.</p>
         <div id="eden-picks-list"></div>
       </details>
@@ -1013,10 +1013,10 @@ const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée 
     Pinnacle, Betfair et Polymarket ; cotes 1,30–2,80 ; edge 2,5–12 % ; 15 min à 18 h avant le match ; référence de 5 min maximum.
     Une mise par événement identifiable, huit par jour maximum, à 10 € fictifs. Historique séparé ; rentabilité future non démontrée.`,
   "Eden": `Eden v${ED.version || 1} — suivi à partir du ${ED.debut ? new Date(ED.debut).toLocaleString("fr-FR", {
-    timeZone: "Europe/Paris", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit"}) : "19/10 16:00"} (Paris).
-    Pinnacle sans marge ; cotes 1,30–2,00 ; edge 2–8 % ; détection de 30 min à 12 h ; référence de 10 min maximum.
-    Une mise fictive de 10 € par bookmaker français et par match, ${ED.paris_max_jour || 6} prises maximum par jour.
-    Le rejeu d'avant le lancement est descriptif. Le protocole du 14 octobre n'a retenu aucune candidate. Rentabilité future non démontrée.`};
+    timeZone: "Europe/Paris", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit"}) : "19/10 20:00"} (Paris).
+    Pinnacle et Polymarket ; cotes 1,30–2,00 ; edge 2–12 % ; détection de 30 min à 24 h ; référence de 15 min maximum.
+    Une mise fictive de 10 € par bookmaker français et par match, sans plafond journalier.
+    Le rejeu d'avant le lancement est descriptif. Rentabilité future non démontrée.`};
 // ligne « Total » : cumul des simulations choisies (A, A+B, A+B+C…), par défaut toutes
 const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
@@ -1732,14 +1732,14 @@ function rendreStrategies() {
          : id.startsWith("JULES") ? "Depuis le 14/10 à 23 h 04 · 1 pari/match · max 6/j"
          : id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection"
          : id.startsWith("Gemini") ? "Multi-réf. adaptative · 1 pari/match · max 8/j"
-         : id.startsWith("Eden") ? "Depuis le 19/10 à 16 h · Pinnacle · 1,30–2,00 · max 6/j"
+         : id.startsWith("Eden") ? "Depuis le 19/10 à 20 h · Pinnacle et Polymarket · 1,30–2,00"
          : "Nouvelles prises officielles depuis le 14/10 à 14 h")
       : (id.startsWith("Convergence") ? "Rejeu exploratoire · même prise, prix et instant · 2 familles minimum"
          : id.startsWith("JULES EDGE v2") ? "Rejeu a posteriori · multi-réf. · 1,30–2,80 · edge 2,5–12 % · max 8/j"
          : id.startsWith("JULES") ? "Rejeu a posteriori · Pinnacle · 1,30–2,50 · edge 3–12 % · max 6/j"
          : id.startsWith("M3") ? "Optimisation a posteriori · 3 sports · 1,30–3,00 · 2–12 % d’edge"
          : id.startsWith("Gemini") ? "Rejeu hypothétique · Pin ≤ 2,15 / Bet+Poly ≤ 2,60 · edge ≥ 2,5 %"
-         : id.startsWith("Eden") ? "Rejeu descriptif · Pinnacle · 1,30–2,00 · edge 2–8 % · 30 min–12 h"
+         : id.startsWith("Eden") ? "Rejeu descriptif · Pinnacle et Polymarket · 1,30–2,00 · edge 2–12 % · 30 min–24 h"
          : "Rejeu hypothétique · mêmes dates que la famille");
     rows.push({id, nom:nomComp, reference:"comparateurs", detail:detailComp,
       graphe:"Comparateur", stats:periodeStrategies === "futur" ? L.comparateurs_futur?.[id] : per[periodeStrategies]});
@@ -1778,7 +1778,7 @@ function rendreStrategies() {
        <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
        ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
-    : '<p class="aide">Aucune nouvelle sélection Eden depuis le 19/10 à 16 h (Paris).</p>';
+    : '<p class="aide">Aucune nouvelle sélection Eden depuis le 19/10 à 20 h (Paris).</p>';
   const gemPicks = L.gemini_paris || [];
   const suivis = L.suivis_prudents || {};
   const navPrudent = L.navigation?.paris || {};
@@ -1825,7 +1825,7 @@ function rendreStrategies() {
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
   document.getElementById("strategies-total").textContent = `${rows.length} stratégies · ${reglees.length} avec des règlements · résultats non cumulables.`;
   const descriptions = {
-    futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h, Eden le 19/10 à 16 h (Paris). Les décisions sont figées à partir de la mise en service du registre ; les prises antérieures restent des reconstructions. Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
+    futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h, Eden le 19/10 à 20 h (Paris). Les décisions sont figées à partir de la mise en service du registre ; les prises antérieures restent des reconstructions. Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
     ensemble:"Historique figé : matchs du 7 au 13 octobre, règlements disponibles au relevé du 14/10 à 12 h 09 (Paris), y compris les règlements tardifs. Rejeu rétrospectif, distinct du suivi depuis lancement.",
     construction:"Construction : matchs du 7 au 10 octobre ; seuls les règlements connus avant le 11 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
     validation:"Validation : matchs des 11 et 12 octobre ; seuls les règlements connus avant le 13 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",

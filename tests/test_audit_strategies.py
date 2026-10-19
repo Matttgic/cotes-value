@@ -120,7 +120,7 @@ def test_diagnostic_fusion_tardive_preserve_chaque_prefixe():
 
 
 @pytest.mark.parametrize('fabrique,selectionner,maximum', [
-    (chatgpt, paris_chatgpt, 5), (jules, paris_jules_v2, 8), (eden, paris_eden, 6)])
+    (chatgpt, paris_chatgpt, 5), (jules, paris_jules_v2, 8)])
 def test_plafond_reinitialise_a_minuit_paris_en_hiver(fabrique, selectionner, maximum):
     # UTC+1 après le changement d'heure : le jour français change à 23h UTC.
     t = datetime(2026, 11, 1, 22, tzinfo=timezone.utc)
