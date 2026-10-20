@@ -268,6 +268,8 @@ assert.ok(h("sante-cotes").includes("Pinnacle · secours (pinnodds, PinBook)") &
 assert.ok(h("sante-cotes").includes("Pinnacle · fraîcheur") && h("sante-cotes").includes("En retard : cotes de 11 à 15 min, toutes écartées (limite 10 min)"));
 assert.equal(ligneFraicheurPinnacle({seuil_min:10,lignes:10,lignes_perimees:0,age_min_s:30,age_max_s:240}).includes("Cotes de 1 à 4 min (limite 10 min)"), true);
 assert.ok(ligneFraicheurPinnacle({seuil_min:10,lignes:200,lignes_perimees:50,age_max_s:700}).includes("25 % des cotes écartées"));
+assert.ok(ligneFraicheurPinnacle({seuil_min:10,seuil_loin_min:16,proche_h:2,lignes:200,lignes_perimees:2,age_max_s:700})
+  .includes("1 % des cotes écartées (limite 10 min si le match est dans les 2 h, 16 min sinon)"));
 assert.equal(ligneFraicheurPinnacle({lignes:0}), "");
 assert.ok(ligneSecoursPinnacle({pause:true,lignes:0}).includes("sante-mot-alerte"));
 assert.ok(h("sante-auto").includes("Collecte et comparaison") && h("sante-auto").includes("5 enregistrements réglés"));

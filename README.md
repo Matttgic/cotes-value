@@ -149,7 +149,10 @@ le champ `api.haywire.apiKey` de `https://www.pinnacle.com/config/app.json` (dé
 cache pour le cycle), puis le secret GitHub Actions ou la variable `PINNACLE_API_KEY`, puis la
 valeur guest historique du code si les deux échouent. Ce secours n'est pas une suppression de la valeur dans le dépôt
 ou son historique.
-`PINNACLE_AGE_MAX_MIN` (défaut 10) est l'âge maximum, en minutes, du cache Cloudflare.
+`PINNACLE_AGE_MAX_MIN` (défaut 10) est l'âge maximum, en minutes, du cache Cloudflare pour un match
+qui commence dans les 2 heures ; `PINNACLE_AGE_MAX_LOIN_MIN` (défaut 16) celui des autres matchs. Le cache
+dure 905 s et d'autres clients le rechargent dès son expiration : un seuil unique de 10 min écartait un
+tiers des lectures. Les deux à 16 : plus aucune lecture écartée, références jusqu'à 15 min.
 Le délai depuis le réchauffeur ne compte que s'il a renouvelé l'entrée (`fresh`, statut
 `MISS`, `EXPIRED` ou `DYNAMIC`). Sinon l'âge est l'en-tête `Age` de la lecture, ou à défaut
 l'âge vu à Paris (`age_s`). Au-delà, ou si aucune mesure n'existe, la cote est périmée et ne

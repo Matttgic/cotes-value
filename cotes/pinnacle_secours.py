@@ -18,7 +18,7 @@ Prudence :
   ``PINNODDS_PAUSE_MIN`` (30 minutes entre deux lectures par défaut). Avec un abonnement, relever la
   limite et mettre la pause à 0 ;
 - entre deux lectures, le dernier passage est rejoué avec son âge réel (``pinnacle_secours_cache.json``) :
-  une ligne plus vieille que ``PINNACLE_AGE_MAX_MIN`` reste marquée périmée et ne sert pas de référence ;
+  une ligne plus vieille que le seuil de ``pinnacle.est_perimee`` reste marquée périmée et ne sert pas de référence ;
 - PinBook (``PINBOOK_API_KEY``, offre gratuite RapidAPI : 550 requêtes par mois) passe après pinnodds et ne comble
   que les sports sans ligne fraîche : ``PINBOOK_SPORTS`` (football, tennis, basket par défaut),
   ``PINBOOK_LIMITE_JOUR`` (16 par défaut) et ``PINBOOK_PAUSE_MIN`` (60 par défaut). Sa fraîcheur vient de ``last_call``.
@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -87,12 +87,17 @@ def sports_si_perime() -> set[int]:
     return {sid for sid, nom in pinnacle.SPORTS.items() if nom in noms and sid in SPORTS_PINNODDS}
 
 
-def sports_en_retard(pin: list[dict]) -> set[int]:
-    """Sports de PINNACLE_SECOURS_PERIME lus en direct mais sans aucune cote fraîche."""
+def sports_en_retard(pin: list[dict], maintenant: datetime | None = None) -> set[int]:
+    """Sports de PINNACLE_SECOURS_PERIME lus en direct sans aucune cote fraîche pour leurs matchs proches
+    (``pinnacle.PROCHE_H``), ou pour tous leurs matchs s'ils n'en ont pas de proche."""
+    maintenant = maintenant or datetime.now(timezone.utc)
+    limite = maintenant + timedelta(hours=pinnacle.PROCHE_H)
     out = set()
     for sid in sports_si_perime():
         lignes = [l for l in pin if isinstance(l, dict) and l.get("sport") == pinnacle.SPORTS[sid]]
-        if lignes and all(l.get("cote_perimee") for l in lignes):
+        proches = [l for l in lignes if (d := _debut(l)) is not None and d <= limite]
+        groupe = proches or lignes
+        if groupe and all(l.get("cote_perimee") for l in groupe):
             out.add(sid)
     return out
 
@@ -272,6 +277,8 @@ def _passer(nom: str, sports: set[int], etat: dict, maintenant: datetime, sessio
                 "collecte_debut": instant, "collecte_recue": instant, "age_cache_s": age,
                 "cote_perimee": age is None or age > pinnacle.age_max_secondes()}
         lues = [l for ev in evenements if isinstance(ev, dict) for l in _lignes_evenement(ev, sport, base, handicaps, maintenant)]
+        for l in lues:
+            l["cote_perimee"] = pinnacle.est_perimee(age, l.get("debut"), maintenant)
         pinnacle._ajouter_proba_justes(lues)
         par_sport[sid] = [l for l in lues if l.get("proba_juste")]      # un marché incomplet ou incohérent ne sert pas
         RESUME["sports"].append(sport)
@@ -344,7 +351,7 @@ def _lire_cache(chemin: Path | None, sports: set[int], maintenant: datetime) -> 
             if debut is None or debut <= maintenant:
                 continue
             age = l["age_cache_s"] + int(ecoule)
-            out.append({**l, "age_cache_s": age, "cote_perimee": age > pinnacle.age_max_secondes()})
+            out.append({**l, "age_cache_s": age, "cote_perimee": pinnacle.est_perimee(age, l.get("debut"), maintenant)})
     return out
 
 

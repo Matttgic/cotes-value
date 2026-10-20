@@ -20,8 +20,9 @@ Un marché sans champ ``status`` est traité comme ouvert (les spéciaux n'en on
 Seul un ``status`` présent et différent de ``open`` est ignoré. Le délai depuis le
 réchauffeur ne compte comme âge que s'il a renouvelé le cache (``fresh``). Sinon l'âge
 est l'en-tête HTTP ``Age`` de la lecture, ou à défaut ``age_s`` vu à Paris. Au-delà de
-``PINNACLE_AGE_MAX_MIN`` minutes (10 par défaut), ou si aucune de ces mesures n'existe,
-``cote_perimee`` est vrai et la cote ne sert pas de référence. La clé guest est lue sur
+``PINNACLE_AGE_MAX_MIN`` minutes (10 par défaut) pour un match qui commence dans ``PROCHE_H``
+heures, de ``PINNACLE_AGE_MAX_LOIN_MIN`` (16 par défaut) pour les autres, ou si aucune de ces
+mesures n'existe, ``cote_perimee`` est vrai et la cote ne sert pas de référence. La clé guest est lue sur
 https://www.pinnacle.com/config/app.json (``api.haywire.apiKey``), puis
 ``PINNACLE_API_KEY``, puis la valeur historique. Elle n'est jamais journalisée.
 ``PINNACLE_RECHAUFFEUR_URL`` et ``PINNACLE_RECHAUFFEUR_SECRET`` appellent la fonction
@@ -35,7 +36,7 @@ import logging
 import os
 import time
 from math import isfinite
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import requests
 
@@ -141,6 +142,34 @@ def age_max_secondes() -> int:
     return minutes * 60
 
 
+# Mesuré le 20/10/2026 : d'autres clients de la clé publique rechargent les copies en cache dès leur
+# expiration (905 s), toutes ensemble. L'âge lu depuis GitHub va donc de 0 à 15 min, et un seuil unique de
+# 10 min écartait un tiers des lectures. Les cotes bougent surtout avant le coup d'envoi : le seuil court ne
+# vaut que pour les matchs qui commencent dans PROCHE_H heures.
+PROCHE_H = 2
+
+
+def age_max_loin_secondes() -> int:
+    """Seuil des matchs lointains. Défaut : 16 minutes, au-delà des 905 s du cache ; jamais sous le seuil court."""
+    brut = os.environ.get("PINNACLE_AGE_MAX_LOIN_MIN", "16").strip() or "16"
+    try:
+        minutes = int(brut)
+    except ValueError:
+        minutes = 16
+    if minutes < 0:
+        minutes = 16
+    return max(minutes * 60, age_max_secondes())
+
+
+def est_perimee(age, debut, maintenant: datetime) -> bool:
+    """Âge inconnu : périmé. Sinon seuil court pour un match proche (ou sans heure), seuil long au-delà."""
+    if age is None or isinstance(age, bool) or not isinstance(age, int):
+        return True
+    instant = _instant(debut)
+    proche = instant is None or instant - maintenant <= timedelta(hours=PROCHE_H)
+    return age > (age_max_secondes() if proche else age_max_loin_secondes())
+
+
 def _erreur(message: str) -> None:
     if message not in ERREURS and len(ERREURS) < 30:
         ERREURS.append(message)
@@ -210,11 +239,9 @@ def _choisir_chemin_prix(sid: int) -> str:
     """Orthographe des prix la plus fraîche selon un HEAD ; l'URL fixe au moindre doute.
 
     Mesuré le 20/10/2026 : trois orthographes sont en cache, au contenu identique, pour 905 s
-    (``max-age=905``) quand le seuil de fraîcheur est de 600 s. Un HEAD sur une copie expirée la recharge :
-    sonder les trois à chaque cycle les rechargeait ensemble, elles vieillissaient ensemble et toutes les
-    cotes d'un sport passaient périmées un cycle sur trois (33 % des lignes en moyenne). Les orthographes
-    sont donc sondées dans l'ordre, jusqu'à la première de moins de la moitié du seuil : celles qu'on ne
-    touche pas expirent puis se rechargent plus tard, décalées, et l'une d'elles reste fraîche.
+    (``max-age=905``). Les orthographes sont sondées dans l'ordre, jusqu'à la première de moins de la
+    moitié du seuil : moins de HEAD. Cela ne les décale pas : d'autres clients de la clé publique les
+    rechargent toutes ensemble dès leur expiration (voir ``est_perimee``).
 
     Mesuré du 18/10/2026 : une orthographe absente du cache part chez Pinnacle, qui refuse GitHub
     (403). Ce refus vise l'orthographe, pas nous : on l'écarte pour le reste du cycle. On ne coupe
@@ -603,6 +630,9 @@ def collecter(sports: dict | None = None, echeance=None) -> list[dict]:
                         lignes += _lignes_special(mu, mk, prix, par_id, base)
                 except (KeyError, TypeError, ValueError, AttributeError, OverflowError):
                     _erreur(f"sport {sid} : schéma de marché invalide")
+        fin = datetime.now(timezone.utc)
+        for ligne in lignes:
+            ligne["cote_perimee"] = est_perimee(ligne.get("age_cache_s"), ligne.get("debut"), fin)
         _ajouter_proba_justes(lignes)
         return lignes
     finally:
