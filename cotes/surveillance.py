@@ -19,7 +19,7 @@ ETAT = "sante_alertes.json"
 SEUIL_CYCLES = 2                    # cycles de suite avant d'alerter (toutes les ~5 min)
 RAPPEL = timedelta(hours=3)         # une panne qui dure est rappelée
 SURVEILLEES_DEGRADE = {"pinnacle", "winamax_direct", "betclic_direct", "unibet_direct", "pmu_direct", "olybet"}
-BENINS = ("budget", "HTTP 429")      # lecture partielle prévue ou quota : pas une alerte
+BENINS = ("budget", "HTTP 403", "HTTP 429")   # lecture partielle prévue, refus avec reprise ou quota : pas une alerte
 
 
 def noms(nom: str) -> str:

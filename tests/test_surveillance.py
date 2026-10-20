@@ -7,6 +7,10 @@ PANNE = {"winamax_direct": {"ok": False, "degrade": True, "erreurs": ["sport:1 :
 BUDGET = {"betclic_direct": {"ok": True, "degrade": True, "erreurs": ["budget"]}}
 
 
+def test_refus_403_de_pinnacle_avec_reprise_est_benin():
+    assert s.problemes({"pinnacle": {"ok": True, "degrade": True, "erreurs": ["HTTP 403", "HTTP 403"]}}) == {}
+
+
 def test_budget_et_resultats_ne_sont_pas_des_problemes():
     assert s.problemes({**BUDGET, "resultats_espn_tennis": {"ok": False}, "smarkets": {"ok": True, "degrade": True, "erreurs": ["x"]}}) == {}
 
