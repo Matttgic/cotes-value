@@ -1,45 +1,44 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-20T00:59:55+00:00",
+  "debut": "2026-10-20T01:04:34+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 14.5,
+    "secondes": 9.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "prix bid/ask invalides",
-     "prix lu après le coup d'envoi : rejet pré-match"
+     "prix bid/ask invalides"
     ]
    },
    "pinnacle": {
-    "secondes": 43.2,
+    "secondes": 38.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 28 matchups : HTTP 403",
      "sport 9 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403"
+     "sport 45 matchups : HTTP 403",
+     "sport 5 matchups : HTTP 403"
     ]
    },
-   "unibet_direct": {
-    "secondes": 4.7,
+   "olybet": {
+    "secondes": 5.1,
     "ok": true
    },
-   "olybet": {
-    "secondes": 5.6,
+   "unibet_direct": {
+    "secondes": 7.1,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 11.8,
+    "secondes": 11.3,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 19.8,
+    "secondes": 20.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -47,39 +46,48 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 67.1,
+    "secondes": 50.8,
     "ok": true
    },
    "smarkets": {
-    "secondes": 21.5,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 8.2,
+    "secondes": 8.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.6,
+    "secondes": 0.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.1,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 27809,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
-   "age_max_s": 523,
-   "age_min_s": 160,
+   "age_max_s": 796,
+   "age_min_s": 430,
    "lignes": 106650,
-   "lignes_perimees": 0,
+   "lignes_perimees": 80103,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -93,8 +101,8 @@
     "head_200": 33,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 3,
+    "choisi_autre": 4,
+    "choisi_fixe": 7,
     "reprise_403": 6
    }
   },
@@ -183,24 +191,8 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 7,
    "comparaisons": [
-    {
-     "match": "Deportivo Pasto – Alianza FC Valledupar",
-     "source": "Pinnacle",
-     "cote_netbet": 1.65,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.0933,
-     "aberrant": false
-    },
-    {
-     "match": "Deportivo Pasto – Alianza FC Valledupar",
-     "source": "PMU",
-     "cote_netbet": 1.65,
-     "cote_reference": 1.57,
-     "ecart_relatif": 0.051,
-     "aberrant": false
-    },
     {
      "match": "Al Diriyah – Al-Riyadh SC",
      "source": "Pinnacle",
@@ -248,27 +240,36 @@
      "cote_reference": 8.5,
      "ecart_relatif": 0.0294,
      "aberrant": false
+    },
+    {
+     "match": "Al Ettifaq Dammam – Al Ittihad Jeddah",
+     "source": "Pinnacle",
+     "cote_netbet": 2.9,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0794,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-20T01:00:06+00:00",
-   "pinnacle_derniere_lecture": "2026-10-20T01:00:15+00:00",
+   "pinnacle_premiere_lecture": "2026-10-20T01:04:44+00:00",
+   "pinnacle_derniere_lecture": "2026-10-20T01:05:13+00:00",
    "books_premiere_lecture": "2026-10-19T22:43:39+00:00",
-   "books_derniere_lecture": "2026-10-20T01:00:39+00:00",
-   "ecart_enveloppe_secondes": 8196.0
+   "books_derniere_lecture": "2026-10-20T01:05:15+00:00",
+   "ecart_enveloppe_secondes": 8494.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 561,
    "a_verifier": 9,
    "non_conforme": 9,
-   "mesures": 13450,
+   "mesures": 11584,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -284,26 +285,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-20T00:33:46+00:00"
   },
-  "fin": "2026-10-20T01:02:20+00:00",
+  "fin": "2026-10-20T01:06:18+00:00",
   "cotes": {
-   "francaises": 40010,
-   "pinnacle": 106650,
-   "polymarket": 10783,
+   "francaises": 39820,
+   "pinnacle": 134459,
+   "polymarket": 10682,
    "smarkets": 3804
   },
-  "matchs_francais": 872,
+  "matchs_francais": 863,
   "opportunites": 10,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 3
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-19T09:33:47+00:00",
-   "mode": "complet",
-   "opportunites": 0,
-   "nouveaux_paris": 0,
-   "requetes_pulsescore": {}
-  },
   {
    "debut": "2026-10-19T09:38:27+00:00",
    "mode": "complet",
@@ -1529,6 +1523,12 @@
    "mode": "complet",
    "opportunites": 10,
    "nouveaux_paris": 3
+  },
+  {
+   "debut": "2026-10-20T01:04:34+00:00",
+   "mode": "complet",
+   "opportunites": 10,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-20T00:33:46+00:00",
