@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-20T11:27:37+00:00",
+  "debut": "2026-10-20T11:32:15+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.8,
+    "secondes": 13.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,40 +12,34 @@
     ]
    },
    "pinnacle": {
-    "secondes": 19.6,
-    "ok": true
-   },
-   "olybet": {
-    "secondes": 6.0,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 13.6,
-    "ok": false,
+    "secondes": 33.0,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:3 : réseau",
-     "sport:4 : réseau",
-     "sport:5 : réseau",
-     "sport:6 : réseau",
-     "sport:16 : réseau",
-     "sport:19 : réseau",
-     "sport:23 : réseau",
-     "lecture vide"
+     "sport 18 markets/straight : HTTP 403",
+     "sport 27 markets/straight : HTTP 403",
+     "sport 15 matchups : HTTP 502",
+     "sport 45 matchups : HTTP 403"
     ]
    },
+   "olybet": {
+    "secondes": 5.8,
+    "ok": true
+   },
    "pmu_direct": {
-    "secondes": 13.7,
+    "secondes": 14.6,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 34.1,
+    "secondes": 29.6,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 32.0,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -53,7 +47,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.6,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -61,19 +55,16 @@
     ]
    },
    "smarkets": {
-    "secondes": 21.5,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 10.3,
+    "secondes": 8.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.3,
+    "secondes": 1.0,
     "ok": true
    },
    "cotes_cloture": {
@@ -84,30 +75,42 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football_americain",
+    "handball",
+    "football"
+   ],
+   "requetes": 3,
+   "lignes": 33516,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 732,
-   "age_min_s": 485,
-   "lignes": 116934,
-   "lignes_perimees": 2726,
-   "rechauffeur": "ok",
+   "age_max_s": 826,
+   "age_min_s": 61,
+   "lignes": 116796,
+   "lignes_perimees": 3290,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 40,
+    "head_200": 8,
     "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 7,
-    "sport_vide": 6
+    "ortho_refusee": 1,
+    "choisi_autre": 2,
+    "choisi_fixe": 3,
+    "reprise_403": 3,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -115,86 +118,62 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "PK-35 Helsinki – FF Jaro",
+     "match": "Lille – Galatasaray",
      "source": "Pinnacle",
-     "cote_olybet": 2.67,
-     "cote_reference": 2.8,
-     "ecart_relatif": 0.0464,
+     "cote_olybet": 2.07,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0505,
      "aberrant": false
     },
     {
-     "match": "PK-35 Helsinki – FF Jaro",
+     "match": "Lille – Galatasaray",
      "source": "PMU",
-     "cote_olybet": 2.67,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.0766,
-     "aberrant": false
-    },
-    {
-     "match": "FC Tokyo – Kashiwa Reysol",
-     "source": "Pinnacle",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0651,
-     "aberrant": false
-    },
-    {
-     "match": "FC Tokyo – Kashiwa Reysol",
-     "source": "PMU",
-     "cote_olybet": 2.01,
+     "cote_olybet": 2.07,
      "cote_reference": 2.1,
-     "ecart_relatif": 0.0429,
+     "ecart_relatif": 0.0143,
      "aberrant": false
     },
     {
-     "match": "Kawasaki Frontale – Vissel Kobe",
+     "match": "Liverpool – Villarreal",
      "source": "Pinnacle",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.37,
-     "ecart_relatif": 0.0591,
+     "cote_olybet": 1.45,
+     "cote_reference": 1.495,
+     "ecart_relatif": 0.0301,
      "aberrant": false
     },
     {
-     "match": "Kawasaki Frontale – Vissel Kobe",
+     "match": "Liverpool – Villarreal",
      "source": "PMU",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0304,
+     "cote_olybet": 1.45,
+     "cote_reference": 1.43,
+     "ecart_relatif": 0.014,
      "aberrant": false
     },
     {
-     "match": "Avispa Fukuoka – Gamba Osaka",
+     "match": "FC Porto – PSV Eindhoven",
      "source": "Pinnacle",
-     "cote_olybet": 2.45,
-     "cote_reference": 2.63,
-     "ecart_relatif": 0.0684,
+     "cote_olybet": 1.48,
+     "cote_reference": 1.532,
+     "ecart_relatif": 0.0339,
      "aberrant": false
     },
     {
-     "match": "Avispa Fukuoka – Gamba Osaka",
+     "match": "FC Porto – PSV Eindhoven",
      "source": "PMU",
-     "cote_olybet": 2.45,
-     "cote_reference": 2.35,
-     "ecart_relatif": 0.0426,
+     "cote_olybet": 1.48,
+     "cote_reference": 1.46,
+     "ecart_relatif": 0.0137,
      "aberrant": false
     },
     {
-     "match": "Yokohama F. Marinos – Tokyo Verdy",
+     "match": "Sporting CP – LASK Linz",
      "source": "Pinnacle",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.877,
-     "ecart_relatif": 0.0518,
-     "aberrant": false
-    },
-    {
-     "match": "Yokohama F. Marinos – Tokyo Verdy",
-     "source": "PMU",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.75,
-     "ecart_relatif": 0.0171,
+     "cote_olybet": 1.18,
+     "cote_reference": 1.21,
+     "ecart_relatif": 0.0249,
      "aberrant": false
     }
    ],
@@ -265,22 +244,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-20T11:27:46+00:00",
-   "pinnacle_derniere_lecture": "2026-10-20T11:27:52+00:00",
+   "pinnacle_premiere_lecture": "2026-10-20T11:32:26+00:00",
+   "pinnacle_derniere_lecture": "2026-10-20T11:32:50+00:00",
    "books_premiere_lecture": "2026-10-20T09:50:24+00:00",
-   "books_derniere_lecture": "2026-10-20T11:27:57+00:00",
-   "ecart_enveloppe_secondes": 5848.0
+   "books_derniere_lecture": "2026-10-20T11:32:52+00:00",
+   "ecart_enveloppe_secondes": 6146.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 592,
+   "conforme": 593,
    "a_verifier": 9,
-   "non_conforme": 10,
-   "mesures": 19793,
+   "non_conforme": 9,
+   "mesures": 23389,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -296,25 +276,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-20T10:52:58+00:00"
   },
-  "fin": "2026-10-20T11:29:52+00:00",
+  "fin": "2026-10-20T11:34:24+00:00",
   "cotes": {
-   "francaises": 70848,
-   "pinnacle": 116934,
-   "polymarket": 13513,
+   "francaises": 80875,
+   "pinnacle": 150312,
+   "polymarket": 13613,
    "smarkets": 3920
   },
-  "matchs_francais": 1009,
-  "opportunites": 1,
+  "matchs_francais": 1250,
+  "opportunites": 2,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-19T20:05:52+00:00",
-   "mode": "complet",
-   "opportunites": 7,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-19T20:09:09+00:00",
    "mode": "complet",
@@ -1514,6 +1488,12 @@
    "mode": "complet",
    "opportunites": 1,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-20T11:32:15+00:00",
+   "mode": "complet",
+   "opportunites": 2,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-20T10:52:58+00:00",
