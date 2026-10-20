@@ -760,6 +760,8 @@ def main() -> int:
                                                                                 "nouveaux_paris")}]
     etat["historique"] = historique
     ecrire_json(donnees / "etat.json", etat)
+    from cotes import surveillance                                      # noqa: E402
+    journal["surveillance"] = surveillance.surveiller(donnees, journal.get("etapes", {}))
 
     # 6. site
     if not args.sans_site:
