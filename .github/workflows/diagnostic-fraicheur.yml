@@ -1,0 +1,56 @@
+name: Diagnostic fraicheur (lecture seule)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Un seul essai ; aucun pari ni publication. Consomme des minutes Actions."
+        type: choice
+        options: [test, complet]
+        default: test
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagnostic-fraicheur
+  cancel-in-progress: false
+
+jobs:
+  observer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Tests du diagnostic uniquement
+        run: |
+          python -m unittest discover -s tests -p test_diagnostic_fraicheur.py -v
+          python -m unittest discover -s tests -p test_observation_fraicheur.py -v
+      - name: Lire la reserve sans la modifier
+        uses: actions/checkout@v4
+        with:
+          ref: donnees
+          path: reserve-diagnostic
+          persist-credentials: false
+          sparse-checkout: horizon_direct.json
+          sparse-checkout-cone-mode: false
+      - name: Une collecte observee sans simulation
+        env:
+          PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
+          PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
+          PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
+        run: python scripts/observer_collecte.py --mode "${{ inputs.mode }}" --reserve reserve-diagnostic/horizon_direct.json --sortie rapport-diagnostic
+      - name: Conserver le rapport sans donnees brutes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostic-fraicheur-${{ github.run_id }}
+          path: rapport-diagnostic/fraicheur-cycle.json
+          if-no-files-found: warn
+          retention-days: 7
