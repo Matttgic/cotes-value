@@ -250,3 +250,19 @@ def test_lecture_incompletee_est_un_echec(monkeypatch):
     assert "lecture incomplète" in meta["erreurs"]
 
 
+
+
+def test_noms_abreges_du_tennis_reconnus_par_le_nom_de_famille():
+    # 20/10/2026 : « M. Uchijima +0.5 » pour Moyuka Uchijima ; sans cela, aucun handicap de tennis.
+    assert winamax._issue("no", "M. Uchijima +0.5", "Moyuka Uchijima", "Eri Shibahara", "GAME_HANDICAP") == "HOME"
+    assert winamax._issue("yes", "E. Shibahara -0.5", "Moyuka Uchijima", "Eri Shibahara", "GAME_HANDICAP") == "AWAY"
+    assert winamax._issue("no", "J.M. Cerundolo -1.5", "Juan Manuel Cerundolo", "Luca Nardi", "SET_HANDICAP") == "HOME"
+    # nom de famille commun aux deux joueurs, ou inconnu : aucune issue plutôt qu'une mauvaise
+    assert winamax._issue("no", "A. Zverev +1.5", "Alexander Zverev", "Mischa Zverev", "SET_HANDICAP") is None
+    assert winamax._issue("no", "X. Inconnu +1.5", "Moyuka Uchijima", "Eri Shibahara", "SET_HANDICAP") is None
+
+
+def test_tennis_et_hockey_lisent_leurs_filtres():
+    # Sans filtre, la route du sport ne porte que le vainqueur (2 cotes par match).
+    assert {107, 108, 116, 121, 122, 123} <= set(winamax.FILTRES["tennis"])
+    assert {247, 248, 249, 253, 255} <= set(winamax.FILTRES["hockey"])

@@ -229,7 +229,7 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
     """Une étape qui a perdu des lectures (HTTP 500, coupure…) est marquée dégradée, pas « ok » muette :
     sinon « aucune source » pour un pari ne dit pas qu'une source était en panne."""
     if erreurs and nom in journal["etapes"]:
-        journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:3]}
+        journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:10]}
 
 
 def _radar_depuis(lignes) -> list[dict]:

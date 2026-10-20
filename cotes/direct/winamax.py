@@ -70,9 +70,15 @@ _PAR_SPORT = {
 # Filtres de la page sport, limités aux marchés déjà comparés. Le football est
 # le plus lourd (quelques Mo par filtre) ; un filtre remplace des centaines de
 # routes ``match:``.
+# Tennis et hockey relevés le 20/10/2026 (sans eux : vainqueur seul) ; un seul filtre par marché, les autres
+# (108/120, 247/260…) renvoient les mêmes paris. Tennis : sets (314), jeux (189), écart de sets (188),
+# écart de jeux (187), jeux de chaque joueur (190, 191). Hockey : écart (410), total (412), les deux
+# équipes marquent (29), vainqueur (406), double chance (10).
 FILTRES = {
     "football": (6, 13, 16, 56, 17, 74, 4),
     "basket": (207,),
+    "tennis": (107, 108, 116, 121, 122, 123),
+    "hockey": (247, 248, 249, 253, 255),
 }
 # En dessous, la lecture a vu les matchs mais n'a presque pas sorti de cotes.
 _SEUIL_LECTURE = 0.5
@@ -83,6 +89,7 @@ _HUIT = {"1": "HOME", "2": "AWAY", "x": "DRAW", "X": "DRAW"}
 _DOUBLES = {"9": "HOME_DRAW", "10": "HOME_AWAY", "11": "DRAW_AWAY"}
 _TOTAUX = {"over": "OVER", "under": "UNDER"}
 _BTTS = {"74": "YES", "76": "NO"}
+_ABREGE = re.compile(r"^(?:[^\W\d_]{1,3}\.\s*)+(.+?)(?:\s*[-+]\d+(?:[.,]\d+)?)?\s*$")
 
 
 def _pause(secondes: float) -> None:
@@ -303,6 +310,14 @@ def _issue(code, libelle: str, domicile: str, exterieur: str, canon: str) -> str
             return "HOME"
         if exterieur and bas.startswith(exterieur.casefold()):
             return "AWAY"
+        # Tennis : « M. Uchijima +0.5 » pour Moyuka Uchijima. Le nom de famille doit désigner un seul joueur.
+        m = _ABREGE.match(bas)
+        if m:
+            nom = m.group(1)
+            dom = bool(domicile) and (domicile.casefold() == nom or domicile.casefold().endswith(" " + nom))
+            ext = bool(exterieur) and (exterieur.casefold() == nom or exterieur.casefold().endswith(" " + nom))
+            if dom != ext:
+                return "HOME" if dom else "AWAY"
     return None
 
 

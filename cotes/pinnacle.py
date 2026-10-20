@@ -70,6 +70,7 @@ _ortho_refusees: set[str] = set()   # orthographes refusées (403) pendant ce cy
 REPRISES_403_MAX = 6
 PAUSE_REPRISE_403_S = 3
 _reprises_403 = 0
+_dernier_code: int | None = None    # statut HTTP de la dernière réponse lue par _get
 _plans: dict[int, dict] = {}
 
 
@@ -186,6 +187,10 @@ def _chemin_matchups(sid: int) -> str:
     # URL fixes : le 18/10/2026, les chemins proposés par le réchauffeur (cache-buster « &_= »,
     # orthographes tournantes) faisaient répondre Pinnacle en 204/403 et la collecte tombait à 0.
     return f"/sports/{sid}/matchups?withSpecials=true"
+
+
+def _chemin_matchups_simple(sid: int) -> str:
+    return f"/sports/{sid}/matchups"
 
 
 def _chemin_marches(sid: int) -> str:
@@ -307,8 +312,10 @@ def _demander_rechauffe(sports: dict, echeance=None) -> None:
     etat_rechauffeur = "ok"
 
 
-def _get(path: str, essais: int = 3, echeance=None):
-    global _bloque, _reprises_403
+def _get(path: str, essais: int = 3, echeance=None, sonde_403: bool = False):
+    """``sonde_403`` : un 403 rend None tout de suite, sans reprise ni erreur notée (l'appelant vérifie)."""
+    global _bloque, _reprises_403, _dernier_code
+    _dernier_code = None
     if echeance is None:
         echeance = _echeance_active
     if echeance is not None and not echeance.ok():
@@ -327,6 +334,7 @@ def _get(path: str, essais: int = 3, echeance=None):
             return None
         try:
             r = requests.get(base_api() + path, headers=headers(), timeout=delai)
+            _dernier_code = r.status_code
             if r.status_code == 200:
                 try:
                     d = r.json()
@@ -340,6 +348,8 @@ def _get(path: str, essais: int = 3, echeance=None):
                         _compter("reprise_403_ok")
                     return d
                 _erreur(f"{contexte} : liste JSON attendue")
+                return None
+            if r.status_code == 403 and sonde_403:
                 return None
             if r.status_code == 403 and not reprise_403 and _reprises_403 < REPRISES_403_MAX:
                 _reprises_403 += 1            # refus aléatoire : un seul nouvel essai, sans noter d'erreur s'il passe
@@ -475,6 +485,33 @@ def _norm_special(desc: str, dom: str, ext: str) -> tuple[str, str]:
     return desc.strip(), periode
 
 
+def _lire_matchups(sid: int) -> list:
+    """Catalogue d'un sport.
+
+    Mesuré le 20/10/2026 : curling, cyclisme, beach-volley, badminton, padel et hockey sur gazon refusent
+    l'URL avec spéciaux (403, cache « BYPASS ») alors que l'URL simple, servie par le cache, répond 200 avec
+    0 match. Un 403 est donc d'abord vérifié sur l'URL simple : vide, le sport n'a aucun match (ni erreur, ni
+    reprise de 3 s). Sinon, reprise habituelle de l'URL avec spéciaux (403 aléatoires du football) ; si elle
+    échoue encore, les matchs de l'URL simple servent, sans les marchés spéciaux.
+    """
+    d = _get(_chemin_matchups(sid), sonde_403=True)
+    if d is not None or _bloque or _dernier_code != 403:
+        return d or []
+    simple = _get(_chemin_matchups_simple(sid), essais=1, sonde_403=True)
+    if simple == []:
+        _compter("sport_vide")
+        return []
+    if _bloque:
+        return []
+    complet = _get(_chemin_matchups(sid))
+    if complet:
+        return complet
+    if simple:
+        _compter("matchups_sans_speciaux")
+        return simple
+    return []
+
+
 def collecter(sports: dict | None = None, echeance=None) -> list[dict]:
     """Toutes les cotes ouvertes (avant-match), une ligne par issue, avec probabilité juste."""
     global _bloque, _choix_coupe, _reprises_403, _echeance_active
@@ -501,7 +538,7 @@ def collecter(sports: dict | None = None, echeance=None) -> list[dict]:
             if echeance is not None and not echeance.ok():
                 _erreur("budget")
                 break
-            matchups = _get(_chemin_matchups(sid)) or []
+            matchups = _lire_matchups(sid)
             if _bloque:
                 break
             if not matchups:
