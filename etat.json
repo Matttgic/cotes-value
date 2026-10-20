@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-20T21:37:12+00:00",
+  "debut": "2026-10-20T21:41:53+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 9.5,
+    "secondes": 9.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,73 +12,85 @@
     ]
    },
    "pinnacle": {
-    "secondes": 24.2,
+    "secondes": 29.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403"
+     "sport 9 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "sport 37 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 4.9,
+    "secondes": 3.2,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 13.4,
+    "secondes": 13.0,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 16.9,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 32.2,
+    "secondes": 32.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 37.7,
-    "ok": true
-   },
    "betclic_direct": {
-    "secondes": 56.6,
+    "secondes": 48.3,
     "ok": true
    },
    "smarkets": {
-    "secondes": 26.3,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 6.1,
+    "secondes": 11.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.6,
+    "secondes": 1.2,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.3,
+    "secondes": 0.2,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 28929,
+   "erreurs": [
+    "pinbook : limite journalière du secours atteinte"
+   ],
+   "pause": true,
+   "cache_lignes": 28929,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 833,
-   "age_min_s": 65,
-   "lignes": 117317,
-   "lignes_perimees": 12,
+   "age_max_s": 614,
+   "age_min_s": 165,
+   "lignes": 117532,
+   "lignes_perimees": 1196,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -89,13 +101,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 25,
+    "head_200": 38,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "choisi_fixe": 6,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 8,
+    "choisi_fixe": 5,
+    "sport_vide": 4,
+    "reprise_403": 3
    }
   },
   "olybet_source": "direct",
@@ -103,24 +115,8 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 10,
    "comparaisons": [
-    {
-     "match": "V-Varen Nagasaki – Sanfrecce Hiroshima",
-     "source": "Pinnacle",
-     "cote_olybet": 5.4,
-     "cote_reference": 6.14,
-     "ecart_relatif": 0.1205,
-     "aberrant": false
-    },
-    {
-     "match": "V-Varen Nagasaki – Sanfrecce Hiroshima",
-     "source": "PMU",
-     "cote_olybet": 5.4,
-     "cote_reference": 6.4,
-     "ecart_relatif": 0.1562,
-     "aberrant": true
-    },
     {
      "match": "Kyoto Sanga – Kashima Antlers",
      "source": "Pinnacle",
@@ -152,18 +148,57 @@
      "cote_reference": 1.94,
      "ecart_relatif": 0.0206,
      "aberrant": false
+    },
+    {
+     "match": "Kawasaki Frontale – Vissel Kobe",
+     "source": "Pinnacle",
+     "cote_olybet": 2.23,
+     "cote_reference": 2.37,
+     "ecart_relatif": 0.0591,
+     "aberrant": false
+    },
+    {
+     "match": "Kawasaki Frontale – Vissel Kobe",
+     "source": "PMU",
+     "cote_olybet": 2.23,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.0304,
+     "aberrant": false
+    },
+    {
+     "match": "Fagiano Okayama – Mito HollyHock",
+     "source": "Pinnacle",
+     "cote_olybet": 1.68,
+     "cote_reference": 1.775,
+     "ecart_relatif": 0.0536,
+     "aberrant": false
+    },
+    {
+     "match": "Fagiano Okayama – Mito HollyHock",
+     "source": "PMU",
+     "cote_olybet": 1.68,
+     "cote_reference": 1.74,
+     "ecart_relatif": 0.0345,
+     "aberrant": false
+    },
+    {
+     "match": "Avispa Fukuoka – Gamba Osaka",
+     "source": "Pinnacle",
+     "cote_olybet": 2.45,
+     "cote_reference": 2.61,
+     "ecart_relatif": 0.0613,
+     "aberrant": false
+    },
+    {
+     "match": "Avispa Fukuoka – Gamba Osaka",
+     "source": "PMU",
+     "cote_olybet": 2.45,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0426,
+     "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "V-Varen Nagasaki – Sanfrecce Hiroshima",
-     "source": "PMU",
-     "cote_olybet": 5.4,
-     "cote_reference": 6.4,
-     "ecart_relatif": 0.1562,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -205,17 +240,17 @@
     {
      "match": "Chivas Guadalajara – Necaxa",
      "source": "Pinnacle",
-     "cote_netbet": 1.28,
+     "cote_netbet": 1.29,
      "cote_reference": 1.379,
-     "ecart_relatif": 0.0717,
+     "ecart_relatif": 0.0644,
      "aberrant": false
     },
     {
      "match": "Chivas Guadalajara – Necaxa",
      "source": "PMU",
-     "cote_netbet": 1.28,
+     "cote_netbet": 1.29,
      "cote_reference": 1.27,
-     "ecart_relatif": 0.0079,
+     "ecart_relatif": 0.0157,
      "aberrant": false
     },
     {
@@ -230,8 +265,8 @@
      "match": "Vasco Da Gama – Boca Juniors",
      "source": "PMU",
      "cote_netbet": 2.55,
-     "cote_reference": 2.55,
-     "ecart_relatif": 0.0,
+     "cote_reference": 2.5,
+     "ecart_relatif": 0.02,
      "aberrant": false
     },
     {
@@ -254,22 +289,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-20T21:37:22+00:00",
-   "pinnacle_derniere_lecture": "2026-10-20T21:37:29+00:00",
+   "pinnacle_premiere_lecture": "2026-10-20T21:14:23+00:00",
+   "pinnacle_derniere_lecture": "2026-10-20T21:42:08+00:00",
    "books_premiere_lecture": "2026-10-20T19:01:04+00:00",
-   "books_derniere_lecture": "2026-10-20T21:37:36+00:00",
-   "ecart_enveloppe_secondes": 9385.0
+   "books_derniere_lecture": "2026-10-20T21:42:24+00:00",
+   "ecart_enveloppe_secondes": 9664.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 614,
+   "conforme": 615,
    "a_verifier": 8,
-   "non_conforme": 10,
-   "mesures": 20658,
+   "non_conforme": 9,
+   "mesures": 20554,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -283,27 +319,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-20T20:44:07+00:00"
+   "dernier_reglement": "2026-10-20T21:39:18+00:00"
   },
-  "fin": "2026-10-20T21:39:09+00:00",
+  "fin": "2026-10-20T21:43:29+00:00",
   "cotes": {
-   "francaises": 66700,
-   "pinnacle": 117317,
-   "polymarket": 9931,
+   "francaises": 66748,
+   "pinnacle": 146461,
+   "polymarket": 9943,
    "smarkets": 3794
   },
-  "matchs_francais": 1062,
+  "matchs_francais": 1059,
   "opportunites": 1,
   "opportunites_suspectes": 3,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-20T05:36:49+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-20T05:41:30+00:00",
    "mode": "complet",
@@ -1500,6 +1530,12 @@
   },
   {
    "debut": "2026-10-20T21:37:12+00:00",
+   "mode": "complet",
+   "opportunites": 1,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-20T21:41:53+00:00",
    "mode": "complet",
    "opportunites": 1,
    "nouveaux_paris": 0
