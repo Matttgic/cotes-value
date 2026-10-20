@@ -56,3 +56,27 @@ def tranche(items: list, curseur: int, taille: int) -> tuple[list, int]:
     i = int(curseur or 0) % n
     pris = [items[(i + k) % n] for k in range(min(taille, n))]
     return pris, (i + len(pris)) % n
+
+
+def fusionner_marches(anciennes, nouvelles, maintenant: datetime, heures: float = 36,
+                      age_max_min: float = 15) -> list[dict]:
+    """Comme ``fusionner``, au niveau du marché : une ligne ancienne n'est remplacée que si son marché
+    (match, marché, période) a été relu. Les marchés lus par rotation restent entre deux lectures, au plus
+    ``age_max_min`` minutes : au-delà, la comparaison ne les rapproche plus d'une référence fraîche."""
+    horizon = maintenant + timedelta(hours=heures)
+    relus = {(l.get("match_id"), l.get("marche"), l.get("periode"))
+             for l in nouvelles or [] if isinstance(l, dict) and l.get("match_id")}
+    limite = timedelta(minutes=age_max_min)
+    gardes = []
+    for ligne in anciennes or []:
+        if not isinstance(ligne, dict) or not ligne.get("match_id"):
+            continue
+        if (ligne.get("match_id"), ligne.get("marche"), ligne.get("periode")) in relus:
+            continue
+        debut = _heure(ligne.get("debut"))
+        lu = _heure(ligne.get("collecte"))
+        if not debut or not (maintenant < debut <= horizon) or lu is None or maintenant - lu > limite:
+            continue
+        gardes.append(ligne)
+    gardes.extend(l for l in nouvelles or [] if isinstance(l, dict) and l.get("match_id"))
+    return gardes

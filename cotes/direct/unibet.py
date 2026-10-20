@@ -23,7 +23,7 @@ from urllib.parse import urlencode
 import requests
 
 from cotes.correspondance import ressemblance
-from cotes.direct.horizon import fusionner
+from cotes.direct.horizon import fusionner_marches, tranche
 from cotes.pulsescore import traduire
 
 ACCUEIL = "https://www.unibet.fr/"
@@ -69,6 +69,10 @@ PARAMS = {"lineId": "1", "originId": "3", "breakdownEventsIntoDays": "true", "sh
 _PAGES_MAX = 16
 _PAGES_COURT = 3
 _HORIZON_COURT = 6
+# Cycle avec réserve : marché principal à chaque cycle, autres marchés par tranches tournantes. Une lecture
+# complète (~100 requêtes) dépassait le budget de 75 s un cycle sur trois avant le 18/10 ; 20 filtres par
+# cycle couvrent les ~55 secondaires en trois cycles (~14 min), sous la fenêtre de 15 min de la comparaison.
+_SECONDAIRES_PAR_CYCLE = 20
 # Une requête lancée trop près de l'échéance dépasserait le join du cycle et
 # ferait jeter les cotes déjà lues. On s'arrête avant, avec le partiel.
 _MARGE_S = 3.0
@@ -388,6 +392,14 @@ def _issue(desc: str, home: str, away: str, canon: str) -> str | None:
     return None
 
 
+def _sans_equipes(texte: str, home: str, away: str) -> str:
+    """Le texte sans les noms des équipes : « PHI 76ers 112,5 » ne doit pas donner la ligne 76."""
+    for nom in sorted((home, away), key=len, reverse=True):
+        if nom:
+            texte = re.sub(re.escape(nom), " ", texte, flags=re.I)
+    return texte
+
+
 def marche_depuis(cle: str, offre: dict, home: str, away: str) -> dict | None:
     if not isinstance(offre, dict):
         return None
@@ -408,7 +420,7 @@ def marche_depuis(cle: str, offre: dict, home: str, away: str) -> dict | None:
     libelle = desc if not periode or periode.casefold() in desc.casefold() else f"{desc} - {periode}"
     ligne_marche = _crochet(desc)
     if ligne_marche is None and canon in ("OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
-        ligne_marche = _nombre(desc)
+        ligne_marche = _nombre(_sans_equipes(desc, home, away))
     selections = []
     for issue in offre.get("outcomes") or []:
         if not isinstance(issue, dict) or _cache(issue):
@@ -425,7 +437,7 @@ def marche_depuis(cle: str, offre: dict, home: str, away: str) -> dict | None:
         sel = {"canonicalOutcome": code, "rawName": nom, "odds": cote}
         ligne = _crochet(nom)
         if ligne is None and canon in ("OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
-            ligne = ligne_marche if ligne_marche is not None else _nombre(nom)
+            ligne = ligne_marche if ligne_marche is not None else _nombre(_sans_equipes(nom, home, away))
         if canon in ("ASIAN_HANDICAP", "EUROPEAN_HANDICAP", "OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
             if ligne is None:
                 continue
@@ -618,9 +630,9 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
     si aucun match du sport n'est sur le radar.
 
     Avec une réserve (le cycle), le radar ne retire pas de match : chaque sport est
-    suivi par ``nextEventId`` jusqu'à l'horizon, sur le marché principal seulement.
-    Les autres types (handicaps, score exact) produisaient des clés communes aux
-    mauvaises cotes. La comparaison reçoit l'union avec le cache.
+    suivi par ``nextEventId`` jusqu'à l'horizon, sur le marché principal à chaque cycle,
+    et sur une tranche tournante des autres marchés (``_SECONDAIRES_PAR_CYCLE`` filtres).
+    La comparaison reçoit l'union avec le cache, fusionnée marché par marché.
     """
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
@@ -644,7 +656,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
     # les matchs que PulseScore compare quand même.
     filtre_radar = bool(radar_idx) and reserve is None
     pages_max = _PAGES_MAX if reserve is not None else _pages(heures_lecture)
-    filtres_heures = _HORIZON_COURT if reserve is not None else heures_lecture
+    filtres_heures = heures_lecture
     verrou_sac = threading.Lock()
     largeur = max(1, int(concurrence or 1))
 
@@ -699,13 +711,15 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         candidats.append((interne, noeud))
     curseur_suivant = None
     if reserve is not None:
-        primaires = []
+        primaires, secondaires = [], []
         for interne, noeud in candidats:
             filtres = _filtres(interne, filtres_heures)
             if filtres:
                 primaires.append((noeud, interne, filtres[0][0], filtres[0][1]))
+                secondaires += [(noeud, interne, t, p) for t, p in filtres[1:]]
         executer(primaires)
-        curseur_suivant = 0
+        pris, curseur_suivant = tranche(secondaires, bloc.get("curseur"), _SECONDAIRES_PAR_CYCLE)
+        executer(pris)
     elif filtre_radar:
         primaires = []
         for interne, noeud in candidats:
@@ -759,7 +773,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
             "requetes": client.requetes, "matchs": matchs}
     if reserve is None:
         return lignes, meta
-    fusion = fusionner(bloc.get("lignes") or [], lignes, maintenant, heures)
+    fusion = fusionner_marches(bloc.get("lignes") or [], lignes, maintenant, heures)
     meta["ok"] = not client.erreurs or bool(fusion)
     meta["matchs"] = len({l.get("match_id") for l in fusion})
     meta["reserve"] = {"curseur": curseur_suivant, "lignes": fusion}
