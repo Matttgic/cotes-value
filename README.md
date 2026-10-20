@@ -77,6 +77,10 @@ cinq nouvelles mises maximum par jour. Le bouton « Voir les paris ChatGPT » do
 ses sélections. Aucun appel API supplémentaire.
 
 [Règles, audit historique défavorable et limites](docs/strategie-chatgpt.md).
+
+**Qwen** (`qwen_persistence`, depuis le 20/10/2026) : Pinnacle, cotes 1,45–3,20, edge ≥ 3,5 %, Winamax et Betclic,
+15 min à 2 h avant le match, validée après deux cycles consécutifs, 3 paris par jour au plus.
+[Règles et limites](docs/strategie-qwen.md).
 Le backtest de conception est exclu du bilan prospectif : rentabilité non démontrée.
 
 ### JULES EDGE v1

@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from .decisions import appliquer
 from .strategie_m3_structure import M3_STRUCTURE, paris_m3_structure
+from .strategie_qwen import QWEN, paris_qwen
 from .convergence import STRATEGIES, selections, votes
 from .laboratoire import heure
 from .simulation import REFERENCES, paris_strategie
@@ -28,7 +29,7 @@ CONVERGENCE_3 = {
     "debut": DEBUT_VARIANTES, "version": "1", "mise": 10,
     "regles": "≥3 familles parmi Claude, ChatGPT, Gemini, Jules · 1 pari/match · mise fictive 10 €",
 }
-VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE)
+VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN)
 PARIS = ZoneInfo("Europe/Paris")
 
 
@@ -146,6 +147,7 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
     if depuis is None:
         resultat = {cle: appliquer(paris, ids, cle) for cle, ids in resultat.items()}
     resultat["m3_structure"] = paris_m3_structure(paris) if depuis is None else set()
+    resultat["qwen_persistence"] = paris_qwen(paris, depuis)
     return resultat
 
 

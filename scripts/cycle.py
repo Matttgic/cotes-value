@@ -679,6 +679,8 @@ def main() -> int:
     opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
                          index=index, controle=(etat_controle, suspects),
                          hors_consensus=hors) or []
+    for o in opportunites:           # marqueur de cycle : sert à la persistance (Qwen) et au diagnostic
+        o["cycle_id"] = journal["debut"]
     # Écarts d'affichage, y compris quand Smarkets ne décide pas. Avant le placement :
     # le pari enregistre les trois champs.
     comparaison.annoter_ecarts(opportunites, francais, {"Polymarket": poly, "Smarkets": sm_lignes})
@@ -694,6 +696,14 @@ def main() -> int:
         journal["redecision"] = {"ajoutees": redecider_ouverts(registre, maintenant)}
     except Exception as e:      # une correction ratée ne doit jamais arrêter la collecte
         journal["redecision"] = {"erreur": f"{type(e).__name__}: {e}"[:200]}
+    try:                              # Qwen : validation après deux cycles consécutifs ; jamais bloquante
+        from cotes import strategie_qwen
+        chemin_qwen = donnees / "persistance_qwen.json"
+        etat_qwen, vues_qwen = strategie_qwen.suivre(lire_json(chemin_qwen, {}), opportunites, maintenant, journal["debut"])
+        journal["qwen"] = strategie_qwen.valider(registre, vues_qwen, maintenant)
+        ecrire_json(chemin_qwen, etat_qwen)
+    except Exception as e:  # noqa: BLE001
+        journal["qwen"] = {"erreur": f"{type(e).__name__}: {e}"[:200]}
     simulation.suivre_prix(paris, francais)
     justes = etape("cotes_cloture", journal, comparaison.cotes_justes_depuis, index,
                    hors_consensus=hors) or {}

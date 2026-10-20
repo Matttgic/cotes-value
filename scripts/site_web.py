@@ -22,6 +22,7 @@ from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
 from cotes.strategie_jules import JULES, paris_jules  # noqa: E402
 from cotes.strategie_jules_v2 import JULES_V2, paris_jules_v2  # noqa: E402
 from cotes.strategie_eden import EDEN, paris_eden  # noqa: E402
+from cotes.strategie_qwen import QWEN, paris_qwen  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
                               evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
@@ -210,6 +211,7 @@ def courbes(paris: list[dict]) -> dict[str, list]:
     jules = paris_jules(paris)
     jules_v2 = paris_jules_v2(paris)
     eden = paris_eden(paris)
+    qwen = paris_qwen(paris)
     out: dict[str, list] = {}
     regles = [p for p in paris if p.get("statut") not in ("en_cours", "a_regler") and p.get("regle_le")]
     regles.sort(key=lambda p: (p["regle_le"], p.get("debut") or ""))
@@ -228,7 +230,8 @@ def courbes(paris: list[dict]) -> dict[str, list]:
                 + ([GEMINI["nom"]] if id(p) in gemini else [])
                 + ([JULES["nom"]] if id(p) in jules else [])
                 + ([JULES_V2["nom"]] if id(p) in jules_v2 else [])
-                + ([EDEN["nom"]] if id(p) in eden else []))
+                + ([EDEN["nom"]] if id(p) in eden else [])
+                + ([QWEN["nom"]] if id(p) in qwen else []))
         for v in vues:
             out.setdefault(v, []).append(point)
     return out
@@ -990,7 +993,7 @@ const GM = D.gemini || {};
 const JL = D.jules || {};
 const JV2 = D.jules_v2 || {};
 const ED = D.eden || {};
-const QUOI = {Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée une seule fois (10 € par pari).",
+const QUOI = {Qwen: "Qwen (suivi depuis le 20/10) : Pinnacle, 1N2, vainqueur, handicap et total, cotes 1,45–3,20, edge ≥ 3,5 %, 15 min à 2 h avant le match, Winamax et Betclic, validé après deux cycles consécutifs, 3 paris par jour au plus. Pari simulé à la cote de la première détection.", Uniques: "Ce que tu aurais gagné en jouant chaque cote signalée une seule fois (10 € par pari).",
   Toutes: "Somme des références : une même cote repérée par plusieurs références compte plusieurs fois.",
   "Stratégie": `Stratégie testée depuis le ${ST.debut ? new Date(ST.debut).toLocaleString("fr-FR", {day: "numeric",
     month: "numeric", hour: "2-digit", minute: "2-digit"}) : "11/10"} : référence ${(ST.references || []).join(", ")},
@@ -1053,7 +1056,7 @@ function additionner(sims, source = D.bilan, prefixe = "") {
   return t;
 }
 function rendreBilan() {
-  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", ...D.references, "Toutes"];
+  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "Qwen", ...D.references, "Toutes"];
   const bloc = D.ecarts_references || {};
   document.getElementById("bilan-ecarts").textContent = "Paris uniques réglés · " +
     ["Polymarket", "Smarkets"].map(nom => {
@@ -1074,7 +1077,7 @@ function rendreBilan() {
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
 <td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles} tickets</small><small>Par match ${pctC(b.clv_evenement)} · ${b.clv_evenements_n ?? 0}/${b.evenements_regles ?? "—"}</small>` : ""}</td></tr>`;
   document.getElementById("liste-bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
-    Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "M3", "Convergence ≥ 2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
+    Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "Qwen", "M3", "Convergence ≥ 2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
       `<option value="${i}"${i===cumul?" selected":""}>${nomCumul(l)}</option>`).join("")}</select>`,
       additionner(CUMULS[cumul])).replace("<tr>", '<tr class="total">');
@@ -1661,7 +1664,7 @@ const STRAT_PERIODES = {futur:"Depuis le lancement", ensemble:"Historique 7–13
 const courbesMasquees = new Set();
 const COULEURS_COMPARATEURS = {"Claude (rejeu)":"var(--courbe-claude,#2675ce)", "ChatGPT v1 (rejeu)":"var(--courbe-chatgpt,#d15b13)",
   "Gemini Argon v1 (rejeu)":"var(--courbe-gemini,#16884c)", "JULES EDGE v1 (rejeu)":"var(--courbe-jules1,#b04baf)",
-  "JULES EDGE v2 (rejeu)":"var(--courbe-jules2,#865fe0)", "Eden (rejeu)":"var(--courbe-eden,#1a7a6d)", "M3 (rejeu)":"var(--courbe-m3,#16838b)", "Convergence ≥ 2":"var(--courbe-convergence2,#c44862)", "Claude 1/match · max 10/j":"var(--courbe-claudeprudent,#b47b00)", "Convergence ≥ 3 hors M3":"var(--courbe-convergence3,#d13f8c)", "M3 · Max 3/match":"var(--courbe-m3structure,#7f9225)"};
+  "JULES EDGE v2 (rejeu)":"var(--courbe-jules2,#865fe0)", "Eden (rejeu)":"var(--courbe-eden,#1a7a6d)", "M3 (rejeu)":"var(--courbe-m3,#16838b)", "Convergence ≥ 2":"var(--courbe-convergence2,#c44862)", "Claude 1/match · max 10/j":"var(--courbe-claudeprudent,#b47b00)", "Convergence ≥ 3 hors M3":"var(--courbe-convergence3,#d13f8c)", "M3 · Max 3/match":"var(--courbe-m3structure,#7f9225)", "Qwen":"var(--courbe-qwen,#9b5de5)"};
 function rendreCourbesStrategies(rows) {
   const legend = document.getElementById("strategies-legende"), svg = document.getElementById("strategies-courbes");
   const toutes = rows.map(r => ({...r, points:D.laboratoire.navigation?.courbes?.[r.id]?.[periodeStrategies] || []}));

@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from .convergence import STRATEGIES, cle_selection, paris_convergence
 from .laboratoire import DEBUT_SUIVI, REGLES, heure, selectionner
+from .strategie_qwen import QWEN
 from .strategies_prudentes import VARIANTES
 
 API = "https://tapotyftgyacbnjmeovn.supabase.co/functions/v1/cv-notifications"
@@ -71,13 +72,17 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
     valides = {**retenus, "convergence": paris_convergence(paris, retenus)}
     observations = {}
     for p in paris:
-        t = heure(p.get("detecte"))
-        if not t:
+        t0 = heure(p.get("detecte"))
+        if not t0:
             continue
-        key = (*cle_selection(p), p.get("cote"))
         for cle, ids in valides.items():
             if id(p) in ids:
-                dates = observations.setdefault(key, {})
+                t, cote = t0, p.get("cote")
+                if cle == QWEN["cle"]:
+                    # Qwen décide à la validation (2ᵉ cycle) : date et prix de ce cycle, pas ceux de la première détection.
+                    f = (p.get("selections_figees") or {}).get(cle) or {}
+                    t, cote = heure(f.get("decide_le")) or t0, f.get("cote_confirmee", cote)
+                dates = observations.setdefault((*cle_selection(p), cote), {})
                 dates[cle] = min(dates.get(cle, t), t)
     alertes, depuis_pinnacle = {}, set()
     for o in actuelles:
