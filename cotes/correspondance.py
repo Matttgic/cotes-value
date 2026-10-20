@@ -48,7 +48,7 @@ MOTS = {"cordoue": "cordoba", "barbade": "barbados", "bermudes": "bermuda", "val
         "lisbonne": "lisbon", "moscou": "moscow", "geneve": "geneva", "munich": "munchen", "ste": "saint",
         "st": "saint", "lucie": "lucia", "cologne": "koln", "mayence": "mainz", "brunswick": "braunschweig"}
 VIDES = {"fc", "cf", "sc", "ac", "afc", "cd", "ca", "club", "de", "del", "la", "le", "les", "the", "sk", "fk",
-         "bk", "ud", "sd", "rc", "cs", "ss", "ssc", "calcio", "un", "1907", "1909", "y", "et", "and"}
+         "bk", "ud", "sd", "rc", "cs", "ss", "ssc", "calcio", "un", "1907", "1909", "y", "et", "and", "vb"}
 FEMININ = re.compile(r"\((f|w|wom|women|fem|feminin)\)|\b(women|womens|wom|feminin|feminine|femmes|ladies)\b|\s(f|w)\.?$")
 JEUNES = re.compile(r"^(u\d{2}|ii|b|reserves?|youth)$")
 
@@ -58,6 +58,7 @@ def normaliser(nom: str | None) -> tuple[tuple[str, ...], bool, frozenset]:
     s = unicodedata.normalize("NFKD", nom or "").encode("ascii", "ignore").decode().lower().strip()
     s = re.sub(r"\bf\.\s?c\.?", "fc", s)                 # « F.C. » -> fc
     s = re.sub(r"\bb\.\s?c\.?", "bc", s)                 # « AEK B.C. » (club de basket) -> bc, pas l'équipe B
+    s = re.sub(r"\bv\.\s?b\.?(?=\s|$)", "vb", s)       # « Toulouse V.B. » (volley-ball) -> vb, pas l'équipe B
     s = re.sub(r"\((\d{2})\)", r" u\1", s)                 # « Italie(21) » -> italie u21
     fem = bool(FEMININ.search(s))
     s = FEMININ.sub(" ", s)
@@ -106,6 +107,12 @@ def _ressemblance_mots(ma: tuple[str, ...], mb: tuple[str, ...]) -> float:
     if longs_a and set(longs_a) <= sb and all(any(x.startswith(i) for x in mb) for i in init_a):
         return 0.88
     if longs_b and set(longs_b) <= sa and all(any(x.startswith(i) for x in ma) for i in init_b):
+        return 0.88
+    # radicaux : « Aurillac » / « Stade Aurillacois » (un mot en préfixe de l'autre, 5 lettres au moins)
+    def _couvert(petit, grand):
+        return all(m in grand or any(len(m) >= 5 and (m.startswith(x) or x.startswith(m)) and len(x) >= 5 for x in grand)
+                   for m in petit)
+    if _couvert(sa, sb) or _couvert(sb, sa):
         return 0.88
     jac = len(sa & sb) / len(sa | sb)
     rat = difflib.SequenceMatcher(None, " ".join(ma), " ".join(mb)).ratio()

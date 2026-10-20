@@ -29,6 +29,7 @@ RESSEMBLANCE_MIN = 0.75
 # tennis : l'heure annoncée n'est qu'une estimation (ordre de passage, pluie) ; jusqu'à 12 h d'écart si les
 # deux joueurs sont clairement les mêmes (cas réel : Charaeva – Zheng annoncé 02:00, joué à 11:05)
 ECART_TENNIS_H = 12
+ECART_LARGE_H = 2
 RESSEMBLANCE_TENNIS_LOIN = 0.9
 SOURCES_MIN = 2
 # sources en désaccord : le score majoritaire l'emporte s'il est donné par au moins MAJORITE_MIN sources et
@@ -426,6 +427,9 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
             continue
         ecart = abs((date - debut).total_seconds())
         tennis_large = p["sport"] == "tennis" and ecart is not None and ecart <= ECART_TENNIS_H * 3600
+        # heure annoncée différente d'une source à l'autre (LiveScore 1 h plus tard que le bookmaker) : jusqu'à
+        # 2 h d'écart si les noms sont presque identiques (pas au baseball : double confrontation le même jour)
+        tennis_large = tennis_large or (p["sport"] not in ("tennis", "baseball") and ecart <= ECART_LARGE_H * 3600)
         if ecart is None or (ecart > ECART_HEURE_MIN * 60 and not tennis_large):
             continue
         direct = min(proche(dom, r["domicile"]), proche(ext, r["exterieur"]))
@@ -571,6 +575,10 @@ def plausible(sport: str, score: tuple[int, int]) -> bool:
         return a != b
     if sport == "rugby":
         return a + b > 0
+    if sport == "snooker":                         # manches gagnées : pas de nul, un vainqueur a au moins 2 manches
+        return a != b and max(a, b) >= 2
+    if sport in ("flechettes", "badminton"):
+        return a != b
     return True
 
 

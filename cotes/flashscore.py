@@ -1,4 +1,5 @@
-"""Résultats Flashscore, pour les sports qu'aucune autre source gratuite ne couvre (volley, handball, rugby).
+"""Résultats Flashscore, pour les sports qu'aucune autre source gratuite ne couvre (volley, handball, rugby,
+snooker, fléchettes, badminton).
 
 Flux texte de l'application web, un fichier par sport et par jour (UTC), 7 jours en arrière au plus. Le jeton
 d'en-tête est celui du site (public, dans son JavaScript) : ce n'est ni une clé ni un compte. Source non
@@ -19,7 +20,7 @@ BASE = "https://www.flashscore.fr/x/feed"
 ENTETES = {"x-fsign": "SW9D1eZo", "x-requested-with": "XMLHttpRequest", "referer": "https://www.flashscore.fr/",
            "User-Agent": "Mozilla/5.0"}
 SPORTS = {"football": 1, "tennis": 2, "basket": 3, "hockey": 4, "football_americain": 5, "baseball": 6,
-          "handball": 7, "rugby": 8, "volley": 12}
+          "handball": 7, "rugby": 8, "volley": 12, "flechettes": 14, "snooker": 15, "badminton": 21}
 HISTORIQUE_J = 7
 ERREURS: list[str] = []
 

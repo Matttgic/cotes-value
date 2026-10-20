@@ -131,3 +131,48 @@ def test_d_accord_avec_une_autre_source_elle_regle_tout_de_suite():
              "corners": None, "abandon": False}
     res = resultats.consensus(_pari(), [r, autre], DEBUT + timedelta(hours=3))
     assert res["score"] == (3, 1) and res["sources"] == ["flashscore", "thesportsdb"]
+
+
+# --- correctifs issus du diagnostic des matchs en attente (20 oct. 2026) -------------------------------------
+
+def _enr(source, sport, dom, ext, debut, score):
+    return {"source": source, "sport": sport, "domicile": dom, "exterieur": ext, "debut": debut, "score": score,
+            "periodes": [], "libelles": [], "corners": None}
+
+
+def test_volley_vb_n_est_pas_une_equipe_b():
+    p = {"match_id": "v1", "sport": "volley", "domicile": "Toulouse V.B.", "exterieur": "Arago de Sète",
+         "debut": "2026-10-17T16:00:00.000Z", "match_reference": "Toulouse - Arago de Sete", "statut": "a_regler"}
+    d = datetime(2026, 10, 17, 16, 0, tzinfo=timezone.utc)
+    r = _enr("flashscore", "volley", "Toulouse", "Sète", d, (3, 1))
+    assert [x["source"] for x in resultats.retrouver(p, [r])] == ["flashscore"]
+    assert resultats.consensus(p, [r], d + timedelta(hours=60))["score"] == (3, 1)
+
+
+def test_heure_decalee_d_une_heure_si_les_noms_collent():
+    p = {"match_id": "h1", "sport": "hockey", "domicile": "Zvolen", "exterieur": "Banská Bystrica",
+         "debut": "2026-10-17T15:00:00.000Z", "match_reference": "HC 05 Banska Bystrica - HKM Zvolen",
+         "statut": "a_regler"}
+    r = _enr("livescore", "hockey", "Banska Bystrica", "Zvolen", datetime(2026, 10, 17, 16, 0, tzinfo=timezone.utc), (3, 4))
+    trouve = resultats.retrouver(p, [r])
+    assert len(trouve) == 1 and trouve[0]["score"] == (4, 3)                        # orienté comme le pari
+    assert resultats.consensus(p, [r], datetime(2026, 10, 18, 15, 0, tzinfo=timezone.utc))["score"] == (4, 3)
+    loin = _enr("livescore", "hockey", "Banska Bystrica", "Zvolen", datetime(2026, 10, 17, 19, 0, tzinfo=timezone.utc), (3, 4))
+    assert resultats.retrouver(p, [loin]) == []                                      # 4 h d'écart : pas le même match
+
+
+def test_radical_aurillac_aurillacois():
+    from cotes.correspondance import ressemblance
+    assert ressemblance("Aurillac", "Stade Aurillacois") >= 0.88
+    assert ressemblance("Toulouse V.B.", "Toulouse") >= 0.9
+    assert ressemblance("Lyon", "Lille") < 0.75                                      # pas de faux rapprochement
+
+
+def test_snooker_flechettes_badminton_lus_chez_flashscore():
+    from cotes import flashscore
+    assert flashscore.SPORTS["snooker"] == 15 and flashscore.SPORTS["flechettes"] == 14
+    d = {"AA": "x", "AB": "3", "AC": "3", "AD": "1792400000", "AE": "Jak Jones", "AF": "Tom Ford", "AG": "4", "AH": "2"}
+    m = flashscore.match("snooker", d)
+    assert m["score"] == (4, 2) and m["periodes"] == []
+    assert resultats.plausible("snooker", (4, 2)) and not resultats.plausible("snooker", (0, 0))
+    assert not resultats.plausible("snooker", (3, 3))
