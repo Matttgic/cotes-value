@@ -227,11 +227,10 @@ def test_ntfy_texte_brut_titre_priorite_et_tags_sans_cle():
     assert not est_ntfy("https://ntfy.sh.autre.test/x") and not est_ntfy("https://hooks.example.test/ntfy.sh")
     titre, corps = message_ntfy(_alerte_ntfy())
     assert titre == "Betclic – Basket"
-    assert corps == ("Galatasaray SK – Strasbourg\nGalatasaray SK -7,5 @ 1,93 (min 1,88)\nmar. 20/10 19h00\n"
-                     "https://www.winamax.fr/paris-sportifs/match/68932762")
+    assert corps == ("Galatasaray SK – Strasbourg\nGalatasaray SK -7,5 @ 1,93 (min 1,88)\nmar. 20/10 19h00")
     assert message_ntfy(_alerte_ntfy(recheck=True))[1] == corps                   # rien d'autre
     assert "Ligue" not in corps and "edge" not in corps
-    assert message_ntfy(_alerte_ntfy(lien=None))[1].count("\n") == 2
+    assert "http" not in corps and message_ntfy(_alerte_ntfy(lien=None))[1] == corps     # pas de lien dans le texte
     assert message_ntfy(_alerte_ntfy(cote_min=1.87))[1].split("\n")[1].endswith("(min 1,87)")
     appels = []
     r = poster_webhook([_alerte_ntfy()], {"ALERTE_WEBHOOK_URL": "https://ntfy.sh/mon-canal"},
