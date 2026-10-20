@@ -1501,13 +1501,13 @@
    "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-10-20T05:15:48+00:00",
+ "dernier_reglement": "2026-10-20T06:14:05+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-10-20T05:15:48+00:00",
+  "debut": "2026-10-20T06:14:05+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_basket": {
-    "secondes": 1.9,
+    "secondes": 0.9,
     "ok": true
    },
    "resultats_espn_rugby": {
@@ -1515,7 +1515,7 @@
     "ok": true
    },
    "resultats_espn_hockey": {
-    "secondes": 0.8,
+    "secondes": 0.3,
     "ok": true
    },
    "resultats_espn_volley": {
@@ -1523,7 +1523,7 @@
     "ok": true
    },
    "resultats_espn_tennis": {
-    "secondes": 0.9,
+    "secondes": 0.5,
     "ok": true
    },
    "resultats_espn_snooker": {
@@ -1531,39 +1531,62 @@
     "ok": true
    },
    "resultats_livescore_basket": {
-    "secondes": 1.5,
-    "ok": true
+    "secondes": 1.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "basket 2026-10-15 : ValueError('HTTP 503')",
+     "basket 2026-10-16 : ValueError('HTTP 503')",
+     "basket 2026-10-17 : ValueError('HTTP 503')",
+     "basket 2026-10-18 : ValueError('HTTP 503')",
+     "basket 2026-10-19 : ValueError('HTTP 503')",
+     "basket 2026-10-20 : ValueError('HTTP 503')"
+    ]
    },
    "resultats_livescore_hockey": {
-    "secondes": 1.1,
-    "ok": true
+    "secondes": 0.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "hockey 2026-10-16 : ValueError('HTTP 503')",
+     "hockey 2026-10-17 : ValueError('HTTP 503')",
+     "hockey 2026-10-18 : ValueError('HTTP 503')",
+     "hockey 2026-10-19 : ValueError('HTTP 503')",
+     "hockey 2026-10-20 : ValueError('HTTP 503')"
+    ]
    },
    "resultats_livescore_tennis": {
-    "secondes": 0.6,
-    "ok": true
+    "secondes": 0.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "tennis 2026-10-18 : ValueError('HTTP 503')",
+     "tennis 2026-10-19 : ValueError('HTTP 503')",
+     "tennis 2026-10-20 : ValueError('HTTP 503')"
+    ]
    },
    "resultats_nhl_officiel": {
     "secondes": 0.0,
     "ok": true
    },
    "resultats_flashscore_basket": {
-    "secondes": 1.5,
+    "secondes": 0.9,
     "ok": true
    },
    "resultats_flashscore_rugby": {
-    "secondes": 0.7,
+    "secondes": 0.5,
     "ok": true
    },
    "resultats_flashscore_hockey": {
-    "secondes": 1.7,
+    "secondes": 2.2,
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 1.3,
+    "secondes": 0.9,
     "ok": true
    },
    "resultats_flashscore_tennis": {
-    "secondes": 3.1,
+    "secondes": 3.0,
     "ok": true
    },
    "resultats_theodds": {
@@ -1588,8 +1611,8 @@
    "couverture": {
     "marche_non_couvert": 8,
     "competition_non_couverte": 22,
-    "deja_valide": 2,
-    "trop_recent": 13,
+    "deja_valide": 1,
+    "trop_recent": 18,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1636,10 +1659,10 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "deja_valide": 2,
+    "deja_valide": 1,
     "marche_non_couvert": 8,
     "competition_non_couverte": 22,
-    "trop_recent": 13,
+    "trop_recent": 18,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1647,9 +1670,9 @@
    "requetes_jour": 0
   },
   "resultats": {
-   "enregistrements": 3161,
-   "matchs_valides": 2,
-   "reportes": 12,
+   "enregistrements": 2136,
+   "matchs_valides": 1,
+   "reportes": 10,
    "non_regles": [
     {
      "match_id": "betclic|1252632529219584",
@@ -1892,6 +1915,16 @@
      "validation_apres": null
     },
     {
+     "match_id": "pmu|1029474634",
+     "match": "Jak Jones – Tom Ford",
+     "sport": "snooker",
+     "debut": "2026-10-19T18:00:00Z",
+     "sources": {},
+     "retenues": [],
+     "raison": "aucune source",
+     "validation_apres": null
+    },
+    {
      "match_id": "pmu|1029474651",
      "match": "Chris Wakelin – Jamie Jones",
      "sport": "snooker",
@@ -1902,17 +1935,17 @@
      "validation_apres": null
     }
    ],
-   "paris_en_attente": 33,
-   "paris_regles": 2,
-   "selections_en_attente": 32,
+   "paris_en_attente": 34,
+   "paris_regles": 1,
+   "selections_en_attente": 33,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
    "sources_reglement": {
-    "espn": 2,
-    "livescore": 2
+    "espn": 1,
+    "flashscore": 1
    }
   },
-  "fin": "2026-10-20T05:16:11+00:00"
+  "fin": "2026-10-20T06:14:23+00:00"
  }
 }
