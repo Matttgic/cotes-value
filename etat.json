@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-20T15:14:07+00:00",
+  "debut": "2026-10-20T15:18:43+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.9,
+    "secondes": 15.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,36 +13,53 @@
     ]
    },
    "pinnacle": {
-    "secondes": 20.0,
+    "secondes": 27.0,
     "ok": true
    },
    "olybet": {
-    "secondes": 4.9,
+    "secondes": 5.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 14.8,
+    "secondes": 14.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 32.3,
+    "secondes": 17.4,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau",
+     "sport:2 : réseau",
+     "sport:3 : réseau",
+     "sport:4 : réseau",
+     "sport:5 : réseau",
+     "sport:6 : réseau",
+     "sport:9 : réseau",
+     "sport:16 : réseau",
+     "sport:19 : réseau",
+     "sport:23 : réseau"
+    ]
+   },
+   "unibet_direct": {
+    "secondes": 17.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 39.2,
-    "ok": true
-   },
    "betclic_direct": {
-    "secondes": 66.7,
-    "ok": true
+    "secondes": 77.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -50,11 +67,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 9.9,
+    "secondes": 7.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.3,
+    "secondes": 0.7,
     "ok": true
    },
    "cotes_cloture": {
@@ -65,14 +82,26 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 31127,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 739,
-   "age_min_s": 364,
-   "lignes": 118001,
-   "lignes_perimees": 3740,
+   "age_max_s": 804,
+   "age_min_s": 27,
+   "lignes": 118175,
+   "lignes_perimees": 2581,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -83,11 +112,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 40,
+    "head_200": 29,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 5,
-    "choisi_fixe": 8,
+    "choisi_autre": 7,
+    "choisi_fixe": 6,
     "sport_vide": 6
    }
   },
@@ -96,70 +125,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Montevideo City Torque – Atlético Mineiro",
+     "match": "Wolverhampton – Portsmouth",
      "source": "Pinnacle",
-     "cote_olybet": 2.79,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.0606,
+     "cote_olybet": 1.48,
+     "cote_reference": 1.565,
+     "ecart_relatif": 0.0543,
      "aberrant": false
     },
     {
-     "match": "Montevideo City Torque – Atlético Mineiro",
+     "match": "Santos Laguna – Pumas",
+     "source": "Pinnacle",
+     "cote_olybet": 2.15,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.057,
+     "aberrant": false
+    },
+    {
+     "match": "Santos Laguna – Pumas",
      "source": "PMU",
-     "cote_olybet": 2.79,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0528,
+     "cote_olybet": 2.15,
+     "cote_reference": 2.07,
+     "ecart_relatif": 0.0386,
      "aberrant": false
     },
     {
-     "match": "Vasco De Gama – Boca Juniors",
+     "match": "Chivas de Guadalajara – Club Necaxa",
      "source": "Pinnacle",
-     "cote_olybet": 2.46,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0717,
+     "cote_olybet": 1.35,
+     "cote_reference": 1.405,
+     "ecart_relatif": 0.0391,
      "aberrant": false
     },
     {
-     "match": "Vasco De Gama – Boca Juniors",
+     "match": "Chivas de Guadalajara – Club Necaxa",
      "source": "PMU",
-     "cote_olybet": 2.46,
-     "cote_reference": 2.55,
-     "ecart_relatif": 0.0353,
+     "cote_olybet": 1.35,
+     "cote_reference": 1.32,
+     "ecart_relatif": 0.0227,
      "aberrant": false
     },
     {
-     "match": "Larne FC – Linfield",
+     "match": "Atlético San Luis – Querétaro",
      "source": "Pinnacle",
-     "cote_olybet": 1.88,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0507,
+     "cote_olybet": 2.15,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.0733,
      "aberrant": false
     },
     {
-     "match": "Al Nassr Riyadh – Neom SC",
-     "source": "Pinnacle",
-     "cote_olybet": 1.39,
-     "cote_reference": 1.437,
-     "ecart_relatif": 0.0325,
-     "aberrant": false
-    },
-    {
-     "match": "Al Nassr Riyadh – Neom SC",
+     "match": "Atlético San Luis – Querétaro",
      "source": "PMU",
-     "cote_olybet": 1.39,
-     "cote_reference": 1.34,
-     "ecart_relatif": 0.0373,
+     "cote_olybet": 2.15,
+     "cote_reference": 2.12,
+     "ecart_relatif": 0.0142,
      "aberrant": false
     },
     {
-     "match": "Al Ettifaq Club – Al Ittihad Djeddah",
+     "match": "Atlas de Guadalajara – Club América",
      "source": "Pinnacle",
-     "cote_olybet": 3.2,
-     "cote_reference": 3.44,
-     "ecart_relatif": 0.0698,
+     "cote_olybet": 3.18,
+     "cote_reference": 3.45,
+     "ecart_relatif": 0.0783,
+     "aberrant": false
+    },
+    {
+     "match": "Atlas de Guadalajara – Club América",
+     "source": "PMU",
+     "cote_olybet": 3.18,
+     "cote_reference": 2.8,
+     "ecart_relatif": 0.1357,
      "aberrant": false
     }
    ],
@@ -238,23 +275,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-20T15:14:18+00:00",
-   "pinnacle_derniere_lecture": "2026-10-20T15:14:24+00:00",
+   "pinnacle_premiere_lecture": "2026-10-20T15:18:54+00:00",
+   "pinnacle_derniere_lecture": "2026-10-20T15:19:12+00:00",
    "books_premiere_lecture": "2026-10-20T12:42:32+00:00",
-   "books_derniere_lecture": "2026-10-20T15:14:28+00:00",
-   "ecart_enveloppe_secondes": 9112.0
+   "books_derniere_lecture": "2026-10-20T15:19:13+00:00",
+   "ecart_enveloppe_secondes": 9400.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.7
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 609,
    "a_verifier": 11,
    "non_conforme": 11,
-   "mesures": 24339,
+   "mesures": 22244,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -270,25 +307,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-20T15:01:48+00:00"
   },
-  "fin": "2026-10-20T15:15:52+00:00",
+  "fin": "2026-10-20T15:20:42+00:00",
   "cotes": {
-   "francaises": 86829,
-   "pinnacle": 118001,
-   "polymarket": 14313,
+   "francaises": 77103,
+   "pinnacle": 149302,
+   "polymarket": 14402,
    "smarkets": 3770
   },
-  "matchs_francais": 1311,
-  "opportunites": 3,
+  "matchs_francais": 1067,
+  "opportunites": 5,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-19T23:15:31+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-19T23:20:10+00:00",
    "mode": "complet",
@@ -1488,6 +1519,12 @@
    "mode": "complet",
    "opportunites": 3,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-20T15:18:43+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-20T15:01:48+00:00",
