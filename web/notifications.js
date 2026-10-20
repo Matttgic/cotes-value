@@ -59,7 +59,7 @@
     const reg=await worker(), subscription=await reg.pushManager.getSubscription();
     if(!subscription) throw Error('Réactive les notifications sur cet appareil.');
     await request('subscribe',{strategies,subscription:subscription.toJSON()});
-    device.strategies=strategies;device.enabled=true;persist();render();
+    device.strategies=strategies;device.enabled=true;persist();suiviEnregistrer(strategies);rendreMesStrategies();render();
   }
   async function busy(button,fn) {
     button.disabled=true;say('');
@@ -94,7 +94,7 @@
     try {await request('unsubscribe');} catch(err) {error=err;}
     const reg=await worker(), sub=await reg.pushManager.getSubscription();
     if(sub && !await sub.unsubscribe()) throw Error('Désactivation impossible. Réessaie.');
-    device.enabled=false;persist();
+    device.enabled=false;persist();suiviEnregistrer([]);rendreMesStrategies();
     say(error?'Arrêté sur cet appareil. Le serveur n’a pas confirmé la suppression.':'Notifications désactivées.');
   });
   if(!supported) {activer.disabled=true;sauver.disabled=true;tester.disabled=true;ui.textContent='Notifications indisponibles ici. Ouvre le site dans Chrome sur Android.';return;}
@@ -103,6 +103,7 @@
     try {
       const status=await request('status'), sub=await (await worker()).pushManager.getSubscription();
       if(!status.enabled || !sub) {device.enabled=false;persist();render();}
+      else {suiviAmorcer(status.strategies||device.strategies||[],status.since);rendreMesStrategies();}
     } catch(error) {
       if(error.status===404) {device.enabled=false;persist();render();say('Abonnement expiré : clique sur Activer pour le rétablir.',true);}
       else say('Vérification du serveur indisponible. Tes réglages locaux sont conservés ; réessaie plus tard.',true);

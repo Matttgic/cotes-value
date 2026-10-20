@@ -303,13 +303,14 @@ def courbe_comparateur(rows: list[dict], cutoff: str) -> list[list]:
     return points
 
 
-def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]]) -> dict:
+def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]], regles: dict[str, set[int]] | None = None) -> dict:
     """Toutes les prises, en colonnes compactes ; le navigateur ne rend que 50 cartes.
 
     Une ligne = une prise enregistrée (référence comprise), prix/date exacts.
     La CLV exportée est uniquement celle de clôture validée, comme dans le bilan.
     """
-    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence", "mise", "unique_bilan"]
+    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence", "mise", "unique_bilan", "regles"]
+    regles = regles or {}
     uniques = premiers_par_selection(paris)
     convergents = paris_convergence(paris, retenus)
     rows = []
@@ -317,7 +318,8 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]]) -> dict:
         f = {k: p.get(k) for k in CHAMPS_FICHE}
         f.update(simulation=p.get("simulation"), clv=clv_finale(p), tranche=tranche(p["cote"]) if p.get("cote") else None,
                  strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents,
-                 mise=p.get("mise"), unique_bilan=id(p) in uniques)
+                 mise=p.get("mise"), unique_bilan=id(p) in uniques,
+                 regles=[cle for cle in regles if id(p) in regles[cle]])      # règles Pinnacle/Polymarket (« Mes stratégies »)
         rows.append([f[k] for k in champs])
     return {"champs": champs, "lignes": rows}
 
@@ -583,7 +585,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS,
                               "details": notifications_mod.DETAILS},
-            "catalogue": catalogue_paris(paris, retenus),
+            "catalogue": catalogue_paris(paris, retenus, notifications_mod.selections_labo(paris)),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
@@ -615,6 +617,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
     html = html.replace("__HORAIRES_JS__", (web / "horaires.js").read_text(encoding="utf-8"))
     html = html.replace("__ANALYSES_JS__", (web / "analyses.js").read_text(encoding="utf-8"))
+    html = html.replace("__SUIVI_JS__", (web / "suivi.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
@@ -660,9 +663,11 @@ MODELE = r"""<!doctype html>
     <div class="bilan-onglets" role="tablist" aria-label="Vue du bilan">
       <button type="button" role="tab" id="bt-uniques" data-bilan="uniques" aria-controls="bilan-uniques">Paris uniques</button>
       <button type="button" role="tab" id="bt-strategies" data-bilan="strategies" aria-controls="o-strategies">Stratégies</button>
+      <button type="button" role="tab" id="bt-mes" data-bilan="mes" aria-controls="o-mes">Mes stratégies</button>
     </div>
     <div id="bilan-uniques" role="tabpanel" aria-labelledby="bt-uniques">
       <div class="puces bu-periodes" id="bu-periodes" aria-label="Période"></div>
+      <div id="bu-dates"></div>
       <div class="bu-kpis" id="bu-kpis"></div>
       <p class="aide" id="bu-note"></p>
       <h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div>
@@ -713,6 +718,10 @@ MODELE = r"""<!doctype html>
       une mise par bookmaker et par match, sans plafond journalier. Suivi depuis le 19/10 à 20 h (Paris).
       Le passé est un rejeu descriptif ; le test historique est positif, aucune rentabilité future n'est annoncée.</p></details>
       </details>
+    </div>
+    <div id="o-mes" role="tabpanel" aria-labelledby="bt-mes" hidden>
+      <div class="page-tete"><div><h2>Mes stratégies actives</h2><p class="sous-texte">Les paris des stratégies cochées dans Notifications, à partir du moment où tu les as cochées.</p></div></div>
+      <div id="mes-strategies"></div>
     </div>
     <div id="o-strategies" role="tabpanel" aria-labelledby="bt-strategies" hidden>
       <div class="raccourci-analyses"><a href="#analyses">Analyses et graphiques <span aria-hidden="true">↗</span></a></div>
@@ -938,6 +947,7 @@ const ecrire = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
 
 __VISUELS_JS__
 __HORAIRES_JS__
+__SUIVI_JS__
 __INTERFACE_JS__
 
 // --- en-tête et onglets
@@ -950,16 +960,18 @@ function montrerVueBilan(v) {
   document.querySelectorAll("[data-bilan]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.bilan===v)));
   document.getElementById("bilan-uniques").hidden = v !== "uniques";
   document.getElementById("o-strategies").hidden = v !== "strategies";
+  document.getElementById("o-mes").hidden = v !== "mes";
+  if (v === "mes") rendreMesStrategies();
   if (v === "strategies") requestAnimationFrame(() => rendreStrategies());
   else requestAnimationFrame(() => rendreCourbe());
 }
 // Quatre onglets : « À jouer » rejoint Paris, la saisie à la main rejoint Santé, Analyses et Segments restent sous Bilan.
-const GROUPES = {jouer:"paris", regler:"controle", strategies:"bilan", segments:"bilan", analyses:"bilan"};
+const GROUPES = {jouer:"paris", regler:"controle", strategies:"bilan", mes:"bilan", segments:"bilan", analyses:"bilan"};
 function ouvrir(o) {
   // « #strategies » ouvre la vue Stratégies du bilan ; « #bilan », les paris uniques.
-  if (o === "strategies" || o === "bilan") vueBilan = o === "strategies" ? "strategies" : "uniques";
-  const page = o === "strategies" ? "bilan" : o === "jouer" ? "paris" : o, groupe = GROUPES[page] || page;
-  const nom = page === "bilan" && vueBilan === "strategies" ? "strategies" : page;
+  if (o === "strategies" || o === "mes" || o === "bilan") vueBilan = o === "bilan" ? "uniques" : o;
+  const page = o === "strategies" || o === "mes" ? "bilan" : o === "jouer" ? "paris" : o, groupe = GROUPES[page] || page;
+  const nom = page === "bilan" && vueBilan !== "uniques" ? vueBilan : page;
   document.querySelectorAll("nav button[data-o]").forEach(b => {
     b.classList.toggle("actif", b.dataset.o===groupe);
     if (b.dataset.o===groupe) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
@@ -970,8 +982,9 @@ function ouvrir(o) {
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
 }
 document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
-  montrerVueBilan(b.dataset.bilan); history.replaceState(null, "", "#"+(b.dataset.bilan === "strategies" ? "strategies" : "bilan"));
-  ecrire("onglet", b.dataset.bilan === "strategies" ? "strategies" : "bilan");
+  const hash = b.dataset.bilan === "uniques" ? "bilan" : b.dataset.bilan;
+  montrerVueBilan(b.dataset.bilan); history.replaceState(null, "", "#"+hash);
+  ecrire("onglet", hash);
 });
 document.querySelectorAll("[data-aller]").forEach(b => b.onclick = () => {ouvrir(b.dataset.aller);window.scrollTo(0,0);});
 document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => {ouvrir(b.dataset.o);window.scrollTo(0,0);});
@@ -1384,13 +1397,17 @@ function tableBU(groupes) {
 }
 function rendreBilanUniques(maintenant=Date.now()) {
   const depuis = maintenant - Number(periodeBU)*86400000;
-  const L = fiches.filter(p => p.unique_bilan && p.gain != null &&
-    (!periodeBU || Date.parse(p.regle_le || p.debut || p.detecte) >= depuis));
+  const pr = suiviPeriode(), bo = suiviBornes(pr.depuis, pr.jusqua), perso = bo.depuis != null || bo.jusqua != null;
+  const date = p => Date.parse(p.regle_le || p.debut || p.detecte);
+  const L = fiches.filter(p => p.unique_bilan && p.gain != null && (perso
+    ? (bo.depuis == null || date(p) >= bo.depuis) && (bo.jusqua == null || date(p) < bo.jusqua)
+    : (!periodeBU || date(p) >= depuis)));
+  rendreDatesBilan();
   const periodes = document.getElementById("bu-periodes");
-  periodes.innerHTML = BU_PERIODES.map(([v,t]) => `<button type="button" data-periode="${v}" aria-pressed="${v===periodeBU}">${t}</button>`).join("");
+  periodes.innerHTML = BU_PERIODES.map(([v,t]) => `<button type="button" data-periode="${v}" aria-pressed="${!perso && v===periodeBU}">${t}</button>`).join("");
   periodes.onclick = ev => {
     const b = ev.target?.closest?.("button[data-periode]");
-    if (b) { periodeBU = b.dataset.periode; rendreBilanUniques(); }
+    if (b) { periodeBU = b.dataset.periode; ecrire(CLE_PERIODE, "{}"); rendreBilanUniques(); }
   };
   const s = statsBU(L);
   document.getElementById("bu-kpis").innerHTML = [["Gain net",eur(s.net),signe(s.net)],["ROI",pct(s.roi),signe(s.net)],
@@ -1989,7 +2006,7 @@ rendreLaboratoire();
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon Paris (« #jouer » reste un ancien raccourci vers Paris)
 const depart = location.hash.slice(1) || lire("onglet") || "paris";
 __NOTIFICATIONS_JS__
-const ONGLETS = ["jouer","bilan","strategies","segments","paris","notifications","regler","controle","analyses"];
+const ONGLETS = ["jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
 ouvrir(ONGLETS.includes(depart) ? depart : "paris");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 
@@ -2023,7 +2040,7 @@ installerActualisation({
     periodeStrategies = s.periodeStrategies in STRAT_PERIODES ? s.periodeStrategies : "futur";
     courbesMasquees.clear();
     for (const id of s.courbes || []) courbesMasquees.add(id);
-    rendreBilan(); rendreBilanUniques(); rendreParis(); rendreSante(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
+    rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSante(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
     document.getElementById("labo-regle")?.onchange?.();
     adapterTableaux();
     for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));
