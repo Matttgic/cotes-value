@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from cotes.direct import betclic, pmu, unibet
-from cotes.direct.horizon import fusionner, tranche
+from cotes.direct.horizon import fusionner, fusionner_marches, tranche
 
 MAINTENANT = datetime(2026, 10, 18, 12, tzinfo=timezone.utc)
 
@@ -129,6 +129,7 @@ def test_unibet_reserve_page_lointaine_et_cache(monkeypatch):
     session = Session([
         (200, {"items": {e: ev}, "numberOfEvents": 400, "nextEventId": 42}, {}),
         (200, {"items": {}, "numberOfEvents": 400}, {}),
+        (200, {"items": {}, "numberOfEvents": 0}, {}),          # marché secondaire (1, 102)
     ])
     cache = {
         "bookmaker": "unibet-fr", "match_id": "unibet-fr|cache", "sport": "football",
@@ -141,6 +142,7 @@ def test_unibet_reserve_page_lointaine_et_cache(monkeypatch):
     assert any("nextEventId=42" in u for u in session.urls)
     assert not any("pageIndex=" in u for u in session.urls)
     assert any(l["match_id"] == "unibet-fr|cache" for l in lignes)
+    assert any("periodId=102" in u for u in session.urls)
     assert meta["reserve"]["curseur"] == 0
     assert "JETON" not in json.dumps({k: v for k, v in meta.items() if k != "reserve"})
 
@@ -178,3 +180,33 @@ def test_cycle_enregistre_l_horizon(monkeypatch, tmp_path):
     cycle.collecter_prematch("complet", maintenant, {"etapes": {}}, donnees=tmp_path)
     assert vus["pmu"][1]["reserve"]["curseur"] == 3
     assert vus["betclic"][1]["reserve"]["lignes"][0]["match_id"] == "betclic"
+
+
+def test_fusion_par_marche_garde_les_marches_non_relus_quinze_minutes():
+    def l(mid, marche, cote, lu_min=-5, periode="MATCH"):
+        return {"match_id": mid, "marche": marche, "periode": periode, "debut": _iso(3),
+                "collecte": (MAINTENANT + timedelta(minutes=lu_min)).isoformat(), "cote": cote}
+    anciennes = [l("u|1", "RESULTAT_1N2", 2.0), l("u|1", "TOTAL", 1.9), l("u|1", "HANDICAP", 1.8, lu_min=-20),
+                 l("u|1", "TOTAL", 1.7, periode="MT1")]
+    neuves = [l("u|1", "RESULTAT_1N2", 2.1, lu_min=0)]
+    fusion = fusionner_marches(anciennes, neuves, MAINTENANT, 36)
+    assert sorted((x["marche"], x["periode"], x["cote"]) for x in fusion) == [
+        ("RESULTAT_1N2", "MATCH", 2.1), ("TOTAL", "MATCH", 1.9), ("TOTAL", "MT1", 1.7)]
+
+
+def test_unibet_reserve_tourne_sur_les_marches_secondaires(monkeypatch):
+    from tests.test_unibet_direct import Page, Session
+    monkeypatch.setattr(unibet, "MARCHES", {"football": tuple((t, 100) for t in range(1, 6))})
+    monkeypatch.setattr(unibet, "_SECONDAIRES_PAR_CYCLE", 3)
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    vide = (200, {"items": {}, "numberOfEvents": 0}, {})
+    lus = []
+    curseur = 0
+    for _ in range(2):
+        session = Session([vide] * 4)
+        _, meta = unibet.collecter({"football"}, 36, session=session, page=Page(), pause=(0, 0),
+                                   maintenant=MAINTENANT, reserve={"lignes": [], "curseur": curseur})
+        lus.append([u.split("marketTypeId=")[1].split("&")[0] for u in session.urls])
+        curseur = meta["reserve"]["curseur"]
+    # marché principal (1) à chaque cycle, puis 3 secondaires parmi 2..5, en tournant
+    assert lus == [["1", "2", "3", "4"], ["1", "5", "2", "3"]] and curseur == 2

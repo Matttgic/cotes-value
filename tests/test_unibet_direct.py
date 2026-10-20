@@ -293,3 +293,19 @@ def test_budget_rend_les_cotes_deja_lues(monkeypatch):
     assert JETON not in json.dumps(meta)
 
 
+
+
+def test_total_d_equipe_dont_le_nom_porte_un_nombre():
+    # 20/10/2026 : « PHI 76ers 112,5 » donnait la ligne 76, « HV71 1,5 » la ligne 71.
+    def offre(desc, periode="Match"):
+        return {"desc": desc, "period": periode, "outcomes": [
+            {"desc": "Plus de", "price": "1.80"}, {"desc": "Moins de", "price": "1.95"}]}
+    m = unibet.marche_depuis("m1", offre("Plus / Moins Point(s) - PHI 76ers 112,5 - Match"),
+                             "PHI 76ers", "Boston Celtics")
+    assert m["canonicalMarket"] == "HOME_OVER_UNDER" and {x["line"] for x in m["selections"]} == {112.5}
+    m = unibet.marche_depuis("m2", offre("Plus / Moins But(s) - HV71 1,5 - Temps Réglementaire"),
+                             "HV71", "Frolunda")
+    assert m["canonicalMarket"] == "HOME_OVER_UNDER" and {x["line"] for x in m["selections"]} == {1.5}
+    m = unibet.marche_depuis("m3", offre("Plus / Moins Point(s) - PHI 76ers 57,5 - 1ère Mi-temps"),
+                             "Boston Celtics", "PHI 76ers")
+    assert m["canonicalMarket"] == "AWAY_OVER_UNDER" and {x["line"] for x in m["selections"]} == {57.5}
