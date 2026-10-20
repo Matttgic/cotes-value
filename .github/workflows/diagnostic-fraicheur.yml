@@ -1,6 +1,9 @@
 name: Diagnostic fraicheur (lecture seule)
 
 on:
+  push:
+    branches: [diagnostic/fraicheur-cotes-2026-10-20]
+    paths: [.github/workflows/diagnostic-fraicheur.yml]
   workflow_dispatch:
     inputs:
       mode:
@@ -18,6 +21,7 @@ concurrency:
 
 jobs:
   observer:
+    if: github.ref == 'refs/heads/diagnostic/fraicheur-cotes-2026-10-20' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[essai-collecte]'))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -45,7 +49,29 @@ jobs:
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
           PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
-        run: python scripts/observer_collecte.py --mode "${{ inputs.mode }}" --reserve reserve-diagnostic/horizon_direct.json --sortie rapport-diagnostic
+        run: python scripts/observer_collecte.py --mode "${{ inputs.mode || 'complet' }}" --reserve reserve-diagnostic/horizon_direct.json --sortie rapport-diagnostic
+      - name: Resume de l'essai
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path('rapport-diagnostic/fraicheur-cycle.json')
+          texte = ['# Diagnostic de fraicheur', 'Un seul essai, sans publication du site.']
+          if not p.exists():
+              texte.append('Aucun rapport produit : consulter les etapes en echec.')
+          else:
+              r = json.loads(p.read_text(encoding='utf-8'))
+              texte.append('Seuil : 60 secondes. Age du prix amont non certifie.')
+              for nom, b in r['sources'].items():
+                  g = b.get('groupes', [])
+                  recentes = sum(x['observations_dans_objectif'] for x in g)
+                  cache = sum(x['observation_et_cache_dans_objectif'] for x in g)
+                  texte.append(f"- {nom} : {b['lignes_presentes']} lignes ; {recentes} observations dans le seuil ; {cache} observations avec cache documente dans le seuil.")
+              texte.append('Secours Pinnacle desactives ; inventaire attendu non verifie.')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
+              f.write('\n'.join(texte) + '\n')
+          PY
       - name: Conserver le rapport sans donnees brutes
         if: always()
         uses: actions/upload-artifact@v4
