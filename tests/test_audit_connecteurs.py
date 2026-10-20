@@ -817,9 +817,10 @@ def test_choix_sans_bonne_copie_sonde_tout_et_garde_la_plus_fraiche(monkeypatch)
     assert P._choisir_chemin_prix(29)=='/sports/29/markets/straight?primaryOnly=false' and len(heads)==5
 
 
-def test_copies_decalees_restent_fraiches_cycle_apres_cycle(monkeypatch):
-    # Simulation : cache de 905 s, un cycle toutes les 280 s, le réchauffeur relit l'URL fixe à chaque cycle.
-    # Un HEAD sur une copie expirée la recharge ; une copie non touchée reste expirée.
+def test_sondes_dans_l_ordre_decalent_les_copies_sans_autre_client(monkeypatch):
+    # Modèle sans autre client : cache de 905 s, un cycle toutes les 280 s, le réchauffeur relit l'URL fixe.
+    # Un HEAD sur une copie expirée la recharge ; une copie non touchée reste expirée. En production (mesuré
+    # le 20/10/2026), d'autres clients rechargent les trois copies ensemble : seul le seuil (est_perimee) aide.
     monkeypatch.setenv('PINNACLE_CHOIX_PRIX','oui')
     rempli={q:0 for q in ('?primaryOnly=false&withSpecials=true','?primaryOnly=false','')}
     horloge={'t':0}
@@ -840,3 +841,18 @@ def test_copies_decalees_restent_fraiches_cycle_apres_cycle(monkeypatch):
         q=P._choisir_chemin_prix(29).split('straight',1)[1]
         ages.append(horloge['t']-rempli[q])
     assert max(ages[10:])<P.age_max_secondes()
+
+
+def test_seuil_de_peremption_court_pour_les_matchs_proches(monkeypatch):
+    # Mesuré le 20/10/2026 : le cache dure 905 s et d'autres clients le rechargent à l'expiration.
+    maintenant = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
+    proche = (maintenant + timedelta(hours=1)).isoformat()
+    loin = (maintenant + timedelta(hours=5)).isoformat().replace('+00:00', 'Z')
+    assert P.est_perimee(601, proche, maintenant) is True and P.est_perimee(600, proche, maintenant) is False
+    assert P.est_perimee(905, loin, maintenant) is False and P.est_perimee(961, loin, maintenant) is True
+    assert P.est_perimee(None, loin, maintenant) is True                       # âge inconnu : périmé
+    assert P.est_perimee(700, None, maintenant) is True                        # heure inconnue : seuil court
+    monkeypatch.setenv('PINNACLE_AGE_MAX_LOIN_MIN', '5')                       # jamais sous le seuil court
+    assert P.age_max_loin_secondes() == P.age_max_secondes() == 600
+    monkeypatch.setenv('PINNACLE_AGE_MAX_MIN', '16')                           # option « tout à 16 minutes »
+    assert P.est_perimee(905, proche, maintenant) is False

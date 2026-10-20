@@ -1606,11 +1606,14 @@ const niveauEtape = v => !v || !v.ok ? "panne" : v.degrade ? "alerte" : "ok";
 // Âge des cotes Pinnacle lues en direct : au-delà du seuil, elles ne servent pas de référence.
 function ligneFraicheurPinnacle(fr) {
   if (!fr || !fr.lignes || !Number.isFinite(fr.age_max_s)) return "";
-  const mn = s => Math.round(s/60), p = fr.lignes_perimees || 0, seuil = fr.seuil_min;
+  const mn = s => Math.round(s/60), p = fr.lignes_perimees || 0;
+  // Seuil court pour les matchs proches, long au-delà (cotes/pinnacle.py, est_perimee).
+  const limite = fr.seuil_loin_min && fr.seuil_loin_min !== fr.seuil_min
+    ? `${fr.seuil_min} min si le match est dans les ${fr.proche_h || 2} h, ${fr.seuil_loin_min} min sinon` : `${fr.seuil_min} min`;
   const de = Number.isFinite(fr.age_min_s) && mn(fr.age_min_s) !== mn(fr.age_max_s) ? `${mn(fr.age_min_s)} à ${mn(fr.age_max_s)}` : `${mn(fr.age_max_s)}`;
-  const detail = !p ? `Cotes de ${de} min (limite ${seuil} min)`
-    : p >= fr.lignes ? `En retard : cotes de ${de} min, toutes écartées (limite ${seuil} min) · Pinnacle ne les renouvelle que toutes les 15 min`
-    : `${Math.max(1, Math.round(100*p/fr.lignes))} % des cotes écartées : plus de ${seuil} min`;
+  const detail = !p ? `Cotes de ${de} min (limite ${limite})`
+    : p >= fr.lignes ? `En retard : cotes de ${de} min, toutes écartées (limite ${limite}) · Pinnacle ne les renouvelle que toutes les 15 min`
+    : `${Math.max(1, Math.round(100*p/fr.lignes))} % des cotes écartées (limite ${limite})`;
   return ligneSante("Pinnacle · fraîcheur", detail, p ? "alerte" : "ok");
 }
 function ligneSecoursPinnacle(secours) {

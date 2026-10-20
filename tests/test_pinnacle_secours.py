@@ -121,8 +121,10 @@ def test_budget_journalier_et_pause(tmp_path, monkeypatch):
     assert len(session.appels) == 2 and S.RESUME["pause"] is True and not S.ERREURS
     assert frais and S.RESUME["cache_lignes"] == len(frais) and not any(l["cote_perimee"] for l in frais)
     assert {l["age_cache_s"] for l in frais} == {4 + 300}
-    vieux = S.collecter({29}, NOW + timedelta(minutes=10, seconds=1), tmp_path, session)
-    assert vieux and all(l["cote_perimee"] for l in vieux)                  # au-delà de 10 minutes : plus de référence
+    loin = S.collecter({29}, NOW + timedelta(minutes=10, seconds=1), tmp_path, session)
+    assert loin and not any(l["cote_perimee"] for l in loin)                # match dans 5 h : seuil de 16 minutes
+    vieux = S.collecter({29}, NOW + timedelta(minutes=16, seconds=1), tmp_path, session)
+    assert vieux and all(l["cote_perimee"] for l in vieux)                  # au-delà de 16 minutes : plus de référence
     # budget épuisé le même jour, même après la pause : toujours aucune requête
     S.collecter({29}, NOW + timedelta(minutes=40), tmp_path, session)
     assert len(session.appels) == 2
@@ -308,7 +310,7 @@ def test_pinbook_comble_les_trous_avec_sa_pause_et_son_budget(tmp_path, monkeypa
     r = Routeur(pinnodds=Reponse(entetes={"X-Data-Age-Ms": "1000"}), pinbook=ReponsePinBook())
     S.collecter({29}, NOW, tmp_path, r)                                      # pinnodds lit, football frais
     assert [a[0] for a in r.appels] == ["pinnodds"]
-    lignes = S.collecter({29}, NOW + timedelta(minutes=12), tmp_path, r)     # cache périmé : PinBook comble
+    lignes = S.collecter({29}, NOW + timedelta(minutes=17), tmp_path, r)     # cache périmé : PinBook comble
     assert [a[0] for a in r.appels] == ["pinnodds", "pinbook"] and {l["origine"] for l in lignes} == {"pinbook"}
     S.collecter({29}, NOW + timedelta(minutes=30), tmp_path, r)              # pause de 60 minutes de PinBook
     assert [a[0] for a in r.appels].count("pinbook") == 1
@@ -325,3 +327,16 @@ def test_pinbook_erreurs_et_donnees_absentes_ne_donnent_rien(monkeypatch):
     assert S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(statut=403))) == [] and "403" in S.ERREURS[0]
     vieux = S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(age_s=3600)))
     assert vieux and all(l["cote_perimee"] for l in vieux)                   # last_call vieux d'une heure : jamais une référence
+
+
+def test_sports_en_retard_regarde_les_matchs_proches():
+    proche = (NOW + timedelta(hours=1)).isoformat()
+    loin = (NOW + timedelta(hours=8)).isoformat()
+    lignes = [{"sport": "football", "debut": proche, "cote_perimee": True},
+              {"sport": "football", "debut": loin, "cote_perimee": False}]
+    # les matchs lointains restent frais plus longtemps : les proches périmés suffisent pour le secours
+    assert S.sports_en_retard(lignes, NOW) == {29}
+    lignes[0]["cote_perimee"] = False
+    assert S.sports_en_retard(lignes, NOW) == set()
+    # sans match proche : tous les matchs comptent
+    assert S.sports_en_retard([{"sport": "football", "debut": loin, "cote_perimee": True}], NOW) == {29}

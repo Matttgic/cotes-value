@@ -26,7 +26,7 @@ Abonnement (Pro, 10 requêtes par seconde sans plafond) : mettre `PINNODDS_LIMIT
 ## Comportement
 
 - Sont relus les sports en **erreur HTTP** chez Pinnacle (tous si la lecture directe ne rend rien), et ceux de
-  `PINNACLE_SECOURS_PERIME` dont toutes les cotes directes sont **périmées** (plus de `PINNACLE_AGE_MAX_MIN` minutes).
+  `PINNACLE_SECOURS_PERIME` dont les cotes directes des matchs des 2 prochaines heures (ou de tous, s'il n'y en a pas) sont **périmées** (plus de `PINNACLE_AGE_MAX_MIN` minutes).
 - Marchés repris par défaut : résultat, vainqueur et totaux, aux périodes de `pinnacle.PERIODES`.
   Tennis : vainqueur seulement (handicaps et totaux y sont en sets ou en jeux).
 - Les lignes ont le format de `pinnacle.collecter`, avec `origine: "pinnodds"` et leur probabilité juste.
@@ -47,11 +47,11 @@ confrontés à la lecture directe.
 
 ## Entre deux lectures
 
-Le secours ne lit que toutes les 30 minutes (offre gratuite). Entre deux lectures, le dernier passage est rejoué depuis `pinnacle_secours_cache.json` avec son âge réel : une ligne plus vieille que `PINNACLE_AGE_MAX_MIN` (10 minutes par défaut) reste marquée périmée et ne sert pas de référence, un match commencé est retiré, et le cache est ignoré au-delà de 3 heures. Limite : avec 90 requêtes par jour, l'offre gratuite ne donne une référence fraîche que quelques dizaines de minutes par jour.
+Le secours ne lit que toutes les 30 minutes (offre gratuite). Entre deux lectures, le dernier passage est rejoué depuis `pinnacle_secours_cache.json` avec son âge réel : une ligne plus vieille que le seuil (`PINNACLE_AGE_MAX_MIN`, 10 minutes, pour un match dans les 2 heures ; `PINNACLE_AGE_MAX_LOIN_MIN`, 16 minutes, au-delà) reste marquée périmée et ne sert pas de référence, un match commencé est retiré, et le cache est ignoré au-delà de 3 heures. Limite : avec 90 requêtes par jour, l'offre gratuite ne donne une référence fraîche que quelques dizaines de minutes par jour.
 
 ## Second secours : PinBook (offre gratuite)
 
-`PINBOOK_API_KEY` (secret GitHub, clé de l'offre gratuite « PinBook Odds » sur RapidAPI : 550 requêtes par mois) ajoute PinBook **derrière** pinnodds. Il ne sert que pour les sports restés sans ligne fraîche (ni lecture, ni cache de moins de 10 minutes), parmi `PINBOOK_SPORTS` (football, tennis, basket par défaut), au plus `PINBOOK_LIMITE_JOUR` requêtes par jour (16) et `PINBOOK_PAUSE_MIN` minutes entre deux lectures (60). La fraîcheur vient de `last_call` : une réponse plus vieille que `PINNACLE_AGE_MAX_MIN` donne des lignes marquées périmées. Les lignes portent `origine: pinbook`.
+`PINBOOK_API_KEY` (secret GitHub, clé de l'offre gratuite « PinBook Odds » sur RapidAPI : 550 requêtes par mois) ajoute PinBook **derrière** pinnodds. Il ne sert que pour les sports restés sans ligne fraîche (ni lecture, ni cache de moins de 10 minutes), parmi `PINBOOK_SPORTS` (football, tennis, basket par défaut), au plus `PINBOOK_LIMITE_JOUR` requêtes par jour (16) et `PINBOOK_PAUSE_MIN` minutes entre deux lectures (60). La fraîcheur vient de `last_call` : une réponse plus vieille que ce même seuil donne des lignes marquées périmées. Les lignes portent `origine: pinbook`.
 
 Essai manuel : workflow « Essai PinBook » (3 requêtes, aucune écriture), qui affiche couverture, fraîcheur et quota restant. Mesures du 19/10/2026 pendant la maintenance de l'API invitée de Pinnacle : football 360 matchs à moins de 36 h, tennis 156, basket 79, données vieilles de quelques secondes.
 
@@ -69,3 +69,10 @@ Conséquence : chaque cycle lit des cotes de 0 à 15 minutes et, environ un cycl
 requête toutes les 30 minutes, 48 par jour, soit environ un trou sur deux. Ajouter tennis et basket à
 `PINNACLE_SECOURS_PERIME` triple la dépense : le quota gratuit (90) serait vide en fin d'après-midi, heure de
 Paris. La page Santé affiche la ligne « Pinnacle · fraîcheur ».
+
+Depuis le 20/10/2026, le seuil dépend de l'heure du match : 10 minutes (`PINNACLE_AGE_MAX_MIN`) pour un
+match qui commence dans les 2 heures, où les cotes bougent (compositions, nouvelles), 16 minutes
+(`PINNACLE_AGE_MAX_LOIN_MIN`) au-delà, soit plus que les 905 s du cache. Mesuré ce jour-là : d'autres
+clients de la clé publique rechargent les trois copies en cache ensemble, dès leur expiration ; l'ordre de
+nos sondes ne peut pas les décaler. Seules les cotes des matchs proches restent donc écartées un cycle sur
+trois, et le secours ne se déclenche que pour elles. Mettre les deux variables à 16 n'écarte plus rien.

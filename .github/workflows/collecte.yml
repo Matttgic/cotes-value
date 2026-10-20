@@ -70,6 +70,9 @@ jobs:
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
           PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
+          # Âge maximum du cache Pinnacle, en minutes : matchs dans les 2 h, puis les autres (cache de 905 s)
+          PINNACLE_AGE_MAX_MIN: ${{ vars.PINNACLE_AGE_MAX_MIN || '10' }}
+          PINNACLE_AGE_MAX_LOIN_MIN: ${{ vars.PINNACLE_AGE_MAX_LOIN_MIN || '16' }}
           # Secours Pinnacle (pinnodds) : inactif sans ce secret ; voir docs/pinnacle-secours.md
           PINNODDS_API_KEY: ${{ secrets.PINNODDS_API_KEY }}
           PINNODDS_LIMITE_JOUR: ${{ vars.PINNODDS_LIMITE_JOUR || '90' }}

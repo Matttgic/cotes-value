@@ -322,6 +322,8 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
             journal["pinnacle_configuration"] = {"mode": pinnacle.origine_cle}
         journal["pinnacle_fraicheur"] = {
             "seuil_min": pinnacle.age_max_secondes() // 60,
+            "seuil_loin_min": pinnacle.age_max_loin_secondes() // 60,
+            "proche_h": pinnacle.PROCHE_H,
             "age_max_s": max(ages) if ages else None,
             "age_min_s": min(ages) if ages else None,
             "lignes": lues,
