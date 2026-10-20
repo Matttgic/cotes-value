@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import math
 import os
 import sys
 import time
@@ -65,21 +66,40 @@ def _fr(x, decimales: int) -> str:
     return f"{x:.{decimales}f}".replace(".", ",") if isinstance(x, (int, float)) and not isinstance(x, bool) else "—"
 
 
+def _min_affichee(x) -> str:
+    """Cote minimale arrondie au centième supérieur : le bookmaker affiche 2 décimales, jamais sous le seuil."""
+    if not isinstance(x, (int, float)) or isinstance(x, bool):
+        return "—"
+    return _fr(math.ceil(round(x * 100, 6)) / 100, 2)
+
+
+SPORTS = {"football": "Football", "basket": "Basket", "hockey": "Hockey", "tennis": "Tennis",
+          "handball": "Handball", "volley": "Volley", "rugby": "Rugby", "rugby_league": "Rugby à XIII",
+          "baseball": "Baseball", "tennis_de_table": "Tennis de table", "football_americain": "Football américain",
+          "football_australien": "Football australien", "mma": "MMA", "boxe": "Boxe", "snooker": "Snooker",
+          "badminton": "Badminton", "golf": "Golf", "cyclisme": "Cyclisme"}
+JOURS = ("lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim.")
+
+
+def _sport(s) -> str:
+    s = str(s or "").strip()
+    return SPORTS.get(s.lower(), s.replace("_", " ").capitalize() or "—")
+
+
 def message_ntfy(a: dict) -> tuple[str, str]:
-    """(titre, corps) lisibles sur un téléphone ; l'heure du match est celle de Paris."""
-    c = charge_utile(a)
+    """(titre, corps) en texte brut ; l'heure du match est celle de Paris (« mar. 20/10 20h00 »)."""
     try:
-        d = datetime.fromisoformat(str(c["debut"]).replace("Z", "+00:00")).astimezone(ZoneInfo("Europe/Paris"))
-        heure = d.strftime("%d/%m à %H:%M")
+        d = datetime.fromisoformat(str(a.get("debut")).replace("Z", "+00:00")).astimezone(ZoneInfo("Europe/Paris"))
+        heure = f'{JOURS[d.weekday()]} {d:%d/%m} {d:%H}h{d:%M}'
     except ValueError:
         heure = "heure inconnue"
-    edge = f'{_fr(100 * c["ecart"], 1)} %' if isinstance(c.get("ecart"), (int, float)) else "—"
-    ligue = f' ({c["ligue"]})' if c.get("ligue") else ""
-    corps = (f'{c["match"]}{ligue}\n{heure}\n{c["marche"]} : {c["selection"]}\n'
-             f'Cote {_fr(c["cote"], 2)} – min {_fr(c["cote_min"], 3)} – edge {edge}')
-    if c["recheck"]:
-        corps += "\nRe-check : vérifier le prix"
-    return f'Pinnacle 2 – {c["bookmaker"]} {_fr(c["cote"], 2)}', corps
+    dom, ext = a.get("domicile"), a.get("exterieur")
+    match = f"{dom} – {ext}" if dom and ext else str(a.get("match") or "")
+    pari = str(a.get("selection") or a.get("pari") or "").split("\n")[0]
+    lignes = [match, f'{pari} @ {_fr(a.get("cote"), 2)} (min {_min_affichee(a.get("cote_min"))})', heure]
+    if a.get("lien"):
+        lignes.append(a["lien"])
+    return f'{a.get("bookmaker") or "—"} – {_sport(a.get("sport"))}', "\n".join(lignes)
 
 
 def _entete_utf8(texte: str) -> str:
@@ -87,27 +107,12 @@ def _entete_utf8(texte: str) -> str:
     return "=?UTF-8?B?" + base64.b64encode(texte.encode()).decode() + "?="
 
 
-BOOKMAKERS_WEBHOOK_DEFAUT = "Betclic"
-
-
-def bookmakers_webhook(env=None) -> set[str]:
-    """Bookmakers admis au webhook (minuscules). ALERTE_WEBHOOK_BOOKMAKERS : noms séparés par des virgules,
-    « tous » pour ne pas filtrer ; Betclic seul par défaut."""
-    env = os.environ if env is None else env
-    brut = env.get("ALERTE_WEBHOOK_BOOKMAKERS", "").strip() or BOOKMAKERS_WEBHOOK_DEFAUT
-    return set() if brut.lower() == "tous" else {b.strip().lower() for b in brut.split(",") if b.strip()}
-
-
-def alertes_webhook(flux: dict, paris: list[dict], envoyes: dict, maintenant: datetime | None = None,
-                    bookmakers: set[str] | None = None) -> list[dict]:
-    """Alertes Pinnacle 2 pas encore envoyées, d'un bookmaker admis : celles du scan, puis les paris re-décidés
-    (même s'ils datent). Les autres bookmakers ne passent pas par le webhook."""
+def alertes_webhook(flux: dict, paris: list[dict], envoyes: dict, maintenant: datetime | None = None) -> list[dict]:
+    """Alertes Pinnacle 2 pas encore envoyées, quel que soit le bookmaker : celles du scan, puis les paris
+    re-décidés (même s'ils datent)."""
     from cotes.notifications import alertes_recheck
-    admis = bookmakers_webhook() if bookmakers is None else bookmakers
     vues, out = set(envoyes), []
     for a in [x for x in flux.get("alertes", []) if PIN2 in x.get("strategies", [])] + alertes_recheck(paris, PIN2, maintenant):
-        if admis and str(a.get("bookmaker", "")).strip().lower() not in admis:
-            continue
         if a["id"] not in vues:
             vues.add(a["id"])
             out.append(a)
@@ -138,6 +143,8 @@ def poster_webhook(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.m
                 titre, corps = message_ntfy(a)
                 en_tetes.update({"Content-Type": "text/plain; charset=utf-8", "Title": _entete_utf8(titre),
                                  "Priority": "high", "Tags": "moneybag"})
+                if a.get("lien"):
+                    en_tetes["Click"] = a["lien"]          # toucher la notification ouvre le match
                 donnees = corps.encode()
             else:
                 donnees = json.dumps(charge_utile(a), ensure_ascii=False).encode()

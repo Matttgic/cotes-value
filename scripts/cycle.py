@@ -37,6 +37,7 @@ from cotes.direct import unibet as unibet_direct  # noqa: E402
 from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours  # noqa: E402
+from cotes import liens  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
@@ -635,6 +636,7 @@ def main() -> int:
         journal["mode"] = "reglement"
         regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)
         paris = stockage.archiver(donnees, paris, maintenant)
+        liens.completer_liens(paris)
         ecrire_json(donnees / "paris.json", paris)
         etat = lire_json(donnees / "etat.json", {})
         journal["fin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -716,6 +718,7 @@ def main() -> int:
 
     # 5. sauvegarde
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
+    liens.completer_liens(paris)                              # lien direct vers le match chez le bookmaker
     ecrire_json(donnees / "paris.json", paris)
     ecrire_json(donnees / "controle.json", etat_controle)
     ecrire_json(donnees / "opportunites_actuelles.json", sorted(opportunites, key=lambda o: -o["ecart"]))
