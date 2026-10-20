@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   diagnostic:
@@ -26,4 +26,11 @@ jobs:
       - name: Charger les donnees actuelles
         run: git clone -q --depth 1 --branch donnees "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" donnees
       - name: Diagnostic
-        run: python scripts/diagnostic_sources.py --donnees donnees
+        run: python scripts/diagnostic_sources.py --donnees donnees | tee rapport.txt
+      - name: Publier le rapport sur une branche jetable
+        run: |
+          mkdir -p /tmp/rapport && cp rapport.txt /tmp/rapport/ && cd /tmp/rapport
+          git init -q && git checkout -q -b diagnostic-sources
+          git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rapport.txt && git commit -qm "Rapport de diagnostic"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" diagnostic-sources
