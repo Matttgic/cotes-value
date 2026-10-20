@@ -26,9 +26,9 @@ def test_relecture_preserve_prise_et_ignore_autre_contrat_et_retour_arriere():
     assert p['prix_revu']==1.56
 
 
-def test_alerte_prix_cinq_minutes_et_date_visible_sans_antidater_validation():
+def test_alerte_prix_quinze_minutes_et_date_visible_sans_antidater_validation():
     p=selection();base={'strategie':{id(p)}}
-    for age,expected in [(299,True),(300,True),(301,False),(-1,False)]:
+    for age,expected in [(899,True),(900,True),(901,False),(-1,False)]:
         o={**p,'collecte_recue':(NOW-timedelta(seconds=age)).isoformat()}
         alertes=flux([o],[p],base,NOW)['alertes']
         assert bool(alertes)==expected

@@ -297,3 +297,12 @@ def test_webhook_ne_garde_que_betclic_par_defaut(monkeypatch):
     assert {a["bookmaker"] for a in alertes_webhook(f, [], {}, NOW)} == {"Betclic", "PMU"}
     monkeypatch.setenv("ALERTE_WEBHOOK_BOOKMAKERS", "tous")
     assert len(alertes_webhook({"alertes": []}, recheck, {}, NOW)) == 2
+
+
+def test_prix_garde_par_la_rotation_jusqu_a_quinze_minutes():
+    # 20/10/2026 : Fenerbahçe – Slavia, Unibet relu par la rotation 11 min avant la préparation, jamais notifié.
+    p = selection(); p['detecte'] = (NOW-timedelta(minutes=11)).isoformat(); ids = {'strategie': {id(p)}}
+    a = flux([p], [p], ids, NOW)['alertes']
+    assert len(a) == 1 and a[0]['age_prix_secondes'] == 660 and 'Prix relevé' in a[0]['pari']
+    p['detecte'] = (NOW-timedelta(minutes=15, seconds=1)).isoformat()
+    assert not flux([p], [p], ids, NOW)['alertes']
