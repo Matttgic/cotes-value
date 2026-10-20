@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-20T06:26:08+00:00",
+  "debut": "2026-10-20T06:30:48+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 13.6,
+    "secondes": 20.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,27 +12,33 @@
     ]
    },
    "pinnacle": {
-    "secondes": 25.6,
-    "ok": true
+    "secondes": 34.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 27 matchups : HTTP 403",
+     "sport 6 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 10.2,
+    "secondes": 6.0,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 11.9,
+    "secondes": 12.7,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 21.6,
+    "secondes": 21.1,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 31.9,
+    "secondes": 29.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -40,16 +46,19 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 74.9,
+    "secondes": 76.5,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 22.6,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 12.3,
+    "secondes": 10.8,
     "ok": true
    },
    "comparaison": {
@@ -65,25 +74,22 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 28726,
+   "sports": [],
+   "requetes": 0,
+   "lignes": 22,
    "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
+   "pause": true,
+   "cache_lignes": 22,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 836,
-   "age_min_s": 695,
-   "lignes": 109252,
-   "lignes_perimees": 1146,
+   "age_max_s": 203,
+   "age_min_s": 76,
+   "lignes": 109373,
+   "lignes_perimees": 0,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -94,12 +100,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 45,
-    "choisi_autre": 9,
-    "head_403": 1,
-    "ortho_refusee": 1,
-    "choisi_fixe": 2,
-    "sport_vide": 2
+    "head_200": 23,
+    "choisi_autre": 4,
+    "choisi_fixe": 7,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "reprise_403": 3,
+    "matchups_sans_speciaux": 2,
+    "sport_vide": 4
    }
   },
   "olybet_source": "direct",
@@ -145,8 +153,8 @@
      "match": "Juarez – CF Atlante",
      "source": "Pinnacle",
      "cote_olybet": 2.72,
-     "cote_reference": 2.95,
-     "ecart_relatif": 0.078,
+     "cote_reference": 2.98,
+     "ecart_relatif": 0.0872,
      "aberrant": false
     },
     {
@@ -233,8 +241,8 @@
      "match": "Sabah – Borussia Dortmund",
      "source": "Pinnacle",
      "cote_netbet": 8.25,
-     "cote_reference": 9.4,
-     "ecart_relatif": 0.1223,
+     "cote_reference": 9.41,
+     "ecart_relatif": 0.1233,
      "aberrant": false
     },
     {
@@ -257,23 +265,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-20T06:26:18+00:00",
-   "pinnacle_derniere_lecture": "2026-10-20T06:26:35+00:00",
+   "pinnacle_premiere_lecture": "2026-10-20T04:13:47+00:00",
+   "pinnacle_derniere_lecture": "2026-10-20T06:31:14+00:00",
    "books_premiere_lecture": "2026-10-20T05:08:56+00:00",
-   "books_derniere_lecture": "2026-10-20T06:26:37+00:00",
-   "ecart_enveloppe_secondes": 4659.0
+   "books_derniere_lecture": "2026-10-20T06:31:23+00:00",
+   "ecart_enveloppe_secondes": 8256.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 593,
    "a_verifier": 9,
    "non_conforme": 9,
-   "mesures": 18478,
+   "mesures": 19178,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -289,25 +296,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-20T06:14:05+00:00"
   },
-  "fin": "2026-10-20T06:28:09+00:00",
+  "fin": "2026-10-20T06:33:20+00:00",
   "cotes": {
-   "francaises": 66308,
-   "pinnacle": 137978,
-   "polymarket": 12037,
-   "smarkets": 4028
+   "francaises": 67018,
+   "pinnacle": 109395,
+   "polymarket": 12012,
+   "smarkets": 4037
   },
-  "matchs_francais": 1011,
-  "opportunites": 1,
-  "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "matchs_francais": 1010,
+  "opportunites": 7,
+  "opportunites_suspectes": 9,
+  "nouveaux_paris": 5
  },
  "historique": [
-  {
-   "debut": "2026-10-19T14:59:52+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-19T15:04:32+00:00",
    "mode": "complet",
@@ -1507,6 +1508,12 @@
    "mode": "complet",
    "opportunites": 1,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-20T06:30:48+00:00",
+   "mode": "complet",
+   "opportunites": 7,
+   "nouveaux_paris": 5
   }
  ],
  "dernier_reglement": "2026-10-20T06:14:05+00:00",
