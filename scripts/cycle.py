@@ -36,7 +36,7 @@ from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes.direct import unibet as unibet_direct  # noqa: E402
 from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
-from cotes import theodds, resultats_nhl, propline, pinnacle_secours  # noqa: E402
+from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
@@ -538,6 +538,22 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
                     if r:
                         resultats[p["match_id"]] = r
             journal["apisports_quota_restant"] = quota_ap
+        # TheSportsDB : secours gratuit (clé publique), match par match, pour ce qu'aucune source n'a validé.
+        # Seul le score final : une source seule ne règle qu'après 24 h, jamais au hockey (cotes/resultats.py).
+        restants_tsdb = [p for p in paris if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats]
+        if restants_tsdb:
+            cache_ts = lire_json(donnees / "thesportsdb.json", {})
+            n = len(thesportsdb.ERREURS)
+            enregistrements += etape("resultats_thesportsdb", journal, thesportsdb.collecter,
+                                     restants_tsdb, cache_ts, datetime.now(timezone.utc)) or []
+            ecrire_json(donnees / "thesportsdb.json", cache_ts)
+            signaler(journal, "resultats_thesportsdb", thesportsdb.ERREURS[n:])
+            journal["thesportsdb"] = dict(thesportsdb.RESUME)
+            for p in restants_tsdb:
+                if p["match_id"] not in resultats:
+                    r = resultats_mod.consensus(p, enregistrements, maintenant)
+                    if r:
+                        resultats[p["match_id"]] = r
         # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)
         for p in paris:
             r = resultats.get(p["match_id"])

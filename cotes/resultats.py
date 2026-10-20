@@ -2,7 +2,7 @@
 
 Sources : ESPN (API publique, sans clé ; aussi la source des scores par période : mi-temps au football,
 quart-temps NFL, tiers-temps NHL…), LiveScore, Flashscore, la NHL officielle, API-Sports, puis les secours
-(The Odds API, Prop-Line). Les validateurs PulseScore (Betfair, DraftKings, Unibet UK, Interwetten, BetMGM,
+(TheSportsDB, The Odds API, Prop-Line). Les validateurs PulseScore (Betfair, DraftKings, Unibet UK, Interwetten, BetMGM,
 PMU) ont disparu avec l'abonnement ; certaines règles ci-dessous gardent leurs noms, sans effet.
 
 Un match est retrouvé chez chaque source par les noms d'équipes (dans un sens ou l'autre) et l'heure de

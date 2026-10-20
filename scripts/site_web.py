@@ -1585,7 +1585,7 @@ rendreControle();
 const SOURCES_COTES = [["pinnacle","Pinnacle"],["polymarket","Polymarket"],["netbet","NetBet"],["winamax_direct","Winamax"],
   ["betclic_direct","Betclic"],["unibet_direct","Unibet"],["pmu_direct","PMU"],["olybet","OlyBet"],["smarkets","Smarkets"]];
 const SOURCES_RESULTATS = [["espn","ESPN"],["flashscore","Flashscore"],["livescore","LiveScore"],["nhl","NHL officiel"],
-  ["theodds","The Odds API"],["propline","Propline"]];
+  ["thesportsdb","TheSportsDB"],["theodds","The Odds API"],["propline","Propline"]];
 const MOTS_SANTE = {ok:"✓ OK", alerte:"! Alerte", panne:"✗ En panne"};
 const ligneSante = (nom, detail, niveau) => `<div class="sante-ligne"><div><b>${e(nom)}</b><small>${e(detail)}</small></div>`+
   `<span class="sante-mot sante-mot-${niveau}">${MOTS_SANTE[niveau]}</span></div>`;

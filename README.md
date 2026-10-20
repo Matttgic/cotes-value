@@ -274,3 +274,7 @@ liste les matchs qu'aucune source ne règle (un match vu par plusieurs bookmaker
 ses clés dans `match_ids`), avec le modèle de saisie de `resultats_manuels.json`. Le journal du
 cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non
 officiels : ils peuvent changer sans préavis.
+
+TheSportsDB (`cotes/thesportsdb.py`, clé publique gratuite ou `THESPORTSDB_API_KEY`) sert de secours pour les paris
+restés sans résultat : recherche match par match (20 appels au plus par cycle, cache `donnees/thesportsdb.json`),
+score final seulement (pas de tennis, ni de score par période). Seule, elle ne règle qu'après 24 h et jamais au hockey.
