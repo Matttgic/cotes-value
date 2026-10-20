@@ -140,7 +140,7 @@ def test_collecte_pinnacle_isole_marche_invalide_et_garde_un_marche_complet(monk
     bon=marche_pin()
     mauvais=marche_pin(key='bad',prices=[{'designation':'home','price':'abc'},{'designation':'away','price':120}])
     values=[[None,matchup()],[None,mauvais,{'matchupId':{}},bon]]
-    monkeypatch.setattr(P,'_get',lambda *a:values.pop(0))
+    monkeypatch.setattr(P,'_get',lambda *a,**kw:values.pop(0))
     out=P.collecter({29:'football'})
     assert len(out)==2 and {l['issue'] for l in out}=={'DOM','EXT'}
     assert sum(l['proba_juste'] for l in out)==pytest.approx(1)
@@ -373,7 +373,7 @@ def test_special_sans_statut_survit_et_prix_unique_silencieux(monkeypatch):
     sans_statut=marche_pin()
     del sans_statut['status']
     values=[[parent,special],[incomplet,ferme,ouvert,sans_statut]]
-    monkeypatch.setattr(P,'_get',lambda *a:values.pop(0))
+    monkeypatch.setattr(P,'_get',lambda *a,**kw:values.pop(0))
     out=P.collecter({29:'football'})
     assert {l['marche'] for l in out}>={'SPECIAL:Both Teams To Score?','VAINQUEUR'}
     assert not any('liste de prix invalide' in e for e in P.ERREURS)
@@ -384,7 +384,7 @@ def test_special_sans_statut_survit_et_prix_unique_silencieux(monkeypatch):
 
 def test_marche_ordinaire_a_un_seul_prix_reste_signale(monkeypatch):
     mauvais=marche_pin(prices=[{'designation':'home','price':-110}])
-    monkeypatch.setattr(P,'_get',lambda *a:[matchup()] if 'matchups' in a[0] else [mauvais])
+    monkeypatch.setattr(P,'_get',lambda *a,**kw:[matchup()] if 'matchups' in a[0] else [mauvais])
     assert P.collecter({29:'football'})==[]
     assert any('liste de prix invalide' in e for e in P.ERREURS)
 
@@ -698,10 +698,10 @@ def test_choix_prend_l_orthographe_la_plus_fraiche(monkeypatch):
         '': Tete(200,'HIT',600)},
         {'/markets/straight?primaryOnly=false': Reponse([marche_pin()], headers={'cf-cache-status':'HIT','Age':'47'})})
     out=P.collecter({29:'football'})
-    assert len(heads)==5
+    assert len(heads)==2            # 45 s suffit : les suivantes ne sont pas touchées (donc pas rechargées)
     assert [g for g in gets if 'markets' in g][0].endswith('/markets/straight?primaryOnly=false')
     assert out and all(l['age_cache_s']==47 and l['cote_perimee'] is False for l in out)
-    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['head_200']==5
+    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['head_200']==2
 
 
 def test_choix_garde_l_url_fixe_sans_age_exploitable(monkeypatch):
@@ -723,7 +723,7 @@ def test_choix_403_sur_une_orthographe_l_ecarte_sans_couper(monkeypatch):
     P._choisir_chemin_prix(33)
     assert P._choix_coupe is False
     assert sum(h.endswith('/markets/straight?withSpecials=true') for h in heads)==1   # pas redemandée
-    assert len(heads)==5+4
+    assert len(heads)==4+3          # arrêt sur la première de moins de 300 s (40 s, quatrième)
     assert P.choix_prix['ortho_refusee']==1 and P.choix_prix['choisi_autre']==2
 
 
@@ -758,3 +758,85 @@ def test_choix_coupe_par_variable(monkeypatch):
     monkeypatch.setenv('PINNACLE_CHOIX_PRIX','non')
     P.collecter({29:'football'})
     assert heads==[] and [g for g in gets if 'markets' in g]==[P.base_api()+FIXE]
+
+
+def test_403_sur_sport_vide_verifie_par_url_simple_sans_erreur(monkeypatch):
+    # Mesuré le 20/10/2026 : curling, cyclisme… refusent l'URL avec spéciaux (403) mais l'URL simple répond 0 match.
+    urls=[]; pauses=[]
+    def get(url, **kw):
+        urls.append(url)
+        if '/sports/9/' in url:
+            return Reponse(status=403) if 'withSpecials' in url else Reponse([])
+        return Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])
+    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P.time,'sleep',pauses.append)
+    out=P.collecter({9:'curling',29:'football'})
+    assert len(out)==2 and not P.ERREURS and not pauses
+    assert P.choix_prix.get('sport_vide')==1 and 'reprise_403' not in P.choix_prix
+    assert [u for u in urls if '/sports/9/' in u]==[P.BASE+'/sports/9/matchups?withSpecials=true',
+                                                    P.BASE+'/sports/9/matchups']
+
+
+def test_403_avec_matchs_sur_url_simple_les_garde_sans_speciaux(monkeypatch):
+    def get(url, **kw):
+        if 'matchups?withSpecials' in url:
+            return Reponse(status=403)
+        return Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])
+    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P.time,'sleep',lambda _:None)
+    out=P.collecter({29:'football'})
+    # la reprise habituelle a échoué (refus noté) : les matchs de l'URL simple servent quand même
+    assert len(out)==2 and P.choix_prix.get('matchups_sans_speciaux')==1
+    assert P.ERREURS==['sport 29 matchups : HTTP 403']
+
+
+def test_403_aleatoire_sur_sport_actif_garde_la_reprise_avec_speciaux(monkeypatch):
+    # Cas du 18/10 : un 403 isolé sur le football. L'URL simple montre des matchs : on reprend l'URL avec
+    # spéciaux plutôt que de perdre les marchés spéciaux.
+    refus=[Reponse(status=403)]; urls=[]
+    def get(url, **kw):
+        urls.append(url)
+        if 'matchups?withSpecials' in url and refus:
+            return refus.pop()
+        return Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])
+    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P.time,'sleep',lambda _:None)
+    out=P.collecter({29:'football'})
+    assert len(out)==2 and not P.ERREURS and 'matchups_sans_speciaux' not in P.choix_prix
+    assert [u.split('/0.1')[1] for u in urls if 'matchups' in u]==[
+        '/sports/29/matchups?withSpecials=true','/sports/29/matchups','/sports/29/matchups?withSpecials=true']
+
+
+def test_choix_sans_bonne_copie_sonde_tout_et_garde_la_plus_fraiche(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {
+        '?primaryOnly=false&withSpecials=true': Tete(200,'HIT',800),
+        '?primaryOnly=false': Tete(200,'HIT',500),
+        '?withSpecials=true': Tete(403,'BYPASS'),
+        '?withSpecials=true&primaryOnly=false': Tete(403,'BYPASS'),
+        '': Tete(200,'HIT',650)})
+    assert P._choisir_chemin_prix(29)=='/sports/29/markets/straight?primaryOnly=false' and len(heads)==5
+
+
+def test_copies_decalees_restent_fraiches_cycle_apres_cycle(monkeypatch):
+    # Simulation : cache de 905 s, un cycle toutes les 280 s, le réchauffeur relit l'URL fixe à chaque cycle.
+    # Un HEAD sur une copie expirée la recharge ; une copie non touchée reste expirée.
+    monkeypatch.setenv('PINNACLE_CHOIX_PRIX','oui')
+    rempli={q:0 for q in ('?primaryOnly=false&withSpecials=true','?primaryOnly=false','')}
+    horloge={'t':0}
+    def toucher(q):
+        if horloge['t']-rempli[q]>905:
+            rempli[q]=horloge['t']
+            return Tete(200,'EXPIRED',None)
+        return Tete(200,'HIT',horloge['t']-rempli[q])
+    def head(url, **kw):
+        q='?'+url.split('?',1)[1] if '?' in url else ''
+        return toucher(q) if q in rempli else Tete(403,'BYPASS')
+    monkeypatch.setattr(P.requests,'head',head)
+    ages=[]
+    for cycle in range(40):
+        horloge['t']=cycle*280
+        P._ortho_refusees.clear(); P._choix_coupe=False
+        toucher('?primaryOnly=false&withSpecials=true')          # réchauffeur
+        q=P._choisir_chemin_prix(29).split('straight',1)[1]
+        ages.append(horloge['t']-rempli[q])
+    assert max(ages[10:])<P.age_max_secondes()
