@@ -698,10 +698,10 @@ def test_choix_prend_l_orthographe_la_plus_fraiche(monkeypatch):
         '': Tete(200,'HIT',600)},
         {'/markets/straight?primaryOnly=false': Reponse([marche_pin()], headers={'cf-cache-status':'HIT','Age':'47'})})
     out=P.collecter({29:'football'})
-    assert len(heads)==5
+    assert len(heads)==2            # 45 s suffit : les suivantes ne sont pas touchées (donc pas rechargées)
     assert [g for g in gets if 'markets' in g][0].endswith('/markets/straight?primaryOnly=false')
     assert out and all(l['age_cache_s']==47 and l['cote_perimee'] is False for l in out)
-    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['head_200']==5
+    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['head_200']==2
 
 
 def test_choix_garde_l_url_fixe_sans_age_exploitable(monkeypatch):
@@ -723,7 +723,7 @@ def test_choix_403_sur_une_orthographe_l_ecarte_sans_couper(monkeypatch):
     P._choisir_chemin_prix(33)
     assert P._choix_coupe is False
     assert sum(h.endswith('/markets/straight?withSpecials=true') for h in heads)==1   # pas redemandée
-    assert len(heads)==5+4
+    assert len(heads)==4+3          # arrêt sur la première de moins de 300 s (40 s, quatrième)
     assert P.choix_prix['ortho_refusee']==1 and P.choix_prix['choisi_autre']==2
 
 
@@ -805,3 +805,38 @@ def test_403_aleatoire_sur_sport_actif_garde_la_reprise_avec_speciaux(monkeypatc
     assert len(out)==2 and not P.ERREURS and 'matchups_sans_speciaux' not in P.choix_prix
     assert [u.split('/0.1')[1] for u in urls if 'matchups' in u]==[
         '/sports/29/matchups?withSpecials=true','/sports/29/matchups','/sports/29/matchups?withSpecials=true']
+
+
+def test_choix_sans_bonne_copie_sonde_tout_et_garde_la_plus_fraiche(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {
+        '?primaryOnly=false&withSpecials=true': Tete(200,'HIT',800),
+        '?primaryOnly=false': Tete(200,'HIT',500),
+        '?withSpecials=true': Tete(403,'BYPASS'),
+        '?withSpecials=true&primaryOnly=false': Tete(403,'BYPASS'),
+        '': Tete(200,'HIT',650)})
+    assert P._choisir_chemin_prix(29)=='/sports/29/markets/straight?primaryOnly=false' and len(heads)==5
+
+
+def test_copies_decalees_restent_fraiches_cycle_apres_cycle(monkeypatch):
+    # Simulation : cache de 905 s, un cycle toutes les 280 s, le réchauffeur relit l'URL fixe à chaque cycle.
+    # Un HEAD sur une copie expirée la recharge ; une copie non touchée reste expirée.
+    monkeypatch.setenv('PINNACLE_CHOIX_PRIX','oui')
+    rempli={q:0 for q in ('?primaryOnly=false&withSpecials=true','?primaryOnly=false','')}
+    horloge={'t':0}
+    def toucher(q):
+        if horloge['t']-rempli[q]>905:
+            rempli[q]=horloge['t']
+            return Tete(200,'EXPIRED',None)
+        return Tete(200,'HIT',horloge['t']-rempli[q])
+    def head(url, **kw):
+        q='?'+url.split('?',1)[1] if '?' in url else ''
+        return toucher(q) if q in rempli else Tete(403,'BYPASS')
+    monkeypatch.setattr(P.requests,'head',head)
+    ages=[]
+    for cycle in range(40):
+        horloge['t']=cycle*280
+        P._ortho_refusees.clear(); P._choix_coupe=False
+        toucher('?primaryOnly=false&withSpecials=true')          # réchauffeur
+        q=P._choisir_chemin_prix(29).split('straight',1)[1]
+        ages.append(horloge['t']-rempli[q])
+    assert max(ages[10:])<P.age_max_secondes()

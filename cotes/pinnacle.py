@@ -209,6 +209,13 @@ def _compter(cle: str) -> None:
 def _choisir_chemin_prix(sid: int) -> str:
     """Orthographe des prix la plus fraîche selon un HEAD ; l'URL fixe au moindre doute.
 
+    Mesuré le 20/10/2026 : trois orthographes sont en cache, au contenu identique, pour 905 s
+    (``max-age=905``) quand le seuil de fraîcheur est de 600 s. Un HEAD sur une copie expirée la recharge :
+    sonder les trois à chaque cycle les rechargeait ensemble, elles vieillissaient ensemble et toutes les
+    cotes d'un sport passaient périmées un cycle sur trois (33 % des lignes en moyenne). Les orthographes
+    sont donc sondées dans l'ordre, jusqu'à la première de moins de la moitié du seuil : celles qu'on ne
+    touche pas expirent puis se rechargent plus tard, décalées, et l'une d'elles reste fraîche.
+
     Mesuré du 18/10/2026 : une orthographe absente du cache part chez Pinnacle, qui refuse GitHub
     (403). Ce refus vise l'orthographe, pas nous : on l'écarte pour le reste du cycle. On ne coupe
     tout qu'au vrai signal de blocage : 401, 429, ou 403 sur l'URL fixe.
@@ -219,6 +226,7 @@ def _choisir_chemin_prix(sid: int) -> str:
     if _choix_coupe or _bloque or not choix_actif() or len(candidates) <= 1:
         return fixe
     meilleur, age_min = fixe, None
+    suffisant = age_max_secondes() // 2
     for q in candidates:
         chemin = f"/sports/{sid}/markets/straight{q}"
         try:
@@ -244,6 +252,8 @@ def _choisir_chemin_prix(sid: int) -> str:
             continue
         if age_min is None or age < age_min:
             meilleur, age_min = chemin, age
+        if age < suffisant:
+            break
     _compter("choisi_fixe" if meilleur == fixe else "choisi_autre")
     return meilleur
 
