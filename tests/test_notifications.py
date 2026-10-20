@@ -205,7 +205,9 @@ def _alerte_ntfy(**kw):
     return {"id": "n" * 64, "match": "Galatasaray SK – Strasbourg", "ligue": "Ligue des Champions",
             "debut": "2026-10-20T17:00:00Z", "marche": "HANDICAP", "selection": "Galatasaray SK -7,5",
             "bookmaker": "Betclic", "cote": 1.93, "cote_min": 1.872, "cote_juste": 1.835, "cote_pinnacle": 1.80,
-            "ecart": .0516, "recheck": False, **kw}
+            "ecart": .0516, "recheck": False, "sport": "basket", "domicile": "Galatasaray SK",
+            "exterieur": "Strasbourg", "match_id": "winamax|68932762",
+            "lien": "https://www.winamax.fr/paris-sportifs/match/68932762", **kw}
 
 
 class _Rep:
@@ -224,11 +226,13 @@ def test_ntfy_texte_brut_titre_priorite_et_tags_sans_cle():
     assert est_ntfy("https://ntfy.sh/mon-canal") and est_ntfy("https://www.ntfy.sh/x")
     assert not est_ntfy("https://ntfy.sh.autre.test/x") and not est_ntfy("https://hooks.example.test/ntfy.sh")
     titre, corps = message_ntfy(_alerte_ntfy())
-    assert titre == "Pinnacle 2 – Betclic 1,93"
-    assert corps == ("Galatasaray SK – Strasbourg (Ligue des Champions)\n20/10 à 19:00\nHANDICAP : Galatasaray SK -7,5\n"
-                     "Cote 1,93 – min 1,872 – edge 5,2 %")
-    assert message_ntfy(_alerte_ntfy(recheck=True))[1].endswith("\nRe-check : vérifier le prix")
-    assert "()" not in message_ntfy(_alerte_ntfy(ligue=None))[1]
+    assert titre == "Betclic – Basket"
+    assert corps == ("Galatasaray SK – Strasbourg\nGalatasaray SK -7,5 @ 1,93 (min 1,88)\nmar. 20/10 19h00\n"
+                     "https://www.winamax.fr/paris-sportifs/match/68932762")
+    assert message_ntfy(_alerte_ntfy(recheck=True))[1] == corps                   # rien d'autre
+    assert "Ligue" not in corps and "edge" not in corps
+    assert message_ntfy(_alerte_ntfy(lien=None))[1].count("\n") == 2
+    assert message_ntfy(_alerte_ntfy(cote_min=1.87))[1].split("\n")[1].endswith("(min 1,87)")
     appels = []
     r = poster_webhook([_alerte_ntfy()], {"ALERTE_WEBHOOK_URL": "https://ntfy.sh/mon-canal"},
                        lambda req, timeout: appels.append((req, timeout)) or _Rep())
@@ -240,6 +244,7 @@ def test_ntfy_texte_brut_titre_priorite_et_tags_sans_cle():
     assert en_tetes["content-type"].startswith("text/plain")
     assert str(email.header.make_header(email.header.decode_header(en_tetes["title"]))) == titre
     en_tetes["title"].encode("latin-1")                      # valide pour http.client
+    assert en_tetes["click"] == "https://www.winamax.fr/paris-sportifs/match/68932762"
     assert req.data.decode() == corps and "x-api-key" not in en_tetes and "authorization" not in en_tetes
     assert "mon-canal" not in json.dumps(r)
 
@@ -281,19 +286,42 @@ def test_ntfy_erreurs_sans_fuite_et_pas_de_doublon(tmp_path, monkeypatch):
     assert E.webhook_pinnacle2(tmp_path, {"alertes": []})["envoyees"] == 0 and len(envoyes) == 1
 
 
-def test_webhook_ne_garde_que_betclic_par_defaut(monkeypatch):
-    from scripts.envoyer_notifications import alertes_webhook, bookmakers_webhook
-    monkeypatch.delenv("ALERTE_WEBHOOK_BOOKMAKERS", raising=False)
-    assert bookmakers_webhook() == {"betclic"}
+def test_webhook_envoie_tous_les_bookmakers(monkeypatch):
+    from scripts.envoyer_notifications import alertes_webhook
+    monkeypatch.setenv("ALERTE_WEBHOOK_BOOKMAKERS", "Betclic")                    # ancienne variable : ignorée
     betclic, pmu = prise_pin2(), prise_pin2(id="pmu", match_id="pmu|1", bookmaker="PMU", pari="Autre")
     f = flux([dict(betclic), dict(pmu)], [betclic, pmu], {PIN2: {id(betclic), id(pmu)}}, NOW)
-    assert {a["bookmaker"] for a in f["alertes"]} == {"Betclic", "PMU"}          # Chrome : tout
-    assert [a["bookmaker"] for a in alertes_webhook(f, [], {}, NOW)] == ["Betclic"]
+    assert {a["bookmaker"] for a in alertes_webhook(f, [], {}, NOW)} == {"Betclic", "PMU"}
     vieux = dict(detecte=(NOW - timedelta(hours=1)).isoformat(), debut=(NOW + timedelta(hours=20)).isoformat(),
                  selections_figees={PIN2: {}}, redecision_lecture_posterieure=NOW.isoformat())
-    recheck = [prise_pin2(**vieux), prise_pin2(id="r2", match_id="pmu|2", bookmaker="Winamax", pari="Z", **vieux)]
-    assert [a["bookmaker"] for a in alertes_webhook({"alertes": []}, recheck, {}, NOW)] == ["Betclic"]
-    monkeypatch.setenv("ALERTE_WEBHOOK_BOOKMAKERS", " betclic , PMU ")
-    assert {a["bookmaker"] for a in alertes_webhook(f, [], {}, NOW)} == {"Betclic", "PMU"}
-    monkeypatch.setenv("ALERTE_WEBHOOK_BOOKMAKERS", "tous")
-    assert len(alertes_webhook({"alertes": []}, recheck, {}, NOW)) == 2
+    recheck = [prise_pin2(**vieux), prise_pin2(id="r2", match_id="winamax|2", bookmaker="Winamax", pari="Z", **vieux)]
+    assert {a["bookmaker"] for a in alertes_webhook({"alertes": []}, recheck, {}, NOW)} == {"Betclic", "Winamax"}
+
+
+def test_alerte_porte_equipes_sport_et_lien():
+    p = prise_pin2(match_id="winamax|68932762", bookmaker="Winamax", lien="/paris-sportifs/match/68932762")
+    a = flux([dict(p)], [p], {PIN2: {id(p)}}, NOW)["alertes"][0]
+    assert a["lien"] == "https://www.winamax.fr/paris-sportifs/match/68932762"
+    assert a["domicile"] == p["domicile"] and a["exterieur"] == p["exterieur"] and a["sport"] == p["sport"]
+
+
+def test_liens_par_bookmaker():
+    from cotes.liens import completer_liens, lien_match
+    base = {"domicile": "Paris SG", "exterieur": "OM"}
+    assert lien_match({**base, "bookmaker": "Winamax", "match_id": "winamax|68932762"}) == \
+        "https://www.winamax.fr/paris-sportifs/match/68932762"
+    assert lien_match({**base, "bookmaker": "Betclic", "match_id": "betclic|1244",
+                       "lien": "/psg-om-m1244"}) == "https://www.betclic.fr/psg-om-m1244"
+    assert lien_match({**base, "bookmaker": "PMU", "match_id": "pmu|10266",
+                       "lien": "/sport/football/l1/psg---om/10266"}) == "https://paris-sportifs.pmu.fr/sport/football/l1/psg---om/10266"
+    assert lien_match({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|33851",
+                       "lien": "/paris-football/fr/l1/33851/psg-vs-om"}) == "https://www.unibet.fr/paris-football/fr/l1/33851/psg-vs-om"
+    recherche = lien_match({**base, "bookmaker": "OlyBet", "match_id": "olybet|31111875"})
+    assert recherche == "https://www.google.com/search?q=site%3Asports.olybet.fr+Paris+SG+OM"
+    # chemin relevé d'un autre match : on ne l'utilise pas
+    assert lien_match({**base, "bookmaker": "Betclic", "match_id": "betclic|1", "lien": "/autre-m999"}).startswith(
+        "https://www.google.com/search?q=site%3Awww.betclic.fr")
+    assert lien_match({"bookmaker": "Inconnu", "lien": "/x"}) is None
+    lien_match({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|1", "lien": "/é/1"}).encode("latin-1")
+    paris = [{**base, "bookmaker": "Winamax", "match_id": "winamax|5", "lien": "/paris-sportifs/match/5"}]
+    assert completer_liens(paris) == 1 and paris[0]["lien"].endswith("/match/5") and completer_liens(paris) == 0

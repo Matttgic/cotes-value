@@ -26,6 +26,7 @@ from .strategie_jules import JULES, paris_jules
 from .strategie_jules_v2 import JULES_V2, paris_jules_v2
 from .strategie_eden import EDEN, paris_eden
 from .strategie_qwen import QWEN, paris_qwen
+from .liens import lien_match
 
 MISE = 10.0
 INF = float("inf")
@@ -92,7 +93,7 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
              "ecart_polymarket": o.get("ecart_polymarket"),
              "ecart_smarkets": o.get("ecart_smarkets"),
              "statut": "en_cours", "gain": None, "cote_juste_cloture": o["cote_juste"], "clv": None,
-             "match_reference": o.get("match_reference"), "lien": o.get("lien"),
+             "match_reference": o.get("match_reference"), "lien": lien_match(o),
              # trace de la prise : de quoi revérifier le pari après coup
              "preuve_prise": {"match_id_reference": o.get("match_id_reference"),
                               "equipes_inversees": o.get("reference_inversee"),
