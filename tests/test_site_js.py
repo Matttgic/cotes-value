@@ -35,7 +35,7 @@ const courbesMasquees=new Set(['M3']);
 const rendus=[];
 const rendreBilan=()=>rendus.push(refBilan),
  rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},rendreBilanUniques=()=>{},rendreSante=()=>{},
- rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{};
+ rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{},rendreMesStrategies=()=>{};
 function installerActualisation(config) {
   const etat=config.capturer();
   refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
@@ -60,13 +60,14 @@ DOM = '''
 const assert=require("node:assert/strict");
 const elements=new Map();
 const document={getElementById(id){
-  if(!elements.has(id)) elements.set(id,{value:"",innerHTML:"",textContent:"",style:{},querySelectorAll(){return []},setAttribute(){}});
+  if(!elements.has(id)) elements.set(id,{value:"",innerHTML:"",textContent:"",style:{},dataset:{},querySelectorAll(){return []},setAttribute(){}});
   return elements.get(id);
 },querySelectorAll(){return []}};
 const e=s => String(s ?? "").replaceAll("<","&lt;").replaceAll('"','&quot;');
 const cote=e,pct=e,eur=e,quand=e,signe=()=>"",ouvrir=()=>{};
 const STATUTS={}, STRAT_PERIODES={futur:"Depuis le lancement",ensemble:"Historique"};
-'''+(Path(__file__).resolve().parents[1]/'web/horaires.js').read_text()
+const lire=()=>null, ecrire=()=>{};
+'''+(Path(__file__).resolve().parents[1]/'web/horaires.js').read_text()+(Path(__file__).resolve().parents[1]/'web/suivi.js').read_text()
 
 
 def test_js_recherche_filtres_export_bom_echappement_et_archive_complete():
