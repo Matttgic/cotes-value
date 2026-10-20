@@ -16,7 +16,11 @@ from .strategie_qwen import QWEN
 from .strategies_prudentes import VARIANTES
 
 API = "https://tapotyftgyacbnjmeovn.supabase.co/functions/v1/cv-notifications"
-AGE_PRIX_MAX_MINUTES = 5
+# Même fenêtre que la comparaison (cote française lue à moins de 15 min de la référence) et que le service
+# Supabase (détection de moins de 15 min). À 5 min, une prise retenue sur une cote gardée par la rotation
+# Unibet ou PMU n'était jamais notifiée (Fenerbahçe – Slavia, Pinnacle 2, 20/10/2026 : prix de 11 min).
+# L'heure du relevé figure dans le texte de l'alerte.
+AGE_PRIX_MAX_MINUTES = 15
 
 
 def _noms_labo() -> dict[str, str]:
