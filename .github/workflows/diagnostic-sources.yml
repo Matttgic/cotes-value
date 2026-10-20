@@ -1,0 +1,29 @@
+name: Diagnostic des sources de resultats
+
+# Lecture seule : cherche pourquoi les matchs en attente ne trouvent aucun resultat (aucune ecriture de donnees).
+on:
+  push:
+    branches: [ccr-148b8ccc-phitmr]
+    paths:
+      - .github/workflows/diagnostic-sources.yml
+      - scripts/diagnostic_sources.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Charger les donnees actuelles
+        run: git clone -q --depth 1 --branch donnees "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" donnees
+      - name: Diagnostic
+        run: python scripts/diagnostic_sources.py --donnees donnees
