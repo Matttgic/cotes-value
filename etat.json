@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T11:41:37+00:00",
+  "debut": "2026-10-21T11:46:17+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 13.1,
+    "secondes": 14.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,16 +12,11 @@
     ]
    },
    "pinnacle": {
-    "secondes": 34.0,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 22 markets/straight : HTTP 403",
-     "sport 45 matchups : HTTP 403"
-    ]
+    "secondes": 21.9,
+    "ok": true
    },
    "unibet_direct": {
-    "secondes": 1.0,
+    "secondes": 1.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -29,19 +24,19 @@
     ]
    },
    "olybet": {
-    "secondes": 6.4,
+    "secondes": 5.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 14.1,
+    "secondes": 13.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 37.2,
+    "secondes": 30.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -49,7 +44,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -57,20 +52,23 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.4,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 21.1,
+    "secondes": 16.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.4,
+    "secondes": 0.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.5,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -80,33 +78,37 @@
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 0,
+   "lignes": 31124,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 0,
-   "retard": []
+   "cache_lignes": 31124,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 866,
-   "age_min_s": 13,
-   "lignes": 125469,
-   "lignes_perimees": 262,
-   "rechauffeur": "indisponible",
+   "age_max_s": 740,
+   "age_min_s": 49,
+   "lignes": 125505,
+   "lignes_perimees": 3549,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 19,
-    "head_403": 3,
+    "head_200": 31,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 4,
-    "reprise_403": 2,
+    "choisi_autre": 9,
+    "choisi_fixe": 5,
     "sport_vide": 6
    }
   },
@@ -115,38 +117,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Trabzonspor – Heart of Midlothian",
+     "match": "Cincinnati – DC United",
      "source": "Pinnacle",
-     "cote_olybet": 1.3,
-     "cote_reference": 1.326,
-     "ecart_relatif": 0.0194,
+     "cote_olybet": 1.59,
+     "cote_reference": 1.667,
+     "ecart_relatif": 0.046,
      "aberrant": false
     },
     {
-     "match": "Trabzonspor – Heart of Midlothian",
+     "match": "Cincinnati – DC United",
      "source": "PMU",
-     "cote_olybet": 1.3,
-     "cote_reference": 1.27,
-     "ecart_relatif": 0.0236,
+     "cote_olybet": 1.59,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0062,
      "aberrant": false
     },
     {
-     "match": "Jablonec – Brighton",
+     "match": "Hamrun Spartans – Balzan",
      "source": "Pinnacle",
-     "cote_olybet": 7.9,
-     "cote_reference": 8.9,
-     "ecart_relatif": 0.1124,
+     "cote_olybet": 1.71,
+     "cote_reference": 1.746,
+     "ecart_relatif": 0.0208,
      "aberrant": false
     },
     {
-     "match": "Jablonec – Brighton",
+     "match": "Hamrun Spartans – Balzan",
      "source": "PMU",
-     "cote_olybet": 7.9,
-     "cote_reference": 9.0,
-     "ecart_relatif": 0.1222,
+     "cote_olybet": 1.71,
+     "cote_reference": 1.58,
+     "ecart_relatif": 0.0823,
+     "aberrant": false
+    },
+    {
+     "match": "Hibernians FC – Gzira United",
+     "source": "PMU",
+     "cote_olybet": 1.82,
+     "cote_reference": 1.76,
+     "ecart_relatif": 0.0341,
      "aberrant": false
     }
    ],
@@ -201,23 +211,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T11:41:48+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T11:42:01+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T11:32:39+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T11:46:35+00:00",
    "books_premiere_lecture": "2026-10-21T02:55:45+00:00",
-   "books_derniere_lecture": "2026-10-21T11:42:12+00:00",
-   "ecart_enveloppe_secondes": 31576.0
+   "books_derniere_lecture": "2026-10-21T11:46:40+00:00",
+   "ecart_enveloppe_secondes": 31850.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 615,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 20904,
+   "mesures": 21576,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -233,27 +242,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-21T10:47:59+00:00"
+   "dernier_reglement": "2026-10-21T11:44:09+00:00"
   },
-  "fin": "2026-10-21T11:43:58+00:00",
+  "fin": "2026-10-21T11:48:39+00:00",
   "cotes": {
-   "francaises": 89078,
-   "pinnacle": 125469,
-   "polymarket": 12380,
-   "smarkets": 3972
+   "francaises": 89249,
+   "pinnacle": 156629,
+   "polymarket": 12378,
+   "smarkets": 3944
   },
-  "matchs_francais": 1376,
-  "opportunites": 11,
+  "matchs_francais": 1383,
+  "opportunites": 9,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 3
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-20T20:19:37+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-20T20:24:17+00:00",
    "mode": "complet",
@@ -1453,6 +1456,12 @@
    "mode": "complet",
    "opportunites": 11,
    "nouveaux_paris": 3
+  },
+  {
+   "debut": "2026-10-21T11:46:17+00:00",
+   "mode": "complet",
+   "opportunites": 9,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-21T11:44:09+00:00",
