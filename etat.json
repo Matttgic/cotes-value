@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T13:37:50+00:00",
+  "debut": "2026-10-21T13:42:28+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 15.0,
+    "secondes": 10.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,19 +12,28 @@
     ]
    },
    "pinnacle": {
-    "secondes": 27.5,
-    "ok": true
+    "secondes": 32.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 9 matchups : HTTP 403",
+     "sport 37 matchups : HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 6.5,
+    "secondes": 5.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 15.7,
+    "secondes": 15.6,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 20.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 34.9,
+    "secondes": 32.7,
     "ok": true
    },
    "netbet": {
@@ -35,36 +44,25 @@
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 39.5,
+   "betclic_direct": {
+    "secondes": 76.4,
     "ok": true
    },
-   "betclic_direct": {
-    "secondes": 77.4,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
    "smarkets": {
-    "secondes": 27.5,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 20.1,
+    "secondes": 18.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.7,
+    "secondes": 1.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.4,
+    "secondes": 0.5,
     "ok": true
    }
   },
@@ -75,26 +73,25 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 732,
-   "age_min_s": 73,
-   "lignes": 124249,
-   "lignes_perimees": 3468,
-   "rechauffeur": "ok",
+   "age_max_s": 718,
+   "age_min_s": 9,
+   "lignes": 125861,
+   "lignes_perimees": 84,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 46,
-    "choisi_autre": 11,
-    "head_403": 2,
+    "head_200": 21,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_fixe": 3,
-    "sport_vide": 6
+    "choisi_fixe": 5,
+    "choisi_autre": 5,
+    "reprise_403": 3,
+    "reprise_403_ok": 1,
+    "sport_vide": 4
    }
   },
   "olybet_source": "direct",
@@ -102,46 +99,62 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "Mosta – Valletta",
+     "match": "PK-35 Helsinki – FF Jaro",
      "source": "Pinnacle",
-     "cote_olybet": 5.1,
-     "cote_reference": 5.4,
-     "ecart_relatif": 0.0556,
+     "cote_olybet": 2.95,
+     "cote_reference": 3.28,
+     "ecart_relatif": 0.1006,
      "aberrant": false
     },
     {
-     "match": "Hamrun Spartans – Balzan",
-     "source": "Pinnacle",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.746,
-     "ecart_relatif": 0.0208,
-     "aberrant": false
-    },
-    {
-     "match": "Hamrun Spartans – Balzan",
+     "match": "PK-35 Helsinki – FF Jaro",
      "source": "PMU",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.58,
-     "ecart_relatif": 0.0823,
+     "cote_olybet": 2.95,
+     "cote_reference": 2.85,
+     "ecart_relatif": 0.0351,
      "aberrant": false
     },
     {
-     "match": "Birzebbuga St. Peters FC – Marsaxlokk",
+     "match": "Como – Manchester Utd",
      "source": "Pinnacle",
-     "cote_olybet": 5.2,
-     "cote_reference": 4.97,
-     "ecart_relatif": 0.0463,
+     "cote_olybet": 2.33,
+     "cote_reference": 2.5,
+     "ecart_relatif": 0.068,
      "aberrant": false
     },
     {
-     "match": "Hibernians FC – Gzira United",
+     "match": "Como – Manchester Utd",
      "source": "PMU",
-     "cote_olybet": 1.81,
-     "cote_reference": 1.76,
-     "ecart_relatif": 0.0284,
+     "cote_olybet": 2.33,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.013,
+     "aberrant": false
+    },
+    {
+     "match": "Sporting CP – LASK Linz",
+     "source": "Pinnacle",
+     "cote_olybet": 1.24,
+     "cote_reference": 1.273,
+     "ecart_relatif": 0.0261,
+     "aberrant": false
+    },
+    {
+     "match": "Real Madrid – Leipzig",
+     "source": "Pinnacle",
+     "cote_olybet": 1.21,
+     "cote_reference": 1.227,
+     "ecart_relatif": 0.0141,
+     "aberrant": false
+    },
+    {
+     "match": "Real Madrid – Leipzig",
+     "source": "PMU",
+     "cote_olybet": 1.21,
+     "cote_reference": 1.18,
+     "ecart_relatif": 0.0254,
      "aberrant": false
     }
    ],
@@ -196,22 +209,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T13:38:00+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T13:38:13+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T13:42:39+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T13:42:50+00:00",
    "books_premiere_lecture": "2026-10-21T12:23:44+00:00",
-   "books_derniere_lecture": "2026-10-21T13:38:18+00:00",
-   "ecart_enveloppe_secondes": 4469.0
+   "books_derniere_lecture": "2026-10-21T13:43:02+00:00",
+   "ecart_enveloppe_secondes": 4746.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 616,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 28245,
+   "mesures": 29247,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -227,25 +241,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T13:35:14+00:00"
   },
-  "fin": "2026-10-21T13:40:30+00:00",
+  "fin": "2026-10-21T13:44:43+00:00",
   "cotes": {
-   "francaises": 98737,
-   "pinnacle": 124249,
-   "polymarket": 11910,
+   "francaises": 98825,
+   "pinnacle": 125861,
+   "polymarket": 11903,
    "smarkets": 3977
   },
-  "matchs_francais": 1429,
+  "matchs_francais": 1437,
   "opportunites": 2,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-20T22:14:27+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-20T22:19:03+00:00",
    "mode": "complet",
@@ -1442,6 +1450,12 @@
   },
   {
    "debut": "2026-10-21T13:37:50+00:00",
+   "mode": "complet",
+   "opportunites": 2,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T13:42:28+00:00",
    "mode": "complet",
    "opportunites": 2,
    "nouveaux_paris": 0
