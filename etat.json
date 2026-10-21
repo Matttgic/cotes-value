@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T05:45:36+00:00",
+  "debut": "2026-10-21T05:50:11+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.0,
+    "secondes": 11.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,8 +13,12 @@
     ]
    },
    "pinnacle": {
-    "secondes": 24.5,
-    "ok": true
+    "secondes": 24.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 28 matchups : HTTP 403"
+    ]
    },
    "unibet_direct": {
     "secondes": 0.8,
@@ -25,19 +29,19 @@
     ]
    },
    "olybet": {
-    "secondes": 5.5,
+    "secondes": 5.0,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 13.4,
+    "secondes": 13.8,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 33.5,
+    "secondes": 32.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -45,12 +49,8 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 77.2,
+    "ok": true
    },
    "smarkets": {
     "secondes": 0.0,
@@ -58,15 +58,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 16.9,
+    "secondes": 8.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.2,
+    "secondes": 0.6,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.4,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -77,22 +77,27 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 505,
-   "age_min_s": 168,
+   "age_max_s": 778,
+   "age_min_s": 432,
    "lignes": 119509,
-   "lignes_perimees": 0,
-   "rechauffeur": "indisponible",
+   "lignes_perimees": 1304,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 36,
-    "choisi_fixe": 1,
+    "head_200": 40,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 12,
+    "choisi_fixe": 5,
+    "choisi_autre": 8,
+    "reprise_403": 1,
+    "matchups_sans_speciaux": 1,
     "sport_vide": 6
    }
   },
@@ -101,14 +106,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Club Bruges – Lens",
+     "match": "Palmeiras – Fluminense",
+     "source": "Pinnacle",
+     "cote_olybet": 1.91,
+     "cote_reference": 1.99,
+     "ecart_relatif": 0.0402,
+     "aberrant": false
+    },
+    {
+     "match": "Palmeiras – Fluminense",
      "source": "PMU",
-     "cote_olybet": 1.88,
-     "cote_reference": 1.86,
-     "ecart_relatif": 0.0108,
+     "cote_olybet": 1.91,
+     "cote_reference": 1.8,
+     "ecart_relatif": 0.0611,
+     "aberrant": false
+    },
+    {
+     "match": "Real Madrid – Leipzig",
+     "source": "Pinnacle",
+     "cote_olybet": 1.2,
+     "cote_reference": 1.23,
+     "ecart_relatif": 0.0247,
+     "aberrant": false
+    },
+    {
+     "match": "Real Madrid – Leipzig",
+     "source": "PMU",
+     "cote_olybet": 1.2,
+     "cote_reference": 1.19,
+     "ecart_relatif": 0.0084,
      "aberrant": false
     },
     {
@@ -125,38 +154,6 @@
      "cote_olybet": 2.0,
      "cote_reference": 1.95,
      "ecart_relatif": 0.0256,
-     "aberrant": false
-    },
-    {
-     "match": "Aston Villa – Viking",
-     "source": "Pinnacle",
-     "cote_olybet": 1.19,
-     "cote_reference": 1.222,
-     "ecart_relatif": 0.0263,
-     "aberrant": false
-    },
-    {
-     "match": "Aston Villa – Viking",
-     "source": "PMU",
-     "cote_olybet": 1.19,
-     "cote_reference": 1.17,
-     "ecart_relatif": 0.0171,
-     "aberrant": false
-    },
-    {
-     "match": "Lille – Galatasaray",
-     "source": "Pinnacle",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0391,
-     "aberrant": false
-    },
-    {
-     "match": "Lille – Galatasaray",
-     "source": "PMU",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0625,
      "aberrant": false
     }
    ],
@@ -251,23 +248,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T05:45:46+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T05:45:56+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T05:50:21+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T05:50:32+00:00",
    "books_premiere_lecture": "2026-10-21T02:55:45+00:00",
-   "books_derniere_lecture": "2026-10-21T05:46:01+00:00",
-   "ecart_enveloppe_secondes": 10211.0
+   "books_derniere_lecture": "2026-10-21T05:50:36+00:00",
+   "ecart_enveloppe_secondes": 10487.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 13.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 615,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 18803,
+   "mesures": 17982,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -285,25 +282,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T05:10:19+00:00"
   },
-  "fin": "2026-10-21T05:47:41+00:00",
+  "fin": "2026-10-21T05:52:06+00:00",
   "cotes": {
-   "francaises": 75304,
+   "francaises": 75364,
    "pinnacle": 119509,
-   "polymarket": 12508,
+   "polymarket": 12500,
    "smarkets": 4003
   },
-  "matchs_francais": 1208,
-  "opportunites": 48,
+  "matchs_francais": 1219,
+  "opportunites": 46,
   "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-20T14:24:44+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-20T14:27:17+00:00",
    "mode": "complet",
@@ -1502,6 +1493,12 @@
    "debut": "2026-10-21T05:45:36+00:00",
    "mode": "complet",
    "opportunites": 48,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T05:50:11+00:00",
+   "mode": "complet",
+   "opportunites": 46,
    "nouveaux_paris": 0
   }
  ],
