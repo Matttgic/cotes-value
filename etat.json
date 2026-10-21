@@ -1,63 +1,73 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T22:30:14+00:00",
+  "debut": "2026-10-21T22:34:54+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 9.3,
+    "secondes": 12.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "prix bid/ask invalides"
+     "prix bid/ask invalides",
+     "prix lu après le coup d'envoi : rejet pré-match"
     ]
    },
    "pinnacle": {
-    "secondes": 23.2,
-    "ok": true
+    "secondes": 34.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 27 matchups : HTTP 403",
+     "sport 6 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 5.9,
+    "secondes": 5.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 28.0,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 28.7,
+    "secondes": 29.1,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 33.1,
+    "secondes": 36.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "unibet_direct": {
+    "secondes": 56.5,
+    "ok": true
+   },
    "betclic_direct": {
-    "secondes": 61.4,
+    "secondes": 68.2,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.5,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 6.7,
+    "secondes": 6.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.7,
+    "secondes": 0.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.3,
+    "secondes": 0.4,
     "ok": true
    }
   },
@@ -66,41 +76,37 @@
   },
   "pinnacle_secours": {
    "sports": [
-    "football"
+    "boxe"
    ],
    "requetes": 1,
-   "lignes": 28953,
+   "lignes": 48,
    "erreurs": [],
-   "pause": true,
    "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 891,
-   "age_min_s": 1,
-   "lignes": 122629,
-   "lignes_perimees": 6312,
-   "rechauffeur": "ok",
+   "age_max_s": 839,
+   "age_min_s": 16,
+   "lignes": 122721,
+   "lignes_perimees": 8,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 33,
-    "head_403": 3,
-    "ortho_refusee": 3,
-    "choisi_fixe": 9,
-    "choisi_autre": 5,
-    "sport_vide": 6
+    "head_200": 30,
+    "choisi_autre": 7,
+    "choisi_fixe": 7,
+    "reprise_403": 3,
+    "matchups_sans_speciaux": 2,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -108,78 +114,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Flamengo – Estudiantes de La Plata",
+     "match": "Atlas de Guadalajara – Club América",
      "source": "Pinnacle",
-     "cote_olybet": 1.34,
-     "cote_reference": 1.37,
-     "ecart_relatif": 0.0222,
+     "cote_olybet": 3.11,
+     "cote_reference": 3.46,
+     "ecart_relatif": 0.1012,
      "aberrant": false
     },
     {
-     "match": "Flamengo – Estudiantes de La Plata",
+     "match": "Atlas de Guadalajara – Club América",
      "source": "PMU",
-     "cote_olybet": 1.34,
-     "cote_reference": 1.3,
-     "ecart_relatif": 0.0308,
+     "cote_olybet": 3.11,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0127,
      "aberrant": false
     },
     {
-     "match": "Palmeiras – Fluminense",
+     "match": "Santos Laguna – Pumas",
      "source": "Pinnacle",
-     "cote_olybet": 1.65,
-     "cote_reference": 1.714,
-     "ecart_relatif": 0.0375,
+     "cote_olybet": 2.12,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0702,
      "aberrant": false
     },
     {
-     "match": "Palmeiras – Fluminense",
+     "match": "Santos Laguna – Pumas",
      "source": "PMU",
-     "cote_olybet": 1.65,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0312,
+     "cote_olybet": 2.12,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0707,
      "aberrant": false
     },
     {
-     "match": "Jablonec – Brighton",
+     "match": "Deportivo Toluca – Club Tijuana",
      "source": "Pinnacle",
-     "cote_olybet": 8.3,
-     "cote_reference": 9.42,
-     "ecart_relatif": 0.1189,
+     "cote_olybet": 1.24,
+     "cote_reference": 1.288,
+     "ecart_relatif": 0.0374,
      "aberrant": false
     },
     {
-     "match": "Jablonec – Brighton",
+     "match": "Deportivo Toluca – Club Tijuana",
      "source": "PMU",
-     "cote_olybet": 8.3,
-     "cote_reference": 9.5,
-     "ecart_relatif": 0.1263,
+     "cote_olybet": 1.24,
+     "cote_reference": 1.22,
+     "ecart_relatif": 0.0164,
      "aberrant": false
     },
     {
-     "match": "Midtjylland – Saint-Trond",
-     "source": "PMU",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.55,
-     "ecart_relatif": 0.0323,
-     "aberrant": false
-    },
-    {
-     "match": "Borac Banja Luka – KuPS",
+     "match": "Pachuca – Cruz Azul",
      "source": "Pinnacle",
-     "cote_olybet": 1.73,
-     "cote_reference": 1.806,
-     "ecart_relatif": 0.0423,
+     "cote_olybet": 2.85,
+     "cote_reference": 3.07,
+     "ecart_relatif": 0.0717,
      "aberrant": false
     },
     {
-     "match": "Borac Banja Luka – KuPS",
+     "match": "Pachuca – Cruz Azul",
      "source": "PMU",
-     "cote_olybet": 1.73,
-     "cote_reference": 1.68,
-     "ecart_relatif": 0.0298,
+     "cote_olybet": 2.85,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.0755,
      "aberrant": false
     }
    ],
@@ -194,8 +192,8 @@
      "match": "Cincinnati – DC United",
      "source": "Pinnacle",
      "cote_netbet": 1.45,
-     "cote_reference": 1.526,
-     "ecart_relatif": 0.05,
+     "cote_reference": 1.54,
+     "ecart_relatif": 0.0587,
      "aberrant": false
     },
     {
@@ -210,8 +208,8 @@
      "match": "Llaneros FC – Deportivo Cali",
      "source": "Pinnacle",
      "cote_netbet": 2.8,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.0667,
+     "cote_reference": 2.98,
+     "ecart_relatif": 0.0604,
      "aberrant": false
     },
     {
@@ -258,8 +256,8 @@
      "match": "Deportivo Toluca – Tijuana",
      "source": "Pinnacle",
      "cote_netbet": 1.2,
-     "cote_reference": 1.289,
-     "ecart_relatif": 0.069,
+     "cote_reference": 1.288,
+     "ecart_relatif": 0.0685,
      "aberrant": false
     },
     {
@@ -274,23 +272,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T22:30:24+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T22:30:39+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T22:35:04+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T22:35:29+00:00",
    "books_premiere_lecture": "2026-10-21T21:34:34+00:00",
-   "books_derniere_lecture": "2026-10-21T22:30:41+00:00",
-   "ecart_enveloppe_secondes": 3365.0
+   "books_derniere_lecture": "2026-10-21T22:35:30+00:00",
+   "ecart_enveloppe_secondes": 3655.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 23279,
+   "mesures": 24388,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -308,12 +305,12 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T22:08:39+00:00"
   },
-  "fin": "2026-10-21T22:31:53+00:00",
+  "fin": "2026-10-21T22:37:11+00:00",
   "cotes": {
-   "francaises": 68727,
-   "pinnacle": 151582,
-   "polymarket": 10084,
-   "smarkets": 4006
+   "francaises": 68747,
+   "pinnacle": 122769,
+   "polymarket": 10125,
+   "smarkets": 3991
   },
   "matchs_francais": 897,
   "opportunites": 5,
@@ -321,12 +318,6 @@
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T07:04:36+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 7
-  },
   {
    "debut": "2026-10-21T07:09:07+00:00",
    "mode": "complet",
@@ -1523,6 +1514,12 @@
   },
   {
    "debut": "2026-10-21T22:30:14+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T22:34:54+00:00",
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 0
