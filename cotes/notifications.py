@@ -18,6 +18,15 @@ from .strategies_prudentes import VARIANTES
 
 API = "https://tapotyftgyacbnjmeovn.supabase.co/functions/v1/cv-notifications"
 AGE_PRIX_MAX_MINUTES = 5
+# Matchs à plus de 6 h : PMU, Unibet et Betclic ne sont relus qu'à leur rythme (20, 27 et 34 min, scripts/cycle.py).
+# Le prix de la dernière lecture reste le bon ; la limite de 5 min ferait taire l'alerte jusqu'à la lecture suivante.
+LOINTAIN_H = 6
+AGE_PRIX_LOINTAIN_MINUTES = {"PMU": 25, "Unibet": 32, "Betclic": 39}
+
+
+def age_prix_max(o: dict, debut: datetime, recue: datetime) -> timedelta:
+    loin = debut - recue > timedelta(hours=LOINTAIN_H)
+    return timedelta(minutes=AGE_PRIX_LOINTAIN_MINUTES.get(o.get("bookmaker"), AGE_PRIX_MAX_MINUTES) if loin else AGE_PRIX_MAX_MINUTES)
 
 
 def _noms_labo() -> dict[str, str]:
@@ -78,6 +87,11 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
         t0 = heure(p.get("detecte"))
         if not t0:
             continue
+        # Pari décidé après sa première détection (référence Pinnacle arrivée plus tard) : la fenêtre de 15 min
+        # part de la décision, pas de la première lecture du prix.
+        decide = heure(p.get("decide_le"))
+        if decide and decide > t0:
+            t0 = decide
         for cle, ids in valides.items():
             if id(p) in ids:
                 t, cote = t0, p.get("cote")
@@ -93,7 +107,7 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
         recue = heure(o.get("collecte_recue") or o.get("detecte"))
         if (o.get("suspect") or o.get("pariable") is False or not debut
                 or debut <= maintenant + timedelta(minutes=1) or not recue
-                or not timedelta(0) <= maintenant-recue <= timedelta(minutes=AGE_PRIX_MAX_MINUTES)):
+                or not timedelta(0) <= maintenant-recue <= age_prix_max(o, debut, recue)):
             continue
         key = (*cle_selection(o), o.get("cote"))
         dates = observations.get(key, {})

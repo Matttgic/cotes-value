@@ -2,7 +2,7 @@ import io
 import json
 from datetime import timedelta
 
-from cotes.notifications import flux
+from cotes.notifications import PIN2, flux
 from scripts.envoyer_notifications import transmettre
 from tests.test_theodds import NOW, pari
 
@@ -230,6 +230,8 @@ def test_ntfy_texte_brut_titre_priorite_et_tags_sans_cle():
     assert corps == ("Galatasaray SK – Strasbourg\nGalatasaray SK -7,5 @ 1,93 (min 1,88)\nmar. 20/10 19h00")
     assert message_ntfy(_alerte_ntfy(recheck=True))[1] == corps                   # rien d'autre
     assert "Ligue" not in corps and "edge" not in corps
+    assert message_ntfy(_alerte_ntfy(age_prix_secondes=660))[1] == corps + "\nPrix relevé il y a 11 min"
+    assert message_ntfy(_alerte_ntfy(age_prix_secondes=120))[1] == corps
     assert "http" not in corps and message_ntfy(_alerte_ntfy(lien=None))[1] == corps     # pas de lien dans le texte
     assert message_ntfy(_alerte_ntfy(cote_min=1.87))[1].split("\n")[1].endswith("(min 1,87)")
     appels = []
@@ -324,3 +326,19 @@ def test_liens_par_bookmaker():
     lien_match({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|1", "lien": "/é/1"}).encode("latin-1")
     paris = [{**base, "bookmaker": "Winamax", "match_id": "winamax|5", "lien": "/paris-sportifs/match/5"}]
     assert completer_liens(paris) == 1 and paris[0]["lien"].endswith("/match/5") and completer_liens(paris) == 0
+
+
+def test_match_lointain_prix_de_la_derniere_lecture_et_fenetre_depuis_la_decision():
+    # PMU à plus de 6 h : relu toutes les 20 min ; prix de 11 min, pari décidé il y a 1 min (Pinnacle arrivé après).
+    p = pari(detecte=(NOW-timedelta(minutes=11)).isoformat(), debut=(NOW+timedelta(hours=9)).isoformat(),
+             reference="Pinnacle", pari="Moins de 2,5 buts", bookmaker="PMU", decide_le=(NOW-timedelta(minutes=1)).isoformat())
+    ids = {PIN2: {id(p)}}
+    a = flux([dict(p)], [p], ids, NOW)["alertes"]
+    assert len(a) == 1 and a[0]["age_prix_secondes"] == 660
+    assert a[0]["validations"][PIN2] == p["decide_le"]
+    # même prix de 11 min mais match proche (relu à chaque cycle) : écarté
+    proche = {**p, "debut": (NOW+timedelta(hours=2)).isoformat()}
+    assert not flux([dict(proche)], [proche], {PIN2: {id(proche)}}, NOW)["alertes"]
+    # au-delà du rythme de la source : écarté
+    vieux = {**p, "detecte": (NOW-timedelta(minutes=26)).isoformat()}
+    assert not flux([dict(vieux)], [vieux], {PIN2: {id(vieux)}}, NOW)["alertes"]
