@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T17:47:38+00:00",
+  "debut": "2026-10-21T17:52:14+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 11.4,
+    "secondes": 9.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,17 +12,15 @@
     ]
    },
    "pinnacle": {
-    "secondes": 45.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 25.7,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 29 matchups : réseau indisponible",
-     "budget"
+     "sport 45 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 2.7,
+    "secondes": 0.6,
     "ok": false,
     "erreur": "CurlError('Failed to perform, curl: (22) Refused WebSocket upgrade: 502. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.')",
     "degrade": true,
@@ -31,32 +29,28 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 27.7,
+    "secondes": 30.7,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 35.1,
+    "secondes": 35.8,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 37.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
-   },
-   "unibet_direct": {
-    "secondes": 49.8,
-    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.4,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 58.2,
+    "ok": true
    },
    "smarkets": {
     "secondes": 0.0,
@@ -64,52 +58,46 @@
     "cache": true
    },
    "association": {
-    "secondes": 2.3,
+    "secondes": 8.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.9,
+    "secondes": 1.2,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.1,
+    "secondes": 0.4,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 30350,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 30350,
-   "retard": []
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": null,
-   "age_min_s": null,
-   "lignes": 0,
+   "age_max_s": 630,
+   "age_min_s": 234,
+   "lignes": 124609,
    "lignes_perimees": 0,
-   "rechauffeur": "indisponible",
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 17,
+    "head_200": 42,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 4,
-    "choisi_fixe": 3,
-    "reprise_403": 1,
-    "matchups_sans_speciaux": 1
+    "choisi_autre": 9,
+    "choisi_fixe": 5,
+    "sport_vide": 6,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -154,8 +142,8 @@
      "match": "Zabbar St. Patrick – Sliema Wanderers",
      "source": "Pinnacle",
      "cote_netbet": 3.8,
-     "cote_reference": 4.0,
-     "ecart_relatif": 0.05,
+     "cote_reference": 3.98,
+     "ecart_relatif": 0.0452,
      "aberrant": false
     },
     {
@@ -169,56 +157,56 @@
     {
      "match": "Aston Villa – Viking",
      "source": "Pinnacle",
-     "cote_netbet": 1.22,
+     "cote_netbet": 1.21,
      "cote_reference": 1.267,
-     "ecart_relatif": 0.0371,
+     "ecart_relatif": 0.0453,
      "aberrant": false
     },
     {
      "match": "Aston Villa – Viking",
      "source": "PMU",
-     "cote_netbet": 1.22,
-     "cote_reference": 1.2,
-     "ecart_relatif": 0.0167,
+     "cote_netbet": 1.21,
+     "cote_reference": 1.19,
+     "ecart_relatif": 0.0168,
      "aberrant": false
     },
     {
      "match": "Bayern Munich – Arsenal",
      "source": "Pinnacle",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.31,
-     "ecart_relatif": 0.0693,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.0517,
      "aberrant": false
     },
     {
      "match": "Bayern Munich – Arsenal",
      "source": "PMU",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.16,
-     "ecart_relatif": 0.0046,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0351,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T16:47:39+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T17:24:51+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T17:52:24+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T17:52:32+00:00",
    "books_premiere_lecture": "2026-10-21T17:20:04+00:00",
-   "books_derniere_lecture": "2026-10-21T17:48:26+00:00",
-   "ecart_enveloppe_secondes": 3647.0
+   "books_derniere_lecture": "2026-10-21T17:52:40+00:00",
+   "ecart_enveloppe_secondes": 1948.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 13.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 616,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 12578,
+   "mesures": 23432,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -234,25 +222,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T17:26:36+00:00"
   },
-  "fin": "2026-10-21T17:49:50+00:00",
+  "fin": "2026-10-21T17:53:53+00:00",
   "cotes": {
-   "francaises": 72157,
-   "pinnacle": 30350,
-   "polymarket": 10939,
+   "francaises": 71684,
+   "pinnacle": 124609,
+   "polymarket": 10947,
    "smarkets": 4000
   },
-  "matchs_francais": 979,
-  "opportunites": 0,
+  "matchs_francais": 973,
+  "opportunites": 4,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T02:23:22+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T02:27:57+00:00",
    "mode": "complet",
@@ -1451,6 +1433,12 @@
    "debut": "2026-10-21T17:47:38+00:00",
    "mode": "complet",
    "opportunites": 0,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T17:52:14+00:00",
+   "mode": "complet",
+   "opportunites": 4,
    "nouveaux_paris": 0
   }
  ],
