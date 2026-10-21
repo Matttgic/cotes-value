@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T02:51:10+00:00",
+  "debut": "2026-10-21T02:55:45+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 9.1,
+    "secondes": 10.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,31 +13,35 @@
     ]
    },
    "pinnacle": {
-    "secondes": 24.6,
+    "secondes": 36.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403"
+     "sport 27 matchups : HTTP 403",
+     "sport 6 matchups : HTTP 403",
+     "sport 17 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "sport 13 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 4.5,
+    "secondes": 3.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 12.6,
+    "secondes": 11.4,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 16.7,
+    "secondes": 26.4,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 30.2,
+    "secondes": 29.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.0,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -45,27 +49,24 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 52.8,
+    "secondes": 45.6,
     "ok": true
    },
    "smarkets": {
-    "secondes": 19.5,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 7.0,
+    "secondes": 13.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.6,
+    "secondes": 1.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -75,22 +76,20 @@
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 29728,
+   "lignes": 0,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 29728,
-   "retard": [
-    "football"
-   ]
+   "cache_lignes": 0,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 890,
-   "age_min_s": 563,
-   "lignes": 119460,
-   "lignes_perimees": 3489,
+   "age_max_s": 844,
+   "age_min_s": 134,
+   "lignes": 119193,
+   "lignes_perimees": 0,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -101,13 +100,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
-    "head_403": 2,
+    "head_200": 19,
+    "choisi_fixe": 7,
+    "choisi_autre": 6,
+    "reprise_403": 5,
+    "matchups_sans_speciaux": 2,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 5,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -115,7 +115,7 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 9,
    "comparaisons": [
     {
      "match": "PK-35 Helsinki – FF Jaro",
@@ -134,67 +134,59 @@
      "aberrant": true
     },
     {
-     "match": "CF Puebla – Monterrey",
-     "source": "Pinnacle",
-     "cote_olybet": 3.76,
-     "cote_reference": 4.13,
-     "ecart_relatif": 0.0896,
-     "aberrant": false
-    },
-    {
-     "match": "CF Puebla – Monterrey",
+     "match": "Al Hazem – Al Feiha",
      "source": "PMU",
-     "cote_olybet": 3.76,
-     "cote_reference": 3.45,
-     "ecart_relatif": 0.0899,
+     "cote_olybet": 2.15,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.0733,
      "aberrant": false
     },
     {
-     "match": "Atlas de Guadalajara – Club América",
+     "match": "Al-Fateh – Al-Shabab Riyad",
      "source": "Pinnacle",
-     "cote_olybet": 3.21,
-     "cote_reference": 3.49,
-     "ecart_relatif": 0.0802,
+     "cote_olybet": 2.95,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.0484,
      "aberrant": false
     },
     {
-     "match": "Atlas de Guadalajara – Club América",
+     "match": "Al-Fateh – Al-Shabab Riyad",
      "source": "PMU",
-     "cote_olybet": 3.21,
-     "cote_reference": 2.88,
-     "ecart_relatif": 0.1146,
+     "cote_olybet": 2.95,
+     "cote_reference": 2.6,
+     "ecart_relatif": 0.1346,
      "aberrant": false
     },
     {
-     "match": "Pachuca – Cruz Azul",
+     "match": "Llaneros Villavicencio – Deportivo Cali",
      "source": "Pinnacle",
-     "cote_olybet": 2.79,
-     "cote_reference": 2.98,
-     "ecart_relatif": 0.0638,
+     "cote_olybet": 2.61,
+     "cote_reference": 2.78,
+     "ecart_relatif": 0.0612,
      "aberrant": false
     },
     {
-     "match": "Pachuca – Cruz Azul",
+     "match": "Llaneros Villavicencio – Deportivo Cali",
      "source": "PMU",
-     "cote_olybet": 2.79,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0528,
+     "cote_olybet": 2.61,
+     "cote_reference": 2.6,
+     "ecart_relatif": 0.0038,
      "aberrant": false
     },
     {
-     "match": "Deportivo Toluca – Club Tijuana",
+     "match": "Santa Fe – Jaguares de Córdoba",
      "source": "Pinnacle",
-     "cote_olybet": 1.33,
-     "cote_reference": 1.382,
-     "ecart_relatif": 0.0374,
+     "cote_olybet": 1.28,
+     "cote_reference": 1.315,
+     "ecart_relatif": 0.0262,
      "aberrant": false
     },
     {
-     "match": "Deportivo Toluca – Club Tijuana",
+     "match": "Santa Fe – Jaguares de Córdoba",
      "source": "PMU",
-     "cote_olybet": 1.33,
-     "cote_reference": 1.29,
-     "ecart_relatif": 0.031,
+     "cote_olybet": 1.28,
+     "cote_reference": 1.24,
+     "ecart_relatif": 0.0323,
      "aberrant": false
     }
    ],
@@ -217,25 +209,25 @@
     {
      "match": "Tigres UANL – León",
      "source": "Pinnacle",
-     "cote_netbet": 1.93,
-     "cote_reference": 2.13,
-     "ecart_relatif": 0.0939,
+     "cote_netbet": 1.95,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.093,
      "aberrant": false
     },
     {
      "match": "Tigres UANL – León",
      "source": "PMU",
-     "cote_netbet": 1.93,
+     "cote_netbet": 1.95,
      "cote_reference": 1.9,
-     "ecart_relatif": 0.0158,
+     "ecart_relatif": 0.0263,
      "aberrant": false
     },
     {
      "match": "Avispa Fukuoka – Gamba Osaka",
      "source": "Pinnacle",
      "cote_netbet": 2.37,
-     "cote_reference": 2.63,
-     "ecart_relatif": 0.0989,
+     "cote_reference": 2.59,
+     "ecart_relatif": 0.0849,
      "aberrant": false
     },
     {
@@ -298,22 +290,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T02:33:21+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T02:51:27+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T02:55:54+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T02:56:07+00:00",
    "books_premiere_lecture": "2026-10-21T00:50:57+00:00",
-   "books_derniere_lecture": "2026-10-21T02:51:35+00:00",
-   "ecart_enveloppe_secondes": 7230.0
+   "books_derniere_lecture": "2026-10-21T02:56:22+00:00",
+   "ecart_enveloppe_secondes": 7510.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 615,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 18840,
+   "mesures": 19233,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -329,25 +322,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T02:20:19+00:00"
   },
-  "fin": "2026-10-21T02:52:58+00:00",
+  "fin": "2026-10-21T02:57:27+00:00",
   "cotes": {
-   "francaises": 59240,
-   "pinnacle": 149188,
-   "polymarket": 10326,
+   "francaises": 59488,
+   "pinnacle": 119193,
+   "polymarket": 10344,
    "smarkets": 3957
   },
-  "matchs_francais": 1009,
-  "opportunites": 1,
+  "matchs_francais": 1024,
+  "opportunites": 2,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-20T10:51:04+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-20T10:55:42+00:00",
    "mode": "complet",
@@ -1546,6 +1533,12 @@
    "debut": "2026-10-21T02:51:10+00:00",
    "mode": "complet",
    "opportunites": 1,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T02:55:45+00:00",
+   "mode": "complet",
+   "opportunites": 2,
    "nouveaux_paris": 0
   }
  ],
