@@ -43,14 +43,18 @@ function suiviPrises(prises, {depuis, jusqua, etat, unique} = {}) {
   }
   return out;
 }
-function suiviBilan(prises) {
-  const b = {paris: prises.length, regles: 0, gagnes: 0, en_cours: 0, mises: 0, gains: 0};
+// `poids(p)` : nombre de mises du pari. Dans « Toutes », chaque stratégie suivie qui l'a pris mise 10 € ;
+// la vue d'une seule stratégie compte une mise.
+function suiviBilan(prises, poids = () => 1) {
+  const b = {paris: 0, regles: 0, gagnes: 0, en_cours: 0, mises: 0, gains: 0};
   for (const p of prises) {
-    if (!REGLES_SUIVI.has(p.statut)) {b.en_cours++; continue;}
+    const w = poids(p);
+    b.paris += w;
+    if (!REGLES_SUIVI.has(p.statut)) {b.en_cours += w; continue;}
     const mise = suiviNombre(p.mise) ?? 10;
     const g = suiviNombre(p.gain) ?? (p.statut === 'gagne' ? mise * (p.cote - 1) : p.statut === 'perdu' ? -mise : 0);
-    b.regles++; b.mises += mise; b.gains += g;
-    if (g > 0) b.gagnes++;
+    b.regles += w; b.mises += mise * w; b.gains += g * w;
+    if (g > 0) b.gagnes += w;
   }
   b.roi = b.mises ? b.gains / b.mises : null;
   return b;
@@ -107,7 +111,7 @@ function lierDates(racine, rapides) {
 }
 const bornesActuelles = () => { const p = suiviPeriode(); return suiviBornes(p.depuis, p.jusqua); };
 const resumeHtml = b => `<div class="carte resume-suivi"><div class="l1"><span><b>${b.regles}</b> réglé${b.regles > 1 ? 's' : ''} · ${b.gagnes} gagné${b.gagnes > 1 ? 's' : ''}${b.regles ? ' (' + Math.round(100 * b.gagnes / b.regles) + ' %)' : ''}${b.en_cours ? ' · ' + b.en_cours + ' en cours' : ''}</span></div>
-  <div class="l1"><span><b class="${signe(b.gains)}">${eur2(b.regles ? b.gains : null)}</b> <small class="roi ${signe(b.roi)}">ROI ${b.roi == null ? '—' : pctC(b.roi)}</small> <small>· 10 € par prise</small></span></div></div>`;
+  <div class="l1"><span><b class="${signe(b.gains)}">${eur2(b.regles ? b.gains : null)}</b> <small class="roi ${signe(b.roi)}">ROI ${b.roi == null ? '—' : pctC(b.roi)}</small> <small>· 10 € par stratégie et par pari</small></span></div></div>`;
 // Bilan « Paris uniques » : deux dates au choix en plus des périodes rapides.
 function rendreDatesBilan() {
   const zone = document.getElementById('bu-dates');
@@ -145,7 +149,7 @@ function rendreMesStrategies() {
   }).join('');
   const puce = (k, nom, n) => `<button type="button" data-suivi="${e(k)}" class="${suiviFiltre === k ? 'actif' : ''}">${e(nom)} <small>${n}</small></button>`;
   sortie.innerHTML = `<div class="puces" aria-label="Filtrer par stratégie">${puce('', 'Toutes', toutes.length)}${cles.map(k => puce(k, nomStrategie(k), nb[k])).join('')}</div>`
-    + resumeHtml(suiviBilan(vues))
+    + resumeHtml(suiviBilan(vues, suiviFiltre ? () => 1 : p => p.suivies.length))
     + `<div id="mes-liste">${vues.slice(0, suiviLimite).map(carteSuivi).join('') || '<p class="vide">Aucun pari sur cette période.</p>'}</div>`
     + (vues.length > suiviLimite ? '<p><button type="button" class="btn secondaire" id="mes-plus">Voir plus</button></p>' : '')
     + `<details class="mode-emploi"><summary>Stratégies suivies</summary><div class="carte">${lignesSuivi}</div>

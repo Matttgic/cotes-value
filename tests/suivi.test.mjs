@@ -54,3 +54,12 @@ test('Filtre de période et bilan',()=>{
   assert.equal(r.regles,1); assert.equal(r.gains,10); assert.equal(r.en_cours,1); assert.equal(r.roi,1);
   eq(c.suiviPrises(prises,{unique:true}).map(p=>p.id),[1,2]);
 });
+
+test('Un pari pris par trois stratégies compte trois mises dans « Toutes », une dans la vue d’une stratégie',()=>{
+  const p={statut:'perdu',cote:2,suivies:['a','b','c']};
+  const tout=c.suiviBilan([p],q=>q.suivies.length);
+  assert.equal(tout.gains,-30); assert.equal(tout.mises,30); assert.equal(tout.regles,3); assert.equal(tout.roi,-1);
+  assert.equal(c.suiviBilan([p]).gains,-10);
+  const g=c.suiviBilan([{statut:'gagne',cote:1.5,suivies:['a','b']},{statut:'en_cours',suivies:['a','b','c']}],q=>q.suivies.length);
+  assert.equal(g.gains,10); assert.equal(g.en_cours,3); assert.equal(g.regles,2);
+});
