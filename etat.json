@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T17:33:36+00:00",
+  "debut": "2026-10-21T17:38:19+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 14.9,
+    "secondes": 13.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,11 +12,15 @@
     ]
    },
    "pinnacle": {
-    "secondes": 26.7,
-    "ok": true
+    "secondes": 24.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 0.5,
+    "secondes": 0.7,
     "ok": false,
     "erreur": "CurlError('Failed to perform, curl: (22) Refused WebSocket upgrade: 502. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.')",
     "degrade": true,
@@ -25,11 +29,11 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 31.4,
+    "secondes": 31.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -37,11 +41,11 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 38.9,
+    "secondes": 37.4,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 40.9,
+    "secondes": 56.7,
     "ok": true
    },
    "betclic_direct": {
@@ -53,12 +57,15 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.2,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 10.2,
+    "secondes": 11.8,
     "ok": true
    },
    "comparaison": {
@@ -73,27 +80,42 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 30379,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 30379,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 415,
-   "age_min_s": 27,
+   "age_max_s": 695,
+   "age_min_s": 293,
    "lignes": 125451,
-   "lignes_perimees": 0,
-   "rechauffeur": "indisponible",
+   "lignes_perimees": 8787,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
+    "head_200": 41,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 4,
-    "sport_vide": 6
+    "choisi_autre": 6,
+    "choisi_fixe": 8,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -137,33 +159,33 @@
     {
      "match": "Zabbar St. Patrick – Sliema Wanderers",
      "source": "Pinnacle",
-     "cote_netbet": 3.85,
+     "cote_netbet": 3.8,
      "cote_reference": 4.0,
-     "ecart_relatif": 0.0375,
+     "ecart_relatif": 0.05,
      "aberrant": false
     },
     {
      "match": "Zabbar St. Patrick – Sliema Wanderers",
      "source": "PMU",
-     "cote_netbet": 3.85,
+     "cote_netbet": 3.8,
      "cote_reference": 4.2,
-     "ecart_relatif": 0.0833,
+     "ecart_relatif": 0.0952,
      "aberrant": false
     },
     {
      "match": "Aston Villa – Viking",
      "source": "Pinnacle",
-     "cote_netbet": 1.22,
+     "cote_netbet": 1.21,
      "cote_reference": 1.267,
-     "ecart_relatif": 0.0374,
+     "ecart_relatif": 0.0453,
      "aberrant": false
     },
     {
      "match": "Aston Villa – Viking",
      "source": "PMU",
-     "cote_netbet": 1.22,
+     "cote_netbet": 1.21,
      "cote_reference": 1.2,
-     "ecart_relatif": 0.0167,
+     "ecart_relatif": 0.0083,
      "aberrant": false
     },
     {
@@ -186,23 +208,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T17:33:47+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T17:33:58+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T17:24:51+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T17:38:36+00:00",
    "books_premiere_lecture": "2026-10-21T16:56:52+00:00",
-   "books_derniere_lecture": "2026-10-21T17:34:03+00:00",
-   "ecart_enveloppe_secondes": 2226.0
+   "books_derniere_lecture": "2026-10-21T17:38:45+00:00",
+   "ecart_enveloppe_secondes": 2504.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 616,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 23577,
+   "mesures": 22653,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -218,25 +239,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T17:26:36+00:00"
   },
-  "fin": "2026-10-21T17:35:37+00:00",
+  "fin": "2026-10-21T17:40:44+00:00",
   "cotes": {
-   "francaises": 72001,
-   "pinnacle": 125451,
-   "polymarket": 10957,
-   "smarkets": 3926
+   "francaises": 72221,
+   "pinnacle": 155830,
+   "polymarket": 10953,
+   "smarkets": 4000
   },
-  "matchs_francais": 968,
-  "opportunites": 2,
+  "matchs_francais": 977,
+  "opportunites": 4,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-21T02:09:28+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T02:14:05+00:00",
    "mode": "complet",
@@ -1436,6 +1451,12 @@
    "mode": "complet",
    "opportunites": 2,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T17:38:19+00:00",
+   "mode": "complet",
+   "opportunites": 4,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-21T17:26:36+00:00",
