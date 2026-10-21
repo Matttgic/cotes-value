@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T07:04:36+00:00",
+  "debut": "2026-10-21T07:09:07+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.4,
+    "secondes": 11.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,11 +13,11 @@
     ]
    },
    "pinnacle": {
-    "secondes": 23.7,
+    "secondes": 21.7,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 1.1,
+    "secondes": 0.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -25,32 +25,19 @@
     ]
    },
    "olybet": {
-    "secondes": 6.7,
+    "secondes": 4.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 14.2,
+    "secondes": 14.3,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 15.3,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:3 : réseau",
-     "sport:4 : réseau",
-     "sport:5 : réseau",
-     "sport:6 : réseau",
-     "sport:9 : réseau",
-     "sport:16 : réseau",
-     "sport:19 : réseau",
-     "sport:23 : réseau"
-    ]
+    "secondes": 34.7,
+    "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,24 +45,23 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 62.2,
+    "ok": true
+   },
+   "smarkets": {
+    "secondes": 18.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "smarkets": {
-    "secondes": 0.0,
-    "ok": true,
-    "cache": true
-   },
    "association": {
-    "secondes": 17.5,
+    "secondes": 21.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.2,
+    "secondes": 1.4,
     "ok": true
    },
    "cotes_cloture": {
@@ -86,14 +72,27 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 31034,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 715,
-   "age_min_s": 377,
-   "lignes": 122795,
-   "lignes_perimees": 2790,
+   "age_max_s": 903,
+   "age_min_s": 13,
+   "lignes": 122797,
+   "lignes_perimees": 10185,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -104,11 +103,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 40,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_autre": 12,
-    "choisi_fixe": 1,
+    "head_200": 29,
+    "head_403": 3,
+    "ortho_refusee": 3,
+    "choisi_autre": 5,
+    "choisi_fixe": 8,
+    "reprise_403": 1,
+    "reprise_403_ok": 1,
     "sport_vide": 6
    }
   },
@@ -117,75 +118,82 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
+     "match": "Montevideo City Torque – Atlético Mineiro",
      "source": "Pinnacle",
-     "cote_olybet": 3.81,
-     "cote_reference": 3.96,
-     "ecart_relatif": 0.0379,
+     "cote_olybet": 3.02,
+     "cote_reference": 3.25,
+     "ecart_relatif": 0.0708,
      "aberrant": false
     },
     {
-     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
+     "match": "Montevideo City Torque – Atlético Mineiro",
      "source": "PMU",
-     "cote_olybet": 3.81,
-     "cote_reference": 4.6,
-     "ecart_relatif": 0.1717,
-     "aberrant": true
-    },
-    {
-     "match": "Mosta – Valletta",
-     "source": "Pinnacle",
-     "cote_olybet": 5.0,
-     "cote_reference": 5.33,
-     "ecart_relatif": 0.0619,
+     "cote_olybet": 3.02,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0982,
      "aberrant": false
     },
     {
-     "match": "Hamrun Spartans – Balzan",
+     "match": "Bayern Munich – Arsenal",
      "source": "Pinnacle",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.746,
-     "ecart_relatif": 0.0208,
+     "cote_olybet": 2.0,
+     "cote_reference": 2.09,
+     "ecart_relatif": 0.0431,
      "aberrant": false
     },
     {
-     "match": "Hamrun Spartans – Balzan",
+     "match": "Bayern Munich – Arsenal",
      "source": "PMU",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.58,
-     "ecart_relatif": 0.0823,
+     "cote_olybet": 2.0,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0101,
      "aberrant": false
     },
     {
-     "match": "Birzebbuga St. Peters FC – Marsaxlokk",
-     "source": "Pinnacle",
-     "cote_olybet": 5.1,
-     "cote_reference": 5.37,
-     "ecart_relatif": 0.0503,
-     "aberrant": false
-    },
-    {
-     "match": "Hibernians FC – Gzira United",
+     "match": "Club Bruges – Lens",
      "source": "PMU",
-     "cote_olybet": 1.82,
-     "cote_reference": 1.76,
-     "ecart_relatif": 0.0341,
+     "cote_olybet": 1.84,
+     "cote_reference": 1.8,
+     "ecart_relatif": 0.0222,
+     "aberrant": false
+    },
+    {
+     "match": "Aston Villa – Viking",
+     "source": "Pinnacle",
+     "cote_olybet": 1.19,
+     "cote_reference": 1.228,
+     "ecart_relatif": 0.0308,
+     "aberrant": false
+    },
+    {
+     "match": "Aston Villa – Viking",
+     "source": "PMU",
+     "cote_olybet": 1.19,
+     "cote_reference": 1.19,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Lille – Galatasaray",
+     "source": "Pinnacle",
+     "cote_olybet": 2.13,
+     "cote_reference": 2.21,
+     "ecart_relatif": 0.0362,
+     "aberrant": false
+    },
+    {
+     "match": "Lille – Galatasaray",
+     "source": "PMU",
+     "cote_olybet": 2.13,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0143,
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
-     "source": "PMU",
-     "cote_olybet": 3.81,
-     "cote_reference": 4.6,
-     "ecart_relatif": 0.1717,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -227,15 +235,15 @@
     {
      "match": "FC Tokyo – Kashiwa Reysol",
      "source": "Pinnacle",
-     "cote_netbet": 1.95,
+     "cote_netbet": 1.93,
      "cote_reference": 2.08,
-     "ecart_relatif": 0.0625,
+     "ecart_relatif": 0.0721,
      "aberrant": false
     },
     {
      "match": "FC Tokyo – Kashiwa Reysol",
      "source": "PMU",
-     "cote_netbet": 1.95,
+     "cote_netbet": 1.93,
      "cote_reference": 1.94,
      "ecart_relatif": 0.0052,
      "aberrant": false
@@ -276,23 +284,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T07:04:47+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T07:04:55+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T07:09:17+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T07:09:31+00:00",
    "books_premiere_lecture": "2026-10-21T02:55:45+00:00",
-   "books_derniere_lecture": "2026-10-21T07:05:01+00:00",
-   "ecart_enveloppe_secondes": 14950.0
+   "books_derniere_lecture": "2026-10-21T07:09:33+00:00",
+   "ecart_enveloppe_secondes": 15226.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 615,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 17639,
+   "mesures": 20272,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -308,25 +315,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T07:01:36+00:00"
   },
-  "fin": "2026-10-21T07:06:43+00:00",
+  "fin": "2026-10-21T07:11:23+00:00",
   "cotes": {
-   "francaises": 76830,
-   "pinnacle": 122795,
-   "polymarket": 14772,
-   "smarkets": 3979
+   "francaises": 89438,
+   "pinnacle": 153831,
+   "polymarket": 14904,
+   "smarkets": 3991
   },
-  "matchs_francais": 1117,
-  "opportunites": 11,
-  "opportunites_suspectes": 0,
-  "nouveaux_paris": 7
+  "matchs_francais": 1395,
+  "opportunites": 51,
+  "opportunites_suspectes": 38,
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-20T15:41:59+00:00",
-   "mode": "complet",
-   "opportunites": 7,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-20T15:46:36+00:00",
    "mode": "complet",
@@ -1526,6 +1527,12 @@
    "mode": "complet",
    "opportunites": 11,
    "nouveaux_paris": 7
+  },
+  {
+   "debut": "2026-10-21T07:09:07+00:00",
+   "mode": "complet",
+   "opportunites": 51,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-10-21T07:01:36+00:00",
