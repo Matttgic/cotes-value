@@ -1,28 +1,22 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T07:55:34+00:00",
+  "debut": "2026-10-21T08:00:12+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 11.7,
+    "secondes": 12.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "prix bid/ask invalides",
-     "1N2 incomplet ou issues dupliquées : référence rejetée"
+     "prix bid/ask invalides"
     ]
    },
    "pinnacle": {
-    "secondes": 28.4,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 4 matchups : HTTP 403",
-     "sport 27 markets/straight : HTTP 403"
-    ]
+    "secondes": 20.3,
+    "ok": true
    },
    "unibet_direct": {
-    "secondes": 0.8,
+    "secondes": 0.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -30,19 +24,32 @@
     ]
    },
    "olybet": {
-    "secondes": 5.1,
+    "secondes": 5.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 12.9,
+    "secondes": 12.7,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 33.1,
-    "ok": true
+    "secondes": 17.0,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau",
+     "sport:2 : réseau",
+     "sport:3 : réseau",
+     "sport:4 : réseau",
+     "sport:5 : réseau",
+     "sport:6 : réseau",
+     "sport:9 : réseau",
+     "sport:16 : réseau",
+     "sport:19 : réseau",
+     "sport:23 : réseau"
+    ]
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -50,7 +57,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 71.8,
+    "secondes": 72.6,
     "ok": true
    },
    "smarkets": {
@@ -59,40 +66,29 @@
     "cache": true
    },
    "association": {
-    "secondes": 19.7,
+    "secondes": 9.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 0.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.5,
+    "secondes": 0.3,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 31092,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 31092,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 759,
-   "age_min_s": 48,
-   "lignes": 124962,
-   "lignes_perimees": 2731,
+   "age_max_s": 430,
+   "age_min_s": 63,
+   "lignes": 125280,
+   "lignes_perimees": 0,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -103,14 +99,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 7,
-    "head_403": 3,
+    "head_200": 30,
+    "choisi_autre": 8,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 4,
-    "choisi_autre": 1,
-    "reprise_403": 3,
-    "matchups_sans_speciaux": 1,
-    "reprise_403_ok": 1,
+    "choisi_fixe": 5,
     "sport_vide": 6
    }
   },
@@ -122,55 +115,64 @@
    "examines": 6,
    "comparaisons": [
     {
-     "match": "Santa Fe – Jaguares de Córdoba",
+     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
      "source": "Pinnacle",
-     "cote_olybet": 1.28,
-     "cote_reference": 1.311,
-     "ecart_relatif": 0.0233,
+     "cote_olybet": 3.79,
+     "cote_reference": 3.92,
+     "ecart_relatif": 0.0332,
      "aberrant": false
     },
     {
-     "match": "Santa Fe – Jaguares de Córdoba",
+     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
      "source": "PMU",
-     "cote_olybet": 1.28,
-     "cote_reference": 1.24,
-     "ecart_relatif": 0.0323,
-     "aberrant": false
+     "cote_olybet": 3.79,
+     "cote_reference": 4.6,
+     "ecart_relatif": 0.1761,
+     "aberrant": true
     },
     {
-     "match": "Llaneros Villavicencio – Deportivo Cali",
+     "match": "Mosta – Valletta",
      "source": "Pinnacle",
-     "cote_olybet": 2.59,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0582,
+     "cote_olybet": 5.1,
+     "cote_reference": 5.34,
+     "ecart_relatif": 0.0449,
      "aberrant": false
     },
     {
-     "match": "Llaneros Villavicencio – Deportivo Cali",
+     "match": "Hamrun Spartans – Balzan",
+     "source": "Pinnacle",
+     "cote_olybet": 1.71,
+     "cote_reference": 1.746,
+     "ecart_relatif": 0.0208,
+     "aberrant": false
+    },
+    {
+     "match": "Hamrun Spartans – Balzan",
      "source": "PMU",
-     "cote_olybet": 2.59,
-     "cote_reference": 2.6,
-     "ecart_relatif": 0.0038,
+     "cote_olybet": 1.71,
+     "cote_reference": 1.58,
+     "ecart_relatif": 0.0823,
      "aberrant": false
     },
     {
      "match": "Birzebbuga St. Peters FC – Marsaxlokk",
      "source": "Pinnacle",
      "cote_olybet": 3.7,
-     "cote_reference": 3.62,
-     "ecart_relatif": 0.0221,
-     "aberrant": false
-    },
-    {
-     "match": "Hibernians FC – Gzira United",
-     "source": "PMU",
-     "cote_olybet": 1.82,
-     "cote_reference": 1.76,
-     "ecart_relatif": 0.0341,
+     "cote_reference": 3.68,
+     "ecart_relatif": 0.0054,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
+     "source": "PMU",
+     "cote_olybet": 3.79,
+     "cote_reference": 4.6,
+     "ecart_relatif": 0.1761,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -196,57 +198,57 @@
     {
      "match": "Fagiano Okayama – Mito Hollyhock",
      "source": "Pinnacle",
-     "cote_netbet": 1.67,
-     "cote_reference": 1.806,
-     "ecart_relatif": 0.0756,
+     "cote_netbet": 1.63,
+     "cote_reference": 1.699,
+     "ecart_relatif": 0.0408,
      "aberrant": false
     },
     {
      "match": "Fagiano Okayama – Mito Hollyhock",
      "source": "PMU",
-     "cote_netbet": 1.67,
+     "cote_netbet": 1.63,
      "cote_reference": 1.7,
-     "ecart_relatif": 0.0176,
+     "ecart_relatif": 0.0412,
      "aberrant": false
     },
     {
      "match": "FC Tokyo – Kashiwa Reysol",
      "source": "Pinnacle",
-     "cote_netbet": 1.88,
-     "cote_reference": 2.03,
-     "ecart_relatif": 0.0739,
+     "cote_netbet": 1.87,
+     "cote_reference": 2.02,
+     "ecart_relatif": 0.0743,
      "aberrant": false
     },
     {
      "match": "FC Tokyo – Kashiwa Reysol",
      "source": "PMU",
-     "cote_netbet": 1.88,
+     "cote_netbet": 1.87,
      "cote_reference": 1.94,
-     "ecart_relatif": 0.0309,
+     "ecart_relatif": 0.0361,
      "aberrant": false
     },
     {
      "match": "Kawasaki Frontale – Vissel Kobe",
      "source": "Pinnacle",
-     "cote_netbet": 2.3,
-     "cote_reference": 2.49,
-     "ecart_relatif": 0.0763,
+     "cote_netbet": 2.35,
+     "cote_reference": 2.68,
+     "ecart_relatif": 0.1231,
      "aberrant": false
     },
     {
      "match": "Kawasaki Frontale – Vissel Kobe",
      "source": "PMU",
-     "cote_netbet": 2.3,
+     "cote_netbet": 2.35,
      "cote_reference": 2.3,
-     "ecart_relatif": 0.0,
+     "ecart_relatif": 0.0217,
      "aberrant": false
     },
     {
      "match": "Kyoto Sanga FC – Kashima Antlers",
      "source": "Pinnacle",
      "cote_netbet": 3.5,
-     "cote_reference": 3.91,
-     "ecart_relatif": 0.1049,
+     "cote_reference": 3.89,
+     "ecart_relatif": 0.1003,
      "aberrant": false
     },
     {
@@ -261,23 +263,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T07:28:10+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T07:55:58+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T08:00:21+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T08:00:29+00:00",
    "books_premiere_lecture": "2026-10-21T02:55:45+00:00",
-   "books_derniere_lecture": "2026-10-21T07:56:04+00:00",
-   "ecart_enveloppe_secondes": 18013.0
+   "books_derniere_lecture": "2026-10-21T08:00:32+00:00",
+   "ecart_enveloppe_secondes": 18284.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.2
+   "age_min": 13.8
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 615,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 22664,
+   "mesures": 18133,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -291,27 +293,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-21T07:01:36+00:00"
+   "dernier_reglement": "2026-10-21T07:57:57+00:00"
   },
-  "fin": "2026-10-21T07:57:45+00:00",
+  "fin": "2026-10-21T08:01:58+00:00",
   "cotes": {
-   "francaises": 92649,
-   "pinnacle": 156054,
-   "polymarket": 14926,
+   "francaises": 80080,
+   "pinnacle": 125280,
+   "polymarket": 14884,
    "smarkets": 3937
   },
-  "matchs_francais": 1417,
-  "opportunites": 14,
+  "matchs_francais": 1151,
+  "opportunites": 12,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 2
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-20T16:33:12+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-20T16:37:46+00:00",
    "mode": "complet",
@@ -1511,6 +1507,12 @@
    "mode": "complet",
    "opportunites": 14,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-21T08:00:12+00:00",
+   "mode": "complet",
+   "opportunites": 12,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-21T07:57:57+00:00",
