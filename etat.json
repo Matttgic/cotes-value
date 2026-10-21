@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T08:51:27+00:00",
+  "debut": "2026-10-21T08:56:05+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 9.5,
+    "secondes": 16.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,15 +13,16 @@
     ]
    },
    "pinnacle": {
-    "secondes": 22.3,
+    "secondes": 32.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 27 markets/straight : HTTP 403",
      "sport 45 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 0.8,
+    "secondes": 0.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -29,15 +30,15 @@
     ]
    },
    "olybet": {
-    "secondes": 4.5,
+    "secondes": 6.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 12.9,
+    "secondes": 13.7,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 33.1,
+    "secondes": 35.6,
     "ok": true
    },
    "netbet": {
@@ -49,8 +50,12 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 63.1,
-    "ok": true
+    "secondes": 77.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -58,46 +63,55 @@
     "cache": true
    },
    "association": {
-    "secondes": 20.7,
+    "secondes": 19.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 1.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.2,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 31352,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 31352,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 789,
-   "age_min_s": 376,
-   "lignes": 125625,
-   "lignes_perimees": 4326,
-   "rechauffeur": "ok",
+   "age_max_s": 769,
+   "age_min_s": 0,
+   "lignes": 125651,
+   "lignes_perimees": 8922,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 39,
-    "head_403": 2,
+    "head_200": 15,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 7,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 4,
+    "choisi_fixe": 3,
+    "reprise_403": 3,
+    "reprise_403_ok": 1,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -105,86 +119,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Santos Laguna – Pumas",
+     "match": "Real Madrid – Leipzig",
      "source": "Pinnacle",
-     "cote_olybet": 2.14,
-     "cote_reference": 2.29,
-     "ecart_relatif": 0.0655,
+     "cote_olybet": 1.2,
+     "cote_reference": 1.229,
+     "ecart_relatif": 0.0234,
      "aberrant": false
     },
     {
-     "match": "Santos Laguna – Pumas",
+     "match": "Real Madrid – Leipzig",
      "source": "PMU",
-     "cote_olybet": 2.14,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.0338,
+     "cote_olybet": 1.2,
+     "cote_reference": 1.2,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "CF Puebla – Monterrey",
+     "match": "Aston Villa – Viking",
      "source": "Pinnacle",
-     "cote_olybet": 3.89,
-     "cote_reference": 4.25,
-     "ecart_relatif": 0.0847,
+     "cote_olybet": 1.2,
+     "cote_reference": 1.247,
+     "ecart_relatif": 0.0376,
      "aberrant": false
     },
     {
-     "match": "CF Puebla – Monterrey",
+     "match": "Aston Villa – Viking",
      "source": "PMU",
-     "cote_olybet": 3.89,
-     "cote_reference": 3.45,
-     "ecart_relatif": 0.1275,
+     "cote_olybet": 1.2,
+     "cote_reference": 1.19,
+     "ecart_relatif": 0.0084,
      "aberrant": false
     },
     {
-     "match": "Pachuca – Cruz Azul",
+     "match": "Como – Manchester Utd",
      "source": "Pinnacle",
-     "cote_olybet": 2.8,
-     "cote_reference": 3.02,
-     "ecart_relatif": 0.0728,
+     "cote_olybet": 2.19,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0681,
      "aberrant": false
     },
     {
-     "match": "Pachuca – Cruz Azul",
+     "match": "Como – Manchester Utd",
      "source": "PMU",
-     "cote_olybet": 2.8,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0566,
-     "aberrant": false
-    },
-    {
-     "match": "Atlas de Guadalajara – Club América",
-     "source": "Pinnacle",
-     "cote_olybet": 3.21,
-     "cote_reference": 3.48,
-     "ecart_relatif": 0.0776,
-     "aberrant": false
-    },
-    {
-     "match": "Atlas de Guadalajara – Club América",
-     "source": "PMU",
-     "cote_olybet": 3.21,
-     "cote_reference": 2.88,
-     "ecart_relatif": 0.1146,
-     "aberrant": false
-    },
-    {
-     "match": "Deportivo Toluca – Club Tijuana",
-     "source": "Pinnacle",
-     "cote_olybet": 1.31,
-     "cote_reference": 1.372,
-     "ecart_relatif": 0.045,
-     "aberrant": false
-    },
-    {
-     "match": "Deportivo Toluca – Club Tijuana",
-     "source": "PMU",
-     "cote_olybet": 1.31,
-     "cote_reference": 1.29,
-     "ecart_relatif": 0.0155,
+     "cote_olybet": 2.19,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0045,
      "aberrant": false
     }
    ],
@@ -223,8 +205,8 @@
      "match": "Fagiano Okayama – Mito Hollyhock",
      "source": "PMU",
      "cote_netbet": 1.53,
-     "cote_reference": 1.62,
-     "ecart_relatif": 0.0556,
+     "cote_reference": 1.63,
+     "ecart_relatif": 0.0613,
      "aberrant": false
     },
     {
@@ -279,23 +261,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T08:51:37+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T08:51:42+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T08:42:33+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T08:56:30+00:00",
    "books_premiere_lecture": "2026-10-21T02:55:45+00:00",
-   "books_derniere_lecture": "2026-10-21T08:51:50+00:00",
-   "ecart_enveloppe_secondes": 21357.0
+   "books_derniere_lecture": "2026-10-21T08:56:39+00:00",
+   "ecart_enveloppe_secondes": 21645.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 13.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 615,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 21962,
+   "mesures": 21614,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -309,27 +291,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-21T07:57:57+00:00"
+   "dernier_reglement": "2026-10-21T08:53:32+00:00"
   },
-  "fin": "2026-10-21T08:53:22+00:00",
+  "fin": "2026-10-21T08:58:20+00:00",
   "cotes": {
-   "francaises": 92171,
-   "pinnacle": 125625,
-   "polymarket": 14796,
+   "francaises": 92157,
+   "pinnacle": 157003,
+   "polymarket": 14762,
    "smarkets": 3913
   },
-  "matchs_francais": 1417,
-  "opportunites": 46,
-  "opportunites_suspectes": 49,
-  "nouveaux_paris": 2
+  "matchs_francais": 1414,
+  "opportunites": 43,
+  "opportunites_suspectes": 50,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-20T17:27:40+00:00",
-   "mode": "complet",
-   "opportunites": 20,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-10-20T17:32:15+00:00",
    "mode": "complet",
@@ -1529,6 +1505,12 @@
    "mode": "complet",
    "opportunites": 46,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-21T08:56:05+00:00",
+   "mode": "complet",
+   "opportunites": 43,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-21T08:53:32+00:00",
