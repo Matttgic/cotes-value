@@ -95,8 +95,8 @@ _QUEUE_PERIODE = re.compile(
     r"[1-4](?:er|re|e|ère)?\s+(?:p[eé]riode|quart-temps|set|mi-temps)"
     r")\s*$")
 _PRES_H = 6
-_LOIN_EVENTS = 40
-_LOIN_COMP = 8
+_LOIN_EVENTS = 200   # tous les matchs lointains à chaque cycle (mesuré : 263 matchs, 44 s pour un budget de 75 s)
+_LOIN_COMP = 30
 _COMP_FRAIS_MIN = 45
 _PAUSE_PARALLELE = (0.4, 0.6)
 _MARGE_S = 3.0
