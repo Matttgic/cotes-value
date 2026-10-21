@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T10:13:26+00:00",
+  "debut": "2026-10-21T10:18:01+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.1,
+    "secondes": 12.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,11 +12,15 @@
     ]
    },
    "pinnacle": {
-    "secondes": 19.4,
-    "ok": true
+    "secondes": 22.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "unibet_direct": {
-    "secondes": 0.6,
+    "secondes": 0.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -28,15 +32,15 @@
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 13.6,
+    "secondes": 13.2,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 33.7,
+    "secondes": 35.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.0,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -44,19 +48,16 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 72.4,
+    "secondes": 70.7,
     "ok": true
    },
    "smarkets": {
-    "secondes": 20.1,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 13.2,
+    "secondes": 11.1,
     "ok": true
    },
    "comparaison": {
@@ -64,45 +65,38 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.3,
+    "secondes": 0.5,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 30333,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 30333,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 875,
-   "age_min_s": 109,
-   "lignes": 122923,
-   "lignes_perimees": 3150,
-   "rechauffeur": "indisponible",
+   "age_max_s": 550,
+   "age_min_s": 54,
+   "lignes": 124971,
+   "lignes_perimees": 0,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 23,
+    "head_200": 35,
+    "choisi_fixe": 7,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 2,
-    "choisi_fixe": 12,
-    "sport_vide": 6
+    "choisi_autre": 7,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -110,75 +104,90 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Al Ahli Djeddah – Al Khaleej Saihat",
+     "match": "Palmeiras – Fluminense",
      "source": "Pinnacle",
-     "cote_olybet": 1.25,
-     "cote_reference": 1.278,
-     "ecart_relatif": 0.0218,
+     "cote_olybet": 1.91,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0496,
      "aberrant": false
     },
     {
-     "match": "Al Ahli Djeddah – Al Khaleej Saihat",
+     "match": "Palmeiras – Fluminense",
      "source": "PMU",
-     "cote_olybet": 1.25,
-     "cote_reference": 1.25,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 1.91,
+     "cote_reference": 1.81,
+     "ecart_relatif": 0.0552,
      "aberrant": false
     },
     {
-     "match": "Al-Fateh – Al-Shabab Riyad",
+     "match": "Llaneros Villavicencio – Deportivo Cali",
      "source": "Pinnacle",
-     "cote_olybet": 2.95,
-     "cote_reference": 3.1,
-     "ecart_relatif": 0.0484,
+     "cote_olybet": 2.59,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0582,
      "aberrant": false
     },
     {
-     "match": "Al-Fateh – Al-Shabab Riyad",
+     "match": "Llaneros Villavicencio – Deportivo Cali",
      "source": "PMU",
-     "cote_olybet": 2.95,
+     "cote_olybet": 2.59,
      "cote_reference": 2.6,
-     "ecart_relatif": 0.1346,
+     "ecart_relatif": 0.0038,
      "aberrant": false
     },
     {
-     "match": "Al Hazem – Al Feiha",
-     "source": "PMU",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.32,
-     "ecart_relatif": 0.0733,
-     "aberrant": false
-    },
-    {
-     "match": "PK-35 Helsinki – FF Jaro",
+     "match": "Santa Fe – Jaguares de Córdoba",
      "source": "Pinnacle",
-     "cote_olybet": 3.0,
-     "cote_reference": 3.17,
-     "ecart_relatif": 0.0536,
+     "cote_olybet": 1.28,
+     "cote_reference": 1.311,
+     "ecart_relatif": 0.0233,
      "aberrant": false
     },
     {
-     "match": "PK-35 Helsinki – FF Jaro",
+     "match": "Santa Fe – Jaguares de Córdoba",
      "source": "PMU",
-     "cote_olybet": 3.0,
-     "cote_reference": 2.6,
-     "ecart_relatif": 0.1538,
-     "aberrant": true
+     "cote_olybet": 1.28,
+     "cote_reference": 1.24,
+     "ecart_relatif": 0.0323,
+     "aberrant": false
+    },
+    {
+     "match": "CF Puebla – Monterrey",
+     "source": "Pinnacle",
+     "cote_olybet": 3.89,
+     "cote_reference": 4.25,
+     "ecart_relatif": 0.0847,
+     "aberrant": false
+    },
+    {
+     "match": "CF Puebla – Monterrey",
+     "source": "PMU",
+     "cote_olybet": 3.89,
+     "cote_reference": 3.45,
+     "ecart_relatif": 0.1275,
+     "aberrant": false
+    },
+    {
+     "match": "Deportivo Toluca – Club Tijuana",
+     "source": "Pinnacle",
+     "cote_olybet": 1.31,
+     "cote_reference": 1.372,
+     "ecart_relatif": 0.045,
+     "aberrant": false
+    },
+    {
+     "match": "Deportivo Toluca – Club Tijuana",
+     "source": "PMU",
+     "cote_olybet": 1.31,
+     "cote_reference": 1.29,
+     "ecart_relatif": 0.0155,
+     "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "PK-35 Helsinki – FF Jaro",
-     "source": "PMU",
-     "cote_olybet": 3.0,
-     "cote_reference": 2.6,
-     "ecart_relatif": 0.1538,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -189,8 +198,8 @@
      "match": "Urawa – Jef United Chiba",
      "source": "Pinnacle",
      "cote_netbet": 1.43,
-     "cote_reference": 1.502,
-     "ecart_relatif": 0.0483,
+     "cote_reference": 1.498,
+     "ecart_relatif": 0.0451,
      "aberrant": false
     },
     {
@@ -229,22 +238,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T09:57:07+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T10:13:42+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T10:18:11+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T10:18:18+00:00",
    "books_premiere_lecture": "2026-10-21T02:55:45+00:00",
-   "books_derniere_lecture": "2026-10-21T10:13:47+00:00",
-   "ecart_enveloppe_secondes": 26277.0
+   "books_derniere_lecture": "2026-10-21T10:18:25+00:00",
+   "ecart_enveloppe_secondes": 26553.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 615,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 19882,
+   "mesures": 21012,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -260,25 +270,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T09:49:30+00:00"
   },
-  "fin": "2026-10-21T10:15:36+00:00",
+  "fin": "2026-10-21T10:19:52+00:00",
   "cotes": {
-   "francaises": 88329,
-   "pinnacle": 153256,
+   "francaises": 88395,
+   "pinnacle": 124971,
    "polymarket": 12511,
    "smarkets": 3855
   },
-  "matchs_francais": 1379,
-  "opportunites": 6,
+  "matchs_francais": 1384,
+  "opportunites": 7,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-20T18:51:24+00:00",
-   "mode": "complet",
-   "opportunites": 15,
-   "nouveaux_paris": 3
-  },
   {
    "debut": "2026-10-20T18:56:01+00:00",
    "mode": "complet",
@@ -1478,6 +1482,12 @@
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T10:18:01+00:00",
+   "mode": "complet",
+   "opportunites": 7,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-21T09:49:30+00:00",
