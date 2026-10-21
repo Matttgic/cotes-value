@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T22:16:16+00:00",
+  "debut": "2026-10-21T22:20:55+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 6.5,
+    "secondes": 10.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,36 +12,24 @@
     ]
    },
    "pinnacle": {
-    "secondes": 25.5,
-    "ok": true
+    "secondes": 37.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 26 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 4.1,
+    "secondes": 5.7,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 16.0,
+   "pmu_direct": {
+    "secondes": 28.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 18.1,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:3 : réseau",
-     "sport:4 : réseau",
-     "sport:5 : réseau",
-     "sport:6 : réseau",
-     "sport:9 : réseau",
-     "sport:16 : réseau",
-     "sport:23 : réseau",
-     "sport:9992 : réseau"
-    ]
-   },
-   "pmu_direct": {
-    "secondes": 27.0,
+    "secondes": 34.7,
     "ok": true
    },
    "netbet": {
@@ -52,20 +40,21 @@
      "budget"
     ]
    },
+   "unibet_direct": {
+    "secondes": 57.8,
+    "ok": true
+   },
    "betclic_direct": {
-    "secondes": 40.1,
+    "secondes": 64.8,
     "ok": true
    },
    "smarkets": {
-    "secondes": 23.3,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 8.4,
+    "secondes": 7.6,
     "ok": true
    },
    "comparaison": {
@@ -73,7 +62,7 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.3,
+    "secondes": 0.5,
     "ok": true
    }
   },
@@ -84,23 +73,26 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 176,
-   "age_min_s": 0,
-   "lignes": 122104,
-   "lignes_perimees": 0,
-   "rechauffeur": "ok",
+   "age_max_s": 452,
+   "age_min_s": 132,
+   "lignes": 122620,
+   "lignes_perimees": 232,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
-    "choisi_autre": 11,
-    "choisi_fixe": 3
+    "head_200": 31,
+    "choisi_autre": 8,
+    "head_403": 3,
+    "ortho_refusee": 2,
+    "choisi_fixe": 4,
+    "sport_vide": 4,
+    "reprise_403": 3,
+    "reprise_403_ok": 1,
+    "matchups_sans_speciaux": 1
    }
   },
   "olybet_source": "direct",
@@ -108,8 +100,24 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 8,
    "comparaisons": [
+    {
+     "match": "Cincinnati – DC United",
+     "source": "Pinnacle",
+     "cote_olybet": 1.45,
+     "cote_reference": 1.526,
+     "ecart_relatif": 0.05,
+     "aberrant": false
+    },
+    {
+     "match": "Cincinnati – DC United",
+     "source": "PMU",
+     "cote_olybet": 1.45,
+     "cote_reference": 1.49,
+     "ecart_relatif": 0.0268,
+     "aberrant": false
+    },
     {
      "match": "Al-Fateh – Al-Shabab Riyad",
      "source": "Pinnacle",
@@ -151,19 +159,11 @@
      "aberrant": false
     },
     {
-     "match": "Atlético Nacional – Deportivo Pasto",
+     "match": "Veres Rivne – Kolos Kovalivka",
      "source": "Pinnacle",
-     "cote_olybet": 1.27,
-     "cote_reference": 1.301,
-     "ecart_relatif": 0.024,
-     "aberrant": false
-    },
-    {
-     "match": "Atlético Nacional – Deportivo Pasto",
-     "source": "PMU",
-     "cote_olybet": 1.27,
-     "cote_reference": 1.18,
-     "ecart_relatif": 0.0763,
+     "cote_olybet": 3.03,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0381,
      "aberrant": false
     }
    ],
@@ -177,17 +177,17 @@
     {
      "match": "Cincinnati – DC United",
      "source": "Pinnacle",
-     "cote_netbet": 1.5,
-     "cote_reference": 1.571,
-     "ecart_relatif": 0.0454,
+     "cote_netbet": 1.48,
+     "cote_reference": 1.526,
+     "ecart_relatif": 0.0303,
      "aberrant": false
     },
     {
      "match": "Cincinnati – DC United",
      "source": "PMU",
-     "cote_netbet": 1.5,
-     "cote_reference": 1.53,
-     "ecart_relatif": 0.0196,
+     "cote_netbet": 1.48,
+     "cote_reference": 1.49,
+     "ecart_relatif": 0.0067,
      "aberrant": false
     },
     {
@@ -226,8 +226,8 @@
      "match": "Atlas – Club América",
      "source": "Pinnacle",
      "cote_netbet": 3.15,
-     "cote_reference": 3.45,
-     "ecart_relatif": 0.087,
+     "cote_reference": 3.46,
+     "ecart_relatif": 0.0896,
      "aberrant": false
     },
     {
@@ -258,22 +258,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T22:16:30+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T22:16:39+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T22:21:06+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T22:21:24+00:00",
    "books_premiere_lecture": "2026-10-21T21:34:34+00:00",
-   "books_derniere_lecture": "2026-10-21T22:16:43+00:00",
-   "ecart_enveloppe_secondes": 2525.0
+   "books_derniere_lecture": "2026-10-21T22:21:33+00:00",
+   "ecart_enveloppe_secondes": 2810.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 21039,
+   "mesures": 24309,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -291,25 +292,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T22:08:39+00:00"
   },
-  "fin": "2026-10-21T22:17:59+00:00",
+  "fin": "2026-10-21T22:22:51+00:00",
   "cotes": {
-   "francaises": 60403,
-   "pinnacle": 122104,
-   "polymarket": 10382,
+   "francaises": 68458,
+   "pinnacle": 122620,
+   "polymarket": 10376,
    "smarkets": 4006
   },
-  "matchs_francais": 733,
+  "matchs_francais": 893,
   "opportunites": 5,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T06:50:34+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T06:55:11+00:00",
    "mode": "complet",
@@ -1506,6 +1501,12 @@
   },
   {
    "debut": "2026-10-21T22:16:16+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T22:20:55+00:00",
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 0
