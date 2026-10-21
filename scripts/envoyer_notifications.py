@@ -97,6 +97,9 @@ def message_ntfy(a: dict) -> tuple[str, str]:
     match = f"{dom} – {ext}" if dom and ext else str(a.get("match") or "")
     pari = str(a.get("selection") or a.get("pari") or "").split("\n")[0]
     lignes = [match, f'{pari} @ {_fr(a.get("cote"), 2)} (min {_min_affichee(a.get("cote_min"))})', heure]
+    age = a.get("age_prix_secondes")
+    if isinstance(age, (int, float)) and age > 300:          # match lointain, lu à son rythme : on le dit
+        lignes.append(f"Prix relevé il y a {round(age / 60)} min")
     return f'{a.get("bookmaker") or "—"} – {_sport(a.get("sport"))}', "\n".join(lignes)
 
 
