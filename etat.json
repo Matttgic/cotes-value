@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-21T05:31:35+00:00",
+  "debut": "2026-10-21T05:36:19+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.0,
+    "secondes": 11.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,15 +13,16 @@
     ]
    },
    "pinnacle": {
-    "secondes": 27.6,
+    "secondes": 27.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 6 markets/straight : HTTP 403"
+     "sport 6 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 0.8,
+    "secondes": 1.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -29,19 +30,19 @@
     ]
    },
    "olybet": {
-    "secondes": 6.0,
+    "secondes": 5.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 14.3,
+    "secondes": 14.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 32.6,
+    "secondes": 32.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -57,20 +58,23 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.0,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 16.7,
+    "secondes": 12.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.2,
+    "secondes": 0.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.4,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -78,23 +82,24 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [
-    "boxe"
-   ],
-   "requetes": 1,
-   "lignes": 22,
+   "sports": [],
+   "requetes": 0,
+   "lignes": 30028,
    "erreurs": [],
-   "cache_lignes": 0,
-   "retard": []
+   "pause": true,
+   "cache_lignes": 30028,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 569,
-   "age_min_s": 327,
+   "age_max_s": 852,
+   "age_min_s": 503,
    "lignes": 119868,
-   "lignes_perimees": 168,
+   "lignes_perimees": 2078,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -105,10 +110,10 @@
     "head_200": 31,
     "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 1,
-    "reprise_403": 1,
-    "sport_vide": 6
+    "choisi_autre": 7,
+    "choisi_fixe": 4,
+    "reprise_403": 2,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -116,80 +121,64 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "PK-35 Helsinki – FF Jaro",
+     "match": "Hamrun Spartans – Balzan",
      "source": "Pinnacle",
-     "cote_olybet": 2.87,
-     "cote_reference": 3.06,
-     "ecart_relatif": 0.0621,
+     "cote_olybet": 1.71,
+     "cote_reference": 1.746,
+     "ecart_relatif": 0.0208,
      "aberrant": false
     },
     {
-     "match": "PK-35 Helsinki – FF Jaro",
+     "match": "Hamrun Spartans – Balzan",
      "source": "PMU",
-     "cote_olybet": 2.87,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.1573,
+     "cote_olybet": 1.71,
+     "cote_reference": 1.58,
+     "ecart_relatif": 0.0823,
+     "aberrant": false
+    },
+    {
+     "match": "Birzebbuga St. Peters FC – Marsaxlokk",
+     "source": "Pinnacle",
+     "cote_olybet": 5.7,
+     "cote_reference": 5.95,
+     "ecart_relatif": 0.042,
+     "aberrant": false
+    },
+    {
+     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
+     "source": "Pinnacle",
+     "cote_olybet": 3.81,
+     "cote_reference": 3.96,
+     "ecart_relatif": 0.0379,
+     "aberrant": false
+    },
+    {
+     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
+     "source": "PMU",
+     "cote_olybet": 3.81,
+     "cote_reference": 4.6,
+     "ecart_relatif": 0.1717,
      "aberrant": true
     },
     {
-     "match": "Getafe – FC Lugano",
+     "match": "Mosta – Valletta",
      "source": "Pinnacle",
-     "cote_olybet": 1.72,
-     "cote_reference": 1.775,
-     "ecart_relatif": 0.0311,
-     "aberrant": false
-    },
-    {
-     "match": "Getafe – FC Lugano",
-     "source": "PMU",
-     "cote_olybet": 1.72,
-     "cote_reference": 1.71,
-     "ecart_relatif": 0.0058,
-     "aberrant": false
-    },
-    {
-     "match": "Kairat Almaty – Panathinaïkos",
-     "source": "Pinnacle",
-     "cote_olybet": 4.9,
-     "cote_reference": 5.23,
-     "ecart_relatif": 0.0631,
-     "aberrant": false
-    },
-    {
-     "match": "Kairat Almaty – Panathinaïkos",
-     "source": "PMU",
-     "cote_olybet": 4.9,
-     "cote_reference": 4.7,
-     "ecart_relatif": 0.0426,
-     "aberrant": false
-    },
-    {
-     "match": "FK Kauno Zalgiris – Brann",
-     "source": "Pinnacle",
-     "cote_olybet": 3.75,
-     "cote_reference": 4.01,
-     "ecart_relatif": 0.0648,
-     "aberrant": false
-    },
-    {
-     "match": "FK Kauno Zalgiris – Brann",
-     "source": "PMU",
-     "cote_olybet": 3.75,
-     "cote_reference": 4.0,
-     "ecart_relatif": 0.0625,
+     "cote_olybet": 5.0,
+     "cote_reference": 5.33,
+     "ecart_relatif": 0.0619,
      "aberrant": false
     }
    ],
    "aberrants": [
     {
-     "match": "PK-35 Helsinki – FF Jaro",
+     "match": "Zabbar St. Patrick FC – Sliema Wanderers",
      "source": "PMU",
-     "cote_olybet": 2.87,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.1573,
+     "cote_olybet": 3.81,
+     "cote_reference": 4.6,
+     "ecart_relatif": 0.1717,
      "aberrant": true
     }
    ]
@@ -283,23 +272,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-21T05:31:46+00:00",
-   "pinnacle_derniere_lecture": "2026-10-21T05:32:04+00:00",
+   "pinnacle_premiere_lecture": "2026-10-21T05:22:44+00:00",
+   "pinnacle_derniere_lecture": "2026-10-21T05:36:39+00:00",
    "books_premiere_lecture": "2026-10-21T02:55:45+00:00",
-   "books_derniere_lecture": "2026-10-21T05:32:05+00:00",
-   "ecart_enveloppe_secondes": 9379.0
+   "books_derniere_lecture": "2026-10-21T05:36:48+00:00",
+   "ecart_enveloppe_secondes": 9654.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 615,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 18307,
+   "mesures": 18412,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -317,25 +305,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-21T05:10:19+00:00"
   },
-  "fin": "2026-10-21T05:33:44+00:00",
+  "fin": "2026-10-21T05:38:45+00:00",
   "cotes": {
-   "francaises": 72746,
-   "pinnacle": 119890,
-   "polymarket": 12516,
-   "smarkets": 3983
+   "francaises": 73609,
+   "pinnacle": 149896,
+   "polymarket": 12517,
+   "smarkets": 4003
   },
-  "matchs_francais": 1190,
-  "opportunites": 8,
-  "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "matchs_francais": 1203,
+  "opportunites": 48,
+  "opportunites_suspectes": 19,
+  "nouveaux_paris": 9
  },
  "historique": [
-  {
-   "debut": "2026-10-20T14:10:45+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-20T14:15:24+00:00",
    "mode": "complet",
@@ -1535,6 +1517,12 @@
    "mode": "complet",
    "opportunites": 8,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-21T05:36:19+00:00",
+   "mode": "complet",
+   "opportunites": 48,
+   "nouveaux_paris": 9
   }
  ],
  "dernier_reglement": "2026-10-21T05:10:19+00:00",
