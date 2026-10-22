@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T03:34:31+00:00",
+  "debut": "2026-10-22T03:39:06+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 6.7,
+    "secondes": 6.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,31 +12,34 @@
     ]
    },
    "pinnacle": {
-    "secondes": 20.0,
+    "secondes": 32.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 27 matchups : HTTP 403",
+     "sport 6 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 3.9,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 27.4,
+    "secondes": 3.8,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 27.4,
+    "secondes": 26.4,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 27.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 30.6,
+    "secondes": 30.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.5,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -44,7 +47,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 38.4,
+    "secondes": 39.3,
     "ok": true
    },
    "smarkets": {
@@ -53,11 +56,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 7.6,
+    "secondes": 15.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.8,
+    "secondes": 1.1,
     "ok": true
    },
    "cotes_cloture": {
@@ -68,14 +71,25 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 29747,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 29747,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 786,
-   "age_min_s": 18,
+   "age_max_s": 811,
+   "age_min_s": 61,
    "lignes": 123875,
-   "lignes_perimees": 102,
+   "lignes_perimees": 388,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -86,13 +100,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 27,
+    "head_200": 37,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 9,
-    "choisi_autre": 5,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_fixe": 8,
+    "choisi_autre": 6,
+    "reprise_403": 4,
+    "matchups_sans_speciaux": 3,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -100,30 +115,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 3,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Hibernians FC – Gzira United",
+     "match": "FC Nordsjaelland – CSKA Sofia",
      "source": "Pinnacle",
-     "cote_olybet": 1.89,
-     "cote_reference": 1.935,
-     "ecart_relatif": 0.0231,
+     "cote_olybet": 1.4,
+     "cote_reference": 1.448,
+     "ecart_relatif": 0.0334,
      "aberrant": false
     },
     {
-     "match": "Hibernians FC – Gzira United",
+     "match": "FC Nordsjaelland – CSKA Sofia",
      "source": "PMU",
-     "cote_olybet": 1.89,
-     "cote_reference": 1.77,
-     "ecart_relatif": 0.0678,
+     "cote_olybet": 1.4,
+     "cote_reference": 1.36,
+     "ecart_relatif": 0.0294,
      "aberrant": false
     },
     {
-     "match": "Birkirkara – Floriana",
+     "match": "Getafe – FC Lugano",
      "source": "Pinnacle",
-     "cote_olybet": 2.78,
-     "cote_reference": 2.88,
-     "ecart_relatif": 0.0347,
+     "cote_olybet": 1.81,
+     "cote_reference": 1.901,
+     "ecart_relatif": 0.0478,
+     "aberrant": false
+    },
+    {
+     "match": "Getafe – FC Lugano",
+     "source": "PMU",
+     "cote_olybet": 1.81,
+     "cote_reference": 1.66,
+     "ecart_relatif": 0.0904,
+     "aberrant": false
+    },
+    {
+     "match": "Trabzonspor – Heart of Midlothian",
+     "source": "Pinnacle",
+     "cote_olybet": 1.25,
+     "cote_reference": 1.286,
+     "ecart_relatif": 0.0284,
+     "aberrant": false
+    },
+    {
+     "match": "Trabzonspor – Heart of Midlothian",
+     "source": "PMU",
+     "cote_olybet": 1.25,
+     "cote_reference": 1.23,
+     "ecart_relatif": 0.0163,
      "aberrant": false
     }
    ],
@@ -186,23 +225,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T03:34:40+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T03:34:44+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T01:39:14+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T03:39:31+00:00",
    "books_premiere_lecture": "2026-10-22T03:07:10+00:00",
-   "books_derniere_lecture": "2026-10-22T03:34:51+00:00",
-   "ecart_enveloppe_secondes": 1654.0
+   "books_derniere_lecture": "2026-10-22T03:39:40+00:00",
+   "ecart_enveloppe_secondes": 7226.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.7
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 20561,
+   "mesures": 20606,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -218,25 +257,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T02:49:56+00:00"
   },
-  "fin": "2026-10-22T03:35:41+00:00",
+  "fin": "2026-10-22T03:40:42+00:00",
   "cotes": {
-   "francaises": 62050,
-   "pinnacle": 123875,
-   "polymarket": 9170,
+   "francaises": 63149,
+   "pinnacle": 153622,
+   "polymarket": 9154,
    "smarkets": 4077
   },
   "matchs_francais": 883,
-  "opportunites": 3,
+  "opportunites": 5,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-21T12:09:29+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T12:14:11+00:00",
    "mode": "complet",
@@ -1436,6 +1469,12 @@
    "mode": "complet",
    "opportunites": 3,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T03:39:06+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-10-22T02:49:56+00:00",
