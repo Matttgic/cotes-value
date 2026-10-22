@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T03:43:45+00:00",
+  "debut": "2026-10-22T03:48:20+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 7.7,
+    "secondes": 5.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,52 +12,56 @@
     ]
    },
    "pinnacle": {
-    "secondes": 28.7,
-    "ok": true
-   },
-   "olybet": {
-    "secondes": 5.5,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 19.7,
+    "secondes": 24.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "HTTP 410"
+     "sport 22 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403"
     ]
    },
+   "olybet": {
+    "secondes": 3.6,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 18.6,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 27.2,
+    "ok": true
+   },
    "winamax_direct": {
-    "secondes": 32.6,
+    "secondes": 33.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.0,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 57.7,
-    "ok": true
-   },
    "betclic_direct": {
-    "secondes": 59.3,
+    "secondes": 39.2,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 18.7,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 6.2,
+    "secondes": 11.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.6,
+    "secondes": 1.2,
     "ok": true
    },
    "cotes_cloture": {
@@ -68,27 +72,40 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 72,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 72,
+   "retard": []
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 806,
-   "age_min_s": 179,
-   "lignes": 123807,
-   "lignes_perimees": 1840,
-   "rechauffeur": "indisponible",
+   "age_max_s": 893,
+   "age_min_s": 44,
+   "lignes": 123533,
+   "lignes_perimees": 378,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
-    "choisi_autre": 9,
-    "head_403": 2,
+    "head_200": 20,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_fixe": 5,
-    "sport_vide": 6
+    "choisi_fixe": 7,
+    "choisi_autre": 3,
+    "reprise_403": 2,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -96,54 +113,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Brisbane Roar – Perth Glory",
+     "match": "Atlético Nacional – Deportivo Pasto",
      "source": "Pinnacle",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0651,
+     "cote_olybet": 1.27,
+     "cote_reference": 1.311,
+     "ecart_relatif": 0.031,
      "aberrant": false
     },
     {
-     "match": "Brisbane Roar – Perth Glory",
+     "match": "Atlético Nacional – Deportivo Pasto",
      "source": "PMU",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.005,
+     "cote_olybet": 1.27,
+     "cote_reference": 1.18,
+     "ecart_relatif": 0.0763,
      "aberrant": false
     },
     {
-     "match": "Lech Poznan – Sunderland",
+     "match": "Zira – Soumgaït FK",
      "source": "Pinnacle",
-     "cote_olybet": 4.4,
-     "cote_reference": 4.72,
-     "ecart_relatif": 0.0678,
+     "cote_olybet": 1.58,
+     "cote_reference": 1.61,
+     "ecart_relatif": 0.0185,
      "aberrant": false
     },
     {
-     "match": "Lech Poznan – Sunderland",
-     "source": "PMU",
-     "cote_olybet": 4.4,
-     "cote_reference": 4.1,
-     "ecart_relatif": 0.0732,
-     "aberrant": false
-    },
-    {
-     "match": "Ferencváros TC – SCU Torreense",
+     "match": "Araz Nakhchivan – Qabala",
      "source": "Pinnacle",
-     "cote_olybet": 1.3,
-     "cote_reference": 1.341,
-     "ecart_relatif": 0.0308,
-     "aberrant": false
-    },
-    {
-     "match": "Ferencváros TC – SCU Torreense",
-     "source": "PMU",
-     "cote_olybet": 1.3,
-     "cote_reference": 1.3,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 2.16,
+     "cote_reference": 2.21,
+     "ecart_relatif": 0.0226,
      "aberrant": false
     }
    ],
@@ -206,23 +207,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T03:43:55+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T03:44:08+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T01:39:15+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T03:48:37+00:00",
    "books_premiere_lecture": "2026-10-22T03:07:10+00:00",
-   "books_derniere_lecture": "2026-10-22T03:44:14+00:00",
-   "ecart_enveloppe_secondes": 2218.0
+   "books_derniere_lecture": "2026-10-22T03:48:46+00:00",
+   "ecart_enveloppe_secondes": 7771.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 20523,
+   "mesures": 20824,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -236,27 +236,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-22T02:49:56+00:00"
+   "dernier_reglement": "2026-10-22T03:45:31+00:00"
   },
-  "fin": "2026-10-22T03:45:23+00:00",
+  "fin": "2026-10-22T03:50:01+00:00",
   "cotes": {
-   "francaises": 63303,
-   "pinnacle": 123807,
+   "francaises": 63311,
+   "pinnacle": 123605,
    "polymarket": 9161,
-   "smarkets": 4077
+   "smarkets": 4024
   },
-  "matchs_francais": 893,
+  "matchs_francais": 895,
   "opportunites": 5,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T12:18:47+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-10-21T12:23:22+00:00",
    "mode": "complet",
@@ -1453,6 +1447,12 @@
   },
   {
    "debut": "2026-10-22T03:43:45+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T03:48:20+00:00",
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 0
