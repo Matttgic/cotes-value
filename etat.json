@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T05:18:26+00:00",
+  "debut": "2026-10-22T05:23:07+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.2,
+    "secondes": 10.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,19 +12,23 @@
     ]
    },
    "pinnacle": {
-    "secondes": 29.0,
-    "ok": true
+    "secondes": 25.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 5.9,
+    "secondes": 5.7,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 27.8,
+    "secondes": 29.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.3,
+    "secondes": 30.4,
     "ok": true
    },
    "winamax_direct": {
@@ -32,7 +36,7 @@
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -40,23 +44,20 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 69.0,
+    "secondes": 75.5,
     "ok": true
    },
    "smarkets": {
-    "secondes": 20.6,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 13.8,
+    "secondes": 20.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.1,
+    "secondes": 1.4,
     "ok": true
    },
    "cotes_cloture": {
@@ -67,14 +68,26 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 30173,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 891,
-   "age_min_s": 13,
-   "lignes": 124482,
-   "lignes_perimees": 106,
+   "age_max_s": 839,
+   "age_min_s": 27,
+   "lignes": 125022,
+   "lignes_perimees": 355,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -85,12 +98,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 36,
+    "head_200": 35,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 4,
-    "sport_vide": 6
+    "choisi_autre": 7,
+    "choisi_fixe": 7,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -98,24 +112,8 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 8,
    "comparaisons": [
-    {
-     "match": "Brisbane Roar – Perth Glory",
-     "source": "Pinnacle",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0651,
-     "aberrant": false
-    },
-    {
-     "match": "Brisbane Roar – Perth Glory",
-     "source": "PMU",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.005,
-     "aberrant": false
-    },
     {
      "match": "LKP Motor Lublin – Zaglebie Lubin",
      "source": "Pinnacle",
@@ -130,6 +128,54 @@
      "cote_olybet": 1.87,
      "cote_reference": 1.94,
      "ecart_relatif": 0.0361,
+     "aberrant": false
+    },
+    {
+     "match": "CSKA 1948 Sofia – Botev Plovdiv",
+     "source": "Pinnacle",
+     "cote_olybet": 1.97,
+     "cote_reference": 2.05,
+     "ecart_relatif": 0.039,
+     "aberrant": false
+    },
+    {
+     "match": "CSKA 1948 Sofia – Botev Plovdiv",
+     "source": "PMU",
+     "cote_olybet": 1.97,
+     "cote_reference": 1.91,
+     "ecart_relatif": 0.0314,
+     "aberrant": false
+    },
+    {
+     "match": "Elfsborg – Malmo",
+     "source": "Pinnacle",
+     "cote_olybet": 1.97,
+     "cote_reference": 2.06,
+     "ecart_relatif": 0.0437,
+     "aberrant": false
+    },
+    {
+     "match": "Elfsborg – Malmo",
+     "source": "PMU",
+     "cote_olybet": 1.97,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0051,
+     "aberrant": false
+    },
+    {
+     "match": "Vasteras SK – Halmstads",
+     "source": "Pinnacle",
+     "cote_olybet": 1.62,
+     "cote_reference": 1.685,
+     "ecart_relatif": 0.0385,
+     "aberrant": false
+    },
+    {
+     "match": "Vasteras SK – Halmstads",
+     "source": "PMU",
+     "cote_olybet": 1.62,
+     "cote_reference": 1.58,
+     "ecart_relatif": 0.0253,
      "aberrant": false
     }
    ],
@@ -192,22 +238,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T05:18:37+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T05:18:50+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T05:23:17+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T05:23:34+00:00",
    "books_premiere_lecture": "2026-10-22T03:34:51+00:00",
-   "books_derniere_lecture": "2026-10-22T05:18:56+00:00",
-   "ecart_enveloppe_secondes": 6239.0
+   "books_derniere_lecture": "2026-10-22T05:23:36+00:00",
+   "ecart_enveloppe_secondes": 6523.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 22545,
+   "mesures": 22468,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -223,25 +270,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T04:44:16+00:00"
   },
-  "fin": "2026-10-22T05:20:47+00:00",
+  "fin": "2026-10-22T05:25:21+00:00",
   "cotes": {
-   "francaises": 77721,
-   "pinnacle": 124482,
-   "polymarket": 10606,
+   "francaises": 78058,
+   "pinnacle": 155195,
+   "polymarket": 10624,
    "smarkets": 4019
   },
-  "matchs_francais": 1069,
-  "opportunites": 6,
+  "matchs_francais": 1071,
+  "opportunites": 8,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-21T13:56:24+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T14:01:05+00:00",
    "mode": "complet",
@@ -1441,6 +1482,12 @@
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-22T05:23:07+00:00",
+   "mode": "complet",
+   "opportunites": 8,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-10-22T04:44:16+00:00",
