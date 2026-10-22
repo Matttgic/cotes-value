@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T13:07:30+00:00",
+  "debut": "2026-10-22T13:12:14+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.7,
+    "secondes": 13.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,41 +12,50 @@
     ]
    },
    "pinnacle": {
-    "secondes": 26.5,
+    "secondes": 34.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 27 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 5.0,
+    "secondes": 7.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 33.1,
+    "secondes": 34.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 38.5,
+   "winamax_direct": {
+    "secondes": 38.8,
     "ok": true
    },
-   "winamax_direct": {
-    "secondes": 39.1,
-    "ok": true
+   "unibet_direct": {
+    "secondes": 74.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
-    "secondes": 69.7,
-    "ok": true
+    "secondes": 77.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -54,11 +63,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 40.9,
+    "secondes": 31.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.2,
+    "secondes": 1.9,
     "ok": true
    },
    "cotes_cloture": {
@@ -69,26 +78,14 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 37143,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 842,
-   "age_min_s": 8,
-   "lignes": 144056,
-   "lignes_perimees": 2430,
+   "age_max_s": 893,
+   "age_min_s": 81,
+   "lignes": 144150,
+   "lignes_perimees": 16,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -96,13 +93,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 20,
-    "head_403": 3,
+    "head_200": 38,
+    "choisi_autre": 13,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 5,
-    "choisi_fixe": 5,
     "reprise_403": 2,
-    "reprise_403_ok": 1,
+    "matchups_sans_speciaux": 1,
+    "choisi_fixe": 1,
     "sport_vide": 5
    }
   },
@@ -111,78 +108,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Tigre – Club Atlético Tucumán",
+     "match": "Libertad – Sportivo Luqueno",
      "source": "Pinnacle",
-     "cote_olybet": 1.64,
-     "cote_reference": 1.714,
-     "ecart_relatif": 0.0433,
+     "cote_olybet": 1.46,
+     "cote_reference": 1.493,
+     "ecart_relatif": 0.0218,
      "aberrant": false
     },
     {
-     "match": "Tigre – Club Atlético Tucumán",
+     "match": "Libertad – Sportivo Luqueno",
      "source": "PMU",
-     "cote_olybet": 1.64,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0061,
+     "cote_olybet": 1.46,
+     "cote_reference": 1.45,
+     "ecart_relatif": 0.0069,
      "aberrant": false
     },
     {
-     "match": "Gimnasia y Esgrima La Plata – Sarmiento",
+     "match": "Club Rubio Nu – Club Guarani",
      "source": "Pinnacle",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.671,
-     "ecart_relatif": 0.0425,
+     "cote_olybet": 2.92,
+     "cote_reference": 3.09,
+     "ecart_relatif": 0.055,
      "aberrant": false
     },
     {
-     "match": "Gimnasia y Esgrima La Plata – Sarmiento",
+     "match": "Club Rubio Nu – Club Guarani",
      "source": "PMU",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0184,
+     "cote_olybet": 2.92,
+     "cote_reference": 2.88,
+     "ecart_relatif": 0.0139,
      "aberrant": false
     },
     {
-     "match": "Gimnasia y Esgrima de Mendoza – Platense Buenos Aires",
+     "match": "Vitoria Guimaraes – Maritimo",
      "source": "Pinnacle",
-     "cote_olybet": 2.12,
-     "cote_reference": 2.29,
-     "ecart_relatif": 0.0742,
+     "cote_olybet": 1.59,
+     "cote_reference": 1.641,
+     "ecart_relatif": 0.0311,
      "aberrant": false
     },
     {
-     "match": "Gimnasia y Esgrima de Mendoza – Platense Buenos Aires",
+     "match": "Vitoria Guimaraes – Maritimo",
      "source": "PMU",
-     "cote_olybet": 2.12,
-     "cote_reference": 2.05,
-     "ecart_relatif": 0.0341,
+     "cote_olybet": 1.59,
+     "cote_reference": 1.61,
+     "ecart_relatif": 0.0124,
      "aberrant": false
     },
     {
-     "match": "Brisbane Roar – Perth Glory",
+     "match": "FK Kauno Zalgiris – Brann",
      "source": "Pinnacle",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.17,
-     "ecart_relatif": 0.0737,
+     "cote_olybet": 4.0,
+     "cote_reference": 4.42,
+     "ecart_relatif": 0.095,
      "aberrant": false
     },
     {
-     "match": "Brisbane Roar – Perth Glory",
+     "match": "FK Kauno Zalgiris – Brann",
      "source": "PMU",
-     "cote_olybet": 2.01,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0152,
-     "aberrant": false
-    },
-    {
-     "match": "Olympique Akbou – CS Constantine",
-     "source": "Pinnacle",
-     "cote_olybet": 1.79,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0426,
+     "cote_olybet": 4.0,
+     "cote_reference": 3.85,
+     "ecart_relatif": 0.039,
      "aberrant": false
     }
    ],
@@ -196,17 +185,17 @@
     {
      "match": "Al-Hazm – Al Feiha",
      "source": "PMU",
-     "cote_netbet": 2.07,
+     "cote_netbet": 2.05,
      "cote_reference": 2.0,
-     "ecart_relatif": 0.035,
+     "ecart_relatif": 0.025,
      "aberrant": false
     },
     {
      "match": "Kairat Almaty – Panathinaikos",
      "source": "Pinnacle",
      "cote_netbet": 5.0,
-     "cote_reference": 5.69,
-     "ecart_relatif": 0.1213,
+     "cote_reference": 5.81,
+     "ecart_relatif": 0.1394,
      "aberrant": false
     },
     {
@@ -221,8 +210,8 @@
      "match": "Al Fateh – Al Shabab Riyadh",
      "source": "Pinnacle",
      "cote_netbet": 2.72,
-     "cote_reference": 2.96,
-     "ecart_relatif": 0.0811,
+     "cote_reference": 3.01,
+     "ecart_relatif": 0.0963,
      "aberrant": false
     },
     {
@@ -245,23 +234,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T13:07:41+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T13:07:58+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T13:12:25+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T13:12:39+00:00",
    "books_premiere_lecture": "2026-10-22T11:38:42+00:00",
-   "books_derniere_lecture": "2026-10-22T13:08:01+00:00",
-   "ecart_enveloppe_secondes": 5356.0
+   "books_derniere_lecture": "2026-10-22T13:12:49+00:00",
+   "ecart_enveloppe_secondes": 5637.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 34831,
+   "mesures": 35238,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -275,27 +264,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-22T12:13:47+00:00"
+   "dernier_reglement": "2026-10-22T13:10:22+00:00"
   },
-  "fin": "2026-10-22T13:10:08+00:00",
+  "fin": "2026-10-22T13:14:52+00:00",
   "cotes": {
-   "francaises": 123865,
-   "pinnacle": 181199,
-   "polymarket": 16105,
+   "francaises": 124697,
+   "pinnacle": 144150,
+   "polymarket": 16122,
    "smarkets": 4105
   },
   "matchs_francais": 1634,
-  "opportunites": 4,
+  "opportunites": 5,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-21T21:43:30+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T21:48:06+00:00",
    "mode": "complet",
@@ -1494,6 +1477,12 @@
    "debut": "2026-10-22T13:07:30+00:00",
    "mode": "complet",
    "opportunites": 4,
+   "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-22T13:12:14+00:00",
+   "mode": "complet",
+   "opportunites": 5,
    "nouveaux_paris": 1
   }
  ],
