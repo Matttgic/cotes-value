@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T13:02:54+00:00",
+  "debut": "2026-10-22T13:07:30+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 7.9,
+    "secondes": 8.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,27 +12,24 @@
     ]
    },
    "pinnacle": {
-    "secondes": 18.9,
+    "secondes": 26.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 5.2,
+    "secondes": 5.0,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.8,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 35.1,
+    "secondes": 33.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -40,27 +37,28 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 38.6,
+    "secondes": 38.5,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 39.1,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 66.3,
+    "secondes": 69.7,
     "ok": true
    },
    "smarkets": {
-    "secondes": 26.8,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 21.0,
+    "secondes": 40.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 2.2,
     "ok": true
    },
    "cotes_cloture": {
@@ -71,30 +69,41 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 37143,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 839,
-   "age_min_s": 311,
-   "lignes": 144182,
-   "lignes_perimees": 2552,
-   "rechauffeur": "ok",
+   "age_max_s": 842,
+   "age_min_s": 8,
+   "lignes": 144056,
+   "lignes_perimees": 2430,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 43,
-    "head_403": 2,
+    "head_200": 20,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 4,
-    "sport_vide": 6
+    "choisi_autre": 5,
+    "choisi_fixe": 5,
+    "reprise_403": 2,
+    "reprise_403_ok": 1,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -102,75 +111,82 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Jablonec – Brighton",
+     "match": "Tigre – Club Atlético Tucumán",
      "source": "Pinnacle",
-     "cote_olybet": 13.0,
-     "cote_reference": 15.43,
-     "ecart_relatif": 0.1575,
-     "aberrant": true
+     "cote_olybet": 1.64,
+     "cote_reference": 1.714,
+     "ecart_relatif": 0.0433,
+     "aberrant": false
     },
     {
-     "match": "Jablonec – Brighton",
+     "match": "Tigre – Club Atlético Tucumán",
      "source": "PMU",
-     "cote_olybet": 13.0,
-     "cote_reference": 12.0,
-     "ecart_relatif": 0.0833,
+     "cote_olybet": 1.64,
+     "cote_reference": 1.63,
+     "ecart_relatif": 0.0061,
      "aberrant": false
     },
     {
-     "match": "Getafe – FC Lugano",
+     "match": "Gimnasia y Esgrima La Plata – Sarmiento",
      "source": "Pinnacle",
-     "cote_olybet": 1.88,
-     "cote_reference": 1.971,
-     "ecart_relatif": 0.0461,
+     "cote_olybet": 1.6,
+     "cote_reference": 1.671,
+     "ecart_relatif": 0.0425,
      "aberrant": false
     },
     {
-     "match": "Borac Banja Luka – KuPS",
-     "source": "Pinnacle",
-     "cote_olybet": 1.73,
-     "cote_reference": 1.813,
-     "ecart_relatif": 0.0458,
-     "aberrant": false
-    },
-    {
-     "match": "Borac Banja Luka – KuPS",
+     "match": "Gimnasia y Esgrima La Plata – Sarmiento",
      "source": "PMU",
-     "cote_olybet": 1.73,
-     "cote_reference": 1.68,
-     "ecart_relatif": 0.0298,
+     "cote_olybet": 1.6,
+     "cote_reference": 1.63,
+     "ecart_relatif": 0.0184,
      "aberrant": false
     },
     {
-     "match": "AS Monaco – Fribourg",
+     "match": "Gimnasia y Esgrima de Mendoza – Platense Buenos Aires",
      "source": "Pinnacle",
-     "cote_olybet": 2.03,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0514,
+     "cote_olybet": 2.12,
+     "cote_reference": 2.29,
+     "ecart_relatif": 0.0742,
      "aberrant": false
     },
     {
-     "match": "AS Monaco – Fribourg",
+     "match": "Gimnasia y Esgrima de Mendoza – Platense Buenos Aires",
      "source": "PMU",
-     "cote_olybet": 2.03,
+     "cote_olybet": 2.12,
      "cote_reference": 2.05,
-     "ecart_relatif": 0.0098,
+     "ecart_relatif": 0.0341,
+     "aberrant": false
+    },
+    {
+     "match": "Brisbane Roar – Perth Glory",
+     "source": "Pinnacle",
+     "cote_olybet": 2.01,
+     "cote_reference": 2.17,
+     "ecart_relatif": 0.0737,
+     "aberrant": false
+    },
+    {
+     "match": "Brisbane Roar – Perth Glory",
+     "source": "PMU",
+     "cote_olybet": 2.01,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0152,
+     "aberrant": false
+    },
+    {
+     "match": "Olympique Akbou – CS Constantine",
+     "source": "Pinnacle",
+     "cote_olybet": 1.79,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.0426,
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Jablonec – Brighton",
-     "source": "Pinnacle",
-     "cote_olybet": 13.0,
-     "cote_reference": 15.43,
-     "ecart_relatif": 0.1575,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -188,17 +204,17 @@
     {
      "match": "Kairat Almaty – Panathinaikos",
      "source": "Pinnacle",
-     "cote_netbet": 4.9,
+     "cote_netbet": 5.0,
      "cote_reference": 5.69,
-     "ecart_relatif": 0.1388,
+     "ecart_relatif": 0.1213,
      "aberrant": false
     },
     {
      "match": "Kairat Almaty – Panathinaikos",
      "source": "PMU",
-     "cote_netbet": 4.9,
+     "cote_netbet": 5.0,
      "cote_reference": 4.7,
-     "ecart_relatif": 0.0426,
+     "ecart_relatif": 0.0638,
      "aberrant": false
     },
     {
@@ -229,30 +245,31 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T13:03:04+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T13:03:10+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T13:07:41+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T13:07:58+00:00",
    "books_premiere_lecture": "2026-10-22T11:38:42+00:00",
-   "books_derniere_lecture": "2026-10-22T13:03:14+00:00",
-   "ecart_enveloppe_secondes": 5068.0
+   "books_derniere_lecture": "2026-10-22T13:08:01+00:00",
+   "ecart_enveloppe_secondes": 5356.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 36341,
+   "mesures": 34831,
    "matchs_suspects": 0
   },
   "redecision": {
    "ajoutees": 0
   },
   "qwen": {
-   "candidates": 1,
-   "validees": 1,
+   "candidates": 0,
+   "validees": 0,
    "refus": {}
   },
   "reglement": false,
@@ -260,25 +277,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T12:13:47+00:00"
   },
-  "fin": "2026-10-22T13:05:19+00:00",
+  "fin": "2026-10-22T13:10:08+00:00",
   "cotes": {
-   "francaises": 123892,
-   "pinnacle": 144182,
-   "polymarket": 16240,
+   "francaises": 123865,
+   "pinnacle": 181199,
+   "polymarket": 16105,
    "smarkets": 4105
   },
-  "matchs_francais": 1641,
-  "opportunites": 6,
+  "matchs_francais": 1634,
+  "opportunites": 4,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-21T21:38:46+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T21:43:30+00:00",
    "mode": "complet",
@@ -1478,6 +1489,12 @@
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T13:07:30+00:00",
+   "mode": "complet",
+   "opportunites": 4,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-22T12:13:47+00:00",
