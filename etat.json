@@ -1,38 +1,35 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T00:47:26+00:00",
+  "debut": "2026-10-22T00:52:02+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 9.6,
+    "secondes": 7.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "prix bid/ask invalides"
+     "prix bid/ask invalides",
+     "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
    "pinnacle": {
-    "secondes": 22.0,
+    "secondes": 29.2,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.6,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 16.7,
+    "secondes": 3.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 27.9,
+    "secondes": 27.8,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 33.1,
+    "secondes": 35.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -40,7 +37,11 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 62.8,
+    "secondes": 37.7,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 51.6,
     "ok": true
    },
    "smarkets": {
@@ -49,53 +50,45 @@
     "cache": true
    },
    "association": {
-    "secondes": 6.4,
+    "secondes": 8.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.6,
+    "secondes": 1.2,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.3,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 29230,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 29230,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 866,
-   "age_min_s": 10,
-   "lignes": 122397,
-   "lignes_perimees": 1548,
-   "rechauffeur": "indisponible",
+   "age_max_s": 471,
+   "age_min_s": 4,
+   "lignes": 122544,
+   "lignes_perimees": 0,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 30,
+    "head_200": 28,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 5,
-    "sport_vide": 6
+    "choisi_autre": 4,
+    "choisi_fixe": 9,
+    "sport_vide": 7
    }
   },
   "olybet_source": "direct",
@@ -103,38 +96,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "FK Kauno Zalgiris – Brann",
+     "match": "Al Ahli Djeddah – Al Khaleej Saihat",
      "source": "Pinnacle",
-     "cote_olybet": 3.89,
-     "cote_reference": 4.2,
-     "ecart_relatif": 0.0738,
+     "cote_olybet": 1.26,
+     "cote_reference": 1.288,
+     "ecart_relatif": 0.0219,
      "aberrant": false
     },
     {
-     "match": "FK Kauno Zalgiris – Brann",
+     "match": "Al Ahli Djeddah – Al Khaleej Saihat",
      "source": "PMU",
-     "cote_olybet": 3.89,
-     "cote_reference": 4.5,
-     "ecart_relatif": 0.1356,
+     "cote_olybet": 1.26,
+     "cote_reference": 1.25,
+     "ecart_relatif": 0.008,
      "aberrant": false
     },
     {
-     "match": "Jablonec – Brighton",
+     "match": "Al-Fateh – Al-Shabab Riyad",
      "source": "Pinnacle",
-     "cote_olybet": 9.1,
-     "cote_reference": 10.22,
-     "ecart_relatif": 0.1096,
+     "cote_olybet": 2.94,
+     "cote_reference": 3.14,
+     "ecart_relatif": 0.0637,
      "aberrant": false
     },
     {
-     "match": "Jablonec – Brighton",
+     "match": "Al-Fateh – Al-Shabab Riyad",
      "source": "PMU",
-     "cote_olybet": 9.1,
-     "cote_reference": 9.5,
-     "ecart_relatif": 0.0421,
+     "cote_olybet": 2.94,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.1094,
+     "aberrant": false
+    },
+    {
+     "match": "Al Hazem – Al Feiha",
+     "source": "PMU",
+     "cote_olybet": 2.25,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0321,
+     "aberrant": false
+    },
+    {
+     "match": "Araz Nakhchivan – Qabala",
+     "source": "Pinnacle",
+     "cote_olybet": 2.16,
+     "cote_reference": 2.21,
+     "ecart_relatif": 0.0226,
      "aberrant": false
     }
    ],
@@ -149,8 +158,8 @@
      "match": "Atlas – Club América",
      "source": "Pinnacle",
      "cote_netbet": 3.15,
-     "cote_reference": 3.51,
-     "ecart_relatif": 0.1026,
+     "cote_reference": 3.29,
+     "ecart_relatif": 0.0426,
      "aberrant": false
     },
     {
@@ -165,8 +174,8 @@
      "match": "Deportivo Toluca – Tijuana",
      "source": "Pinnacle",
      "cote_netbet": 1.06,
-     "cote_reference": 1.153,
-     "ecart_relatif": 0.081,
+     "cote_reference": 1.131,
+     "ecart_relatif": 0.0629,
      "aberrant": false
     },
     {
@@ -181,8 +190,8 @@
      "match": "Puebla – Monterrey",
      "source": "Pinnacle",
      "cote_netbet": 3.6,
-     "cote_reference": 3.83,
-     "ecart_relatif": 0.0601,
+     "cote_reference": 3.92,
+     "ecart_relatif": 0.0816,
      "aberrant": false
     },
     {
@@ -196,17 +205,17 @@
     {
      "match": "Independiente Santa Fe – Jaguares de Córdoba",
      "source": "Pinnacle",
-     "cote_netbet": 1.15,
-     "cote_reference": 1.247,
-     "ecart_relatif": 0.0777,
+     "cote_netbet": 1.14,
+     "cote_reference": 1.216,
+     "ecart_relatif": 0.0621,
      "aberrant": false
     },
     {
      "match": "Independiente Santa Fe – Jaguares de Córdoba",
      "source": "PMU",
-     "cote_netbet": 1.15,
+     "cote_netbet": 1.14,
      "cote_reference": 1.12,
-     "ecart_relatif": 0.0268,
+     "ecart_relatif": 0.0179,
      "aberrant": false
     },
     {
@@ -229,23 +238,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T00:33:59+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T00:47:44+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T00:52:23+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T00:52:28+00:00",
    "books_premiere_lecture": "2026-10-21T23:33:42+00:00",
-   "books_derniere_lecture": "2026-10-22T00:47:49+00:00",
-   "ecart_enveloppe_secondes": 4442.0
+   "books_derniere_lecture": "2026-10-22T00:52:32+00:00",
+   "ecart_enveloppe_secondes": 4726.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 21069,
+   "mesures": 21399,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -261,25 +270,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T00:02:44+00:00"
   },
-  "fin": "2026-10-22T00:49:01+00:00",
+  "fin": "2026-10-22T00:53:38+00:00",
   "cotes": {
-   "francaises": 60679,
-   "pinnacle": 151627,
-   "polymarket": 9365,
+   "francaises": 60549,
+   "pinnacle": 122544,
+   "polymarket": 9394,
    "smarkets": 3798
   },
-  "matchs_francais": 827,
+  "matchs_francais": 829,
   "opportunites": 8,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T09:23:58+00:00",
-   "mode": "complet",
-   "opportunites": 13,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T09:28:41+00:00",
    "mode": "complet",
@@ -1476,6 +1479,12 @@
   },
   {
    "debut": "2026-10-22T00:47:26+00:00",
+   "mode": "complet",
+   "opportunites": 8,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T00:52:02+00:00",
    "mode": "complet",
    "opportunites": 8,
    "nouveaux_paris": 0
