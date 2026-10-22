@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T16:26:26+00:00",
+  "debut": "2026-10-22T16:31:06+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 14.3,
+    "secondes": 18.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,11 +12,14 @@
     ]
    },
    "pinnacle": {
-    "secondes": 32.7,
+    "secondes": 40.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
+     "sport 27 matchups : HTTP 403",
+     "sport 6 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403",
+     "sport 17 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
@@ -24,12 +27,16 @@
     "secondes": 7.7,
     "ok": true
    },
+   "unibet_direct": {
+    "secondes": 20.8,
+    "ok": true
+   },
    "pmu_direct": {
-    "secondes": 33.0,
+    "secondes": 33.2,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -38,14 +45,15 @@
    },
    "winamax_direct": {
     "secondes": 45.0,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 56.4,
-    "ok": true
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "lecture interrompue"
+    ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -53,23 +61,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 24.4,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 24.9,
+    "secondes": 17.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.9,
+    "secondes": 1.3,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.5,
     "ok": true
    }
   },
@@ -77,41 +82,38 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 37203,
+   "sports": [
+    "boxe"
+   ],
+   "requetes": 1,
+   "lignes": 50,
    "erreurs": [],
-   "pause": true,
-   "cache_lignes": 37203,
-   "retard": [
-    "football"
-   ]
+   "cache_lignes": 0,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 870,
-   "age_min_s": 87,
-   "lignes": 148940,
-   "lignes_perimees": 5103,
-   "rechauffeur": "ok",
+   "age_max_s": 658,
+   "age_min_s": 83,
+   "lignes": 148716,
+   "lignes_perimees": 0,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
+    "head_200": 40,
+    "choisi_fixe": 8,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 2,
-    "choisi_autre": 12,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 5,
+    "reprise_403": 4,
+    "matchups_sans_speciaux": 3,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -119,86 +121,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Cruzeiro – Remo PA",
+     "match": "Pau FC – Grenoble Foot 38",
      "source": "Pinnacle",
-     "cote_olybet": 1.32,
-     "cote_reference": 1.368,
-     "ecart_relatif": 0.0348,
+     "cote_olybet": 1.75,
+     "cote_reference": 1.8,
+     "ecart_relatif": 0.0278,
      "aberrant": false
     },
     {
-     "match": "Cruzeiro – Remo PA",
+     "match": "Pau FC – Grenoble Foot 38",
      "source": "PMU",
-     "cote_olybet": 1.32,
-     "cote_reference": 1.3,
-     "ecart_relatif": 0.0154,
+     "cote_olybet": 1.75,
+     "cote_reference": 1.72,
+     "ecart_relatif": 0.0174,
      "aberrant": false
     },
     {
-     "match": "Shamrock Rovers – Sligo Rovers",
+     "match": "Nancy – Laval",
      "source": "Pinnacle",
-     "cote_olybet": 1.11,
-     "cote_reference": 1.131,
-     "ecart_relatif": 0.0183,
+     "cote_olybet": 1.53,
+     "cote_reference": 1.578,
+     "ecart_relatif": 0.0304,
      "aberrant": false
     },
     {
-     "match": "Shamrock Rovers – Sligo Rovers",
+     "match": "Nancy – Laval",
      "source": "PMU",
-     "cote_olybet": 1.11,
-     "cote_reference": 1.07,
-     "ecart_relatif": 0.0374,
+     "cote_olybet": 1.53,
+     "cote_reference": 1.57,
+     "ecart_relatif": 0.0255,
      "aberrant": false
     },
     {
-     "match": "Derry City – Dundalk",
+     "match": "Clermont Foot – En Avant Guingamp",
      "source": "Pinnacle",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.775,
-     "ecart_relatif": 0.0367,
+     "cote_olybet": 2.89,
+     "cote_reference": 3.02,
+     "ecart_relatif": 0.043,
      "aberrant": false
     },
     {
-     "match": "Derry City – Dundalk",
+     "match": "Clermont Foot – En Avant Guingamp",
      "source": "PMU",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0687,
-     "aberrant": false
-    },
-    {
-     "match": "Galway United FC – St. Patrick's Athletic",
-     "source": "Pinnacle",
-     "cote_olybet": 4.6,
-     "cote_reference": 5.0,
-     "ecart_relatif": 0.08,
-     "aberrant": false
-    },
-    {
-     "match": "Galway United FC – St. Patrick's Athletic",
-     "source": "PMU",
-     "cote_olybet": 4.6,
-     "cote_reference": 4.5,
-     "ecart_relatif": 0.0222,
-     "aberrant": false
-    },
-    {
-     "match": "Waterford – Drogheda United",
-     "source": "Pinnacle",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.847,
-     "ecart_relatif": 0.0365,
-     "aberrant": false
-    },
-    {
-     "match": "Waterford – Drogheda United",
-     "source": "PMU",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.022,
+     "cote_olybet": 2.89,
+     "cote_reference": 2.9,
+     "ecart_relatif": 0.0034,
      "aberrant": false
     }
    ],
@@ -213,86 +183,87 @@
      "match": "FC Ararat-Armenia – AZ Alkmaar",
      "source": "Pinnacle",
      "cote_netbet": 6.75,
-     "cote_reference": 7.84,
-     "ecart_relatif": 0.139,
+     "cote_reference": 7.57,
+     "ecart_relatif": 0.1083,
      "aberrant": false
     },
     {
      "match": "FC Ararat-Armenia – AZ Alkmaar",
      "source": "PMU",
      "cote_netbet": 6.75,
-     "cote_reference": 6.5,
-     "ecart_relatif": 0.0385,
+     "cote_reference": 6.75,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
      "match": "Ferencváros – Torreense",
      "source": "Pinnacle",
      "cote_netbet": 1.37,
-     "cote_reference": 1.422,
-     "ecart_relatif": 0.0365,
+     "cote_reference": 1.442,
+     "ecart_relatif": 0.0503,
      "aberrant": false
     },
     {
      "match": "Ferencváros – Torreense",
      "source": "PMU",
      "cote_netbet": 1.37,
-     "cote_reference": 1.34,
-     "ecart_relatif": 0.0224,
+     "cote_reference": 1.33,
+     "ecart_relatif": 0.0301,
      "aberrant": false
     },
     {
      "match": "Getafe – Lugano",
      "source": "Pinnacle",
-     "cote_netbet": 2.05,
-     "cote_reference": 2.26,
-     "ecart_relatif": 0.0929,
+     "cote_netbet": 2.07,
+     "cote_reference": 2.19,
+     "ecart_relatif": 0.0548,
      "aberrant": false
     },
     {
      "match": "Getafe – Lugano",
      "source": "PMU",
-     "cote_netbet": 2.05,
+     "cote_netbet": 2.07,
      "cote_reference": 2.02,
-     "ecart_relatif": 0.0149,
+     "ecart_relatif": 0.0248,
      "aberrant": false
     },
     {
      "match": "GNK Dinamo Zagreb – NEC Nimègue",
      "source": "Pinnacle",
      "cote_netbet": 1.48,
-     "cote_reference": 1.544,
-     "ecart_relatif": 0.0411,
+     "cote_reference": 1.55,
+     "ecart_relatif": 0.0449,
      "aberrant": false
     },
     {
      "match": "GNK Dinamo Zagreb – NEC Nimègue",
      "source": "PMU",
      "cote_netbet": 1.48,
-     "cote_reference": 1.44,
-     "ecart_relatif": 0.0278,
+     "cote_reference": 1.45,
+     "ecart_relatif": 0.0207,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T15:59:03+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T16:26:50+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T16:31:17+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T16:31:47+00:00",
    "books_premiere_lecture": "2026-10-22T14:08:44+00:00",
-   "books_derniere_lecture": "2026-10-22T16:27:01+00:00",
-   "ecart_enveloppe_secondes": 8286.0
+   "books_derniere_lecture": "2026-10-22T16:31:49+00:00",
+   "ecart_enveloppe_secondes": 8583.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 618,
    "a_verifier": 9,
    "non_conforme": 9,
-   "mesures": 35208,
+   "mesures": 30986,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -308,25 +279,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T16:01:31+00:00"
   },
-  "fin": "2026-10-22T16:29:22+00:00",
+  "fin": "2026-10-22T16:33:35+00:00",
   "cotes": {
-   "francaises": 122691,
-   "pinnacle": 186143,
-   "polymarket": 16704,
+   "francaises": 106256,
+   "pinnacle": 148766,
+   "polymarket": 16707,
    "smarkets": 3910
   },
-  "matchs_francais": 1623,
-  "opportunites": 4,
+  "matchs_francais": 1273,
+  "opportunites": 3,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 2
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-22T01:01:21+00:00",
-   "mode": "complet",
-   "opportunites": 7,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T01:05:56+00:00",
    "mode": "complet",
@@ -1526,6 +1491,12 @@
    "mode": "complet",
    "opportunites": 4,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-22T16:31:06+00:00",
+   "mode": "complet",
+   "opportunites": 3,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-22T16:01:31+00:00",
