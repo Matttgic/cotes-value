@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T10:52:07+00:00",
+  "debut": "2026-10-22T10:56:44+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 11.9,
+    "secondes": 11.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,39 +12,43 @@
     ]
    },
    "pinnacle": {
-    "secondes": 31.2,
-    "ok": true,
+    "secondes": 45.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403"
+     "sport 29 matchups : réseau indisponible",
+     "sport 26 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "budget"
     ]
    },
    "olybet": {
-    "secondes": 8.1,
+    "secondes": 6.9,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 17.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.7,
+    "secondes": 28.8,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 36.4,
+    "secondes": 33.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 69.2,
-    "ok": true
-   },
    "betclic_direct": {
-    "secondes": 77.5,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -52,37 +56,43 @@
     ]
    },
    "smarkets": {
-    "secondes": 20.5,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 20.3,
+    "secondes": 3.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.4,
+    "secondes": 0.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.5,
+    "secondes": 0.1,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 36431,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 36431,
+   "retard": []
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 898,
-   "age_min_s": 45,
-   "lignes": 141438,
-   "lignes_perimees": 178,
+   "age_max_s": null,
+   "age_min_s": null,
+   "lignes": 0,
+   "lignes_perimees": 0,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -90,12 +100,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
-    "choisi_autre": 14,
+    "head_200": 40,
     "head_403": 2,
     "ortho_refusee": 2,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 11,
+    "choisi_fixe": 3,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 2
    }
   },
   "olybet_source": "direct",
@@ -106,67 +118,67 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "Lech Poznan – Sunderland",
+     "match": "Empoli – LR Vicenza Virtus",
      "source": "Pinnacle",
-     "cote_olybet": 4.4,
-     "cote_reference": 4.71,
-     "ecart_relatif": 0.0658,
+     "cote_olybet": 2.25,
+     "cote_reference": 2.39,
+     "ecart_relatif": 0.0586,
      "aberrant": false
     },
     {
-     "match": "Lech Poznan – Sunderland",
+     "match": "Empoli – LR Vicenza Virtus",
      "source": "PMU",
-     "cote_olybet": 4.4,
-     "cote_reference": 4.25,
-     "ecart_relatif": 0.0353,
+     "cote_olybet": 2.25,
+     "cote_reference": 2.25,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Ferencváros TC – SCU Torreense",
+     "match": "Brest – OGC Nice",
      "source": "Pinnacle",
-     "cote_olybet": 1.26,
-     "cote_reference": 1.298,
-     "ecart_relatif": 0.029,
+     "cote_olybet": 2.2,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.0435,
      "aberrant": false
     },
     {
-     "match": "Ferencváros TC – SCU Torreense",
+     "match": "Brest – OGC Nice",
      "source": "PMU",
-     "cote_olybet": 1.26,
-     "cote_reference": 1.24,
-     "ecart_relatif": 0.0161,
+     "cote_olybet": 2.2,
+     "cote_reference": 2.14,
+     "ecart_relatif": 0.028,
      "aberrant": false
     },
     {
-     "match": "Olympiakos – Sparta Prague",
+     "match": "Widzew Lodz – Gornik Zabrze",
      "source": "Pinnacle",
-     "cote_olybet": 1.45,
-     "cote_reference": 1.513,
-     "ecart_relatif": 0.0415,
-     "aberrant": false
-    },
-    {
-     "match": "Olympiakos – Sparta Prague",
-     "source": "PMU",
-     "cote_olybet": 1.45,
-     "cote_reference": 1.42,
-     "ecart_relatif": 0.0211,
-     "aberrant": false
-    },
-    {
-     "match": "Jagiellonia Bialystok – Anderlecht",
-     "source": "Pinnacle",
-     "cote_olybet": 2.97,
-     "cote_reference": 3.18,
-     "ecart_relatif": 0.066,
-     "aberrant": false
-    },
-    {
-     "match": "Jagiellonia Bialystok – Anderlecht",
-     "source": "PMU",
-     "cote_olybet": 2.97,
+     "cote_olybet": 2.74,
      "cote_reference": 2.88,
-     "ecart_relatif": 0.0312,
+     "ecart_relatif": 0.0486,
+     "aberrant": false
+    },
+    {
+     "match": "Widzew Lodz – Gornik Zabrze",
+     "source": "PMU",
+     "cote_olybet": 2.74,
+     "cote_reference": 2.55,
+     "ecart_relatif": 0.0745,
+     "aberrant": false
+    },
+    {
+     "match": "LKP Motor Lublin – Zaglebie Lubin",
+     "source": "Pinnacle",
+     "cote_olybet": 1.87,
+     "cote_reference": 1.97,
+     "ecart_relatif": 0.0508,
+     "aberrant": false
+    },
+    {
+     "match": "LKP Motor Lublin – Zaglebie Lubin",
+     "source": "PMU",
+     "cote_olybet": 1.87,
+     "cote_reference": 1.94,
+     "ecart_relatif": 0.0361,
      "aberrant": false
     }
    ],
@@ -229,22 +241,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T10:52:18+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T10:52:30+00:00",
-   "books_premiere_lecture": "2026-10-22T10:38:12+00:00",
-   "books_derniere_lecture": "2026-10-22T10:52:39+00:00",
-   "ecart_enveloppe_secondes": 858.0
+   "pinnacle_premiere_lecture": "2026-10-22T09:25:26+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T10:33:59+00:00",
+   "books_premiere_lecture": "2026-10-22T10:42:49+00:00",
+   "books_derniere_lecture": "2026-10-22T10:57:33+00:00",
+   "ecart_enveloppe_secondes": 5527.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 34295,
+   "mesures": 18414,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -260,25 +273,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T10:22:31+00:00"
   },
-  "fin": "2026-10-22T10:54:48+00:00",
+  "fin": "2026-10-22T10:59:00+00:00",
   "cotes": {
-   "francaises": 116693,
-   "pinnacle": 141438,
-   "polymarket": 15157,
+   "francaises": 116771,
+   "pinnacle": 36431,
+   "polymarket": 15150,
    "smarkets": 4040
   },
-  "matchs_francais": 1568,
-  "opportunites": 5,
+  "matchs_francais": 1573,
+  "opportunites": 1,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T19:29:56+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T19:34:36+00:00",
    "mode": "complet",
@@ -1477,6 +1484,12 @@
    "debut": "2026-10-22T10:52:07+00:00",
    "mode": "complet",
    "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T10:56:44+00:00",
+   "mode": "complet",
+   "opportunites": 1,
    "nouveaux_paris": 0
   }
  ],
