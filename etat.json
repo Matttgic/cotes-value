@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T19:19:11+00:00",
+  "debut": "2026-10-22T19:23:52+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.0,
+    "secondes": 16.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,58 +12,45 @@
     ]
    },
    "pinnacle": {
-    "secondes": 23.4,
+    "secondes": 31.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "unibet_direct": {
-    "secondes": 0.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "accueil HTTP 403"
-    ]
-   },
    "olybet": {
-    "secondes": 6.2,
+    "secondes": 6.9,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 30.6,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 31.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 21.4,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:3 : réseau",
-     "sport:4 : réseau",
-     "sport:5 : réseau",
-     "sport:6 : réseau",
-     "sport:9 : réseau",
-     "sport:12 : réseau",
-     "sport:16 : réseau",
-     "sport:19 : réseau"
-    ]
-   },
-   "pmu_direct": {
-    "secondes": 30.3,
+    "secondes": 36.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "HTTP 502",
      "budget"
     ]
    },
    "betclic_direct": {
-    "secondes": 66.7,
-    "ok": true
+    "secondes": 77.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -71,15 +58,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 12.2,
+    "secondes": 18.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.8,
+    "secondes": 1.2,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.3,
+    "secondes": 0.4,
     "ok": true
    }
   },
@@ -90,23 +77,27 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 779,
-   "age_min_s": 6,
-   "lignes": 147081,
-   "lignes_perimees": 602,
-   "rechauffeur": "indisponible",
+   "age_max_s": 878,
+   "age_min_s": 5,
+   "lignes": 148325,
+   "lignes_perimees": 716,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
+    "head_200": 38,
+    "choisi_fixe": 5,
+    "choisi_autre": 9,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 8,
-    "sport_vide": 6
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -114,22 +105,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Atlético Nacional – Deportivo Pasto",
+     "match": "Ipswich – Nottingham Forest",
      "source": "Pinnacle",
-     "cote_olybet": 1.24,
-     "cote_reference": 1.287,
-     "ecart_relatif": 0.0368,
+     "cote_olybet": 3.12,
+     "cote_reference": 3.31,
+     "ecart_relatif": 0.0574,
      "aberrant": false
     },
     {
-     "match": "Atlético Nacional – Deportivo Pasto",
+     "match": "Ipswich – Nottingham Forest",
      "source": "PMU",
-     "cote_olybet": 1.24,
-     "cote_reference": 1.17,
-     "ecart_relatif": 0.0598,
+     "cote_olybet": 3.12,
+     "cote_reference": 2.9,
+     "ecart_relatif": 0.0759,
+     "aberrant": false
+    },
+    {
+     "match": "Flamengo – Estudiantes de La Plata",
+     "source": "Pinnacle",
+     "cote_olybet": 1.26,
+     "cote_reference": 1.301,
+     "ecart_relatif": 0.0317,
+     "aberrant": false
+    },
+    {
+     "match": "Flamengo – Estudiantes de La Plata",
+     "source": "PMU",
+     "cote_olybet": 1.26,
+     "cote_reference": 1.21,
+     "ecart_relatif": 0.0413,
      "aberrant": false
     },
     {
@@ -157,19 +164,19 @@
      "aberrant": false
     },
     {
-     "match": "CSKA 1948 Sofia – Botev Plovdiv",
+     "match": "Atlético Nacional – Deportivo Pasto",
      "source": "Pinnacle",
-     "cote_olybet": 1.97,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.0483,
+     "cote_olybet": 1.24,
+     "cote_reference": 1.287,
+     "ecart_relatif": 0.0368,
      "aberrant": false
     },
     {
-     "match": "CSKA 1948 Sofia – Botev Plovdiv",
+     "match": "Atlético Nacional – Deportivo Pasto",
      "source": "PMU",
-     "cote_olybet": 1.97,
-     "cote_reference": 1.91,
-     "ecart_relatif": 0.0314,
+     "cote_olybet": 1.24,
+     "cote_reference": 1.17,
+     "ecart_relatif": 0.0598,
      "aberrant": false
     }
    ],
@@ -240,23 +247,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T19:19:22+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T19:19:31+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T19:24:03+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T19:24:16+00:00",
    "books_premiere_lecture": "2026-10-22T16:59:37+00:00",
-   "books_derniere_lecture": "2026-10-22T19:19:35+00:00",
-   "ecart_enveloppe_secondes": 8394.0
+   "books_derniere_lecture": "2026-10-22T19:24:25+00:00",
+   "ecart_enveloppe_secondes": 8679.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 23262,
+   "mesures": 27363,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -272,25 +279,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T18:49:20+00:00"
   },
-  "fin": "2026-10-22T19:21:00+00:00",
+  "fin": "2026-10-22T19:26:08+00:00",
   "cotes": {
-   "francaises": 85801,
-   "pinnacle": 147081,
-   "polymarket": 13536,
+   "francaises": 97258,
+   "pinnacle": 148325,
+   "polymarket": 13542,
    "smarkets": 1929
   },
-  "matchs_francais": 1040,
+  "matchs_francais": 1292,
   "opportunites": 6,
   "opportunites_suspectes": 3,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T03:53:00+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-22T03:57:37+00:00",
    "mode": "complet",
@@ -1487,6 +1488,12 @@
   },
   {
    "debut": "2026-10-22T19:19:11+00:00",
+   "mode": "complet",
+   "opportunites": 6,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T19:23:52+00:00",
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 0
