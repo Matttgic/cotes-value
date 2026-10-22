@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T02:01:36+00:00",
+  "debut": "2026-10-22T02:06:15+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 7.5,
+    "secondes": 6.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,32 +12,31 @@
     ]
    },
    "pinnacle": {
-    "secondes": 30.6,
+    "secondes": 27.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 22 markets/straight : HTTP 403",
-     "sport 26 markets/straight : HTTP 403"
+     "sport 6 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 5.6,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 19.7,
+    "secondes": 3.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 27.8,
+    "secondes": 29.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 33.0,
+    "secondes": 34.3,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 34.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.5,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -45,7 +44,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 60.8,
+    "secondes": 46.7,
     "ok": true
    },
    "smarkets": {
@@ -54,11 +53,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 4.7,
+    "secondes": 9.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.6,
+    "secondes": 1.1,
     "ok": true
    },
    "cotes_cloture": {
@@ -72,36 +71,36 @@
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 72,
+   "lignes": 29253,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 72,
-   "retard": []
+   "cache_lignes": 29253,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 901,
-   "age_min_s": 4,
-   "lignes": 122763,
-   "lignes_perimees": 4088,
-   "rechauffeur": "ok",
+   "age_max_s": 819,
+   "age_min_s": 1,
+   "lignes": 122511,
+   "lignes_perimees": 963,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
     "head_200": 22,
     "head_403": 3,
-    "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 4,
-    "reprise_403": 2,
+    "ortho_refusee": 3,
+    "choisi_autre": 3,
+    "choisi_fixe": 11,
+    "reprise_403": 1,
+    "matchups_sans_speciaux": 1,
     "sport_vide": 6
    }
   },
@@ -110,30 +109,22 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Flamengo – Estudiantes de La Plata",
+     "match": "Al Ahli Djeddah – Al Khaleej Saihat",
      "source": "Pinnacle",
-     "cote_olybet": 1.35,
-     "cote_reference": 1.38,
-     "ecart_relatif": 0.0219,
+     "cote_olybet": 1.21,
+     "cote_reference": 1.254,
+     "ecart_relatif": 0.0355,
      "aberrant": false
     },
     {
-     "match": "Flamengo – Estudiantes de La Plata",
+     "match": "Al Ahli Djeddah – Al Khaleej Saihat",
      "source": "PMU",
-     "cote_olybet": 1.35,
-     "cote_reference": 1.3,
-     "ecart_relatif": 0.0385,
-     "aberrant": false
-    },
-    {
-     "match": "Al Faisaly Harmah – Al Nassr Riyadh",
-     "source": "Pinnacle",
-     "cote_olybet": 8.0,
-     "cote_reference": 8.71,
-     "ecart_relatif": 0.0815,
+     "cote_olybet": 1.21,
+     "cote_reference": 1.25,
+     "ecart_relatif": 0.032,
      "aberrant": false
     },
     {
@@ -153,27 +144,19 @@
      "aberrant": false
     },
     {
+     "match": "Al Faisaly Harmah – Al Nassr Riyadh",
+     "source": "Pinnacle",
+     "cote_olybet": 8.0,
+     "cote_reference": 8.71,
+     "ecart_relatif": 0.0815,
+     "aberrant": false
+    },
+    {
      "match": "Al Hazem – Al Feiha",
      "source": "PMU",
      "cote_olybet": 2.25,
      "cote_reference": 2.18,
      "ecart_relatif": 0.0321,
-     "aberrant": false
-    },
-    {
-     "match": "Al Ahli Djeddah – Al Khaleej Saihat",
-     "source": "Pinnacle",
-     "cote_olybet": 1.21,
-     "cote_reference": 1.254,
-     "ecart_relatif": 0.0355,
-     "aberrant": false
-    },
-    {
-     "match": "Al Ahli Djeddah – Al Khaleej Saihat",
-     "source": "PMU",
-     "cote_olybet": 1.21,
-     "cote_reference": 1.25,
-     "ecart_relatif": 0.032,
      "aberrant": false
     }
    ],
@@ -260,23 +243,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T01:39:15+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T02:02:02+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T01:39:14+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T02:06:38+00:00",
    "books_premiere_lecture": "2026-10-22T00:38:39+00:00",
-   "books_derniere_lecture": "2026-10-22T02:02:07+00:00",
-   "ecart_enveloppe_secondes": 5003.0
+   "books_derniere_lecture": "2026-10-22T02:06:43+00:00",
+   "ecart_enveloppe_secondes": 5279.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.7
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 20020,
+   "mesures": 20436,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -292,25 +275,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T01:53:47+00:00"
   },
-  "fin": "2026-10-22T02:03:16+00:00",
+  "fin": "2026-10-22T02:07:44+00:00",
   "cotes": {
-   "francaises": 58215,
-   "pinnacle": 122835,
-   "polymarket": 8950,
+   "francaises": 58441,
+   "pinnacle": 151764,
+   "polymarket": 8948,
    "smarkets": 4067
   },
-  "matchs_francais": 822,
+  "matchs_francais": 826,
   "opportunites": 4,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T10:36:36+00:00",
-   "mode": "complet",
-   "opportunites": 9,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-21T10:41:16+00:00",
    "mode": "complet",
@@ -1507,6 +1484,12 @@
   },
   {
    "debut": "2026-10-22T02:01:36+00:00",
+   "mode": "complet",
+   "opportunites": 4,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T02:06:15+00:00",
    "mode": "complet",
    "opportunites": 4,
    "nouveaux_paris": 0
