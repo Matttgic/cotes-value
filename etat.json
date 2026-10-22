@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T23:17:00+00:00",
+  "debut": "2026-10-22T23:20:14+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 9.8,
+    "secondes": 12.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,25 +12,24 @@
     ]
    },
    "pinnacle": {
-    "secondes": 27.4,
+    "secondes": 26.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 6 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 5.1,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 17.5,
+    "secondes": 6.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 29.2,
+    "secondes": 30.9,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 34.7,
     "ok": true
    },
    "netbet": {
@@ -41,24 +40,21 @@
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 38.4,
+   "unibet_direct": {
+    "secondes": 55.7,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 53.7,
+    "secondes": 75.3,
     "ok": true
    },
    "smarkets": {
-    "secondes": 17.9,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 33.4,
+    "secondes": 33.9,
     "ok": true
    },
    "comparaison": {
@@ -74,23 +70,26 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [
-    "boxe"
+   "sports": [],
+   "requetes": 0,
+   "lignes": 37233,
+   "erreurs": [
+    "pinbook : limite journalière du secours atteinte"
    ],
-   "requetes": 1,
-   "lignes": 50,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": []
+   "pause": true,
+   "cache_lignes": 37233,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 870,
-   "age_min_s": 86,
+   "age_max_s": 752,
+   "age_min_s": 164,
    "lignes": 150599,
-   "lignes_perimees": 8,
+   "lignes_perimees": 1404,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -101,14 +100,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
+    "head_200": 37,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 8,
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 5
+    "choisi_autre": 4,
+    "choisi_fixe": 10,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -116,7 +114,7 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 5,
    "comparaisons": [
     {
      "match": "Randers – Brøndby IF",
@@ -127,67 +125,35 @@
      "aberrant": false
     },
     {
-     "match": "Gimnasia y Esgrima de Mendoza – Platense Buenos Aires",
+     "match": "Corvinul Hunedoara – FC Universitatea Cluj",
      "source": "Pinnacle",
-     "cote_olybet": 2.1,
-     "cote_reference": 2.24,
-     "ecart_relatif": 0.0625,
+     "cote_olybet": 2.45,
+     "cote_reference": 2.5,
+     "ecart_relatif": 0.02,
      "aberrant": false
     },
     {
-     "match": "Gimnasia y Esgrima de Mendoza – Platense Buenos Aires",
+     "match": "Corvinul Hunedoara – FC Universitatea Cluj",
      "source": "PMU",
-     "cote_olybet": 2.1,
-     "cote_reference": 2.05,
-     "ecart_relatif": 0.0244,
+     "cote_olybet": 2.45,
+     "cote_reference": 2.38,
+     "ecart_relatif": 0.0294,
      "aberrant": false
     },
     {
-     "match": "Tigre – Club Atlético Tucumán",
+     "match": "Olympique Akbou – CS Constantine",
      "source": "Pinnacle",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.667,
-     "ecart_relatif": 0.04,
+     "cote_olybet": 1.79,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.0426,
      "aberrant": false
     },
     {
-     "match": "Tigre – Club Atlético Tucumán",
-     "source": "PMU",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0184,
-     "aberrant": false
-    },
-    {
-     "match": "Gimnasia y Esgrima La Plata – Sarmiento",
+     "match": "JS El Biar – MC Oran",
      "source": "Pinnacle",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.694,
-     "ecart_relatif": 0.0498,
-     "aberrant": false
-    },
-    {
-     "match": "Gimnasia y Esgrima La Plata – Sarmiento",
-     "source": "PMU",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0123,
-     "aberrant": false
-    },
-    {
-     "match": "Audax Italiano – Huachipato",
-     "source": "Pinnacle",
-     "cote_olybet": 1.99,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0524,
-     "aberrant": false
-    },
-    {
-     "match": "Audax Italiano – Huachipato",
-     "source": "PMU",
-     "cote_olybet": 1.99,
-     "cote_reference": 1.79,
-     "ecart_relatif": 0.1117,
+     "cote_olybet": 2.63,
+     "cote_reference": 2.78,
+     "ecart_relatif": 0.054,
      "aberrant": false
     }
    ],
@@ -258,22 +224,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T23:17:11+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T23:17:29+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T22:45:05+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T23:20:33+00:00",
    "books_premiere_lecture": "2026-10-22T20:29:42+00:00",
-   "books_derniere_lecture": "2026-10-22T23:17:30+00:00",
-   "ecart_enveloppe_secondes": 10067.0
+   "books_derniere_lecture": "2026-10-22T23:20:43+00:00",
+   "ecart_enveloppe_secondes": 10251.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 3.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 31606,
+   "mesures": 31453,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -289,25 +256,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T22:32:54+00:00"
   },
-  "fin": "2026-10-22T23:19:27+00:00",
+  "fin": "2026-10-22T23:22:44+00:00",
   "cotes": {
-   "francaises": 109403,
-   "pinnacle": 150649,
-   "polymarket": 15501,
+   "francaises": 109467,
+   "pinnacle": 187832,
+   "polymarket": 15497,
    "smarkets": 3807
   },
-  "matchs_francais": 1434,
+  "matchs_francais": 1430,
   "opportunites": 4,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T07:47:03+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T07:51:41+00:00",
    "mode": "complet",
@@ -1504,6 +1465,12 @@
   },
   {
    "debut": "2026-10-22T23:17:00+00:00",
+   "mode": "complet",
+   "opportunites": 4,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T23:20:14+00:00",
    "mode": "complet",
    "opportunites": 4,
    "nouveaux_paris": 0
