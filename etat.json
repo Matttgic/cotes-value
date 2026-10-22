@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T12:25:28+00:00",
+  "debut": "2026-10-22T12:30:11+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.4,
+    "secondes": 14.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,39 +12,55 @@
     ]
    },
    "pinnacle": {
-    "secondes": 24.6,
+    "secondes": 39.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403"
+     "sport 27 matchups : HTTP 403",
+     "sport 6 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403",
+     "sport 17 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 6.8,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 22.7,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 30.5,
+    "secondes": 8.1,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 34.5,
+    "secondes": 17.5,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau",
+     "sport:2 : réseau",
+     "sport:3 : réseau",
+     "sport:4 : réseau",
+     "sport:5 : réseau",
+     "sport:6 : réseau",
+     "sport:9 : réseau",
+     "sport:12 : réseau",
+     "sport:16 : réseau",
+     "sport:19 : réseau"
+    ]
+   },
+   "pmu_direct": {
+    "secondes": 31.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "unibet_direct": {
+    "secondes": 51.4,
+    "ok": true
+   },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -52,19 +68,16 @@
     ]
    },
    "smarkets": {
-    "secondes": 19.3,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 17.1,
+    "secondes": 28.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.1,
+    "secondes": 1.9,
     "ok": true
    },
    "cotes_cloture": {
@@ -75,14 +88,24 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "boxe"
+   ],
+   "requetes": 1,
+   "lignes": 48,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": []
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 848,
-   "age_min_s": 1,
+   "age_max_s": 692,
+   "age_min_s": 184,
    "lignes": 143165,
-   "lignes_perimees": 16,
+   "lignes_perimees": 0,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -90,13 +113,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 27,
-    "choisi_fixe": 10,
-    "choisi_autre": 4,
-    "head_403": 3,
-    "ortho_refusee": 3,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "head_200": 41,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "choisi_autre": 12,
+    "choisi_fixe": 2,
+    "reprise_403": 4,
+    "matchups_sans_speciaux": 4,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -104,75 +128,50 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Trefelin BGC – Flint Town United",
+     "match": "Zira – Soumgaït FK",
      "source": "Pinnacle",
-     "cote_olybet": 3.23,
-     "cote_reference": 3.37,
-     "ecart_relatif": 0.0415,
+     "cote_olybet": 1.66,
+     "cote_reference": 1.709,
+     "ecart_relatif": 0.0288,
      "aberrant": false
     },
     {
-     "match": "Holywell Town FC – Penybont FC",
+     "match": "Araz Nakhchivan – Qabala",
      "source": "Pinnacle",
-     "cote_olybet": 8.1,
-     "cote_reference": 8.97,
-     "ecart_relatif": 0.097,
+     "cote_olybet": 2.18,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.0224,
      "aberrant": false
     },
     {
-     "match": "Holywell Town FC – Penybont FC",
+     "match": "Audax Italiano – Huachipato",
+     "source": "Pinnacle",
+     "cote_olybet": 2.0,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0476,
+     "aberrant": false
+    },
+    {
+     "match": "Audax Italiano – Huachipato",
      "source": "PMU",
-     "cote_olybet": 8.1,
-     "cote_reference": 7.0,
-     "ecart_relatif": 0.1571,
-     "aberrant": true
-    },
-    {
-     "match": "Colwyn Bay – Cardiff Metropolitan University",
-     "source": "Pinnacle",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.649,
-     "ecart_relatif": 0.0239,
+     "cote_olybet": 2.0,
+     "cote_reference": 1.79,
+     "ecart_relatif": 0.1173,
      "aberrant": false
     },
     {
-     "match": "Cambrian United FC – Airbus Broughton",
+     "match": "Portadown – Linfield",
      "source": "Pinnacle",
-     "cote_olybet": 2.98,
-     "cote_reference": 3.11,
-     "ecart_relatif": 0.0418,
-     "aberrant": false
-    },
-    {
-     "match": "Caernarfon Town – Briton Ferry Llansawel AFC",
-     "source": "Pinnacle",
-     "cote_olybet": 1.29,
-     "cote_reference": 1.326,
-     "ecart_relatif": 0.0269,
-     "aberrant": false
-    },
-    {
-     "match": "Caernarfon Town – Briton Ferry Llansawel AFC",
-     "source": "PMU",
-     "cote_olybet": 1.29,
-     "cote_reference": 1.22,
-     "ecart_relatif": 0.0574,
+     "cote_olybet": 6.0,
+     "cote_reference": 6.57,
+     "ecart_relatif": 0.0868,
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Holywell Town FC – Penybont FC",
-     "source": "PMU",
-     "cote_olybet": 8.1,
-     "cote_reference": 7.0,
-     "ecart_relatif": 0.1571,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -231,22 +230,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T12:25:38+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T12:25:45+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T12:30:22+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T12:30:52+00:00",
    "books_premiere_lecture": "2026-10-22T10:47:30+00:00",
-   "books_derniere_lecture": "2026-10-22T12:25:53+00:00",
-   "ecart_enveloppe_secondes": 5895.0
+   "books_derniere_lecture": "2026-10-22T12:30:53+00:00",
+   "ecart_enveloppe_secondes": 6202.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 36603,
+   "mesures": 31289,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -262,25 +262,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T12:13:47+00:00"
   },
-  "fin": "2026-10-22T12:27:55+00:00",
+  "fin": "2026-10-22T12:32:55+00:00",
   "cotes": {
-   "francaises": 123849,
-   "pinnacle": 143165,
-   "polymarket": 15921,
+   "francaises": 108704,
+   "pinnacle": 143213,
+   "polymarket": 15962,
    "smarkets": 4104
   },
-  "matchs_francais": 1644,
-  "opportunites": 6,
+  "matchs_francais": 1312,
+  "opportunites": 8,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-21T21:01:35+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T21:06:14+00:00",
    "mode": "complet",
@@ -1480,6 +1474,12 @@
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T12:30:11+00:00",
+   "mode": "complet",
+   "opportunites": 8,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-22T12:13:47+00:00",
