@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T02:34:08+00:00",
+  "debut": "2026-10-22T02:38:44+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 7.7,
+    "secondes": 8.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,70 +12,52 @@
     ]
    },
    "pinnacle": {
-    "secondes": 29.9,
+    "secondes": 28.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 markets/straight : HTTP 403",
-     "sport 26 markets/straight : HTTP 403",
      "sport 45 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 5.9,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 13.8,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:4 : réseau",
-     "sport:5 : réseau",
-     "sport:6 : réseau",
-     "sport:9 : réseau",
-     "sport:16 : réseau",
-     "sport:19 : réseau",
-     "sport:23 : réseau",
-     "lecture vide"
-    ]
-   },
-   "unibet_direct": {
-    "secondes": 18.7,
+    "secondes": 5.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 27.3,
+    "secondes": 27.5,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 32.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.0,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "unibet_direct": {
+    "secondes": 56.4,
+    "ok": true
+   },
    "betclic_direct": {
-    "secondes": 57.8,
+    "secondes": 59.5,
     "ok": true
    },
    "smarkets": {
-    "secondes": 20.6,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 5.8,
+    "secondes": 6.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.7,
+    "secondes": 0.6,
     "ok": true
    },
    "cotes_cloture": {
@@ -86,28 +68,44 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 29460,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 789,
-   "age_min_s": 22,
-   "lignes": 122868,
-   "lignes_perimees": 226,
-   "rechauffeur": "indisponible",
+   "age_max_s": 876,
+   "age_min_s": 45,
+   "lignes": 122795,
+   "lignes_perimees": 828,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 12,
-    "head_403": 3,
+    "head_200": 39,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 3,
-    "choisi_fixe": 4,
-    "reprise_403": 3,
-    "sport_vide": 3
+    "choisi_autre": 4,
+    "choisi_fixe": 10,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -115,46 +113,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Araz Nakhchivan – Qabala",
+     "match": "Veres Rivne – Kolos Kovalivka",
      "source": "Pinnacle",
-     "cote_olybet": 2.16,
-     "cote_reference": 2.21,
-     "ecart_relatif": 0.0226,
+     "cote_olybet": 3.05,
+     "cote_reference": 3.16,
+     "ecart_relatif": 0.0348,
      "aberrant": false
     },
     {
-     "match": "Kairat Almaty – Panathinaïkos",
+     "match": "Hibernians FC – Gzira United",
      "source": "Pinnacle",
-     "cote_olybet": 4.6,
-     "cote_reference": 5.03,
-     "ecart_relatif": 0.0855,
+     "cote_olybet": 1.89,
+     "cote_reference": 1.935,
+     "ecart_relatif": 0.0231,
      "aberrant": false
     },
     {
-     "match": "Kairat Almaty – Panathinaïkos",
+     "match": "Hibernians FC – Gzira United",
      "source": "PMU",
-     "cote_olybet": 4.6,
-     "cote_reference": 4.7,
-     "ecart_relatif": 0.0213,
+     "cote_olybet": 1.89,
+     "cote_reference": 1.77,
+     "ecart_relatif": 0.0678,
      "aberrant": false
     },
     {
-     "match": "Getafe – FC Lugano",
+     "match": "Birkirkara – Floriana",
      "source": "Pinnacle",
-     "cote_olybet": 1.8,
-     "cote_reference": 1.893,
-     "ecart_relatif": 0.0491,
+     "cote_olybet": 2.78,
+     "cote_reference": 2.88,
+     "ecart_relatif": 0.0347,
      "aberrant": false
     },
     {
-     "match": "Getafe – FC Lugano",
+     "match": "Viktoria Plzen – Levski Sofia",
+     "source": "Pinnacle",
+     "cote_olybet": 1.7,
+     "cote_reference": 1.781,
+     "ecart_relatif": 0.0456,
+     "aberrant": false
+    },
+    {
+     "match": "Viktoria Plzen – Levski Sofia",
      "source": "PMU",
-     "cote_olybet": 1.8,
-     "cote_reference": 1.66,
-     "ecart_relatif": 0.0843,
+     "cote_olybet": 1.7,
+     "cote_reference": 1.68,
+     "ecart_relatif": 0.0119,
+     "aberrant": false
+    },
+    {
+     "match": "Celtic – Celta Vigo",
+     "source": "Pinnacle",
+     "cote_olybet": 2.56,
+     "cote_reference": 2.71,
+     "ecart_relatif": 0.0554,
+     "aberrant": false
+    },
+    {
+     "match": "Celtic – Celta Vigo",
+     "source": "PMU",
+     "cote_olybet": 2.56,
+     "cote_reference": 2.5,
+     "ecart_relatif": 0.024,
      "aberrant": false
     }
    ],
@@ -241,22 +263,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T02:34:19+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T02:34:31+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T02:38:54+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T02:39:15+00:00",
    "books_premiere_lecture": "2026-10-22T00:38:39+00:00",
-   "books_derniere_lecture": "2026-10-22T02:34:39+00:00",
-   "ecart_enveloppe_secondes": 6952.0
+   "books_derniere_lecture": "2026-10-22T02:39:16+00:00",
+   "ecart_enveloppe_secondes": 7236.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 17483,
+   "mesures": 19575,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -272,25 +295,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T01:53:47+00:00"
   },
-  "fin": "2026-10-22T02:36:07+00:00",
+  "fin": "2026-10-22T02:40:25+00:00",
   "cotes": {
-   "francaises": 49961,
-   "pinnacle": 122868,
-   "polymarket": 9115,
+   "francaises": 56670,
+   "pinnacle": 152255,
+   "polymarket": 9108,
    "smarkets": 3803
   },
-  "matchs_francais": 672,
+  "matchs_francais": 813,
   "opportunites": 3,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T11:09:05+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T11:13:52+00:00",
    "mode": "complet",
@@ -1487,6 +1504,12 @@
   },
   {
    "debut": "2026-10-22T02:34:08+00:00",
+   "mode": "complet",
+   "opportunites": 3,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T02:38:44+00:00",
    "mode": "complet",
    "opportunites": 3,
    "nouveaux_paris": 0
