@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T06:46:34+00:00",
+  "debut": "2026-10-22T06:51:13+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.7,
+    "secondes": 14.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,65 +12,60 @@
     ]
    },
    "pinnacle": {
-    "secondes": 22.1,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 0.8,
+    "secondes": 29.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "accueil HTTP 403"
+     "sport 28 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 6.0,
+    "secondes": 6.8,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 31.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 18.0,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:4 : réseau",
-     "sport:5 : réseau",
-     "sport:6 : réseau",
-     "sport:9 : réseau",
-     "sport:12 : réseau",
-     "sport:16 : réseau",
-     "sport:19 : réseau",
-     "sport:23 : réseau"
-    ]
-   },
-   "pmu_direct": {
-    "secondes": 30.0,
+    "secondes": 35.0,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "HTTP 404",
+     "budget"
+    ]
+   },
+   "unibet_direct": {
+    "secondes": 38.1,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "betclic_direct": {
-    "secondes": 73.1,
-    "ok": true
-   },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 28.5,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 11.8,
+    "secondes": 15.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.8,
+    "secondes": 1.0,
     "ok": true
    },
    "cotes_cloture": {
@@ -85,24 +80,27 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 798,
-   "age_min_s": 92,
-   "lignes": 127168,
-   "lignes_perimees": 2208,
-   "rechauffeur": "indisponible",
+   "age_max_s": 819,
+   "age_min_s": 41,
+   "lignes": 128004,
+   "lignes_perimees": 102,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 22,
-    "choisi_fixe": 6,
-    "head_403": 3,
+    "head_200": 34,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 3,
+    "choisi_autre": 13,
+    "choisi_fixe": 1,
     "reprise_403": 1,
-    "reprise_403_ok": 1,
+    "matchups_sans_speciaux": 1,
     "sport_vide": 6
    }
   },
@@ -111,30 +109,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 3,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Tammeka Tartu – Narva Trans",
-     "source": "PMU",
-     "cote_olybet": 1.99,
-     "cote_reference": 2.06,
-     "ecart_relatif": 0.034,
-     "aberrant": false
-    },
-    {
-     "match": "Nomme United – Parnu JK Vaprus",
+     "match": "Bohemians – Shelbourne",
      "source": "Pinnacle",
-     "cote_olybet": 1.95,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0441,
+     "cote_olybet": 1.53,
+     "cote_reference": 1.585,
+     "ecart_relatif": 0.0346,
      "aberrant": false
     },
     {
-     "match": "Nomme United – Parnu JK Vaprus",
+     "match": "Bohemians – Shelbourne",
      "source": "PMU",
-     "cote_olybet": 1.95,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0714,
+     "cote_olybet": 1.53,
+     "cote_reference": 1.47,
+     "ecart_relatif": 0.0408,
+     "aberrant": false
+    },
+    {
+     "match": "Derry City – Dundalk",
+     "source": "Pinnacle",
+     "cote_olybet": 1.73,
+     "cote_reference": 1.8,
+     "ecart_relatif": 0.0389,
+     "aberrant": false
+    },
+    {
+     "match": "Derry City – Dundalk",
+     "source": "PMU",
+     "cote_olybet": 1.73,
+     "cote_reference": 1.61,
+     "ecart_relatif": 0.0745,
+     "aberrant": false
+    },
+    {
+     "match": "Galway United FC – St. Patrick's Athletic",
+     "source": "Pinnacle",
+     "cote_olybet": 4.9,
+     "cote_reference": 5.31,
+     "ecart_relatif": 0.0772,
+     "aberrant": false
+    },
+    {
+     "match": "Galway United FC – St. Patrick's Athletic",
+     "source": "PMU",
+     "cote_olybet": 4.9,
+     "cote_reference": 4.5,
+     "ecart_relatif": 0.0889,
+     "aberrant": false
+    },
+    {
+     "match": "Waterford – Drogheda United",
+     "source": "Pinnacle",
+     "cote_olybet": 1.79,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.0426,
+     "aberrant": false
+    },
+    {
+     "match": "Waterford – Drogheda United",
+     "source": "PMU",
+     "cote_olybet": 1.79,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0165,
+     "aberrant": false
+    },
+    {
+     "match": "Birkirkara – Floriana",
+     "source": "Pinnacle",
+     "cote_olybet": 2.79,
+     "cote_reference": 2.9,
+     "ecart_relatif": 0.0379,
      "aberrant": false
     }
    ],
@@ -197,23 +243,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T06:46:44+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T06:46:53+00:00",
-   "books_premiere_lecture": "2026-10-22T06:32:41+00:00",
-   "books_derniere_lecture": "2026-10-22T06:46:57+00:00",
-   "ecart_enveloppe_secondes": 852.0
+   "pinnacle_premiere_lecture": "2026-10-22T06:51:24+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T06:51:38+00:00",
+   "books_premiere_lecture": "2026-10-22T06:37:18+00:00",
+   "books_derniere_lecture": "2026-10-22T06:51:43+00:00",
+   "ecart_enveloppe_secondes": 860.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 25529,
+   "mesures": 29781,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -229,25 +274,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T06:35:06+00:00"
   },
-  "fin": "2026-10-22T06:48:28+00:00",
+  "fin": "2026-10-22T06:53:51+00:00",
   "cotes": {
-   "francaises": 94223,
-   "pinnacle": 127168,
-   "polymarket": 14345,
-   "smarkets": 4072
+   "francaises": 107251,
+   "pinnacle": 128004,
+   "polymarket": 14340,
+   "smarkets": 4110
   },
-  "matchs_francais": 1210,
-  "opportunites": 2,
+  "matchs_francais": 1508,
+  "opportunites": 3,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T15:23:09+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T15:27:48+00:00",
    "mode": "complet",
@@ -1446,6 +1485,12 @@
    "debut": "2026-10-22T06:46:34+00:00",
    "mode": "complet",
    "opportunites": 2,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T06:51:13+00:00",
+   "mode": "complet",
+   "opportunites": 3,
    "nouveaux_paris": 0
   }
  ],
