@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T15:26:01+00:00",
+  "debut": "2026-10-22T15:30:40+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 15.7,
+    "secondes": 9.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,29 +12,24 @@
     ]
    },
    "pinnacle": {
-    "secondes": 32.6,
+    "secondes": 28.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 5 matchups : HTTP 403",
-     "sport 13 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 8.1,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 19.0,
+    "secondes": 6.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 34.6,
+    "secondes": 33.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -42,11 +37,15 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 41.3,
+    "secondes": 39.1,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 67.0,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.6,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,60 +53,54 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 27.8,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 25.5,
+    "secondes": 28.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.8,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 37434,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 854,
-   "age_min_s": 89,
-   "lignes": 147782,
-   "lignes_perimees": 4903,
-   "rechauffeur": "indisponible",
+   "age_max_s": 651,
+   "age_min_s": 121,
+   "lignes": 147872,
+   "lignes_perimees": 0,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
+    "head_200": 40,
+    "choisi_fixe": 8,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 11,
-    "choisi_fixe": 3,
-    "sport_vide": 4,
-    "reprise_403": 2
+    "choisi_autre": 6,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -115,38 +108,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Araz Nakhchivan – Qabala",
+     "match": "LKP Motor Lublin – Zaglebie Lubin",
      "source": "Pinnacle",
-     "cote_olybet": 2.18,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0224,
+     "cote_olybet": 1.86,
+     "cote_reference": 1.952,
+     "ecart_relatif": 0.0473,
      "aberrant": false
     },
     {
-     "match": "Zira – Soumgaït FK",
-     "source": "Pinnacle",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.709,
-     "ecart_relatif": 0.0229,
-     "aberrant": false
-    },
-    {
-     "match": "Derry City – Dundalk",
-     "source": "Pinnacle",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.775,
-     "ecart_relatif": 0.0367,
-     "aberrant": false
-    },
-    {
-     "match": "Derry City – Dundalk",
+     "match": "LKP Motor Lublin – Zaglebie Lubin",
      "source": "PMU",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0687,
+     "cote_olybet": 1.86,
+     "cote_reference": 1.94,
+     "ecart_relatif": 0.0412,
+     "aberrant": false
+    },
+    {
+     "match": "Widzew Lodz – Gornik Zabrze",
+     "source": "Pinnacle",
+     "cote_olybet": 2.71,
+     "cote_reference": 2.88,
+     "ecart_relatif": 0.059,
+     "aberrant": false
+    },
+    {
+     "match": "Widzew Lodz – Gornik Zabrze",
+     "source": "PMU",
+     "cote_olybet": 2.71,
+     "cote_reference": 2.55,
+     "ecart_relatif": 0.0627,
+     "aberrant": false
+    },
+    {
+     "match": "Elfsborg – Malmo",
+     "source": "Pinnacle",
+     "cote_olybet": 1.96,
+     "cote_reference": 2.06,
+     "ecart_relatif": 0.0485,
+     "aberrant": false
+    },
+    {
+     "match": "Elfsborg – Malmo",
+     "source": "PMU",
+     "cote_olybet": 1.96,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0101,
+     "aberrant": false
+    },
+    {
+     "match": "Vasteras SK – Halmstads",
+     "source": "Pinnacle",
+     "cote_olybet": 1.62,
+     "cote_reference": 1.685,
+     "ecart_relatif": 0.0385,
+     "aberrant": false
+    },
+    {
+     "match": "Vasteras SK – Halmstads",
+     "source": "PMU",
+     "cote_olybet": 1.62,
+     "cote_reference": 1.58,
+     "ecart_relatif": 0.0253,
      "aberrant": false
     }
    ],
@@ -161,32 +186,32 @@
      "match": "Birkirkara – Floriana",
      "source": "Pinnacle",
      "cote_netbet": 2.32,
-     "cote_reference": 2.41,
-     "ecart_relatif": 0.0373,
+     "cote_reference": 2.42,
+     "ecart_relatif": 0.0413,
      "aberrant": false
     },
     {
      "match": "FC Ararat-Armenia – AZ Alkmaar",
      "source": "Pinnacle",
-     "cote_netbet": 7.25,
-     "cote_reference": 8.42,
-     "ecart_relatif": 0.139,
+     "cote_netbet": 7.5,
+     "cote_reference": 8.55,
+     "ecart_relatif": 0.1228,
      "aberrant": false
     },
     {
      "match": "FC Ararat-Armenia – AZ Alkmaar",
      "source": "PMU",
-     "cote_netbet": 7.25,
+     "cote_netbet": 7.5,
      "cote_reference": 7.5,
-     "ecart_relatif": 0.0333,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
      "match": "Ferencváros – Torreense",
      "source": "Pinnacle",
      "cote_netbet": 1.27,
-     "cote_reference": 1.331,
-     "ecart_relatif": 0.0459,
+     "cote_reference": 1.33,
+     "ecart_relatif": 0.0451,
      "aberrant": false
     },
     {
@@ -217,23 +242,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T15:26:12+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T15:26:36+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T15:30:51+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T15:31:01+00:00",
    "books_premiere_lecture": "2026-10-22T13:35:30+00:00",
-   "books_derniere_lecture": "2026-10-22T15:26:37+00:00",
-   "ecart_enveloppe_secondes": 6666.0
+   "books_derniere_lecture": "2026-10-22T15:31:10+00:00",
+   "ecart_enveloppe_secondes": 6931.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 12.8
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 618,
    "a_verifier": 9,
    "non_conforme": 9,
-   "mesures": 35621,
+   "mesures": 36820,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -249,25 +273,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T15:01:51+00:00"
   },
-  "fin": "2026-10-22T15:28:31+00:00",
+  "fin": "2026-10-22T15:33:36+00:00",
   "cotes": {
-   "francaises": 125805,
-   "pinnacle": 185216,
-   "polymarket": 16580,
-   "smarkets": 4079
+   "francaises": 125425,
+   "pinnacle": 147872,
+   "polymarket": 16516,
+   "smarkets": 4061
   },
-  "matchs_francais": 1665,
-  "opportunites": 6,
+  "matchs_francais": 1649,
+  "opportunites": 8,
   "opportunites_suspectes": 2,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T00:01:04+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T00:05:46+00:00",
    "mode": "complet",
@@ -1466,6 +1484,12 @@
    "debut": "2026-10-22T15:26:01+00:00",
    "mode": "complet",
    "opportunites": 6,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T15:30:40+00:00",
+   "mode": "complet",
+   "opportunites": 8,
    "nouveaux_paris": 0
   }
  ],
