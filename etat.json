@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T12:20:48+00:00",
+  "debut": "2026-10-22T12:25:28+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 8.6,
+    "secondes": 8.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,48 +12,59 @@
     ]
    },
    "pinnacle": {
-    "secondes": 20.4,
-    "ok": true
+    "secondes": 24.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 5.2,
+    "secondes": 6.8,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 22.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.6,
+    "secondes": 30.5,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 34.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 38.8,
-    "ok": true
-   },
    "betclic_direct": {
-    "secondes": 66.9,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 74.4,
-    "ok": true
+    "secondes": 77.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.3,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 21.0,
+    "secondes": 17.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 1.1,
     "ok": true
    },
    "cotes_cloture": {
@@ -64,41 +75,28 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 36476,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 36476,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 900,
-   "age_min_s": 13,
-   "lignes": 142263,
-   "lignes_perimees": 3964,
-   "rechauffeur": "ok",
+   "age_max_s": 848,
+   "age_min_s": 1,
+   "lignes": 143165,
+   "lignes_perimees": 16,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_fixe": 9,
-    "choisi_autre": 5,
-    "sport_vide": 6
+    "head_200": 27,
+    "choisi_fixe": 10,
+    "choisi_autre": 4,
+    "head_403": 3,
+    "ortho_refusee": 3,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -109,20 +107,28 @@
    "examines": 7,
    "comparaisons": [
     {
-     "match": "Bolton Wanderers – Middlesbrough",
+     "match": "Trefelin BGC – Flint Town United",
      "source": "Pinnacle",
-     "cote_olybet": 4.6,
-     "cote_reference": 5.07,
-     "ecart_relatif": 0.0927,
+     "cote_olybet": 3.23,
+     "cote_reference": 3.37,
+     "ecart_relatif": 0.0415,
      "aberrant": false
     },
     {
-     "match": "Bolton Wanderers – Middlesbrough",
-     "source": "PMU",
-     "cote_olybet": 4.6,
-     "cote_reference": 4.7,
-     "ecart_relatif": 0.0213,
+     "match": "Holywell Town FC – Penybont FC",
+     "source": "Pinnacle",
+     "cote_olybet": 8.1,
+     "cote_reference": 8.97,
+     "ecart_relatif": 0.097,
      "aberrant": false
+    },
+    {
+     "match": "Holywell Town FC – Penybont FC",
+     "source": "PMU",
+     "cote_olybet": 8.1,
+     "cote_reference": 7.0,
+     "ecart_relatif": 0.1571,
+     "aberrant": true
     },
     {
      "match": "Colwyn Bay – Cardiff Metropolitan University",
@@ -155,17 +161,18 @@
      "cote_reference": 1.22,
      "ecart_relatif": 0.0574,
      "aberrant": false
-    },
-    {
-     "match": "Trefelin BGC – Flint Town United",
-     "source": "Pinnacle",
-     "cote_olybet": 3.23,
-     "cote_reference": 3.37,
-     "ecart_relatif": 0.0415,
-     "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Holywell Town FC – Penybont FC",
+     "source": "PMU",
+     "cote_olybet": 8.1,
+     "cote_reference": 7.0,
+     "ecart_relatif": 0.1571,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -200,8 +207,8 @@
      "match": "Al Fateh – Al Shabab Riyadh",
      "source": "Pinnacle",
      "cote_netbet": 2.77,
-     "cote_reference": 3.07,
-     "ecart_relatif": 0.0977,
+     "cote_reference": 3.0,
+     "ecart_relatif": 0.0767,
      "aberrant": false
     },
     {
@@ -224,23 +231,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T11:34:26+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T12:21:05+00:00",
+   "pinnacle_premiere_lecture": "2026-10-22T12:25:38+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T12:25:45+00:00",
    "books_premiere_lecture": "2026-10-22T10:47:30+00:00",
-   "books_derniere_lecture": "2026-10-22T12:21:10+00:00",
-   "ecart_enveloppe_secondes": 5615.0
+   "books_derniere_lecture": "2026-10-22T12:25:53+00:00",
+   "ecart_enveloppe_secondes": 5895.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 36265,
+   "mesures": 36603,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -256,25 +262,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T12:13:47+00:00"
   },
-  "fin": "2026-10-22T12:22:56+00:00",
+  "fin": "2026-10-22T12:27:55+00:00",
   "cotes": {
-   "francaises": 123839,
-   "pinnacle": 178739,
-   "polymarket": 15936,
-   "smarkets": 4111
+   "francaises": 123849,
+   "pinnacle": 143165,
+   "polymarket": 15921,
+   "smarkets": 4104
   },
-  "matchs_francais": 1651,
-  "opportunites": 5,
+  "matchs_francais": 1644,
+  "opportunites": 6,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-21T20:57:00+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-21T21:01:35+00:00",
    "mode": "complet",
@@ -1473,6 +1473,12 @@
    "debut": "2026-10-22T12:20:48+00:00",
    "mode": "complet",
    "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T12:25:28+00:00",
+   "mode": "complet",
+   "opportunites": 6,
    "nouveaux_paris": 0
   }
  ],
