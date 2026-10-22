@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-22T10:15:04+00:00",
+  "debut": "2026-10-22T10:19:40+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 12.3,
+    "secondes": 9.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,59 +12,58 @@
     ]
    },
    "pinnacle": {
-    "secondes": 24.4,
-    "ok": true
+    "secondes": 30.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
+     "sport 5 matchups : HTTP 403",
+     "sport 13 matchups : HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 7.0,
+    "secondes": 5.0,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 24.4,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.1,
+    "secondes": 30.8,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 35.5,
+    "secondes": 36.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.5,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
-   },
-   "unibet_direct": {
-    "secondes": 52.6,
-    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.5,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 66.6,
+    "ok": true
    },
    "smarkets": {
-    "secondes": 21.7,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 24.4,
+    "secondes": 38.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.4,
+    "secondes": 2.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.4,
+    "secondes": 0.5,
     "ok": true
    }
   },
@@ -72,12 +71,14 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 36247,
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 36407,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 36247,
+   "cache_lignes": 0,
    "retard": [
     "football"
    ]
@@ -86,10 +87,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 731,
-   "age_min_s": 233,
+   "age_max_s": 895,
+   "age_min_s": 102,
    "lignes": 141402,
-   "lignes_perimees": 1296,
+   "lignes_perimees": 3892,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -100,11 +101,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 42,
+    "head_200": 41,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 14,
-    "sport_vide": 6
+    "choisi_fixe": 7,
+    "choisi_autre": 7,
+    "sport_vide": 3,
+    "reprise_403": 3
    }
   },
   "olybet_source": "direct",
@@ -112,46 +115,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "FK Kauno Zalgiris – Brann",
+     "match": "Alanyaspor – Kocaelispor",
      "source": "Pinnacle",
-     "cote_olybet": 4.0,
-     "cote_reference": 4.34,
-     "ecart_relatif": 0.0783,
+     "cote_olybet": 1.9,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.05,
      "aberrant": false
     },
     {
-     "match": "FK Kauno Zalgiris – Brann",
+     "match": "Alanyaspor – Kocaelispor",
      "source": "PMU",
-     "cote_olybet": 4.0,
-     "cote_reference": 3.95,
-     "ecart_relatif": 0.0127,
+     "cote_olybet": 1.9,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.016,
      "aberrant": false
     },
     {
-     "match": "AGF Aarhus – KF Egnatia",
-     "source": "PMU",
-     "cote_olybet": 1.41,
-     "cote_reference": 1.36,
-     "ecart_relatif": 0.0368,
-     "aberrant": false
-    },
-    {
-     "match": "Borac Banja Luka – KuPS",
+     "match": "Brest – OGC Nice",
      "source": "Pinnacle",
-     "cote_olybet": 1.73,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.0493,
+     "cote_olybet": 2.2,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.0435,
      "aberrant": false
     },
     {
-     "match": "Borac Banja Luka – KuPS",
+     "match": "Brest – OGC Nice",
      "source": "PMU",
-     "cote_olybet": 1.73,
-     "cote_reference": 1.7,
-     "ecart_relatif": 0.0176,
+     "cote_olybet": 2.2,
+     "cote_reference": 2.14,
+     "ecart_relatif": 0.028,
+     "aberrant": false
+    },
+    {
+     "match": "Randers – Brøndby IF",
+     "source": "PMU",
+     "cote_olybet": 3.35,
+     "cote_reference": 3.4,
+     "ecart_relatif": 0.0147,
+     "aberrant": false
+    },
+    {
+     "match": "Cambrian United FC – Airbus Broughton",
+     "source": "Pinnacle",
+     "cote_olybet": 2.88,
+     "cote_reference": 2.9,
+     "ecart_relatif": 0.0069,
      "aberrant": false
     }
    ],
@@ -214,22 +225,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-22T10:02:37+00:00",
-   "pinnacle_derniere_lecture": "2026-10-22T10:15:24+00:00",
-   "books_premiere_lecture": "2026-10-22T10:02:05+00:00",
-   "books_derniere_lecture": "2026-10-22T10:15:30+00:00",
-   "ecart_enveloppe_secondes": 799.0
+   "pinnacle_premiere_lecture": "2026-10-22T10:19:51+00:00",
+   "pinnacle_derniere_lecture": "2026-10-22T10:20:13+00:00",
+   "books_premiere_lecture": "2026-10-22T10:05:40+00:00",
+   "books_derniere_lecture": "2026-10-22T10:20:15+00:00",
+   "ecart_enveloppe_secondes": 873.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 617,
    "a_verifier": 8,
    "non_conforme": 9,
-   "mesures": 34370,
+   "mesures": 34038,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -245,25 +257,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-22T09:23:00+00:00"
   },
-  "fin": "2026-10-22T10:17:43+00:00",
+  "fin": "2026-10-22T10:22:16+00:00",
   "cotes": {
-   "francaises": 115654,
-   "pinnacle": 177649,
-   "polymarket": 15070,
+   "francaises": 115552,
+   "pinnacle": 177809,
+   "polymarket": 15064,
    "smarkets": 4059
   },
-  "matchs_francais": 1580,
-  "opportunites": 4,
+  "matchs_francais": 1582,
+  "opportunites": 5,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-21T18:52:43+00:00",
-   "mode": "complet",
-   "opportunites": 7,
-   "nouveaux_paris": 3
-  },
   {
    "debut": "2026-10-21T18:57:17+00:00",
    "mode": "complet",
@@ -1463,6 +1469,12 @@
    "mode": "complet",
    "opportunites": 4,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-22T10:19:40+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-22T09:23:00+00:00",
