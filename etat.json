@@ -1,43 +1,46 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T04:11:54+00:00",
+  "debut": "2026-10-23T04:16:34+00:00",
   "mode": "complet",
   "etapes": {
+   "pinnacle": {
+    "secondes": 24.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "polymarket": {
-    "secondes": 20.5,
+    "secondes": 27.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "prix bid/ask invalides"
     ]
    },
-   "pinnacle": {
-    "secondes": 26.9,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 45 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "olybet": {
-    "secondes": 7.4,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 22.9,
+    "secondes": 10.4,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.1,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 34.5,
+    "secondes": 32.0,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
+   "winamax_direct": {
+    "secondes": 38.0,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 74.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -45,7 +48,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -53,34 +56,49 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.8,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 58.7,
+    "secondes": 127.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.6,
+    "secondes": 3.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.8,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 39437,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 898,
-   "age_min_s": 141,
-   "lignes": 153147,
-   "lignes_perimees": 1004,
+   "age_max_s": 832,
+   "age_min_s": 77,
+   "lignes": 153284,
+   "lignes_perimees": 558,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -91,13 +109,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
+    "head_200": 31,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 7,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 8,
+    "choisi_fixe": 5,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -105,66 +122,51 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Gyor ETO – Ujpest",
+     "match": "FC Spaeri – FC Gagra",
      "source": "Pinnacle",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.32,
-     "ecart_relatif": 0.0388,
+     "cote_olybet": 2.01,
+     "cote_reference": 2.05,
+     "ecart_relatif": 0.0195,
      "aberrant": false
     },
     {
-     "match": "Gyor ETO – Ujpest",
+     "match": "FC Rustavi – Dinamo Tbilissi",
+     "source": "Pinnacle",
+     "cote_olybet": 2.74,
+     "cote_reference": 2.81,
+     "ecart_relatif": 0.0249,
+     "aberrant": false
+    },
+    {
+     "match": "Mladost Lucani – Vojvodina Novi Sad",
+     "source": "Pinnacle",
+     "cote_olybet": 5.7,
+     "cote_reference": 5.89,
+     "ecart_relatif": 0.0323,
+     "aberrant": false
+    },
+    {
+     "match": "Mladost Lucani – Vojvodina Novi Sad",
      "source": "PMU",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0372,
-     "aberrant": false
-    },
-    {
-     "match": "Kispest Honved FC – Debrecen",
-     "source": "Pinnacle",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.0444,
-     "aberrant": false
-    },
-    {
-     "match": "AFK Csikszereda Miercurea Ciuc – Voluntari",
-     "source": "Pinnacle",
-     "cote_olybet": 2.59,
-     "cote_reference": 2.73,
-     "ecart_relatif": 0.0513,
-     "aberrant": false
-    },
-    {
-     "match": "AFK Csikszereda Miercurea Ciuc – Voluntari",
-     "source": "PMU",
-     "cote_olybet": 2.59,
-     "cote_reference": 2.45,
-     "ecart_relatif": 0.0571,
-     "aberrant": false
-    },
-    {
-     "match": "Corvinul Hunedoara – FC Universitatea Cluj",
-     "source": "Pinnacle",
-     "cote_olybet": 2.46,
-     "cote_reference": 2.61,
-     "ecart_relatif": 0.0575,
-     "aberrant": false
-    },
-    {
-     "match": "Corvinul Hunedoara – FC Universitatea Cluj",
-     "source": "PMU",
-     "cote_olybet": 2.46,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0336,
-     "aberrant": false
+     "cote_olybet": 5.7,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.1633,
+     "aberrant": true
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Mladost Lucani – Vojvodina Novi Sad",
+     "source": "PMU",
+     "cote_olybet": 5.7,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.1633,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -231,23 +233,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T04:12:04+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T04:12:13+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T04:16:45+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T04:17:04+00:00",
    "books_premiere_lecture": "2026-10-23T02:35:56+00:00",
-   "books_derniere_lecture": "2026-10-23T04:12:22+00:00",
-   "ecart_enveloppe_secondes": 5777.0
+   "books_derniere_lecture": "2026-10-23T04:17:06+00:00",
+   "ecart_enveloppe_secondes": 6068.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.1
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 51941,
+   "mesures": 53052,
    "matchs_suspects": 1
   },
   "redecision": {
@@ -261,27 +262,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-23T03:16:54+00:00"
+   "dernier_reglement": "2026-10-23T04:15:14+00:00"
   },
-  "fin": "2026-10-23T04:15:04+00:00",
+  "fin": "2026-10-23T04:21:41+00:00",
   "cotes": {
-   "francaises": 168463,
-   "pinnacle": 153147,
-   "polymarket": 31524,
-   "smarkets": 3944
+   "francaises": 171753,
+   "pinnacle": 192721,
+   "polymarket": 31772,
+   "smarkets": 3941
   },
-  "matchs_francais": 2132,
-  "opportunites": 15,
+  "matchs_francais": 2146,
+  "opportunites": 14,
   "opportunites_suspectes": 15,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T12:39:38+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T12:44:17+00:00",
    "mode": "complet",
@@ -1480,6 +1475,12 @@
    "debut": "2026-10-23T04:11:54+00:00",
    "mode": "complet",
    "opportunites": 15,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T04:16:34+00:00",
+   "mode": "complet",
+   "opportunites": 14,
    "nouveaux_paris": 0
   }
  ],
