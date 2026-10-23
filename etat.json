@@ -1,32 +1,32 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T10:49:37+00:00",
+  "debut": "2026-10-23T10:54:33+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 22.5,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
-    "secondes": 26.5,
+    "secondes": 24.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "prix lu après le coup d'envoi : rejet pré-match"
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 34.5,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 8.9,
+    "secondes": 11.0,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.1,
+    "secondes": 33.3,
     "ok": true
    },
    "netbet": {
@@ -38,20 +38,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 38.8,
+    "secondes": 38.3,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 75.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 74.5,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "lecture interrompue"
+     "budget"
     ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,16 +58,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.9,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 95.5,
+    "secondes": 119.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.5,
+    "secondes": 2.7,
     "ok": true
    },
    "cotes_cloture": {
@@ -83,10 +85,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 834,
-   "age_min_s": 81,
-   "lignes": 177361,
-   "lignes_perimees": 142,
+   "age_max_s": 835,
+   "age_min_s": 216,
+   "lignes": 177571,
+   "lignes_perimees": 38,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -94,12 +96,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 27,
-    "choisi_fixe": 9,
-    "choisi_autre": 5,
-    "sport_vide": 7,
+    "head_200": 41,
     "head_403": 2,
-    "ortho_refusee": 2
+    "ortho_refusee": 2,
+    "choisi_autre": 10,
+    "choisi_fixe": 4,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -107,54 +110,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Dundee United – Aberdeen",
+     "match": "AEK Athènes – Panetolikos",
      "source": "Pinnacle",
-     "cote_olybet": 2.06,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.055,
+     "cote_olybet": 1.09,
+     "cote_reference": 1.113,
+     "ecart_relatif": 0.0206,
      "aberrant": false
     },
     {
-     "match": "Dundee United – Aberdeen",
+     "match": "AEK Athènes – Panetolikos",
      "source": "PMU",
-     "cote_olybet": 2.06,
-     "cote_reference": 2.06,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 1.09,
+     "cote_reference": 1.06,
+     "ecart_relatif": 0.0283,
      "aberrant": false
     },
     {
-     "match": "St Mirren FC – Dundee",
+     "match": "Iraklis 1908 FC – AE Kifisia FC",
      "source": "Pinnacle",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.057,
+     "cote_olybet": 2.53,
+     "cote_reference": 2.68,
+     "ecart_relatif": 0.056,
      "aberrant": false
     },
     {
-     "match": "St Mirren FC – Dundee",
-     "source": "PMU",
-     "cote_olybet": 2.15,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0859,
-     "aberrant": false
-    },
-    {
-     "match": "Glasgow Rangers – St. Johnstone",
+     "match": "Asteras Tripolis – Levadiakos",
      "source": "Pinnacle",
-     "cote_olybet": 1.17,
-     "cote_reference": 1.205,
-     "ecart_relatif": 0.0293,
+     "cote_olybet": 1.9,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.05,
      "aberrant": false
     },
     {
-     "match": "Glasgow Rangers – St. Johnstone",
+     "match": "Asteras Tripolis – Levadiakos",
      "source": "PMU",
-     "cote_olybet": 1.17,
-     "cote_reference": 1.21,
-     "ecart_relatif": 0.0331,
+     "cote_olybet": 1.9,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.016,
+     "aberrant": false
+    },
+    {
+     "match": "Zalaegerszeg TE – Kisvarda Master Good",
+     "source": "Pinnacle",
+     "cote_olybet": 1.82,
+     "cote_reference": 1.885,
+     "ecart_relatif": 0.0345,
+     "aberrant": false
+    },
+    {
+     "match": "Zalaegerszeg TE – Kisvarda Master Good",
+     "source": "PMU",
+     "cote_olybet": 1.82,
+     "cote_reference": 1.84,
+     "ecart_relatif": 0.0109,
+     "aberrant": false
+    },
+    {
+     "match": "Gyor ETO – Ujpest",
+     "source": "Pinnacle",
+     "cote_olybet": 2.22,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.0431,
+     "aberrant": false
+    },
+    {
+     "match": "Gyor ETO – Ujpest",
+     "source": "PMU",
+     "cote_olybet": 2.22,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0326,
      "aberrant": false
     }
    ],
@@ -176,9 +203,9 @@
     {
      "match": "Al Faisaly Harmah – Al-Nassr",
      "source": "Pinnacle",
-     "cote_netbet": 9.5,
+     "cote_netbet": 9.75,
      "cote_reference": 10.45,
-     "ecart_relatif": 0.0909,
+     "ecart_relatif": 0.067,
      "aberrant": false
     },
     {
@@ -209,23 +236,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T10:49:48+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T10:49:55+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T10:54:45+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T10:54:58+00:00",
    "books_premiere_lecture": "2026-10-23T08:37:32+00:00",
-   "books_derniere_lecture": "2026-10-23T10:50:05+00:00",
-   "ecart_enveloppe_secondes": 7943.0
+   "books_derniere_lecture": "2026-10-23T10:55:09+00:00",
+   "ecart_enveloppe_secondes": 8246.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 10.3
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 623,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 50287,
+   "mesures": 61537,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -241,25 +267,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T10:15:27+00:00"
   },
-  "fin": "2026-10-23T10:53:39+00:00",
+  "fin": "2026-10-23T10:59:35+00:00",
   "cotes": {
-   "francaises": 156153,
-   "pinnacle": 177361,
-   "polymarket": 35267,
-   "smarkets": 3919
+   "francaises": 182885,
+   "pinnacle": 177571,
+   "polymarket": 35242,
+   "smarkets": 3928
   },
-  "matchs_francais": 2140,
-  "opportunites": 20,
+  "matchs_francais": 2649,
+  "opportunites": 15,
   "opportunites_suspectes": 38,
-  "nouveaux_paris": 5
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-22T17:59:50+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T18:04:30+00:00",
    "mode": "complet",
@@ -1459,6 +1479,12 @@
    "mode": "complet",
    "opportunites": 20,
    "nouveaux_paris": 5
+  },
+  {
+   "debut": "2026-10-23T10:54:33+00:00",
+   "mode": "complet",
+   "opportunites": 15,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-23T10:15:27+00:00",
