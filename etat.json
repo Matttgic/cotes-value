@@ -1,58 +1,51 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T05:14:43+00:00",
+  "debut": "2026-10-23T05:19:22+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 19.1,
+    "secondes": 24.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "prix lu après le coup d'envoi : rejet pré-match"
+     "prix bid/ask invalides"
     ]
    },
    "pinnacle": {
-    "secondes": 28.3,
+    "secondes": 26.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 6 markets/straight : HTTP 403",
-     "sport 32 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 8.4,
+    "secondes": 10.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.8,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 36.4,
+    "secondes": 32.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
+   },
+   "winamax_direct": {
+    "secondes": 37.8,
+    "ok": true
    },
    "unibet_direct": {
-    "secondes": 74.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 59.1,
+    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -60,20 +53,23 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.8,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 65.2,
+    "secondes": 101.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.8,
+    "secondes": 2.2,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -81,22 +77,25 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 0,
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 40616,
    "erreurs": [],
-   "pause": true,
    "cache_lignes": 0,
-   "retard": []
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 876,
-   "age_min_s": 5,
-   "lignes": 154830,
-   "lignes_perimees": 150,
+   "age_max_s": 882,
+   "age_min_s": 71,
+   "lignes": 155199,
+   "lignes_perimees": 406,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -107,12 +106,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 20,
-    "head_403": 3,
+    "head_200": 39,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
     "choisi_fixe": 4,
-    "reprise_403": 2,
+    "choisi_autre": 10,
     "sport_vide": 6
    }
   },
@@ -121,78 +119,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Tianjin Jinmen Tiger FC – Shanghai Port FC",
-     "source": "Pinnacle",
-     "cote_olybet": 2.56,
-     "cote_reference": 2.69,
-     "ecart_relatif": 0.0483,
-     "aberrant": false
-    },
-    {
-     "match": "Tianjin Jinmen Tiger FC – Shanghai Port FC",
+     "match": "Randers – Brøndby IF",
      "source": "PMU",
-     "cote_olybet": 2.56,
-     "cote_reference": 2.6,
-     "ecart_relatif": 0.0154,
+     "cote_olybet": 3.36,
+     "cote_reference": 3.4,
+     "ecart_relatif": 0.0118,
      "aberrant": false
     },
     {
-     "match": "Shenzhen Peng City – Shanghai Shenhua",
+     "match": "HamKam – Rosenborg",
      "source": "Pinnacle",
-     "cote_olybet": 3.3,
-     "cote_reference": 3.48,
-     "ecart_relatif": 0.0517,
+     "cote_olybet": 4.7,
+     "cote_reference": 5.17,
+     "ecart_relatif": 0.0909,
      "aberrant": false
     },
     {
-     "match": "Shenzhen Peng City – Shanghai Shenhua",
+     "match": "HamKam – Rosenborg",
      "source": "PMU",
-     "cote_olybet": 3.3,
-     "cote_reference": 3.25,
-     "ecart_relatif": 0.0154,
+     "cote_olybet": 4.7,
+     "cote_reference": 4.4,
+     "ecart_relatif": 0.0682,
      "aberrant": false
     },
     {
-     "match": "Qingdao West Coast FC – Yunnan Yukun",
+     "match": "FK Bodo/Glimt – Valerenga Oslo",
      "source": "Pinnacle",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.0444,
+     "cote_olybet": 1.11,
+     "cote_reference": 1.135,
+     "ecart_relatif": 0.0217,
      "aberrant": false
     },
     {
-     "match": "Qingdao West Coast FC – Yunnan Yukun",
+     "match": "FK Bodo/Glimt – Valerenga Oslo",
      "source": "PMU",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.1449,
+     "cote_olybet": 1.11,
+     "cote_reference": 1.11,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Liaoning Tieren – Zhejiang Professional FC",
+     "match": "Polissya Zhytomyr – Obolon-Brovar Kiev",
      "source": "Pinnacle",
-     "cote_olybet": 1.86,
-     "cote_reference": 1.952,
-     "ecart_relatif": 0.0473,
-     "aberrant": false
-    },
-    {
-     "match": "Henan FC – Beijing Guoan FC",
-     "source": "Pinnacle",
-     "cote_olybet": 2.98,
-     "cote_reference": 3.19,
-     "ecart_relatif": 0.0658,
-     "aberrant": false
-    },
-    {
-     "match": "Henan FC – Beijing Guoan FC",
-     "source": "PMU",
-     "cote_olybet": 2.98,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0836,
+     "cote_olybet": 1.18,
+     "cote_reference": 1.198,
+     "ecart_relatif": 0.015,
      "aberrant": false
     }
    ],
@@ -263,23 +237,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T05:14:53+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T05:15:07+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T05:19:34+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T05:19:51+00:00",
    "books_premiere_lecture": "2026-10-23T02:35:56+00:00",
-   "books_derniere_lecture": "2026-10-23T05:15:12+00:00",
-   "ecart_enveloppe_secondes": 9551.0
+   "books_derniere_lecture": "2026-10-23T05:19:53+00:00",
+   "ecart_enveloppe_secondes": 9835.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 11.3
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 619,
+   "conforme": 618,
    "a_verifier": 10,
-   "non_conforme": 9,
-   "mesures": 57408,
+   "non_conforme": 10,
+   "mesures": 54632,
    "matchs_suspects": 4
   },
   "redecision": {
@@ -295,25 +268,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T05:13:24+00:00"
   },
-  "fin": "2026-10-23T05:18:05+00:00",
+  "fin": "2026-10-23T05:23:54+00:00",
   "cotes": {
-   "francaises": 184685,
-   "pinnacle": 154830,
-   "polymarket": 33006,
-   "smarkets": 3918
+   "francaises": 176421,
+   "pinnacle": 195815,
+   "polymarket": 32939,
+   "smarkets": 3984
   },
-  "matchs_francais": 2307,
+  "matchs_francais": 2301,
   "opportunites": 18,
-  "opportunites_suspectes": 27,
+  "opportunites_suspectes": 29,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T13:35:30+00:00",
-   "mode": "complet",
-   "opportunites": 7,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T13:40:18+00:00",
    "mode": "complet",
@@ -1510,6 +1477,12 @@
   },
   {
    "debut": "2026-10-23T05:14:43+00:00",
+   "mode": "complet",
+   "opportunites": 18,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T05:19:22+00:00",
    "mode": "complet",
    "opportunites": 18,
    "nouveaux_paris": 0
