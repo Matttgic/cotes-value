@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T02:07:14+00:00",
+  "debut": "2026-10-23T02:11:52+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 16.9,
+    "secondes": 19.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,33 +12,36 @@
     ]
    },
    "pinnacle": {
-    "secondes": 31.1,
+    "secondes": 44.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 17 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 8.0,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 21.1,
+    "secondes": 8.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.3,
+    "secondes": 30.8,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 36.1,
+    "secondes": 35.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "HTTP 403",
+     "budget"
+    ]
+   },
+   "unibet_direct": {
+    "secondes": 74.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,15 +62,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 80.4,
+    "secondes": 52.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.7,
+    "secondes": 1.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -78,28 +81,20 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 810,
-   "age_min_s": 304,
-   "lignes": 152244,
-   "lignes_perimees": 2536,
-   "rechauffeur": "ok",
+   "age_max_s": 203,
+   "age_min_s": 0,
+   "lignes": 151457,
+   "lignes_perimees": 0,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 39,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "choisi_fixe": 6,
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 5
+    "head_200": 33,
+    "choisi_autre": 10,
+    "choisi_fixe": 3
    }
   },
   "olybet_source": "direct",
@@ -107,46 +102,86 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Paris SG (F) – Montpellier (F)",
-     "source": "PMU",
-     "cote_olybet": 1.18,
-     "cote_reference": 1.19,
-     "ecart_relatif": 0.0084,
-     "aberrant": false
-    },
-    {
-     "match": "Vasteras SK – Halmstads",
+     "match": "Bohemians – Shelbourne",
      "source": "Pinnacle",
-     "cote_olybet": 1.62,
-     "cote_reference": 1.694,
-     "ecart_relatif": 0.0439,
+     "cote_olybet": 1.55,
+     "cote_reference": 1.629,
+     "ecart_relatif": 0.0484,
      "aberrant": false
     },
     {
-     "match": "Vasteras SK – Halmstads",
+     "match": "Bohemians – Shelbourne",
      "source": "PMU",
-     "cote_olybet": 1.62,
-     "cote_reference": 1.58,
-     "ecart_relatif": 0.0253,
+     "cote_olybet": 1.55,
+     "cote_reference": 1.47,
+     "ecart_relatif": 0.0544,
      "aberrant": false
     },
     {
-     "match": "Sirius – AIK",
+     "match": "Shamrock Rovers – Sligo Rovers",
      "source": "Pinnacle",
-     "cote_olybet": 1.51,
-     "cote_reference": 1.568,
-     "ecart_relatif": 0.0371,
+     "cote_olybet": 1.11,
+     "cote_reference": 1.137,
+     "ecart_relatif": 0.0236,
      "aberrant": false
     },
     {
-     "match": "Sirius – AIK",
+     "match": "Shamrock Rovers – Sligo Rovers",
      "source": "PMU",
-     "cote_olybet": 1.51,
-     "cote_reference": 1.48,
-     "ecart_relatif": 0.0203,
+     "cote_olybet": 1.11,
+     "cote_reference": 1.07,
+     "ecart_relatif": 0.0374,
+     "aberrant": false
+    },
+    {
+     "match": "Derry City – Dundalk",
+     "source": "Pinnacle",
+     "cote_olybet": 1.81,
+     "cote_reference": 1.909,
+     "ecart_relatif": 0.0519,
+     "aberrant": false
+    },
+    {
+     "match": "Derry City – Dundalk",
+     "source": "PMU",
+     "cote_olybet": 1.81,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.1312,
+     "aberrant": false
+    },
+    {
+     "match": "Galway United FC – St. Patrick's Athletic",
+     "source": "Pinnacle",
+     "cote_olybet": 4.5,
+     "cote_reference": 4.93,
+     "ecart_relatif": 0.0872,
+     "aberrant": false
+    },
+    {
+     "match": "Galway United FC – St. Patrick's Athletic",
+     "source": "PMU",
+     "cote_olybet": 4.5,
+     "cote_reference": 4.5,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Waterford – Drogheda United",
+     "source": "Pinnacle",
+     "cote_olybet": 1.77,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.0533,
+     "aberrant": false
+    },
+    {
+     "match": "Waterford – Drogheda United",
+     "source": "PMU",
+     "cote_olybet": 1.77,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0275,
      "aberrant": false
     }
    ],
@@ -155,69 +190,28 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
-   "comparaisons": [
-    {
-     "match": "Brisbane Roar Fc – Perth Glory",
-     "source": "Pinnacle",
-     "cote_netbet": 2.05,
-     "cote_reference": 2.33,
-     "ecart_relatif": 0.1202,
-     "aberrant": false
-    },
-    {
-     "match": "Brisbane Roar Fc – Perth Glory",
-     "source": "PMU",
-     "cote_netbet": 2.05,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0354,
-     "aberrant": false
-    },
-    {
-     "match": "Dynamo Kiev – Kudrivka",
-     "source": "Pinnacle",
-     "cote_netbet": 1.09,
-     "cote_reference": 1.148,
-     "ecart_relatif": 0.0506,
-     "aberrant": false
-    },
-    {
-     "match": "Veres Rivne – Kolos Kovalivka",
-     "source": "Pinnacle",
-     "cote_netbet": 2.97,
-     "cote_reference": 3.13,
-     "ecart_relatif": 0.0511,
-     "aberrant": false
-    },
-    {
-     "match": "Araz-Naxcivan – FK Qabala",
-     "source": "Pinnacle",
-     "cote_netbet": 2.32,
-     "cote_reference": 2.57,
-     "ecart_relatif": 0.0973,
-     "aberrant": false
-    }
-   ],
+   "examines": 0,
+   "comparaisons": [],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T02:07:25+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T02:07:38+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T02:12:16+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T02:12:33+00:00",
    "books_premiere_lecture": "2026-10-23T00:25:04+00:00",
-   "books_derniere_lecture": "2026-10-23T02:07:46+00:00",
-   "ecart_enveloppe_secondes": 6154.0
+   "books_derniere_lecture": "2026-10-23T02:12:37+00:00",
+   "ecart_enveloppe_secondes": 6449.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 45211,
+   "mesures": 46356,
    "matchs_suspects": 1
   },
   "redecision": {
@@ -233,25 +227,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T01:23:32+00:00"
   },
-  "fin": "2026-10-23T02:11:01+00:00",
+  "fin": "2026-10-23T02:15:10+00:00",
   "cotes": {
-   "francaises": 147872,
-   "pinnacle": 152244,
-   "polymarket": 27117,
+   "francaises": 149553,
+   "pinnacle": 151457,
+   "polymarket": 27139,
    "smarkets": 3855
   },
   "matchs_francais": 1849,
-  "opportunites": 15,
+  "opportunites": 13,
   "opportunites_suspectes": 15,
-  "nouveaux_paris": 3
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T10:38:12+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-22T10:42:49+00:00",
    "mode": "complet",
@@ -1451,6 +1439,12 @@
    "mode": "complet",
    "opportunites": 15,
    "nouveaux_paris": 3
+  },
+  {
+   "debut": "2026-10-23T02:11:52+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-23T01:23:32+00:00",
