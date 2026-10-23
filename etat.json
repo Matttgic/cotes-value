@@ -1,36 +1,37 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T11:32:35+00:00",
+  "debut": "2026-10-23T11:37:17+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 25.9,
+   "polymarket": {
+    "secondes": 21.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 6 markets/straight : HTTP 403",
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 32.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 17 markets/straight : HTTP 403",
+     "sport 39 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 8.3,
+    "secondes": 10.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 34.6,
+    "secondes": 33.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.7,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -38,15 +39,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 42.0,
+    "secondes": 39.2,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 53.3,
-    "ok": true
+    "secondes": 73.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,54 +64,42 @@
     "cache": true
    },
    "association": {
-    "secondes": 77.6,
+    "secondes": 144.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.7,
+    "secondes": 3.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 1.0,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 50,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 50,
-   "retard": []
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 885,
-   "age_min_s": 4,
-   "lignes": 178371,
-   "lignes_perimees": 238,
-   "rechauffeur": "ok",
+   "age_max_s": 658,
+   "age_min_s": 67,
+   "lignes": 178331,
+   "lignes_perimees": 38,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 20,
-    "choisi_fixe": 5,
-    "choisi_autre": 6,
+    "head_200": 32,
     "head_403": 3,
     "ortho_refusee": 2,
-    "reprise_403": 1,
+    "choisi_autre": 9,
+    "choisi_fixe": 5,
+    "reprise_403": 2,
     "sport_vide": 6
    }
   },
@@ -115,70 +108,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Glasgow Rangers – St. Johnstone",
+     "match": "AFK Csikszereda Miercurea Ciuc – Voluntari",
      "source": "Pinnacle",
-     "cote_olybet": 1.17,
-     "cote_reference": 1.205,
-     "ecart_relatif": 0.0293,
+     "cote_olybet": 2.59,
+     "cote_reference": 2.73,
+     "ecart_relatif": 0.0513,
      "aberrant": false
     },
     {
-     "match": "Glasgow Rangers – St. Johnstone",
+     "match": "AFK Csikszereda Miercurea Ciuc – Voluntari",
      "source": "PMU",
-     "cote_olybet": 1.17,
-     "cote_reference": 1.21,
-     "ecart_relatif": 0.0331,
+     "cote_olybet": 2.59,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.0571,
      "aberrant": false
     },
     {
-     "match": "St Mirren FC – Dundee",
+     "match": "Corvinul Hunedoara – FC Universitatea Cluj",
      "source": "Pinnacle",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.057,
+     "cote_olybet": 2.42,
+     "cote_reference": 2.58,
+     "ecart_relatif": 0.062,
      "aberrant": false
     },
     {
-     "match": "St Mirren FC – Dundee",
+     "match": "Corvinul Hunedoara – FC Universitatea Cluj",
      "source": "PMU",
-     "cote_olybet": 2.15,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0859,
+     "cote_olybet": 2.42,
+     "cote_reference": 2.38,
+     "ecart_relatif": 0.0168,
      "aberrant": false
     },
     {
-     "match": "Falkirk – Kilmarnock",
+     "match": "FCSB – Rapid Bucarest",
      "source": "Pinnacle",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0479,
-     "aberrant": false
-    },
-    {
-     "match": "Falkirk – Kilmarnock",
-     "source": "PMU",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.77,
-     "ecart_relatif": 0.0056,
-     "aberrant": false
-    },
-    {
-     "match": "Dundee United – Aberdeen",
-     "source": "Pinnacle",
-     "cote_olybet": 2.06,
+     "cote_olybet": 2.08,
      "cote_reference": 2.18,
-     "ecart_relatif": 0.055,
+     "ecart_relatif": 0.0459,
      "aberrant": false
     },
     {
-     "match": "Dundee United – Aberdeen",
+     "match": "FCSB – Rapid Bucarest",
      "source": "PMU",
-     "cote_olybet": 2.06,
-     "cote_reference": 2.06,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 2.08,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.04,
      "aberrant": false
     }
    ],
@@ -200,25 +177,25 @@
     {
      "match": "Spaeri – FC Gagra",
      "source": "Pinnacle",
-     "cote_netbet": 2.22,
+     "cote_netbet": 2.12,
      "cote_reference": 2.49,
-     "ecart_relatif": 0.1084,
+     "ecart_relatif": 0.1486,
      "aberrant": false
     },
     {
      "match": "JS El Biar – MC Oran",
      "source": "Pinnacle",
-     "cote_netbet": 2.4,
+     "cote_netbet": 2.35,
      "cote_reference": 2.46,
-     "ecart_relatif": 0.0244,
+     "ecart_relatif": 0.0447,
      "aberrant": false
     },
     {
      "match": "JS El Biar – MC Oran",
      "source": "PMU",
-     "cote_netbet": 2.4,
+     "cote_netbet": 2.35,
      "cote_reference": 2.48,
-     "ecart_relatif": 0.0323,
+     "ecart_relatif": 0.0524,
      "aberrant": false
     },
     {
@@ -241,23 +218,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T11:10:35+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T11:32:56+00:00",
-   "books_premiere_lecture": "2026-10-23T10:21:41+00:00",
-   "books_derniere_lecture": "2026-10-23T11:33:08+00:00",
-   "ecart_enveloppe_secondes": 4275.0
+   "pinnacle_premiere_lecture": "2026-10-23T11:37:29+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T11:37:37+00:00",
+   "books_premiere_lecture": "2026-10-23T11:00:59+00:00",
+   "books_derniere_lecture": "2026-10-23T11:37:51+00:00",
+   "ecart_enveloppe_secondes": 2198.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 6.5
+   "age_min": 11.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 623,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 51483,
+   "mesures": 63222,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -273,25 +250,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T11:13:44+00:00"
   },
-  "fin": "2026-10-23T11:35:54+00:00",
+  "fin": "2026-10-23T11:42:28+00:00",
   "cotes": {
-   "francaises": 205395,
-   "pinnacle": 178421,
-   "polymarket": 0,
+   "francaises": 218095,
+   "pinnacle": 178331,
+   "polymarket": 35658,
    "smarkets": 3918
   },
-  "matchs_francais": 2691,
-  "opportunites": 9,
-  "opportunites_suspectes": 19,
+  "matchs_francais": 2685,
+  "opportunites": 13,
+  "opportunites_suspectes": 38,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T18:37:09+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T18:41:50+00:00",
    "mode": "complet",
@@ -1490,6 +1461,12 @@
    "debut": "2026-10-23T11:32:35+00:00",
    "mode": "complet",
    "opportunites": 9,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T11:37:17+00:00",
+   "mode": "complet",
+   "opportunites": 13,
    "nouveaux_paris": 0
   }
  ],
