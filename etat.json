@@ -1,12 +1,11 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T16:34:06+00:00",
+  "debut": "2026-10-23T16:38:43+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 21.5,
+    "ok": true,
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
@@ -14,28 +13,24 @@
     ]
    },
    "pinnacle": {
-    "secondes": 37.4,
+    "secondes": 27.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 22 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 10.3,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 27.1,
+    "secondes": 8.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 34.3,
+    "secondes": 35.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.5,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -43,16 +38,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 45.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 43.5,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 74.9,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "lecture interrompue"
+     "budget"
     ]
    },
    "betclic_direct": {
-    "secondes": 77.5,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -60,20 +58,23 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.3,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 49.4,
+    "secondes": 199.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.4,
+    "secondes": 3.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 1.1,
     "ok": true
    }
   },
@@ -83,35 +84,39 @@
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 0,
+   "lignes": 51447,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 0,
-   "retard": []
+   "cache_lignes": 51447,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 863,
-   "age_min_s": 89,
-   "lignes": 190460,
-   "lignes_perimees": 3650,
-   "rechauffeur": "indisponible",
+   "age_max_s": 738,
+   "age_min_s": 0,
+   "lignes": 190452,
+   "lignes_perimees": 15443,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 22,
-    "head_403": 3,
+    "head_200": 33,
+    "head_403": 2,
     "ortho_refusee": 2,
     "choisi_autre": 5,
-    "reprise_403": 3,
-    "reprise_403_ok": 2,
-    "choisi_fixe": 5,
-    "sport_vide": 6
+    "choisi_fixe": 9,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -119,70 +124,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Entella – Mantova FC",
-     "source": "Pinnacle",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0652,
-     "aberrant": false
-    },
-    {
-     "match": "Entella – Mantova FC",
+     "match": "Las Palmas – Real Sociedad B",
      "source": "PMU",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0337,
+     "cote_olybet": 1.9,
+     "cote_reference": 1.72,
+     "ecart_relatif": 0.1047,
      "aberrant": false
     },
     {
-     "match": "Cremonese – SS Juve Stabia",
+     "match": "Cordoue – Eibar",
      "source": "Pinnacle",
-     "cote_olybet": 1.76,
-     "cote_reference": 1.855,
-     "ecart_relatif": 0.0511,
+     "cote_olybet": 2.08,
+     "cote_reference": 2.21,
+     "ecart_relatif": 0.0588,
      "aberrant": false
     },
     {
-     "match": "Cremonese – SS Juve Stabia",
+     "match": "Cordoue – Eibar",
      "source": "PMU",
-     "cote_olybet": 1.76,
-     "cote_reference": 1.64,
-     "ecart_relatif": 0.0732,
+     "cote_olybet": 2.08,
+     "cote_reference": 1.96,
+     "ecart_relatif": 0.0612,
      "aberrant": false
     },
     {
-     "match": "SS Arezzo – Benevento",
+     "match": "Almeria – Real Oviedo",
      "source": "Pinnacle",
-     "cote_olybet": 2.85,
-     "cote_reference": 3.05,
-     "ecart_relatif": 0.0656,
+     "cote_olybet": 1.64,
+     "cote_reference": 1.709,
+     "ecart_relatif": 0.0405,
      "aberrant": false
     },
     {
-     "match": "SS Arezzo – Benevento",
+     "match": "Almeria – Real Oviedo",
      "source": "PMU",
-     "cote_olybet": 2.85,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0755,
-     "aberrant": false
-    },
-    {
-     "match": "FC Sudtirol – Sampdoria",
-     "source": "Pinnacle",
-     "cote_olybet": 2.76,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.0707,
-     "aberrant": false
-    },
-    {
-     "match": "FC Sudtirol – Sampdoria",
-     "source": "PMU",
-     "cote_olybet": 2.76,
-     "cote_reference": 2.5,
-     "ecart_relatif": 0.104,
+     "cote_olybet": 1.64,
+     "cote_reference": 1.49,
+     "ecart_relatif": 0.1007,
      "aberrant": false
     }
    ],
@@ -196,17 +177,17 @@
     {
      "match": "Alanyaspor – Kocaelispor",
      "source": "Pinnacle",
-     "cote_netbet": 1.92,
+     "cote_netbet": 1.95,
      "cote_reference": 2.2,
-     "ecart_relatif": 0.1273,
+     "ecart_relatif": 0.1136,
      "aberrant": false
     },
     {
      "match": "Alanyaspor – Kocaelispor",
      "source": "PMU",
-     "cote_netbet": 1.92,
-     "cote_reference": 1.88,
-     "ecart_relatif": 0.0213,
+     "cote_netbet": 1.95,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.0428,
      "aberrant": false
     },
     {
@@ -253,8 +234,8 @@
      "match": "Västerås SK FK – Halmstads BK",
      "source": "PMU",
      "cote_netbet": 1.5,
-     "cote_reference": 1.5,
-     "ecart_relatif": 0.0,
+     "cote_reference": 1.52,
+     "ecart_relatif": 0.0132,
      "aberrant": false
     },
     {
@@ -269,24 +250,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T16:34:17+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T16:34:38+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T16:23:48+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T16:39:01+00:00",
    "books_premiere_lecture": "2026-10-23T15:17:06+00:00",
-   "books_derniere_lecture": "2026-10-23T16:34:45+00:00",
-   "ecart_enveloppe_secondes": 4652.0
+   "books_derniere_lecture": "2026-10-23T16:39:13+00:00",
+   "ecart_enveloppe_secondes": 4915.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 10.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 43466,
-   "matchs_suspects": 2
+   "mesures": 62857,
+   "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
@@ -301,25 +281,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T16:02:26+00:00"
   },
-  "fin": "2026-10-23T16:36:59+00:00",
+  "fin": "2026-10-23T16:45:00+00:00",
   "cotes": {
-   "francaises": 158756,
-   "pinnacle": 190460,
-   "polymarket": 0,
-   "smarkets": 3561
+   "francaises": 197252,
+   "pinnacle": 241899,
+   "polymarket": 35922,
+   "smarkets": 3722
   },
-  "matchs_francais": 2115,
-  "opportunites": 6,
-  "opportunites_suspectes": 19,
-  "nouveaux_paris": 0
+  "matchs_francais": 2613,
+  "opportunites": 11,
+  "opportunites_suspectes": 27,
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-22T22:53:49+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T22:58:28+00:00",
    "mode": "complet",
@@ -1519,6 +1493,12 @@
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T16:38:43+00:00",
+   "mode": "complet",
+   "opportunites": 11,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-10-23T16:02:26+00:00",
