@@ -1,56 +1,57 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T15:11:29+00:00",
+  "debut": "2026-10-23T15:16:30+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 22.8,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
+     "liste d'événements tronquée (plafond de pagination)"
     ]
    },
    "pinnacle": {
-    "secondes": 35.3,
+    "secondes": 34.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
+     "sport 28 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 9.8,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 34.3,
-    "ok": true
-   },
-   "netbet": {
-    "secondes": 37.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
-   "winamax_direct": {
-    "secondes": 37.7,
+    "secondes": 12.2,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 74.7,
+    "secondes": 27.6,
+    "ok": true
+   },
+   "netbet": {
+    "secondes": 38.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "pmu_direct": {
+    "secondes": 39.6,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 45.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "lecture interrompue"
+    ]
+   },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,23 +59,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 29.6,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 80.5,
+    "secondes": 92.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.1,
+    "secondes": 2.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -85,10 +83,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 843,
-   "age_min_s": 154,
-   "lignes": 188165,
-   "lignes_perimees": 810,
+   "age_max_s": 895,
+   "age_min_s": 8,
+   "lignes": 187939,
+   "lignes_perimees": 4724,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -97,12 +95,13 @@
    },
    "choix_prix": {
     "head_200": 40,
-    "choisi_autre": 12,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 2,
-    "sport_vide": 7,
-    "reprise_403": 1
+    "choisi_fixe": 5,
+    "choisi_autre": 9,
+    "sport_vide": 8,
+    "reprise_403": 1,
+    "matchups_sans_speciaux": 1
    }
   },
   "olybet_source": "direct",
@@ -110,78 +109,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Shenzhen Peng City – Shanghai Shenhua",
+     "match": "Varazdin – Slaven Belupo",
      "source": "Pinnacle",
-     "cote_olybet": 3.32,
-     "cote_reference": 3.56,
-     "ecart_relatif": 0.0674,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.68,
+     "ecart_relatif": 0.0299,
      "aberrant": false
     },
     {
-     "match": "Shenzhen Peng City – Shanghai Shenhua",
+     "match": "Varazdin – Slaven Belupo",
      "source": "PMU",
-     "cote_olybet": 3.32,
-     "cote_reference": 3.25,
-     "ecart_relatif": 0.0215,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.54,
+     "ecart_relatif": 0.0584,
      "aberrant": false
     },
     {
-     "match": "Qingdao West Coast FC – Yunnan Yukun",
+     "match": "HNK Gorica – Lokomotiva Zagreb",
      "source": "Pinnacle",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.51,
-     "ecart_relatif": 0.0558,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.43,
+     "ecart_relatif": 0.0535,
      "aberrant": false
     },
     {
-     "match": "Qingdao West Coast FC – Yunnan Yukun",
+     "match": "HNK Gorica – Lokomotiva Zagreb",
      "source": "PMU",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.1449,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0952,
      "aberrant": false
     },
     {
-     "match": "Liaoning Tieren – Zhejiang Professional FC",
+     "match": "Olympiakos Nicosie – Krasava Ypsonas",
      "source": "Pinnacle",
-     "cote_olybet": 1.9,
-     "cote_reference": 1.99,
-     "ecart_relatif": 0.0453,
+     "cote_olybet": 1.81,
+     "cote_reference": 1.862,
+     "ecart_relatif": 0.028,
      "aberrant": false
     },
     {
-     "match": "Henan FC – Beijing Guoan FC",
+     "match": "Anorthosis – Omonia Aradippou",
      "source": "Pinnacle",
-     "cote_olybet": 3.02,
-     "cote_reference": 3.22,
-     "ecart_relatif": 0.0621,
+     "cote_olybet": 2.02,
+     "cote_reference": 2.08,
+     "ecart_relatif": 0.0288,
      "aberrant": false
     },
     {
-     "match": "Henan FC – Beijing Guoan FC",
+     "match": "Tammeka Tartu – Narva Trans",
+     "source": "Pinnacle",
+     "cote_olybet": 1.74,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0438,
+     "aberrant": false
+    },
+    {
+     "match": "Tammeka Tartu – Narva Trans",
      "source": "PMU",
-     "cote_olybet": 3.02,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0982,
-     "aberrant": false
-    },
-    {
-     "match": "Chongqing Tonglianglong – Qingdao Hainiu FC",
-     "source": "Pinnacle",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.258,
-     "ecart_relatif": 0.0305,
-     "aberrant": false
-    },
-    {
-     "match": "Chongqing Tonglianglong – Qingdao Hainiu FC",
-     "source": "PMU",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.14,
-     "ecart_relatif": 0.0702,
+     "cote_olybet": 1.74,
+     "cote_reference": 1.89,
+     "ecart_relatif": 0.0794,
      "aberrant": false
     }
    ],
@@ -195,9 +186,9 @@
     {
      "match": "Al Ittihad Jeddah – Al Diriyah",
      "source": "Pinnacle",
-     "cote_netbet": 1.57,
+     "cote_netbet": 1.58,
      "cote_reference": 1.671,
-     "ecart_relatif": 0.0605,
+     "ecart_relatif": 0.0545,
      "aberrant": false
     },
     {
@@ -212,8 +203,8 @@
      "match": "CSKA Sofia 1948 – Botev Plovdiv",
      "source": "PMU",
      "cote_netbet": 1.85,
-     "cote_reference": 1.91,
-     "ecart_relatif": 0.0314,
+     "cote_reference": 1.9,
+     "ecart_relatif": 0.0263,
      "aberrant": false
     },
     {
@@ -260,23 +251,24 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T15:11:41+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T15:11:54+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T15:16:43+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T15:16:57+00:00",
    "books_premiere_lecture": "2026-10-23T12:34:00+00:00",
-   "books_derniere_lecture": "2026-10-23T15:12:05+00:00",
-   "ecart_enveloppe_secondes": 9474.0
+   "books_derniere_lecture": "2026-10-23T15:17:06+00:00",
+   "ecart_enveloppe_secondes": 9777.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.0
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 68797,
-   "matchs_suspects": 3
+   "mesures": 48633,
+   "matchs_suspects": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -291,25 +283,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T15:04:05+00:00"
   },
-  "fin": "2026-10-23T15:15:41+00:00",
+  "fin": "2026-10-23T15:20:08+00:00",
   "cotes": {
-   "francaises": 218505,
-   "pinnacle": 188165,
-   "polymarket": 36287,
+   "francaises": 185319,
+   "pinnacle": 187939,
+   "polymarket": 0,
    "smarkets": 3720
   },
-  "matchs_francais": 2751,
-  "opportunites": 10,
-  "opportunites_suspectes": 40,
+  "matchs_francais": 2212,
+  "opportunites": 8,
+  "opportunites_suspectes": 17,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T21:39:29+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T21:44:05+00:00",
    "mode": "complet",
@@ -1508,6 +1494,12 @@
    "debut": "2026-10-23T15:11:29+00:00",
    "mode": "complet",
    "opportunites": 10,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T15:16:30+00:00",
+   "mode": "complet",
+   "opportunites": 8,
    "nouveaux_paris": 0
   }
  ],
