@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T03:28:32+00:00",
+  "debut": "2026-10-23T03:33:31+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 22.2,
+    "secondes": 19.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,7 +12,7 @@
     ]
    },
    "pinnacle": {
-    "secondes": 26.6,
+    "secondes": 24.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,15 +20,15 @@
     ]
    },
    "olybet": {
-    "secondes": 9.2,
+    "secondes": 8.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.6,
+    "secondes": 31.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -36,12 +36,16 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 38.7,
+    "secondes": 40.0,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 39.8,
-    "ok": true
+    "secondes": 74.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.4,
@@ -57,11 +61,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 95.3,
+    "secondes": 96.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.8,
+    "secondes": 2.9,
     "ok": true
    },
    "cotes_cloture": {
@@ -72,38 +76,30 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 38525,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 38525,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 891,
-   "age_min_s": 21,
-   "lignes": 152863,
-   "lignes_perimees": 210,
-   "rechauffeur": "indisponible",
+   "age_max_s": 556,
+   "age_min_s": 65,
+   "lignes": 152911,
+   "lignes_perimees": 0,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
     "head_200": 30,
+    "choisi_fixe": 6,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 9,
-    "choisi_autre": 4,
-    "sport_vide": 7
+    "choisi_autre": 7,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -111,22 +107,86 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 2,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "HNK Gorica – Lokomotiva Zagreb",
+     "match": "Western Sydney Wanderers – Auckland FC",
      "source": "Pinnacle",
-     "cote_olybet": 2.31,
-     "cote_reference": 2.41,
-     "ecart_relatif": 0.0415,
+     "cote_olybet": 2.32,
+     "cote_reference": 2.49,
+     "ecart_relatif": 0.0683,
      "aberrant": false
     },
     {
-     "match": "HNK Gorica – Lokomotiva Zagreb",
+     "match": "Western Sydney Wanderers – Auckland FC",
      "source": "PMU",
-     "cote_olybet": 2.31,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.1,
+     "cote_olybet": 2.32,
+     "cote_reference": 2.48,
+     "ecart_relatif": 0.0645,
+     "aberrant": false
+    },
+    {
+     "match": "Newcastle   Jets – Macarthur FC",
+     "source": "Pinnacle",
+     "cote_olybet": 1.97,
+     "cote_reference": 2.12,
+     "ecart_relatif": 0.0708,
+     "aberrant": false
+    },
+    {
+     "match": "Newcastle   Jets – Macarthur FC",
+     "source": "PMU",
+     "cote_olybet": 1.97,
+     "cote_reference": 1.91,
+     "ecart_relatif": 0.0314,
+     "aberrant": false
+    },
+    {
+     "match": "Melbourne Victory – Melbourne City",
+     "source": "Pinnacle",
+     "cote_olybet": 2.38,
+     "cote_reference": 2.57,
+     "ecart_relatif": 0.0739,
+     "aberrant": false
+    },
+    {
+     "match": "Melbourne Victory – Melbourne City",
+     "source": "PMU",
+     "cote_olybet": 2.38,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0917,
+     "aberrant": false
+    },
+    {
+     "match": "Brisbane Roar – Perth Glory",
+     "source": "Pinnacle",
+     "cote_olybet": 2.15,
+     "cote_reference": 2.34,
+     "ecart_relatif": 0.0812,
+     "aberrant": false
+    },
+    {
+     "match": "Brisbane Roar – Perth Glory",
+     "source": "PMU",
+     "cote_olybet": 2.15,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0859,
+     "aberrant": false
+    },
+    {
+     "match": "Cruzeiro – Remo PA",
+     "source": "Pinnacle",
+     "cote_olybet": 1.33,
+     "cote_reference": 1.385,
+     "ecart_relatif": 0.0394,
+     "aberrant": false
+    },
+    {
+     "match": "Cruzeiro – Remo PA",
+     "source": "PMU",
+     "cote_olybet": 1.33,
+     "cote_reference": 1.3,
+     "ecart_relatif": 0.0231,
      "aberrant": false
     }
    ],
@@ -181,23 +241,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T03:00:00+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T03:28:53+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T03:33:41+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T03:33:51+00:00",
    "books_premiere_lecture": "2026-10-23T02:35:56+00:00",
-   "books_derniere_lecture": "2026-10-23T03:29:01+00:00",
-   "ecart_enveloppe_secondes": 3177.0
+   "books_derniere_lecture": "2026-10-23T03:33:57+00:00",
+   "ecart_enveloppe_secondes": 3475.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 10.0
+   "age_min": 15.0
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 48096,
+   "mesures": 49701,
    "matchs_suspects": 1
   },
   "redecision": {
@@ -213,25 +273,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T03:16:54+00:00"
   },
-  "fin": "2026-10-23T03:32:36+00:00",
+  "fin": "2026-10-23T03:37:32+00:00",
   "cotes": {
-   "francaises": 155632,
-   "pinnacle": 191388,
-   "polymarket": 28690,
+   "francaises": 159825,
+   "pinnacle": 152911,
+   "polymarket": 29289,
    "smarkets": 3906
   },
-  "matchs_francais": 1959,
-  "opportunites": 13,
+  "matchs_francais": 1976,
+  "opportunites": 15,
   "opportunites_suspectes": 15,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T11:57:30+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T12:02:15+00:00",
    "mode": "complet",
@@ -1430,6 +1484,12 @@
    "debut": "2026-10-23T03:28:32+00:00",
    "mode": "complet",
    "opportunites": 13,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T03:33:31+00:00",
+   "mode": "complet",
+   "opportunites": 15,
    "nouveaux_paris": 0
   }
  ],
