@@ -1,18 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T06:07:20+00:00",
+  "debut": "2026-10-23T06:14:16+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 20.8,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
-    "secondes": 21.6,
+    "secondes": 19.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,28 +12,37 @@
      "prix bid/ask invalides"
     ]
    },
+   "pinnacle": {
+    "secondes": 23.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 37 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "olybet": {
-    "secondes": 7.6,
+    "secondes": 6.4,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.8,
+    "secondes": 31.3,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 36.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 39.6,
-    "ok": true
-   },
    "unibet_direct": {
-    "secondes": 74.6,
+    "secondes": 74.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -49,28 +50,24 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "réseau",
      "budget"
     ]
    },
    "smarkets": {
-    "secondes": 28.7,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 134.3,
+    "secondes": 129.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.1,
+    "secondes": 3.4,
     "ok": true
    },
    "cotes_cloture": {
@@ -85,10 +82,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 865,
-   "age_min_s": 71,
-   "lignes": 158027,
-   "lignes_perimees": 0,
+   "age_max_s": 891,
+   "age_min_s": 45,
+   "lignes": 157981,
+   "lignes_perimees": 240,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -99,12 +96,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 38,
-    "choisi_fixe": 8,
+    "head_200": 36,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "sport_vide": 6
+    "choisi_autre": 10,
+    "choisi_fixe": 4,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -112,90 +110,75 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "CSKA 1948 Sofia – Botev Plovdiv",
-     "source": "Pinnacle",
-     "cote_olybet": 1.97,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0529,
-     "aberrant": false
-    },
-    {
-     "match": "CSKA 1948 Sofia – Botev Plovdiv",
+     "match": "Ulsan Hyundai FC – Pohang Steelers",
      "source": "PMU",
-     "cote_olybet": 1.97,
-     "cote_reference": 1.91,
-     "ecart_relatif": 0.0314,
-     "aberrant": false
-    },
-    {
-     "match": "Dunav Ruse – Spartak Varna",
-     "source": "Pinnacle",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.44,
-     "ecart_relatif": 0.0451,
-     "aberrant": false
-    },
-    {
-     "match": "Dunav Ruse – Spartak Varna",
-     "source": "PMU",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0688,
-     "aberrant": false
-    },
-    {
-     "match": "Lokomotiv Sofia – Botev Vratsa",
-     "source": "Pinnacle",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.84,
-     "ecart_relatif": 0.0328,
-     "aberrant": false
-    },
-    {
-     "match": "Lokomotiv Sofia – Botev Vratsa",
-     "source": "PMU",
-     "cote_olybet": 1.78,
+     "cote_olybet": 1.83,
      "cote_reference": 1.83,
-     "ecart_relatif": 0.0273,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Henan FC – Beijing Guoan FC",
+     "match": "Anyang – Jeonbuk Motors",
      "source": "Pinnacle",
-     "cote_olybet": 2.98,
-     "cote_reference": 3.19,
-     "ecart_relatif": 0.0658,
+     "cote_olybet": 3.72,
+     "cote_reference": 4.0,
+     "ecart_relatif": 0.07,
      "aberrant": false
     },
     {
-     "match": "Henan FC – Beijing Guoan FC",
+     "match": "Anyang – Jeonbuk Motors",
      "source": "PMU",
-     "cote_olybet": 2.98,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0836,
+     "cote_olybet": 3.72,
+     "cote_reference": 3.45,
+     "ecart_relatif": 0.0783,
      "aberrant": false
     },
     {
-     "match": "Chongqing Tonglianglong – Qingdao Hainiu FC",
+     "match": "Bucheon 1995 – Gwangju FC",
      "source": "Pinnacle",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.25,
-     "ecart_relatif": 0.024,
+     "cote_olybet": 2.09,
+     "cote_reference": 2.19,
+     "ecart_relatif": 0.0457,
      "aberrant": false
     },
     {
-     "match": "Chongqing Tonglianglong – Qingdao Hainiu FC",
+     "match": "Bucheon 1995 – Gwangju FC",
      "source": "PMU",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.14,
-     "ecart_relatif": 0.0702,
+     "cote_olybet": 2.09,
+     "cote_reference": 1.96,
+     "ecart_relatif": 0.0663,
      "aberrant": false
+    },
+    {
+     "match": "Gimcheon Sangmu FC – Daejeon Citizen FC",
+     "source": "Pinnacle",
+     "cote_olybet": 3.58,
+     "cote_reference": 3.81,
+     "ecart_relatif": 0.0604,
+     "aberrant": false
+    },
+    {
+     "match": "Gimcheon Sangmu FC – Daejeon Citizen FC",
+     "source": "PMU",
+     "cote_olybet": 3.58,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.1548,
+     "aberrant": true
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Gimcheon Sangmu FC – Daejeon Citizen FC",
+     "source": "PMU",
+     "cote_olybet": 3.58,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.1548,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -262,22 +245,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T06:07:30+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T06:07:37+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T06:14:26+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T06:14:32+00:00",
    "books_premiere_lecture": "2026-10-23T04:53:04+00:00",
-   "books_derniere_lecture": "2026-10-23T06:07:43+00:00",
-   "ecart_enveloppe_secondes": 4473.0
+   "books_derniere_lecture": "2026-10-23T06:14:41+00:00",
+   "ecart_enveloppe_secondes": 4888.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 6.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 11,
    "non_conforme": 9,
-   "mesures": 53843,
+   "mesures": 58717,
    "matchs_suspects": 4
   },
   "redecision": {
@@ -291,27 +275,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-23T05:13:24+00:00"
+   "dernier_reglement": "2026-10-23T06:12:54+00:00"
   },
-  "fin": "2026-10-23T06:12:43+00:00",
+  "fin": "2026-10-23T06:19:05+00:00",
   "cotes": {
-   "francaises": 162477,
-   "pinnacle": 158027,
-   "polymarket": 33151,
+   "francaises": 189004,
+   "pinnacle": 157981,
+   "polymarket": 33183,
    "smarkets": 3990
   },
-  "matchs_francais": 2430,
-  "opportunites": 16,
+  "matchs_francais": 2433,
+  "opportunites": 17,
   "opportunites_suspectes": 35,
   "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-22T14:22:07+00:00",
-   "mode": "complet",
-   "opportunites": 15,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-22T14:26:45+00:00",
    "mode": "complet",
@@ -1510,6 +1488,12 @@
    "debut": "2026-10-23T06:07:20+00:00",
    "mode": "complet",
    "opportunites": 16,
+   "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-23T06:14:16+00:00",
+   "mode": "complet",
+   "opportunites": 17,
    "nouveaux_paris": 1
   }
  ],
