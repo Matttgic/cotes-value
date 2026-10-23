@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T01:48:39+00:00",
+  "debut": "2026-10-23T01:53:21+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 13.4,
+    "secondes": 20.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,39 +12,41 @@
     ]
    },
    "pinnacle": {
-    "secondes": 32.5,
+    "secondes": 29.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 matchups : HTTP 403",
-     "sport 6 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "olybet": {
-    "secondes": 6.7,
-    "ok": true
-   },
    "unibet_direct": {
-    "secondes": 16.6,
+    "secondes": 0.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "accueil HTTP 403"
+    ]
+   },
+   "olybet": {
+    "secondes": 8.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.2,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 34.5,
+    "secondes": 31.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.5,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
+   },
+   "winamax_direct": {
+    "secondes": 38.0,
+    "ok": true
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -60,39 +62,29 @@
     "cache": true
    },
    "association": {
-    "secondes": 39.0,
+    "secondes": 50.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.6,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.5,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "boxe"
-   ],
-   "requetes": 1,
-   "lignes": 50,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": []
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 606,
-   "age_min_s": 110,
+   "age_max_s": 886,
+   "age_min_s": 400,
    "lignes": 152414,
-   "lignes_perimees": 150,
+   "lignes_perimees": 2522,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -103,14 +95,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 31,
-    "choisi_fixe": 7,
+    "head_200": 39,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "reprise_403": 3,
-    "matchups_sans_speciaux": 2,
-    "sport_vide": 5
+    "choisi_fixe": 5,
+    "choisi_autre": 8,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -121,55 +112,64 @@
    "examines": 6,
    "comparaisons": [
     {
-     "match": "Augsburg – Union Berlin",
+     "match": "Brest – OGC Nice",
      "source": "Pinnacle",
-     "cote_olybet": 1.8,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0372,
+     "cote_olybet": 2.19,
+     "cote_reference": 2.29,
+     "ecart_relatif": 0.0437,
      "aberrant": false
     },
     {
-     "match": "Augsburg – Union Berlin",
+     "match": "Brest – OGC Nice",
      "source": "PMU",
-     "cote_olybet": 1.8,
-     "cote_reference": 1.72,
-     "ecart_relatif": 0.0465,
+     "cote_olybet": 2.19,
+     "cote_reference": 2.08,
+     "ecart_relatif": 0.0529,
      "aberrant": false
     },
     {
-     "match": "Leipzig – SV Elversberg",
+     "match": "Fakel Voronezh – Rodina",
      "source": "Pinnacle",
-     "cote_olybet": 1.39,
-     "cote_reference": 1.435,
-     "ecart_relatif": 0.0312,
+     "cote_olybet": 2.03,
+     "cote_reference": 2.13,
+     "ecart_relatif": 0.0469,
      "aberrant": false
     },
     {
-     "match": "Leipzig – SV Elversberg",
-     "source": "PMU",
-     "cote_olybet": 1.39,
-     "cote_reference": 1.36,
-     "ecart_relatif": 0.0221,
-     "aberrant": false
-    },
-    {
-     "match": "Mayence – Werder Brême",
+     "match": "FK Akron – Dynamo Moscou",
      "source": "Pinnacle",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.763,
-     "ecart_relatif": 0.036,
+     "cote_olybet": 4.75,
+     "cote_reference": 5.21,
+     "ecart_relatif": 0.0883,
      "aberrant": false
     },
     {
-     "match": "Mayence – Werder Brême",
-     "source": "PMU",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0429,
+     "match": "Qingdao West Coast FC – Yunnan Yukun",
+     "source": "Pinnacle",
+     "cote_olybet": 2.41,
+     "cote_reference": 2.52,
+     "ecart_relatif": 0.0437,
      "aberrant": false
+    },
+    {
+     "match": "Qingdao West Coast FC – Yunnan Yukun",
+     "source": "PMU",
+     "cote_olybet": 2.41,
+     "cote_reference": 2.07,
+     "ecart_relatif": 0.1643,
+     "aberrant": true
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Qingdao West Coast FC – Yunnan Yukun",
+     "source": "PMU",
+     "cote_olybet": 2.41,
+     "cote_reference": 2.07,
+     "ecart_relatif": 0.1643,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -220,23 +220,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T01:48:49+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T01:49:12+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T01:53:32+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T01:53:42+00:00",
    "books_premiere_lecture": "2026-10-23T00:25:04+00:00",
-   "books_derniere_lecture": "2026-10-23T01:49:14+00:00",
-   "ecart_enveloppe_secondes": 5048.0
+   "books_derniere_lecture": "2026-10-23T01:53:52+00:00",
+   "ecart_enveloppe_secondes": 5318.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 40191,
+   "mesures": 39787,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -252,25 +252,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T01:23:32+00:00"
   },
-  "fin": "2026-10-23T01:51:24+00:00",
+  "fin": "2026-10-23T01:56:16+00:00",
   "cotes": {
-   "francaises": 130143,
-   "pinnacle": 152464,
-   "polymarket": 20537,
+   "francaises": 130157,
+   "pinnacle": 152414,
+   "polymarket": 20559,
    "smarkets": 3666
   },
-  "matchs_francais": 1653,
+  "matchs_francais": 1651,
   "opportunites": 10,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T10:19:40+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-22T10:24:20+00:00",
    "mode": "complet",
@@ -1467,6 +1461,12 @@
   },
   {
    "debut": "2026-10-23T01:48:39+00:00",
+   "mode": "complet",
+   "opportunites": 10,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T01:53:21+00:00",
    "mode": "complet",
    "opportunites": 10,
    "nouveaux_paris": 0
