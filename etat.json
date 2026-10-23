@@ -1,38 +1,36 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T21:12:43+00:00",
+  "debut": "2026-10-23T21:18:46+00:00",
   "mode": "complet",
   "etapes": {
-   "polymarket": {
-    "secondes": 27.9,
+   "pinnacle": {
+    "secondes": 24.2,
     "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
+   "polymarket": {
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
      "prix bid/ask invalides"
     ]
    },
-   "pinnacle": {
-    "secondes": 45.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "sport 29 matchups : réseau indisponible",
-     "sport 29 matchups : HTTP 403",
-     "budget"
-    ]
-   },
    "olybet": {
-    "secondes": 9.3,
+    "secondes": 9.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.9,
+    "secondes": 32.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -40,19 +38,15 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 39.0,
+    "secondes": 38.2,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 74.5,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 58.4,
+    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -60,23 +54,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 21.0,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 122.7,
+    "secondes": 68.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.9,
+    "secondes": 1.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.4,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -84,39 +75,40 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [
-    "basket",
-    "tennis"
-   ],
-   "requetes": 2,
-   "lignes": 60526,
+   "sports": [],
+   "requetes": 0,
+   "lignes": 47866,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 50246,
-   "retard": []
+   "cache_lignes": 47866,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": null,
-   "age_min_s": null,
-   "lignes": 0,
-   "lignes_perimees": 0,
-   "rechauffeur": "indisponible",
+   "age_max_s": 881,
+   "age_min_s": 4,
+   "lignes": 180513,
+   "lignes_perimees": 4756,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "reprise_403": 1,
-    "head_200": 39,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 3,
-    "sport_vide": 4
+    "head_200": 28,
+    "head_403": 3,
+    "ortho_refusee": 3,
+    "choisi_fixe": 11,
+    "choisi_autre": 3,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -124,70 +116,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Dunav Ruse – Spartak Varna",
+     "match": "HNK Gorica – Lokomotiva Zagreb",
      "source": "Pinnacle",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.46,
-     "ecart_relatif": 0.0528,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.43,
+     "ecart_relatif": 0.0535,
      "aberrant": false
     },
     {
-     "match": "Dunav Ruse – Spartak Varna",
+     "match": "HNK Gorica – Lokomotiva Zagreb",
      "source": "PMU",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0688,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0952,
      "aberrant": false
     },
     {
-     "match": "Lokomotiv Sofia – Botev Vratsa",
+     "match": "Varazdin – Slaven Belupo",
      "source": "Pinnacle",
-     "cote_olybet": 1.83,
-     "cote_reference": 1.917,
-     "ecart_relatif": 0.0454,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.694,
+     "ecart_relatif": 0.038,
      "aberrant": false
     },
     {
-     "match": "Lokomotiv Sofia – Botev Vratsa",
+     "match": "Varazdin – Slaven Belupo",
      "source": "PMU",
-     "cote_olybet": 1.83,
-     "cote_reference": 1.83,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Willem II Tilburg – Cambuur Leeuwarden",
-     "source": "Pinnacle",
-     "cote_olybet": 2.42,
-     "cote_reference": 2.57,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.54,
      "ecart_relatif": 0.0584,
      "aberrant": false
     },
     {
-     "match": "Willem II Tilburg – Cambuur Leeuwarden",
-     "source": "PMU",
-     "cote_olybet": 2.42,
-     "cote_reference": 2.35,
-     "ecart_relatif": 0.0298,
-     "aberrant": false
-    },
-    {
-     "match": "Utrecht – PEC Zwolle",
+     "match": "US Amal Tiznit – CODM Meknès",
      "source": "Pinnacle",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.625,
-     "ecart_relatif": 0.0338,
+     "cote_olybet": 3.45,
+     "cote_reference": 3.55,
+     "ecart_relatif": 0.0282,
      "aberrant": false
     },
     {
-     "match": "Utrecht – PEC Zwolle",
+     "match": "UTS Rabat – Wydad Casablanca",
      "source": "PMU",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0329,
+     "cote_olybet": 3.45,
+     "cote_reference": 3.0,
+     "ecart_relatif": 0.15,
      "aberrant": false
     }
    ],
@@ -201,25 +177,25 @@
     {
      "match": "Gimnasia Mendoza – Platense",
      "source": "Pinnacle",
-     "cote_netbet": 2.45,
+     "cote_netbet": 2.47,
      "cote_reference": 2.72,
-     "ecart_relatif": 0.0993,
+     "ecart_relatif": 0.0919,
      "aberrant": false
     },
     {
      "match": "Gimnasia Mendoza – Platense",
      "source": "PMU",
-     "cote_netbet": 2.45,
+     "cote_netbet": 2.47,
      "cote_reference": 2.38,
-     "ecart_relatif": 0.0294,
+     "ecart_relatif": 0.0378,
      "aberrant": false
     },
     {
      "match": "Libertad – Sportivo Luqueño",
      "source": "Pinnacle",
      "cote_netbet": 1.39,
-     "cote_reference": 1.462,
-     "ecart_relatif": 0.0492,
+     "cote_reference": 1.463,
+     "ecart_relatif": 0.0499,
      "aberrant": false
     },
     {
@@ -233,17 +209,17 @@
     {
      "match": "Audax Italiano – Huachipato",
      "source": "Pinnacle",
-     "cote_netbet": 1.85,
+     "cote_netbet": 1.87,
      "cote_reference": 2.04,
-     "ecart_relatif": 0.0931,
+     "ecart_relatif": 0.0833,
      "aberrant": false
     },
     {
      "match": "Audax Italiano – Huachipato",
      "source": "PMU",
-     "cote_netbet": 1.85,
+     "cote_netbet": 1.87,
      "cote_reference": 1.79,
-     "ecart_relatif": 0.0335,
+     "ecart_relatif": 0.0447,
      "aberrant": false
     },
     {
@@ -265,32 +241,33 @@
     {
      "match": "Cruzeiro – Club Do Remo",
      "source": "Pinnacle",
-     "cote_netbet": 1.25,
+     "cote_netbet": 1.24,
      "cote_reference": 1.301,
-     "ecart_relatif": 0.0392,
+     "ecart_relatif": 0.047,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T18:36:06+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T21:13:33+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T21:02:32+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T21:19:06+00:00",
    "books_premiere_lecture": "2026-10-23T18:54:58+00:00",
-   "books_derniere_lecture": "2026-10-23T21:13:35+00:00",
-   "ecart_enveloppe_secondes": 9449.0
+   "books_derniere_lecture": "2026-10-23T21:19:19+00:00",
+   "ecart_enveloppe_secondes": 8648.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 6.1
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 40658,
-   "matchs_suspects": 2
+   "mesures": 45000,
+   "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
@@ -305,25 +282,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T20:55:40+00:00"
   },
-  "fin": "2026-10-23T21:17:47+00:00",
+  "fin": "2026-10-23T21:21:54+00:00",
   "cotes": {
-   "francaises": 180349,
-   "pinnacle": 60526,
-   "polymarket": 37210,
+   "francaises": 171869,
+   "pinnacle": 228379,
+   "polymarket": 0,
    "smarkets": 4002
   },
-  "matchs_francais": 2196,
+  "matchs_francais": 2200,
   "opportunites": 3,
-  "opportunites_suspectes": 24,
+  "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T02:54:52+00:00",
-   "mode": "complet",
-   "opportunites": 14,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T02:59:31+00:00",
    "mode": "complet",
@@ -1520,6 +1491,12 @@
   },
   {
    "debut": "2026-10-23T21:12:43+00:00",
+   "mode": "complet",
+   "opportunites": 3,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T21:18:46+00:00",
    "mode": "complet",
    "opportunites": 3,
    "nouveaux_paris": 0
