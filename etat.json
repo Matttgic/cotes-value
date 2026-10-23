@@ -1,13 +1,14 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T13:58:23+00:00",
+  "debut": "2026-10-23T14:03:00+00:00",
   "mode": "complet",
   "etapes": {
    "pinnacle": {
-    "secondes": 26.5,
+    "secondes": 29.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
@@ -21,36 +22,35 @@
     ]
    },
    "olybet": {
-    "secondes": 12.9,
+    "secondes": 9.6,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 37.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 38.0,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "pmu_direct": {
-    "secondes": 38.8,
-    "ok": true
-   },
    "winamax_direct": {
-    "secondes": 42.2,
+    "secondes": 42.8,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 75.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 74.4,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "lecture interrompue"
+     "budget"
     ]
    },
    "betclic_direct": {
-    "secondes": 77.6,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,34 +58,48 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 29.1,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 94.4,
+    "secondes": 167.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.5,
+    "secondes": 3.3,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.7,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 51065,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 51065,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 752,
-   "age_min_s": 14,
-   "lignes": 186748,
-   "lignes_perimees": 2134,
+   "age_max_s": 866,
+   "age_min_s": 9,
+   "lignes": 185978,
+   "lignes_perimees": 7852,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -93,12 +107,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 42,
+    "head_200": 36,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 12,
-    "choisi_fixe": 2,
-    "sport_vide": 6
+    "choisi_autre": 6,
+    "choisi_fixe": 8,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -106,62 +121,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "FC Rustavi – Dinamo Tbilissi",
+     "match": "Darmstadt – FC St. Pauli",
      "source": "Pinnacle",
-     "cote_olybet": 2.9,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.0236,
+     "cote_olybet": 2.88,
+     "cote_reference": 3.14,
+     "ecart_relatif": 0.0828,
      "aberrant": false
     },
     {
-     "match": "Galway United FC – St. Patrick's Athletic",
-     "source": "Pinnacle",
-     "cote_olybet": 4.8,
-     "cote_reference": 5.2,
-     "ecart_relatif": 0.0769,
-     "aberrant": false
-    },
-    {
-     "match": "Galway United FC – St. Patrick's Athletic",
+     "match": "Darmstadt – FC St. Pauli",
      "source": "PMU",
-     "cote_olybet": 4.8,
-     "cote_reference": 4.25,
-     "ecart_relatif": 0.1294,
+     "cote_olybet": 2.88,
+     "cote_reference": 2.88,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Waterford – Drogheda United",
+     "match": "Bochum – Wolfsburg",
      "source": "Pinnacle",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.69,
-     "ecart_relatif": 0.0531,
+     "cote_olybet": 2.89,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0825,
      "aberrant": false
     },
     {
-     "match": "Waterford – Drogheda United",
+     "match": "Bochum – Wolfsburg",
      "source": "PMU",
-     "cote_olybet": 1.6,
+     "cote_olybet": 2.89,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.0677,
+     "aberrant": false
+    },
+    {
+     "match": "Heidenheim – Energie Cottbus",
+     "source": "Pinnacle",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.73,
+     "ecart_relatif": 0.052,
+     "aberrant": false
+    },
+    {
+     "match": "Heidenheim – Energie Cottbus",
+     "source": "PMU",
+     "cote_olybet": 1.64,
      "cote_reference": 1.58,
-     "ecart_relatif": 0.0127,
+     "ecart_relatif": 0.038,
      "aberrant": false
     },
     {
-     "match": "Bohemians – Shelbourne",
+     "match": "1.FC Magdeburg – Karlsruhe",
      "source": "Pinnacle",
-     "cote_olybet": 1.56,
-     "cote_reference": 1.637,
-     "ecart_relatif": 0.047,
+     "cote_olybet": 1.74,
+     "cote_reference": 1.84,
+     "ecart_relatif": 0.0545,
      "aberrant": false
     },
     {
-     "match": "Bohemians – Shelbourne",
+     "match": "1.FC Magdeburg – Karlsruhe",
      "source": "PMU",
-     "cote_olybet": 1.56,
-     "cote_reference": 1.48,
-     "ecart_relatif": 0.0541,
+     "cote_olybet": 1.74,
+     "cote_reference": 1.64,
+     "ecart_relatif": 0.061,
      "aberrant": false
     }
    ],
@@ -172,14 +195,6 @@
    "seuil_relatif": 0.15,
    "examines": 7,
    "comparaisons": [
-    {
-     "match": "Spaeri – FC Gagra",
-     "source": "Pinnacle",
-     "cote_netbet": 1.81,
-     "cote_reference": 1.893,
-     "ecart_relatif": 0.0438,
-     "aberrant": false
-    },
     {
      "match": "JS El Biar – MC Oran",
      "source": "Pinnacle",
@@ -208,8 +223,8 @@
      "match": "FC Botosani – Petrolul Ploiesti",
      "source": "PMU",
      "cote_netbet": 1.83,
-     "cote_reference": 1.83,
-     "ecart_relatif": 0.0,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0055,
      "aberrant": false
     },
     {
@@ -227,28 +242,35 @@
      "cote_reference": 1.67,
      "ecart_relatif": 0.0719,
      "aberrant": false
+    },
+    {
+     "match": "Al Ittihad Jeddah – Al Diriyah",
+     "source": "Pinnacle",
+     "cote_netbet": 1.73,
+     "cote_reference": 1.855,
+     "ecart_relatif": 0.0672,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T13:58:35+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T13:58:44+00:00",
-   "books_premiere_lecture": "2026-10-23T12:27:42+00:00",
-   "books_derniere_lecture": "2026-10-23T13:58:54+00:00",
-   "ecart_enveloppe_secondes": 5462.0
+   "pinnacle_premiere_lecture": "2026-10-23T13:51:16+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T14:03:21+00:00",
+   "books_premiere_lecture": "2026-10-23T12:34:00+00:00",
+   "books_derniere_lecture": "2026-10-23T14:03:34+00:00",
+   "ecart_enveloppe_secondes": 5361.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 12.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 44076,
+   "mesures": 55659,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -264,25 +286,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T13:10:08+00:00"
   },
-  "fin": "2026-10-23T14:01:56+00:00",
+  "fin": "2026-10-23T14:08:20+00:00",
   "cotes": {
-   "francaises": 165683,
-   "pinnacle": 186748,
+   "francaises": 207548,
+   "pinnacle": 237043,
    "polymarket": 0,
-   "smarkets": 3926
+   "smarkets": 3951
   },
-  "matchs_francais": 2223,
-  "opportunites": 9,
+  "matchs_francais": 2758,
+  "opportunites": 10,
   "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T20:38:36+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T20:43:21+00:00",
    "mode": "complet",
@@ -1481,6 +1497,12 @@
    "debut": "2026-10-23T13:58:23+00:00",
    "mode": "complet",
    "opportunites": 9,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T14:03:00+00:00",
+   "mode": "complet",
+   "opportunites": 10,
    "nouveaux_paris": 0
   }
  ],
