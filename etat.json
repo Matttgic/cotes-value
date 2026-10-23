@@ -1,31 +1,35 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T22:04:48+00:00",
+  "debut": "2026-10-23T22:11:20+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 25.1,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
-    "secondes": 30.0,
+    "secondes": 30.1,
     "ok": false,
     "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 34.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 26 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "sport 5 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 10.6,
+    "secondes": 8.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 33.7,
+    "secondes": 30.9,
     "ok": true
    },
    "netbet": {
@@ -37,11 +41,11 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 41.3,
+    "secondes": 39.3,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 75.0,
+    "secondes": 74.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -49,7 +53,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -57,49 +61,34 @@
     ]
    },
    "smarkets": {
-    "secondes": 33.8,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 170.7,
+    "secondes": 109.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.8,
+    "secondes": 2.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.6,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 48231,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 894,
-   "age_min_s": 22,
-   "lignes": 181024,
-   "lignes_perimees": 4844,
+   "age_max_s": 605,
+   "age_min_s": 174,
+   "lignes": 181417,
+   "lignes_perimees": 354,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -110,12 +99,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
-    "head_403": 2,
+    "head_200": 25,
+    "choisi_fixe": 7,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 6,
-    "sport_vide": 6
+    "choisi_autre": 6,
+    "reprise_403": 3,
+    "sport_vide": 4
    }
   },
   "olybet_source": "direct",
@@ -123,38 +113,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Palmeiras – RB Bragantino",
+     "match": "Gaziantep FK – Erzurumspor FK",
      "source": "Pinnacle",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.546,
-     "ecart_relatif": 0.0429,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.46,
+     "ecart_relatif": 0.065,
      "aberrant": false
     },
     {
-     "match": "Palmeiras – RB Bragantino",
+     "match": "Gaziantep FK – Erzurumspor FK",
      "source": "PMU",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.49,
-     "ecart_relatif": 0.0067,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0455,
      "aberrant": false
     },
     {
-     "match": "Internacional – Botafogo",
+     "match": "Eyupspor – Kasimpasa",
      "source": "Pinnacle",
-     "cote_olybet": 1.88,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.06,
+     "cote_olybet": 5.0,
+     "cote_reference": 5.58,
+     "ecart_relatif": 0.1039,
      "aberrant": false
     },
     {
-     "match": "Internacional – Botafogo",
+     "match": "Eyupspor – Kasimpasa",
      "source": "PMU",
-     "cote_olybet": 1.88,
-     "cote_reference": 1.75,
-     "ecart_relatif": 0.0743,
+     "cote_olybet": 5.0,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.0204,
+     "aberrant": false
+    },
+    {
+     "match": "Samsunspor – Amedspor SK",
+     "source": "Pinnacle",
+     "cote_olybet": 3.23,
+     "cote_reference": 3.54,
+     "ecart_relatif": 0.0876,
+     "aberrant": false
+    },
+    {
+     "match": "Sarajevo – Zeljeznicar Sarajevo",
+     "source": "Pinnacle",
+     "cote_olybet": 1.5,
+     "cote_reference": 1.524,
+     "ecart_relatif": 0.0155,
+     "aberrant": false
+    },
+    {
+     "match": "Sarajevo – Zeljeznicar Sarajevo",
+     "source": "PMU",
+     "cote_olybet": 1.5,
+     "cote_reference": 1.52,
+     "ecart_relatif": 0.0132,
+     "aberrant": false
+    },
+    {
+     "match": "Siroki Brijeg – Celik Zenica",
+     "source": "PMU",
+     "cote_olybet": 1.92,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0549,
      "aberrant": false
     }
    ],
@@ -169,8 +191,8 @@
      "match": "Libertad – Sportivo Luqueño",
      "source": "Pinnacle",
      "cote_netbet": 1.39,
-     "cote_reference": 1.459,
-     "ecart_relatif": 0.0471,
+     "cote_reference": 1.488,
+     "ecart_relatif": 0.0657,
      "aberrant": false
     },
     {
@@ -185,8 +207,8 @@
      "match": "Audax Italiano – Huachipato",
      "source": "Pinnacle",
      "cote_netbet": 1.87,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0833,
+     "cote_reference": 2.06,
+     "ecart_relatif": 0.0922,
      "aberrant": false
     },
     {
@@ -200,33 +222,33 @@
     {
      "match": "Boyacá Chicó – Atlético Bucaramanga",
      "source": "Pinnacle",
-     "cote_netbet": 3.25,
-     "cote_reference": 3.46,
-     "ecart_relatif": 0.0607,
+     "cote_netbet": 3.35,
+     "cote_reference": 3.76,
+     "ecart_relatif": 0.109,
      "aberrant": false
     },
     {
      "match": "Boyacá Chicó – Atlético Bucaramanga",
      "source": "PMU",
-     "cote_netbet": 3.25,
+     "cote_netbet": 3.35,
      "cote_reference": 3.55,
-     "ecart_relatif": 0.0845,
+     "ecart_relatif": 0.0563,
      "aberrant": false
     },
     {
      "match": "Cruzeiro – Club Do Remo",
      "source": "Pinnacle",
      "cote_netbet": 1.24,
-     "cote_reference": 1.298,
-     "ecart_relatif": 0.0451,
+     "cote_reference": 1.296,
+     "ecart_relatif": 0.0431,
      "aberrant": false
     },
     {
      "match": "Tigre – Atlético Tucumán",
      "source": "Pinnacle",
      "cote_netbet": 1.65,
-     "cote_reference": 1.758,
-     "ecart_relatif": 0.0612,
+     "cote_reference": 1.752,
+     "ecart_relatif": 0.0582,
      "aberrant": false
     },
     {
@@ -241,22 +263,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T22:05:00+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T22:05:21+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T22:11:31+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T22:11:43+00:00",
    "books_premiere_lecture": "2026-10-23T19:52:59+00:00",
-   "books_derniere_lecture": "2026-10-23T22:05:24+00:00",
-   "ecart_enveloppe_secondes": 7942.0
+   "books_derniere_lecture": "2026-10-23T22:11:57+00:00",
+   "ecart_enveloppe_secondes": 8324.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 6.5
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 9,
    "non_conforme": 11,
-   "mesures": 50134,
+   "mesures": 50414,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -272,25 +295,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T21:54:07+00:00"
   },
-  "fin": "2026-10-23T22:10:17+00:00",
+  "fin": "2026-10-23T22:15:14+00:00",
   "cotes": {
-   "francaises": 173475,
-   "pinnacle": 229255,
+   "francaises": 183365,
+   "pinnacle": 181417,
    "polymarket": 0,
    "smarkets": 3998
   },
-  "matchs_francais": 2213,
+  "matchs_francais": 2215,
   "opportunites": 1,
   "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T03:43:34+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T03:48:29+00:00",
    "mode": "complet",
@@ -1487,6 +1504,12 @@
   },
   {
    "debut": "2026-10-23T22:04:48+00:00",
+   "mode": "complet",
+   "opportunites": 1,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T22:11:20+00:00",
    "mode": "complet",
    "opportunites": 1,
    "nouveaux_paris": 0
