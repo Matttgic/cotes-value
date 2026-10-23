@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T02:30:54+00:00",
+  "debut": "2026-10-23T02:35:29+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 16.0,
+    "secondes": 15.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,23 +12,24 @@
     ]
    },
    "pinnacle": {
-    "secondes": 22.4,
+    "secondes": 25.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 6.5,
+    "secondes": 7.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.2,
+    "secondes": 30.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 35.5,
+    "secondes": 32.6,
     "ok": true
    },
    "netbet": {
@@ -39,17 +40,20 @@
      "budget"
     ]
    },
-   "betclic_direct": {
-    "secondes": 70.2,
-    "ok": true
-   },
    "unibet_direct": {
-    "secondes": 75.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 74.7,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "lecture interrompue"
+     "budget"
+    ]
+   },
+   "betclic_direct": {
+    "secondes": 77.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
     ]
    },
    "smarkets": {
@@ -58,15 +62,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 69.3,
+    "secondes": 46.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.0,
+    "secondes": 1.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.5,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -77,8 +81,8 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 833,
-   "age_min_s": 37,
+   "age_max_s": 694,
+   "age_min_s": 207,
    "lignes": 151392,
    "lignes_perimees": 150,
    "rechauffeur": "ok",
@@ -91,12 +95,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 26,
-    "choisi_autre": 7,
-    "choisi_fixe": 6,
+    "head_200": 37,
     "head_403": 2,
     "ortho_refusee": 2,
-    "sport_vide": 6
+    "choisi_fixe": 5,
+    "choisi_autre": 8,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -104,70 +109,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Brest – OGC Nice",
+     "match": "Cordoue – Eibar",
      "source": "Pinnacle",
-     "cote_olybet": 2.19,
-     "cote_reference": 2.29,
-     "ecart_relatif": 0.0437,
+     "cote_olybet": 2.06,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.055,
      "aberrant": false
     },
     {
-     "match": "Brest – OGC Nice",
+     "match": "Cordoue – Eibar",
      "source": "PMU",
-     "cote_olybet": 2.19,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0529,
+     "cote_olybet": 2.06,
+     "cote_reference": 1.96,
+     "ecart_relatif": 0.051,
      "aberrant": false
     },
     {
-     "match": "Galway United FC – St. Patrick's Athletic",
+     "match": "Preston North End – West Bromwich",
      "source": "Pinnacle",
-     "cote_olybet": 4.5,
-     "cote_reference": 4.93,
-     "ecart_relatif": 0.0872,
+     "cote_olybet": 3.4,
+     "cote_reference": 3.63,
+     "ecart_relatif": 0.0634,
      "aberrant": false
     },
     {
-     "match": "Galway United FC – St. Patrick's Athletic",
+     "match": "Preston North End – West Bromwich",
      "source": "PMU",
-     "cote_olybet": 4.5,
-     "cote_reference": 4.5,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Waterford – Drogheda United",
-     "source": "Pinnacle",
-     "cote_olybet": 1.77,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0533,
-     "aberrant": false
-    },
-    {
-     "match": "Waterford – Drogheda United",
-     "source": "PMU",
-     "cote_olybet": 1.77,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.0275,
-     "aberrant": false
-    },
-    {
-     "match": "Bohemians – Shelbourne",
-     "source": "Pinnacle",
-     "cote_olybet": 1.55,
-     "cote_reference": 1.629,
-     "ecart_relatif": 0.0484,
-     "aberrant": false
-    },
-    {
-     "match": "Bohemians – Shelbourne",
-     "source": "PMU",
-     "cote_olybet": 1.55,
-     "cote_reference": 1.47,
-     "ecart_relatif": 0.0544,
+     "cote_olybet": 3.4,
+     "cote_reference": 3.35,
+     "ecart_relatif": 0.0149,
      "aberrant": false
     }
    ],
@@ -222,23 +195,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T02:31:05+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T02:31:12+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T02:35:40+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T02:35:48+00:00",
    "books_premiere_lecture": "2026-10-23T02:21:59+00:00",
-   "books_derniere_lecture": "2026-10-23T02:31:18+00:00",
-   "ecart_enveloppe_secondes": 553.0
+   "books_derniere_lecture": "2026-10-23T02:35:56+00:00",
+   "ecart_enveloppe_secondes": 829.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 13.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 35861,
+   "mesures": 46678,
    "matchs_suspects": 1
   },
   "redecision": {
@@ -254,25 +227,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T02:20:13+00:00"
   },
-  "fin": "2026-10-23T02:34:10+00:00",
+  "fin": "2026-10-23T02:38:21+00:00",
   "cotes": {
-   "francaises": 106314,
+   "francaises": 140877,
    "pinnacle": 151392,
-   "polymarket": 27935,
+   "polymarket": 28012,
    "smarkets": 3938
   },
-  "matchs_francais": 1510,
+  "matchs_francais": 1918,
   "opportunites": 13,
   "opportunites_suspectes": 15,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T11:01:24+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T11:06:16+00:00",
    "mode": "complet",
@@ -1469,6 +1436,12 @@
   },
   {
    "debut": "2026-10-23T02:30:54+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T02:35:29+00:00",
    "mode": "complet",
    "opportunites": 13,
    "nouveaux_paris": 0
