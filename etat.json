@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T08:48:02+00:00",
+  "debut": "2026-10-23T08:53:54+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 21.2,
+    "secondes": 21.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,41 +13,44 @@
     ]
    },
    "pinnacle": {
-    "secondes": 27.4,
+    "secondes": 25.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 markets/straight : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 7.4,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 24.1,
+    "secondes": 9.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.6,
+    "secondes": 32.1,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 37.0,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 39.9,
-    "ok": true
+   "unibet_direct": {
+    "secondes": 73.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -55,16 +58,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.5,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 137.1,
+    "secondes": 101.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.7,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
@@ -75,28 +81,43 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 49822,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 804,
-   "age_min_s": 80,
-   "lignes": 178051,
-   "lignes_perimees": 204,
-   "rechauffeur": "indisponible",
+   "age_max_s": 851,
+   "age_min_s": 240,
+   "lignes": 178079,
+   "lignes_perimees": 2655,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 10,
-    "head_403": 3,
+    "head_200": 40,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 5,
-    "choisi_autre": 2,
-    "reprise_403": 2,
-    "sport_vide": 6
+    "choisi_fixe": 7,
+    "choisi_autre": 7,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -107,63 +128,72 @@
    "examines": 7,
    "comparaisons": [
     {
-     "match": "Boyacá Chicó – Atlético Bucaramanga",
+     "match": "Radnicki Nis – Novi Pazar",
      "source": "Pinnacle",
-     "cote_olybet": 3.29,
-     "cote_reference": 3.57,
-     "ecart_relatif": 0.0784,
+     "cote_olybet": 2.33,
+     "cote_reference": 2.39,
+     "ecart_relatif": 0.0251,
      "aberrant": false
     },
     {
-     "match": "Boyacá Chicó – Atlético Bucaramanga",
+     "match": "Radnicki Nis – Novi Pazar",
      "source": "PMU",
-     "cote_olybet": 3.29,
-     "cote_reference": 3.55,
-     "ecart_relatif": 0.0732,
+     "cote_olybet": 2.33,
+     "cote_reference": 2.38,
+     "ecart_relatif": 0.021,
      "aberrant": false
     },
     {
-     "match": "Atlético Junior  Barranquilla – Aguilas Doradas Rionegro",
+     "match": "FK IMT Novi Beograd – Zeleznicar Pancevo",
      "source": "Pinnacle",
-     "cote_olybet": 1.79,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0426,
+     "cote_olybet": 2.54,
+     "cote_reference": 2.59,
+     "ecart_relatif": 0.0193,
      "aberrant": false
     },
     {
-     "match": "Dortmund – Eintracht Francfort",
+     "match": "Partizan Belgrade – Cukaricki",
      "source": "Pinnacle",
-     "cote_olybet": 1.43,
-     "cote_reference": 1.481,
-     "ecart_relatif": 0.0343,
+     "cote_olybet": 1.5,
+     "cote_reference": 1.529,
+     "ecart_relatif": 0.019,
      "aberrant": false
     },
     {
-     "match": "Dortmund – Eintracht Francfort",
+     "match": "Partizan Belgrade – Cukaricki",
      "source": "PMU",
-     "cote_olybet": 1.43,
-     "cote_reference": 1.42,
-     "ecart_relatif": 0.007,
+     "cote_olybet": 1.5,
+     "cote_reference": 1.43,
+     "ecart_relatif": 0.049,
      "aberrant": false
     },
     {
-     "match": "Augsburg – Union Berlin",
+     "match": "Mladost Lucani – Vojvodina Novi Sad",
      "source": "Pinnacle",
-     "cote_olybet": 1.79,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0426,
+     "cote_olybet": 5.7,
+     "cote_reference": 5.89,
+     "ecart_relatif": 0.0323,
      "aberrant": false
     },
     {
-     "match": "Augsburg – Union Berlin",
+     "match": "Mladost Lucani – Vojvodina Novi Sad",
      "source": "PMU",
-     "cote_olybet": 1.79,
-     "cote_reference": 1.72,
-     "ecart_relatif": 0.0407,
-     "aberrant": false
+     "cote_olybet": 5.7,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.1633,
+     "aberrant": true
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Mladost Lucani – Vojvodina Novi Sad",
+     "source": "PMU",
+     "cote_olybet": 5.7,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.1633,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -205,17 +235,17 @@
     {
      "match": "Veres Rivne – Kolos Kovalivka",
      "source": "Pinnacle",
-     "cote_netbet": 2.77,
+     "cote_netbet": 2.82,
      "cote_reference": 3.13,
-     "ecart_relatif": 0.115,
+     "ecart_relatif": 0.099,
      "aberrant": false
     },
     {
      "match": "Veres Rivne – Kolos Kovalivka",
      "source": "PMU",
-     "cote_netbet": 2.77,
+     "cote_netbet": 2.82,
      "cote_reference": 2.55,
-     "ecart_relatif": 0.0863,
+     "ecart_relatif": 0.1059,
      "aberrant": false
     },
     {
@@ -230,23 +260,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T08:48:14+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T08:48:22+00:00",
-   "books_premiere_lecture": "2026-10-23T06:55:14+00:00",
-   "books_derniere_lecture": "2026-10-23T08:48:31+00:00",
-   "ecart_enveloppe_secondes": 6788.0
+   "pinnacle_premiere_lecture": "2026-10-23T08:54:05+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T08:54:21+00:00",
+   "books_premiere_lecture": "2026-10-23T08:37:32+00:00",
+   "books_derniere_lecture": "2026-10-23T08:54:23+00:00",
+   "ecart_enveloppe_secondes": 1009.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 10.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 622,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 61711,
+   "mesures": 63261,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -262,25 +291,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T08:18:58+00:00"
   },
-  "fin": "2026-10-23T08:53:05+00:00",
+  "fin": "2026-10-23T08:58:14+00:00",
   "cotes": {
-   "francaises": 202378,
-   "pinnacle": 178051,
-   "polymarket": 35357,
-   "smarkets": 3955
+   "francaises": 205227,
+   "pinnacle": 227901,
+   "polymarket": 35323,
+   "smarkets": 4019
   },
-  "matchs_francais": 2603,
-  "opportunites": 20,
+  "matchs_francais": 2613,
+  "opportunites": 18,
   "opportunites_suspectes": 29,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T16:21:48+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T16:26:26+00:00",
    "mode": "complet",
@@ -1480,6 +1503,12 @@
    "mode": "complet",
    "opportunites": 20,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-23T08:53:54+00:00",
+   "mode": "complet",
+   "opportunites": 18,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-23T08:18:58+00:00",
