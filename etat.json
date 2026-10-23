@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T02:16:32+00:00",
+  "debut": "2026-10-23T02:21:34+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 15.0,
+    "secondes": 15.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,19 +12,32 @@
     ]
    },
    "pinnacle": {
-    "secondes": 20.1,
+    "secondes": 24.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
+   "unibet_direct": {
+    "secondes": 0.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "accueil HTTP 403"
+    ]
+   },
    "olybet": {
-    "secondes": 6.0,
+    "secondes": 6.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.1,
+    "secondes": 29.2,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 32.8,
     "ok": true
    },
    "netbet": {
@@ -35,33 +48,33 @@
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 39.2,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 43.2,
-    "ok": true
-   },
    "betclic_direct": {
-    "secondes": 68.5,
-    "ok": true
+    "secondes": 80.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "lecture interrompue"
+    ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.0,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 84.3,
+    "secondes": 32.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.8,
+    "secondes": 1.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.4,
     "ok": true
    }
   },
@@ -72,10 +85,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 883,
-   "age_min_s": 102,
+   "age_max_s": 767,
+   "age_min_s": 278,
    "lignes": 151276,
-   "lignes_perimees": 150,
+   "lignes_perimees": 938,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -86,11 +99,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 30,
-    "choisi_autre": 9,
+    "head_200": 37,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 4
+    "choisi_fixe": 8,
+    "choisi_autre": 5,
+    "sport_vide": 1,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -101,51 +116,51 @@
    "examines": 6,
    "comparaisons": [
     {
-     "match": "Academica – Leixoes",
+     "match": "Slovan Liberec – Banik Ostrava",
      "source": "Pinnacle",
-     "cote_olybet": 2.75,
-     "cote_reference": 2.91,
-     "ecart_relatif": 0.055,
+     "cote_olybet": 1.54,
+     "cote_reference": 1.581,
+     "ecart_relatif": 0.0262,
      "aberrant": false
     },
     {
-     "match": "Academica – Leixoes",
+     "match": "Slovan Liberec – Banik Ostrava",
      "source": "PMU",
-     "cote_olybet": 2.75,
-     "cote_reference": 2.43,
-     "ecart_relatif": 0.1317,
+     "cote_olybet": 1.54,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0375,
      "aberrant": false
     },
     {
-     "match": "Chaves – Vizela",
+     "match": "Teplice – SK Artis Brno",
      "source": "Pinnacle",
-     "cote_olybet": 2.44,
-     "cote_reference": 2.58,
-     "ecart_relatif": 0.0543,
+     "cote_olybet": 1.71,
+     "cote_reference": 1.775,
+     "ecart_relatif": 0.0367,
      "aberrant": false
     },
     {
-     "match": "Chaves – Vizela",
+     "match": "Teplice – SK Artis Brno",
      "source": "PMU",
-     "cote_olybet": 2.44,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.0161,
+     "cote_olybet": 1.71,
+     "cote_reference": 1.61,
+     "ecart_relatif": 0.0621,
      "aberrant": false
     },
     {
-     "match": "Vasteras SK – Halmstads",
+     "match": "FC Zlin – Sigma Olomouc",
      "source": "Pinnacle",
-     "cote_olybet": 1.62,
-     "cote_reference": 1.694,
-     "ecart_relatif": 0.0439,
+     "cote_olybet": 3.81,
+     "cote_reference": 4.07,
+     "ecart_relatif": 0.0639,
      "aberrant": false
     },
     {
-     "match": "Vasteras SK – Halmstads",
+     "match": "FC Zlin – Sigma Olomouc",
      "source": "PMU",
-     "cote_olybet": 1.62,
-     "cote_reference": 1.58,
-     "ecart_relatif": 0.0253,
+     "cote_olybet": 3.81,
+     "cote_reference": 3.65,
+     "ecart_relatif": 0.0438,
      "aberrant": false
     }
    ],
@@ -200,23 +215,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T02:16:42+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T02:16:49+00:00",
-   "books_premiere_lecture": "2026-10-23T00:25:04+00:00",
-   "books_derniere_lecture": "2026-10-23T02:16:53+00:00",
-   "ecart_enveloppe_secondes": 6705.0
+   "pinnacle_premiere_lecture": "2026-10-23T02:21:45+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T02:21:53+00:00",
+   "books_premiere_lecture": "2026-10-23T02:02:36+00:00",
+   "books_derniere_lecture": "2026-10-23T02:21:59+00:00",
+   "ecart_enveloppe_secondes": 1157.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 46775,
+   "mesures": 35129,
    "matchs_suspects": 1
   },
   "redecision": {
@@ -230,27 +244,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-23T01:23:32+00:00"
+   "dernier_reglement": "2026-10-23T02:20:13+00:00"
   },
-  "fin": "2026-10-23T02:20:02+00:00",
+  "fin": "2026-10-23T02:24:26+00:00",
   "cotes": {
-   "francaises": 149959,
+   "francaises": 118154,
    "pinnacle": 151276,
-   "polymarket": 27417,
-   "smarkets": 3855
+   "polymarket": 27426,
+   "smarkets": 3938
   },
-  "matchs_francais": 1854,
+  "matchs_francais": 1512,
   "opportunites": 13,
   "opportunites_suspectes": 15,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T10:47:30+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T10:52:07+00:00",
    "mode": "complet",
@@ -1447,6 +1455,12 @@
   },
   {
    "debut": "2026-10-23T02:16:32+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T02:21:34+00:00",
    "mode": "complet",
    "opportunites": 13,
    "nouveaux_paris": 0
