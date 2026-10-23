@@ -1,39 +1,37 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T10:00:06+00:00",
+  "debut": "2026-10-23T10:05:41+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 24.0,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
-    "secondes": 24.2,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
      "prix bid/ask invalides"
     ]
    },
-   "olybet": {
-    "secondes": 8.8,
-    "ok": true
+   "pinnacle": {
+    "secondes": 33.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
    },
-   "unibet_direct": {
-    "secondes": 24.8,
+   "olybet": {
+    "secondes": 11.4,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 33.1,
+    "secondes": 33.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -41,41 +39,43 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 40.4,
+    "secondes": 41.4,
     "ok": true
    },
-   "betclic_direct": {
-    "secondes": 51.3,
+   "unibet_direct": {
+    "secondes": 74.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "trame incomplète",
-     "trame incomplète",
-     "trame incomplète",
-     "trame incomplète",
-     "trame incomplète",
-     "trame incomplète",
-     "trame incomplète",
-     "trame incomplète",
-     "trame incomplète",
-     "trame incomplète"
+     "budget"
+    ]
+   },
+   "betclic_direct": {
+    "secondes": 77.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 22.6,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 142.9,
+    "secondes": 99.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.5,
+    "secondes": 3.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -86,26 +86,24 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 835,
-   "age_min_s": 6,
-   "lignes": 177951,
-   "lignes_perimees": 1286,
-   "rechauffeur": "ok",
+   "age_max_s": 646,
+   "age_min_s": 7,
+   "lignes": 177044,
+   "lignes_perimees": 8,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
-    "choisi_fixe": 3,
-    "choisi_autre": 11,
+    "head_200": 37,
     "head_403": 2,
     "ortho_refusee": 2,
-    "sport_vide": 6
+    "choisi_autre": 12,
+    "choisi_fixe": 2,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -113,62 +111,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Zemun – Macva Sabac",
+     "match": "Araz Nakhchivan – Qabala",
      "source": "Pinnacle",
-     "cote_olybet": 2.75,
-     "cote_reference": 2.82,
-     "ecart_relatif": 0.0248,
-     "aberrant": false
-    },
-    {
-     "match": "Zemun – Macva Sabac",
-     "source": "PMU",
-     "cote_olybet": 2.75,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Radnicki Nis – Novi Pazar",
-     "source": "Pinnacle",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.39,
-     "ecart_relatif": 0.0251,
-     "aberrant": false
-    },
-    {
-     "match": "Radnicki Nis – Novi Pazar",
-     "source": "PMU",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.021,
-     "aberrant": false
-    },
-    {
-     "match": "FK IMT Novi Beograd – Zeleznicar Pancevo",
-     "source": "Pinnacle",
-     "cote_olybet": 2.54,
+     "cote_olybet": 2.5,
      "cote_reference": 2.59,
-     "ecart_relatif": 0.0193,
+     "ecart_relatif": 0.0347,
      "aberrant": false
     },
     {
-     "match": "Partizan Belgrade – Cukaricki",
+     "match": "Neftchi Bakou – Turan Tovuz IK",
      "source": "Pinnacle",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.529,
-     "ecart_relatif": 0.019,
+     "cote_olybet": 1.77,
+     "cote_reference": 1.781,
+     "ecart_relatif": 0.0063,
      "aberrant": false
     },
     {
-     "match": "Partizan Belgrade – Cukaricki",
+     "match": "Zira – Soumgaït FK",
+     "source": "Pinnacle",
+     "cote_olybet": 1.65,
+     "cote_reference": 1.671,
+     "ecart_relatif": 0.0126,
+     "aberrant": false
+    },
+    {
+     "match": "Zira – Soumgaït FK",
      "source": "PMU",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.43,
-     "ecart_relatif": 0.049,
+     "cote_olybet": 1.65,
+     "cote_reference": 1.67,
+     "ecart_relatif": 0.012,
+     "aberrant": false
+    },
+    {
+     "match": "Stjarnan – Valur Reykjavik",
+     "source": "Pinnacle",
+     "cote_olybet": 1.8,
+     "cote_reference": 1.855,
+     "ecart_relatif": 0.0295,
+     "aberrant": false
+    },
+    {
+     "match": "Stjarnan – Valur Reykjavik",
+     "source": "PMU",
+     "cote_olybet": 1.8,
+     "cote_reference": 1.78,
+     "ecart_relatif": 0.0112,
      "aberrant": false
     }
    ],
@@ -223,23 +213,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T10:00:16+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T10:00:24+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T10:05:53+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T10:06:05+00:00",
    "books_premiere_lecture": "2026-10-23T08:37:32+00:00",
-   "books_derniere_lecture": "2026-10-23T10:00:32+00:00",
-   "ecart_enveloppe_secondes": 4972.0
+   "books_derniere_lecture": "2026-10-23T10:06:16+00:00",
+   "ecart_enveloppe_secondes": 5313.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.1
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 622,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 57046,
+   "mesures": 50922,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -255,25 +244,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T09:16:27+00:00"
   },
-  "fin": "2026-10-23T10:04:42+00:00",
+  "fin": "2026-10-23T10:09:47+00:00",
   "cotes": {
-   "francaises": 198586,
-   "pinnacle": 177951,
-   "polymarket": 35334,
-   "smarkets": 3961
+   "francaises": 204779,
+   "pinnacle": 177044,
+   "polymarket": 0,
+   "smarkets": 3934
   },
-  "matchs_francais": 2643,
-  "opportunites": 17,
-  "opportunites_suspectes": 36,
+  "matchs_francais": 2566,
+  "opportunites": 12,
+  "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T17:17:40+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-22T17:22:28+00:00",
    "mode": "complet",
@@ -1472,6 +1455,12 @@
    "debut": "2026-10-23T10:00:06+00:00",
    "mode": "complet",
    "opportunites": 17,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T10:05:41+00:00",
+   "mode": "complet",
+   "opportunites": 12,
    "nouveaux_paris": 0
   }
  ],
