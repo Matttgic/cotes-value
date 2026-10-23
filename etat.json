@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T09:17:51+00:00",
+  "debut": "2026-10-23T09:23:26+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 20.5,
+    "secondes": 27.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,29 +13,24 @@
     ]
    },
    "pinnacle": {
-    "secondes": 29.5,
+    "secondes": 33.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "sport 45 matchups : HTTP 403",
-     "sport 37 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 8.8,
+    "secondes": 12.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.6,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 33.6,
+    "secondes": 31.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -43,11 +38,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 39.9,
+    "secondes": 40.2,
     "ok": true
    },
+   "unibet_direct": {
+    "secondes": 74.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -60,46 +63,56 @@
     "cache": true
    },
    "association": {
-    "secondes": 111.9,
+    "secondes": 171.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.1,
+    "secondes": 2.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.1,
+    "secondes": 1.0,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 49607,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 771,
-   "age_min_s": 15,
-   "lignes": 178133,
-   "lignes_perimees": 136,
-   "rechauffeur": "ok",
+   "age_max_s": 816,
+   "age_min_s": 202,
+   "lignes": 178147,
+   "lignes_perimees": 2895,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 26,
-    "head_403": 3,
-    "ortho_refusee": 3,
-    "choisi_autre": 8,
-    "choisi_fixe": 6,
-    "sport_vide": 4,
-    "reprise_403": 2
+    "head_200": 41,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "choisi_autre": 10,
+    "choisi_fixe": 4,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -107,38 +120,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Rubin Kazan – Krylia Sovetov",
+     "match": "Zrinjski Mostar – Radnik Bijeljina",
      "source": "Pinnacle",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.36,
-     "ecart_relatif": 0.0551,
+     "cote_olybet": 1.17,
+     "cote_reference": 1.185,
+     "ecart_relatif": 0.0125,
      "aberrant": false
     },
     {
-     "match": "Fakel Voronezh – Rodina",
-     "source": "Pinnacle",
-     "cote_olybet": 2.03,
-     "cote_reference": 2.13,
-     "ecart_relatif": 0.0469,
+     "match": "Zrinjski Mostar – Radnik Bijeljina",
+     "source": "PMU",
+     "cote_olybet": 1.17,
+     "cote_reference": 1.19,
+     "ecart_relatif": 0.0168,
      "aberrant": false
     },
     {
-     "match": "Krasnodar – FC Baltika Kaliningrad",
+     "match": "Sarajevo – Zeljeznicar Sarajevo",
      "source": "Pinnacle",
-     "cote_olybet": 1.68,
-     "cote_reference": 1.752,
-     "ecart_relatif": 0.041,
+     "cote_olybet": 1.49,
+     "cote_reference": 1.524,
+     "ecart_relatif": 0.0221,
      "aberrant": false
     },
     {
-     "match": "FK Akron – Dynamo Moscou",
+     "match": "Sarajevo – Zeljeznicar Sarajevo",
+     "source": "PMU",
+     "cote_olybet": 1.49,
+     "cote_reference": 1.47,
+     "ecart_relatif": 0.0136,
+     "aberrant": false
+    },
+    {
+     "match": "Siroki Brijeg – Celik Zenica",
+     "source": "PMU",
+     "cote_olybet": 1.92,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0549,
+     "aberrant": false
+    },
+    {
+     "match": "Independiente del Valle – CD Universidad Catolica Quito",
      "source": "Pinnacle",
-     "cote_olybet": 4.75,
-     "cote_reference": 5.21,
-     "ecart_relatif": 0.0883,
+     "cote_olybet": 1.57,
+     "cote_reference": 1.633,
+     "ecart_relatif": 0.0385,
+     "aberrant": false
+    },
+    {
+     "match": "Independiente del Valle – CD Universidad Catolica Quito",
+     "source": "PMU",
+     "cote_olybet": 1.57,
+     "cote_reference": 1.44,
+     "ecart_relatif": 0.0903,
+     "aberrant": false
+    },
+    {
+     "match": "Manta – Deportivo Cuenca",
+     "source": "Pinnacle",
+     "cote_olybet": 2.3,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0417,
+     "aberrant": false
+    },
+    {
+     "match": "Manta – Deportivo Cuenca",
+     "source": "PMU",
+     "cote_olybet": 2.3,
+     "cote_reference": 2.17,
+     "ecart_relatif": 0.0599,
      "aberrant": false
     }
    ],
@@ -152,33 +205,33 @@
     {
      "match": "Dynamo Kiev – Kudrivka",
      "source": "Pinnacle",
-     "cote_netbet": 1.14,
+     "cote_netbet": 1.13,
      "cote_reference": 1.196,
-     "ecart_relatif": 0.0466,
+     "ecart_relatif": 0.0549,
      "aberrant": false
     },
     {
      "match": "Dynamo Kiev – Kudrivka",
      "source": "PMU",
-     "cote_netbet": 1.14,
+     "cote_netbet": 1.13,
      "cote_reference": 1.13,
-     "ecart_relatif": 0.0088,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
      "match": "Veres Rivne – Kolos Kovalivka",
      "source": "Pinnacle",
-     "cote_netbet": 2.77,
+     "cote_netbet": 2.75,
      "cote_reference": 3.06,
-     "ecart_relatif": 0.0948,
+     "ecart_relatif": 0.1013,
      "aberrant": false
     },
     {
      "match": "Veres Rivne – Kolos Kovalivka",
      "source": "PMU",
-     "cote_netbet": 2.77,
+     "cote_netbet": 2.75,
      "cote_reference": 2.55,
-     "ecart_relatif": 0.0863,
+     "ecart_relatif": 0.0784,
      "aberrant": false
     },
     {
@@ -201,23 +254,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T09:18:03+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T09:18:10+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T09:23:39+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T09:24:03+00:00",
    "books_premiere_lecture": "2026-10-23T08:37:32+00:00",
-   "books_derniere_lecture": "2026-10-23T09:18:23+00:00",
-   "ecart_enveloppe_secondes": 2438.0
+   "books_derniere_lecture": "2026-10-23T09:24:05+00:00",
+   "ecart_enveloppe_secondes": 2791.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 6.6
+   "age_min": 12.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 622,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 60593,
+   "mesures": 60293,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -233,25 +286,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T09:16:27+00:00"
   },
-  "fin": "2026-10-23T09:22:20+00:00",
+  "fin": "2026-10-23T09:29:02+00:00",
   "cotes": {
-   "francaises": 190967,
-   "pinnacle": 178133,
-   "polymarket": 35307,
+   "francaises": 191028,
+   "pinnacle": 227754,
+   "polymarket": 35377,
    "smarkets": 3958
   },
-  "matchs_francais": 2624,
-  "opportunites": 16,
+  "matchs_francais": 2626,
+  "opportunites": 17,
   "opportunites_suspectes": 36,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T16:45:05+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T16:49:42+00:00",
    "mode": "complet",
@@ -1451,6 +1498,12 @@
    "mode": "complet",
    "opportunites": 16,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-23T09:23:26+00:00",
+   "mode": "complet",
+   "opportunites": 17,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-23T09:16:27+00:00",
