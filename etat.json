@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T13:16:40+00:00",
+  "debut": "2026-10-23T13:21:16+00:00",
   "mode": "complet",
   "etapes": {
    "pinnacle": {
-    "secondes": 28.9,
+    "secondes": 27.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -22,28 +22,32 @@
     ]
    },
    "olybet": {
-    "secondes": 12.0,
+    "secondes": 8.1,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 27.8,
+   "pmu_direct": {
+    "secondes": 37.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "pmu_direct": {
-    "secondes": 38.0,
+   "winamax_direct": {
+    "secondes": 39.0,
     "ok": true
    },
-   "winamax_direct": {
-    "secondes": 44.1,
-    "ok": true
+   "unibet_direct": {
+    "secondes": 73.5,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -59,41 +63,29 @@
     "cache": true
    },
    "association": {
-    "secondes": 86.0,
+    "secondes": 115.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.7,
+    "secondes": 3.3,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 0.7,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 51065,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 844,
-   "age_min_s": 9,
-   "lignes": 181184,
-   "lignes_perimees": 4795,
+   "age_max_s": 855,
+   "age_min_s": 62,
+   "lignes": 183695,
+   "lignes_perimees": 144,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -101,11 +93,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 38,
+    "head_200": 32,
+    "choisi_fixe": 6,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 13,
-    "choisi_fixe": 1,
+    "choisi_autre": 8,
     "sport_vide": 5,
     "reprise_403": 1
    }
@@ -115,22 +107,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 2,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Rubin Kazan – Krylia Sovetov",
+     "match": "HamKam – Rosenborg",
      "source": "Pinnacle",
-     "cote_olybet": 2.22,
-     "cote_reference": 2.36,
-     "ecart_relatif": 0.0593,
+     "cote_olybet": 4.7,
+     "cote_reference": 5.17,
+     "ecart_relatif": 0.0909,
      "aberrant": false
     },
     {
-     "match": "Fakel Voronezh – Rodina",
+     "match": "HamKam – Rosenborg",
+     "source": "PMU",
+     "cote_olybet": 4.7,
+     "cote_reference": 4.4,
+     "ecart_relatif": 0.0682,
+     "aberrant": false
+    },
+    {
+     "match": "FK Bodo/Glimt – Valerenga Oslo",
      "source": "Pinnacle",
-     "cote_olybet": 2.02,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0605,
+     "cote_olybet": 1.11,
+     "cote_reference": 1.133,
+     "ecart_relatif": 0.02,
+     "aberrant": false
+    },
+    {
+     "match": "FK Bodo/Glimt – Valerenga Oslo",
+     "source": "PMU",
+     "cote_olybet": 1.11,
+     "cote_reference": 1.11,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Racing de Santander – Espanyol",
+     "source": "Pinnacle",
+     "cote_olybet": 2.31,
+     "cote_reference": 2.42,
+     "ecart_relatif": 0.0455,
+     "aberrant": false
+    },
+    {
+     "match": "Racing de Santander – Espanyol",
+     "source": "PMU",
+     "cote_olybet": 2.31,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0132,
      "aberrant": false
     }
    ],
@@ -145,16 +169,16 @@
      "match": "Al Faisaly Harmah – Al-Nassr",
      "source": "Pinnacle",
      "cote_netbet": 9.5,
-     "cote_reference": 10.06,
-     "ecart_relatif": 0.0557,
+     "cote_reference": 10.15,
+     "ecart_relatif": 0.064,
      "aberrant": false
     },
     {
      "match": "Spaeri – FC Gagra",
      "source": "Pinnacle",
      "cote_netbet": 2.07,
-     "cote_reference": 2.32,
-     "ecart_relatif": 0.1078,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0505,
      "aberrant": false
     },
     {
@@ -193,23 +217,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T13:16:50+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T13:17:12+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T13:21:27+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T13:21:36+00:00",
    "books_premiere_lecture": "2026-10-23T11:22:02+00:00",
-   "books_derniere_lecture": "2026-10-23T13:17:14+00:00",
-   "ecart_enveloppe_secondes": 6910.0
+   "books_derniere_lecture": "2026-10-23T13:21:48+00:00",
+   "ecart_enveloppe_secondes": 7174.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.0
+   "age_min": 9.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 624,
    "a_verifier": 11,
    "non_conforme": 9,
-   "mesures": 52288,
+   "mesures": 55423,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -225,25 +249,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T13:10:08+00:00"
   },
-  "fin": "2026-10-23T13:20:07+00:00",
+  "fin": "2026-10-23T13:25:13+00:00",
   "cotes": {
-   "francaises": 217603,
-   "pinnacle": 232249,
+   "francaises": 219219,
+   "pinnacle": 183695,
    "polymarket": 0,
    "smarkets": 4050
   },
-  "matchs_francais": 2750,
-  "opportunites": 11,
+  "matchs_francais": 2751,
+  "opportunites": 13,
   "opportunites_suspectes": 19,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T20:06:04+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T20:10:43+00:00",
    "mode": "complet",
@@ -1443,6 +1461,12 @@
    "mode": "complet",
    "opportunites": 11,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-23T13:21:16+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-23T13:10:08+00:00",
