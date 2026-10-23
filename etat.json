@@ -1,41 +1,35 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T18:19:51+00:00",
+  "debut": "2026-10-23T18:25:14+00:00",
   "mode": "complet",
   "etapes": {
-   "polymarket": {
-    "secondes": 23.8,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "prix lu après le coup d'envoi : rejet pré-match"
-    ]
-   },
    "pinnacle": {
-    "secondes": 31.1,
+    "secondes": 25.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 22 markets/straight : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "olybet": {
-    "secondes": 8.0,
-    "ok": true
+   "polymarket": {
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ]
    },
-   "unibet_direct": {
-    "secondes": 35.2,
+   "olybet": {
+    "secondes": 11.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 35.7,
+    "secondes": 35.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.5,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -43,16 +37,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 45.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 41.8,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 74.3,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "lecture interrompue"
+     "budget"
     ]
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -60,23 +57,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 19.2,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 91.6,
+    "secondes": 161.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.4,
+    "secondes": 2.6,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -86,20 +80,22 @@
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 82,
+   "lignes": 48793,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 82,
-   "retard": []
+   "cache_lignes": 48793,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 851,
-   "age_min_s": 92,
-   "lignes": 183653,
-   "lignes_perimees": 2696,
+   "age_max_s": 653,
+   "age_min_s": 55,
+   "lignes": 183923,
+   "lignes_perimees": 10079,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -107,13 +103,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 19,
-    "choisi_fixe": 9,
-    "reprise_403": 2,
-    "reprise_403_ok": 1,
-    "head_403": 3,
+    "head_200": 37,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 1,
+    "choisi_autre": 10,
+    "choisi_fixe": 4,
     "sport_vide": 6
    }
   },
@@ -122,86 +116,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Carrick Rangers – Limavady United",
+     "match": "Young Boys – FC Saint-Gall",
      "source": "Pinnacle",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.532,
-     "ecart_relatif": 0.0339,
+     "cote_olybet": 1.69,
+     "cote_reference": 1.758,
+     "ecart_relatif": 0.0385,
      "aberrant": false
     },
     {
-     "match": "Carrick Rangers – Limavady United",
+     "match": "Young Boys – FC Saint-Gall",
      "source": "PMU",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.47,
-     "ecart_relatif": 0.0068,
+     "cote_olybet": 1.69,
+     "cote_reference": 1.72,
+     "ecart_relatif": 0.0174,
      "aberrant": false
     },
     {
-     "match": "Crusaders – Coleraine",
+     "match": "Servette – FC Vaduz",
      "source": "Pinnacle",
-     "cote_olybet": 7.6,
-     "cote_reference": 8.48,
-     "ecart_relatif": 0.1038,
+     "cote_olybet": 1.76,
+     "cote_reference": 1.862,
+     "ecart_relatif": 0.0548,
      "aberrant": false
     },
     {
-     "match": "Crusaders – Coleraine",
+     "match": "Servette – FC Vaduz",
      "source": "PMU",
-     "cote_olybet": 7.6,
-     "cote_reference": 8.5,
-     "ecart_relatif": 0.1059,
+     "cote_olybet": 1.76,
+     "cote_reference": 1.68,
+     "ecart_relatif": 0.0476,
      "aberrant": false
     },
     {
-     "match": "Dungannon Swifts – Cliftonville",
+     "match": "Neftchi Bakou – Turan Tovuz IK",
      "source": "Pinnacle",
-     "cote_olybet": 1.99,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0433,
-     "aberrant": false
-    },
-    {
-     "match": "Dungannon Swifts – Cliftonville",
-     "source": "PMU",
-     "cote_olybet": 1.99,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0149,
-     "aberrant": false
-    },
-    {
-     "match": "Portadown – Linfield",
-     "source": "Pinnacle",
-     "cote_olybet": 6.0,
-     "cote_reference": 6.73,
-     "ecart_relatif": 0.1085,
-     "aberrant": false
-    },
-    {
-     "match": "Portadown – Linfield",
-     "source": "PMU",
-     "cote_olybet": 6.0,
-     "cote_reference": 5.8,
-     "ecart_relatif": 0.0345,
-     "aberrant": false
-    },
-    {
-     "match": "Bangor FC – Larne FC",
-     "source": "Pinnacle",
-     "cote_olybet": 6.6,
-     "cote_reference": 7.32,
-     "ecart_relatif": 0.0984,
-     "aberrant": false
-    },
-    {
-     "match": "Bangor FC – Larne FC",
-     "source": "PMU",
-     "cote_olybet": 6.6,
-     "cote_reference": 7.5,
-     "ecart_relatif": 0.12,
+     "cote_olybet": 1.75,
+     "cote_reference": 1.787,
+     "ecart_relatif": 0.0209,
      "aberrant": false
     }
    ],
@@ -280,23 +234,24 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T18:05:29+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T18:20:18+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T18:15:19+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T18:25:34+00:00",
    "books_premiere_lecture": "2026-10-23T17:12:39+00:00",
-   "books_derniere_lecture": "2026-10-23T18:20:25+00:00",
-   "ecart_enveloppe_secondes": 4059.0
+   "books_derniere_lecture": "2026-10-23T18:25:47+00:00",
+   "ecart_enveloppe_secondes": 4375.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.4
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 48291,
-   "matchs_suspects": 2
+   "mesures": 43685,
+   "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
@@ -311,25 +266,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T17:58:50+00:00"
   },
-  "fin": "2026-10-23T18:24:05+00:00",
+  "fin": "2026-10-23T18:29:56+00:00",
   "cotes": {
-   "francaises": 146609,
-   "pinnacle": 183735,
-   "polymarket": 34963,
+   "francaises": 171081,
+   "pinnacle": 232716,
+   "polymarket": 0,
    "smarkets": 3441
   },
-  "matchs_francais": 1899,
-  "opportunites": 2,
-  "opportunites_suspectes": 39,
+  "matchs_francais": 2356,
+  "opportunites": 4,
+  "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T00:20:26+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T00:25:04+00:00",
    "mode": "complet",
@@ -1528,6 +1477,12 @@
    "debut": "2026-10-23T18:19:51+00:00",
    "mode": "complet",
    "opportunites": 2,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T18:25:14+00:00",
+   "mode": "complet",
+   "opportunites": 4,
    "nouveaux_paris": 0
   }
  ],
