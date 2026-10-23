@@ -1,40 +1,37 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T20:36:30+00:00",
+  "debut": "2026-10-23T20:41:06+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 28.1,
+   "polymarket": {
+    "secondes": 28.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 43.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 29 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 10.6,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 31.4,
+    "secondes": 9.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 37.7,
+    "secondes": 33.2,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.7,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -42,11 +39,15 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 37.9,
+    "secondes": 41.0,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 69.2,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,37 +55,43 @@
     ]
    },
    "smarkets": {
-    "secondes": 21.3,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 66.1,
+    "secondes": 148.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.9,
+    "secondes": 3.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.9,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 47230,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 47230,
+   "retard": []
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 880,
+   "age_max_s": 642,
    "age_min_s": 51,
-   "lignes": 179806,
-   "lignes_perimees": 838,
+   "lignes": 179966,
+   "lignes_perimees": 8,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -92,13 +99,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 36,
-    "choisi_autre": 8,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 1,
+    "head_200": 34,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 6,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 6,
+    "choisi_fixe": 8,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -106,62 +114,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Audax Italiano – Huachipato",
-     "source": "Pinnacle",
-     "cote_olybet": 1.92,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0588,
-     "aberrant": false
-    },
-    {
-     "match": "Audax Italiano – Huachipato",
+     "match": "Las Palmas – Real Sociedad B",
      "source": "PMU",
-     "cote_olybet": 1.92,
-     "cote_reference": 1.79,
-     "ecart_relatif": 0.0726,
+     "cote_olybet": 1.9,
+     "cote_reference": 1.72,
+     "ecart_relatif": 0.1047,
      "aberrant": false
     },
     {
-     "match": "O´Higgins – Cobresal",
+     "match": "Cordoue – Eibar",
      "source": "Pinnacle",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.633,
-     "ecart_relatif": 0.0385,
+     "cote_olybet": 2.08,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0545,
      "aberrant": false
     },
     {
-     "match": "O´Higgins – Cobresal",
+     "match": "Cordoue – Eibar",
      "source": "PMU",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0329,
+     "cote_olybet": 2.08,
+     "cote_reference": 1.96,
+     "ecart_relatif": 0.0612,
      "aberrant": false
     },
     {
-     "match": "CD La Serena – Deportes Conception",
+     "match": "Almeria – Real Oviedo",
      "source": "Pinnacle",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.37,
-     "ecart_relatif": 0.0591,
+     "cote_olybet": 1.64,
+     "cote_reference": 1.719,
+     "ecart_relatif": 0.0462,
      "aberrant": false
     },
     {
-     "match": "Fakel Voronezh – Rodina",
-     "source": "Pinnacle",
-     "cote_olybet": 1.96,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0577,
-     "aberrant": false
-    },
-    {
-     "match": "Krasnodar – FC Baltika Kaliningrad",
-     "source": "Pinnacle",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.787,
-     "ecart_relatif": 0.0489,
+     "match": "Almeria – Real Oviedo",
+     "source": "PMU",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.49,
+     "ecart_relatif": 0.1007,
      "aberrant": false
     }
    ],
@@ -175,17 +167,17 @@
     {
      "match": "Gimnasia de La Plata – Club Atletico Sarmiento De Junin",
      "source": "Pinnacle",
-     "cote_netbet": 1.51,
+     "cote_netbet": 1.53,
      "cote_reference": 1.633,
-     "ecart_relatif": 0.0753,
+     "ecart_relatif": 0.063,
      "aberrant": false
     },
     {
      "match": "Gimnasia de La Plata – Club Atletico Sarmiento De Junin",
      "source": "PMU",
-     "cote_netbet": 1.51,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0066,
+     "cote_netbet": 1.53,
+     "cote_reference": 1.5,
+     "ecart_relatif": 0.02,
      "aberrant": false
     },
     {
@@ -256,22 +248,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T20:36:40+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T20:36:49+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T20:10:10+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T20:41:41+00:00",
    "books_premiere_lecture": "2026-10-23T18:54:58+00:00",
-   "books_derniere_lecture": "2026-10-23T20:37:01+00:00",
-   "ecart_enveloppe_secondes": 6111.0
+   "books_derniere_lecture": "2026-10-23T20:41:53+00:00",
+   "ecart_enveloppe_secondes": 6403.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 48697,
+   "mesures": 59787,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -287,25 +280,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T19:57:17+00:00"
   },
-  "fin": "2026-10-23T20:39:54+00:00",
+  "fin": "2026-10-23T20:46:29+00:00",
   "cotes": {
-   "francaises": 166783,
-   "pinnacle": 179806,
-   "polymarket": 0,
+   "francaises": 167253,
+   "pinnacle": 227196,
+   "polymarket": 37178,
    "smarkets": 3633
   },
-  "matchs_francais": 2194,
+  "matchs_francais": 2191,
   "opportunites": 5,
-  "opportunites_suspectes": 19,
+  "opportunites_suspectes": 44,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T02:21:34+00:00",
-   "mode": "complet",
-   "opportunites": 13,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T02:26:13+00:00",
    "mode": "complet",
@@ -1502,6 +1489,12 @@
   },
   {
    "debut": "2026-10-23T20:36:30+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T20:41:06+00:00",
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 0
