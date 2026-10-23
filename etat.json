@@ -1,8 +1,16 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T20:57:16+00:00",
+  "debut": "2026-10-23T21:02:00+00:00",
   "mode": "complet",
   "etapes": {
+   "pinnacle": {
+    "secondes": 24.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "polymarket": {
     "secondes": 30.0,
     "ok": false,
@@ -12,37 +20,28 @@
      "liste d'événements tronquée (plafond de pagination)"
     ]
    },
-   "pinnacle": {
-    "secondes": 30.9,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 45 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "olybet": {
-    "secondes": 13.7,
+    "secondes": 9.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.7,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 36.1,
+    "secondes": 32.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "winamax_direct": {
+    "secondes": 38.4,
+    "ok": true
+   },
    "unibet_direct": {
-    "secondes": 74.7,
+    "secondes": 74.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -50,7 +49,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -63,43 +62,57 @@
     "cache": true
    },
    "association": {
-    "secondes": 107.8,
+    "secondes": 105.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.8,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.6,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 47866,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 704,
-   "age_min_s": 100,
-   "lignes": 180880,
-   "lignes_perimees": 8,
-   "rechauffeur": "indisponible",
+   "age_max_s": 807,
+   "age_min_s": 68,
+   "lignes": 180852,
+   "lignes_perimees": 3600,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 42,
+    "head_200": 40,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 6,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 5,
+    "choisi_fixe": 9,
+    "sport_vide": 7
    }
   },
   "olybet_source": "direct",
@@ -107,78 +120,30 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 3,
    "comparaisons": [
     {
-     "match": "San Lorenzo de Almagro – Newell's Old Boys",
+     "match": "Naftan Novopolotsk – FC Isloch",
      "source": "Pinnacle",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.68,
-     "ecart_relatif": 0.0634,
+     "cote_olybet": 6.5,
+     "cote_reference": 6.79,
+     "ecart_relatif": 0.0427,
      "aberrant": false
     },
     {
-     "match": "San Lorenzo de Almagro – Newell's Old Boys",
-     "source": "PMU",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0913,
-     "aberrant": false
-    },
-    {
-     "match": "Atlético Talleres – CSD Defensa y Justicia",
-     "source": "PMU",
-     "cote_olybet": 2.18,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0686,
-     "aberrant": false
-    },
-    {
-     "match": "Tigre – Club Atlético Tucumán",
+     "match": "Gomel – Dinamo Minsk",
      "source": "Pinnacle",
-     "cote_olybet": 1.65,
-     "cote_reference": 1.758,
-     "ecart_relatif": 0.0612,
+     "cote_olybet": 4.6,
+     "cote_reference": 4.78,
+     "ecart_relatif": 0.0377,
      "aberrant": false
     },
     {
-     "match": "Tigre – Club Atlético Tucumán",
-     "source": "PMU",
-     "cote_olybet": 1.65,
-     "cote_reference": 1.65,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Banfield – Lanus",
+     "match": "BATE Borisov – Belshina Babrouïsk",
      "source": "Pinnacle",
-     "cote_olybet": 3.47,
-     "cote_reference": 3.78,
-     "ecart_relatif": 0.082,
-     "aberrant": false
-    },
-    {
-     "match": "Banfield – Lanus",
-     "source": "PMU",
-     "cote_olybet": 3.47,
-     "cote_reference": 3.2,
-     "ecart_relatif": 0.0844,
-     "aberrant": false
-    },
-    {
-     "match": "Gimnasia y Esgrima de Mendoza – Platense Buenos Aires",
-     "source": "Pinnacle",
-     "cote_olybet": 2.41,
-     "cote_reference": 2.58,
-     "ecart_relatif": 0.0659,
-     "aberrant": false
-    },
-    {
-     "match": "Gimnasia y Esgrima de Mendoza – Platense Buenos Aires",
-     "source": "PMU",
-     "cote_olybet": 2.41,
-     "cote_reference": 2.35,
-     "ecart_relatif": 0.0255,
+     "cote_olybet": 2.02,
+     "cote_reference": 2.06,
+     "ecart_relatif": 0.0194,
      "aberrant": false
     }
    ],
@@ -187,38 +152,22 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Gimnasia de La Plata – Club Atletico Sarmiento De Junin",
-     "source": "Pinnacle",
-     "cote_netbet": 1.55,
-     "cote_reference": 1.625,
-     "ecart_relatif": 0.0462,
-     "aberrant": false
-    },
-    {
-     "match": "Gimnasia de La Plata – Club Atletico Sarmiento De Junin",
-     "source": "PMU",
-     "cote_netbet": 1.55,
-     "cote_reference": 1.5,
-     "ecart_relatif": 0.0333,
-     "aberrant": false
-    },
-    {
      "match": "Gimnasia Mendoza – Platense",
      "source": "Pinnacle",
-     "cote_netbet": 2.35,
+     "cote_netbet": 2.4,
      "cote_reference": 2.58,
-     "ecart_relatif": 0.0891,
+     "ecart_relatif": 0.0698,
      "aberrant": false
     },
     {
      "match": "Gimnasia Mendoza – Platense",
      "source": "PMU",
-     "cote_netbet": 2.35,
-     "cote_reference": 2.35,
-     "ecart_relatif": 0.0,
+     "cote_netbet": 2.4,
+     "cote_reference": 2.38,
+     "ecart_relatif": 0.0084,
      "aberrant": false
     },
     {
@@ -268,28 +217,36 @@
      "cote_reference": 3.55,
      "ecart_relatif": 0.0986,
      "aberrant": false
+    },
+    {
+     "match": "Cruzeiro – Club Do Remo",
+     "source": "Pinnacle",
+     "cote_netbet": 1.25,
+     "cote_reference": 1.301,
+     "ecart_relatif": 0.0393,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T20:57:28+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T20:57:38+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T21:02:11+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T21:02:32+00:00",
    "books_premiere_lecture": "2026-10-23T18:54:58+00:00",
-   "books_derniere_lecture": "2026-10-23T20:57:48+00:00",
-   "ecart_enveloppe_secondes": 7360.0
+   "books_derniere_lecture": "2026-10-23T21:02:34+00:00",
+   "ecart_enveloppe_secondes": 7654.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.1
+   "age_min": 9.8
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 51489,
+   "mesures": 50139,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -305,25 +262,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T20:55:40+00:00"
   },
-  "fin": "2026-10-23T21:01:04+00:00",
+  "fin": "2026-10-23T21:05:46+00:00",
   "cotes": {
-   "francaises": 171814,
-   "pinnacle": 180880,
+   "francaises": 187029,
+   "pinnacle": 228718,
    "polymarket": 0,
    "smarkets": 3961
   },
-  "matchs_francais": 2193,
-  "opportunites": 4,
+  "matchs_francais": 2192,
+  "opportunites": 3,
   "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T02:40:10+00:00",
-   "mode": "complet",
-   "opportunites": 13,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T02:45:33+00:00",
    "mode": "complet",
@@ -1522,6 +1473,12 @@
    "debut": "2026-10-23T20:57:16+00:00",
    "mode": "complet",
    "opportunites": 4,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T21:02:00+00:00",
+   "mode": "complet",
+   "opportunites": 3,
    "nouveaux_paris": 0
   }
  ],
