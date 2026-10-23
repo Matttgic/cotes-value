@@ -1,39 +1,36 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T21:33:35+00:00",
+  "debut": "2026-10-23T21:39:32+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 23.8,
+   "polymarket": {
+    "secondes": 26.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 28.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 10.5,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 33.9,
+    "secondes": 7.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 35.9,
+    "secondes": 32.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -41,11 +38,15 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 40.8,
+    "secondes": 41.8,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 67.9,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.5,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,41 +59,29 @@
     "cache": true
    },
    "association": {
-    "secondes": 169.0,
+    "secondes": 148.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.8,
+    "secondes": 3.3,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 1.1,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 48159,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 887,
-   "age_min_s": 154,
-   "lignes": 181246,
-   "lignes_perimees": 5340,
+   "age_max_s": 826,
+   "age_min_s": 68,
+   "lignes": 181154,
+   "lignes_perimees": 120,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -103,12 +92,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 39,
+    "head_200": 28,
+    "choisi_fixe": 9,
     "head_403": 2,
     "ortho_refusee": 2,
     "choisi_autre": 5,
-    "choisi_fixe": 9,
-    "sport_vide": 6
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -116,54 +106,30 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 3,
    "comparaisons": [
     {
-     "match": "AL-Riyad – Al-Taawoun Buraidah",
+     "match": "Connahs Quay Nomads FC – Llandudno",
      "source": "Pinnacle",
-     "cote_olybet": 2.86,
-     "cote_reference": 3.04,
-     "ecart_relatif": 0.0592,
+     "cote_olybet": 1.39,
+     "cote_reference": 1.42,
+     "ecart_relatif": 0.0213,
      "aberrant": false
     },
     {
-     "match": "AL-Riyad – Al-Taawoun Buraidah",
-     "source": "PMU",
-     "cote_olybet": 2.86,
-     "cote_reference": 3.1,
-     "ecart_relatif": 0.0774,
-     "aberrant": false
-    },
-    {
-     "match": "Al Kholood – Al Ettifaq Club",
+     "match": "Barry Town United – Haverfordwest",
      "source": "Pinnacle",
-     "cote_olybet": 2.44,
-     "cote_reference": 2.58,
-     "ecart_relatif": 0.0543,
+     "cote_olybet": 2.0,
+     "cote_reference": 2.06,
+     "ecart_relatif": 0.0291,
      "aberrant": false
     },
     {
-     "match": "Al Kholood – Al Ettifaq Club",
+     "match": "Barry Town United – Haverfordwest",
      "source": "PMU",
-     "cote_olybet": 2.44,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.0702,
-     "aberrant": false
-    },
-    {
-     "match": "Neom SC – Abha",
-     "source": "Pinnacle",
-     "cote_olybet": 1.46,
-     "cote_reference": 1.516,
-     "ecart_relatif": 0.0366,
-     "aberrant": false
-    },
-    {
-     "match": "Neom SC – Abha",
-     "source": "PMU",
-     "cote_olybet": 1.46,
-     "cote_reference": 1.47,
-     "ecart_relatif": 0.0068,
+     "cote_olybet": 2.0,
+     "cote_reference": 1.75,
+     "ecart_relatif": 0.1429,
      "aberrant": false
     }
    ],
@@ -194,8 +160,8 @@
      "match": "Audax Italiano – Huachipato",
      "source": "Pinnacle",
      "cote_netbet": 1.87,
-     "cote_reference": 2.05,
-     "ecart_relatif": 0.0878,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0833,
      "aberrant": false
     },
     {
@@ -250,23 +216,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T21:33:47+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T21:34:08+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T21:39:42+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T21:39:51+00:00",
    "books_premiere_lecture": "2026-10-23T19:00:53+00:00",
-   "books_derniere_lecture": "2026-10-23T21:34:11+00:00",
-   "ecart_enveloppe_secondes": 9195.0
+   "books_derniere_lecture": "2026-10-23T21:40:02+00:00",
+   "ecart_enveloppe_secondes": 9538.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.7
+   "age_min": 10.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 46468,
+   "mesures": 60180,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -282,25 +248,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T20:55:40+00:00"
   },
-  "fin": "2026-10-23T21:38:28+00:00",
+  "fin": "2026-10-23T21:44:41+00:00",
   "cotes": {
-   "francaises": 183879,
-   "pinnacle": 229405,
-   "polymarket": 0,
+   "francaises": 167494,
+   "pinnacle": 181154,
+   "polymarket": 37510,
    "smarkets": 4030
   },
-  "matchs_francais": 2188,
-  "opportunites": 4,
-  "opportunites_suspectes": 19,
-  "nouveaux_paris": 0
+  "matchs_francais": 2204,
+  "opportunites": 3,
+  "opportunites_suspectes": 46,
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-23T03:13:37+00:00",
-   "mode": "complet",
-   "opportunites": 15,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T03:18:33+00:00",
    "mode": "complet",
@@ -1500,6 +1460,12 @@
    "mode": "complet",
    "opportunites": 4,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T21:39:32+00:00",
+   "mode": "complet",
+   "opportunites": 3,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-23T20:55:40+00:00",
