@@ -1,32 +1,31 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T22:26:51+00:00",
+  "debut": "2026-10-23T22:31:27+00:00",
   "mode": "complet",
   "etapes": {
    "pinnacle": {
-    "secondes": 27.1,
+    "secondes": 24.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 29.9,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
     ]
    },
    "olybet": {
-    "secondes": 10.1,
+    "secondes": 8.3,
     "ok": true
    },
-   "pmu_direct": {
-    "secondes": 32.5,
+   "winamax_direct": {
+    "secondes": 33.3,
     "ok": true
    },
    "netbet": {
@@ -37,20 +36,29 @@
      "budget"
     ]
    },
-   "winamax_direct": {
+   "pmu_direct": {
     "secondes": 37.5,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 59.1,
+    "secondes": 47.2,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "budget"
+     "réseau",
+     "réseau",
+     "réseau",
+     "réseau",
+     "réseau",
+     "réseau",
+     "réseau",
+     "réseau",
+     "réseau",
+     "réseau"
     ]
    },
    "smarkets": {
@@ -59,15 +67,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 54.0,
+    "secondes": 88.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.4,
+    "secondes": 1.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.7,
     "ok": true
    }
   },
@@ -78,27 +86,23 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 637,
-   "age_min_s": 29,
+   "age_max_s": 737,
+   "age_min_s": 2,
    "lignes": 182377,
-   "lignes_perimees": 220,
-   "rechauffeur": "ok",
+   "lignes_perimees": 2202,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
-    "choisi_autre": 13,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_fixe": 1,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "head_200": 38,
+    "head_403": 3,
+    "ortho_refusee": 3,
+    "choisi_autre": 8,
+    "choisi_fixe": 6,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -106,62 +110,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Reykjavik – Breidablik Kopavogur",
+     "match": "Levadia Tallinn – Harju JK Laagri",
      "source": "Pinnacle",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.602,
-     "ecart_relatif": 0.0202,
+     "cote_olybet": 1.25,
+     "cote_reference": 1.282,
+     "ecart_relatif": 0.0247,
      "aberrant": false
     },
     {
-     "match": "FH Hafnarfjordur – Akureyri",
-     "source": "Pinnacle",
-     "cote_olybet": 2.0,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0385,
-     "aberrant": false
-    },
-    {
-     "match": "FH Hafnarfjordur – Akureyri",
+     "match": "Levadia Tallinn – Harju JK Laagri",
      "source": "PMU",
-     "cote_olybet": 2.0,
-     "cote_reference": 1.96,
-     "ecart_relatif": 0.0204,
+     "cote_olybet": 1.25,
+     "cote_reference": 1.19,
+     "ecart_relatif": 0.0504,
      "aberrant": false
     },
     {
-     "match": "IA Akranes – Keflavik",
+     "match": "Academica – Leixoes",
      "source": "Pinnacle",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.538,
-     "ecart_relatif": 0.0245,
+     "cote_olybet": 2.75,
+     "cote_reference": 2.95,
+     "ecart_relatif": 0.0678,
      "aberrant": false
     },
     {
-     "match": "IA Akranes – Keflavik",
+     "match": "Academica – Leixoes",
      "source": "PMU",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.53,
-     "ecart_relatif": 0.0196,
+     "cote_olybet": 2.75,
+     "cote_reference": 2.43,
+     "ecart_relatif": 0.1317,
      "aberrant": false
     },
     {
-     "match": "Vikingur Reykjavik – Fram Reykjavik",
+     "match": "Farense – Penafiel",
      "source": "Pinnacle",
-     "cote_olybet": 1.49,
-     "cote_reference": 1.546,
-     "ecart_relatif": 0.0365,
+     "cote_olybet": 1.9,
+     "cote_reference": 1.99,
+     "ecart_relatif": 0.0453,
      "aberrant": false
     },
     {
-     "match": "Vikingur Reykjavik – Fram Reykjavik",
+     "match": "Farense – Penafiel",
      "source": "PMU",
-     "cote_olybet": 1.49,
-     "cote_reference": 1.45,
-     "ecart_relatif": 0.0276,
+     "cote_olybet": 1.9,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0686,
      "aberrant": false
     }
    ],
@@ -172,22 +168,6 @@
    "seuil_relatif": 0.15,
    "examines": 9,
    "comparaisons": [
-    {
-     "match": "Libertad – Sportivo Luqueño",
-     "source": "Pinnacle",
-     "cote_netbet": 1.4,
-     "cote_reference": 1.488,
-     "ecart_relatif": 0.059,
-     "aberrant": false
-    },
-    {
-     "match": "Libertad – Sportivo Luqueño",
-     "source": "PMU",
-     "cote_netbet": 1.4,
-     "cote_reference": 1.42,
-     "ecart_relatif": 0.0141,
-     "aberrant": false
-    },
     {
      "match": "Audax Italiano – Huachipato",
      "source": "Pinnacle",
@@ -243,28 +223,44 @@
      "cote_reference": 1.65,
      "ecart_relatif": 0.0,
      "aberrant": false
+    },
+    {
+     "match": "Necaxa – FC Juárez",
+     "source": "Pinnacle",
+     "cote_netbet": 1.63,
+     "cote_reference": 1.735,
+     "ecart_relatif": 0.0607,
+     "aberrant": false
+    },
+    {
+     "match": "Necaxa – FC Juárez",
+     "source": "PMU",
+     "cote_netbet": 1.63,
+     "cote_reference": 1.63,
+     "ecart_relatif": 0.0,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T22:27:01+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T22:27:10+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T22:31:38+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T22:31:47+00:00",
    "books_premiere_lecture": "2026-10-23T19:52:59+00:00",
-   "books_derniere_lecture": "2026-10-23T22:27:22+00:00",
-   "ecart_enveloppe_secondes": 9251.0
+   "books_derniere_lecture": "2026-10-23T22:31:58+00:00",
+   "ecart_enveloppe_secondes": 9528.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 6.0
+   "age_min": 10.6
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 625,
+   "conforme": 626,
    "a_verifier": 9,
-   "non_conforme": 11,
-   "mesures": 48320,
+   "non_conforme": 10,
+   "mesures": 60495,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -280,25 +276,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T21:54:07+00:00"
   },
-  "fin": "2026-10-23T22:29:41+00:00",
+  "fin": "2026-10-23T22:35:14+00:00",
   "cotes": {
-   "francaises": 177101,
+   "francaises": 177688,
    "pinnacle": 182377,
-   "polymarket": 0,
+   "polymarket": 37239,
    "smarkets": 3961
   },
-  "matchs_francais": 2227,
+  "matchs_francais": 2223,
   "opportunites": 2,
-  "opportunites_suspectes": 22,
-  "nouveaux_paris": 1
+  "opportunites_suspectes": 49,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T04:02:37+00:00",
-   "mode": "complet",
-   "opportunites": 15,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T04:07:16+00:00",
    "mode": "complet",
@@ -1498,6 +1488,12 @@
    "mode": "complet",
    "opportunites": 2,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-23T22:31:27+00:00",
+   "mode": "complet",
+   "opportunites": 2,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-23T21:54:07+00:00",
