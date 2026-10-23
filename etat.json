@@ -1,16 +1,8 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T20:15:03+00:00",
+  "debut": "2026-10-23T20:20:42+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 25.5,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
     "secondes": 30.0,
     "ok": false,
@@ -21,33 +13,39 @@
      "prix bid/ask invalides"
     ]
    },
+   "pinnacle": {
+    "secondes": 34.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 22 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "olybet": {
-    "secondes": 6.4,
+    "secondes": 10.2,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.4,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 35.8,
+    "secondes": 32.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "winamax_direct": {
+    "secondes": 37.5,
+    "ok": true
+   },
    "unibet_direct": {
-    "secondes": 74.1,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 58.9,
+    "ok": true
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -58,16 +56,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 22.8,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 163.3,
+    "secondes": 103.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.8,
+    "secondes": 2.7,
     "ok": true
    },
    "cotes_cloture": {
@@ -79,40 +80,37 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 47314,
+   "sports": [
+    "mma"
+   ],
+   "requetes": 1,
+   "lignes": 82,
    "erreurs": [],
-   "pause": true,
-   "cache_lignes": 47314,
-   "retard": [
-    "football"
-   ]
+   "cache_lignes": 0,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 881,
-   "age_min_s": 270,
-   "lignes": 179383,
-   "lignes_perimees": 3005,
-   "rechauffeur": "ok",
+   "age_max_s": 842,
+   "age_min_s": 48,
+   "lignes": 178954,
+   "lignes_perimees": 1324,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 40,
-    "head_403": 2,
+    "head_200": 22,
+    "choisi_autre": 4,
+    "choisi_fixe": 6,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_fixe": 12,
-    "choisi_autre": 2,
-    "sport_vide": 6
+    "reprise_403": 2,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -120,54 +118,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Liepaja 2014 – FK Tukums 2000/Telms",
+     "match": "KVC Westerlo – SK Beveren",
      "source": "Pinnacle",
-     "cote_olybet": 1.4,
-     "cote_reference": 1.444,
-     "ecart_relatif": 0.0307,
+     "cote_olybet": 2.01,
+     "cote_reference": 2.14,
+     "ecart_relatif": 0.0607,
      "aberrant": false
     },
     {
-     "match": "Liepaja 2014 – FK Tukums 2000/Telms",
+     "match": "KVC Westerlo – SK Beveren",
      "source": "PMU",
-     "cote_olybet": 1.4,
-     "cote_reference": 1.41,
-     "ecart_relatif": 0.0071,
+     "cote_olybet": 2.01,
+     "cote_reference": 1.88,
+     "ecart_relatif": 0.0691,
      "aberrant": false
     },
     {
-     "match": "FC Zlin – Sigma Olomouc",
+     "match": "RAA  Louviéroise – Zulte Waregem",
      "source": "Pinnacle",
-     "cote_olybet": 3.83,
-     "cote_reference": 4.13,
-     "ecart_relatif": 0.0726,
+     "cote_olybet": 2.91,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0762,
      "aberrant": false
     },
     {
-     "match": "FC Zlin – Sigma Olomouc",
+     "match": "RAA  Louviéroise – Zulte Waregem",
      "source": "PMU",
-     "cote_olybet": 3.83,
-     "cote_reference": 3.65,
-     "ecart_relatif": 0.0493,
+     "cote_olybet": 2.91,
+     "cote_reference": 2.9,
+     "ecart_relatif": 0.0034,
      "aberrant": false
     },
     {
-     "match": "Slavia Prague – Mlada Boleslav",
+     "match": "Oud-Heverlee Leuven – Lommel SK",
      "source": "Pinnacle",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.253,
-     "ecart_relatif": 0.0265,
+     "cote_olybet": 1.82,
+     "cote_reference": 1.926,
+     "ecart_relatif": 0.055,
      "aberrant": false
     },
     {
-     "match": "Slavia Prague – Mlada Boleslav",
+     "match": "Royal Antwerp – Sporting de Charleroi",
+     "source": "Pinnacle",
+     "cote_olybet": 3.78,
+     "cote_reference": 4.15,
+     "ecart_relatif": 0.0892,
+     "aberrant": false
+    },
+    {
+     "match": "Royal Antwerp – Sporting de Charleroi",
      "source": "PMU",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.2,
-     "ecart_relatif": 0.0167,
+     "cote_olybet": 3.78,
+     "cote_reference": 3.85,
+     "ecart_relatif": 0.0182,
+     "aberrant": false
+    },
+    {
+     "match": "Anorthosis – Omonia Aradippou",
+     "source": "Pinnacle",
+     "cote_olybet": 1.92,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0305,
      "aberrant": false
     }
    ],
@@ -181,33 +195,33 @@
     {
      "match": "Independiente del Valle – Universidad Catolica del Ecuador",
      "source": "Pinnacle",
-     "cote_netbet": 1.62,
-     "cote_reference": 1.769,
-     "ecart_relatif": 0.0843,
+     "cote_netbet": 1.63,
+     "cote_reference": 1.806,
+     "ecart_relatif": 0.0977,
      "aberrant": false
     },
     {
      "match": "Independiente del Valle – Universidad Catolica del Ecuador",
      "source": "PMU",
-     "cote_netbet": 1.62,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0658,
+     "cote_netbet": 1.63,
+     "cote_reference": 1.56,
+     "ecart_relatif": 0.0449,
      "aberrant": false
     },
     {
      "match": "Gimnasia de La Plata – Club Atletico Sarmiento De Junin",
      "source": "Pinnacle",
      "cote_netbet": 1.5,
-     "cote_reference": 1.575,
-     "ecart_relatif": 0.0474,
+     "cote_reference": 1.588,
+     "ecart_relatif": 0.0555,
      "aberrant": false
     },
     {
      "match": "Gimnasia de La Plata – Club Atletico Sarmiento De Junin",
      "source": "PMU",
      "cote_netbet": 1.5,
-     "cote_reference": 1.53,
-     "ecart_relatif": 0.0196,
+     "cote_reference": 1.5,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
@@ -262,23 +276,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T20:10:10+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T20:15:24+00:00",
-   "books_premiere_lecture": "2026-10-23T17:44:43+00:00",
-   "books_derniere_lecture": "2026-10-23T20:15:37+00:00",
-   "ecart_enveloppe_secondes": 9041.0
+   "pinnacle_premiere_lecture": "2026-10-23T20:20:53+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T20:21:17+00:00",
+   "books_premiere_lecture": "2026-10-23T18:54:58+00:00",
+   "books_derniere_lecture": "2026-10-23T20:21:19+00:00",
+   "ecart_enveloppe_secondes": 5179.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 10.8
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 50034,
+   "mesures": 48345,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -294,25 +307,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T19:57:17+00:00"
   },
-  "fin": "2026-10-23T20:19:48+00:00",
+  "fin": "2026-10-23T20:24:53+00:00",
   "cotes": {
-   "francaises": 182993,
-   "pinnacle": 226697,
+   "francaises": 174490,
+   "pinnacle": 179036,
    "polymarket": 0,
-   "smarkets": 3733
+   "smarkets": 3673
   },
-  "matchs_francais": 2180,
+  "matchs_francais": 2186,
   "opportunites": 5,
   "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T02:02:36+00:00",
-   "mode": "complet",
-   "opportunites": 12,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-23T02:07:14+00:00",
    "mode": "complet",
@@ -1509,6 +1516,12 @@
   },
   {
    "debut": "2026-10-23T20:15:03+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T20:20:42+00:00",
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 0
