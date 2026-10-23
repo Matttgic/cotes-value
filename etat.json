@@ -1,56 +1,56 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T14:38:05+00:00",
+  "debut": "2026-10-23T14:43:26+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 28.3,
+   "polymarket": {
+    "secondes": 28.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 31.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
+   "olybet": {
+    "secondes": 11.7,
+    "ok": true
+   },
+   "netbet": {
+    "secondes": 37.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
+   "pmu_direct": {
+    "secondes": 38.7,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 45.0,
     "ok": false,
     "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
+     "lecture interrompue"
     ]
-   },
-   "olybet": {
-    "secondes": 10.9,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 36.7,
-    "ok": true
-   },
-   "netbet": {
-    "secondes": 38.0,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
-   "winamax_direct": {
-    "secondes": 44.1,
-    "ok": true
    },
    "unibet_direct": {
-    "secondes": 74.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 68.5,
+    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,23 +58,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 19.3,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 121.4,
+    "secondes": 125.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.3,
+    "secondes": 3.2,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 1.0,
     "ok": true
    }
   },
@@ -85,10 +82,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 638,
-   "age_min_s": 21,
-   "lignes": 188851,
-   "lignes_perimees": 8,
+   "age_max_s": 737,
+   "age_min_s": 322,
+   "lignes": 188843,
+   "lignes_perimees": 3752,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -96,13 +93,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 28,
-    "choisi_fixe": 9,
-    "head_403": 2,
+    "head_200": 25,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 5,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 6,
+    "choisi_fixe": 3,
+    "reprise_403": 1,
+    "reprise_403_ok": 1,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -110,30 +108,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 3,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Olympiakos Nicosie – Krasava Ypsonas",
+     "match": "Widzew Lodz – Gornik Zabrze",
      "source": "Pinnacle",
-     "cote_olybet": 1.81,
-     "cote_reference": 1.862,
-     "ecart_relatif": 0.028,
+     "cote_olybet": 3.07,
+     "cote_reference": 3.32,
+     "ecart_relatif": 0.0753,
      "aberrant": false
     },
     {
-     "match": "Anorthosis – Omonia Aradippou",
-     "source": "Pinnacle",
-     "cote_olybet": 2.02,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0288,
+     "match": "Widzew Lodz – Gornik Zabrze",
+     "source": "PMU",
+     "cote_olybet": 3.07,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.1164,
      "aberrant": false
     },
     {
-     "match": "FC Rustavi – Dinamo Tbilissi",
+     "match": "LKP Motor Lublin – Zaglebie Lubin",
      "source": "Pinnacle",
-     "cote_olybet": 2.87,
-     "cote_reference": 3.01,
-     "ecart_relatif": 0.0465,
+     "cote_olybet": 1.84,
+     "cote_reference": 1.971,
+     "ecart_relatif": 0.0664,
+     "aberrant": false
+    },
+    {
+     "match": "LKP Motor Lublin – Zaglebie Lubin",
+     "source": "PMU",
+     "cote_olybet": 1.84,
+     "cote_reference": 1.94,
+     "ecart_relatif": 0.0515,
+     "aberrant": false
+    },
+    {
+     "match": "Korona Kielce – GKS Katowice",
+     "source": "Pinnacle",
+     "cote_olybet": 2.05,
+     "cote_reference": 2.16,
+     "ecart_relatif": 0.0509,
+     "aberrant": false
+    },
+    {
+     "match": "Korona Kielce – GKS Katowice",
+     "source": "PMU",
+     "cote_olybet": 2.05,
+     "cote_reference": 2.02,
+     "ecart_relatif": 0.0149,
+     "aberrant": false
+    },
+    {
+     "match": "Pogon Szczecin – RKS Radomiak Radom",
+     "source": "Pinnacle",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.709,
+     "ecart_relatif": 0.0405,
+     "aberrant": false
+    },
+    {
+     "match": "Pogon Szczecin – RKS Radomiak Radom",
+     "source": "PMU",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.57,
+     "ecart_relatif": 0.0446,
      "aberrant": false
     }
    ],
@@ -147,41 +185,41 @@
     {
      "match": "FC Botosani – Petrolul Ploiesti",
      "source": "Pinnacle",
-     "cote_netbet": 1.78,
+     "cote_netbet": 1.75,
      "cote_reference": 1.847,
-     "ecart_relatif": 0.0365,
+     "ecart_relatif": 0.0528,
      "aberrant": false
     },
     {
      "match": "FC Botosani – Petrolul Ploiesti",
      "source": "PMU",
-     "cote_netbet": 1.78,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.022,
+     "cote_netbet": 1.75,
+     "cote_reference": 1.76,
+     "ecart_relatif": 0.0057,
      "aberrant": false
     },
     {
      "match": "Zira – Sumqayit",
      "source": "Pinnacle",
-     "cote_netbet": 1.62,
+     "cote_netbet": 1.63,
      "cote_reference": 1.847,
-     "ecart_relatif": 0.1231,
+     "ecart_relatif": 0.1177,
      "aberrant": false
     },
     {
      "match": "Zira – Sumqayit",
      "source": "PMU",
-     "cote_netbet": 1.62,
+     "cote_netbet": 1.63,
      "cote_reference": 1.67,
-     "ecart_relatif": 0.0299,
+     "ecart_relatif": 0.024,
      "aberrant": false
     },
     {
      "match": "Al Ittihad Jeddah – Al Diriyah",
      "source": "Pinnacle",
-     "cote_netbet": 1.68,
+     "cote_netbet": 1.61,
      "cote_reference": 1.658,
-     "ecart_relatif": 0.0133,
+     "ecart_relatif": 0.0289,
      "aberrant": false
     },
     {
@@ -220,23 +258,24 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T14:38:16+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T14:38:25+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T14:43:38+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T14:43:51+00:00",
    "books_premiere_lecture": "2026-10-23T12:34:00+00:00",
-   "books_derniere_lecture": "2026-10-23T14:38:37+00:00",
-   "ecart_enveloppe_secondes": 7465.0
+   "books_derniere_lecture": "2026-10-23T14:44:00+00:00",
+   "ecart_enveloppe_secondes": 7791.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 55368,
-   "matchs_suspects": 3
+   "mesures": 51655,
+   "matchs_suspects": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -251,25 +290,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T14:08:33+00:00"
   },
-  "fin": "2026-10-23T14:42:27+00:00",
+  "fin": "2026-10-23T14:48:05+00:00",
   "cotes": {
-   "francaises": 217513,
-   "pinnacle": 188851,
-   "polymarket": 0,
+   "francaises": 186033,
+   "pinnacle": 188843,
+   "polymarket": 36297,
    "smarkets": 3871
   },
-  "matchs_francais": 2755,
+  "matchs_francais": 2215,
   "opportunites": 10,
-  "opportunites_suspectes": 19,
+  "opportunites_suspectes": 32,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T21:11:34+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T21:16:12+00:00",
    "mode": "complet",
@@ -1466,6 +1499,12 @@
   },
   {
    "debut": "2026-10-23T14:38:05+00:00",
+   "mode": "complet",
+   "opportunites": 10,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T14:43:26+00:00",
    "mode": "complet",
    "opportunites": 10,
    "nouveaux_paris": 0
