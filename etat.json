@@ -1,52 +1,68 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T15:52:23+00:00",
+  "debut": "2026-10-23T15:58:36+00:00",
   "mode": "complet",
   "etapes": {
-   "polymarket": {
-    "secondes": 22.7,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
-    ]
-   },
    "pinnacle": {
-    "secondes": 26.3,
+    "secondes": 27.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
+   "polymarket": {
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ]
+   },
    "olybet": {
-    "secondes": 7.5,
+    "secondes": 11.8,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 21.1,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau",
+     "sport:2 : réseau",
+     "sport:3 : réseau",
+     "sport:4 : réseau",
+     "sport:5 : réseau",
+     "sport:6 : réseau",
+     "sport:9 : réseau",
+     "sport:10 : réseau",
+     "sport:12 : réseau",
+     "sport:16 : réseau"
+    ]
+   },
+   "pmu_direct": {
+    "secondes": 36.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 38.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "pmu_direct": {
-    "secondes": 40.2,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 41.2,
-    "ok": true
-   },
    "unibet_direct": {
-    "secondes": 56.3,
-    "ok": true
+    "secondes": 74.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,15 +75,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 158.2,
+    "secondes": 95.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.6,
+    "secondes": 3.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.1,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -78,27 +94,23 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 854,
-   "age_min_s": 106,
-   "lignes": 191818,
-   "lignes_perimees": 156,
-   "rechauffeur": "ok",
+   "age_max_s": 879,
+   "age_min_s": 37,
+   "lignes": 191756,
+   "lignes_perimees": 3976,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 32,
+    "head_200": 39,
+    "choisi_fixe": 1,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 8,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 13,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -106,62 +118,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Boyacá Chicó – Atlético Bucaramanga",
+     "match": "AFK Csikszereda Miercurea Ciuc – Voluntari",
      "source": "Pinnacle",
-     "cote_olybet": 3.3,
-     "cote_reference": 3.56,
-     "ecart_relatif": 0.073,
+     "cote_olybet": 2.59,
+     "cote_reference": 2.76,
+     "ecart_relatif": 0.0616,
      "aberrant": false
     },
     {
-     "match": "Boyacá Chicó – Atlético Bucaramanga",
+     "match": "AFK Csikszereda Miercurea Ciuc – Voluntari",
      "source": "PMU",
-     "cote_olybet": 3.3,
-     "cote_reference": 3.55,
-     "ecart_relatif": 0.0704,
+     "cote_olybet": 2.59,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.0571,
      "aberrant": false
     },
     {
-     "match": "Atlético Junior  Barranquilla – Aguilas Doradas Rionegro",
+     "match": "Corvinul Hunedoara – FC Universitatea Cluj",
      "source": "Pinnacle",
-     "cote_olybet": 1.84,
-     "cote_reference": 1.926,
-     "ecart_relatif": 0.0446,
+     "cote_olybet": 2.42,
+     "cote_reference": 2.61,
+     "ecart_relatif": 0.0728,
      "aberrant": false
     },
     {
-     "match": "América de Cali – Cúcuta Deportivo",
-     "source": "Pinnacle",
-     "cote_olybet": 1.27,
-     "cote_reference": 1.299,
-     "ecart_relatif": 0.0226,
-     "aberrant": false
-    },
-    {
-     "match": "América de Cali – Cúcuta Deportivo",
+     "match": "Corvinul Hunedoara – FC Universitatea Cluj",
      "source": "PMU",
-     "cote_olybet": 1.27,
-     "cote_reference": 1.23,
-     "ecart_relatif": 0.0325,
+     "cote_olybet": 2.42,
+     "cote_reference": 2.38,
+     "ecart_relatif": 0.0168,
      "aberrant": false
     },
     {
-     "match": "Once Caldas – Deportivo Pereira",
+     "match": "FCSB – Rapid Bucarest",
      "source": "Pinnacle",
-     "cote_olybet": 1.28,
-     "cote_reference": 1.315,
-     "ecart_relatif": 0.0262,
+     "cote_olybet": 2.08,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0459,
      "aberrant": false
     },
     {
-     "match": "Once Caldas – Deportivo Pereira",
+     "match": "FCSB – Rapid Bucarest",
      "source": "PMU",
-     "cote_olybet": 1.28,
-     "cote_reference": 1.18,
-     "ecart_relatif": 0.0847,
+     "cote_olybet": 2.08,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.04,
      "aberrant": false
     }
    ],
@@ -191,33 +195,33 @@
     {
      "match": "FK Radnicki Nis – Novi Pazar",
      "source": "Pinnacle",
-     "cote_netbet": 2.42,
-     "cote_reference": 2.57,
-     "ecart_relatif": 0.0584,
+     "cote_netbet": 2.5,
+     "cote_reference": 2.82,
+     "ecart_relatif": 0.1135,
      "aberrant": false
     },
     {
      "match": "FK Radnicki Nis – Novi Pazar",
      "source": "PMU",
-     "cote_netbet": 2.42,
+     "cote_netbet": 2.5,
      "cote_reference": 2.38,
-     "ecart_relatif": 0.0168,
+     "ecart_relatif": 0.0504,
      "aberrant": false
     },
     {
      "match": "IMT Novi Beograd – Zeleznicar Pancevo",
      "source": "Pinnacle",
-     "cote_netbet": 2.4,
-     "cote_reference": 2.7,
-     "ecart_relatif": 0.1111,
+     "cote_netbet": 2.35,
+     "cote_reference": 2.62,
+     "ecart_relatif": 0.1031,
      "aberrant": false
     },
     {
      "match": "Motor Lublin – Zaglebie Lubin",
      "source": "Pinnacle",
      "cote_netbet": 1.85,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0658,
+     "cote_reference": 1.99,
+     "ecart_relatif": 0.0704,
      "aberrant": false
     },
     {
@@ -248,24 +252,24 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T15:52:35+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T15:52:41+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T15:58:48+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T15:58:58+00:00",
    "books_premiere_lecture": "2026-10-23T15:17:06+00:00",
-   "books_derniere_lecture": "2026-10-23T15:52:51+00:00",
-   "ecart_enveloppe_secondes": 2135.0
+   "books_derniere_lecture": "2026-10-23T15:59:08+00:00",
+   "ecart_enveloppe_secondes": 2512.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.9
+   "age_min": 11.1
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 59999,
-   "matchs_suspects": 3
+   "mesures": 47465,
+   "matchs_suspects": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -280,25 +284,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T15:04:05+00:00"
   },
-  "fin": "2026-10-23T15:57:38+00:00",
+  "fin": "2026-10-23T16:02:12+00:00",
   "cotes": {
-   "francaises": 210053,
-   "pinnacle": 191818,
-   "polymarket": 36007,
+   "francaises": 190078,
+   "pinnacle": 191756,
+   "polymarket": 0,
    "smarkets": 3874
   },
-  "matchs_francais": 2722,
-  "opportunites": 11,
-  "opportunites_suspectes": 39,
+  "matchs_francais": 2178,
+  "opportunites": 9,
+  "opportunites_suspectes": 17,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T22:16:35+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T22:21:13+00:00",
    "mode": "complet",
@@ -1497,6 +1495,12 @@
    "debut": "2026-10-23T15:52:23+00:00",
    "mode": "complet",
    "opportunites": 11,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T15:58:36+00:00",
+   "mode": "complet",
+   "opportunites": 9,
    "nouveaux_paris": 0
   }
  ],
