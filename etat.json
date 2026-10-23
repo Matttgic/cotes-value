@@ -1,57 +1,57 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T19:52:29+00:00",
+  "debut": "2026-10-23T19:59:05+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 25.3,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
+     "liste d'événements tronquée (plafond de pagination)"
     ]
    },
    "pinnacle": {
-    "secondes": 29.2,
+    "secondes": 34.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 markets/straight : HTTP 403",
-     "sport 45 matchups : HTTP 403",
+     "sport 27 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 9.1,
+    "secondes": 10.4,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.4,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 37.5,
+    "secondes": 33.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.7,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
+   },
+   "winamax_direct": {
+    "secondes": 43.2,
+    "ok": true
    },
    "unibet_direct": {
     "secondes": 75.0,
-    "ok": true,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "budget"
+     "lecture interrompue"
     ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -64,45 +64,55 @@
     "cache": true
    },
    "association": {
-    "secondes": 124.1,
+    "secondes": 131.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.8,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.5,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 47335,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 47335,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 744,
-   "age_min_s": 52,
-   "lignes": 179313,
-   "lignes_perimees": 264,
-   "rechauffeur": "ok",
+   "age_max_s": 839,
+   "age_min_s": 214,
+   "lignes": 180030,
+   "lignes_perimees": 3919,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 8,
-    "choisi_fixe": 5,
-    "choisi_autre": 2,
-    "head_403": 1,
-    "reprise_403": 2,
-    "sport_vide": 5
+    "head_200": 39,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "choisi_fixe": 10,
+    "choisi_autre": 4,
+    "reprise_403": 1,
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -110,86 +120,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Newcastle   Jets – Macarthur FC",
+     "match": "Hapoël Jérusalem – Hapoël Tel-Aviv",
      "source": "Pinnacle",
-     "cote_olybet": 1.93,
-     "cote_reference": 2.09,
-     "ecart_relatif": 0.0766,
+     "cote_olybet": 5.7,
+     "cote_reference": 6.32,
+     "ecart_relatif": 0.0981,
      "aberrant": false
     },
     {
-     "match": "Newcastle   Jets – Macarthur FC",
-     "source": "PMU",
-     "cote_olybet": 1.93,
-     "cote_reference": 1.91,
-     "ecart_relatif": 0.0105,
-     "aberrant": false
-    },
-    {
-     "match": "Wellington Phoenix – Central Coast Mariners",
+     "match": "Hapoel Ramat Gan Givatayim FC – Maccabi Petakh Tikva",
      "source": "Pinnacle",
-     "cote_olybet": 1.73,
-     "cote_reference": 1.84,
-     "ecart_relatif": 0.0599,
+     "cote_olybet": 2.56,
+     "cote_reference": 2.71,
+     "ecart_relatif": 0.0554,
      "aberrant": false
     },
     {
-     "match": "Wellington Phoenix – Central Coast Mariners",
-     "source": "PMU",
-     "cote_olybet": 1.73,
-     "cote_reference": 1.72,
-     "ecart_relatif": 0.0058,
-     "aberrant": false
-    },
-    {
-     "match": "Sydney – Adelaide United",
+     "match": "Maccabi Tel-Aviv – Hapoël Haïfa",
      "source": "Pinnacle",
-     "cote_olybet": 2.07,
-     "cote_reference": 2.22,
-     "ecart_relatif": 0.0676,
+     "cote_olybet": 1.22,
+     "cote_reference": 1.249,
+     "ecart_relatif": 0.0235,
      "aberrant": false
     },
     {
-     "match": "Sydney – Adelaide United",
-     "source": "PMU",
-     "cote_olybet": 2.07,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0248,
-     "aberrant": false
-    },
-    {
-     "match": "Melbourne Victory – Melbourne City",
+     "match": "Ironi Tiberias FC – Maccabi Netanya",
      "source": "Pinnacle",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.59,
-     "ecart_relatif": 0.0849,
-     "aberrant": false
-    },
-    {
-     "match": "Melbourne Victory – Melbourne City",
-     "source": "PMU",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0872,
-     "aberrant": false
-    },
-    {
-     "match": "Western Sydney Wanderers – Auckland FC",
-     "source": "Pinnacle",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.59,
-     "ecart_relatif": 0.0849,
-     "aberrant": false
-    },
-    {
-     "match": "Western Sydney Wanderers – Auckland FC",
-     "source": "PMU",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.0444,
+     "cote_olybet": 4.4,
+     "cote_reference": 4.8,
+     "ecart_relatif": 0.0833,
      "aberrant": false
     }
    ],
@@ -203,33 +165,33 @@
     {
      "match": "Rubio Ñú – Guaraní Asuncion",
      "source": "Pinnacle",
-     "cote_netbet": 2.85,
+     "cote_netbet": 2.82,
      "cote_reference": 3.17,
-     "ecart_relatif": 0.1009,
+     "ecart_relatif": 0.1104,
      "aberrant": false
     },
     {
      "match": "Rubio Ñú – Guaraní Asuncion",
      "source": "PMU",
-     "cote_netbet": 2.85,
+     "cote_netbet": 2.82,
      "cote_reference": 2.85,
-     "ecart_relatif": 0.0,
+     "ecart_relatif": 0.0105,
      "aberrant": false
     },
     {
      "match": "Independiente del Valle – Universidad Catolica del Ecuador",
      "source": "Pinnacle",
-     "cote_netbet": 1.55,
+     "cote_netbet": 1.57,
      "cote_reference": 1.719,
-     "ecart_relatif": 0.0985,
+     "ecart_relatif": 0.0869,
      "aberrant": false
     },
     {
      "match": "Independiente del Valle – Universidad Catolica del Ecuador",
      "source": "PMU",
-     "cote_netbet": 1.55,
+     "cote_netbet": 1.57,
      "cote_reference": 1.47,
-     "ecart_relatif": 0.0544,
+     "ecart_relatif": 0.068,
      "aberrant": false
     },
     {
@@ -284,23 +246,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T19:52:39+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T19:52:50+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T19:47:55+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T19:59:34+00:00",
    "books_premiere_lecture": "2026-10-23T17:44:43+00:00",
-   "books_derniere_lecture": "2026-10-23T19:52:59+00:00",
-   "ecart_enveloppe_secondes": 7687.0
+   "books_derniere_lecture": "2026-10-23T19:59:42+00:00",
+   "ecart_enveloppe_secondes": 8091.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.1
+   "age_min": 11.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 63326,
+   "mesures": 37402,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -314,27 +276,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-23T18:58:49+00:00"
+   "dernier_reglement": "2026-10-23T19:57:17+00:00"
   },
-  "fin": "2026-10-23T19:57:05+00:00",
+  "fin": "2026-10-23T20:03:19+00:00",
   "cotes": {
-   "francaises": 176733,
-   "pinnacle": 179313,
-   "polymarket": 35952,
+   "francaises": 129077,
+   "pinnacle": 227365,
+   "polymarket": 0,
    "smarkets": 3710
   },
-  "matchs_francais": 2177,
+  "matchs_francais": 1727,
   "opportunites": 5,
-  "opportunites_suspectes": 40,
+  "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T01:44:02+00:00",
-   "mode": "complet",
-   "opportunites": 10,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T01:48:39+00:00",
    "mode": "complet",
@@ -1531,6 +1487,12 @@
   },
   {
    "debut": "2026-10-23T19:52:29+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T19:59:05+00:00",
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 0
