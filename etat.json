@@ -1,40 +1,35 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T23:13:23+00:00",
+  "debut": "2026-10-23T23:20:08+00:00",
   "mode": "complet",
   "etapes": {
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
-    ]
-   },
    "pinnacle": {
-    "secondes": 32.3,
+    "secondes": 22.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 6 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "olybet": {
-    "secondes": 10.2,
-    "ok": true
+   "polymarket": {
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ]
    },
-   "unibet_direct": {
-    "secondes": 25.1,
+   "olybet": {
+    "secondes": 7.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.4,
+    "secondes": 32.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -42,11 +37,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 42.0,
+    "secondes": 39.6,
     "ok": true
    },
+   "unibet_direct": {
+    "secondes": 74.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,23 +57,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 35.3,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 152.5,
+    "secondes": 170.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.4,
+    "secondes": 2.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.7,
     "ok": true
    }
   },
@@ -80,34 +80,37 @@
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 0,
+   "lignes": 48652,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 0,
-   "retard": []
+   "cache_lignes": 48652,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 705,
-   "age_min_s": 99,
-   "lignes": 182470,
-   "lignes_perimees": 216,
-   "rechauffeur": "indisponible",
+   "age_max_s": 881,
+   "age_min_s": 13,
+   "lignes": 182348,
+   "lignes_perimees": 5657,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
     "head_200": 35,
-    "choisi_autre": 10,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 3,
-    "reprise_403": 1,
-    "matchups_sans_speciaux": 1,
+    "choisi_autre": 7,
+    "choisi_fixe": 6,
     "sport_vide": 6
    }
   },
@@ -116,70 +119,86 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Gil Vicente – FC Porto",
+     "match": "AL-Riyad – Al-Taawoun Buraidah",
      "source": "Pinnacle",
-     "cote_olybet": 6.8,
-     "cote_reference": 7.54,
-     "ecart_relatif": 0.0981,
+     "cote_olybet": 2.7,
+     "cote_reference": 2.88,
+     "ecart_relatif": 0.0625,
      "aberrant": false
     },
     {
-     "match": "Gil Vicente – FC Porto",
+     "match": "AL-Riyad – Al-Taawoun Buraidah",
      "source": "PMU",
-     "cote_olybet": 6.8,
-     "cote_reference": 8.0,
-     "ecart_relatif": 0.15,
+     "cote_olybet": 2.7,
+     "cote_reference": 2.7,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Estrela Amadora – Casa Pia AC",
+     "match": "Al Kholood – Al Ettifaq Club",
      "source": "Pinnacle",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.73,
-     "ecart_relatif": 0.0346,
+     "cote_olybet": 2.44,
+     "cote_reference": 2.58,
+     "ecart_relatif": 0.0543,
      "aberrant": false
     },
     {
-     "match": "Estrela Amadora – Casa Pia AC",
+     "match": "Al Kholood – Al Ettifaq Club",
      "source": "PMU",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0245,
+     "cote_olybet": 2.44,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0702,
      "aberrant": false
     },
     {
-     "match": "FC Alverca – Arouca",
+     "match": "Neom SC – Abha",
      "source": "Pinnacle",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0459,
+     "cote_olybet": 1.46,
+     "cote_reference": 1.516,
+     "ecart_relatif": 0.0366,
      "aberrant": false
     },
     {
-     "match": "FC Alverca – Arouca",
+     "match": "Neom SC – Abha",
      "source": "PMU",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0297,
+     "cote_olybet": 1.46,
+     "cote_reference": 1.47,
+     "ecart_relatif": 0.0068,
      "aberrant": false
     },
     {
-     "match": "Eyupspor – Kasimpasa",
+     "match": "Glasgow Rangers – St. Johnstone",
      "source": "Pinnacle",
-     "cote_olybet": 5.0,
-     "cote_reference": 5.64,
-     "ecart_relatif": 0.1135,
+     "cote_olybet": 1.17,
+     "cote_reference": 1.216,
+     "ecart_relatif": 0.0378,
      "aberrant": false
     },
     {
-     "match": "Eyupspor – Kasimpasa",
+     "match": "Glasgow Rangers – St. Johnstone",
      "source": "PMU",
-     "cote_olybet": 5.0,
-     "cote_reference": 4.9,
-     "ecart_relatif": 0.0204,
+     "cote_olybet": 1.17,
+     "cote_reference": 1.18,
+     "ecart_relatif": 0.0085,
+     "aberrant": false
+    },
+    {
+     "match": "Falkirk – Kilmarnock",
+     "source": "Pinnacle",
+     "cote_olybet": 1.8,
+     "cote_reference": 1.909,
+     "ecart_relatif": 0.0571,
+     "aberrant": false
+    },
+    {
+     "match": "Falkirk – Kilmarnock",
+     "source": "PMU",
+     "cote_olybet": 1.8,
+     "cote_reference": 1.77,
+     "ecart_relatif": 0.0169,
      "aberrant": false
     }
    ],
@@ -258,22 +277,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T23:13:34+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T23:13:49+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T23:07:55+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T23:20:26+00:00",
    "books_premiere_lecture": "2026-10-23T21:29:35+00:00",
-   "books_derniere_lecture": "2026-10-23T23:13:58+00:00",
-   "ecart_enveloppe_secondes": 6254.0
+   "books_derniere_lecture": "2026-10-23T23:20:42+00:00",
+   "ecart_enveloppe_secondes": 6651.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 6.8
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 61375,
+   "mesures": 48535,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -289,25 +309,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T22:51:16+00:00"
   },
-  "fin": "2026-10-23T23:19:14+00:00",
+  "fin": "2026-10-23T23:25:01+00:00",
   "cotes": {
-   "francaises": 180406,
-   "pinnacle": 182470,
-   "polymarket": 37345,
+   "francaises": 184710,
+   "pinnacle": 231000,
+   "polymarket": 0,
    "smarkets": 3340
   },
-  "matchs_francais": 2212,
-  "opportunites": 5,
-  "opportunites_suspectes": 49,
+  "matchs_francais": 2240,
+  "opportunites": 4,
+  "opportunites_suspectes": 22,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T04:47:52+00:00",
-   "mode": "complet",
-   "opportunites": 18,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-10-23T04:52:33+00:00",
    "mode": "complet",
@@ -1506,6 +1520,12 @@
    "debut": "2026-10-23T23:13:23+00:00",
    "mode": "complet",
    "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T23:20:08+00:00",
+   "mode": "complet",
+   "opportunites": 4,
    "nouveaux_paris": 0
   }
  ],
