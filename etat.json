@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T19:13:26+00:00",
+  "debut": "2026-10-23T19:19:31+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 25.0,
+    "secondes": 28.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,36 +13,43 @@
     ]
    },
    "pinnacle": {
-    "secondes": 27.4,
+    "secondes": 30.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 28 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 8.9,
+    "secondes": 8.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.8,
+    "secondes": 30.3,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 34.8,
+    "secondes": 32.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "HTTP 500",
+     "budget"
+    ]
+   },
+   "unibet_direct": {
+    "secondes": 73.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
-   },
-   "unibet_direct": {
-    "secondes": 50.6,
-    "ok": true
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -53,49 +60,34 @@
     ]
    },
    "smarkets": {
-    "secondes": 20.9,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 149.0,
+    "secondes": 70.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.2,
+    "secondes": 1.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 1.0,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 47173,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 812,
-   "age_min_s": 228,
-   "lignes": 180084,
-   "lignes_perimees": 5025,
+   "age_max_s": 862,
+   "age_min_s": 41,
+   "lignes": 179231,
+   "lignes_perimees": 1278,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -106,12 +98,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 40,
+    "head_200": 33,
+    "choisi_fixe": 10,
+    "choisi_autre": 4,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 6,
-    "sport_vide": 6
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -119,70 +113,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Sarajevo – Zeljeznicar Sarajevo",
+     "match": "Qingdao West Coast FC – Yunnan Yukun",
      "source": "Pinnacle",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.524,
-     "ecart_relatif": 0.0155,
+     "cote_olybet": 2.37,
+     "cote_reference": 2.51,
+     "ecart_relatif": 0.0558,
      "aberrant": false
     },
     {
-     "match": "Sarajevo – Zeljeznicar Sarajevo",
+     "match": "Qingdao West Coast FC – Yunnan Yukun",
      "source": "PMU",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0132,
+     "cote_olybet": 2.37,
+     "cote_reference": 2.07,
+     "ecart_relatif": 0.1449,
      "aberrant": false
     },
     {
-     "match": "Siroki Brijeg – Celik Zenica",
-     "source": "PMU",
-     "cote_olybet": 1.92,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.0549,
-     "aberrant": false
-    },
-    {
-     "match": "Audax Italiano – Huachipato",
+     "match": "Liaoning Tieren – Zhejiang Professional FC",
      "source": "Pinnacle",
-     "cote_olybet": 1.94,
-     "cote_reference": 2.06,
-     "ecart_relatif": 0.0583,
+     "cote_olybet": 1.9,
+     "cote_reference": 1.99,
+     "ecart_relatif": 0.0453,
      "aberrant": false
     },
     {
-     "match": "Audax Italiano – Huachipato",
-     "source": "PMU",
-     "cote_olybet": 1.94,
-     "cote_reference": 1.79,
-     "ecart_relatif": 0.0838,
-     "aberrant": false
-    },
-    {
-     "match": "O´Higgins – Cobresal",
+     "match": "Henan FC – Beijing Guoan FC",
      "source": "Pinnacle",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.633,
-     "ecart_relatif": 0.0385,
+     "cote_olybet": 3.02,
+     "cote_reference": 3.22,
+     "ecart_relatif": 0.0621,
      "aberrant": false
     },
     {
-     "match": "O´Higgins – Cobresal",
+     "match": "Henan FC – Beijing Guoan FC",
      "source": "PMU",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0329,
+     "cote_olybet": 3.02,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0982,
      "aberrant": false
     },
     {
-     "match": "CD La Serena – Deportes Conception",
+     "match": "Chongqing Tonglianglong – Qingdao Hainiu FC",
      "source": "Pinnacle",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.37,
-     "ecart_relatif": 0.0591,
+     "cote_olybet": 1.23,
+     "cote_reference": 1.269,
+     "ecart_relatif": 0.0306,
+     "aberrant": false
+    },
+    {
+     "match": "Chongqing Tonglianglong – Qingdao Hainiu FC",
+     "source": "PMU",
+     "cote_olybet": 1.23,
+     "cote_reference": 1.14,
+     "ecart_relatif": 0.0789,
+     "aberrant": false
+    },
+    {
+     "match": "Chengdu Rongcheng FC – Dalian Yingbo FC",
+     "source": "Pinnacle",
+     "cote_olybet": 1.91,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.045,
+     "aberrant": false
+    },
+    {
+     "match": "Chengdu Rongcheng FC – Dalian Yingbo FC",
+     "source": "PMU",
+     "cote_olybet": 1.91,
+     "cote_reference": 1.86,
+     "ecart_relatif": 0.0269,
      "aberrant": false
     }
    ],
@@ -197,8 +199,8 @@
      "match": "Vitória Guimarães – Marítimo",
      "source": "Pinnacle",
      "cote_netbet": 1.48,
-     "cote_reference": 1.592,
-     "ecart_relatif": 0.0702,
+     "cote_reference": 1.625,
+     "ecart_relatif": 0.0892,
      "aberrant": false
     },
     {
@@ -245,8 +247,8 @@
      "match": "Gimnasia de La Plata – Club Atletico Sarmiento De Junin",
      "source": "Pinnacle",
      "cote_netbet": 1.51,
-     "cote_reference": 1.581,
-     "ecart_relatif": 0.0451,
+     "cote_reference": 1.575,
+     "ecart_relatif": 0.0411,
      "aberrant": false
     },
     {
@@ -277,22 +279,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T19:13:38+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T19:13:55+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T19:19:41+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T19:19:54+00:00",
    "books_premiere_lecture": "2026-10-23T17:12:39+00:00",
-   "books_derniere_lecture": "2026-10-23T19:13:58+00:00",
-   "ecart_enveloppe_secondes": 7276.0
+   "books_derniere_lecture": "2026-10-23T19:20:03+00:00",
+   "ecart_enveloppe_secondes": 7635.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 6.1
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 54433,
+   "mesures": 62819,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -308,25 +311,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T18:58:49+00:00"
   },
-  "fin": "2026-10-23T19:18:41+00:00",
+  "fin": "2026-10-23T19:22:57+00:00",
   "cotes": {
-   "francaises": 170746,
-   "pinnacle": 227257,
-   "polymarket": 34843,
+   "francaises": 185414,
+   "pinnacle": 179231,
+   "polymarket": 34928,
    "smarkets": 3172
   },
-  "matchs_francais": 2157,
+  "matchs_francais": 2161,
   "opportunites": 2,
-  "opportunites_suspectes": 39,
+  "opportunites_suspectes": 40,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T01:11:26+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T01:16:17+00:00",
    "mode": "complet",
@@ -1523,6 +1520,12 @@
   },
   {
    "debut": "2026-10-23T19:13:26+00:00",
+   "mode": "complet",
+   "opportunites": 2,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T19:19:31+00:00",
    "mode": "complet",
    "opportunites": 2,
    "nouveaux_paris": 0
