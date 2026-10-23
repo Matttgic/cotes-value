@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T13:32:32+00:00",
+  "debut": "2026-10-23T13:40:09+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 27.7,
+    "secondes": 26.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,40 +13,50 @@
     ]
    },
    "pinnacle": {
-    "secondes": 34.9,
+    "secondes": 39.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 27 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 11.1,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 36.1,
+    "secondes": 11.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 38.5,
+   "pmu_direct": {
+    "secondes": 37.9,
     "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 45.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "lecture interrompue"
+    ]
    },
    "unibet_direct": {
-    "secondes": 64.1,
-    "ok": true
+    "secondes": 75.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,40 +69,29 @@
     "cache": true
    },
    "association": {
-    "secondes": 207.5,
+    "secondes": 101.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.5,
+    "secondes": 2.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.2,
+    "secondes": 1.0,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 50838,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 50838,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 871,
-   "age_min_s": 68,
-   "lignes": 183560,
-   "lignes_perimees": 5693,
+   "age_max_s": 801,
+   "age_min_s": 178,
+   "lignes": 185175,
+   "lignes_perimees": 8,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -100,13 +99,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
+    "head_200": 39,
+    "choisi_fixe": 4,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 10,
-    "choisi_autre": 4,
+    "choisi_autre": 10,
     "reprise_403": 2,
-    "reprise_403_ok": 1,
+    "matchups_sans_speciaux": 1,
     "sport_vide": 5
    }
   },
@@ -115,86 +114,62 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "Santos – Bahia",
+     "match": "Zira – Soumgaït FK",
      "source": "Pinnacle",
-     "cote_olybet": 1.83,
-     "cote_reference": 1.926,
-     "ecart_relatif": 0.0498,
-     "aberrant": false
-    },
-    {
-     "match": "Santos – Bahia",
-     "source": "PMU",
-     "cote_olybet": 1.83,
-     "cote_reference": 1.93,
-     "ecart_relatif": 0.0518,
-     "aberrant": false
-    },
-    {
-     "match": "Vasco De Gama – Corinthians",
-     "source": "Pinnacle",
-     "cote_olybet": 1.61,
+     "cote_olybet": 1.64,
      "cote_reference": 1.685,
-     "ecart_relatif": 0.0445,
+     "ecart_relatif": 0.0266,
      "aberrant": false
     },
     {
-     "match": "Vasco De Gama – Corinthians",
+     "match": "Zira – Soumgaït FK",
      "source": "PMU",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.62,
-     "ecart_relatif": 0.0062,
+     "cote_olybet": 1.64,
+     "cote_reference": 1.67,
+     "ecart_relatif": 0.018,
      "aberrant": false
     },
     {
-     "match": "Palmeiras – RB Bragantino",
+     "match": "Neftchi Bakou – Turan Tovuz IK",
      "source": "Pinnacle",
-     "cote_olybet": 1.47,
-     "cote_reference": 1.532,
-     "ecart_relatif": 0.0404,
+     "cote_olybet": 1.77,
+     "cote_reference": 1.763,
+     "ecart_relatif": 0.0037,
      "aberrant": false
     },
     {
-     "match": "Palmeiras – RB Bragantino",
-     "source": "PMU",
-     "cote_olybet": 1.47,
-     "cote_reference": 1.49,
-     "ecart_relatif": 0.0134,
-     "aberrant": false
-    },
-    {
-     "match": "Mirassol FC – Sao Paulo FC",
+     "match": "Chongqing Tonglianglong – Qingdao Hainiu FC",
      "source": "Pinnacle",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.37,
-     "ecart_relatif": 0.0591,
+     "cote_olybet": 1.22,
+     "cote_reference": 1.258,
+     "ecart_relatif": 0.0305,
      "aberrant": false
     },
     {
-     "match": "Mirassol FC – Sao Paulo FC",
+     "match": "Chongqing Tonglianglong – Qingdao Hainiu FC",
      "source": "PMU",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0619,
+     "cote_olybet": 1.22,
+     "cote_reference": 1.14,
+     "ecart_relatif": 0.0702,
      "aberrant": false
     },
     {
-     "match": "Internacional – Botafogo",
+     "match": "Chengdu Rongcheng FC – Dalian Yingbo FC",
      "source": "Pinnacle",
-     "cote_olybet": 1.86,
-     "cote_reference": 1.962,
-     "ecart_relatif": 0.0517,
+     "cote_olybet": 1.92,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.04,
      "aberrant": false
     },
     {
-     "match": "Internacional – Botafogo",
+     "match": "Chengdu Rongcheng FC – Dalian Yingbo FC",
      "source": "PMU",
-     "cote_olybet": 1.86,
-     "cote_reference": 1.76,
-     "ecart_relatif": 0.0568,
+     "cote_olybet": 1.92,
+     "cote_reference": 1.86,
+     "ecart_relatif": 0.0323,
      "aberrant": false
     }
    ],
@@ -209,8 +184,8 @@
      "match": "Spaeri – FC Gagra",
      "source": "Pinnacle",
      "cote_netbet": 1.97,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0963,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.015,
      "aberrant": false
     },
     {
@@ -265,23 +240,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T13:17:12+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T13:32:59+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T13:40:20+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T13:40:38+00:00",
    "books_premiere_lecture": "2026-10-23T11:22:02+00:00",
-   "books_derniere_lecture": "2026-10-23T13:33:11+00:00",
-   "ecart_enveloppe_secondes": 7857.0
+   "books_derniere_lecture": "2026-10-23T13:40:50+00:00",
+   "ecart_enveloppe_secondes": 8316.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.3
+   "age_min": 12.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 57865,
+   "mesures": 54813,
    "matchs_suspects": 2
   },
   "redecision": {
@@ -297,25 +272,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T13:10:08+00:00"
   },
-  "fin": "2026-10-23T13:38:51+00:00",
+  "fin": "2026-10-23T13:44:28+00:00",
   "cotes": {
-   "francaises": 213508,
-   "pinnacle": 234398,
-   "polymarket": 36510,
+   "francaises": 193020,
+   "pinnacle": 185175,
+   "polymarket": 36478,
    "smarkets": 4080
   },
-  "matchs_francais": 2762,
-  "opportunites": 11,
-  "opportunites_suspectes": 30,
+  "matchs_francais": 2221,
+  "opportunites": 12,
+  "opportunites_suspectes": 36,
   "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-22T20:20:02+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T20:24:43+00:00",
    "mode": "complet",
@@ -1514,6 +1483,12 @@
    "debut": "2026-10-23T13:32:32+00:00",
    "mode": "complet",
    "opportunites": 11,
+   "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-23T13:40:09+00:00",
+   "mode": "complet",
+   "opportunites": 12,
    "nouveaux_paris": 1
   }
  ],
