@@ -1,36 +1,40 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T10:27:40+00:00",
+  "debut": "2026-10-23T10:33:22+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 29.1,
+   "polymarket": {
+    "secondes": 21.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 17 matchups : HTTP 403",
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 25.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 9 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 11.9,
+    "secondes": 6.9,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 32.4,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 35.3,
+    "secondes": 35.0,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -38,19 +42,11 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 44.1,
+    "secondes": 41.0,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 74.1,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -63,56 +59,46 @@
     "cache": true
    },
    "association": {
-    "secondes": 157.8,
+    "secondes": 143.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.9,
+    "secondes": 3.6,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 1.0,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 49608,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 841,
-   "age_min_s": 49,
-   "lignes": 177674,
-   "lignes_perimees": 5238,
-   "rechauffeur": "indisponible",
+   "age_max_s": 766,
+   "age_min_s": 11,
+   "lignes": 177455,
+   "lignes_perimees": 142,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 40,
+    "head_200": 28,
+    "choisi_fixe": 7,
+    "choisi_autre": 7,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 2,
-    "choisi_autre": 12,
     "reprise_403": 1,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 6
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -120,86 +106,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Levadia Tallinn – Harju JK Laagri",
+     "match": "Glentoran – Ballymena United",
      "source": "Pinnacle",
-     "cote_olybet": 1.23,
-     "cote_reference": 1.265,
-     "ecart_relatif": 0.0279,
+     "cote_olybet": 1.58,
+     "cote_reference": 1.625,
+     "ecart_relatif": 0.0277,
      "aberrant": false
     },
     {
-     "match": "Levadia Tallinn – Harju JK Laagri",
+     "match": "Glentoran – Ballymena United",
      "source": "PMU",
-     "cote_olybet": 1.23,
-     "cote_reference": 1.19,
-     "ecart_relatif": 0.0336,
+     "cote_olybet": 1.58,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0125,
      "aberrant": false
     },
     {
-     "match": "Tammeka Tartu – Narva Trans",
+     "match": "Carrick Rangers – Limavady United",
      "source": "Pinnacle",
-     "cote_olybet": 1.74,
-     "cote_reference": 1.806,
-     "ecart_relatif": 0.0368,
+     "cote_olybet": 1.48,
+     "cote_reference": 1.518,
+     "ecart_relatif": 0.0251,
      "aberrant": false
     },
     {
-     "match": "Tammeka Tartu – Narva Trans",
-     "source": "PMU",
-     "cote_olybet": 1.74,
-     "cote_reference": 1.89,
-     "ecart_relatif": 0.0794,
-     "aberrant": false
-    },
-    {
-     "match": "Nomme United – Parnu JK Vaprus",
+     "match": "Crusaders – Coleraine",
      "source": "Pinnacle",
-     "cote_olybet": 1.97,
-     "cote_reference": 2.06,
-     "ecart_relatif": 0.0437,
+     "cote_olybet": 7.6,
+     "cote_reference": 8.23,
+     "ecart_relatif": 0.0765,
      "aberrant": false
     },
     {
-     "match": "Nomme United – Parnu JK Vaprus",
+     "match": "Crusaders – Coleraine",
      "source": "PMU",
-     "cote_olybet": 1.97,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0619,
+     "cote_olybet": 7.6,
+     "cote_reference": 8.5,
+     "ecart_relatif": 0.1059,
      "aberrant": false
     },
     {
-     "match": "FK Transinvest – FC Hegelmann",
+     "match": "Dungannon Swifts – Cliftonville",
      "source": "Pinnacle",
-     "cote_olybet": 1.29,
-     "cote_reference": 1.33,
-     "ecart_relatif": 0.0301,
+     "cote_olybet": 1.99,
+     "cote_reference": 2.07,
+     "ecart_relatif": 0.0386,
      "aberrant": false
     },
     {
-     "match": "FK Transinvest – FC Hegelmann",
-     "source": "PMU",
-     "cote_olybet": 1.29,
-     "cote_reference": 1.34,
-     "ecart_relatif": 0.0373,
-     "aberrant": false
-    },
-    {
-     "match": "Ipswich – Nottingham Forest",
+     "match": "Portadown – Linfield",
      "source": "Pinnacle",
-     "cote_olybet": 2.97,
-     "cote_reference": 3.18,
-     "ecart_relatif": 0.066,
+     "cote_olybet": 6.2,
+     "cote_reference": 6.7,
+     "ecart_relatif": 0.0746,
      "aberrant": false
     },
     {
-     "match": "Ipswich – Nottingham Forest",
+     "match": "Portadown – Linfield",
      "source": "PMU",
-     "cote_olybet": 2.97,
-     "cote_reference": 2.95,
-     "ecart_relatif": 0.0068,
+     "cote_olybet": 6.2,
+     "cote_reference": 5.8,
+     "ecart_relatif": 0.069,
      "aberrant": false
     }
    ],
@@ -213,9 +183,9 @@
     {
      "match": "Araz-Naxcivan – FK Qabala",
      "source": "Pinnacle",
-     "cote_netbet": 2.35,
-     "cote_reference": 2.59,
-     "ecart_relatif": 0.0927,
+     "cote_netbet": 2.42,
+     "cote_reference": 2.58,
+     "ecart_relatif": 0.062,
      "aberrant": false
     },
     {
@@ -254,23 +224,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T10:27:52+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T10:28:13+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T10:33:32+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T10:33:40+00:00",
    "books_premiere_lecture": "2026-10-23T08:37:32+00:00",
-   "books_derniere_lecture": "2026-10-23T10:28:16+00:00",
-   "ecart_enveloppe_secondes": 6641.0
+   "books_derniere_lecture": "2026-10-23T10:33:49+00:00",
+   "ecart_enveloppe_secondes": 6968.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 6.5
+   "age_min": 12.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 622,
    "a_verifier": 11,
    "non_conforme": 9,
-   "mesures": 50646,
+   "mesures": 60707,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -286,25 +256,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T10:15:27+00:00"
   },
-  "fin": "2026-10-23T10:32:23+00:00",
+  "fin": "2026-10-23T10:38:27+00:00",
   "cotes": {
-   "francaises": 185181,
-   "pinnacle": 227282,
-   "polymarket": 0,
+   "francaises": 192847,
+   "pinnacle": 177455,
+   "polymarket": 35292,
    "smarkets": 3951
   },
-  "matchs_francais": 2648,
-  "opportunites": 10,
-  "opportunites_suspectes": 19,
+  "matchs_francais": 2656,
+  "opportunites": 16,
+  "opportunites_suspectes": 38,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T17:41:14+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T17:45:56+00:00",
    "mode": "complet",
@@ -1503,6 +1467,12 @@
    "debut": "2026-10-23T10:27:40+00:00",
    "mode": "complet",
    "opportunites": 10,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-23T10:33:22+00:00",
+   "mode": "complet",
+   "opportunites": 16,
    "nouveaux_paris": 0
   }
  ],
