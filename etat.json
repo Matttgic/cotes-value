@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T04:42:28+00:00",
+  "debut": "2026-10-23T04:47:52+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 20.1,
+    "secondes": 18.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,7 +13,7 @@
     ]
    },
    "pinnacle": {
-    "secondes": 23.2,
+    "secondes": 21.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -21,19 +21,19 @@
     ]
    },
    "olybet": {
-    "secondes": 6.2,
+    "secondes": 8.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.1,
+    "secondes": 29.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 36.3,
+    "secondes": 33.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -41,8 +41,12 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 66.8,
-    "ok": true
+    "secondes": 74.5,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.2,
@@ -53,51 +57,61 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 18.4,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 118.7,
+    "secondes": 65.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.2,
+    "secondes": 1.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 0.7,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 39644,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 881,
-   "age_min_s": 5,
-   "lignes": 153830,
-   "lignes_perimees": 6748,
-   "rechauffeur": "ok",
+   "age_max_s": 874,
+   "age_min_s": 144,
+   "lignes": 153840,
+   "lignes_perimees": 556,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 19,
-    "head_403": 3,
+    "head_200": 31,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 2,
+    "choisi_fixe": 7,
     "choisi_autre": 6,
-    "reprise_403": 1,
-    "reprise_403_ok": 1,
     "sport_vide": 6
    }
   },
@@ -106,62 +120,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Cruzeiro – Remo PA",
+     "match": "TSV Hartberg – Wolfsberger AC",
      "source": "Pinnacle",
-     "cote_olybet": 1.33,
-     "cote_reference": 1.385,
-     "ecart_relatif": 0.0394,
+     "cote_olybet": 2.04,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0512,
      "aberrant": false
     },
     {
-     "match": "Cruzeiro – Remo PA",
+     "match": "TSV Hartberg – Wolfsberger AC",
      "source": "PMU",
-     "cote_olybet": 1.33,
-     "cote_reference": 1.3,
-     "ecart_relatif": 0.0231,
+     "cote_olybet": 2.04,
+     "cote_reference": 1.97,
+     "ecart_relatif": 0.0355,
      "aberrant": false
     },
     {
-     "match": "CF Atlante – Atlético San Luis",
+     "match": "WSG Tirol – Grazer AK",
      "source": "Pinnacle",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.27,
-     "ecart_relatif": 0.0529,
+     "cote_olybet": 2.4,
+     "cote_reference": 2.54,
+     "ecart_relatif": 0.0551,
      "aberrant": false
     },
     {
-     "match": "CF Atlante – Atlético San Luis",
+     "match": "WSG Tirol – Grazer AK",
      "source": "PMU",
-     "cote_olybet": 2.15,
-     "cote_reference": 1.94,
-     "ecart_relatif": 0.1082,
-     "aberrant": false
-    },
-    {
-     "match": "Club Necaxa – Juarez",
-     "source": "Pinnacle",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.758,
-     "ecart_relatif": 0.0498,
-     "aberrant": false
-    },
-    {
-     "match": "Club Necaxa – Juarez",
-     "source": "PMU",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0245,
-     "aberrant": false
-    },
-    {
-     "match": "Colwyn Bay – Cardiff Metropolitan University",
-     "source": "Pinnacle",
-     "cote_olybet": 1.64,
-     "cote_reference": 1.685,
-     "ecart_relatif": 0.0266,
+     "cote_olybet": 2.4,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.0435,
      "aberrant": false
     }
    ],
@@ -232,23 +222,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T04:42:39+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T04:42:48+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T04:48:03+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T04:48:15+00:00",
    "books_premiere_lecture": "2026-10-23T02:35:56+00:00",
-   "books_derniere_lecture": "2026-10-23T04:42:53+00:00",
-   "ecart_enveloppe_secondes": 7612.0
+   "books_derniere_lecture": "2026-10-23T04:48:17+00:00",
+   "ecart_enveloppe_secondes": 7939.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 9.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 619,
    "a_verifier": 10,
    "non_conforme": 9,
-   "mesures": 54330,
+   "mesures": 56447,
    "matchs_suspects": 1
   },
   "redecision": {
@@ -264,25 +253,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T04:15:14+00:00"
   },
-  "fin": "2026-10-23T04:47:04+00:00",
+  "fin": "2026-10-23T04:51:27+00:00",
   "cotes": {
-   "francaises": 166071,
-   "pinnacle": 153830,
-   "polymarket": 32537,
-   "smarkets": 3930
+   "francaises": 178082,
+   "pinnacle": 193484,
+   "polymarket": 32636,
+   "smarkets": 3945
   },
-  "matchs_francais": 2226,
-  "opportunites": 15,
-  "opportunites_suspectes": 15,
-  "nouveaux_paris": 1
+  "matchs_francais": 2237,
+  "opportunites": 18,
+  "opportunites_suspectes": 18,
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-22T13:07:30+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-22T13:12:14+00:00",
    "mode": "complet",
@@ -1482,6 +1465,12 @@
    "mode": "complet",
    "opportunites": 15,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-23T04:47:52+00:00",
+   "mode": "complet",
+   "opportunites": 18,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-10-23T04:15:14+00:00",
