@@ -1,31 +1,32 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-23T17:07:04+00:00",
+  "debut": "2026-10-23T17:12:02+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 27.9,
+   "polymarket": {
+    "secondes": 22.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 30.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 12.5,
+    "secondes": 7.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 35.8,
+    "secondes": 36.2,
     "ok": true
    },
    "netbet": {
@@ -37,15 +38,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 42.4,
+    "secondes": 41.0,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 60.0,
-    "ok": true
+    "secondes": 74.5,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -53,47 +58,68 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.1,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 118.9,
+    "secondes": 207.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.0,
+    "secondes": 3.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 1.0,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 50333,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 813,
-   "age_min_s": 58,
-   "lignes": 189144,
-   "lignes_perimees": 156,
-   "rechauffeur": "indisponible",
+   "age_max_s": 855,
+   "age_min_s": 203,
+   "lignes": 189158,
+   "lignes_perimees": 17191,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 30,
+    "head_200": 40,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 11,
-    "choisi_fixe": 3,
-    "sport_vide": 6
+    "choisi_autre": 12,
+    "choisi_fixe": 2,
+    "reprise_403": 2,
+    "reprise_403_ok": 1,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -104,67 +130,67 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "Young Boys – FC Saint-Gall",
+     "match": "Brest – OGC Nice",
      "source": "Pinnacle",
-     "cote_olybet": 1.69,
-     "cote_reference": 1.758,
-     "ecart_relatif": 0.0385,
+     "cote_olybet": 2.29,
+     "cote_reference": 2.41,
+     "ecart_relatif": 0.0498,
      "aberrant": false
     },
     {
-     "match": "Young Boys – FC Saint-Gall",
+     "match": "Brest – OGC Nice",
      "source": "PMU",
-     "cote_olybet": 1.69,
+     "cote_olybet": 2.29,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0651,
+     "aberrant": false
+    },
+    {
+     "match": "Lens – Paris FC",
+     "source": "Pinnacle",
+     "cote_olybet": 2.3,
+     "cote_reference": 2.41,
+     "ecart_relatif": 0.0456,
+     "aberrant": false
+    },
+    {
+     "match": "Lens – Paris FC",
+     "source": "PMU",
+     "cote_olybet": 2.3,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0088,
+     "aberrant": false
+    },
+    {
+     "match": "Zalaegerszeg TE – Kisvarda Master Good",
+     "source": "Pinnacle",
+     "cote_olybet": 1.76,
+     "cote_reference": 1.826,
+     "ecart_relatif": 0.0364,
+     "aberrant": false
+    },
+    {
+     "match": "Zalaegerszeg TE – Kisvarda Master Good",
+     "source": "PMU",
+     "cote_olybet": 1.76,
      "cote_reference": 1.72,
-     "ecart_relatif": 0.0174,
+     "ecart_relatif": 0.0233,
      "aberrant": false
     },
     {
-     "match": "Servette – FC Vaduz",
+     "match": "Gyor ETO – Ujpest",
      "source": "Pinnacle",
-     "cote_olybet": 1.76,
-     "cote_reference": 1.862,
-     "ecart_relatif": 0.0548,
+     "cote_olybet": 2.24,
+     "cote_reference": 2.36,
+     "ecart_relatif": 0.0508,
      "aberrant": false
     },
     {
-     "match": "Servette – FC Vaduz",
+     "match": "Gyor ETO – Ujpest",
      "source": "PMU",
-     "cote_olybet": 1.76,
-     "cote_reference": 1.68,
-     "ecart_relatif": 0.0476,
-     "aberrant": false
-    },
-    {
-     "match": "Orlando City SC – New York City FC",
-     "source": "Pinnacle",
-     "cote_olybet": 2.03,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0514,
-     "aberrant": false
-    },
-    {
-     "match": "Orlando City SC – New York City FC",
-     "source": "PMU",
-     "cote_olybet": 2.03,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0333,
-     "aberrant": false
-    },
-    {
-     "match": "New York Red Bulls – Inter Miami CF",
-     "source": "Pinnacle",
-     "cote_olybet": 3.15,
-     "cote_reference": 3.39,
-     "ecart_relatif": 0.0708,
-     "aberrant": false
-    },
-    {
-     "match": "New York Red Bulls – Inter Miami CF",
-     "source": "PMU",
-     "cote_olybet": 3.15,
-     "cote_reference": 3.3,
-     "ecart_relatif": 0.0455,
+     "cote_olybet": 2.24,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0419,
      "aberrant": false
     }
    ],
@@ -178,9 +204,9 @@
     {
      "match": "Altach – Austria Vienne",
      "source": "Pinnacle",
-     "cote_netbet": 2.17,
+     "cote_netbet": 2.2,
      "cote_reference": 2.45,
-     "ecart_relatif": 0.1143,
+     "ecart_relatif": 0.102,
      "aberrant": false
     },
     {
@@ -211,8 +237,8 @@
      "match": "Al Ahli Jeddah – Al-Khaleej Club Saihat",
      "source": "PMU",
      "cote_netbet": 1.28,
-     "cote_reference": 1.24,
-     "ecart_relatif": 0.0323,
+     "cote_reference": 1.25,
+     "ecart_relatif": 0.024,
      "aberrant": false
     },
     {
@@ -251,31 +277,30 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-23T17:07:16+00:00",
-   "pinnacle_derniere_lecture": "2026-10-23T17:07:25+00:00",
+   "pinnacle_premiere_lecture": "2026-10-23T17:12:14+00:00",
+   "pinnacle_derniere_lecture": "2026-10-23T17:12:36+00:00",
    "books_premiere_lecture": "2026-10-23T15:21:45+00:00",
-   "books_derniere_lecture": "2026-10-23T17:07:35+00:00",
-   "ecart_enveloppe_secondes": 6340.0
+   "books_derniere_lecture": "2026-10-23T17:12:39+00:00",
+   "ecart_enveloppe_secondes": 6651.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 11.8
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 49703,
+   "mesures": 61402,
    "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
   },
   "qwen": {
-   "candidates": 0,
-   "validees": 0,
+   "candidates": 2,
+   "validees": 2,
    "refus": {}
   },
   "reglement": false,
@@ -283,25 +308,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T17:00:29+00:00"
   },
-  "fin": "2026-10-23T17:11:06+00:00",
+  "fin": "2026-10-23T17:18:33+00:00",
   "cotes": {
-   "francaises": 201459,
-   "pinnacle": 189144,
-   "polymarket": 0,
-   "smarkets": 4057
+   "francaises": 213357,
+   "pinnacle": 239491,
+   "polymarket": 35748,
+   "smarkets": 3381
   },
-  "matchs_francais": 2577,
+  "matchs_francais": 2588,
   "opportunites": 8,
-  "opportunites_suspectes": 19,
-  "nouveaux_paris": 2
+  "opportunites_suspectes": 44,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-22T23:20:14+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-22T23:24:52+00:00",
    "mode": "complet",
@@ -1501,6 +1520,12 @@
    "mode": "complet",
    "opportunites": 8,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-23T17:12:02+00:00",
+   "mode": "complet",
+   "opportunites": 8,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-23T17:00:29+00:00",
