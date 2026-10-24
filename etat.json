@@ -1,16 +1,8 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T07:13:54+00:00",
+  "debut": "2026-10-24T07:18:29+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 26.2,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
     "secondes": 30.0,
     "ok": false,
@@ -20,12 +12,21 @@
      "liste d'événements tronquée (plafond de pagination)"
     ]
    },
+   "pinnacle": {
+    "secondes": 31.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "olybet": {
-    "secondes": 13.4,
+    "secondes": 14.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 34.0,
+    "secondes": 35.0,
     "ok": true
    },
    "netbet": {
@@ -36,13 +37,17 @@
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 38.6,
+   "winamax_direct": {
+    "secondes": 43.2,
     "ok": true
    },
-   "winamax_direct": {
-    "secondes": 40.8,
-    "ok": true
+   "unibet_direct": {
+    "secondes": 74.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.5,
@@ -58,15 +63,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 105.8,
+    "secondes": 206.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.8,
+    "secondes": 3.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.9,
     "ok": true
    }
   },
@@ -77,23 +82,28 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 817,
-   "age_min_s": 87,
-   "lignes": 204494,
-   "lignes_perimees": 122,
-   "rechauffeur": "indisponible",
+   "age_max_s": 830,
+   "age_min_s": 183,
+   "lignes": 205652,
+   "lignes_perimees": 1650,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
-    "choisi_autre": 11,
+    "head_200": 41,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 3,
-    "sport_vide": 6
+    "choisi_autre": 8,
+    "choisi_fixe": 6,
+    "reprise_403": 2,
+    "reprise_403_ok": 1,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -101,38 +111,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Le Havre (F) – Lens (F)",
+     "match": "FK Transinvest – FC Hegelmann",
      "source": "Pinnacle",
-     "cote_olybet": 1.98,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0294,
+     "cote_olybet": 1.33,
+     "cote_reference": 1.376,
+     "ecart_relatif": 0.0334,
      "aberrant": false
     },
     {
-     "match": "Le Havre (F) – Lens (F)",
+     "match": "FK Transinvest – FC Hegelmann",
      "source": "PMU",
-     "cote_olybet": 1.98,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 1.33,
+     "cote_reference": 1.34,
+     "ecart_relatif": 0.0075,
      "aberrant": false
     },
     {
-     "match": "Nantes (Wom) – Strasbourg Alsace (F)",
-     "source": "PMU",
-     "cote_olybet": 2.3,
-     "cote_reference": 2.25,
-     "ecart_relatif": 0.0222,
+     "match": "Banga – FA Siauliai",
+     "source": "Pinnacle",
+     "cote_olybet": 1.43,
+     "cote_reference": 1.478,
+     "ecart_relatif": 0.0328,
      "aberrant": false
     },
     {
-     "match": "FC Fleury 91 (F) – Toulouse (F)",
+     "match": "Dziugas Telsiai – FK Panevezys",
+     "source": "Pinnacle",
+     "cote_olybet": 2.38,
+     "cote_reference": 2.51,
+     "ecart_relatif": 0.0518,
+     "aberrant": false
+    },
+    {
+     "match": "Dziugas Telsiai – FK Panevezys",
      "source": "PMU",
-     "cote_olybet": 1.55,
-     "cote_reference": 1.5,
-     "ecart_relatif": 0.0333,
+     "cote_olybet": 2.38,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0083,
      "aberrant": false
     }
    ],
@@ -203,59 +221,51 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T07:14:04+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T07:14:14+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T07:18:40+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T07:18:51+00:00",
    "books_premiere_lecture": "2026-10-24T06:20:53+00:00",
-   "books_derniere_lecture": "2026-10-24T07:14:25+00:00",
-   "ecart_enveloppe_secondes": 3201.0
+   "books_derniere_lecture": "2026-10-24T07:19:02+00:00",
+   "ecart_enveloppe_secondes": 3478.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 6.4
+   "age_min": 11.0
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 9,
    "non_conforme": 11,
-   "mesures": 55763,
-   "matchs_suspects": 4
+   "mesures": 61516,
+   "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
   },
   "qwen": {
-   "candidates": 1,
+   "candidates": 0,
    "validees": 0,
-   "refus": {
-    "hors fenêtre de 15 min à 2 h": 1
-   }
+   "refus": {}
   },
   "reglement": false,
   "resultats": {
    "saute": true,
    "dernier_reglement": "2026-10-24T06:47:07+00:00"
   },
-  "fin": "2026-10-24T07:17:39+00:00",
+  "fin": "2026-10-24T07:23:59+00:00",
   "cotes": {
-   "francaises": 216948,
-   "pinnacle": 204494,
+   "francaises": 229736,
+   "pinnacle": 205652,
    "polymarket": 0,
    "smarkets": 3125
   },
-  "matchs_francais": 3220,
+  "matchs_francais": 3199,
   "opportunites": 9,
-  "opportunites_suspectes": 21,
-  "nouveaux_paris": 2
+  "opportunites_suspectes": 22,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T12:12:03+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T12:16:40+00:00",
    "mode": "complet",
@@ -1455,6 +1465,12 @@
    "mode": "complet",
    "opportunites": 9,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-24T07:18:29+00:00",
+   "mode": "complet",
+   "opportunites": 9,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T06:47:07+00:00",
