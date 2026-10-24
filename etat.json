@@ -1,18 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T16:03:16+00:00",
+  "debut": "2026-10-24T16:08:24+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 25.1,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
-    "secondes": 29.1,
+    "secondes": 22.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,24 +12,37 @@
      "prix bid/ask invalides"
     ]
    },
+   "pinnacle": {
+    "secondes": 29.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "olybet": {
-    "secondes": 10.7,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 24.2,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 36.9,
+    "secondes": 6.7,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 37.1,
+    "secondes": 35.2,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
+   "pmu_direct": {
+    "secondes": 38.2,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 75.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -45,7 +50,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -53,16 +58,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 22.1,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 106.4,
+    "secondes": 113.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.1,
+    "secondes": 3.6,
     "ok": true
    },
    "cotes_cloture": {
@@ -77,10 +85,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 829,
-   "age_min_s": 108,
-   "lignes": 159198,
-   "lignes_perimees": 122,
+   "age_max_s": 753,
+   "age_min_s": 27,
+   "lignes": 159182,
+   "lignes_perimees": 6230,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -91,12 +99,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
-    "choisi_autre": 6,
+    "head_200": 38,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 8,
-    "sport_vide": 6
+    "choisi_autre": 9,
+    "choisi_fixe": 5,
+    "reprise_403": 2,
+    "reprise_403_ok": 1,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -104,99 +114,74 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Club Nacional – Sportivo Trinidense",
+     "match": "Willem II Tilburg – Cambuur Leeuwarden",
      "source": "Pinnacle",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.33,
-     "ecart_relatif": 0.0515,
+     "cote_olybet": 2.48,
+     "cote_reference": 2.66,
+     "ecart_relatif": 0.0677,
      "aberrant": false
     },
     {
-     "match": "Club Nacional – Sportivo Trinidense",
+     "match": "Willem II Tilburg – Cambuur Leeuwarden",
      "source": "PMU",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0279,
+     "cote_olybet": 2.48,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0333,
      "aberrant": false
     },
     {
-     "match": "Club 2 de Mayo – Deportivo Recoleta",
+     "match": "AZ Alkmaar – Twente",
      "source": "Pinnacle",
-     "cote_olybet": 2.11,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0538,
+     "cote_olybet": 2.1,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0367,
      "aberrant": false
     },
     {
-     "match": "Club 2 de Mayo – Deportivo Recoleta",
+     "match": "AZ Alkmaar – Twente",
      "source": "PMU",
-     "cote_olybet": 2.11,
+     "cote_olybet": 2.1,
      "cote_reference": 2.08,
-     "ecart_relatif": 0.0144,
+     "ecart_relatif": 0.0096,
      "aberrant": false
     },
     {
-     "match": "Sportivo Ameliano – Club Olimpia",
+     "match": "Fortuna Sittard – Excelsior",
      "source": "Pinnacle",
-     "cote_olybet": 4.2,
-     "cote_reference": 4.52,
-     "ecart_relatif": 0.0708,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.42,
+     "ecart_relatif": 0.0496,
      "aberrant": false
     },
     {
-     "match": "Sportivo Ameliano – Club Olimpia",
+     "match": "Fortuna Sittard – Excelsior",
      "source": "PMU",
-     "cote_olybet": 4.2,
-     "cote_reference": 3.95,
-     "ecart_relatif": 0.0633,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0455,
      "aberrant": false
     },
     {
-     "match": "Sportivo San Lorenzo – Club Cerro Porteno",
+     "match": "PSV Eindhoven – Feyenoord",
      "source": "Pinnacle",
-     "cote_olybet": 6.9,
-     "cote_reference": 7.45,
-     "ecart_relatif": 0.0738,
+     "cote_olybet": 1.97,
+     "cote_reference": 2.07,
+     "ecart_relatif": 0.0483,
      "aberrant": false
     },
     {
-     "match": "Sportivo San Lorenzo – Club Cerro Porteno",
+     "match": "PSV Eindhoven – Feyenoord",
      "source": "PMU",
-     "cote_olybet": 6.9,
-     "cote_reference": 5.8,
-     "ecart_relatif": 0.1897,
-     "aberrant": true
-    },
-    {
-     "match": "Castellon – Sporting Gijon",
-     "source": "Pinnacle",
-     "cote_olybet": 1.45,
-     "cote_reference": 1.505,
-     "ecart_relatif": 0.0366,
-     "aberrant": false
-    },
-    {
-     "match": "Castellon – Sporting Gijon",
-     "source": "PMU",
-     "cote_olybet": 1.45,
-     "cote_reference": 1.37,
-     "ecart_relatif": 0.0584,
+     "cote_olybet": 1.97,
+     "cote_reference": 1.89,
+     "ecart_relatif": 0.0423,
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Sportivo San Lorenzo – Club Cerro Porteno",
-     "source": "PMU",
-     "cote_olybet": 6.9,
-     "cote_reference": 5.8,
-     "ecart_relatif": 0.1897,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -206,17 +191,17 @@
     {
      "match": "Barry Town – Haverfordwest County",
      "source": "Pinnacle",
-     "cote_netbet": 1.93,
+     "cote_netbet": 1.9,
      "cote_reference": 2.07,
-     "ecart_relatif": 0.0676,
+     "ecart_relatif": 0.0821,
      "aberrant": false
     },
     {
      "match": "Barry Town – Haverfordwest County",
      "source": "PMU",
-     "cote_netbet": 1.93,
+     "cote_netbet": 1.9,
      "cote_reference": 1.76,
-     "ecart_relatif": 0.0966,
+     "ecart_relatif": 0.0795,
      "aberrant": false
     },
     {
@@ -246,17 +231,17 @@
     {
      "match": "Asteras Tripolis – Levadiakos",
      "source": "Pinnacle",
-     "cote_netbet": 1.88,
+     "cote_netbet": 1.9,
      "cote_reference": 2.02,
-     "ecart_relatif": 0.0693,
+     "ecart_relatif": 0.0594,
      "aberrant": false
     },
     {
      "match": "Asteras Tripolis – Levadiakos",
      "source": "PMU",
-     "cote_netbet": 1.88,
-     "cote_reference": 1.85,
-     "ecart_relatif": 0.0162,
+     "cote_netbet": 1.9,
+     "cote_reference": 1.9,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
@@ -279,23 +264,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T16:03:27+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T16:03:36+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T16:08:35+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T16:08:46+00:00",
    "books_premiere_lecture": "2026-10-24T14:57:11+00:00",
-   "books_derniere_lecture": "2026-10-24T16:03:46+00:00",
-   "ecart_enveloppe_secondes": 3985.0
+   "books_derniere_lecture": "2026-10-24T16:08:55+00:00",
+   "ecart_enveloppe_secondes": 4295.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 10.4
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 629,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 63896,
+   "mesures": 62639,
    "matchs_suspects": 2
   },
   "redecision": {
@@ -311,25 +295,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T15:44:41+00:00"
   },
-  "fin": "2026-10-24T16:07:30+00:00",
+  "fin": "2026-10-24T16:13:08+00:00",
   "cotes": {
-   "francaises": 196013,
-   "pinnacle": 159198,
-   "polymarket": 35325,
-   "smarkets": 4116
+   "francaises": 194796,
+   "pinnacle": 159182,
+   "polymarket": 35322,
+   "smarkets": 3336
   },
-  "matchs_francais": 2649,
-  "opportunites": 10,
+  "matchs_francais": 2661,
+  "opportunites": 9,
   "opportunites_suspectes": 30,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T18:49:49+00:00",
-   "mode": "complet",
-   "opportunites": 0,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T18:54:26+00:00",
    "mode": "complet",
@@ -1529,6 +1507,12 @@
    "mode": "complet",
    "opportunites": 10,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-24T16:08:24+00:00",
+   "mode": "complet",
+   "opportunites": 9,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T15:44:41+00:00",
