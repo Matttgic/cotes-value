@@ -1,38 +1,48 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T21:58:58+00:00",
+  "debut": "2026-10-24T22:03:53+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 23.8,
-    "ok": true
-   },
    "polymarket": {
-    "secondes": 29.0,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
      "prix bid/ask invalides"
     ]
    },
+   "pinnacle": {
+    "secondes": 30.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 6 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403"
+    ]
+   },
    "olybet": {
-    "secondes": 9.4,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 31.0,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 33.0,
+    "secondes": 10.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 35.3,
+    "secondes": 32.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 38.1,
+    "secondes": 37.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
+   "pmu_direct": {
+    "secondes": 38.4,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 74.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -40,7 +50,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.6,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -53,29 +63,42 @@
     "cache": true
    },
    "association": {
-    "secondes": 87.5,
+    "secondes": 89.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.9,
+    "secondes": 2.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 0.5,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 33491,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 32,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 850,
-   "age_min_s": 56,
-   "lignes": 128718,
-   "lignes_perimees": 3776,
+   "age_max_s": 878,
+   "age_min_s": 29,
+   "lignes": 127593,
+   "lignes_perimees": 7658,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -83,12 +106,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 42,
-    "head_403": 2,
+    "head_200": 24,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 6,
-    "sport_vide": 8
+    "choisi_autre": 6,
+    "choisi_fixe": 5,
+    "reprise_403": 2,
+    "sport_vide": 7
    }
   },
   "olybet_source": "direct",
@@ -96,66 +120,99 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Olympiakos – Kalamata FC",
+     "match": "Ogre United – Auda",
      "source": "Pinnacle",
-     "cote_olybet": 1.08,
-     "cote_reference": 1.112,
-     "ecart_relatif": 0.029,
+     "cote_olybet": 4.9,
+     "cote_reference": 5.34,
+     "ecart_relatif": 0.0824,
      "aberrant": false
     },
     {
-     "match": "Olympiakos – Kalamata FC",
+     "match": "Ogre United – Auda",
      "source": "PMU",
-     "cote_olybet": 1.08,
-     "cote_reference": 1.06,
-     "ecart_relatif": 0.0189,
+     "cote_olybet": 4.9,
+     "cote_reference": 4.5,
+     "ecart_relatif": 0.0889,
      "aberrant": false
     },
     {
-     "match": "OFI Crete FC – PAOK",
+     "match": "SK Super Nova Salaspils – FC RFS",
      "source": "Pinnacle",
-     "cote_olybet": 4.2,
-     "cote_reference": 4.58,
-     "ecart_relatif": 0.083,
-     "aberrant": false
+     "cote_olybet": 11.0,
+     "cote_reference": 13.65,
+     "ecart_relatif": 0.1941,
+     "aberrant": true
     },
     {
-     "match": "OFI Crete FC – PAOK",
+     "match": "SK Super Nova Salaspils – FC RFS",
      "source": "PMU",
-     "cote_olybet": 4.2,
-     "cote_reference": 4.25,
-     "ecart_relatif": 0.0118,
+     "cote_olybet": 11.0,
+     "cote_reference": 10.5,
+     "ecart_relatif": 0.0476,
      "aberrant": false
     },
     {
-     "match": "Aris Salonique – Atromitos",
+     "match": "Real Salt Lake – St Louis City SC",
      "source": "Pinnacle",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.68,
-     "ecart_relatif": 0.0418,
+     "cote_olybet": 1.89,
+     "cote_reference": 2.01,
+     "ecart_relatif": 0.0597,
      "aberrant": false
     },
     {
-     "match": "Aris Salonique – Atromitos",
+     "match": "Real Salt Lake – St Louis City SC",
      "source": "PMU",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0063,
+     "cote_olybet": 1.89,
+     "cote_reference": 1.94,
+     "ecart_relatif": 0.0258,
      "aberrant": false
     },
     {
-     "match": "PAE Volos – Panathinaïkos",
+     "match": "Houston Dynamo – Minnesota United FC",
      "source": "Pinnacle",
-     "cote_olybet": 7.4,
-     "cote_reference": 8.54,
-     "ecart_relatif": 0.1335,
+     "cote_olybet": 2.11,
+     "cote_reference": 2.27,
+     "ecart_relatif": 0.0705,
+     "aberrant": false
+    },
+    {
+     "match": "Houston Dynamo – Minnesota United FC",
+     "source": "PMU",
+     "cote_olybet": 2.11,
+     "cote_reference": 1.95,
+     "ecart_relatif": 0.0821,
+     "aberrant": false
+    },
+    {
+     "match": "Dallas – Earthquakes de San José",
+     "source": "Pinnacle",
+     "cote_olybet": 1.74,
+     "cote_reference": 1.847,
+     "ecart_relatif": 0.0582,
+     "aberrant": false
+    },
+    {
+     "match": "Dallas – Earthquakes de San José",
+     "source": "PMU",
+     "cote_olybet": 1.74,
+     "cote_reference": 1.64,
+     "ecart_relatif": 0.061,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "SK Super Nova Salaspils – FC RFS",
+     "source": "Pinnacle",
+     "cote_olybet": 11.0,
+     "cote_reference": 13.65,
+     "ecart_relatif": 0.1941,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -181,17 +238,17 @@
     {
      "match": "2 de Mayo – Deportivo Recoleta",
      "source": "Pinnacle",
-     "cote_netbet": 2.02,
+     "cote_netbet": 2.0,
      "cote_reference": 2.11,
-     "ecart_relatif": 0.0427,
+     "ecart_relatif": 0.0521,
      "aberrant": false
     },
     {
      "match": "2 de Mayo – Deportivo Recoleta",
      "source": "PMU",
-     "cote_netbet": 2.02,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0288,
+     "cote_netbet": 2.0,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
@@ -246,23 +303,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T21:59:09+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T21:59:17+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T21:40:37+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T22:04:28+00:00",
    "books_premiere_lecture": "2026-10-24T19:15:30+00:00",
-   "books_derniere_lecture": "2026-10-24T21:59:28+00:00",
-   "ecart_enveloppe_secondes": 9827.0
+   "books_derniere_lecture": "2026-10-24T22:04:30+00:00",
+   "ecart_enveloppe_secondes": 10138.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.4
+   "age_min": 14.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 630,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 50347,
+   "mesures": 38547,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -278,25 +335,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T21:28:59+00:00"
   },
-  "fin": "2026-10-24T22:02:49+00:00",
+  "fin": "2026-10-24T22:07:26+00:00",
   "cotes": {
-   "francaises": 161373,
-   "pinnacle": 128718,
-   "polymarket": 32852,
+   "francaises": 160473,
+   "pinnacle": 161084,
+   "polymarket": 0,
    "smarkets": 3992
   },
-  "matchs_francais": 2035,
-  "opportunites": 5,
-  "opportunites_suspectes": 4,
+  "matchs_francais": 2027,
+  "opportunites": 8,
+  "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-24T01:17:09+00:00",
-   "mode": "complet",
-   "opportunites": 7,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-24T01:21:50+00:00",
    "mode": "complet",
@@ -1495,6 +1546,12 @@
    "debut": "2026-10-24T21:58:58+00:00",
    "mode": "complet",
    "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T22:03:53+00:00",
+   "mode": "complet",
+   "opportunites": 8,
    "nouveaux_paris": 0
   }
  ],
