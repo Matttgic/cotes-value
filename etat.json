@@ -1,10 +1,19 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T08:51:01+00:00",
+  "debut": "2026-10-24T08:56:41+00:00",
   "mode": "complet",
   "etapes": {
+   "polymarket": {
+    "secondes": 27.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
    "pinnacle": {
-    "secondes": 26.3,
+    "secondes": 29.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,25 +21,12 @@
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 10.9,
+    "secondes": 12.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 33.9,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 35.4,
+    "secondes": 35.9,
     "ok": true
    },
    "netbet": {
@@ -41,9 +37,17 @@
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 61.3,
+   "winamax_direct": {
+    "secondes": 40.0,
     "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 74.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.5,
@@ -54,37 +58,46 @@
     ]
    },
    "smarkets": {
-    "secondes": 19.5,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 107.6,
+    "secondes": 171.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 2.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 1.5,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 57361,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 777,
-   "age_min_s": 47,
-   "lignes": 203845,
-   "lignes_perimees": 1978,
+   "age_max_s": 855,
+   "age_min_s": 49,
+   "lignes": 203801,
+   "lignes_perimees": 7436,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -92,7 +105,7 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 38,
+    "head_200": 36,
     "head_403": 2,
     "ortho_refusee": 2,
     "choisi_autre": 11,
@@ -106,30 +119,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 3,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Valletta – Hamrun Spartans",
-     "source": "PMU",
-     "cote_olybet": 2.27,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.1434,
-     "aberrant": false
-    },
-    {
-     "match": "Sliema Wanderers – Marsaxlokk",
+     "match": "Velez Mostar – Banja Luka",
      "source": "Pinnacle",
-     "cote_olybet": 2.32,
-     "cote_reference": 2.39,
-     "ecart_relatif": 0.0293,
+     "cote_olybet": 1.64,
+     "cote_reference": 1.662,
+     "ecart_relatif": 0.0134,
      "aberrant": false
     },
     {
-     "match": "Sliema Wanderers – Marsaxlokk",
+     "match": "Velez Mostar – Banja Luka",
      "source": "PMU",
-     "cote_olybet": 2.32,
-     "cote_reference": 2.32,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 1.64,
+     "cote_reference": 1.7,
+     "ecart_relatif": 0.0353,
+     "aberrant": false
+    },
+    {
+     "match": "Borac Banja Luka – FK Sloga Doboj",
+     "source": "Pinnacle",
+     "cote_olybet": 1.15,
+     "cote_reference": 1.156,
+     "ecart_relatif": 0.0052,
+     "aberrant": false
+    },
+    {
+     "match": "Borac Banja Luka – FK Sloga Doboj",
+     "source": "PMU",
+     "cote_olybet": 1.15,
+     "cote_reference": 1.2,
+     "ecart_relatif": 0.0417,
+     "aberrant": false
+    },
+    {
+     "match": "Sarajevo – Zeljeznicar Sarajevo",
+     "source": "Pinnacle",
+     "cote_olybet": 1.48,
+     "cote_reference": 1.498,
+     "ecart_relatif": 0.0117,
+     "aberrant": false
+    },
+    {
+     "match": "Sarajevo – Zeljeznicar Sarajevo",
+     "source": "PMU",
+     "cote_olybet": 1.48,
+     "cote_reference": 1.46,
+     "ecart_relatif": 0.0137,
+     "aberrant": false
+    },
+    {
+     "match": "Siroki Brijeg – Celik Zenica",
+     "source": "PMU",
+     "cote_olybet": 1.92,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0549,
+     "aberrant": false
+    },
+    {
+     "match": "Sarpsborg 08 – Aalesunds",
+     "source": "Pinnacle",
+     "cote_olybet": 1.79,
+     "cote_reference": 1.877,
+     "ecart_relatif": 0.0465,
+     "aberrant": false
+    },
+    {
+     "match": "Sarpsborg 08 – Aalesunds",
+     "source": "PMU",
+     "cote_olybet": 1.79,
+     "cote_reference": 1.74,
+     "ecart_relatif": 0.0287,
      "aberrant": false
     }
    ],
@@ -175,40 +236,41 @@
     {
      "match": "Liepaja – Tukums 2000",
      "source": "Pinnacle",
-     "cote_netbet": 1.39,
+     "cote_netbet": 1.4,
      "cote_reference": 1.5,
-     "ecart_relatif": 0.0733,
+     "ecart_relatif": 0.0667,
      "aberrant": false
     },
     {
      "match": "Liepaja – Tukums 2000",
      "source": "PMU",
-     "cote_netbet": 1.39,
+     "cote_netbet": 1.4,
      "cote_reference": 1.41,
-     "ecart_relatif": 0.0142,
+     "ecart_relatif": 0.0071,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T08:51:12+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T08:51:20+00:00",
-   "books_premiere_lecture": "2026-10-24T06:29:55+00:00",
-   "books_derniere_lecture": "2026-10-24T08:51:32+00:00",
-   "ecart_enveloppe_secondes": 8485.0
+   "pinnacle_premiere_lecture": "2026-10-24T08:56:52+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T08:57:13+00:00",
+   "books_premiere_lecture": "2026-10-24T07:08:03+00:00",
+   "books_derniere_lecture": "2026-10-24T08:57:15+00:00",
+   "ecart_enveloppe_secondes": 6550.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 45558,
-   "matchs_suspects": 2
+   "mesures": 67157,
+   "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
@@ -221,27 +283,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-24T07:48:19+00:00"
+   "dernier_reglement": "2026-10-24T08:55:16+00:00"
   },
-  "fin": "2026-10-24T08:55:04+00:00",
+  "fin": "2026-10-24T09:01:57+00:00",
   "cotes": {
-   "francaises": 213982,
-   "pinnacle": 203845,
-   "polymarket": 0,
+   "francaises": 225768,
+   "pinnacle": 261162,
+   "polymarket": 39698,
    "smarkets": 3912
   },
-  "matchs_francais": 3283,
-  "opportunites": 9,
-  "opportunites_suspectes": 15,
+  "matchs_francais": 3314,
+  "opportunites": 11,
+  "opportunites_suspectes": 51,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T13:16:40+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-23T13:21:16+00:00",
    "mode": "complet",
@@ -1440,6 +1496,12 @@
    "debut": "2026-10-24T08:51:01+00:00",
    "mode": "complet",
    "opportunites": 9,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T08:56:41+00:00",
+   "mode": "complet",
+   "opportunites": 11,
    "nouveaux_paris": 0
   }
  ],
