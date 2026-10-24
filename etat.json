@@ -1,48 +1,44 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T15:41:23+00:00",
+  "debut": "2026-10-24T15:46:54+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 25.7,
+   "polymarket": {
+    "secondes": 23.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 27.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 37 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 11.5,
+    "secondes": 7.7,
     "ok": true
    },
-   "winamax_direct": {
-    "secondes": 36.5,
+   "unibet_direct": {
+    "secondes": 20.3,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 37.0,
+    "secondes": 35.1,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 37.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
-   "unibet_direct": {
-    "secondes": 74.8,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -50,7 +46,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -63,56 +59,41 @@
     "cache": true
    },
    "association": {
-    "secondes": 62.0,
+    "secondes": 139.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.7,
+    "secondes": 4.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 1.2,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 39369,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 854,
-   "age_min_s": 39,
-   "lignes": 168461,
-   "lignes_perimees": 39367,
-   "rechauffeur": "ok",
+   "age_max_s": 761,
+   "age_min_s": 34,
+   "lignes": 168889,
+   "lignes_perimees": 122,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 39,
+    "head_200": 30,
+    "choisi_fixe": 4,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 10,
-    "choisi_autre": 4,
+    "choisi_autre": 10,
     "sport_vide": 5,
     "reprise_403": 1
    }
@@ -122,46 +103,86 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Racing Genk – Standard de Liège",
+     "match": "O´Higgins – Cobresal",
      "source": "Pinnacle",
-     "cote_olybet": 1.68,
-     "cote_reference": 1.769,
-     "ecart_relatif": 0.0504,
+     "cote_olybet": 1.52,
+     "cote_reference": 1.595,
+     "ecart_relatif": 0.0471,
      "aberrant": false
     },
     {
-     "match": "Club Bruges – Saint-Trond",
+     "match": "O´Higgins – Cobresal",
      "source": "PMU",
-     "cote_olybet": 1.28,
-     "cote_reference": 1.28,
+     "cote_olybet": 1.52,
+     "cote_reference": 1.52,
      "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "KVC Westerlo – SK Beveren",
+     "match": "Universidad de Concepcion – Deportes Limache",
      "source": "Pinnacle",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.885,
-     "ecart_relatif": 0.0557,
+     "cote_olybet": 2.74,
+     "cote_reference": 2.91,
+     "ecart_relatif": 0.0584,
      "aberrant": false
     },
     {
-     "match": "KVC Westerlo – SK Beveren",
+     "match": "Universidad de Concepcion – Deportes Limache",
      "source": "PMU",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.78,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 2.74,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.1417,
      "aberrant": false
     },
     {
-     "match": "Oud-Heverlee Leuven – Lommel SK",
+     "match": "Palestino – Colo-Colo",
      "source": "Pinnacle",
-     "cote_olybet": 1.78,
-     "cote_reference": 1.901,
-     "ecart_relatif": 0.0636,
+     "cote_olybet": 3.32,
+     "cote_reference": 3.55,
+     "ecart_relatif": 0.0648,
+     "aberrant": false
+    },
+    {
+     "match": "Palestino – Colo-Colo",
+     "source": "PMU",
+     "cote_olybet": 3.32,
+     "cote_reference": 3.0,
+     "ecart_relatif": 0.1067,
+     "aberrant": false
+    },
+    {
+     "match": "Deportivo Nublense – Coquimbo Unido",
+     "source": "Pinnacle",
+     "cote_olybet": 2.78,
+     "cote_reference": 2.99,
+     "ecart_relatif": 0.0702,
+     "aberrant": false
+    },
+    {
+     "match": "Deportivo Nublense – Coquimbo Unido",
+     "source": "PMU",
+     "cote_olybet": 2.78,
+     "cote_reference": 2.48,
+     "ecart_relatif": 0.121,
+     "aberrant": false
+    },
+    {
+     "match": "CD Union La Calera – Universidad Catolica",
+     "source": "Pinnacle",
+     "cote_olybet": 3.27,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.0657,
+     "aberrant": false
+    },
+    {
+     "match": "CD Union La Calera – Universidad Catolica",
+     "source": "PMU",
+     "cote_olybet": 3.27,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0381,
      "aberrant": false
     }
    ],
@@ -170,22 +191,14 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 8,
    "comparaisons": [
-    {
-     "match": "Hapoel Jerusalem – Hapoel Tel Aviv",
-     "source": "Pinnacle",
-     "cote_netbet": 5.7,
-     "cote_reference": 6.53,
-     "ecart_relatif": 0.1271,
-     "aberrant": false
-    },
     {
      "match": "Amal Tiznit – CODM Meknès",
      "source": "Pinnacle",
      "cote_netbet": 3.2,
-     "cote_reference": 3.62,
-     "ecart_relatif": 0.116,
+     "cote_reference": 3.75,
+     "ecart_relatif": 0.1467,
      "aberrant": false
     },
     {
@@ -200,8 +213,8 @@
      "match": "Anorthosis Famagusta – Omonia Aradippou",
      "source": "Pinnacle",
      "cote_netbet": 1.95,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.025,
+     "cote_reference": 2.17,
+     "ecart_relatif": 0.1014,
      "aberrant": false
     },
     {
@@ -227,29 +240,45 @@
      "cote_reference": 1.79,
      "ecart_relatif": 0.0223,
      "aberrant": false
+    },
+    {
+     "match": "Etzella Ettelbrück – Niederkorn",
+     "source": "Pinnacle",
+     "cote_netbet": 4.8,
+     "cote_reference": 4.99,
+     "ecart_relatif": 0.0381,
+     "aberrant": false
+    },
+    {
+     "match": "Etzella Ettelbrück – Niederkorn",
+     "source": "PMU",
+     "cote_netbet": 4.8,
+     "cote_reference": 4.8,
+     "ecart_relatif": 0.0,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T15:41:34+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T15:41:55+00:00",
-   "books_premiere_lecture": "2026-10-24T14:44:47+00:00",
-   "books_derniere_lecture": "2026-10-24T15:41:57+00:00",
-   "ecart_enveloppe_secondes": 3428.0
+   "pinnacle_premiere_lecture": "2026-10-24T15:47:05+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T15:47:14+00:00",
+   "books_premiere_lecture": "2026-10-24T14:57:11+00:00",
+   "books_derniere_lecture": "2026-10-24T15:47:24+00:00",
+   "ecart_enveloppe_secondes": 3003.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 10.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 629,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 48744,
-   "matchs_suspects": 0
+   "mesures": 66444,
+   "matchs_suspects": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -262,27 +291,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-24T14:49:21+00:00"
+   "dernier_reglement": "2026-10-24T15:44:41+00:00"
   },
-  "fin": "2026-10-24T15:44:26+00:00",
+  "fin": "2026-10-24T15:51:48+00:00",
   "cotes": {
-   "francaises": 216058,
-   "pinnacle": 207830,
-   "polymarket": 0,
+   "francaises": 215718,
+   "pinnacle": 168889,
+   "polymarket": 36789,
    "smarkets": 4115
   },
-  "matchs_francais": 2830,
-  "opportunites": 10,
-  "opportunites_suspectes": 4,
-  "nouveaux_paris": 4
+  "matchs_francais": 2845,
+  "opportunites": 11,
+  "opportunites_suspectes": 24,
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-23T18:30:58+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T18:35:33+00:00",
    "mode": "complet",
@@ -1482,6 +1505,12 @@
    "mode": "complet",
    "opportunites": 10,
    "nouveaux_paris": 4
+  },
+  {
+   "debut": "2026-10-24T15:46:54+00:00",
+   "mode": "complet",
+   "opportunites": 11,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-10-24T15:44:41+00:00",
