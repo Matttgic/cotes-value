@@ -57,11 +57,11 @@ def figer_nouveaux(paris, nouveaux):
     from .convergence import selections, paris_convergence
     from .strategies_prudentes import selections_prudentes, VARIANTES
     from .laboratoire import REGLES, DEBUT_SUIVI, selectionner
+    from .strategie_grok import GROKS, paris_grok_1, paris_grok_2, paris_grok_3, paris_grok_4, paris_grok_5
     retenus = selections(paris)
     retenus['convergence'] = paris_convergence(paris, retenus)
     retenus.update(selections_prudentes(paris, bases=retenus))
     retenus.update({'labo:'+r.id: {id(p) for p in selectionner(paris, r, DEBUT_SUIVI)} for r in REGLES})
-    from .strategie_grok import GROKS, paris_grok_1, paris_grok_2, paris_grok_3, paris_grok_4, paris_grok_5
     retenus['grok_1'] = paris_grok_1(paris)
     retenus['grok_2'] = paris_grok_2(paris)
     retenus['grok_3'] = paris_grok_3(paris)
@@ -72,6 +72,10 @@ def figer_nouveaux(paris, nouveaux):
     versions['jules_v2'] = JULES_V2['version']
     for g in GROKS:
         versions[g['cle']] = g['version']
+    for p in candidats:
+        p['selections_figees'] = {cle: {'version': versions.get(cle, '1'), 'decide_le': p['decide_le']}
+                                  for cle, ids in retenus.items() if id(p) in ids}
+        p['registre_version'] = '1'
 
 
 REDECISION = "redecision_lecture_posterieure"
