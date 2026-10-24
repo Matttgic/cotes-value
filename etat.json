@@ -1,32 +1,31 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T10:53:02+00:00",
+  "debut": "2026-10-24T10:59:24+00:00",
   "mode": "complet",
   "etapes": {
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "pinnacle": {
-    "secondes": 30.3,
+    "secondes": 23.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
+   "polymarket": {
+    "secondes": 27.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
    "olybet": {
-    "secondes": 12.0,
+    "secondes": 10.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -34,11 +33,7 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 39.3,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 41.4,
+    "secondes": 39.8,
     "ok": true
    },
    "winamax_direct": {
@@ -50,8 +45,16 @@
      "lecture interrompue"
     ]
    },
+   "unibet_direct": {
+    "secondes": 74.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,23 +62,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 34.8,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 173.2,
+    "secondes": 214.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.9,
+    "secondes": 3.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 1.2,
     "ok": true
    }
   },
@@ -86,27 +86,23 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 851,
-   "age_min_s": 122,
-   "lignes": 203694,
-   "lignes_perimees": 1922,
-   "rechauffeur": "ok",
+   "age_max_s": 736,
+   "age_min_s": 15,
+   "lignes": 204157,
+   "lignes_perimees": 98,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
+    "head_200": 33,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 6,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 9,
+    "choisi_fixe": 5,
+    "sport_vide": 7
    }
   },
   "olybet_source": "direct",
@@ -114,54 +110,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Santos – Bahia",
+     "match": "Nagoya Grampus Eight – Yokohama F. Marinos",
      "source": "Pinnacle",
-     "cote_olybet": 1.76,
-     "cote_reference": 1.862,
-     "ecart_relatif": 0.0548,
+     "cote_olybet": 2.24,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0667,
      "aberrant": false
     },
     {
-     "match": "Santos – Bahia",
+     "match": "Nagoya Grampus Eight – Yokohama F. Marinos",
      "source": "PMU",
-     "cote_olybet": 1.76,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.033,
+     "cote_olybet": 2.24,
+     "cote_reference": 2.43,
+     "ecart_relatif": 0.0782,
      "aberrant": false
     },
     {
-     "match": "Vasco De Gama – Corinthians",
+     "match": "FC Tokyo – Mito HollyHock",
      "source": "Pinnacle",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.704,
-     "ecart_relatif": 0.0553,
+     "cote_olybet": 1.27,
+     "cote_reference": 1.317,
+     "ecart_relatif": 0.0353,
      "aberrant": false
     },
     {
-     "match": "Vasco De Gama – Corinthians",
+     "match": "FC Tokyo – Mito HollyHock",
      "source": "PMU",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.62,
-     "ecart_relatif": 0.0062,
+     "cote_olybet": 1.27,
+     "cote_reference": 1.27,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Palmeiras – RB Bragantino",
+     "match": "Urawa  Red Diamonds – V-Varen Nagasaki",
      "source": "Pinnacle",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.556,
-     "ecart_relatif": 0.0486,
+     "cote_olybet": 1.55,
+     "cote_reference": 1.629,
+     "ecart_relatif": 0.0484,
      "aberrant": false
     },
     {
-     "match": "Palmeiras – RB Bragantino",
+     "match": "Urawa  Red Diamonds – V-Varen Nagasaki",
      "source": "PMU",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.49,
-     "ecart_relatif": 0.0067,
+     "cote_olybet": 1.55,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0312,
+     "aberrant": false
+    },
+    {
+     "match": "Kawasaki Frontale – Fagiano Okayama",
+     "source": "Pinnacle",
+     "cote_olybet": 2.0,
+     "cote_reference": 2.13,
+     "ecart_relatif": 0.061,
+     "aberrant": false
+    },
+    {
+     "match": "Kawasaki Frontale – Fagiano Okayama",
+     "source": "PMU",
+     "cote_olybet": 2.0,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.0,
      "aberrant": false
     }
    ],
@@ -191,25 +203,25 @@
     {
      "match": "FC Meshakhte Tkibuli – Dila Gori",
      "source": "Pinnacle",
-     "cote_netbet": 3.95,
+     "cote_netbet": 3.85,
      "cote_reference": 4.43,
-     "ecart_relatif": 0.1084,
+     "ecart_relatif": 0.1309,
      "aberrant": false
     },
     {
      "match": "Heidenheim – Energie Cottbus",
      "source": "Pinnacle",
-     "cote_netbet": 1.42,
+     "cote_netbet": 1.41,
      "cote_reference": 1.478,
-     "ecart_relatif": 0.0396,
+     "ecart_relatif": 0.0463,
      "aberrant": false
     },
     {
      "match": "Heidenheim – Energie Cottbus",
      "source": "PMU",
-     "cote_netbet": 1.42,
-     "cote_reference": 1.48,
-     "ecart_relatif": 0.0405,
+     "cote_netbet": 1.41,
+     "cote_reference": 1.37,
+     "ecart_relatif": 0.0292,
      "aberrant": false
     },
     {
@@ -232,23 +244,24 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T10:53:14+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T10:53:23+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T10:59:35+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T10:59:42+00:00",
    "books_premiere_lecture": "2026-10-24T08:57:15+00:00",
-   "books_derniere_lecture": "2026-10-24T10:53:34+00:00",
-   "ecart_enveloppe_secondes": 6968.0
+   "books_derniere_lecture": "2026-10-24T10:59:53+00:00",
+   "ecart_enveloppe_secondes": 7347.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 6.4
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 47668,
-   "matchs_suspects": 3
+   "mesures": 60103,
+   "matchs_suspects": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -263,25 +276,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T10:51:34+00:00"
   },
-  "fin": "2026-10-24T10:58:30+00:00",
+  "fin": "2026-10-24T11:05:36+00:00",
   "cotes": {
-   "francaises": 186707,
-   "pinnacle": 203694,
-   "polymarket": 0,
+   "francaises": 190256,
+   "pinnacle": 204157,
+   "polymarket": 39423,
    "smarkets": 3133
   },
-  "matchs_francais": 2680,
-  "opportunites": 14,
-  "opportunites_suspectes": 19,
-  "nouveaux_paris": 0
+  "matchs_francais": 2693,
+  "opportunites": 16,
+  "opportunites_suspectes": 48,
+  "nouveaux_paris": 4
  },
  "historique": [
-  {
-   "debut": "2026-10-23T14:38:05+00:00",
-   "mode": "complet",
-   "opportunites": 10,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T14:43:26+00:00",
    "mode": "complet",
@@ -1481,6 +1488,12 @@
    "mode": "complet",
    "opportunites": 14,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T10:59:24+00:00",
+   "mode": "complet",
+   "opportunites": 16,
+   "nouveaux_paris": 4
   }
  ],
  "dernier_reglement": "2026-10-24T10:51:34+00:00",
