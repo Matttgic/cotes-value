@@ -1,123 +1,104 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T03:14:45+00:00",
+  "debut": "2026-10-24T03:23:13+00:00",
   "mode": "complet",
   "etapes": {
    "pinnacle": {
-    "secondes": 25.9,
+    "secondes": 27.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 17 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "polymarket": {
     "secondes": 30.0,
-    "ok": true,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "prix lu après le coup d'envoi : rejet pré-match"
+     "liste d'événements tronquée (plafond de pagination)"
     ]
    },
    "olybet": {
-    "secondes": 8.3,
+    "secondes": 8.9,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 23.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.6,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 35.9,
+    "secondes": 32.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 74.9,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+   "winamax_direct": {
+    "secondes": 39.2,
+    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "trame incomplète",
      "budget"
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 17.0,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 283.8,
+    "secondes": 170.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.0,
+    "secondes": 3.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.1,
+    "secondes": 0.7,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 55878,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 755,
-   "age_min_s": 69,
-   "lignes": 197678,
-   "lignes_perimees": 4310,
-   "rechauffeur": "ok",
+   "age_max_s": 880,
+   "age_min_s": 60,
+   "lignes": 198878,
+   "lignes_perimees": 606,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 29,
-    "head_403": 3,
+    "head_200": 34,
+    "head_403": 2,
     "ortho_refusee": 2,
     "choisi_fixe": 6,
     "choisi_autre": 7,
-    "reprise_403": 1,
-    "sport_vide": 6
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -128,35 +109,59 @@
    "examines": 9,
    "comparaisons": [
     {
-     "match": "San Lorenzo de Almagro – Newell's Old Boys",
+     "match": "Samsunspor – Amedspor SK",
      "source": "Pinnacle",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.7,
-     "ecart_relatif": 0.0704,
+     "cote_olybet": 3.23,
+     "cote_reference": 3.48,
+     "ecart_relatif": 0.0718,
      "aberrant": false
     },
     {
-     "match": "San Lorenzo de Almagro – Newell's Old Boys",
-     "source": "PMU",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0913,
-     "aberrant": false
-    },
-    {
-     "match": "CA Rosario Central – CA Huracan",
+     "match": "Gaziantep FK – Erzurumspor FK",
      "source": "Pinnacle",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.763,
-     "ecart_relatif": 0.053,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.48,
+     "ecart_relatif": 0.0726,
      "aberrant": false
     },
     {
-     "match": "CA Rosario Central – CA Huracan",
+     "match": "Gaziantep FK – Erzurumspor FK",
      "source": "PMU",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.57,
-     "ecart_relatif": 0.0637,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.0314,
+     "aberrant": false
+    },
+    {
+     "match": "Eyupspor – Kasimpasa",
+     "source": "Pinnacle",
+     "cote_olybet": 5.1,
+     "cote_reference": 1.901,
+     "ecart_relatif": 1.6829,
+     "aberrant": true
+    },
+    {
+     "match": "Eyupspor – Kasimpasa",
+     "source": "PMU",
+     "cote_olybet": 5.1,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.0408,
+     "aberrant": false
+    },
+    {
+     "match": "Konyaspor – Genclerbirligi",
+     "source": "Pinnacle",
+     "cote_olybet": 1.77,
+     "cote_reference": 1.862,
+     "ecart_relatif": 0.0495,
+     "aberrant": false
+    },
+    {
+     "match": "Konyaspor – Genclerbirligi",
+     "source": "PMU",
+     "cote_olybet": 1.77,
+     "cote_reference": 1.75,
+     "ecart_relatif": 0.0114,
      "aberrant": false
     },
     {
@@ -174,33 +179,18 @@
      "cote_reference": 3.2,
      "ecart_relatif": 0.0781,
      "aberrant": false
-    },
-    {
-     "match": "Atlético Talleres – CSD Defensa y Justicia",
-     "source": "PMU",
-     "cote_olybet": 2.18,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0686,
-     "aberrant": false
-    },
-    {
-     "match": "Silkeborg – FC Nordsjaelland",
-     "source": "Pinnacle",
-     "cote_olybet": 4.1,
-     "cote_reference": 4.41,
-     "ecart_relatif": 0.0703,
-     "aberrant": false
-    },
-    {
-     "match": "Silkeborg – FC Nordsjaelland",
-     "source": "PMU",
-     "cote_olybet": 4.1,
-     "cote_reference": 4.4,
-     "ecart_relatif": 0.0682,
-     "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Eyupspor – Kasimpasa",
+     "source": "Pinnacle",
+     "cote_olybet": 5.1,
+     "cote_reference": 1.901,
+     "ecart_relatif": 1.6829,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -210,16 +200,16 @@
     {
      "match": "Newcastle Jets – Macarthur Sydney",
      "source": "Pinnacle",
-     "cote_netbet": 1.92,
-     "cote_reference": 2.11,
-     "ecart_relatif": 0.09,
+     "cote_netbet": 1.93,
+     "cote_reference": 2.13,
+     "ecart_relatif": 0.0939,
      "aberrant": false
     },
     {
      "match": "Newcastle Jets – Macarthur Sydney",
      "source": "PMU",
-     "cote_netbet": 1.92,
-     "cote_reference": 1.91,
+     "cote_netbet": 1.93,
+     "cote_reference": 1.92,
      "ecart_relatif": 0.0052,
      "aberrant": false
     },
@@ -291,23 +281,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T03:14:56+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T03:15:18+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T03:23:25+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T03:23:32+00:00",
    "books_premiere_lecture": "2026-10-24T02:36:19+00:00",
-   "books_derniere_lecture": "2026-10-24T03:15:21+00:00",
-   "ecart_enveloppe_secondes": 2339.0
+   "books_derniere_lecture": "2026-10-24T03:23:45+00:00",
+   "ecart_enveloppe_secondes": 2833.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 12.1
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 71350,
+   "mesures": 60916,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -325,25 +314,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T02:42:10+00:00"
   },
-  "fin": "2026-10-24T03:22:18+00:00",
+  "fin": "2026-10-24T03:28:25+00:00",
   "cotes": {
-   "francaises": 210453,
-   "pinnacle": 253556,
-   "polymarket": 38129,
-   "smarkets": 3993
+   "francaises": 206215,
+   "pinnacle": 198878,
+   "polymarket": 0,
+   "smarkets": 4002
   },
-  "matchs_francais": 2720,
-  "opportunites": 6,
-  "opportunites_suspectes": 39,
-  "nouveaux_paris": 0
+  "matchs_francais": 2730,
+  "opportunites": 8,
+  "opportunites_suspectes": 19,
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-23T08:59:07+00:00",
-   "mode": "complet",
-   "opportunites": 8,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T09:05:20+00:00",
    "mode": "complet",
@@ -1543,6 +1526,12 @@
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T03:23:13+00:00",
+   "mode": "complet",
+   "opportunites": 8,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-24T02:42:10+00:00",
