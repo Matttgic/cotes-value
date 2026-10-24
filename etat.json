@@ -1,31 +1,35 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T21:15:47+00:00",
+  "debut": "2026-10-24T21:20:24+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 22.0,
+   "polymarket": {
+    "secondes": 22.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 24.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé"
-   },
    "olybet": {
-    "secondes": 9.5,
+    "secondes": 5.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 33.9,
+    "secondes": 31.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 34.3,
+    "secondes": 32.0,
     "ok": true
    },
    "netbet": {
@@ -37,16 +41,12 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 38.0,
+    "secondes": 47.6,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.4,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 69.3,
+    "ok": true
    },
    "smarkets": {
     "secondes": 0.0,
@@ -54,29 +54,40 @@
     "cache": true
    },
    "association": {
-    "secondes": 62.9,
+    "secondes": 113.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.6,
+    "secondes": 2.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.8,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 33713,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 33713,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 878,
-   "age_min_s": 15,
-   "lignes": 129046,
-   "lignes_perimees": 778,
+   "age_max_s": 798,
+   "age_min_s": 82,
+   "lignes": 129122,
+   "lignes_perimees": 6267,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -87,12 +98,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 39,
-    "choisi_autre": 3,
-    "choisi_fixe": 11,
+    "head_200": 35,
+    "choisi_fixe": 8,
     "head_403": 2,
     "ortho_refusee": 2,
-    "sport_vide": 8
+    "choisi_autre": 6,
+    "sport_vide": 7,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -100,46 +112,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Hapoël Petah-Tikva – Beitar Jérusalem",
+     "match": "Mjallby – Hammarby",
      "source": "Pinnacle",
-     "cote_olybet": 6.0,
-     "cote_reference": 6.49,
-     "ecart_relatif": 0.0755,
+     "cote_olybet": 5.5,
+     "cote_reference": 6.18,
+     "ecart_relatif": 0.11,
      "aberrant": false
     },
     {
-     "match": "CFR Cluj – Dinamo Bucarest",
-     "source": "Pinnacle",
-     "cote_olybet": 3.82,
-     "cote_reference": 4.15,
-     "ecart_relatif": 0.0795,
-     "aberrant": false
-    },
-    {
-     "match": "CFR Cluj – Dinamo Bucarest",
+     "match": "Mjallby – Hammarby",
      "source": "PMU",
-     "cote_olybet": 3.82,
-     "cote_reference": 3.65,
-     "ecart_relatif": 0.0466,
+     "cote_olybet": 5.5,
+     "cote_reference": 5.75,
+     "ecart_relatif": 0.0435,
      "aberrant": false
     },
     {
-     "match": "FCV Farul Constanta – Otelul Galati",
+     "match": "GAIS – Goteborg",
      "source": "Pinnacle",
-     "cote_olybet": 1.91,
-     "cote_reference": 1.99,
-     "ecart_relatif": 0.0402,
+     "cote_olybet": 2.31,
+     "cote_reference": 2.46,
+     "ecart_relatif": 0.061,
      "aberrant": false
     },
     {
-     "match": "FCV Farul Constanta – Otelul Galati",
+     "match": "GAIS – Goteborg",
      "source": "PMU",
-     "cote_olybet": 1.91,
-     "cote_reference": 1.7,
-     "ecart_relatif": 0.1235,
+     "cote_olybet": 2.31,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.0043,
+     "aberrant": false
+    },
+    {
+     "match": "Imisli FC – Shamakhi FK",
+     "source": "Pinnacle",
+     "cote_olybet": 2.56,
+     "cote_reference": 2.63,
+     "ecart_relatif": 0.0266,
+     "aberrant": false
+    },
+    {
+     "match": "Sabah FK – Qarabag",
+     "source": "Pinnacle",
+     "cote_olybet": 2.48,
+     "cote_reference": 2.54,
+     "ecart_relatif": 0.0236,
      "aberrant": false
     }
    ],
@@ -234,23 +254,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T21:15:58+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T21:16:05+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T21:06:25+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T21:20:41+00:00",
    "books_premiere_lecture": "2026-10-24T19:01:08+00:00",
-   "books_derniere_lecture": "2026-10-24T21:16:19+00:00",
-   "ecart_enveloppe_secondes": 8097.0
+   "books_derniere_lecture": "2026-10-24T21:20:51+00:00",
+   "ecart_enveloppe_secondes": 8373.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.2
+   "age_min": 9.8
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 630,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 42308,
+   "mesures": 49761,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -266,25 +286,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T20:29:47+00:00"
   },
-  "fin": "2026-10-24T21:18:52+00:00",
+  "fin": "2026-10-24T21:24:29+00:00",
   "cotes": {
-   "francaises": 163902,
-   "pinnacle": 129046,
-   "polymarket": 0,
+   "francaises": 159049,
+   "pinnacle": 162835,
+   "polymarket": 33343,
    "smarkets": 4007
   },
-  "matchs_francais": 2045,
-  "opportunites": 8,
+  "matchs_francais": 2041,
+  "opportunites": 7,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 2
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-24T00:29:37+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-24T00:34:10+00:00",
    "mode": "complet",
@@ -1484,6 +1498,12 @@
    "mode": "complet",
    "opportunites": 8,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-24T21:20:24+00:00",
+   "mode": "complet",
+   "opportunites": 7,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T20:29:47+00:00",
