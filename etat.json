@@ -1,41 +1,36 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T01:49:24+00:00",
+  "debut": "2026-10-24T01:56:05+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 24.8,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
+     "liste d'événements tronquée (plafond de pagination)"
     ]
    },
    "pinnacle": {
-    "secondes": 29.0,
+    "secondes": 31.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "sport 45 matchups : HTTP 403",
-     "sport 39 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 6.9,
+    "secondes": 11.5,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.1,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 31.5,
+    "secondes": 35.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.7,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -43,11 +38,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 39.0,
+    "secondes": 39.5,
     "ok": true
    },
+   "unibet_direct": {
+    "secondes": 73.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
    "betclic_direct": {
-    "secondes": 77.5,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -55,54 +58,59 @@
     ]
    },
    "smarkets": {
-    "secondes": 17.1,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 172.9,
+    "secondes": 203.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.5,
+    "secondes": 2.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.7,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 52032,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 52032,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 841,
-   "age_min_s": 108,
-   "lignes": 189903,
-   "lignes_perimees": 2040,
-   "rechauffeur": "ok",
+   "age_max_s": 799,
+   "age_min_s": 58,
+   "lignes": 189755,
+   "lignes_perimees": 1651,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
-    "choisi_fixe": 11,
+    "head_200": 29,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 2,
+    "choisi_fixe": 4,
+    "choisi_autre": 9,
     "sport_vide": 5,
-    "reprise_403": 2
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -110,46 +118,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Levadia Tallinn – Harju JK Laagri",
+     "match": "Young Boys – FC Saint-Gall",
      "source": "Pinnacle",
-     "cote_olybet": 1.25,
-     "cote_reference": 1.282,
-     "ecart_relatif": 0.0247,
+     "cote_olybet": 1.7,
+     "cote_reference": 1.787,
+     "ecart_relatif": 0.0489,
      "aberrant": false
     },
     {
-     "match": "Levadia Tallinn – Harju JK Laagri",
+     "match": "Young Boys – FC Saint-Gall",
      "source": "PMU",
-     "cote_olybet": 1.25,
-     "cote_reference": 1.19,
-     "ecart_relatif": 0.0504,
+     "cote_olybet": 1.7,
+     "cote_reference": 1.72,
+     "ecart_relatif": 0.0116,
      "aberrant": false
     },
     {
-     "match": "Nomme Kalju – Flora Tallinn",
+     "match": "Servette – FC Vaduz",
      "source": "Pinnacle",
-     "cote_olybet": 2.3,
-     "cote_reference": 2.42,
-     "ecart_relatif": 0.0496,
+     "cote_olybet": 1.76,
+     "cote_reference": 1.862,
+     "ecart_relatif": 0.0548,
      "aberrant": false
     },
     {
-     "match": "Nomme Kalju – Flora Tallinn",
+     "match": "Servette – FC Vaduz",
      "source": "PMU",
-     "cote_olybet": 2.3,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.1386,
+     "cote_olybet": 1.76,
+     "cote_reference": 1.68,
+     "ecart_relatif": 0.0476,
      "aberrant": false
     },
     {
-     "match": "IA Akranes – Keflavik",
+     "match": "Aston Villa – Manchester City",
      "source": "Pinnacle",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.516,
-     "ecart_relatif": 0.0234,
+     "cote_olybet": 4.75,
+     "cote_reference": 5.03,
+     "ecart_relatif": 0.0557,
+     "aberrant": false
+    },
+    {
+     "match": "Aston Villa – Manchester City",
+     "source": "PMU",
+     "cote_olybet": 4.75,
+     "cote_reference": 4.6,
+     "ecart_relatif": 0.0326,
      "aberrant": false
     }
    ],
@@ -244,22 +260,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T01:49:35+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T01:49:42+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T01:44:12+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T01:56:27+00:00",
    "books_premiere_lecture": "2026-10-23T23:07:58+00:00",
-   "books_derniere_lecture": "2026-10-24T01:49:55+00:00",
-   "ecart_enveloppe_secondes": 9704.0
+   "books_derniere_lecture": "2026-10-24T01:56:39+00:00",
+   "ecart_enveloppe_secondes": 10109.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 6.7
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 626,
+   "conforme": 624,
    "a_verifier": 9,
-   "non_conforme": 10,
-   "mesures": 63900,
+   "non_conforme": 12,
+   "mesures": 52149,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -277,25 +294,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T01:42:16+00:00"
   },
-  "fin": "2026-10-24T01:55:13+00:00",
+  "fin": "2026-10-24T02:01:31+00:00",
   "cotes": {
-   "francaises": 177833,
-   "pinnacle": 189903,
-   "polymarket": 37797,
+   "francaises": 179245,
+   "pinnacle": 241787,
+   "polymarket": 0,
    "smarkets": 4109
   },
-  "matchs_francais": 2444,
-  "opportunites": 9,
-  "opportunites_suspectes": 46,
+  "matchs_francais": 2445,
+  "opportunites": 6,
+  "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T07:44:06+00:00",
-   "mode": "complet",
-   "opportunites": 10,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T07:48:41+00:00",
    "mode": "complet",
@@ -1494,6 +1505,12 @@
    "debut": "2026-10-24T01:49:24+00:00",
    "mode": "complet",
    "opportunites": 9,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T01:56:05+00:00",
+   "mode": "complet",
+   "opportunites": 6,
    "nouveaux_paris": 0
   }
  ],
