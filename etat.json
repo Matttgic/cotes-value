@@ -1,43 +1,49 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T16:18:37+00:00",
+  "debut": "2026-10-24T16:23:15+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 22.9,
+   "polymarket": {
+    "secondes": 23.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 27.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 27 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 8.2,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 34.4,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 36.0,
+    "secondes": 6.9,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 36.4,
+    "secondes": 32.8,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 35.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
+   "unibet_direct": {
+    "secondes": 74.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -45,7 +51,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,15 +64,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 86.8,
+    "secondes": 109.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.1,
+    "secondes": 3.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 1.0,
     "ok": true
    }
   },
@@ -77,23 +83,28 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 831,
-   "age_min_s": 115,
-   "lignes": 154598,
-   "lignes_perimees": 122,
-   "rechauffeur": "indisponible",
+   "age_max_s": 894,
+   "age_min_s": 191,
+   "lignes": 154612,
+   "lignes_perimees": 5152,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
-    "choisi_fixe": 4,
+    "head_200": 38,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "sport_vide": 7
+    "choisi_fixe": 8,
+    "choisi_autre": 6,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -101,38 +112,30 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 3,
    "comparaisons": [
     {
-     "match": "Wellington Phoenix – Central Coast Mariners",
+     "match": "Osijek – NK Rudeš",
      "source": "Pinnacle",
-     "cote_olybet": 1.68,
-     "cote_reference": 1.8,
-     "ecart_relatif": 0.0667,
+     "cote_olybet": 1.4,
+     "cote_reference": 1.437,
+     "ecart_relatif": 0.0255,
      "aberrant": false
     },
     {
-     "match": "Wellington Phoenix – Central Coast Mariners",
+     "match": "Osijek – NK Rudeš",
      "source": "PMU",
-     "cote_olybet": 1.68,
-     "cote_reference": 1.73,
-     "ecart_relatif": 0.0289,
+     "cote_olybet": 1.4,
+     "cote_reference": 1.35,
+     "ecart_relatif": 0.037,
      "aberrant": false
     },
     {
-     "match": "Sydney – Adelaide United",
+     "match": "Hapoël Petah-Tikva – Beitar Jérusalem",
      "source": "Pinnacle",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.26,
-     "ecart_relatif": 0.0796,
-     "aberrant": false
-    },
-    {
-     "match": "Sydney – Adelaide United",
-     "source": "PMU",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.04,
+     "cote_olybet": 5.1,
+     "cote_reference": 5.46,
+     "ecart_relatif": 0.0659,
      "aberrant": false
     }
    ],
@@ -171,8 +174,8 @@
      "match": "Borussia Dortmund – Eintracht Francfort",
      "source": "PMU",
      "cote_netbet": 1.38,
-     "cote_reference": 1.36,
-     "ecart_relatif": 0.0147,
+     "cote_reference": 1.35,
+     "ecart_relatif": 0.0222,
      "aberrant": false
     },
     {
@@ -203,23 +206,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T16:18:48+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T16:18:56+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T16:23:26+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T16:23:36+00:00",
    "books_premiere_lecture": "2026-10-24T14:57:11+00:00",
-   "books_derniere_lecture": "2026-10-24T16:19:09+00:00",
-   "ecart_enveloppe_secondes": 4905.0
+   "books_derniere_lecture": "2026-10-24T16:23:45+00:00",
+   "ecart_enveloppe_secondes": 5185.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 10.2
+   "age_min": 14.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 629,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 50559,
+   "mesures": 62547,
    "matchs_suspects": 2
   },
   "redecision": {
@@ -235,25 +238,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T15:44:41+00:00"
   },
-  "fin": "2026-10-24T16:22:05+00:00",
+  "fin": "2026-10-24T16:27:30+00:00",
   "cotes": {
-   "francaises": 199334,
-   "pinnacle": 154598,
-   "polymarket": 0,
+   "francaises": 203172,
+   "pinnacle": 154612,
+   "polymarket": 35136,
    "smarkets": 3336
   },
-  "matchs_francais": 2626,
+  "matchs_francais": 2612,
   "opportunites": 11,
-  "opportunites_suspectes": 13,
+  "opportunites_suspectes": 20,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T19:05:08+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T19:08:46+00:00",
    "mode": "complet",
@@ -1450,6 +1447,12 @@
   },
   {
    "debut": "2026-10-24T16:18:37+00:00",
+   "mode": "complet",
+   "opportunites": 11,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T16:23:15+00:00",
    "mode": "complet",
    "opportunites": 11,
    "nouveaux_paris": 0
