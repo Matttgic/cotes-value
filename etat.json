@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T11:27:46+00:00",
+  "debut": "2026-10-24T11:32:51+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 24.1,
+    "secondes": 26.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,7 +13,7 @@
     ]
    },
    "pinnacle": {
-    "secondes": 27.0,
+    "secondes": 27.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -21,28 +21,37 @@
     ]
    },
    "olybet": {
-    "secondes": 12.0,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 26.6,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 37.2,
+    "secondes": 8.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 38.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 43.1,
+   "pmu_direct": {
+    "secondes": 39.4,
     "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 45.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "lecture interrompue"
+    ]
+   },
+   "unibet_direct": {
+    "secondes": 73.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -53,34 +62,49 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 17.4,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 123.6,
+    "secondes": 252.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.1,
+    "secondes": 3.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.3,
+    "secondes": 1.1,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 53634,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 852,
-   "age_min_s": 50,
-   "lignes": 200790,
-   "lignes_perimees": 1736,
+   "age_max_s": 815,
+   "age_min_s": 28,
+   "lignes": 202424,
+   "lignes_perimees": 32798,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -88,11 +112,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 36,
-    "head_403": 2,
+    "head_200": 34,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 11,
-    "choisi_fixe": 3,
+    "choisi_fixe": 5,
+    "choisi_autre": 9,
+    "reprise_403": 1,
+    "reprise_403_ok": 1,
     "sport_vide": 6
    }
   },
@@ -101,46 +127,62 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "Dynamo Batumi – FC Samgurali Tskhaltubo",
+     "match": "Stjarnan – Valur Reykjavik",
      "source": "Pinnacle",
-     "cote_olybet": 1.45,
-     "cote_reference": 1.465,
-     "ecart_relatif": 0.0103,
+     "cote_olybet": 2.0,
+     "cote_reference": 2.07,
+     "ecart_relatif": 0.0338,
      "aberrant": false
     },
     {
-     "match": "Rostov – Lokomotiv Moscou",
-     "source": "Pinnacle",
-     "cote_olybet": 2.18,
-     "cote_reference": 2.33,
-     "ecart_relatif": 0.0644,
+     "match": "Stjarnan – Valur Reykjavik",
+     "source": "PMU",
+     "cote_olybet": 2.0,
+     "cote_reference": 1.78,
+     "ecart_relatif": 0.1236,
      "aberrant": false
     },
     {
-     "match": "Fakel Voronezh – Rodina",
+     "match": "Reykjavik – Breidablik Kopavogur",
      "source": "Pinnacle",
-     "cote_olybet": 1.98,
-     "cote_reference": 2.12,
-     "ecart_relatif": 0.066,
+     "cote_olybet": 1.53,
+     "cote_reference": 1.556,
+     "ecart_relatif": 0.0165,
      "aberrant": false
     },
     {
-     "match": "Krasnodar – FC Baltika Kaliningrad",
+     "match": "FH Hafnarfjordur – Akureyri",
      "source": "Pinnacle",
-     "cote_olybet": 1.71,
-     "cote_reference": 1.813,
-     "ecart_relatif": 0.0568,
+     "cote_olybet": 2.0,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0476,
      "aberrant": false
     },
     {
-     "match": "CSKA Moscou – Spartak Moscou",
+     "match": "FH Hafnarfjordur – Akureyri",
+     "source": "PMU",
+     "cote_olybet": 2.0,
+     "cote_reference": 1.96,
+     "ecart_relatif": 0.0204,
+     "aberrant": false
+    },
+    {
+     "match": "IA Akranes – Keflavik",
      "source": "Pinnacle",
-     "cote_olybet": 2.8,
-     "cote_reference": 2.99,
-     "ecart_relatif": 0.0635,
+     "cote_olybet": 1.5,
+     "cote_reference": 1.538,
+     "ecart_relatif": 0.0245,
+     "aberrant": false
+    },
+    {
+     "match": "IA Akranes – Keflavik",
+     "source": "PMU",
+     "cote_olybet": 1.5,
+     "cote_reference": 1.52,
+     "ecart_relatif": 0.0132,
      "aberrant": false
     }
    ],
@@ -149,110 +191,93 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Aston Villa – Manchester City",
+     "match": "Cordoba – Eibar",
      "source": "Pinnacle",
-     "cote_netbet": 4.3,
-     "cote_reference": 5.0,
-     "ecart_relatif": 0.14,
+     "cote_netbet": 1.73,
+     "cote_reference": 1.862,
+     "ecart_relatif": 0.0709,
      "aberrant": false
     },
     {
-     "match": "Aston Villa – Manchester City",
+     "match": "Cordoba – Eibar",
      "source": "PMU",
-     "cote_netbet": 4.3,
-     "cote_reference": 4.35,
-     "ecart_relatif": 0.0115,
+     "cote_netbet": 1.73,
+     "cote_reference": 1.76,
+     "ecart_relatif": 0.017,
      "aberrant": false
     },
     {
-     "match": "Charlton Athletic – Norwich",
+     "match": "Dijon – Rodez",
      "source": "Pinnacle",
-     "cote_netbet": 3.0,
-     "cote_reference": 3.46,
-     "ecart_relatif": 0.1329,
+     "cote_netbet": 1.92,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.04,
      "aberrant": false
     },
     {
-     "match": "Charlton Athletic – Norwich",
+     "match": "Dijon – Rodez",
      "source": "PMU",
-     "cote_netbet": 3.0,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.0,
+     "cote_netbet": 1.92,
+     "cote_reference": 1.94,
+     "ecart_relatif": 0.0103,
      "aberrant": false
     },
     {
-     "match": "Connah's Quay Nomads – Llandudno",
+     "match": "Rayo Vallecano – Elche",
      "source": "Pinnacle",
-     "cote_netbet": 1.35,
-     "cote_reference": 1.435,
-     "ecart_relatif": 0.0591,
+     "cote_netbet": 1.68,
+     "cote_reference": 1.775,
+     "ecart_relatif": 0.0536,
      "aberrant": false
     },
     {
-     "match": "Connah's Quay Nomads – Llandudno",
+     "match": "Rayo Vallecano – Elche",
      "source": "PMU",
-     "cote_netbet": 1.35,
+     "cote_netbet": 1.68,
+     "cote_reference": 1.67,
+     "ecart_relatif": 0.006,
+     "aberrant": false
+    },
+    {
+     "match": "Arsenal – Everton",
+     "source": "Pinnacle",
+     "cote_netbet": 1.4,
+     "cote_reference": 1.446,
+     "ecart_relatif": 0.0321,
+     "aberrant": false
+    },
+    {
+     "match": "Arsenal – Everton",
+     "source": "PMU",
+     "cote_netbet": 1.4,
      "cote_reference": 1.38,
-     "ecart_relatif": 0.0217,
-     "aberrant": false
-    },
-    {
-     "match": "Kuressaare – Paide Linnameeskond",
-     "source": "Pinnacle",
-     "cote_netbet": 3.8,
-     "cote_reference": 4.38,
-     "ecart_relatif": 0.1324,
-     "aberrant": false
-    },
-    {
-     "match": "Kuressaare – Paide Linnameeskond",
-     "source": "PMU",
-     "cote_netbet": 3.8,
-     "cote_reference": 4.1,
-     "ecart_relatif": 0.0732,
-     "aberrant": false
-    },
-    {
-     "match": "Portsmouth – Millwall FC",
-     "source": "Pinnacle",
-     "cote_netbet": 2.27,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.0847,
-     "aberrant": false
-    },
-    {
-     "match": "Portsmouth – Millwall FC",
-     "source": "PMU",
-     "cote_netbet": 2.27,
-     "cote_reference": 2.35,
-     "ecart_relatif": 0.034,
+     "ecart_relatif": 0.0145,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T11:27:58+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T11:28:08+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T11:33:03+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T11:33:21+00:00",
    "books_premiere_lecture": "2026-10-24T08:57:15+00:00",
-   "books_derniere_lecture": "2026-10-24T11:28:15+00:00",
-   "ecart_enveloppe_secondes": 9053.0
+   "books_derniere_lecture": "2026-10-24T11:33:25+00:00",
+   "ecart_enveloppe_secondes": 9366.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.8
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 73288,
-   "matchs_suspects": 3
+   "mesures": 64252,
+   "matchs_suspects": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -269,25 +294,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T10:51:34+00:00"
   },
-  "fin": "2026-10-24T11:32:07+00:00",
+  "fin": "2026-10-24T11:40:02+00:00",
   "cotes": {
-   "francaises": 225920,
-   "pinnacle": 200790,
-   "polymarket": 39451,
-   "smarkets": 2830
+   "francaises": 204529,
+   "pinnacle": 256058,
+   "polymarket": 38439,
+   "smarkets": 3445
   },
-  "matchs_francais": 3329,
-  "opportunites": 11,
-  "opportunites_suspectes": 54,
-  "nouveaux_paris": 0
+  "matchs_francais": 2651,
+  "opportunites": 13,
+  "opportunites_suspectes": 42,
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-23T14:59:54+00:00",
-   "mode": "complet",
-   "opportunites": 8,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T15:05:56+00:00",
    "mode": "complet",
@@ -1487,6 +1506,12 @@
    "mode": "complet",
    "opportunites": 11,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T11:32:51+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-24T10:51:34+00:00",
