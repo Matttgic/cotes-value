@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T01:17:09+00:00",
+  "debut": "2026-10-24T01:21:50+00:00",
   "mode": "complet",
   "etapes": {
    "pinnacle": {
@@ -13,8 +13,9 @@
     ]
    },
    "polymarket": {
-    "secondes": 29.0,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
@@ -22,27 +23,23 @@
     ]
    },
    "olybet": {
-    "secondes": 8.3,
+    "secondes": 9.2,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 23.4,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.1,
+    "secondes": 31.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 32.8,
+    "secondes": 34.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
-   "unibet_direct": {
-    "secondes": 74.8,
+    "secondes": 37.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -50,7 +47,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -63,15 +60,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 78.2,
+    "secondes": 68.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.7,
+    "secondes": 1.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.2,
+    "secondes": 0.7,
     "ok": true
    }
   },
@@ -82,22 +79,25 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 888,
-   "age_min_s": 232,
-   "lignes": 187455,
-   "lignes_perimees": 2516,
-   "rechauffeur": "indisponible",
+   "age_max_s": 848,
+   "age_min_s": 24,
+   "lignes": 187187,
+   "lignes_perimees": 1542,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
-    "choisi_fixe": 4,
+    "head_200": 32,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 9,
+    "choisi_autre": 6,
+    "choisi_fixe": 7,
     "sport_vide": 5,
     "reprise_403": 1
    }
@@ -107,46 +107,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Neftchi Bakou – Turan Tovuz IK",
+     "match": "Valence – Villarreal",
      "source": "Pinnacle",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.595,
-     "ecart_relatif": 0.003,
+     "cote_olybet": 3.03,
+     "cote_reference": 3.21,
+     "ecart_relatif": 0.0561,
      "aberrant": false
     },
     {
-     "match": "Imisli FC – Shamakhi FK",
-     "source": "Pinnacle",
-     "cote_olybet": 2.56,
-     "cote_reference": 2.63,
-     "ecart_relatif": 0.0266,
-     "aberrant": false
-    },
-    {
-     "match": "Sarajevo – Zeljeznicar Sarajevo",
-     "source": "Pinnacle",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.524,
-     "ecart_relatif": 0.0155,
-     "aberrant": false
-    },
-    {
-     "match": "Sarajevo – Zeljeznicar Sarajevo",
+     "match": "Valence – Villarreal",
      "source": "PMU",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0132,
+     "cote_olybet": 3.03,
+     "cote_reference": 2.95,
+     "ecart_relatif": 0.0271,
      "aberrant": false
     },
     {
-     "match": "Siroki Brijeg – Celik Zenica",
+     "match": "Racing de Santander – Espanyol",
+     "source": "Pinnacle",
+     "cote_olybet": 2.29,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0458,
+     "aberrant": false
+    },
+    {
+     "match": "Racing de Santander – Espanyol",
      "source": "PMU",
-     "cote_olybet": 1.92,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.0549,
+     "cote_olybet": 2.29,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0044,
+     "aberrant": false
+    },
+    {
+     "match": "Athletic Bilbao – Getafe",
+     "source": "Pinnacle",
+     "cote_olybet": 1.54,
+     "cote_reference": 1.592,
+     "ecart_relatif": 0.0325,
+     "aberrant": false
+    },
+    {
+     "match": "Athletic Bilbao – Getafe",
+     "source": "PMU",
+     "cote_olybet": 1.54,
+     "cote_reference": 1.54,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Rayo Vallecano – Elche",
+     "source": "Pinnacle",
+     "cote_olybet": 1.71,
+     "cote_reference": 1.781,
+     "ecart_relatif": 0.04,
+     "aberrant": false
+    },
+    {
+     "match": "Rayo Vallecano – Elche",
+     "source": "PMU",
+     "cote_olybet": 1.71,
+     "cote_reference": 1.68,
+     "ecart_relatif": 0.0179,
      "aberrant": false
     }
    ],
@@ -241,23 +265,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T01:17:19+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T01:17:28+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T01:22:01+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T01:22:08+00:00",
    "books_premiere_lecture": "2026-10-23T23:07:58+00:00",
-   "books_derniere_lecture": "2026-10-24T01:17:39+00:00",
-   "ecart_enveloppe_secondes": 7770.0
+   "books_derniere_lecture": "2026-10-24T01:22:21+00:00",
+   "ecart_enveloppe_secondes": 8050.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.6
+   "age_min": 10.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 63201,
+   "mesures": 47664,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -275,25 +299,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T00:45:55+00:00"
   },
-  "fin": "2026-10-24T01:20:43+00:00",
+  "fin": "2026-10-24T01:24:54+00:00",
   "cotes": {
-   "francaises": 182035,
-   "pinnacle": 187455,
-   "polymarket": 37855,
+   "francaises": 181371,
+   "pinnacle": 187187,
+   "polymarket": 0,
    "smarkets": 3913
   },
-  "matchs_francais": 2384,
-  "opportunites": 7,
-  "opportunites_suspectes": 42,
-  "nouveaux_paris": 1
+  "matchs_francais": 2391,
+  "opportunites": 5,
+  "opportunites_suspectes": 18,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T06:50:06+00:00",
-   "mode": "complet",
-   "opportunites": 19,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T06:54:45+00:00",
    "mode": "complet",
@@ -1493,6 +1511,12 @@
    "mode": "complet",
    "opportunites": 7,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-24T01:21:50+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T00:45:55+00:00",
