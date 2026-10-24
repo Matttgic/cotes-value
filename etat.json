@@ -1,40 +1,32 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T00:47:29+00:00",
+  "debut": "2026-10-24T00:52:25+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 29.8,
+   "polymarket": {
+    "secondes": 24.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
+   "pinnacle": {
+    "secondes": 45.0,
     "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
+    "erreur": "budget dépassé"
    },
    "olybet": {
-    "secondes": 11.3,
+    "secondes": 9.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 33.7,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 33.9,
+    "secondes": 30.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -42,8 +34,16 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 39.9,
+    "secondes": 37.6,
     "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 74.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -54,20 +54,23 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 18.0,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 125.2,
+    "secondes": 31.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.7,
+    "secondes": 2.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.2,
     "ok": true
    }
   },
@@ -78,23 +81,25 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 742,
-   "age_min_s": 18,
-   "lignes": 186653,
-   "lignes_perimees": 1986,
-   "rechauffeur": "indisponible",
+   "age_max_s": null,
+   "age_min_s": null,
+   "lignes": 0,
+   "lignes_perimees": 0,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 38,
-    "head_403": 2,
+    "head_200": 21,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
     "choisi_fixe": 6,
-    "sport_vide": 5,
+    "choisi_autre": 4,
     "reprise_403": 1
    }
   },
@@ -103,94 +108,55 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 3,
    "comparaisons": [
     {
-     "match": "Etzella Ettelbruck – Progrès Niederkorn",
-     "source": "Pinnacle",
-     "cote_olybet": 5.2,
-     "cote_reference": 5.47,
-     "ecart_relatif": 0.0494,
-     "aberrant": false
-    },
-    {
-     "match": "Etzella Ettelbruck – Progrès Niederkorn",
+     "match": "Partizan Belgrade – Cukaricki",
      "source": "PMU",
-     "cote_olybet": 5.2,
-     "cote_reference": 4.75,
-     "ecart_relatif": 0.0947,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.49,
+     "ecart_relatif": 0.094,
      "aberrant": false
     },
     {
-     "match": "KVC Westerlo – SK Beveren",
-     "source": "Pinnacle",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0651,
-     "aberrant": false
-    },
-    {
-     "match": "KVC Westerlo – SK Beveren",
+     "match": "Mladost Lucani – Vojvodina Novi Sad",
      "source": "PMU",
-     "cote_olybet": 2.01,
-     "cote_reference": 1.88,
-     "ecart_relatif": 0.0691,
-     "aberrant": false
+     "cote_olybet": 5.7,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.1633,
+     "aberrant": true
     },
     {
-     "match": "RAA  Louviéroise – Zulte Waregem",
-     "source": "Pinnacle",
-     "cote_olybet": 2.93,
-     "cote_reference": 3.17,
-     "ecart_relatif": 0.0757,
-     "aberrant": false
-    },
-    {
-     "match": "RAA  Louviéroise – Zulte Waregem",
+     "match": "Heidenheim – Energie Cottbus",
      "source": "PMU",
-     "cote_olybet": 2.93,
-     "cote_reference": 2.9,
-     "ecart_relatif": 0.0103,
-     "aberrant": false
-    },
-    {
-     "match": "Oud-Heverlee Leuven – Lommel SK",
-     "source": "Pinnacle",
-     "cote_olybet": 1.82,
-     "cote_reference": 1.926,
-     "ecart_relatif": 0.055,
+     "cote_olybet": 1.67,
+     "cote_reference": 1.58,
+     "ecart_relatif": 0.057,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Mladost Lucani – Vojvodina Novi Sad",
+     "source": "PMU",
+     "cote_olybet": 5.7,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.1633,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 4,
    "comparaisons": [
-    {
-     "match": "Necaxa – FC Juárez",
-     "source": "Pinnacle",
-     "cote_netbet": 1.63,
-     "cote_reference": 1.735,
-     "ecart_relatif": 0.0607,
-     "aberrant": false
-    },
     {
      "match": "Necaxa – FC Juárez",
      "source": "PMU",
      "cote_netbet": 1.63,
      "cote_reference": 1.64,
      "ecart_relatif": 0.0061,
-     "aberrant": false
-    },
-    {
-     "match": "Atlante – Atlético San Luis",
-     "source": "Pinnacle",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.24,
-     "ecart_relatif": 0.0759,
      "aberrant": false
     },
     {
@@ -203,26 +169,10 @@
     },
     {
      "match": "Newcastle Jets – Macarthur Sydney",
-     "source": "Pinnacle",
-     "cote_netbet": 1.91,
-     "cote_reference": 2.11,
-     "ecart_relatif": 0.0948,
-     "aberrant": false
-    },
-    {
-     "match": "Newcastle Jets – Macarthur Sydney",
      "source": "PMU",
      "cote_netbet": 1.91,
      "cote_reference": 1.91,
      "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Bucheon FC 1995 – Gwangju FC",
-     "source": "Pinnacle",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.1,
      "aberrant": false
     },
     {
@@ -237,59 +187,50 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T00:47:41+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T00:47:49+00:00",
+   "pinnacle_premiere_lecture": null,
+   "pinnacle_derniere_lecture": null,
    "books_premiere_lecture": "2026-10-23T23:07:58+00:00",
-   "books_derniere_lecture": "2026-10-24T00:48:01+00:00",
-   "ecart_enveloppe_secondes": 5991.0
+   "books_derniere_lecture": "2026-10-24T00:53:11+00:00",
+   "ecart_enveloppe_secondes": null
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.3
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 48456,
-   "matchs_suspects": 3
+   "mesures": 36176,
+   "matchs_suspects": 2
   },
   "redecision": {
    "ajoutees": 0
   },
   "qwen": {
-   "candidates": 1,
+   "candidates": 0,
    "validees": 0,
-   "refus": {
-    "hors fenêtre de 15 min à 2 h": 1
-   }
+   "refus": {}
   },
   "reglement": false,
   "resultats": {
    "saute": true,
    "dernier_reglement": "2026-10-24T00:45:55+00:00"
   },
-  "fin": "2026-10-24T00:51:33+00:00",
+  "fin": "2026-10-24T00:55:56+00:00",
   "cotes": {
-   "francaises": 169083,
-   "pinnacle": 186653,
-   "polymarket": 0,
-   "smarkets": 4088
+   "francaises": 169360,
+   "pinnacle": 0,
+   "polymarket": 37705,
+   "smarkets": 4160
   },
-  "matchs_francais": 2329,
-  "opportunites": 4,
-  "opportunites_suspectes": 18,
+  "matchs_francais": 2339,
+  "opportunites": 0,
+  "opportunites_suspectes": 13,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T06:19:56+00:00",
-   "mode": "complet",
-   "opportunites": 17,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-23T06:25:41+00:00",
    "mode": "complet",
@@ -1488,6 +1429,12 @@
    "debut": "2026-10-24T00:47:29+00:00",
    "mode": "complet",
    "opportunites": 4,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T00:52:25+00:00",
+   "mode": "complet",
+   "opportunites": 0,
    "nouveaux_paris": 0
   }
  ],
