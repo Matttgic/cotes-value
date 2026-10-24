@@ -1,40 +1,37 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T01:01:46+00:00",
+  "debut": "2026-10-24T01:06:24+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 24.7,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
+     "liste d'événements tronquée (plafond de pagination)"
     ]
    },
    "pinnacle": {
-    "secondes": 29.5,
+    "secondes": 31.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "sport 45 matchups : HTTP 403",
+     "sport 1 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 9.6,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 23.0,
+    "secondes": 9.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.8,
+    "secondes": 32.0,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -42,8 +39,16 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 37.5,
+    "secondes": 39.2,
     "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 74.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -59,15 +64,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 86.7,
+    "secondes": 129.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.9,
+    "secondes": 3.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -78,10 +83,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 872,
-   "age_min_s": 241,
-   "lignes": 186836,
-   "lignes_perimees": 2316,
+   "age_max_s": 813,
+   "age_min_s": 8,
+   "lignes": 186848,
+   "lignes_perimees": 1658,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -89,13 +94,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
-    "choisi_fixe": 6,
+    "head_200": 35,
     "head_403": 2,
     "ortho_refusee": 2,
     "choisi_autre": 7,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_fixe": 6,
+    "sport_vide": 4,
+    "reprise_403": 2
    }
   },
   "olybet_source": "direct",
@@ -103,62 +108,22 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 2,
    "comparaisons": [
     {
-     "match": "WSG Tirol – Grazer AK",
+     "match": "Lens – Paris FC",
      "source": "Pinnacle",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.0605,
+     "cote_olybet": 2.4,
+     "cote_reference": 2.52,
+     "ecart_relatif": 0.0476,
      "aberrant": false
     },
     {
-     "match": "WSG Tirol – Grazer AK",
+     "match": "Lens – Paris FC",
      "source": "PMU",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.013,
-     "aberrant": false
-    },
-    {
-     "match": "TSV Hartberg – Wolfsberger AC",
-     "source": "Pinnacle",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.21,
-     "ecart_relatif": 0.0588,
-     "aberrant": false
-    },
-    {
-     "match": "TSV Hartberg – Wolfsberger AC",
-     "source": "PMU",
-     "cote_olybet": 2.08,
-     "cote_reference": 1.97,
-     "ecart_relatif": 0.0558,
-     "aberrant": false
-    },
-    {
-     "match": "Atlético Junior  Barranquilla – Aguilas Doradas Rionegro",
-     "source": "Pinnacle",
-     "cote_olybet": 1.9,
-     "cote_reference": 1.971,
-     "ecart_relatif": 0.036,
-     "aberrant": false
-    },
-    {
-     "match": "América de Cali – Cúcuta Deportivo",
-     "source": "Pinnacle",
-     "cote_olybet": 1.27,
-     "cote_reference": 1.309,
-     "ecart_relatif": 0.0295,
-     "aberrant": false
-    },
-    {
-     "match": "América de Cali – Cúcuta Deportivo",
-     "source": "PMU",
-     "cote_olybet": 1.27,
-     "cote_reference": 1.23,
-     "ecart_relatif": 0.0325,
+     "cote_olybet": 2.4,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0526,
      "aberrant": false
     }
    ],
@@ -237,57 +202,53 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T01:01:56+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T01:02:07+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T01:06:35+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T01:06:43+00:00",
    "books_premiere_lecture": "2026-10-23T23:07:58+00:00",
-   "books_derniere_lecture": "2026-10-24T01:02:17+00:00",
-   "ecart_enveloppe_secondes": 6849.0
+   "books_derniere_lecture": "2026-10-24T01:06:57+00:00",
+   "ecart_enveloppe_secondes": 7125.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 14.0
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 64917,
+   "mesures": 53341,
    "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
   },
   "qwen": {
-   "candidates": 0,
+   "candidates": 1,
    "validees": 0,
-   "refus": {}
+   "refus": {
+    "hors fenêtre de 15 min à 2 h": 1
+   }
   },
   "reglement": false,
   "resultats": {
    "saute": true,
    "dernier_reglement": "2026-10-24T00:45:55+00:00"
   },
-  "fin": "2026-10-24T01:05:28+00:00",
+  "fin": "2026-10-24T01:10:34+00:00",
   "cotes": {
-   "francaises": 183001,
-   "pinnacle": 186836,
-   "polymarket": 37783,
+   "francaises": 179733,
+   "pinnacle": 186848,
+   "polymarket": 0,
    "smarkets": 4160
   },
-  "matchs_francais": 2383,
-  "opportunites": 6,
-  "opportunites_suspectes": 42,
+  "matchs_francais": 2384,
+  "opportunites": 5,
+  "opportunites_suspectes": 18,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T06:36:08+00:00",
-   "mode": "complet",
-   "opportunites": 17,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T06:40:46+00:00",
    "mode": "complet",
@@ -1486,6 +1447,12 @@
    "debut": "2026-10-24T01:01:46+00:00",
    "mode": "complet",
    "opportunites": 6,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T01:06:24+00:00",
+   "mode": "complet",
+   "opportunites": 5,
    "nouveaux_paris": 0
   }
  ],
