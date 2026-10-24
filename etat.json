@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T04:49:29+00:00",
+  "debut": "2026-10-24T04:55:02+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 27.9,
+    "secondes": 25.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -13,45 +13,36 @@
     ]
    },
    "pinnacle": {
-    "secondes": 31.0,
+    "secondes": 27.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 5 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 11.8,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 21.3,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau",
-     "sport:2 : réseau",
-     "sport:3 : réseau",
-     "sport:4 : réseau",
-     "sport:5 : réseau",
-     "sport:6 : réseau",
-     "sport:9 : réseau",
-     "sport:10 : réseau",
-     "sport:12 : réseau",
-     "sport:16 : réseau"
-    ]
-   },
-   "unibet_direct": {
-    "secondes": 23.0,
+    "secondes": 9.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.2,
+    "secondes": 32.0,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.7,
+    "secondes": 37.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
+   "winamax_direct": {
+    "secondes": 39.3,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 74.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -67,50 +58,34 @@
     ]
    },
    "smarkets": {
-    "secondes": 19.0,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 123.3,
+    "secondes": 230.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.7,
+    "secondes": 4.2,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 1.4,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 56697,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 843,
-   "age_min_s": 47,
-   "lignes": 201026,
-   "lignes_perimees": 4552,
+   "age_max_s": 877,
+   "age_min_s": 51,
+   "lignes": 201192,
+   "lignes_perimees": 1624,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -121,11 +96,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
+    "head_200": 31,
+    "choisi_fixe": 9,
+    "choisi_autre": 4,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 11,
-    "choisi_fixe": 2,
     "sport_vide": 5,
     "reprise_403": 1
    }
@@ -135,78 +110,62 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "IA Akranes – Keflavik",
-     "source": "Pinnacle",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.516,
-     "ecart_relatif": 0.0234,
-     "aberrant": false
-    },
-    {
-     "match": "IA Akranes – Keflavik",
-     "source": "PMU",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.53,
-     "ecart_relatif": 0.0327,
-     "aberrant": false
-    },
-    {
-     "match": "Vikingur Reykjavik – Fram Reykjavik",
-     "source": "Pinnacle",
-     "cote_olybet": 1.49,
-     "cote_reference": 1.55,
-     "ecart_relatif": 0.0384,
-     "aberrant": false
-    },
-    {
-     "match": "Vikingur Reykjavik – Fram Reykjavik",
-     "source": "PMU",
-     "cote_olybet": 1.49,
-     "cote_reference": 1.45,
-     "ecart_relatif": 0.0276,
-     "aberrant": false
-    },
-    {
-     "match": "Stjarnan – Valur Reykjavik",
-     "source": "Pinnacle",
-     "cote_olybet": 1.84,
-     "cote_reference": 1.909,
-     "ecart_relatif": 0.0362,
-     "aberrant": false
-    },
-    {
-     "match": "Stjarnan – Valur Reykjavik",
-     "source": "PMU",
-     "cote_olybet": 1.84,
-     "cote_reference": 1.78,
-     "ecart_relatif": 0.0337,
-     "aberrant": false
-    },
-    {
-     "match": "Reykjavik – Breidablik Kopavogur",
+     "match": "O´Higgins – Cobresal",
      "source": "Pinnacle",
      "cote_olybet": 1.57,
-     "cote_reference": 1.585,
-     "ecart_relatif": 0.0093,
+     "cote_reference": 1.645,
+     "ecart_relatif": 0.0457,
      "aberrant": false
     },
     {
-     "match": "FH Hafnarfjordur – Akureyri",
-     "source": "Pinnacle",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0429,
-     "aberrant": false
-    },
-    {
-     "match": "FH Hafnarfjordur – Akureyri",
+     "match": "O´Higgins – Cobresal",
      "source": "PMU",
-     "cote_olybet": 2.01,
-     "cote_reference": 1.96,
-     "ecart_relatif": 0.0255,
+     "cote_olybet": 1.57,
+     "cote_reference": 1.52,
+     "ecart_relatif": 0.0329,
+     "aberrant": false
+    },
+    {
+     "match": "CD La Serena – Deportes Conception",
+     "source": "Pinnacle",
+     "cote_olybet": 2.23,
+     "cote_reference": 2.38,
+     "ecart_relatif": 0.063,
+     "aberrant": false
+    },
+    {
+     "match": "Deportivo Nublense – Coquimbo Unido",
+     "source": "Pinnacle",
+     "cote_olybet": 2.72,
+     "cote_reference": 2.89,
+     "ecart_relatif": 0.0588,
+     "aberrant": false
+    },
+    {
+     "match": "Deportivo Nublense – Coquimbo Unido",
+     "source": "PMU",
+     "cote_olybet": 2.72,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.1333,
+     "aberrant": false
+    },
+    {
+     "match": "FC Meshakhte Tkibuli – Dila Gori",
+     "source": "Pinnacle",
+     "cote_olybet": 4.1,
+     "cote_reference": 4.26,
+     "ecart_relatif": 0.0376,
+     "aberrant": false
+    },
+    {
+     "match": "Dynamo Batumi – FC Samgurali Tskhaltubo",
+     "source": "Pinnacle",
+     "cote_olybet": 1.49,
+     "cote_reference": 1.513,
+     "ecart_relatif": 0.0151,
      "aberrant": false
     }
    ],
@@ -220,33 +179,33 @@
     {
      "match": "Bucheon FC 1995 – Gwangju FC",
      "source": "Pinnacle",
-     "cote_netbet": 2.2,
-     "cote_reference": 2.47,
-     "ecart_relatif": 0.1093,
+     "cote_netbet": 2.22,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.0939,
      "aberrant": false
     },
     {
      "match": "Bucheon FC 1995 – Gwangju FC",
      "source": "PMU",
-     "cote_netbet": 2.2,
+     "cote_netbet": 2.22,
      "cote_reference": 2.05,
-     "ecart_relatif": 0.0732,
+     "ecart_relatif": 0.0829,
      "aberrant": false
     },
     {
      "match": "FC Anyang – Jeonbuk Hyundai Motors",
      "source": "Pinnacle",
-     "cote_netbet": 3.2,
-     "cote_reference": 3.41,
-     "ecart_relatif": 0.0616,
+     "cote_netbet": 3.05,
+     "cote_reference": 3.27,
+     "ecart_relatif": 0.0673,
      "aberrant": false
     },
     {
      "match": "FC Anyang – Jeonbuk Hyundai Motors",
      "source": "PMU",
-     "cote_netbet": 3.2,
+     "cote_netbet": 3.05,
      "cote_reference": 3.3,
-     "ecart_relatif": 0.0303,
+     "ecart_relatif": 0.0758,
      "aberrant": false
     },
     {
@@ -269,8 +228,8 @@
      "match": "Incheon United – Jeju Sk Fc",
      "source": "Pinnacle",
      "cote_netbet": 2.12,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0783,
+     "cote_reference": 2.34,
+     "ecart_relatif": 0.094,
      "aberrant": false
     },
     {
@@ -301,23 +260,24 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T04:49:40+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T04:50:03+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T04:55:13+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T04:55:21+00:00",
    "books_premiere_lecture": "2026-10-24T02:49:11+00:00",
-   "books_derniere_lecture": "2026-10-24T04:50:05+00:00",
-   "ecart_enveloppe_secondes": 7252.0
+   "books_derniere_lecture": "2026-10-24T04:55:32+00:00",
+   "ecart_enveloppe_secondes": 7570.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 60544,
-   "matchs_suspects": 2
+   "mesures": 76657,
+   "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
@@ -332,25 +292,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T04:40:36+00:00"
   },
-  "fin": "2026-10-24T04:54:11+00:00",
+  "fin": "2026-10-24T05:01:37+00:00",
   "cotes": {
-   "francaises": 176975,
-   "pinnacle": 257723,
-   "polymarket": 39124,
+   "francaises": 221337,
+   "pinnacle": 201192,
+   "polymarket": 39167,
    "smarkets": 4234
   },
-  "matchs_francais": 2407,
-  "opportunites": 11,
-  "opportunites_suspectes": 36,
-  "nouveaux_paris": 1
+  "matchs_francais": 2982,
+  "opportunites": 12,
+  "opportunites_suspectes": 40,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T10:21:11+00:00",
-   "mode": "complet",
-   "opportunites": 17,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T10:27:40+00:00",
    "mode": "complet",
@@ -1550,6 +1504,12 @@
    "mode": "complet",
    "opportunites": 11,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-24T04:55:02+00:00",
+   "mode": "complet",
+   "opportunites": 12,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T04:40:36+00:00",
