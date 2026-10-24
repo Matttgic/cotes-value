@@ -1,19 +1,19 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T05:56:44+00:00",
+  "debut": "2026-10-24T06:04:45+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 23.4,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
+     "liste d'événements tronquée (plafond de pagination)"
     ]
    },
    "pinnacle": {
-    "secondes": 27.0,
+    "secondes": 30.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -22,15 +22,15 @@
     ]
    },
    "olybet": {
-    "secondes": 11.7,
+    "secondes": 13.2,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 34.7,
+    "secondes": 33.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -38,15 +38,16 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 38.6,
+    "secondes": 38.2,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 74.1,
-    "ok": true,
+    "secondes": 75.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "budget"
+     "lecture interrompue"
     ]
    },
    "betclic_direct": {
@@ -58,49 +59,60 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.6,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 237.6,
+    "secondes": 118.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.1,
+    "secondes": 1.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.3,
+    "secondes": 0.9,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 57075,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 57075,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 887,
-   "age_min_s": 12,
-   "lignes": 203059,
-   "lignes_perimees": 150,
-   "rechauffeur": "ok",
+   "age_max_s": 762,
+   "age_min_s": 35,
+   "lignes": 203093,
+   "lignes_perimees": 6390,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 30,
-    "choisi_fixe": 4,
+    "head_200": 41,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
+    "choisi_autre": 13,
+    "choisi_fixe": 1,
     "sport_vide": 5,
     "reprise_403": 1
    }
@@ -110,46 +122,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Deportivo Nublense – Coquimbo Unido",
+     "match": "FC Meshakhte Tkibuli – Dila Gori",
      "source": "Pinnacle",
-     "cote_olybet": 2.72,
-     "cote_reference": 2.89,
-     "ecart_relatif": 0.0588,
+     "cote_olybet": 4.1,
+     "cote_reference": 4.26,
+     "ecart_relatif": 0.0376,
      "aberrant": false
     },
     {
-     "match": "Deportivo Nublense – Coquimbo Unido",
+     "match": "Dynamo Batumi – FC Samgurali Tskhaltubo",
+     "source": "Pinnacle",
+     "cote_olybet": 1.49,
+     "cote_reference": 1.513,
+     "ecart_relatif": 0.0151,
+     "aberrant": false
+    },
+    {
+     "match": "Kawasaki Frontale – Fagiano Okayama",
+     "source": "Pinnacle",
+     "cote_olybet": 2.02,
+     "cote_reference": 2.11,
+     "ecart_relatif": 0.0427,
+     "aberrant": false
+    },
+    {
+     "match": "Kawasaki Frontale – Fagiano Okayama",
      "source": "PMU",
-     "cote_olybet": 2.72,
-     "cote_reference": 2.4,
-     "ecart_relatif": 0.1333,
-     "aberrant": false
-    },
-    {
-     "match": "O´Higgins – Cobresal",
-     "source": "Pinnacle",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.645,
-     "ecart_relatif": 0.0457,
-     "aberrant": false
-    },
-    {
-     "match": "O´Higgins – Cobresal",
-     "source": "PMU",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0329,
-     "aberrant": false
-    },
-    {
-     "match": "CD La Serena – Deportes Conception",
-     "source": "Pinnacle",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.39,
-     "ecart_relatif": 0.0669,
+     "cote_olybet": 2.02,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.01,
      "aberrant": false
     }
    ],
@@ -158,72 +162,8 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
-    {
-     "match": "Kashima Antlers – Kashiwa Reysol",
-     "source": "Pinnacle",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.24,
-     "ecart_relatif": 0.0625,
-     "aberrant": false
-    },
-    {
-     "match": "Kashima Antlers – Kashiwa Reysol",
-     "source": "PMU",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0096,
-     "aberrant": false
-    },
-    {
-     "match": "Tokyo Verdy – Avispa Fukuoka",
-     "source": "Pinnacle",
-     "cote_netbet": 2.87,
-     "cote_reference": 3.23,
-     "ecart_relatif": 0.1115,
-     "aberrant": false
-    },
-    {
-     "match": "Tokyo Verdy – Avispa Fukuoka",
-     "source": "PMU",
-     "cote_netbet": 2.87,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.0433,
-     "aberrant": false
-    },
-    {
-     "match": "Vissel Kobe – Machida Zelvia",
-     "source": "Pinnacle",
-     "cote_netbet": 2.52,
-     "cote_reference": 2.85,
-     "ecart_relatif": 0.1158,
-     "aberrant": false
-    },
-    {
-     "match": "Vissel Kobe – Machida Zelvia",
-     "source": "PMU",
-     "cote_netbet": 2.52,
-     "cote_reference": 2.4,
-     "ecart_relatif": 0.05,
-     "aberrant": false
-    },
-    {
-     "match": "Western Sydney Wanderers – Auckland FC",
-     "source": "Pinnacle",
-     "cote_netbet": 2.25,
-     "cote_reference": 2.41,
-     "ecart_relatif": 0.0664,
-     "aberrant": false
-    },
-    {
-     "match": "Western Sydney Wanderers – Auckland FC",
-     "source": "PMU",
-     "cote_netbet": 2.25,
-     "cote_reference": 2.32,
-     "ecart_relatif": 0.0302,
-     "aberrant": false
-    },
     {
      "match": "Gamba Osaka – Kyoto Sanga FC",
      "source": "Pinnacle",
@@ -236,65 +176,108 @@
      "match": "Gamba Osaka – Kyoto Sanga FC",
      "source": "PMU",
      "cote_netbet": 1.73,
-     "cote_reference": 1.81,
-     "ecart_relatif": 0.0442,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0495,
+     "aberrant": false
+    },
+    {
+     "match": "Chengdu Rongcheng – Dalian Yingbo",
+     "source": "Pinnacle",
+     "cote_netbet": 1.88,
+     "cote_reference": 1.971,
+     "ecart_relatif": 0.0461,
+     "aberrant": false
+    },
+    {
+     "match": "Chengdu Rongcheng – Dalian Yingbo",
+     "source": "PMU",
+     "cote_netbet": 1.88,
+     "cote_reference": 1.86,
+     "ecart_relatif": 0.0108,
+     "aberrant": false
+    },
+    {
+     "match": "Chongqing Tongliangloong – Qingdao Hainiu",
+     "source": "Pinnacle",
+     "cote_netbet": 1.2,
+     "cote_reference": 1.286,
+     "ecart_relatif": 0.0667,
+     "aberrant": false
+    },
+    {
+     "match": "Chongqing Tongliangloong – Qingdao Hainiu",
+     "source": "PMU",
+     "cote_netbet": 1.2,
+     "cote_reference": 1.17,
+     "ecart_relatif": 0.0256,
+     "aberrant": false
+    },
+    {
+     "match": "Henan Songshan Longmen – Beijing Guoan",
+     "source": "Pinnacle",
+     "cote_netbet": 2.9,
+     "cote_reference": 3.16,
+     "ecart_relatif": 0.0823,
+     "aberrant": false
+    },
+    {
+     "match": "Henan Songshan Longmen – Beijing Guoan",
+     "source": "PMU",
+     "cote_netbet": 2.9,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0545,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T05:56:55+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T05:57:03+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T05:50:07+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T06:05:06+00:00",
    "books_premiere_lecture": "2026-10-24T03:23:45+00:00",
-   "books_derniere_lecture": "2026-10-24T05:57:13+00:00",
-   "ecart_enveloppe_secondes": 9198.0
+   "books_derniere_lecture": "2026-10-24T06:05:17+00:00",
+   "ecart_enveloppe_secondes": 9681.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 7.2
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 626,
+   "conforme": 625,
    "a_verifier": 9,
-   "non_conforme": 10,
-   "mesures": 72637,
-   "matchs_suspects": 3
+   "non_conforme": 11,
+   "mesures": 41314,
+   "matchs_suspects": 2
   },
   "redecision": {
    "ajoutees": 0
   },
   "qwen": {
-   "candidates": 0,
+   "candidates": 2,
    "validees": 0,
-   "refus": {}
+   "refus": {
+    "hors fenêtre de 15 min à 2 h": 2
+   }
   },
   "reglement": false,
   "resultats": {
    "saute": true,
    "dernier_reglement": "2026-10-24T05:48:06+00:00"
   },
-  "fin": "2026-10-24T06:03:28+00:00",
+  "fin": "2026-10-24T06:09:02+00:00",
   "cotes": {
-   "francaises": 220995,
-   "pinnacle": 203059,
-   "polymarket": 38965,
-   "smarkets": 3087
+   "francaises": 185205,
+   "pinnacle": 260168,
+   "polymarket": 0,
+   "smarkets": 3937
   },
-  "matchs_francais": 3145,
-  "opportunites": 25,
-  "opportunites_suspectes": 45,
+  "matchs_francais": 2489,
+  "opportunites": 17,
+  "opportunites_suspectes": 11,
   "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-23T11:09:52+00:00",
-   "mode": "complet",
-   "opportunites": 10,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T11:15:28+00:00",
    "mode": "complet",
@@ -1493,6 +1476,12 @@
    "debut": "2026-10-24T05:56:44+00:00",
    "mode": "complet",
    "opportunites": 25,
+   "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-24T06:04:45+00:00",
+   "mode": "complet",
+   "opportunites": 17,
    "nouveaux_paris": 2
   }
  ],
