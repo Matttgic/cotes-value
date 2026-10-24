@@ -1,49 +1,53 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T01:37:45+00:00",
+  "debut": "2026-10-24T01:43:40+00:00",
   "mode": "complet",
   "etapes": {
+   "pinnacle": {
+    "secondes": 23.5,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "polymarket": {
     "secondes": 30.0,
     "ok": false,
     "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
-   "pinnacle": {
-    "secondes": 30.7,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 45 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
     ]
    },
    "olybet": {
-    "secondes": 12.7,
+    "secondes": 8.7,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 34.1,
+    "secondes": 31.9,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 36.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 39.4,
-    "ok": true
-   },
    "unibet_direct": {
-    "secondes": 55.2,
-    "ok": true
+    "secondes": 74.5,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -59,29 +63,41 @@
     "cache": true
    },
    "association": {
-    "secondes": 137.6,
+    "secondes": 165.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.9,
+    "secondes": 2.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.8,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 52032,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 894,
-   "age_min_s": 77,
-   "lignes": 189191,
-   "lignes_perimees": 1530,
+   "age_max_s": 884,
+   "age_min_s": 41,
+   "lignes": 189467,
+   "lignes_perimees": 1676,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -89,13 +105,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 33,
+    "head_200": 31,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 7,
-    "choisi_autre": 6,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_fixe": 8,
+    "choisi_autre": 5,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -103,62 +118,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Silkeborg – FC Nordsjaelland",
+     "match": "O´Higgins – Cobresal",
      "source": "Pinnacle",
-     "cote_olybet": 4.1,
-     "cote_reference": 4.41,
-     "ecart_relatif": 0.0703,
+     "cote_olybet": 1.57,
+     "cote_reference": 1.645,
+     "ecart_relatif": 0.0457,
      "aberrant": false
     },
     {
-     "match": "Silkeborg – FC Nordsjaelland",
+     "match": "O´Higgins – Cobresal",
      "source": "PMU",
-     "cote_olybet": 4.1,
-     "cote_reference": 4.4,
-     "ecart_relatif": 0.0682,
+     "cote_olybet": 1.57,
+     "cote_reference": 1.52,
+     "ecart_relatif": 0.0329,
      "aberrant": false
     },
     {
-     "match": "Midtjylland – Lyngby",
+     "match": "CD La Serena – Deportes Conception",
      "source": "Pinnacle",
-     "cote_olybet": 1.36,
-     "cote_reference": 1.41,
-     "ecart_relatif": 0.0353,
+     "cote_olybet": 2.23,
+     "cote_reference": 2.37,
+     "ecart_relatif": 0.0591,
      "aberrant": false
     },
     {
-     "match": "Midtjylland – Lyngby",
-     "source": "PMU",
-     "cote_olybet": 1.36,
-     "cote_reference": 1.35,
-     "ecart_relatif": 0.0074,
-     "aberrant": false
-    },
-    {
-     "match": "Etzella Ettelbruck – Progrès Niederkorn",
+     "match": "Iraklis 1908 FC – AE Kifisia FC",
      "source": "Pinnacle",
-     "cote_olybet": 5.2,
-     "cote_reference": 5.47,
-     "ecart_relatif": 0.0494,
-     "aberrant": false
-    },
-    {
-     "match": "Etzella Ettelbruck – Progrès Niederkorn",
-     "source": "PMU",
-     "cote_olybet": 5.2,
-     "cote_reference": 4.75,
-     "ecart_relatif": 0.0947,
-     "aberrant": false
-    },
-    {
-     "match": "Las Palmas – Real Sociedad B",
-     "source": "PMU",
-     "cote_olybet": 1.9,
-     "cote_reference": 1.72,
-     "ecart_relatif": 0.1047,
+     "cote_olybet": 2.62,
+     "cote_reference": 2.84,
+     "ecart_relatif": 0.0775,
      "aberrant": false
     }
    ],
@@ -253,23 +244,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T01:37:57+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T01:38:06+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T01:43:51+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T01:44:12+00:00",
    "books_premiere_lecture": "2026-10-23T23:07:58+00:00",
-   "books_derniere_lecture": "2026-10-24T01:38:17+00:00",
-   "ecart_enveloppe_secondes": 9008.0
+   "books_derniere_lecture": "2026-10-24T01:44:15+00:00",
+   "ecart_enveloppe_secondes": 9374.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.3
+   "age_min": 11.2
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 626,
+   "conforme": 625,
    "a_verifier": 9,
-   "non_conforme": 10,
-   "mesures": 49349,
+   "non_conforme": 11,
+   "mesures": 53678,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -285,27 +276,21 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-24T00:45:55+00:00"
+   "dernier_reglement": "2026-10-24T01:42:16+00:00"
   },
-  "fin": "2026-10-24T01:42:03+00:00",
+  "fin": "2026-10-24T01:48:32+00:00",
   "cotes": {
-   "francaises": 182827,
-   "pinnacle": 189191,
+   "francaises": 194851,
+   "pinnacle": 241499,
    "polymarket": 0,
    "smarkets": 3800
   },
-  "matchs_francais": 2410,
-  "opportunites": 5,
+  "matchs_francais": 2419,
+  "opportunites": 7,
   "opportunites_suspectes": 19,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 3
  },
  "historique": [
-  {
-   "debut": "2026-10-23T07:32:30+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T07:37:01+00:00",
    "mode": "complet",
@@ -1505,6 +1490,12 @@
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T01:43:40+00:00",
+   "mode": "complet",
+   "opportunites": 7,
+   "nouveaux_paris": 3
   }
  ],
  "dernier_reglement": "2026-10-24T01:42:16+00:00",
