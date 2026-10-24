@@ -1,40 +1,40 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T02:43:37+00:00",
+  "debut": "2026-10-24T02:48:43+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 29.5,
+   "polymarket": {
+    "secondes": 22.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 17 markets/straight : HTTP 403",
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
+   "pinnacle": {
+    "secondes": 26.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 11.2,
+    "secondes": 9.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.4,
+    "secondes": 31.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 34.7,
+    "secondes": 36.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -42,11 +42,11 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 64.6,
+    "secondes": 48.9,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,48 +54,34 @@
     ]
    },
    "smarkets": {
-    "secondes": 31.3,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 112.4,
+    "secondes": 203.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 3.6,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 1.2,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 54390,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 54390,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 764,
-   "age_min_s": 16,
-   "lignes": 195944,
-   "lignes_perimees": 2261,
+   "age_max_s": 777,
+   "age_min_s": 45,
+   "lignes": 196712,
+   "lignes_perimees": 1610,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -106,13 +92,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 30,
-    "head_403": 3,
+    "head_200": 36,
+    "choisi_fixe": 4,
+    "head_403": 2,
     "ortho_refusee": 2,
     "choisi_autre": 9,
-    "choisi_fixe": 4,
-    "reprise_403": 1,
-    "sport_vide": 6
+    "sport_vide": 6,
+    "reprise_403": 1
    }
   },
   "olybet_source": "direct",
@@ -120,78 +106,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "CF Atlante – Atlético San Luis",
+     "match": "Heidenheim – Energie Cottbus",
      "source": "Pinnacle",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.25,
-     "ecart_relatif": 0.0756,
+     "cote_olybet": 1.67,
+     "cote_reference": 1.763,
+     "ecart_relatif": 0.053,
      "aberrant": false
     },
     {
-     "match": "CF Atlante – Atlético San Luis",
+     "match": "Heidenheim – Energie Cottbus",
      "source": "PMU",
-     "cote_olybet": 2.08,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0505,
+     "cote_olybet": 1.67,
+     "cote_reference": 1.58,
+     "ecart_relatif": 0.057,
      "aberrant": false
     },
     {
-     "match": "León – Deportivo Toluca",
+     "match": "1.FC Magdeburg – Karlsruhe",
      "source": "Pinnacle",
-     "cote_olybet": 3.51,
-     "cote_reference": 3.83,
-     "ecart_relatif": 0.0836,
+     "cote_olybet": 1.73,
+     "cote_reference": 1.826,
+     "ecart_relatif": 0.0528,
      "aberrant": false
     },
     {
-     "match": "León – Deportivo Toluca",
+     "match": "1.FC Magdeburg – Karlsruhe",
      "source": "PMU",
-     "cote_olybet": 3.51,
-     "cote_reference": 3.2,
-     "ecart_relatif": 0.0969,
+     "cote_olybet": 1.73,
+     "cote_reference": 1.66,
+     "ecart_relatif": 0.0422,
      "aberrant": false
     },
     {
-     "match": "Monterrey – Chivas de Guadalajara",
+     "match": "VfL Osnabrück – Greuther Fürth",
      "source": "Pinnacle",
-     "cote_olybet": 2.38,
-     "cote_reference": 2.54,
-     "ecart_relatif": 0.063,
+     "cote_olybet": 2.14,
+     "cote_reference": 2.26,
+     "ecart_relatif": 0.0531,
      "aberrant": false
     },
     {
-     "match": "Pumas – Tigres de l`UANL",
-     "source": "Pinnacle",
-     "cote_olybet": 2.53,
-     "cote_reference": 2.7,
-     "ecart_relatif": 0.063,
-     "aberrant": false
-    },
-    {
-     "match": "Pumas – Tigres de l`UANL",
+     "match": "VfL Osnabrück – Greuther Fürth",
      "source": "PMU",
-     "cote_olybet": 2.53,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.063,
+     "cote_olybet": 2.14,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.019,
      "aberrant": false
     },
     {
-     "match": "Djurgardens – Örgryte IS",
+     "match": "Holstein Kiel – Dynamo Dresden",
      "source": "Pinnacle",
-     "cote_olybet": 1.11,
-     "cote_reference": 1.146,
-     "ecart_relatif": 0.0316,
+     "cote_olybet": 2.21,
+     "cote_reference": 2.34,
+     "ecart_relatif": 0.0556,
      "aberrant": false
     },
     {
-     "match": "Djurgardens – Örgryte IS",
+     "match": "Holstein Kiel – Dynamo Dresden",
      "source": "PMU",
-     "cote_olybet": 1.11,
-     "cote_reference": 1.13,
-     "ecart_relatif": 0.0177,
+     "cote_olybet": 2.21,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0833,
      "aberrant": false
     }
    ],
@@ -286,22 +264,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T02:29:32+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T02:43:57+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T02:48:53+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T02:49:01+00:00",
    "books_premiere_lecture": "2026-10-24T02:08:17+00:00",
-   "books_derniere_lecture": "2026-10-24T02:44:09+00:00",
-   "ecart_enveloppe_secondes": 2140.0
+   "books_derniere_lecture": "2026-10-24T02:49:11+00:00",
+   "ecart_enveloppe_secondes": 2444.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.1
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 53312,
+   "mesures": 66750,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -319,25 +298,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T02:42:10+00:00"
   },
-  "fin": "2026-10-24T02:47:59+00:00",
+  "fin": "2026-10-24T02:54:45+00:00",
   "cotes": {
-   "francaises": 199371,
-   "pinnacle": 250334,
-   "polymarket": 0,
+   "francaises": 198275,
+   "pinnacle": 196712,
+   "polymarket": 37686,
    "smarkets": 4104
   },
-  "matchs_francais": 2600,
-  "opportunites": 7,
-  "opportunites_suspectes": 19,
-  "nouveaux_paris": 1
+  "matchs_francais": 2590,
+  "opportunites": 8,
+  "opportunites_suspectes": 39,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T08:32:31+00:00",
-   "mode": "complet",
-   "opportunites": 24,
-   "nouveaux_paris": 3
-  },
   {
    "debut": "2026-10-23T08:37:06+00:00",
    "mode": "complet",
@@ -1537,6 +1510,12 @@
    "mode": "complet",
    "opportunites": 7,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-24T02:48:43+00:00",
+   "mode": "complet",
+   "opportunites": 8,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T02:42:10+00:00",
