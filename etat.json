@@ -1,20 +1,20 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T02:23:25+00:00",
+  "debut": "2026-10-24T02:28:59+00:00",
   "mode": "complet",
   "etapes": {
    "pinnacle": {
-    "secondes": 23.2,
+    "secondes": 22.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "polymarket": {
-    "secondes": 29.5,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
@@ -22,27 +22,23 @@
     ]
    },
    "olybet": {
-    "secondes": 7.2,
+    "secondes": 8.9,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 23.0,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.3,
+    "secondes": 31.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 34.3,
+    "secondes": 36.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
-   "unibet_direct": {
-    "secondes": 74.3,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -50,7 +46,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,53 +54,59 @@
     ]
    },
    "smarkets": {
-    "secondes": 17.2,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 123.9,
+    "secondes": 228.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.6,
+    "secondes": 3.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.2,
+    "secondes": 0.6,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 54390,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 843,
-   "age_min_s": 14,
-   "lignes": 195761,
-   "lignes_perimees": 1050,
-   "rechauffeur": "ok",
+   "age_max_s": 795,
+   "age_min_s": 40,
+   "lignes": 195225,
+   "lignes_perimees": 2262,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 27,
-    "head_403": 3,
-    "ortho_refusee": 3,
-    "choisi_fixe": 13,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "head_200": 31,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "choisi_fixe": 6,
+    "choisi_autre": 7,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -112,86 +114,22 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 2,
    "comparaisons": [
     {
-     "match": "Hacken – Degerfors",
+     "match": "Epicentr Kamianets-Podilskyi – FC Kharkiv",
      "source": "Pinnacle",
-     "cote_olybet": 1.35,
-     "cote_reference": 1.405,
-     "ecart_relatif": 0.0391,
+     "cote_olybet": 4.9,
+     "cote_reference": 5.17,
+     "ecart_relatif": 0.0522,
      "aberrant": false
     },
     {
-     "match": "Hacken – Degerfors",
+     "match": "Epicentr Kamianets-Podilskyi – FC Kharkiv",
      "source": "PMU",
-     "cote_olybet": 1.35,
-     "cote_reference": 1.29,
-     "ecart_relatif": 0.0465,
-     "aberrant": false
-    },
-    {
-     "match": "GAIS – Goteborg",
-     "source": "Pinnacle",
-     "cote_olybet": 2.22,
-     "cote_reference": 2.34,
-     "ecart_relatif": 0.0513,
-     "aberrant": false
-    },
-    {
-     "match": "GAIS – Goteborg",
-     "source": "PMU",
-     "cote_olybet": 2.22,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0348,
-     "aberrant": false
-    },
-    {
-     "match": "Djurgardens – Örgryte IS",
-     "source": "Pinnacle",
-     "cote_olybet": 1.11,
-     "cote_reference": 1.147,
-     "ecart_relatif": 0.0321,
-     "aberrant": false
-    },
-    {
-     "match": "Djurgardens – Örgryte IS",
-     "source": "PMU",
-     "cote_olybet": 1.11,
-     "cote_reference": 1.13,
-     "ecart_relatif": 0.0177,
-     "aberrant": false
-    },
-    {
-     "match": "Sirius – AIK",
-     "source": "Pinnacle",
-     "cote_olybet": 1.53,
-     "cote_reference": 1.602,
-     "ecart_relatif": 0.0452,
-     "aberrant": false
-    },
-    {
-     "match": "Sirius – AIK",
-     "source": "PMU",
-     "cote_olybet": 1.53,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0066,
-     "aberrant": false
-    },
-    {
-     "match": "Kalmar – IF Brommapojkarna",
-     "source": "Pinnacle",
-     "cote_olybet": 1.75,
-     "cote_reference": 1.84,
-     "ecart_relatif": 0.0491,
-     "aberrant": false
-    },
-    {
-     "match": "Kalmar – IF Brommapojkarna",
-     "source": "PMU",
-     "cote_olybet": 1.75,
-     "cote_reference": 1.73,
-     "ecart_relatif": 0.0116,
+     "cote_olybet": 4.9,
+     "cote_reference": 4.7,
+     "ecart_relatif": 0.0426,
      "aberrant": false
     }
    ],
@@ -286,22 +224,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T02:23:35+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T02:23:41+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T02:29:11+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T02:29:32+00:00",
    "books_premiere_lecture": "2026-10-24T02:03:02+00:00",
-   "books_derniere_lecture": "2026-10-24T02:23:55+00:00",
-   "ecart_enveloppe_secondes": 1239.0
+   "books_derniere_lecture": "2026-10-24T02:29:35+00:00",
+   "ecart_enveloppe_secondes": 1590.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 68034,
+   "mesures": 54050,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -319,25 +258,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T01:42:16+00:00"
   },
-  "fin": "2026-10-24T02:28:11+00:00",
+  "fin": "2026-10-24T02:34:52+00:00",
   "cotes": {
-   "francaises": 201580,
-   "pinnacle": 195761,
-   "polymarket": 37503,
+   "francaises": 202024,
+   "pinnacle": 249615,
+   "polymarket": 0,
    "smarkets": 4105
   },
-  "matchs_francais": 2564,
-  "opportunites": 9,
-  "opportunites_suspectes": 44,
-  "nouveaux_paris": 1
+  "matchs_francais": 2570,
+  "opportunites": 5,
+  "opportunites_suspectes": 19,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T08:15:21+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-23T08:20:54+00:00",
    "mode": "complet",
@@ -1537,6 +1470,12 @@
    "mode": "complet",
    "opportunites": 9,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-24T02:28:59+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T01:42:16+00:00",
