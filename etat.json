@@ -1,10 +1,19 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T01:26:26+00:00",
+  "debut": "2026-10-24T01:32:28+00:00",
   "mode": "complet",
   "etapes": {
+   "polymarket": {
+    "secondes": 28.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
+    ]
+   },
    "pinnacle": {
-    "secondes": 29.6,
+    "secondes": 30.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,45 +21,32 @@
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ]
-   },
    "olybet": {
-    "secondes": 10.9,
+    "secondes": 9.2,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 33.2,
+    "secondes": 31.1,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 35.0,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
-   },
-   "winamax_direct": {
-    "secondes": 41.9,
-    "ok": true
    },
    "unibet_direct": {
-    "secondes": 73.4,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 61.9,
+    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.5,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,62 +54,52 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 31.7,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 188.5,
+    "secondes": 104.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.5,
+    "secondes": 1.9,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.7,
+    "secondes": 0.8,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 51883,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 51883,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 831,
-   "age_min_s": 93,
-   "lignes": 187831,
-   "lignes_perimees": 1824,
-   "rechauffeur": "ok",
+   "age_max_s": 731,
+   "age_min_s": 211,
+   "lignes": 189387,
+   "lignes_perimees": 2646,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
-    "head_403": 2,
-    "ortho_refusee": 2,
+    "head_200": 23,
     "choisi_fixe": 4,
-    "choisi_autre": 9,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "head_403": 4,
+    "ortho_refusee": 4,
+    "choisi_autre": 5,
+    "reprise_403": 2,
+    "reprise_403_ok": 1,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -121,78 +107,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "CA Rosario Central – CA Huracan",
+     "match": "Neftchi Bakou – Turan Tovuz IK",
      "source": "Pinnacle",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.763,
-     "ecart_relatif": 0.053,
+     "cote_olybet": 1.6,
+     "cote_reference": 1.595,
+     "ecart_relatif": 0.003,
      "aberrant": false
     },
     {
-     "match": "CA Rosario Central – CA Huracan",
-     "source": "PMU",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.57,
-     "ecart_relatif": 0.0637,
-     "aberrant": false
-    },
-    {
-     "match": "San Lorenzo de Almagro – Newell's Old Boys",
+     "match": "Imisli FC – Shamakhi FK",
      "source": "Pinnacle",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.7,
-     "ecart_relatif": 0.0704,
+     "cote_olybet": 2.56,
+     "cote_reference": 2.63,
+     "ecart_relatif": 0.0266,
      "aberrant": false
     },
     {
-     "match": "San Lorenzo de Almagro – Newell's Old Boys",
-     "source": "PMU",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0913,
-     "aberrant": false
-    },
-    {
-     "match": "Banfield – Lanus",
+     "match": "CF Atlante – Atlético San Luis",
      "source": "Pinnacle",
-     "cote_olybet": 3.47,
-     "cote_reference": 3.8,
-     "ecart_relatif": 0.0868,
+     "cote_olybet": 2.08,
+     "cote_reference": 2.24,
+     "ecart_relatif": 0.0714,
      "aberrant": false
     },
     {
-     "match": "Banfield – Lanus",
+     "match": "CF Atlante – Atlético San Luis",
      "source": "PMU",
-     "cote_olybet": 3.47,
+     "cote_olybet": 2.08,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.04,
+     "aberrant": false
+    },
+    {
+     "match": "León – Deportivo Toluca",
+     "source": "Pinnacle",
+     "cote_olybet": 3.51,
+     "cote_reference": 3.83,
+     "ecart_relatif": 0.0836,
+     "aberrant": false
+    },
+    {
+     "match": "León – Deportivo Toluca",
+     "source": "PMU",
+     "cote_olybet": 3.51,
      "cote_reference": 3.2,
-     "ecart_relatif": 0.0844,
-     "aberrant": false
-    },
-    {
-     "match": "Atlético Talleres – CSD Defensa y Justicia",
-     "source": "PMU",
-     "cote_olybet": 2.18,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0686,
-     "aberrant": false
-    },
-    {
-     "match": "Manta – Deportivo Cuenca",
-     "source": "Pinnacle",
-     "cote_olybet": 1.97,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.0483,
-     "aberrant": false
-    },
-    {
-     "match": "Manta – Deportivo Cuenca",
-     "source": "PMU",
-     "cote_olybet": 1.97,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0529,
+     "ecart_relatif": 0.0969,
      "aberrant": false
     }
    ],
@@ -287,23 +249,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T01:12:07+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T01:26:46+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T01:32:38+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T01:32:51+00:00",
    "books_premiere_lecture": "2026-10-23T23:07:58+00:00",
-   "books_derniere_lecture": "2026-10-24T01:26:59+00:00",
-   "ecart_enveloppe_secondes": 8328.0
+   "books_derniere_lecture": "2026-10-24T01:32:59+00:00",
+   "ecart_enveloppe_secondes": 8693.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.8
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 625,
+   "conforme": 626,
    "a_verifier": 9,
-   "non_conforme": 11,
-   "mesures": 51902,
+   "non_conforme": 10,
+   "mesures": 61696,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -321,25 +282,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T00:45:55+00:00"
   },
-  "fin": "2026-10-24T01:31:38+00:00",
+  "fin": "2026-10-24T01:37:04+00:00",
   "cotes": {
-   "francaises": 189150,
-   "pinnacle": 239714,
-   "polymarket": 0,
-   "smarkets": 3913
+   "francaises": 183803,
+   "pinnacle": 189387,
+   "polymarket": 37850,
+   "smarkets": 3800
   },
-  "matchs_francais": 2384,
-  "opportunites": 13,
-  "opportunites_suspectes": 18,
-  "nouveaux_paris": 6
+  "matchs_francais": 2410,
+  "opportunites": 9,
+  "opportunites_suspectes": 43,
+  "nouveaux_paris": 3
  },
  "historique": [
-  {
-   "debut": "2026-10-23T07:00:37+00:00",
-   "mode": "complet",
-   "opportunites": 17,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T07:16:42+00:00",
    "mode": "complet",
@@ -1539,6 +1494,12 @@
    "mode": "complet",
    "opportunites": 13,
    "nouveaux_paris": 6
+  },
+  {
+   "debut": "2026-10-24T01:32:28+00:00",
+   "mode": "complet",
+   "opportunites": 9,
+   "nouveaux_paris": 3
   }
  ],
  "dernier_reglement": "2026-10-24T00:45:55+00:00",
