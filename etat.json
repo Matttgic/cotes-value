@@ -1,10 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T17:38:21+00:00",
+  "debut": "2026-10-24T17:42:50+00:00",
   "mode": "complet",
   "etapes": {
+   "pinnacle": {
+    "secondes": 23.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "polymarket": {
-    "secondes": 24.8,
+    "secondes": 27.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,42 +20,32 @@
      "prix bid/ask invalides"
     ]
    },
-   "pinnacle": {
-    "secondes": 29.9,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 6 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "olybet": {
-    "secondes": 10.2,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 20.2,
+    "secondes": 8.6,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.5,
+    "secondes": 33.8,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 33.2,
+    "secondes": 34.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "unibet_direct": {
+    "secondes": 70.3,
+    "ok": true
+   },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -55,19 +53,16 @@
     ]
    },
    "smarkets": {
-    "secondes": 20.1,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 61.4,
+    "secondes": 96.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.2,
+    "secondes": 3.1,
     "ok": true
    },
    "cotes_cloture": {
@@ -78,38 +73,30 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 44,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 44,
-   "retard": []
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 892,
-   "age_min_s": 182,
-   "lignes": 144961,
-   "lignes_perimees": 2608,
-   "rechauffeur": "indisponible",
+   "age_max_s": 890,
+   "age_min_s": 78,
+   "lignes": 144911,
+   "lignes_perimees": 7612,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 40,
+    "head_200": 42,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 6,
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 5
+    "choisi_autre": 6,
+    "choisi_fixe": 8,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -117,22 +104,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 2,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Palerme – Carrarese",
+     "match": "Slask Wroclaw – KS Wieczysta Krakow",
      "source": "Pinnacle",
-     "cote_olybet": 1.42,
-     "cote_reference": 1.474,
-     "ecart_relatif": 0.0366,
+     "cote_olybet": 2.77,
+     "cote_reference": 2.97,
+     "ecart_relatif": 0.0673,
      "aberrant": false
     },
     {
-     "match": "Palerme – Carrarese",
+     "match": "Slask Wroclaw – KS Wieczysta Krakow",
      "source": "PMU",
-     "cote_olybet": 1.42,
-     "cote_reference": 1.3,
-     "ecart_relatif": 0.0923,
+     "cote_olybet": 2.77,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.0453,
+     "aberrant": false
+    },
+    {
+     "match": "Jagiellonia Bialystok – Wisla Plock",
+     "source": "Pinnacle",
+     "cote_olybet": 1.92,
+     "cote_reference": 2.03,
+     "ecart_relatif": 0.0542,
+     "aberrant": false
+    },
+    {
+     "match": "Jagiellonia Bialystok – Wisla Plock",
+     "source": "PMU",
+     "cote_olybet": 1.92,
+     "cote_reference": 1.88,
+     "ecart_relatif": 0.0213,
      "aberrant": false
     }
    ],
@@ -211,22 +214,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T17:32:01+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T17:38:44+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T17:43:01+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T17:43:09+00:00",
    "books_premiere_lecture": "2026-10-24T14:57:11+00:00",
-   "books_derniere_lecture": "2026-10-24T17:38:53+00:00",
-   "ecart_enveloppe_secondes": 9693.0
+   "books_derniere_lecture": "2026-10-24T17:43:19+00:00",
+   "ecart_enveloppe_secondes": 9958.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.5
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 629,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 55208,
+   "mesures": 53374,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -242,25 +246,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T17:35:53+00:00"
   },
-  "fin": "2026-10-24T17:41:57+00:00",
+  "fin": "2026-10-24T17:46:50+00:00",
   "cotes": {
-   "francaises": 175143,
-   "pinnacle": 145005,
-   "polymarket": 34018,
+   "francaises": 173883,
+   "pinnacle": 144911,
+   "polymarket": 33909,
    "smarkets": 4064
   },
-  "matchs_francais": 2356,
-  "opportunites": 10,
+  "matchs_francais": 2351,
+  "opportunites": 7,
   "opportunites_suspectes": 6,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T20:31:51+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T20:36:30+00:00",
    "mode": "complet",
@@ -1459,6 +1457,12 @@
    "debut": "2026-10-24T17:38:21+00:00",
    "mode": "complet",
    "opportunites": 10,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T17:42:50+00:00",
+   "mode": "complet",
+   "opportunites": 7,
    "nouveaux_paris": 0
   }
  ],
