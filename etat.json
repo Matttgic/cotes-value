@@ -1,53 +1,56 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T20:50:48+00:00",
+  "debut": "2026-10-24T20:55:28+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 27.1,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 45 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 24.7,
+    "ok": true,
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
      "prix bid/ask invalides"
     ]
    },
+   "pinnacle": {
+    "secondes": 41.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 6 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "sport 5 matchups : HTTP 403",
+     "sport 13 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "olybet": {
     "secondes": 8.9,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 21.9,
+   "pmu_direct": {
+    "secondes": 32.3,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 32.9,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 34.0,
+    "secondes": 32.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "unibet_direct": {
+    "secondes": 70.3,
+    "ok": true
+   },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -55,20 +58,23 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.9,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 56.4,
+    "secondes": 88.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.8,
+    "secondes": 3.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.5,
+    "secondes": 0.9,
     "ok": true
    }
   },
@@ -76,26 +82,22 @@
    "mode": "site"
   },
   "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 33987,
+   "sports": [],
+   "requetes": 0,
+   "lignes": 34,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
+   "cache_lignes": 34,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 844,
-   "age_min_s": 119,
-   "lignes": 129648,
-   "lignes_perimees": 5076,
+   "age_max_s": 771,
+   "age_min_s": 39,
+   "lignes": 129855,
+   "lignes_perimees": 1176,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -106,13 +108,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
+    "head_200": 35,
+    "choisi_fixe": 10,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 9,
-    "choisi_fixe": 5,
-    "sport_vide": 7,
-    "reprise_403": 1
+    "choisi_autre": 4,
+    "reprise_403": 5,
+    "matchups_sans_speciaux": 2,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -120,46 +123,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 4,
    "comparaisons": [
     {
-     "match": "Sturm Graz – Ried",
+     "match": "Valletta – Hamrun Spartans",
      "source": "Pinnacle",
-     "cote_olybet": 1.59,
-     "cote_reference": 1.676,
-     "ecart_relatif": 0.0511,
+     "cote_olybet": 2.38,
+     "cote_reference": 2.44,
+     "ecart_relatif": 0.0246,
      "aberrant": false
     },
     {
-     "match": "Sturm Graz – Ried",
+     "match": "Valletta – Hamrun Spartans",
      "source": "PMU",
-     "cote_olybet": 1.59,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0062,
+     "cote_olybet": 2.38,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.1019,
      "aberrant": false
     },
     {
-     "match": "Hapoël Petah-Tikva – Beitar Jérusalem",
+     "match": "Gzira United – Birzebbuga St. Peters FC",
      "source": "Pinnacle",
-     "cote_olybet": 6.0,
-     "cote_reference": 6.49,
-     "ecart_relatif": 0.0755,
+     "cote_olybet": 2.29,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0255,
      "aberrant": false
     },
     {
-     "match": "Victoria Rosport – Résidence Walferdange",
+     "match": "Balzan – Birkirkara",
      "source": "Pinnacle",
-     "cote_olybet": 2.04,
-     "cote_reference": 2.09,
-     "ecart_relatif": 0.0239,
-     "aberrant": false
-    },
-    {
-     "match": "Victoria Rosport – Résidence Walferdange",
-     "source": "PMU",
-     "cote_olybet": 2.04,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0852,
+     "cote_olybet": 2.96,
+     "cote_reference": 3.06,
+     "ecart_relatif": 0.0327,
      "aberrant": false
     }
    ],
@@ -189,25 +184,25 @@
     {
      "match": "New York Red Bulls – Inter Miami CF",
      "source": "Pinnacle",
-     "cote_netbet": 2.87,
-     "cote_reference": 3.11,
-     "ecart_relatif": 0.0772,
+     "cote_netbet": 2.9,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.0645,
      "aberrant": false
     },
     {
      "match": "New York Red Bulls – Inter Miami CF",
      "source": "PMU",
-     "cote_netbet": 2.87,
-     "cote_reference": 3.05,
-     "ecart_relatif": 0.059,
+     "cote_netbet": 2.9,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0794,
      "aberrant": false
     },
     {
      "match": "Palmeiras – Bragantino",
      "source": "Pinnacle",
      "cote_netbet": 1.45,
-     "cote_reference": 1.546,
-     "ecart_relatif": 0.0623,
+     "cote_reference": 1.544,
+     "ecart_relatif": 0.0606,
      "aberrant": false
     },
     {
@@ -222,8 +217,8 @@
      "match": "Vasco Da Gama – Corinthians",
      "source": "Pinnacle",
      "cote_netbet": 1.55,
-     "cote_reference": 1.629,
-     "ecart_relatif": 0.0484,
+     "cote_reference": 1.637,
+     "ecart_relatif": 0.0531,
      "aberrant": false
     },
     {
@@ -254,23 +249,22 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T20:50:59+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T20:51:22+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T19:40:02+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T20:55:54+00:00",
    "books_premiere_lecture": "2026-10-24T17:57:33+00:00",
-   "books_derniere_lecture": "2026-10-24T20:51:23+00:00",
-   "ecart_enveloppe_secondes": 10429.0
+   "books_derniere_lecture": "2026-10-24T20:56:11+00:00",
+   "ecart_enveloppe_secondes": 10701.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.1
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 630,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 40777,
+   "mesures": 51823,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -286,25 +280,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T20:29:47+00:00"
   },
-  "fin": "2026-10-24T20:53:45+00:00",
+  "fin": "2026-10-24T20:59:54+00:00",
   "cotes": {
-   "francaises": 163014,
-   "pinnacle": 163635,
-   "polymarket": 0,
-   "smarkets": 3951
+   "francaises": 162975,
+   "pinnacle": 129889,
+   "polymarket": 33529,
+   "smarkets": 4033
   },
-  "matchs_francais": 2045,
-  "opportunites": 7,
-  "opportunites_suspectes": 1,
+  "matchs_francais": 2035,
+  "opportunites": 6,
+  "opportunites_suspectes": 4,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-24T00:03:11+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-24T00:07:51+00:00",
    "mode": "complet",
@@ -1503,6 +1491,12 @@
    "debut": "2026-10-24T20:50:48+00:00",
    "mode": "complet",
    "opportunites": 7,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T20:55:28+00:00",
+   "mode": "complet",
+   "opportunites": 6,
    "nouveaux_paris": 0
   }
  ],
