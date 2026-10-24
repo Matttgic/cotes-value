@@ -1,17 +1,8 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T02:07:46+00:00",
+  "debut": "2026-10-24T02:13:10+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 29.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 45 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
     "secondes": 30.0,
     "ok": false,
@@ -21,24 +12,30 @@
      "liste d'événements tronquée (plafond de pagination)"
     ]
    },
-   "unibet_direct": {
-    "secondes": 1.0,
+   "pinnacle": {
+    "secondes": 30.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "accueil HTTP 403"
+     "sport 26 markets/straight : HTTP 403",
+     "sport 17 markets/straight : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 12.3,
+    "secondes": 10.6,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 24.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.8,
+    "secondes": 31.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -46,11 +43,11 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 38.0,
+    "secondes": 38.6,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.6,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,37 +55,47 @@
     ]
    },
    "smarkets": {
-    "secondes": 21.2,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 128.2,
+    "secondes": 142.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.6,
+    "secondes": 2.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.8,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 54297,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 873,
-   "age_min_s": 62,
-   "lignes": 189795,
-   "lignes_perimees": 1058,
+   "age_max_s": 806,
+   "age_min_s": 176,
+   "lignes": 189969,
+   "lignes_perimees": 2611,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -99,13 +106,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 33,
-    "head_403": 2,
+    "head_200": 29,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 3,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "choisi_autre": 7,
+    "choisi_fixe": 5,
+    "reprise_403": 2,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -113,70 +120,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Entella – Mantova FC",
+     "match": "Etzella Ettelbruck – Progrès Niederkorn",
      "source": "Pinnacle",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0714,
+     "cote_olybet": 5.2,
+     "cote_reference": 5.47,
+     "ecart_relatif": 0.0494,
      "aberrant": false
     },
     {
-     "match": "Entella – Mantova FC",
+     "match": "Etzella Ettelbruck – Progrès Niederkorn",
      "source": "PMU",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0625,
+     "cote_olybet": 5.2,
+     "cote_reference": 4.75,
+     "ecart_relatif": 0.0947,
      "aberrant": false
     },
     {
-     "match": "Catanzaro – Ascoli",
+     "match": "Kispest Honved FC – Debrecen",
      "source": "Pinnacle",
-     "cote_olybet": 2.53,
-     "cote_reference": 2.76,
-     "ecart_relatif": 0.0833,
+     "cote_olybet": 2.35,
+     "cote_reference": 2.49,
+     "ecart_relatif": 0.0562,
      "aberrant": false
     },
     {
-     "match": "Catanzaro – Ascoli",
-     "source": "PMU",
-     "cote_olybet": 2.53,
-     "cote_reference": 2.2,
-     "ecart_relatif": 0.15,
-     "aberrant": false
-    },
-    {
-     "match": "SS Arezzo – Benevento",
+     "match": "Zalaegerszeg TE – Kisvarda Master Good",
      "source": "Pinnacle",
-     "cote_olybet": 2.85,
-     "cote_reference": 3.09,
-     "ecart_relatif": 0.0777,
+     "cote_olybet": 1.76,
+     "cote_reference": 1.84,
+     "ecart_relatif": 0.0436,
      "aberrant": false
     },
     {
-     "match": "SS Arezzo – Benevento",
+     "match": "Zalaegerszeg TE – Kisvarda Master Good",
      "source": "PMU",
-     "cote_olybet": 2.85,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0755,
+     "cote_olybet": 1.76,
+     "cote_reference": 1.72,
+     "ecart_relatif": 0.0233,
      "aberrant": false
     },
     {
-     "match": "Palerme – Carrarese",
+     "match": "Gyor ETO – Ujpest",
      "source": "Pinnacle",
-     "cote_olybet": 1.41,
-     "cote_reference": 1.461,
-     "ecart_relatif": 0.0348,
+     "cote_olybet": 2.24,
+     "cote_reference": 2.36,
+     "ecart_relatif": 0.0508,
      "aberrant": false
     },
     {
-     "match": "Palerme – Carrarese",
+     "match": "Gyor ETO – Ujpest",
      "source": "PMU",
-     "cote_olybet": 1.41,
-     "cote_reference": 1.3,
-     "ecart_relatif": 0.0846,
+     "cote_olybet": 2.24,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0419,
+     "aberrant": false
+    },
+    {
+     "match": "Vasas – Paksi",
+     "source": "Pinnacle",
+     "cote_olybet": 2.19,
+     "cote_reference": 2.29,
+     "ecart_relatif": 0.0437,
+     "aberrant": false
+    },
+    {
+     "match": "Vasas – Paksi",
+     "source": "PMU",
+     "cote_olybet": 2.19,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0429,
      "aberrant": false
     }
    ],
@@ -271,22 +286,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T02:07:57+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T02:08:06+00:00",
-   "books_premiere_lecture": "2026-10-24T01:38:17+00:00",
-   "books_derniere_lecture": "2026-10-24T02:08:17+00:00",
-   "ecart_enveloppe_secondes": 1789.0
+   "pinnacle_premiere_lecture": "2026-10-24T02:13:21+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T02:13:45+00:00",
+   "books_premiere_lecture": "2026-10-24T01:49:24+00:00",
+   "books_derniere_lecture": "2026-10-24T02:13:47+00:00",
+   "ecart_enveloppe_secondes": 1461.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.4
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 624,
    "a_verifier": 9,
    "non_conforme": 12,
-   "mesures": 55576,
+   "mesures": 53272,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -304,25 +320,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T01:42:16+00:00"
   },
-  "fin": "2026-10-24T02:12:14+00:00",
+  "fin": "2026-10-24T02:17:37+00:00",
   "cotes": {
-   "francaises": 191744,
-   "pinnacle": 189795,
+   "francaises": 177896,
+   "pinnacle": 244266,
    "polymarket": 0,
    "smarkets": 3798
   },
-  "matchs_francais": 2531,
+  "matchs_francais": 2518,
   "opportunites": 5,
   "opportunites_suspectes": 19,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T07:59:26+00:00",
-   "mode": "complet",
-   "opportunites": 20,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-23T08:04:05+00:00",
    "mode": "complet",
@@ -1519,6 +1529,12 @@
   },
   {
    "debut": "2026-10-24T02:07:46+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T02:13:10+00:00",
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 0
