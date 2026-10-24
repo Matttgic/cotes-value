@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T00:03:11+00:00",
+  "debut": "2026-10-24T00:07:51+00:00",
   "mode": "complet",
   "etapes": {
    "pinnacle": {
-    "secondes": 27.7,
+    "secondes": 26.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -15,18 +15,22 @@
    "polymarket": {
     "secondes": 30.0,
     "ok": false,
-    "erreur": "budget dépassé"
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ]
    },
    "olybet": {
-    "secondes": 9.9,
+    "secondes": 10.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 32.9,
+    "secondes": 33.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -34,11 +38,11 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 38.6,
+    "secondes": 38.3,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 74.6,
+    "secondes": 74.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -46,7 +50,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,15 +58,12 @@
     ]
    },
    "smarkets": {
-    "secondes": 20.4,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 73.4,
+    "secondes": 111.9,
     "ok": true
    },
    "comparaison": {
@@ -70,36 +71,45 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.7,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 49401,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 802,
-   "age_min_s": 69,
-   "lignes": 183276,
-   "lignes_perimees": 2394,
-   "rechauffeur": "ok",
+   "age_max_s": 868,
+   "age_min_s": 42,
+   "lignes": 183188,
+   "lignes_perimees": 4228,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 38,
+    "head_200": 32,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 3,
-    "choisi_autre": 10,
+    "choisi_fixe": 7,
+    "choisi_autre": 6,
     "sport_vide": 5,
     "reprise_403": 1
    }
@@ -109,62 +119,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Hradec Kralove – Jablonec",
+     "match": "ASO Chlef – MB Rouissat",
      "source": "Pinnacle",
-     "cote_olybet": 2.11,
-     "cote_reference": 2.21,
-     "ecart_relatif": 0.0452,
+     "cote_olybet": 1.87,
+     "cote_reference": 1.952,
+     "ecart_relatif": 0.0422,
      "aberrant": false
     },
     {
-     "match": "Teplice – SK Artis Brno",
+     "match": "JS Saoura – ES Ben Aknoun",
      "source": "Pinnacle",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.769,
-     "ecart_relatif": 0.0391,
+     "cote_olybet": 1.92,
+     "cote_reference": 2.01,
+     "ecart_relatif": 0.0448,
      "aberrant": false
     },
     {
-     "match": "Teplice – SK Artis Brno",
-     "source": "PMU",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.61,
-     "ecart_relatif": 0.0559,
-     "aberrant": false
-    },
-    {
-     "match": "FC Zlin – Sigma Olomouc",
+     "match": "ES Sétif – Temouchent",
      "source": "Pinnacle",
-     "cote_olybet": 3.83,
-     "cote_reference": 4.17,
-     "ecart_relatif": 0.0815,
+     "cote_olybet": 1.33,
+     "cote_reference": 1.373,
+     "ecart_relatif": 0.0314,
      "aberrant": false
     },
     {
-     "match": "FC Zlin – Sigma Olomouc",
-     "source": "PMU",
-     "cote_olybet": 3.83,
-     "cote_reference": 3.65,
-     "ecart_relatif": 0.0493,
-     "aberrant": false
-    },
-    {
-     "match": "Slavia Prague – Mlada Boleslav",
+     "match": "USM Alger – Belouizdad",
      "source": "Pinnacle",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.253,
-     "ecart_relatif": 0.0265,
+     "cote_olybet": 2.46,
+     "cote_reference": 2.59,
+     "ecart_relatif": 0.0502,
      "aberrant": false
     },
     {
-     "match": "Slavia Prague – Mlada Boleslav",
-     "source": "PMU",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.2,
-     "ecart_relatif": 0.0167,
+     "match": "USM Khenchela – JS Kabylie",
+     "source": "Pinnacle",
+     "cote_olybet": 2.95,
+     "cote_reference": 3.14,
+     "ecart_relatif": 0.0605,
      "aberrant": false
     }
    ],
@@ -203,8 +197,8 @@
      "match": "Necaxa – FC Juárez",
      "source": "PMU",
      "cote_netbet": 1.63,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0,
+     "cote_reference": 1.64,
+     "ecart_relatif": 0.0061,
      "aberrant": false
     },
     {
@@ -243,22 +237,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T00:03:22+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T00:03:30+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T00:08:03+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T00:08:24+00:00",
    "books_premiere_lecture": "2026-10-23T21:34:11+00:00",
-   "books_derniere_lecture": "2026-10-24T00:03:42+00:00",
-   "ecart_enveloppe_secondes": 8959.0
+   "books_derniere_lecture": "2026-10-24T00:08:26+00:00",
+   "ecart_enveloppe_secondes": 9253.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 51657,
+   "mesures": 49407,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -276,25 +271,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-23T23:49:50+00:00"
   },
-  "fin": "2026-10-24T00:06:42+00:00",
+  "fin": "2026-10-24T00:11:45+00:00",
   "cotes": {
-   "francaises": 173825,
-   "pinnacle": 183276,
+   "francaises": 183973,
+   "pinnacle": 232589,
    "polymarket": 0,
    "smarkets": 2900
   },
-  "matchs_francais": 2279,
+  "matchs_francais": 2286,
   "opportunites": 3,
   "opportunites_suspectes": 18,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T05:35:53+00:00",
-   "mode": "complet",
-   "opportunites": 15,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T05:41:57+00:00",
    "mode": "complet",
@@ -1491,6 +1480,12 @@
   },
   {
    "debut": "2026-10-24T00:03:11+00:00",
+   "mode": "complet",
+   "opportunites": 3,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T00:07:51+00:00",
    "mode": "complet",
    "opportunites": 3,
    "nouveaux_paris": 0
