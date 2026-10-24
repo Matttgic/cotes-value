@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T06:04:45+00:00",
+  "debut": "2026-10-24T06:09:54+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
@@ -13,24 +13,25 @@
     ]
    },
    "pinnacle": {
-    "secondes": 30.5,
+    "secondes": 30.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 22 markets/straight : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "olybet": {
-    "secondes": 13.2,
+    "secondes": 11.0,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 33.3,
+    "secondes": 31.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -42,12 +43,11 @@
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 75.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 73.7,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "lecture interrompue"
+     "budget"
     ]
    },
    "betclic_direct": {
@@ -59,19 +59,16 @@
     ]
    },
    "smarkets": {
-    "secondes": 19.6,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 118.0,
+    "secondes": 101.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
@@ -85,22 +82,20 @@
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 57075,
+   "lignes": 80,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 57075,
-   "retard": [
-    "football"
-   ]
+   "cache_lignes": 80,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 762,
-   "age_min_s": 35,
-   "lignes": 203093,
-   "lignes_perimees": 6390,
+   "age_max_s": 824,
+   "age_min_s": 63,
+   "lignes": 202291,
+   "lignes_perimees": 1468,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -108,13 +103,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
-    "head_403": 2,
+    "head_200": 20,
+    "choisi_autre": 3,
+    "choisi_fixe": 7,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 13,
-    "choisi_fixe": 1,
-    "sport_vide": 5,
-    "reprise_403": 1
+    "reprise_403": 2,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -122,16 +117,8 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 8,
    "comparaisons": [
-    {
-     "match": "FC Meshakhte Tkibuli – Dila Gori",
-     "source": "Pinnacle",
-     "cote_olybet": 4.1,
-     "cote_reference": 4.26,
-     "ecart_relatif": 0.0376,
-     "aberrant": false
-    },
     {
      "match": "Dynamo Batumi – FC Samgurali Tskhaltubo",
      "source": "Pinnacle",
@@ -141,19 +128,59 @@
      "aberrant": false
     },
     {
-     "match": "Kawasaki Frontale – Fagiano Okayama",
+     "match": "FC Meshakhte Tkibuli – Dila Gori",
      "source": "Pinnacle",
-     "cote_olybet": 2.02,
-     "cote_reference": 2.11,
-     "ecart_relatif": 0.0427,
+     "cote_olybet": 4.1,
+     "cote_reference": 4.26,
+     "ecart_relatif": 0.0376,
      "aberrant": false
     },
     {
-     "match": "Kawasaki Frontale – Fagiano Okayama",
+     "match": "Estoril – Moreirense FC",
+     "source": "Pinnacle",
+     "cote_olybet": 1.89,
+     "cote_reference": 1.952,
+     "ecart_relatif": 0.032,
+     "aberrant": false
+    },
+    {
+     "match": "Estoril – Moreirense FC",
      "source": "PMU",
-     "cote_olybet": 2.02,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.01,
+     "cote_olybet": 1.89,
+     "cote_reference": 1.77,
+     "ecart_relatif": 0.0678,
+     "aberrant": false
+    },
+    {
+     "match": "Gil Vicente – FC Porto",
+     "source": "Pinnacle",
+     "cote_olybet": 6.9,
+     "cote_reference": 7.73,
+     "ecart_relatif": 0.1074,
+     "aberrant": false
+    },
+    {
+     "match": "Gil Vicente – FC Porto",
+     "source": "PMU",
+     "cote_olybet": 6.9,
+     "cote_reference": 8.0,
+     "ecart_relatif": 0.1375,
+     "aberrant": false
+    },
+    {
+     "match": "Estrela Amadora – Casa Pia AC",
+     "source": "Pinnacle",
+     "cote_olybet": 1.66,
+     "cote_reference": 1.735,
+     "ecart_relatif": 0.0434,
+     "aberrant": false
+    },
+    {
+     "match": "Estrela Amadora – Casa Pia AC",
+     "source": "PMU",
+     "cote_olybet": 1.66,
+     "cote_reference": 1.63,
+     "ecart_relatif": 0.0184,
      "aberrant": false
     }
    ],
@@ -168,16 +195,16 @@
      "match": "Gamba Osaka – Kyoto Sanga FC",
      "source": "Pinnacle",
      "cote_netbet": 1.73,
-     "cote_reference": 1.855,
-     "ecart_relatif": 0.0672,
+     "cote_reference": 1.847,
+     "ecart_relatif": 0.0636,
      "aberrant": false
     },
     {
      "match": "Gamba Osaka – Kyoto Sanga FC",
      "source": "PMU",
      "cote_netbet": 1.73,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.0495,
+     "cote_reference": 1.85,
+     "ecart_relatif": 0.0649,
      "aberrant": false
     },
     {
@@ -200,8 +227,8 @@
      "match": "Chongqing Tongliangloong – Qingdao Hainiu",
      "source": "Pinnacle",
      "cote_netbet": 1.2,
-     "cote_reference": 1.286,
-     "ecart_relatif": 0.0667,
+     "cote_reference": 1.257,
+     "ecart_relatif": 0.0454,
      "aberrant": false
     },
     {
@@ -216,8 +243,8 @@
      "match": "Henan Songshan Longmen – Beijing Guoan",
      "source": "Pinnacle",
      "cote_netbet": 2.9,
-     "cote_reference": 3.16,
-     "ecart_relatif": 0.0823,
+     "cote_reference": 3.17,
+     "ecart_relatif": 0.0852,
      "aberrant": false
     },
     {
@@ -232,32 +259,33 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T05:50:07+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T06:05:06+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T05:42:57+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T06:10:16+00:00",
    "books_premiere_lecture": "2026-10-24T03:23:45+00:00",
-   "books_derniere_lecture": "2026-10-24T06:05:17+00:00",
-   "ecart_enveloppe_secondes": 9681.0
+   "books_derniere_lecture": "2026-10-24T06:10:26+00:00",
+   "ecart_enveloppe_secondes": 9991.0
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 625,
    "a_verifier": 9,
    "non_conforme": 11,
-   "mesures": 41314,
-   "matchs_suspects": 2
+   "mesures": 65082,
+   "matchs_suspects": 3
   },
   "redecision": {
    "ajoutees": 0
   },
   "qwen": {
-   "candidates": 2,
+   "candidates": 1,
    "validees": 0,
    "refus": {
-    "hors fenêtre de 15 min à 2 h": 2
+    "hors fenêtre de 15 min à 2 h": 1
    }
   },
   "reglement": false,
@@ -265,25 +293,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T05:48:06+00:00"
   },
-  "fin": "2026-10-24T06:09:02+00:00",
+  "fin": "2026-10-24T06:13:33+00:00",
   "cotes": {
-   "francaises": 185205,
-   "pinnacle": 260168,
+   "francaises": 224855,
+   "pinnacle": 202371,
    "polymarket": 0,
    "smarkets": 3937
   },
-  "matchs_francais": 2489,
-  "opportunites": 17,
-  "opportunites_suspectes": 11,
-  "nouveaux_paris": 2
+  "matchs_francais": 3129,
+  "opportunites": 10,
+  "opportunites_suspectes": 19,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T11:15:28+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T11:21:30+00:00",
    "mode": "complet",
@@ -1483,6 +1505,12 @@
    "mode": "complet",
    "opportunites": 17,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-24T06:09:54+00:00",
+   "mode": "complet",
+   "opportunites": 10,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T05:48:06+00:00",
