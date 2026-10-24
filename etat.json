@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T22:52:39+00:00",
+  "debut": "2026-10-24T22:57:15+00:00",
   "mode": "complet",
   "etapes": {
    "polymarket": {
-    "secondes": 24.5,
+    "secondes": 27.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,24 +12,28 @@
     ]
    },
    "pinnacle": {
-    "secondes": 28.5,
+    "secondes": 32.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 26 markets/straight : HTTP 403",
-     "sport 45 matchups : HTTP 403"
+     "sport 27 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 7.3,
+    "secondes": 8.6,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 27.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 29.0,
+    "secondes": 30.2,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.1,
+    "secondes": 30.7,
     "ok": true
    },
    "netbet": {
@@ -40,12 +44,8 @@
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 49.9,
-    "ok": true
-   },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,7 +58,7 @@
     "cache": true
    },
    "association": {
-    "secondes": 59.3,
+    "secondes": 45.0,
     "ok": true
    },
    "comparaison": {
@@ -73,26 +73,14 @@
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 33490,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 872,
-   "age_min_s": 179,
-   "lignes": 127404,
-   "lignes_perimees": 6481,
+   "age_max_s": 834,
+   "age_min_s": 109,
+   "lignes": 127938,
+   "lignes_perimees": 3792,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -103,13 +91,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 30,
-    "head_403": 3,
+    "head_200": 38,
+    "choisi_autre": 10,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 5,
-    "choisi_fixe": 8,
-    "sport_vide": 7,
-    "reprise_403": 2
+    "choisi_fixe": 4,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 2,
+    "sport_vide": 8
    }
   },
   "olybet_source": "direct",
@@ -117,46 +106,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Banga – FA Siauliai",
+     "match": "VfL Osnabrück – Greuther Fürth",
      "source": "Pinnacle",
-     "cote_olybet": 1.43,
-     "cote_reference": 1.478,
-     "ecart_relatif": 0.0328,
+     "cote_olybet": 2.16,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.069,
      "aberrant": false
     },
     {
-     "match": "Dziugas Telsiai – FK Panevezys",
-     "source": "Pinnacle",
-     "cote_olybet": 2.63,
-     "cote_reference": 2.79,
-     "ecart_relatif": 0.0573,
-     "aberrant": false
-    },
-    {
-     "match": "Dziugas Telsiai – FK Panevezys",
+     "match": "VfL Osnabrück – Greuther Fürth",
      "source": "PMU",
-     "cote_olybet": 2.63,
-     "cote_reference": 2.4,
-     "ecart_relatif": 0.0958,
+     "cote_olybet": 2.16,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0286,
      "aberrant": false
     },
     {
-     "match": "FC Sion – Lausanne-Sport",
+     "match": "Holstein Kiel – Dynamo Dresden",
      "source": "Pinnacle",
-     "cote_olybet": 1.46,
-     "cote_reference": 1.529,
-     "ecart_relatif": 0.0452,
+     "cote_olybet": 2.2,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0638,
      "aberrant": false
     },
     {
-     "match": "FC Sion – Lausanne-Sport",
+     "match": "Holstein Kiel – Dynamo Dresden",
      "source": "PMU",
-     "cote_olybet": 1.46,
-     "cote_reference": 1.44,
-     "ecart_relatif": 0.0139,
+     "cote_olybet": 2.2,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0784,
+     "aberrant": false
+    },
+    {
+     "match": "Imisli FC – Shamakhi FK",
+     "source": "Pinnacle",
+     "cote_olybet": 2.56,
+     "cote_reference": 2.63,
+     "ecart_relatif": 0.0266,
+     "aberrant": false
+    },
+    {
+     "match": "Sabah FK – Qarabag",
+     "source": "Pinnacle",
+     "cote_olybet": 2.48,
+     "cote_reference": 2.54,
+     "ecart_relatif": 0.0236,
      "aberrant": false
     }
    ],
@@ -203,8 +200,8 @@
      "match": "América de Cali – Cúcuta Deportivo",
      "source": "Pinnacle",
      "cote_netbet": 1.26,
-     "cote_reference": 1.33,
-     "ecart_relatif": 0.0526,
+     "cote_reference": 1.339,
+     "ecart_relatif": 0.059,
      "aberrant": false
     },
     {
@@ -235,8 +232,8 @@
      "match": "DC United – Cincinnati",
      "source": "Pinnacle",
      "cote_netbet": 2.6,
-     "cote_reference": 2.86,
-     "ecart_relatif": 0.0909,
+     "cote_reference": 2.85,
+     "ecart_relatif": 0.0877,
      "aberrant": false
     },
     {
@@ -260,23 +257,23 @@
    ]
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T22:52:49+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T22:53:09+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T22:57:25+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T22:57:43+00:00",
    "books_premiere_lecture": "2026-10-24T19:58:52+00:00",
-   "books_derniere_lecture": "2026-10-24T22:53:10+00:00",
-   "ecart_enveloppe_secondes": 10457.0
+   "books_derniere_lecture": "2026-10-24T22:57:49+00:00",
+   "ecart_enveloppe_secondes": 10731.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 629,
    "a_verifier": 9,
    "non_conforme": 11,
-   "mesures": 51075,
+   "mesures": 50892,
    "matchs_suspects": 0
   },
   "redecision": {
@@ -292,25 +289,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T22:26:52+00:00"
   },
-  "fin": "2026-10-24T22:55:47+00:00",
+  "fin": "2026-10-24T23:00:11+00:00",
   "cotes": {
-   "francaises": 158076,
-   "pinnacle": 160894,
-   "polymarket": 32348,
+   "francaises": 157559,
+   "pinnacle": 127938,
+   "polymarket": 32334,
    "smarkets": 3651
   },
-  "matchs_francais": 2023,
+  "matchs_francais": 2011,
   "opportunites": 6,
-  "opportunites_suspectes": 4,
+  "opportunites_suspectes": 5,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-24T02:18:30+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-24T02:23:25+00:00",
    "mode": "complet",
@@ -1507,6 +1498,12 @@
   },
   {
    "debut": "2026-10-24T22:52:39+00:00",
+   "mode": "complet",
+   "opportunites": 6,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T22:57:15+00:00",
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 0
