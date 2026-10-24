@@ -1,37 +1,37 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T08:27:45+00:00",
+  "debut": "2026-10-24T08:33:49+00:00",
   "mode": "complet",
   "etapes": {
-   "pinnacle": {
-    "secondes": 29.8,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 18 markets/straight : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 22.4,
+    "ok": true,
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
      "prix bid/ask invalides"
     ]
    },
+   "pinnacle": {
+    "secondes": 30.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 29 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "olybet": {
-    "secondes": 11.1,
+    "secondes": 9.9,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 35.4,
+    "secondes": 35.2,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.9,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -39,19 +39,15 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 43.3,
+    "secondes": 39.1,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 74.7,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 72.6,
+    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,20 +55,23 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 32.4,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 183.9,
+    "secondes": 260.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.1,
+    "secondes": 4.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 1.4,
     "ok": true
    }
   },
@@ -82,37 +81,38 @@
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 57827,
+   "lignes": 57296,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 57827,
-   "retard": [
-    "football"
-   ]
+   "cache_lignes": 57296,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 898,
-   "age_min_s": 189,
-   "lignes": 204064,
-   "lignes_perimees": 30915,
-   "rechauffeur": "indisponible",
+   "age_max_s": 829,
+   "age_min_s": 164,
+   "lignes": 204779,
+   "lignes_perimees": 1250,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 5,
-    "head_403": 2,
-    "ortho_refusee": 1,
-    "choisi_autre": 1,
-    "choisi_fixe": 2,
     "reprise_403": 2,
-    "reprise_403_ok": 1,
-    "sport_vide": 6
+    "matchups_sans_speciaux": 1,
+    "head_200": 41,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "choisi_fixe": 9,
+    "choisi_autre": 5,
+    "sport_vide": 5
    }
   },
   "olybet_source": "direct",
@@ -123,43 +123,43 @@
    "examines": 5,
    "comparaisons": [
     {
-     "match": "CD Leones Del Norte – FC Libertad",
-     "source": "Pinnacle",
-     "cote_olybet": 1.99,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.0386,
-     "aberrant": false
-    },
-    {
-     "match": "CD Leones Del Norte – FC Libertad",
+     "match": "Nantes (Wom) – Strasbourg Alsace (F)",
      "source": "PMU",
-     "cote_olybet": 1.99,
-     "cote_reference": 1.79,
-     "ecart_relatif": 0.1117,
+     "cote_olybet": 2.3,
+     "cote_reference": 2.25,
+     "ecart_relatif": 0.0222,
      "aberrant": false
     },
     {
-     "match": "Manta – Deportivo Cuenca",
+     "match": "FC Fleury 91 (F) – Toulouse (F)",
+     "source": "PMU",
+     "cote_olybet": 1.55,
+     "cote_reference": 1.5,
+     "ecart_relatif": 0.0333,
+     "aberrant": false
+    },
+    {
+     "match": "Lyon (F) – Marseille (F)",
+     "source": "Pinnacle",
+     "cote_olybet": 1.02,
+     "cote_reference": 1.021,
+     "ecart_relatif": 0.001,
+     "aberrant": false
+    },
+    {
+     "match": "Le Havre (F) – Lens (F)",
      "source": "Pinnacle",
      "cote_olybet": 2.0,
-     "cote_reference": 2.11,
-     "ecart_relatif": 0.0521,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0196,
      "aberrant": false
     },
     {
-     "match": "Manta – Deportivo Cuenca",
+     "match": "Le Havre (F) – Lens (F)",
      "source": "PMU",
      "cote_olybet": 2.0,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0099,
-     "aberrant": false
-    },
-    {
-     "match": "Orense SC – Delfin",
-     "source": "Pinnacle",
-     "cote_olybet": 1.87,
      "cote_reference": 1.98,
-     "ecart_relatif": 0.0557,
+     "ecart_relatif": 0.0101,
      "aberrant": false
     }
    ],
@@ -173,17 +173,17 @@
     {
      "match": "Melbourne Victory – Melbourne City",
      "source": "Pinnacle",
-     "cote_netbet": 2.02,
-     "cote_reference": 2.19,
-     "ecart_relatif": 0.0776,
+     "cote_netbet": 2.07,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.1,
      "aberrant": false
     },
     {
      "match": "Melbourne Victory – Melbourne City",
      "source": "PMU",
-     "cote_netbet": 2.02,
+     "cote_netbet": 2.07,
      "cote_reference": 2.2,
-     "ecart_relatif": 0.0818,
+     "ecart_relatif": 0.0591,
      "aberrant": false
     },
     {
@@ -223,22 +223,21 @@
   },
   "fraicheur_prematch": {
    "pinnacle_premiere_lecture": "2026-10-24T08:09:09+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T08:28:09+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T08:34:11+00:00",
    "books_premiere_lecture": "2026-10-24T06:29:55+00:00",
-   "books_derniere_lecture": "2026-10-24T08:28:19+00:00",
-   "ecart_enveloppe_secondes": 7094.0
+   "books_derniere_lecture": "2026-10-24T08:34:23+00:00",
+   "ecart_enveloppe_secondes": 7456.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 9.6
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 54127,
+   "mesures": 71283,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -254,25 +253,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T07:48:19+00:00"
   },
-  "fin": "2026-10-24T08:32:55+00:00",
+  "fin": "2026-10-24T08:41:37+00:00",
   "cotes": {
-   "francaises": 216330,
-   "pinnacle": 261891,
-   "polymarket": 0,
-   "smarkets": 3796
+   "francaises": 235230,
+   "pinnacle": 262075,
+   "polymarket": 39780,
+   "smarkets": 4035
   },
-  "matchs_francais": 3233,
-  "opportunites": 14,
-  "opportunites_suspectes": 22,
-  "nouveaux_paris": 1
+  "matchs_francais": 3325,
+  "opportunites": 18,
+  "opportunites_suspectes": 54,
+  "nouveaux_paris": 5
  },
  "historique": [
-  {
-   "debut": "2026-10-23T13:04:40+00:00",
-   "mode": "complet",
-   "opportunites": 16,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-23T13:11:39+00:00",
    "mode": "complet",
@@ -1472,6 +1465,12 @@
    "mode": "complet",
    "opportunites": 14,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-24T08:33:49+00:00",
+   "mode": "complet",
+   "opportunites": 18,
+   "nouveaux_paris": 5
   }
  ],
  "dernier_reglement": "2026-10-24T07:48:19+00:00",
