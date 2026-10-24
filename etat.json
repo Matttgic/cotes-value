@@ -1,18 +1,19 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T04:07:00+00:00",
+  "debut": "2026-10-24T04:14:16+00:00",
   "mode": "complet",
   "etapes": {
    "pinnacle": {
-    "secondes": 23.7,
+    "secondes": 26.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 17 markets/straight : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "polymarket": {
-    "secondes": 26.8,
+    "secondes": 28.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -21,15 +22,15 @@
     ]
    },
    "olybet": {
-    "secondes": 9.4,
+    "secondes": 9.1,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.3,
+    "secondes": 31.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.4,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -37,15 +38,15 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 38.4,
+    "secondes": 37.6,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 69.2,
+    "secondes": 61.4,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.2,
+    "secondes": 77.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -53,16 +54,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 17.6,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 218.4,
+    "secondes": 177.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.0,
+    "secondes": 3.3,
     "ok": true
    },
    "cotes_cloture": {
@@ -77,10 +81,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 878,
-   "age_min_s": 3,
-   "lignes": 199732,
-   "lignes_perimees": 1590,
+   "age_max_s": 650,
+   "age_min_s": 10,
+   "lignes": 199480,
+   "lignes_perimees": 0,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -88,11 +92,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 36,
-    "choisi_fixe": 8,
-    "choisi_autre": 5,
-    "head_403": 2,
+    "head_200": 31,
+    "head_403": 3,
     "ortho_refusee": 2,
+    "choisi_autre": 7,
+    "choisi_fixe": 6,
+    "reprise_403": 1,
     "sport_vide": 6
    }
   },
@@ -101,58 +106,83 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Farense – Penafiel",
+     "match": "Eyupspor – Kasimpasa",
      "source": "Pinnacle",
-     "cote_olybet": 1.9,
-     "cote_reference": 1.99,
-     "ecart_relatif": 0.0453,
-     "aberrant": false
+     "cote_olybet": 5.1,
+     "cote_reference": 1.901,
+     "ecart_relatif": 1.6829,
+     "aberrant": true
     },
     {
-     "match": "Farense – Penafiel",
+     "match": "Eyupspor – Kasimpasa",
      "source": "PMU",
-     "cote_olybet": 1.9,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0686,
+     "cote_olybet": 5.1,
+     "cote_reference": 4.9,
+     "ecart_relatif": 0.0408,
      "aberrant": false
     },
     {
-     "match": "AVS Vila das Aves – Tondela",
+     "match": "Goztepe SK – Corum FK",
      "source": "Pinnacle",
-     "cote_olybet": 3.34,
-     "cote_reference": 3.55,
-     "ecart_relatif": 0.0592,
+     "cote_olybet": 2.07,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0505,
      "aberrant": false
     },
     {
-     "match": "Felgueiras 1932 – Lusitania FC Lourosa",
+     "match": "Samsunspor – Amedspor SK",
      "source": "Pinnacle",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.45,
-     "ecart_relatif": 0.049,
+     "cote_olybet": 3.23,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.0771,
      "aberrant": false
     },
     {
-     "match": "Felgueiras 1932 – Lusitania FC Lourosa",
-     "source": "PMU",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.2,
-     "ecart_relatif": 0.0591,
+     "match": "Konyaspor – Genclerbirligi",
+     "source": "Pinnacle",
+     "cote_olybet": 1.77,
+     "cote_reference": 1.862,
+     "ecart_relatif": 0.0495,
      "aberrant": false
     },
     {
-     "match": "Porto B – Uniao Leiria",
+     "match": "Konyaspor – Genclerbirligi",
      "source": "PMU",
-     "cote_olybet": 3.58,
-     "cote_reference": 3.3,
-     "ecart_relatif": 0.0848,
+     "cote_olybet": 1.77,
+     "cote_reference": 1.75,
+     "ecart_relatif": 0.0114,
+     "aberrant": false
+    },
+    {
+     "match": "Gaziantep FK – Erzurumspor FK",
+     "source": "Pinnacle",
+     "cote_olybet": 2.3,
+     "cote_reference": 2.48,
+     "ecart_relatif": 0.0726,
+     "aberrant": false
+    },
+    {
+     "match": "Gaziantep FK – Erzurumspor FK",
+     "source": "PMU",
+     "cote_olybet": 2.3,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.0314,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Eyupspor – Kasimpasa",
+     "source": "Pinnacle",
+     "cote_olybet": 5.1,
+     "cote_reference": 1.901,
+     "ecart_relatif": 1.6829,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -194,17 +224,17 @@
     {
      "match": "FC Seoul – Gangwon FC",
      "source": "Pinnacle",
-     "cote_netbet": 1.73,
+     "cote_netbet": 1.75,
      "cote_reference": 1.917,
-     "ecart_relatif": 0.0977,
+     "ecart_relatif": 0.0873,
      "aberrant": false
     },
     {
      "match": "FC Seoul – Gangwon FC",
      "source": "PMU",
-     "cote_netbet": 1.73,
+     "cote_netbet": 1.75,
      "cote_reference": 1.77,
-     "ecart_relatif": 0.0226,
+     "ecart_relatif": 0.0113,
      "aberrant": false
     },
     {
@@ -226,40 +256,39 @@
     {
      "match": "Sanfrecce Hiroshima – Shimizu S-Pulse",
      "source": "Pinnacle",
-     "cote_netbet": 1.32,
+     "cote_netbet": 1.33,
      "cote_reference": 1.397,
-     "ecart_relatif": 0.055,
+     "ecart_relatif": 0.0478,
      "aberrant": false
     },
     {
      "match": "Sanfrecce Hiroshima – Shimizu S-Pulse",
      "source": "PMU",
-     "cote_netbet": 1.32,
+     "cote_netbet": 1.33,
      "cote_reference": 1.37,
-     "ecart_relatif": 0.0365,
+     "ecart_relatif": 0.0292,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T04:07:11+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T04:07:19+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T04:14:28+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T04:14:34+00:00",
    "books_premiere_lecture": "2026-10-24T02:49:11+00:00",
-   "books_derniere_lecture": "2026-10-24T04:07:29+00:00",
-   "ecart_enveloppe_secondes": 4688.0
+   "books_derniere_lecture": "2026-10-24T04:14:47+00:00",
+   "ecart_enveloppe_secondes": 5123.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 7.8
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 70624,
+   "mesures": 67293,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -277,25 +306,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T03:41:17+00:00"
   },
-  "fin": "2026-10-24T04:13:22+00:00",
+  "fin": "2026-10-24T04:20:05+00:00",
   "cotes": {
-   "francaises": 220713,
-   "pinnacle": 199732,
-   "polymarket": 38810,
-   "smarkets": 4099
+   "francaises": 217027,
+   "pinnacle": 199480,
+   "polymarket": 38833,
+   "smarkets": 4118
   },
-  "matchs_francais": 2885,
+  "matchs_francais": 2915,
   "opportunites": 15,
   "opportunites_suspectes": 43,
-  "nouveaux_paris": 2
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T09:46:59+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T09:53:22+00:00",
    "mode": "complet",
@@ -1495,6 +1518,12 @@
    "mode": "complet",
    "opportunites": 15,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-24T04:14:16+00:00",
+   "mode": "complet",
+   "opportunites": 15,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-24T03:41:17+00:00",
