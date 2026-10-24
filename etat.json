@@ -1,10 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T03:29:19+00:00",
+  "debut": "2026-10-24T03:35:47+00:00",
   "mode": "complet",
   "etapes": {
+   "pinnacle": {
+    "secondes": 21.8,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "polymarket": {
-    "secondes": 23.1,
+    "secondes": 26.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -12,29 +20,20 @@
      "prix bid/ask invalides"
     ]
    },
-   "pinnacle": {
-    "secondes": 31.5,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 26 markets/straight : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "olybet": {
-    "secondes": 10.6,
+    "secondes": 9.1,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 31.5,
+    "secondes": 32.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 34.0,
+    "secondes": 34.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -42,15 +41,16 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 74.5,
-    "ok": true,
+    "secondes": 75.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "budget"
+     "lecture interrompue"
     ]
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -63,40 +63,29 @@
     "cache": true
    },
    "association": {
-    "secondes": 191.1,
+    "secondes": 169.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.6,
+    "secondes": 3.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.1,
+    "secondes": 0.8,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 55830,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 55830,
-   "retard": [
-    "football"
-   ]
-  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 693,
-   "age_min_s": 215,
-   "lignes": 199000,
-   "lignes_perimees": 4044,
+   "age_max_s": 883,
+   "age_min_s": 150,
+   "lignes": 198986,
+   "lignes_perimees": 2160,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -107,13 +96,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 28,
-    "head_403": 3,
+    "head_200": 35,
+    "choisi_fixe": 9,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 7,
-    "choisi_autre": 5,
-    "reprise_403": 2,
-    "reprise_403_ok": 1,
+    "choisi_autre": 4,
     "sport_vide": 6
    }
   },
@@ -122,86 +109,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "HamKam – Rosenborg",
+     "match": "Dynamo Batumi – FC Samgurali Tskhaltubo",
      "source": "Pinnacle",
-     "cote_olybet": 4.8,
-     "cote_reference": 5.28,
-     "ecart_relatif": 0.0909,
+     "cote_olybet": 1.43,
+     "cote_reference": 1.45,
+     "ecart_relatif": 0.0141,
      "aberrant": false
     },
     {
-     "match": "HamKam – Rosenborg",
-     "source": "PMU",
-     "cote_olybet": 4.8,
-     "cote_reference": 4.4,
-     "ecart_relatif": 0.0909,
-     "aberrant": false
-    },
-    {
-     "match": "FK Bodo/Glimt – Valerenga Oslo",
+     "match": "FC Meshakhte Tkibuli – Dila Gori",
      "source": "Pinnacle",
-     "cote_olybet": 1.09,
-     "cote_reference": 1.139,
-     "ecart_relatif": 0.0426,
+     "cote_olybet": 4.1,
+     "cote_reference": 4.26,
+     "ecart_relatif": 0.0376,
      "aberrant": false
     },
     {
-     "match": "FK Bodo/Glimt – Valerenga Oslo",
+     "match": "Valletta – Hamrun Spartans",
      "source": "PMU",
-     "cote_olybet": 1.09,
-     "cote_reference": 1.11,
-     "ecart_relatif": 0.018,
+     "cote_olybet": 2.26,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.1472,
      "aberrant": false
     },
     {
-     "match": "Viking – Tromso",
+     "match": "Sliema Wanderers – Marsaxlokk",
      "source": "Pinnacle",
-     "cote_olybet": 1.46,
-     "cote_reference": 1.513,
-     "ecart_relatif": 0.0349,
+     "cote_olybet": 2.32,
+     "cote_reference": 2.39,
+     "ecart_relatif": 0.0293,
      "aberrant": false
     },
     {
-     "match": "Viking – Tromso",
+     "match": "Sliema Wanderers – Marsaxlokk",
      "source": "PMU",
-     "cote_olybet": 1.46,
-     "cote_reference": 1.43,
-     "ecart_relatif": 0.021,
-     "aberrant": false
-    },
-    {
-     "match": "Saint-Etienne – Nantes",
-     "source": "Pinnacle",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.763,
-     "ecart_relatif": 0.036,
-     "aberrant": false
-    },
-    {
-     "match": "Saint-Etienne – Nantes",
-     "source": "PMU",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.64,
-     "ecart_relatif": 0.0366,
-     "aberrant": false
-    },
-    {
-     "match": "Dijon – Rodez",
-     "source": "Pinnacle",
-     "cote_olybet": 1.92,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.04,
-     "aberrant": false
-    },
-    {
-     "match": "Dijon – Rodez",
-     "source": "PMU",
-     "cote_olybet": 1.92,
-     "cote_reference": 1.94,
-     "ecart_relatif": 0.0103,
+     "cote_olybet": 2.32,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.0,
      "aberrant": false
     }
    ],
@@ -216,8 +163,8 @@
      "match": "Newcastle Jets – Macarthur Sydney",
      "source": "Pinnacle",
      "cote_netbet": 1.95,
-     "cote_reference": 2.13,
-     "ecart_relatif": 0.0845,
+     "cote_reference": 2.17,
+     "ecart_relatif": 0.1014,
      "aberrant": false
     },
     {
@@ -232,8 +179,8 @@
      "match": "Bucheon FC 1995 – Gwangju FC",
      "source": "Pinnacle",
      "cote_netbet": 2.07,
-     "cote_reference": 2.29,
-     "ecart_relatif": 0.0961,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.1,
      "aberrant": false
     },
     {
@@ -248,8 +195,8 @@
      "match": "FC Anyang – Jeonbuk Hyundai Motors",
      "source": "Pinnacle",
      "cote_netbet": 3.55,
-     "cote_reference": 4.04,
-     "ecart_relatif": 0.1213,
+     "cote_reference": 4.07,
+     "ecart_relatif": 0.1278,
      "aberrant": false
     },
     {
@@ -264,8 +211,8 @@
      "match": "FC Seoul – Gangwon FC",
      "source": "Pinnacle",
      "cote_netbet": 1.73,
-     "cote_reference": 1.84,
-     "ecart_relatif": 0.0599,
+     "cote_reference": 1.826,
+     "ecart_relatif": 0.0528,
      "aberrant": false
     },
     {
@@ -296,23 +243,23 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T03:15:18+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T03:29:47+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T03:35:58+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T03:36:04+00:00",
    "books_premiere_lecture": "2026-10-24T02:36:19+00:00",
-   "books_derniere_lecture": "2026-10-24T03:29:53+00:00",
-   "ecart_enveloppe_secondes": 3208.0
+   "books_derniere_lecture": "2026-10-24T03:36:16+00:00",
+   "ecart_enveloppe_secondes": 3585.0
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 6.1
+   "age_min": 12.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 626,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 72116,
+   "mesures": 57105,
    "matchs_suspects": 3
   },
   "redecision": {
@@ -330,25 +277,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T02:42:10+00:00"
   },
-  "fin": "2026-10-24T03:35:00+00:00",
+  "fin": "2026-10-24T03:41:05+00:00",
   "cotes": {
-   "francaises": 206346,
-   "pinnacle": 254830,
-   "polymarket": 38176,
+   "francaises": 164541,
+   "pinnacle": 198986,
+   "polymarket": 38260,
    "smarkets": 4002
   },
-  "matchs_francais": 2722,
-  "opportunites": 10,
+  "matchs_francais": 2245,
+  "opportunites": 9,
   "opportunites_suspectes": 43,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T09:11:17+00:00",
-   "mode": "complet",
-   "opportunites": 17,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T09:17:51+00:00",
    "mode": "complet",
@@ -1547,6 +1488,12 @@
    "debut": "2026-10-24T03:29:19+00:00",
    "mode": "complet",
    "opportunites": 10,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T03:35:47+00:00",
+   "mode": "complet",
+   "opportunites": 9,
    "nouveaux_paris": 0
   }
  ],
