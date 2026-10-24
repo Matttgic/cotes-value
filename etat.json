@@ -1,37 +1,35 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-24T16:23:15+00:00",
+  "debut": "2026-10-24T16:28:23+00:00",
   "mode": "complet",
   "etapes": {
-   "polymarket": {
-    "secondes": 23.1,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
-    ]
-   },
    "pinnacle": {
-    "secondes": 27.9,
+    "secondes": 26.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
+   "polymarket": {
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ]
+   },
    "olybet": {
-    "secondes": 6.9,
+    "secondes": 9.9,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 32.8,
+    "secondes": 31.2,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 35.3,
+    "secondes": 35.2,
     "ok": true
    },
    "netbet": {
@@ -43,15 +41,11 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 74.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 44.4,
+    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.1,
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,40 +53,51 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 23.3,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 109.2,
+    "secondes": 35.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.7,
+    "secondes": 1.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.7,
     "ok": true
    }
   },
   "pinnacle_configuration": {
    "mode": "site"
   },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 36916,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 36916,
+   "retard": [
+    "football"
+   ]
+  },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 894,
-   "age_min_s": 191,
-   "lignes": 154612,
-   "lignes_perimees": 5152,
-   "rechauffeur": "ok",
+   "age_max_s": 856,
+   "age_min_s": 19,
+   "lignes": 154458,
+   "lignes_perimees": 22527,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
@@ -100,11 +105,9 @@
     "head_200": 38,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 8,
-    "choisi_autre": 6,
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 5
+    "choisi_fixe": 5,
+    "choisi_autre": 9,
+    "sport_vide": 6
    }
   },
   "olybet_source": "direct",
@@ -115,27 +118,27 @@
    "examines": 3,
    "comparaisons": [
     {
-     "match": "Osijek – NK Rudeš",
+     "match": "Balzan – Birkirkara",
      "source": "Pinnacle",
-     "cote_olybet": 1.4,
-     "cote_reference": 1.437,
-     "ecart_relatif": 0.0255,
+     "cote_olybet": 2.96,
+     "cote_reference": 3.06,
+     "ecart_relatif": 0.0327,
      "aberrant": false
     },
     {
-     "match": "Osijek – NK Rudeš",
+     "match": "Valletta – Hamrun Spartans",
+     "source": "Pinnacle",
+     "cote_olybet": 2.48,
+     "cote_reference": 2.53,
+     "ecart_relatif": 0.0198,
+     "aberrant": false
+    },
+    {
+     "match": "Valletta – Hamrun Spartans",
      "source": "PMU",
-     "cote_olybet": 1.4,
-     "cote_reference": 1.35,
-     "ecart_relatif": 0.037,
-     "aberrant": false
-    },
-    {
-     "match": "Hapoël Petah-Tikva – Beitar Jérusalem",
-     "source": "Pinnacle",
-     "cote_olybet": 5.1,
-     "cote_reference": 5.46,
-     "ecart_relatif": 0.0659,
+     "cote_olybet": 2.48,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.0642,
      "aberrant": false
     }
    ],
@@ -174,8 +177,8 @@
      "match": "Borussia Dortmund – Eintracht Francfort",
      "source": "PMU",
      "cote_netbet": 1.38,
-     "cote_reference": 1.35,
-     "ecart_relatif": 0.0222,
+     "cote_reference": 1.36,
+     "ecart_relatif": 0.0147,
      "aberrant": false
     },
     {
@@ -190,40 +193,39 @@
      "match": "Chelsea – Tottenham",
      "source": "PMU",
      "cote_netbet": 1.82,
-     "cote_reference": 1.79,
-     "ecart_relatif": 0.0168,
+     "cote_reference": 1.8,
+     "ecart_relatif": 0.0111,
      "aberrant": false
     },
     {
      "match": "Krasnodar – Baltika Kaliningrad",
      "source": "Pinnacle",
-     "cote_netbet": 1.58,
+     "cote_netbet": 1.6,
      "cote_reference": 1.794,
-     "ecart_relatif": 0.1191,
+     "ecart_relatif": 0.108,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-24T16:23:26+00:00",
-   "pinnacle_derniere_lecture": "2026-10-24T16:23:36+00:00",
+   "pinnacle_premiere_lecture": "2026-10-24T15:58:42+00:00",
+   "pinnacle_derniere_lecture": "2026-10-24T16:28:44+00:00",
    "books_premiere_lecture": "2026-10-24T14:57:11+00:00",
-   "books_derniere_lecture": "2026-10-24T16:23:45+00:00",
-   "ecart_enveloppe_secondes": 5185.0
+   "books_derniere_lecture": "2026-10-24T16:28:54+00:00",
+   "ecart_enveloppe_secondes": 5493.0
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 629,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 62547,
-   "matchs_suspects": 2
+   "mesures": 47315,
+   "matchs_suspects": 0
   },
   "redecision": {
    "ajoutees": 0
@@ -238,25 +240,19 @@
    "saute": true,
    "dernier_reglement": "2026-10-24T15:44:41+00:00"
   },
-  "fin": "2026-10-24T16:27:30+00:00",
+  "fin": "2026-10-24T16:31:18+00:00",
   "cotes": {
-   "francaises": 203172,
-   "pinnacle": 154612,
-   "polymarket": 35136,
-   "smarkets": 3336
+   "francaises": 202307,
+   "pinnacle": 191374,
+   "polymarket": 0,
+   "smarkets": 3171
   },
-  "matchs_francais": 2612,
-  "opportunites": 11,
-  "opportunites_suspectes": 20,
+  "matchs_francais": 2606,
+  "opportunites": 16,
+  "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-23T19:08:46+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-23T19:13:26+00:00",
    "mode": "complet",
@@ -1455,6 +1451,12 @@
    "debut": "2026-10-24T16:23:15+00:00",
    "mode": "complet",
    "opportunites": 11,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-24T16:28:23+00:00",
+   "mode": "complet",
+   "opportunites": 16,
    "nouveaux_paris": 0
   }
  ],
