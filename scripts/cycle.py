@@ -742,6 +742,11 @@ def main() -> int:
                          hors_consensus=hors) or []
     for o in opportunites:           # marqueur de cycle : sert à la persistance (Qwen) et au diagnostic
         o["cycle_id"] = journal["debut"]
+    # Mouvement de la cote juste de Pinnacle (dropping odds) : descriptif, inscrit dans le pari. Jamais bloquant.
+    from cotes import mouvement
+    journal["mouvement"] = mouvement.annoter(
+        opportunites, index,
+        Path(args.reprise).with_name("ancres_mouvement.json.gz") if args.reprise else None, maintenant)
     # Écarts d'affichage, y compris quand Smarkets ne décide pas. Avant le placement :
     # le pari enregistre les trois champs.
     comparaison.annoter_ecarts(opportunites, francais, {"Polymarket": poly, "Smarkets": sm_lignes})

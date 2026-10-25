@@ -101,3 +101,17 @@ def test_paris_a_venir_des_segments_uniques_et_pas_commences():
     L = site_web.paris_a_venir_des_segments(paris, datetime(2026, 10, 12, 12, tzinfo=timezone.utc))
     assert [x[8] for x in L] == ["2026-10-12T15:00:00+00:00", "2026-10-12T20:00:00.000Z"]   # un seul pari par cote
     assert L[0][2] == "Betclic" and L[0][9] == "1,01 – 1,50" and L[0][10] == "hockey" and L[0][5] == 0.04
+
+
+def test_bilan_part_battant_la_cloture_et_profil_horaire():
+    from cotes.simulation import bilan, profil_horaire
+    base = {"simulation": "A", "mise": 10, "reference": "Pinnacle", "marche": "VAINQUEUR", "periode": "MATCH",
+            "ligne": None, "joueur": None, "cote": 2.0, "bookmaker": "PMU", "debut": "2026-10-07T18:00:00+00:00",
+            "cloture_lue": "2026-10-07T17:50:00+00:00", "issue": "DOM"}
+    haut = {**base, "match_id": "w|1", "detecte": "2026-10-07T15:10:00+00:00", "statut": "gagne", "gain": 10.0, "clv": 0.05}
+    bas = {**base, "match_id": "w|2", "detecte": "2026-10-07T15:40:00+00:00", "statut": "perdu", "gain": -10.0, "clv": -0.02}
+    nuit = {**base, "match_id": "w|3", "detecte": "2026-10-07T22:30:00+00:00", "bookmaker": "Betclic", "statut": "en_cours"}
+    b = bilan([haut, bas, nuit])["A|Pinnacle"]
+    assert b["clv_n"] == 2 and b["clv_positifs"] == 1
+    h = profil_horaire([haut, bas, nuit])
+    assert h["PMU"][17] == 2 and h["Betclic"][0] == 1 and sum(h["Tous"]) == 3     # 15 h UTC = 17 h Paris (CEST)

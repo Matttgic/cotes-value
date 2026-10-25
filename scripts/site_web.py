@@ -10,8 +10,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bilan,  # noqa: E402
-                              bilan_tranches, moyennes_ecarts, paris_strategie,
-                              premiers_par_selection, REGLES, clv_finale, segments, tranche)
+                              bilan_filtres, bilan_tranches, moyennes_ecarts, paris_strategie,
+                              premiers_par_selection, profil_horaire, REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes, suivis_prudents  # noqa: E402
@@ -594,7 +594,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "variantes": {v["nom"]: v for v in VARIANTES},
             "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "incidents": _lire(donnees / "sante_incidents.json", {}), "bilan": bilan(paris),
             "ecarts_references": moyennes_ecarts(paris),
-            "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "segments": segments(paris),
+            "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "profil_horaire": profil_horaire(paris), "filtres": bilan_filtres(paris), "segments": segments(paris),
             "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
             "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
@@ -678,6 +678,17 @@ MODELE = r"""<!doctype html>
       <p class="aide">★ meilleur ROI parmi les lignes de 50 paris ou plus.</p>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
+      <h3 class="bu-titre">Essais en cours <small>à comparer, rien n'est appliqué</small></h3>
+      <details class="mode-emploi" open><summary>Mise Kelly ¼ contre 10 € fixes, rejouée sur tout l'historique</summary>
+      <p class="aide">Mêmes paris, seule la mise change : 1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 % (20 €), bankroll fixe.
+      Gain = gain réel × mise Kelly / mise fixe, sur les paris réglés. Une simulation de taille de mise, pas une sélection.</p>
+      <div class="tableau"><table id="essai-kelly"></table></div></details>
+      <details class="mode-emploi" open><summary>TRJ, liquidité Pinnacle, mouvement de cote : ROI et CLV par tranche</summary>
+      <p class="aide">Paris uniques. <b>Marge Pinnacle</b> : indicateur de liquidité, disponible aussi sur les anciens paris à 2 issues
+      (retrouvée à partir de la cote et de la cote juste, « estimée »). <b>TRJ</b> du bookmaker français, <b>limite de mise
+      Pinnacle</b> et <b>mouvement de cote</b> : mesurés à l'enregistrement, donc seulement sur les paris pris depuis leur ajout.
+      Les tranches de quelques dizaines de paris ne prouvent rien.</p>
+      <div id="bilan-filtres"></div></details>
       <p class="bilan-liens"><button type="button" class="btn secondaire" data-aller="analyses">Analyses et graphiques ›</button>
         <button type="button" class="btn secondaire" data-aller="segments">Segments ›</button></p>
       <details class="mode-emploi bilan-avance"><summary>Bilan détaillé : références, CLV et courbe</summary>
@@ -697,6 +708,10 @@ MODELE = r"""<!doctype html>
       <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
       <h2 class="sous-titre">Par tranche de cote</h2>
       <div class="tableau"><table id="bilan-tranches"></table></div>
+      <details class="mode-emploi"><summary>Profil horaire des détections</summary>
+      <p class="aide">Heure de Paris de la première détection de chaque cote française (paris uniques). Les barres montrent
+      quand les erreurs de cote apparaissent chez chaque bookmaker ; la plage de 3 h la plus chargée est indiquée.</p>
+      <div id="bilan-horaire"></div></details>
       <details class="aide" style="margin-top:12px"><summary>Comment lire ces tableaux</summary>
       <p>10 € par pari. <b>Gain</b> et <b>ROI</b> : sur les paris réglés. Sous le nombre de paris : les gagnés et le
       <b>% de réussite</b> (gagnés / réglés ; à comparer avec la cote : à 2,00 il faut plus de 50 % pour gagner de l'argent). <b>A à E, X</b> : tranches d'écart entre la
@@ -1058,13 +1073,13 @@ const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
 let cumul = CUMULS.length - 1;
 const nomCumul = l => l.length === SIMS.length ? "Toutes" : l.join("+");
-function additionner(sims, source = D.bilan, prefixe = "") {
-  const t = {paris: 0, regles: 0, en_cours: 0, mises: 0, gains: 0, clv_somme: 0, clv_n: 0, gagnes: 0,
+function additionner(sims, source = D.bilan, prefixe = "", ref = refBilan) {
+  const t = {paris: 0, regles: 0, en_cours: 0, mises: 0, gains: 0, clv_somme: 0, clv_n: 0, clv_positifs: 0, gagnes: 0, mises_kelly: 0, gains_kelly: 0,
     gains_avec_clv: 0, espere_clv: 0, gains_sans_clv: 0, regles_sans_clv: 0};
   let vu = false;
   const evenements=new Map();
   for (const s of sims) {
-    const b = (source || {})[prefixe + s + "|" + refBilan];
+    const b = (source || {})[prefixe + s + "|" + ref];
     if (!b) continue;
     vu = true;
     for (const k of Object.keys(t)) t[k] += b[k] || 0;
@@ -1080,6 +1095,7 @@ function additionner(sims, source = D.bilan, prefixe = "") {
   t.clv_evenement=cs.length?cs.reduce((a,b)=>a+b,0)/cs.length:null;
   t.clv_evenements_n=cs.length;
   t.roi = t.mises ? t.gains / t.mises : null;
+  t.roi_kelly = t.mises_kelly ? t.gains_kelly / t.mises_kelly : null;
   t.clv_moyenne = t.clv_n ? t.clv_somme / t.clv_n : null;
   return t;
 }
@@ -1103,7 +1119,7 @@ function rendreBilan() {
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
     : `<tr><td>${titre}</td><td>${b.regles}<small>${b.evenements_regles ?? "—"} matchs</small>${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""} · <b>${Math.round(100 * b.gagnes / b.regles)} %</b></small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
 <td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
-<td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles} tickets</small><small>Par match ${pctC(b.clv_evenement)} · ${b.clv_evenements_n ?? 0}/${b.evenements_regles ?? "—"}</small>` : ""}</td></tr>`;
+<td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles} tickets</small>${b.clv_n ? `<small>${Math.round(100 * (b.clv_positifs || 0) / b.clv_n)} % battent la clôture</small>` : ""}<small>Par match ${pctC(b.clv_evenement)} · ${b.clv_evenements_n ?? 0}/${b.evenements_regles ?? "—"}</small>` : ""}</td></tr>`;
   document.getElementById("liste-bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "Qwen", "M3", "Convergence ≥ 2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +
     ligne(`<b>Total</b> <select id="cumul" class="cumul">${CUMULS.map((l, i) =>
@@ -1113,14 +1129,65 @@ function rendreBilan() {
   // réel contre espéré d'après la CLV, et paris dont la CLV n'a pas pu être mesurée (selon la sélection du Total)
   const tc = additionner(CUMULS[cumul]);
   document.getElementById("bilan-clv").innerHTML = !tc ? "" :
-    `<tr><th>Selon la CLV</th><th>Paris</th><th>Réel</th><th>Espéré</th></tr>
+    `<tr><th>Selon la CLV</th><th>Paris</th><th>Réel</th><th>Espéré<small>Σ mise × CLV</small></th></tr>
 <tr><td><b>CLV mesurée</b><small>${pctC(tc.clv_moyenne)} en moyenne</small></td><td>${tc.clv_n}</td>
 <td class="${signe(tc.gains_avec_clv)}">${eurC(tc.gains_avec_clv)}</td><td class="${signe(tc.espere_clv)}">${eurC(tc.espere_clv)}</td></tr>
 <tr><td><b>Sans CLV</b><small>référence absente avant le match</small></td><td>${tc.regles_sans_clv}</td>
 <td class="${signe(tc.gains_sans_clv)}">${eurC(tc.gains_sans_clv)}</td><td>—</td></tr>`;
   rendreCourbe();
+  rendreProfilHoraire();
+  rendreFiltres();
+  rendreKelly();
   document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     (D.tranches || []).map(t => ligne(`<b>${e(t)}</b>`, (D.bilan_tranches || {})[t + "|" + refBilan])).join("");
+}
+// --- filtres à tester : une table par filtre, une ligne par tranche
+function rendreKelly() {
+  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "Qwen", ...D.references, "Toutes"];
+  const lignes = refs.map(r => {
+    const t = additionner(SIMS, D.bilan, "", r);
+    if (!t || !t.regles) return "";
+    return `<tr><td><b>${e(NOMS_REF[r] || r)}</b></td><td>${t.regles}</td>
+<td class="${signe(t.gains)}">${eurC(t.gains)}<small class="roi ${signe(t.roi)}">${t.roi == null ? "" : pctC(t.roi)}</small></td>
+<td class="${signe(t.gains_kelly)}">${eurC(t.gains_kelly)}<small class="roi ${signe(t.roi_kelly)}">${t.roi_kelly == null ? "" : pctC(t.roi_kelly)}</small><small>${eurC(t.mises_kelly / t.regles)} par pari</small></td></tr>`;
+  }).join("");
+  document.getElementById("essai-kelly").innerHTML = `<tr><th>Sélection</th><th>Réglés</th><th>10 € fixes<small>gain · ROI</small></th><th>Kelly ¼<small>gain · ROI</small></th></tr>` + lignes;
+}
+const TITRES_FILTRES = {marge: "Marge de Pinnacle (liquidité, ancien et nouveau)", trj: "TRJ du bookmaker", limite: "Limite de mise Pinnacle (liquidité)", mouvement: "Mouvement de la cote Pinnacle"};
+function rendreFiltres() {
+  const cible = document.getElementById("bilan-filtres"), f = D.filtres || {};
+  cible.innerHTML = Object.keys(TITRES_FILTRES).map(nom => {
+    const b = f[nom];
+    if (!b) return "";
+    const lignes = b.tranches.map(t => `<tr><td>${e(t.tranche)}</td><td>${t.n}${t.regles < t.n ? `<small>${t.regles} réglés</small>` : ""}</td>
+<td class="${signe(t.gains)}">${t.regles ? eurC(t.gains) : "—"}<small class="roi ${signe(t.roi)}">${t.roi == null ? "" : pctC(t.roi)}</small></td>
+<td class="${signe(t.clv_moyenne)}">${t.clv_n ? pctC(t.clv_moyenne) : "—"}${t.clv_n ? `<small>${Math.round(100 * t.clv_positifs / t.clv_n)} % battent la clôture · ${t.clv_n}</small>` : ""}</td></tr>`).join("");
+    return `<h3 class="bu-titre">${e(TITRES_FILTRES[nom])} <small>${b.n_mesures} paris mesurés${b.n_estimees ? ` · dont ${b.n_estimees} estimés` : ""}</small></h3>
+<div class="tableau"><table><tr><th>Tranche</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>${lignes}</table></div>`;
+  }).join("");
+}
+// --- profil horaire : part des détections par heure de Paris, par bookmaker
+function plagePleine(h) {            // plage de 3 h consécutives (circulaire) la plus chargée
+  let meilleure = 0, debut = 0;
+  for (let i = 0; i < 24; i++) {
+    const t = h[i] + h[(i + 1) % 24] + h[(i + 2) % 24];
+    if (t > meilleure) { meilleure = t; debut = i; }
+  }
+  return [debut, (debut + 3) % 24, meilleure];
+}
+function rendreProfilHoraire() {
+  const cible = document.getElementById("bilan-horaire");
+  const profil = D.profil_horaire || {};
+  const noms = Object.keys(profil).sort((a, b) => a === "Tous" ? -1 : b === "Tous" ? 1 : profil[b].reduce((x, y) => x + y, 0) - profil[a].reduce((x, y) => x + y, 0));
+  cible.innerHTML = noms.map(nom => {
+    const h = profil[nom], total = h.reduce((x, y) => x + y, 0);
+    if (!total) return "";
+    const max = Math.max(...h), pic = h.indexOf(max), [d, f, n] = plagePleine(h);
+    const barres = h.map((v, i) => `<i title="${i} h : ${v} (${(100 * v / total).toFixed(1).replace(".", ",")} %)" style="flex:1;margin:0 1px;min-height:2px;height:${Math.max(2, Math.round(100 * v / max))}%;background:var(--accent);opacity:${i === pic ? 1 : .6}"></i>`).join("");
+    return `<div style="margin:10px 0"><div><b>${e(nom)}</b> <small>${total} détections · pic ${pic} h (${(100 * max / total).toFixed(1).replace(".", ",")} %) · ${d} h–${f} h : ${Math.round(100 * n / total)} %</small></div>
+<div style="display:flex;align-items:flex-end;height:56px">${barres}</div>
+<div style="display:flex;justify-content:space-between"><small>0 h</small><small>6 h</small><small>12 h</small><small>18 h</small><small>23 h</small></div></div>`;
+  }).join("") || "<p class='aide'>Pas encore de détections.</p>";
 }
 // --- graphique : gain cumulé au fil des paris réglés (référence et simulations choisies dans le bilan)
 function pas(etendue) {               // pas « rond » pour 3 à 5 graduations
