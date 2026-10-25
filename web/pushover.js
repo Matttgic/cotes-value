@@ -51,6 +51,7 @@
   try {
     const d=await appeler('pushover-lire',{});
     defini=!!d.defini;choisies=new Set(d.strategies||[]);
+    if(defini && typeof suiviPushover==='function') {suiviPushover(choisies);if(typeof rendreMesStrategies==='function') rendreMesStrategies();}
     etat.textContent=defini?`Choix enregistré : ${choisies.size} stratégie${choisies.size>1?'s':''}.`:
       'Aucun choix enregistré : Pushover suit pour l’instant les cases de l’abonnement Chrome, s’il existe.';
   } catch {etat.textContent='Choix indisponible pour le moment. Recharge la page pour réessayer.';sauver.disabled=true;}
@@ -65,6 +66,7 @@
       await appeler('pushover-ecrire',{token,strategies});
       memorise=token;try {ecrire(cleCode,token);} catch {}
       code.value='';choisies=new Set(strategies);defini=true;dessiner();
+      if(typeof suiviPushover==='function') {suiviPushover(choisies);if(typeof rendreMesStrategies==='function') rendreMesStrategies();}
       etat.textContent=`Choix enregistré : ${strategies.length} stratégie${strategies.length>1?'s':''}.`;
       say(strategies.length?'Enregistré. Les alertes de ces stratégies arrivent sur Pushover dès le prochain relevé.':'Enregistré : aucune alerte Pushover.');
     } catch(erreur) {

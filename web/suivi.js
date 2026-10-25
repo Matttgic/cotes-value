@@ -79,9 +79,21 @@ const suiviLire = () => { try { return JSON.parse(lire(CLE_SUIVI) || '{}') || {}
 const suiviPeriode = () => { try { return JSON.parse(lire(CLE_PERIODE) || '{}') || {}; } catch { return {}; } };
 
 // Appelées par Notifications (coche enregistrée, arrêt) ; `since` : début de l'abonnement connu du serveur.
+// Les stratégies choisies pour Pushover comptent aussi : elles sont gardées à part (CLE_SUIVI_PUSHOVER) et réunies à
+// celles de l'abonnement Chrome, pour qu'une coche ou un arrêt de l'un n'arrête pas le suivi de l'autre.
+const CLE_SUIVI_PUSHOVER = 'cv-suivi-pushover-v1';
+const DEBUT_PUSHOVER_SITE = Date.parse('2026-10-25T12:44:00Z');       // choix Pushover lu depuis le site
+const suiviPushoverLire = () => { try { const l = JSON.parse(lire(CLE_SUIVI_PUSHOVER) || '[]'); return Array.isArray(l) ? l : []; } catch { return []; } };
 function suiviEnregistrer(cochees, depuis) {
   const etat = suiviLire();
-  ecrire(CLE_SUIVI, JSON.stringify(suiviSynchroniser(etat, cochees, Date.now(), depuis)));
+  const toutes = [...new Set([...cochees, ...suiviPushoverLire()])];
+  ecrire(CLE_SUIVI, JSON.stringify(suiviSynchroniser(etat, toutes, Date.now(), depuis)));
+}
+function suiviPushover(choisies) {
+  ecrire(CLE_SUIVI_PUSHOVER, JSON.stringify([...choisies]));
+  let chrome = [];
+  try { const d = JSON.parse(lire('cv-notifications-v1') || 'null'); if (d?.enabled && Array.isArray(d.strategies)) chrome = d.strategies; } catch {}
+  suiviEnregistrer(chrome, DEBUT_PUSHOVER_SITE);
 }
 function suiviAmorcer(cochees, since) {                  // appareil déjà abonné avant cette fonction : on part de l'abonnement
   if (Object.keys(suiviLire()).length || !cochees.length) return;
