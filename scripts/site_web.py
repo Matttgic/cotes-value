@@ -678,6 +678,17 @@ MODELE = r"""<!doctype html>
       <p class="aide">★ meilleur ROI parmi les lignes de 50 paris ou plus.</p>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
+      <h3 class="bu-titre">Essais en cours <small>à comparer, rien n'est appliqué</small></h3>
+      <details class="mode-emploi" open><summary>Mise Kelly ¼ contre 10 € fixes, rejouée sur tout l'historique</summary>
+      <p class="aide">Mêmes paris, seule la mise change : 1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 % (20 €), bankroll fixe.
+      Gain = gain réel × mise Kelly / mise fixe, sur les paris réglés. Une simulation de taille de mise, pas une sélection.</p>
+      <div class="tableau"><table id="essai-kelly"></table></div></details>
+      <details class="mode-emploi" open><summary>TRJ, liquidité Pinnacle, mouvement de cote : ROI et CLV par tranche</summary>
+      <p class="aide">Paris uniques. <b>Marge Pinnacle</b> : indicateur de liquidité, disponible aussi sur les anciens paris à 2 issues
+      (retrouvée à partir de la cote et de la cote juste, « estimée »). <b>TRJ</b> du bookmaker français, <b>limite de mise
+      Pinnacle</b> et <b>mouvement de cote</b> : mesurés à l'enregistrement, donc seulement sur les paris pris depuis leur ajout.
+      Les tranches de quelques dizaines de paris ne prouvent rien.</p>
+      <div id="bilan-filtres"></div></details>
       <p class="bilan-liens"><button type="button" class="btn secondaire" data-aller="analyses">Analyses et graphiques ›</button>
         <button type="button" class="btn secondaire" data-aller="segments">Segments ›</button></p>
       <details class="mode-emploi bilan-avance"><summary>Bilan détaillé : références, CLV et courbe</summary>
@@ -695,19 +706,8 @@ MODELE = r"""<!doctype html>
       <div class="tableau"><table id="liste-bilan"></table></div>
       <p class="aide" id="bilan-ecarts">Paris uniques réglés · écart vs Polymarket — · écart vs Smarkets —</p>
       <div class="tableau" style="margin-top:10px"><table id="bilan-clv"></table></div>
-      <div class="tableau" style="margin-top:10px"><table id="bilan-kelly"></table></div>
-      <p class="aide">Kelly ¼ : même paris, mise = 1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 % (20 €), bankroll fixe.
-      Simulation de taille de mise, pas une nouvelle sélection.</p>
       <h2 class="sous-titre">Par tranche de cote</h2>
       <div class="tableau"><table id="bilan-tranches"></table></div>
-      <details class="mode-emploi"><summary>Filtres à tester : TRJ, liquidité Pinnacle, mouvement</summary>
-      <p class="aide">Mesures prises <b>à l'enregistrement du pari</b> : seuls les paris récents les portent, les anciens n'y
-      figurent pas. Aucun filtre n'est appliqué : on compare le ROI et la CLV de chaque tranche pour voir si l'un mérite de le devenir.
-      <b>TRJ</b> : taux de retour du marché chez le bookmaker français (1 / Σ des cotes inverses ; bas = grosse marge, haut = marché
-      généreux, parfois mal lu). <b>Liquidité</b> : limite de mise de Pinnacle sur la sélection (plus elle est haute, plus la cote juste est solide).
-      <b>Mouvement</b> : évolution de la cote juste de Pinnacle sur 10 à 60 min avant la détection.
-      Les tranches de quelques dizaines de paris ne prouvent rien.</p>
-      <div id="bilan-filtres"></div></details>
       <details class="mode-emploi"><summary>Profil horaire des détections</summary>
       <p class="aide">Heure de Paris de la première détection de chaque cote française (paris uniques). Les barres montrent
       quand les erreurs de cote apparaissent chez chaque bookmaker ; la plage de 3 h la plus chargée est indiquée.</p>
@@ -1073,13 +1073,13 @@ const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
 let cumul = CUMULS.length - 1;
 const nomCumul = l => l.length === SIMS.length ? "Toutes" : l.join("+");
-function additionner(sims, source = D.bilan, prefixe = "") {
+function additionner(sims, source = D.bilan, prefixe = "", ref = refBilan) {
   const t = {paris: 0, regles: 0, en_cours: 0, mises: 0, gains: 0, clv_somme: 0, clv_n: 0, clv_positifs: 0, gagnes: 0, mises_kelly: 0, gains_kelly: 0,
     gains_avec_clv: 0, espere_clv: 0, gains_sans_clv: 0, regles_sans_clv: 0};
   let vu = false;
   const evenements=new Map();
   for (const s of sims) {
-    const b = (source || {})[prefixe + s + "|" + refBilan];
+    const b = (source || {})[prefixe + s + "|" + ref];
     if (!b) continue;
     vu = true;
     for (const k of Object.keys(t)) t[k] += b[k] || 0;
@@ -1134,20 +1134,26 @@ function rendreBilan() {
 <td class="${signe(tc.gains_avec_clv)}">${eurC(tc.gains_avec_clv)}</td><td class="${signe(tc.espere_clv)}">${eurC(tc.espere_clv)}</td></tr>
 <tr><td><b>Sans CLV</b><small>référence absente avant le match</small></td><td>${tc.regles_sans_clv}</td>
 <td class="${signe(tc.gains_sans_clv)}">${eurC(tc.gains_sans_clv)}</td><td>—</td></tr>`;
-  document.getElementById("bilan-kelly").innerHTML = !tc || !tc.regles ? "" :
-    `<tr><th>Mise</th><th>Misé<small>moyenne</small></th><th>Gain<small>ROI</small></th></tr>
-<tr><td><b>Fixe 10 €</b></td><td>${eurC(tc.mises)}<small>${eurC(tc.mises / tc.regles)} par pari</small></td>
-<td class="${signe(tc.gains)}">${eurC(tc.gains)}<small class="roi ${signe(tc.roi)}">${tc.roi==null ? "" : pctC(tc.roi)}</small></td></tr>
-<tr><td><b>Kelly ¼</b><small>bankroll 1 000 €, 2 % max</small></td><td>${eurC(tc.mises_kelly)}<small>${eurC(tc.mises_kelly / tc.regles)} par pari</small></td>
-<td class="${signe(tc.gains_kelly)}">${eurC(tc.gains_kelly)}<small class="roi ${signe(tc.roi_kelly)}">${tc.roi_kelly==null ? "" : pctC(tc.roi_kelly)}</small></td></tr>`;
   rendreCourbe();
   rendreProfilHoraire();
   rendreFiltres();
+  rendreKelly();
   document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     (D.tranches || []).map(t => ligne(`<b>${e(t)}</b>`, (D.bilan_tranches || {})[t + "|" + refBilan])).join("");
 }
 // --- filtres à tester : une table par filtre, une ligne par tranche
-const TITRES_FILTRES = {trj: "TRJ du bookmaker", limite: "Limite de mise Pinnacle (liquidité)", mouvement: "Mouvement de la cote Pinnacle"};
+function rendreKelly() {
+  const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "Qwen", ...D.references, "Toutes"];
+  const lignes = refs.map(r => {
+    const t = additionner(SIMS, D.bilan, "", r);
+    if (!t || !t.regles) return "";
+    return `<tr><td><b>${e(NOMS_REF[r] || r)}</b></td><td>${t.regles}</td>
+<td class="${signe(t.gains)}">${eurC(t.gains)}<small class="roi ${signe(t.roi)}">${t.roi == null ? "" : pctC(t.roi)}</small></td>
+<td class="${signe(t.gains_kelly)}">${eurC(t.gains_kelly)}<small class="roi ${signe(t.roi_kelly)}">${t.roi_kelly == null ? "" : pctC(t.roi_kelly)}</small><small>${eurC(t.mises_kelly / t.regles)} par pari</small></td></tr>`;
+  }).join("");
+  document.getElementById("essai-kelly").innerHTML = `<tr><th>Sélection</th><th>Réglés</th><th>10 € fixes<small>gain · ROI</small></th><th>Kelly ¼<small>gain · ROI</small></th></tr>` + lignes;
+}
+const TITRES_FILTRES = {marge: "Marge de Pinnacle (liquidité, ancien et nouveau)", trj: "TRJ du bookmaker", limite: "Limite de mise Pinnacle (liquidité)", mouvement: "Mouvement de la cote Pinnacle"};
 function rendreFiltres() {
   const cible = document.getElementById("bilan-filtres"), f = D.filtres || {};
   cible.innerHTML = Object.keys(TITRES_FILTRES).map(nom => {
@@ -1156,7 +1162,7 @@ function rendreFiltres() {
     const lignes = b.tranches.map(t => `<tr><td>${e(t.tranche)}</td><td>${t.n}${t.regles < t.n ? `<small>${t.regles} réglés</small>` : ""}</td>
 <td class="${signe(t.gains)}">${t.regles ? eurC(t.gains) : "—"}<small class="roi ${signe(t.roi)}">${t.roi == null ? "" : pctC(t.roi)}</small></td>
 <td class="${signe(t.clv_moyenne)}">${t.clv_n ? pctC(t.clv_moyenne) : "—"}${t.clv_n ? `<small>${Math.round(100 * t.clv_positifs / t.clv_n)} % battent la clôture · ${t.clv_n}</small>` : ""}</td></tr>`).join("");
-    return `<h3 class="bu-titre">${e(TITRES_FILTRES[nom])} <small>${b.n_mesures} paris mesurés</small></h3>
+    return `<h3 class="bu-titre">${e(TITRES_FILTRES[nom])} <small>${b.n_mesures} paris mesurés${b.n_estimees ? ` · dont ${b.n_estimees} estimés` : ""}</small></h3>
 <div class="tableau"><table><tr><th>Tranche</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>${lignes}</table></div>`;
   }).join("");
 }

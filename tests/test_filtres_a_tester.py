@@ -87,3 +87,24 @@ def test_bilan_filtres_tranches_et_anciens_paris_exclus():
     assert lim["1 000 – 2 999 €"]["n"] == 1 and lim["< 300 €"]["n"] == 1
     mou = {t["tranche"]: t for t in f["mouvement"]["tranches"]}
     assert mou["Cote Pinnacle en baisse ≥ 2 %"]["n"] == 1 and mou["Cote Pinnacle en hausse"]["n"] == 1
+
+
+def test_marge_pinnacle_estimee_retrouve_la_vraie_marge_a_deux_issues():
+    from cotes.marge import marge, proba_justes
+    from cotes.simulation import marge_pinnacle_estimee
+    for cotes in ([1.80, 2.10], [1.45, 3.10], [2.0, 2.0]):
+        pj = proba_justes(cotes)[0]
+        p = {"reference": "Pinnacle", "marche": "TOTAL", "cote_reference": cotes[0], "cote_juste": round(1 / pj, 3)}
+        assert marge_pinnacle_estimee(p) == pytest.approx(marge(cotes), abs=.003)
+    assert marge_pinnacle_estimee({"reference": "Pinnacle", "marche": "RESULTAT_1N2", "cote_reference": 2.0,
+                                   "cote_juste": 2.1}) is None                                   # trois issues
+    assert marge_pinnacle_estimee({"reference": "Polymarket", "marche": "TOTAL", "cote_reference": 2.0,
+                                   "cote_juste": 2.1}) is None
+
+
+def test_bilan_filtres_marge_estimee_sur_ancien_pari():
+    ancien = {**BASE, "match_id": "w|9", "marche": "TOTAL", "statut": "gagne", "gain": 10.0, "clv": .05,
+              "cote_reference": 1.80, "cote_juste": 1.91}
+    f = bilan_filtres([ancien])["marge"]
+    assert f["n_mesures"] == 1 and f["n_estimees"] == 1
+    assert sum(t["n"] for t in f["tranches"]) == 1

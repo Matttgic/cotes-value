@@ -459,10 +459,42 @@ def profil_horaire(paris: list[dict]) -> dict:
 
 # Filtres à tester : TRJ du bookmaker, limite de mise Pinnacle (liquidité du marché sharp), mouvement de Pinnacle.
 # Chaque filtre = (champ du pari, tranches (libellé, minimum inclus, maximum exclus)). Descriptif : aucun n'est appliqué.
+MARCHES_2_ISSUES = {"VAINQUEUR", "DRAW_NO_BET", "TOTAL", "TOTAL_DOM", "TOTAL_EXT", "HANDICAP", "BOTH_TEAMS_TO_SCORE"}
+
+
+def marge_pinnacle_estimee(p: dict) -> float | None:
+    """Marge de Pinnacle retrouvée sur un ancien pari (qui ne l'a pas enregistrée), marchés à 2 issues seulement.
+
+    Le pari garde la cote Pinnacle brute et la cote juste de la sélection ; la méthode « power » (p = (1/cote)^k) donne
+    k, donc la cote de l'autre issue et la marge. Pas de 1N2 : trois issues, une seule connue. Une marge élevée
+    reflète un marché peu liquide, c'est notre indicateur de liquidité pour le passé."""
+    if p.get("reference") != "Pinnacle" or p.get("marche") not in MARCHES_2_ISSUES:
+        return None
+    brute, juste = p.get("cote_reference"), p.get("cote_juste")
+    if not (_nombre_fini(brute) and _nombre_fini(juste)) or brute <= 1 or juste <= 1:
+        return None
+    from math import log
+    po, pj = 1 / brute, 1 / juste
+    if not 0 < pj < 1 or po >= 1 or log(po) == 0:
+        return None
+    k = log(pj) / log(po)
+    if not 0.2 <= k <= 5:
+        return None
+    return round(po + (1 - pj) ** (1 / k) - 1, 4)
+
+
+def _valeur_filtre(champ: str, p: dict) -> float | None:
+    v = p.get(champ)
+    if _nombre_fini(v):
+        return v
+    return marge_pinnacle_estimee(p) if champ == "marge_pinnacle" else None
+
+
 FILTRES = {
     "trj": ("trj_bookmaker", (("< 92 %", 0, .92), ("92 – 94 %", .92, .94), ("94 – 96 %", .94, .96), ("96 % et plus", .96, 9))),
     "limite": ("limite_pinnacle", (("< 300 €", 0, 300), ("300 – 999 €", 300, 1000),
                                    ("1 000 – 2 999 €", 1000, 3000), ("3 000 € et plus", 3000, 1e12))),
+    "marge": ("marge_pinnacle", (("< 2 %", -1, .02), ("2 – 3 %", .02, .03), ("3 – 4 %", .03, .04), ("4 % et plus", .04, 9))),
     "mouvement": ("mouvement_pinnacle", (("Cote Pinnacle en baisse ≥ 2 %", .02, 9), ("En baisse de 0,5 à 2 %", .005, .02),
                                          ("Stable (± 0,5 %)", -.005, .005), ("Cote Pinnacle en hausse", -9, -.005))),
 }
@@ -478,12 +510,13 @@ def bilan_filtres(paris: list[dict]) -> dict:
     for nom, (champ, tranches) in FILTRES.items():
         lignes = [{"tranche": t, "n": 0, "regles": 0, "gagnes": 0, "mises": 0.0, "gains": 0.0, "clv_n": 0,
                    "clv_somme": 0.0, "clv_positifs": 0} for t, _, _ in tranches]
-        mesures = 0
+        mesures = estimee = 0
         for p in paris:
-            v = p.get(champ)
-            if id(p) not in uniques or not _nombre_fini(v):
+            v = _valeur_filtre(champ, p)
+            if id(p) not in uniques or v is None:
                 continue
             mesures += 1
+            estimee += not _nombre_fini(p.get(champ))
             for l, (_, bas, haut) in zip(lignes, tranches):
                 if bas <= v < haut:
                     l["n"] += 1
@@ -503,7 +536,7 @@ def bilan_filtres(paris: list[dict]) -> dict:
             l["clv_moyenne"] = round(l["clv_somme"] / l["clv_n"], 4) if l["clv_n"] else None
             l["gains"], l["mises"] = round(l["gains"], 2), round(l["mises"], 2)
             del l["clv_somme"]
-        out[nom] = {"n_mesures": mesures, "tranches": lignes}
+        out[nom] = {"n_mesures": mesures, "n_estimees": estimee, "tranches": lignes}
     return out
 
 
