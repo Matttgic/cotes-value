@@ -63,3 +63,30 @@ end;
 $$;
 revoke all on function public.cv_push_register(uuid,text,text,jsonb,text[]) from public, anon, authenticated;
 grant execute on function public.cv_push_register(uuid,text,text,jsonb,text[]) to service_role;
+
+-- Choix des stratégies pour Pushover, indépendants de l'abonnement Chrome (une seule ligne).
+-- Le code personnel choisi sur le site est haché côté navigateur puis côté serveur ; seule la ligne l'accepte.
+create table public.cv_pushover_choix (
+  id boolean primary key default true check (id),
+  token_hash text not null,
+  strategies text[] not null,
+  updated_at timestamptz not null default now()
+);
+alter table public.cv_pushover_choix enable row level security;
+revoke all on public.cv_pushover_choix from public, anon, authenticated;
+grant all on public.cv_pushover_choix to service_role;
+
+create function public.cv_pushover_choix_ecrire(p_token text, p_strategies text[])
+returns boolean language plpgsql security invoker set search_path = '' as $$
+declare ancien text;
+begin
+  perform pg_advisory_xact_lock(1404917042);
+  select token_hash into ancien from public.cv_pushover_choix where id;
+  if found and ancien<>p_token then return false; end if;
+  insert into public.cv_pushover_choix(id,token_hash,strategies) values(true,p_token,p_strategies)
+    on conflict(id) do update set strategies=p_strategies, updated_at=now();
+  return true;
+end;
+$$;
+revoke all on function public.cv_pushover_choix_ecrire(text,text[]) from public, anon, authenticated;
+grant execute on function public.cv_pushover_choix_ecrire(text,text[]) to service_role;
