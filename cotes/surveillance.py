@@ -12,7 +12,9 @@ from pathlib import Path
 
 ETAT = "sante_alertes.json"
 INCIDENTS = "sante_incidents.json"  # journal des 24 dernières heures, affiché sur la page Santé du site
+HISTORIQUE = "sante_historique.json"  # archive sans limite de durée : un incident y entre dès qu'il est terminé
 GARDE_INCIDENTS = timedelta(hours=24)
+MAX_HISTORIQUE = 5000
 MAX_TERMINES = 60
 SEUIL_REFUS = 3                     # cycles de suite avant qu'un refus 403/429 devienne un incident (sinon bruit)
 SEUIL_CYCLES = 2                    # cycles de suite avant d'alerter (toutes les ~5 min)
@@ -94,6 +96,25 @@ def journal_incidents(etapes: dict, ancien: dict, maintenant: datetime) -> dict:
     return {"mis_a_jour": maintenant_iso, "en_cours": en_cours, "termines": gardes[-MAX_TERMINES:]}
 
 
+def archiver(incidents: dict, ancien: dict, maintenant: datetime) -> dict:
+    """Ajoute à l'archive les incidents terminés pas encore archivés et compte les cycles du jour.
+
+    {"mis_a_jour", "incidents": [incident, …], "jours": {"AAAA-MM-JJ": {"cycles": n, "cycles_en_incident": n}}}.
+    Les incidents sont rangés par date de début ; un incident terminé n'est archivé qu'une fois (source + début)."""
+    ancien = ancien if isinstance(ancien, dict) else {}
+    liste = [i for i in (ancien.get("incidents") if isinstance(ancien.get("incidents"), list) else []) if isinstance(i, dict)]
+    vus = {(i.get("source"), i.get("debut")) for i in liste}
+    liste += [t for t in incidents.get("termines", []) if (t.get("source"), t.get("debut")) not in vus]
+    liste.sort(key=lambda i: str(i.get("debut")))
+    jours = ancien.get("jours") if isinstance(ancien.get("jours"), dict) else {}
+    jour = maintenant.astimezone(timezone.utc).date().isoformat()
+    cumul = dict(jours.get(jour) or {}) if isinstance(jours.get(jour), dict) else {}
+    cumul["cycles"] = cumul.get("cycles", 0) + 1
+    cumul["cycles_en_incident"] = cumul.get("cycles_en_incident", 0) + (1 if incidents.get("en_cours") else 0)
+    return {"mis_a_jour": maintenant.isoformat(timespec="seconds"), "incidents": liste[-MAX_HISTORIQUE:],
+            "jours": {**jours, jour: cumul}}
+
+
 def evaluer(etapes: dict, ancien: dict, maintenant: datetime) -> tuple[dict, list[tuple[str, str, str]]]:
     """(nouvel état, messages [(titre, corps, priorité)])."""
     courants, nouvel, messages = problemes(etapes), {}, []
@@ -128,6 +149,13 @@ def surveiller(donnees: Path, etapes: dict, maintenant: datetime | None = None) 
         except (OSError, ValueError):
             ancien_i = {}
         incidents = journal_incidents(etapes, ancien_i, maintenant)
+        try:
+            ancien_h = json.loads((donnees / HISTORIQUE).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            ancien_h = {}
+        tmp_h = (donnees / HISTORIQUE).with_suffix(".tmp")
+        tmp_h.write_text(json.dumps(archiver(incidents, ancien_h, maintenant), ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp_h.replace(donnees / HISTORIQUE)
         tmp_i = (donnees / INCIDENTS).with_suffix(".tmp")
         tmp_i.write_text(json.dumps(incidents, ensure_ascii=False, indent=1), encoding="utf-8")
         tmp_i.replace(donnees / INCIDENTS)

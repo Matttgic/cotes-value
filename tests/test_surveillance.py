@@ -76,3 +76,16 @@ def test_journal_garde_24_heures_et_survit_a_un_fichier_abime(tmp_path):
     (tmp_path / s.INCIDENTS).write_text("{pas du json")
     assert s.surveiller(tmp_path, PANNE, T0).get("erreur") is None
     assert s.journal_incidents(PANNE, {}, T0)["mis_a_jour"] and (tmp_path / s.INCIDENTS).exists()
+
+
+def test_archive_garde_les_incidents_termines_une_seule_fois_et_compte_les_cycles():
+    from datetime import datetime, timezone
+    from cotes import surveillance as sv
+    t = datetime(2026, 10, 25, 12, 0, tzinfo=timezone.utc)
+    fini = {"source": "Winamax", "genre": "panne", "debut": "2026-10-25T10:00:00+00:00", "fin": "2026-10-25T10:20:00+00:00"}
+    j = {"en_cours": {"pinnacle": {}}, "termines": [fini]}
+    h = sv.archiver(j, {}, t)
+    h = sv.archiver(j, h, t)
+    assert h["incidents"] == [fini]
+    assert h["jours"]["2026-10-25"] == {"cycles": 2, "cycles_en_incident": 2}
+    assert sv.archiver({"termines": []}, "abîmé", t)["jours"]["2026-10-25"]["cycles"] == 1
