@@ -63,3 +63,17 @@ test('Un pari pris par trois stratégies compte trois mises dans « Toutes », u
   const g=c.suiviBilan([{statut:'gagne',cote:1.5,suivies:['a','b']},{statut:'en_cours',suivies:['a','b','c']}],q=>q.suivies.length);
   assert.equal(g.gains,10); assert.equal(g.en_cours,3); assert.equal(g.regles,2);
 });
+
+// Mise Kelly : « Mes stratégies » recalcule ses gains avec la mise Kelly de chaque pari
+test('prisesSuivi suit la mise des bilans (fixe ou Kelly)', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(new URL('../web/suivi.js', import.meta.url), 'utf8');
+  const D = {catalogue: {champs: ['id', 'mise', 'mise_kelly', 'gain'], lignes: [['a', 10, 4, 12], ['b', 10, 6, -10], ['c', 10, 5, null]]}};
+  const corps = src.slice(src.indexOf('function suiviObjets'), src.indexOf('// Prises détectées'))
+    + src.slice(src.indexOf('let prisesCache'), src.indexOf('function datesHtml'));
+  const fabrique = new Function('D', 'miseMode', corps + '; return prisesSuivi;');
+  const fixe = fabrique(D, 'fixe')();
+  assert.deepEqual(fixe.map(p => [p.mise, p.gain]), [[10, 12], [10, -10], [10, null]]);
+  const kelly = fabrique(D, 'kelly')();
+  assert.deepEqual(kelly.map(p => [p.mise, p.gain]), [[4, 4.8], [6, -6], [5, null]]);
+});

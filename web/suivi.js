@@ -93,8 +93,18 @@ function suiviAmorcer(cochees, since) {                  // appareil déjà abon
 const eur2 = x => x == null ? '—' : (x > 0 ? '+' : '') + x.toFixed(2).replace('.', ',') + ' €';
 const nomStrategie = k => (D.notifications?.strategies || {})[k] || (D.strategies_badges || {})[k] || k;
 let suiviFiltre = '', suiviLimite = 50;
-let prisesCache = [null, []];
-const prisesSuivi = () => prisesCache[0] === D.catalogue ? prisesCache[1] : (prisesCache = [D.catalogue, suiviObjets(D.catalogue)])[1];
+let prisesCache = [null, [], false];
+// Copie des prises propre à cet onglet, refaite quand la mise des bilans change (fixe 10 € ou Kelly ¼).
+const prisesSuivi = () => {
+  const kelly = typeof miseMode !== 'undefined' && miseMode === 'kelly';
+  if (prisesCache[0] !== D.catalogue || prisesCache[2] !== kelly) {
+    let objets = suiviObjets(D.catalogue);
+    if (kelly) objets = objets.map(p => p.mise_kelly && p.mise ? {...p, mise: p.mise_kelly,
+      gain: p.gain == null ? p.gain : Math.round(100 * p.gain * p.mise_kelly / p.mise) / 100} : p);
+    prisesCache = [D.catalogue, objets, kelly];
+  }
+  return prisesCache[1];
+};
 
 function datesHtml() {
   const pr = suiviPeriode(), auj = suiviJourParis();
