@@ -23,6 +23,7 @@ from urllib.parse import urlencode
 import requests
 
 from cotes.correspondance import ressemblance
+from cotes.delai import Reduite
 from cotes.direct.horizon import fusionner_marches, tranche
 from cotes.pulsescore import traduire
 
@@ -76,6 +77,10 @@ _SECONDAIRES_PAR_CYCLE = 20
 # Une requête lancée trop près de l'échéance dépasserait le join du cycle et
 # ferait jeter les cotes déjà lues. On s'arrête avant, avec le partiel.
 _MARGE_S = 3.0
+# Constaté du 23 au 25/10/2026 : 22 cycles sur 349 « lecture interrompue », tous à 75,0 s. Les lectures jouaient
+# tout le budget (moyenne 54 s, 90e centile 74,7 s) et la traduction qui suit dépassait l'échéance : le cycle
+# coupait la source et perdait tout. La lecture s'arrête donc ce nombre de secondes avant la fin du budget.
+MARGE_FIN_S = 8.0
 _TIMEOUT_APPEL = 4.0
 _EXCLU = re.compile(
     r"corner|carton|\bcards?\b|booking|pair\s*/\s*impair|impair\s*/\s*pair|"
@@ -208,10 +213,22 @@ class Client:
                 return False
             if reste is not None:
                 delai = min(8.0, max(1.0, reste - 1))
-        try:
-            r = lecteur.get(ACCUEIL, timeout=delai, headers={
-                "Accept": "text/html", "Accept-Language": "fr-FR"})
-        except (requests.RequestException, OSError):
+        # Refus 403 de l'accueil : 5 cycles sur 349, aléatoires (durée de 1 s). Un second essai après une courte
+        # pause, si le budget le permet, avant de renoncer.
+        r = None
+        for essai in range(2):
+            try:
+                r = lecteur.get(ACCUEIL, timeout=delai, headers={
+                    "Accept": "text/html", "Accept-Language": "fr-FR"})
+            except (requests.RequestException, OSError):
+                r = None
+            if getattr(r, "status_code", None) == 200:
+                break
+            restant = self.echeance.reste() if self.echeance is not None else None
+            if essai == 1 or (restant is not None and restant < _MARGE_S + 3):
+                break
+            _pause(1.0)
+        if r is None:
             self._noter("accueil")
             return False
         if getattr(r, "status_code", None) != 200:
@@ -640,6 +657,8 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
     bloc = reserve if isinstance(reserve, dict) else {}
     if sports is not None and not (set(SPORTS.values()) & set(sports)):
         return _avec_reserve([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}, reserve)
+    if echeance is not None:
+        echeance = Reduite(echeance, MARGE_FIN_S)
     client = Client(session, page, pause, echeance=echeance)
     if echeance is not None and not echeance.ok():
         client._noter("budget")

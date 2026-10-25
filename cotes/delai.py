@@ -29,3 +29,24 @@ class Echeance:
         if reste is None:
             return plafond
         return max(1.0, min(float(plafond), reste))
+
+
+class Reduite:
+    """Même interface qu'une échéance, finissant ``marge`` secondes plus tôt : le temps de traduire et rendre ce
+    qui est déjà lu avant que le cycle ne coupe la source. Accepte toute échéance (``ok``, ``reste``)."""
+
+    def __init__(self, base, marge: float):
+        self.base = base
+        self.marge = float(marge)
+
+    def reste(self) -> float | None:
+        reste = self.base.reste() if hasattr(self.base, "reste") else None
+        return None if reste is None else max(0.0, reste - self.marge)
+
+    def ok(self) -> bool:
+        reste = self.reste()
+        return self.base.ok() and (reste is None or reste > 0)
+
+    def timeout(self, plafond: float) -> float:
+        reste = self.reste()
+        return float(plafond) if reste is None else max(1.0, min(float(plafond), reste))

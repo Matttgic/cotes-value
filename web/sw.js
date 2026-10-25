@@ -24,6 +24,17 @@ async function forget(id) {
   const db=await openedDB();const tx=db.transaction('seen','readwrite');tx.objectStore('seen').delete(id);
   await new Promise(r=>{tx.oncomplete=r;tx.onerror=r;});db.close();
 }
+// Page du match chez le bookmaker, envoyée par le serveur Web Push : revérifiée ici avant de l'ouvrir.
+const HOTES_BOOKMAKERS=/(^|\.)(winamax\.fr|betclic\.fr|pmu\.fr|unibet\.fr|olybet\.fr|netbet\.fr|google\.com)$/;
+function lienSur(lien) {
+  if(typeof lien!=='string' || lien.length>600) return null;
+  try {
+    const u=new URL(lien);
+    if(u.protocol!=='https:' || u.port || u.username || u.password || !HOTES_BOOKMAKERS.test(u.hostname)) return null;
+    if(u.hostname.endsWith('google.com') && u.pathname!=='/search') return null;
+    return u.href;
+  } catch { return null; }
+}
 self.addEventListener('push',event=>event.waitUntil((async()=>{
   let data;try{data=event.data.json();}catch{return;}
   if(!/^[a-f0-9]{64}$/.test(data.id||'') || Date.parse(data.expires_at)<=Date.now() ||
@@ -32,13 +43,17 @@ self.addEventListener('push',event=>event.waitUntil((async()=>{
   try {
     await self.registration.showNotification(String(data.title||'Cotes Value').slice(0,120),{
       body:String(data.body||'Nouvelle sélection').slice(0,500),tag:'cv-'+data.id,renotify:false,
-      data:{id:data.id},timestamp:Date.now()
+      data:{id:data.id,url:lienSur(data.url)},timestamp:Date.now(),
+      // Toucher la notification ouvre le match chez le bookmaker ; ce bouton ouvre le site (cote minimale, mise).
+      ...(lienSur(data.url)?{actions:[{action:'site',title:'Voir sur le site'}]}:{})
     });
   } catch {await forget(data.id);}
 })()));
 self.addEventListener('notificationclick',event=>{
   event.notification.close();
   event.waitUntil((async()=>{
+    const direct=event.action==='site'?null:lienSur(event.notification.data?.url);
+    if(direct) return self.clients.openWindow(direct);
     const url=new URL('./',self.registration.scope);url.searchParams.set('alerte',event.notification.data?.id||'');url.hash='paris';
     for(const c of await self.clients.matchAll({type:'window',includeUncontrolled:true})) {
       if(c.url.startsWith(self.registration.scope) && 'focus' in c) {await c.navigate(url.href);return c.focus();}

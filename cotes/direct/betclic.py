@@ -9,6 +9,7 @@ première trame, sans pagination et sans attendre la suite.
 from __future__ import annotations
 
 import re
+import unicodedata
 import struct
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -28,6 +29,11 @@ _LISTE_MAX = 640
 # d'abord aux matchs encore jamais lus. Le cycle dure 5 min : au-delà de 3 min
 # de cache, des cotes de 10 min d'âge décidaient des paris.
 _FRAIS_MIN = 3
+# Mesuré le 25/10/2026 : un match coûte « Le Top » (1 requête) plus 2 à 3 onglets (~65 % des requêtes), mais les
+# onglets ne portent que 8 % des paris Betclic (44 sur 545, depuis le 15/10). Avec la réserve, « Le Top » est relu à
+# chaque passage et les onglets au plus toutes les ONGLETS_MIN minutes : leurs marchés restent entre-temps avec leur
+# heure de lecture, sous la fenêtre de 15 minutes de la comparaison.
+ONGLETS_MIN = 10
 # Lectures de détail simultanées (5 en parallèle n'ont pas donné de 429).
 _CONCURRENCE = 4
 # Onglets lus en plus de « Le Top » : demi-temps, périodes, quarts-temps, sets, jeux.
@@ -204,11 +210,16 @@ def _match(data: bytes) -> dict | None:
     direct = False
     if 6 in champs and isinstance(champs[6][0], int):
         direct = champs[6][0] == 1
-    competition = None
+    competition = comp_id = sport_id = None
     if 8 in champs and isinstance(champs[8][0], (bytes, bytearray)):
         comp = decode_protobuf(champs[8][0])
         if 2 in comp:
             competition = _texte(comp[2][0])
+        if isinstance(comp.get(1, [None])[0], int):
+            comp_id = comp[1][0]
+        if isinstance(comp.get(3, [None])[0], (bytes, bytearray)):
+            sport_id = decode_protobuf(comp[3][0]).get(3, [None])[0]
+            sport_id = sport_id if isinstance(sport_id, int) else None
     equipes = []
     for equipe in champs.get(12, []):
         if isinstance(equipe, (bytes, bytearray)):
@@ -223,7 +234,28 @@ def _match(data: bytes) -> dict | None:
     if not domicile or not exterieur:
         return None
     return {"id": ident, "domicile": domicile, "exterieur": exterieur, "debut": debut,
-            "competition": competition, "direct": direct}
+            "competition": competition, "direct": direct, "competition_id": comp_id, "sport_id": sport_id}
+
+
+def _slug(texte) -> str:
+    """Minuscules sans accents, tout le reste en tirets (« Australie A-League » -> « australie-a-league »)."""
+    base = unicodedata.normalize("NFKD", str(texte or "")).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", base).strip("-")
+
+
+def chemin_match(match: dict) -> str | None:
+    """Chemin de la page du match sur betclic.fr, ``/football-s1/<compétition>-c<id>/<équipes>-m<id>``.
+
+    Football seulement (les autres sports ont un identifiant de sport et un nom de rubrique que la collecte ne
+    donne pas). FORMAT NON VÉRIFIÉ EN LIGNE : betclic.fr répond 403 à tout accès automatique, même pour un vrai
+    match ; il vient de la forme des adresses du site. Les identifiants viennent de la collecte, les noms servent
+    seulement de décor. ``liens.lien_match`` ajoute le domaine et vérifie que l'identifiant du match y figure."""
+    if match.get("sport") != "football" or match.get("sport_id") != 1 or not isinstance(match.get("competition_id"), int):
+        return None
+    comp, equipes = _slug(match.get("competition")), _slug(f"{match.get('domicile')} {match.get('exterieur')}")
+    if not comp or not equipes or not isinstance(match.get("id"), int):
+        return None
+    return f"/football-s1/{comp}-c{match['competition_id']}/{equipes}-m{match['id']}"
 
 
 def matchs_de_la_liste(trame: bytes | None) -> list[dict]:
@@ -728,6 +760,9 @@ def _detailler(client: Client, match: dict, moment: str,
     if client._bloque:
         return [], bool(trame), False
     offres = marches_du_detail(trame)
+    # Marchés de « Le Top » : les autres lignes viennent d'un onglet et portent ``onglet`` (voir _collecter_reserve).
+    du_top = {f"betclic|{t['marketId']}" for o in offres
+              for t in marches_pulse(o, match["domicile"], match["exterieur"], match["sport"])}
     complet = bool(trame)
     if onglets and trame:
         for ident in onglets_utiles(trame):
@@ -749,12 +784,15 @@ def _detailler(client: Client, match: dict, moment: str,
     if not marches:
         return [], bool(trame), complet
     evenement = {"eventId": match["id"], "home": match["domicile"], "away": match["exterieur"],
-                 "league": match.get("competition"), "startTime": match.get("debut"), "markets": marches}
+                 "league": match.get("competition"), "startTime": match.get("debut"), "markets": marches,
+                 "slug": chemin_match(match)}
     lignes, vus = [], set()
     for ligne in traduire(evenement, "betclic", match["sport"], moment):
         cle = (ligne["match_id"], ligne["marche"], ligne["periode"], ligne["ligne"], ligne["issue"])
         if cle not in vus:     # « Écart de buts » et « Ecart entre les équipes » donnent les mêmes handicaps
             vus.add(cle)
+            if ligne.get("cle_marche") not in du_top:
+                ligne["onglet"] = True
             lignes.append(ligne)
     return lignes, bool(trame), complet
 
@@ -812,18 +850,37 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
         if isinstance(ligne, dict) and ligne.get("match_id"):
             anciennes.setdefault(ligne["match_id"], []).append(ligne)
 
+    onglets_lus = {mid: v for mid, v in (reserve.get("onglets") or {}).items() if isinstance(v, str)} \
+        if isinstance(reserve.get("onglets"), dict) else {}
+    compte = {"avec_onglets": 0, "sans_onglets": 0}
+    verrou = threading.Lock()
+
+    def onglets_dus(mid: str) -> bool:
+        """Onglets jamais lus, sans marché gardé, ou lus il y a ``ONGLETS_MIN`` minutes ou plus."""
+        lu = _heure(onglets_lus.get(mid))
+        if lu is None or not any(l.get("onglet") for l in anciennes.get(mid, [])):
+            return True
+        return maintenant - lu >= timedelta(minutes=ONGLETS_MIN)
+
     def lire(match):
         if arret.is_set() or not client._temps():
             return None
-        ajoutees, lue, complet = _detailler(client, match, moment)
+        mid = f"betclic|{match.get('id')}"
+        dus = onglets_dus(mid)
+        ajoutees, lue, complet = _detailler(client, match, moment, onglets=dus)
         if client._bloque:
             arret.set()
-        if not complet and ajoutees:
-            # Onglets coupés par le budget : on garde les marchés déjà lus au cycle précédent.
+        if dus and lue and complet:
+            onglets_lus[mid] = moment
+        with verrou:
+            compte["avec_onglets" if dus else "sans_onglets"] += 1
+        if (not complet or not dus) and ajoutees:
+            # Onglets pas relus (à leur rythme, ou coupés par le budget) : leurs marchés du passage précédent,
+            # avec leur heure de lecture. Seulement des lignes d'onglet : un marché retiré de « Le Top » ne revient
+            # pas. Même limite d'âge (2 h) que la fusion du reste du catalogue.
             presentes = {l.get("cle_marche") for l in ajoutees}
-            # Même limite d'âge (2 h) que la fusion du reste du catalogue.
-            ajoutees = ajoutees + [l for l in anciennes.get(f"betclic|{match.get('id')}", [])
-                                   if l.get("cle_marche") not in presentes
+            ajoutees = ajoutees + [l for l in anciennes.get(mid, [])
+                                   if l.get("onglet") and l.get("cle_marche") not in presentes
                                    and (lu := _heure(l.get("collecte"))) is not None
                                    and maintenant - lu <= timedelta(hours=2)]
         return ajoutees, lue
@@ -837,12 +894,15 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
                 lectures += 1
             lignes += ajoutees
     fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures, age_max_h=2)
+    au_catalogue = {f"betclic|{m.get('id')}" for m in candidats}
     return fusion, {
         "ok": lectures > 0 or not client.erreurs or bool(fusion),
         "erreurs": list(client.erreurs),
         "requetes": client.requetes,
         "matchs": len({l.get("match_id") for l in fusion}),
-        "reserve": {"offset": 0, "lignes": fusion},
+        "onglets": dict(compte),
+        "reserve": {"offset": 0, "lignes": fusion,
+                    "onglets": {mid: v for mid, v in onglets_lus.items() if mid in au_catalogue}},
     }
 
 
