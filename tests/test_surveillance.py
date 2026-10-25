@@ -34,18 +34,7 @@ def test_panne_qui_se_resout_avant_le_seuil_reste_silencieuse():
     assert msgs == [] and etat == {}
 
 
-def test_poster_utilise_ntfy_et_ne_leve_pas(tmp_path):
-    vus = []
-
-    class R:
-        def __enter__(self): return self
-        def __exit__(self, *a): pass
-
-    def ouvrir(req, timeout):
-        vus.append(req)
-        return R()
-    env = {"ALERTE_WEBHOOK_URL": "https://ntfy.sh/x"}
-    r = s.surveiller(tmp_path, PANNE, env, ouvrir, T0)
-    r = s.surveiller(tmp_path, PANNE, env, ouvrir, T0 + timedelta(minutes=5))
-    assert r["envoyes"] == 1 and vus[0].get_header("Priority") == "high"
-    assert s.surveiller(tmp_path, PANNE, {}, ouvrir, T0)["envoyes"] == 0
+def test_surveiller_ecrit_l_etat_et_liste_les_messages_sans_rien_envoyer(tmp_path):
+    assert s.surveiller(tmp_path, PANNE, T0)["messages"] == []
+    r = s.surveiller(tmp_path, PANNE, T0 + timedelta(minutes=5))
+    assert r["messages"] == ["Winamax en panne"] and (tmp_path / s.ETAT).exists()

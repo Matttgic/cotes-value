@@ -1,19 +1,14 @@
-"""Alerte ntfy quand une source de cotes tombe pour de bon (et quand elle revient).
+"""Suivi de santé : repère une source de cotes tombée pour de bon (et son retour), sans rien envoyer.
 
 Une panne d'un seul cycle (coupure réseau) ou une lecture partielle « budget » (prévue, la suite est gardée en
-cache) ne préviennent pas : il faut SEUIL_CYCLES cycles de suite. L'état est dans donnees/sante_alertes.json.
+cache) ne préviennent pas : il faut SEUIL_CYCLES cycles de suite. L'état (dont le dernier message) est dans donnees/sante_alertes.json.
 Ne lève jamais : la surveillance ne doit pas arrêter la collecte.
 """
 from __future__ import annotations
 
-import base64
 import json
-import os
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 
 ETAT = "sante_alertes.json"
 SEUIL_CYCLES = 2                    # cycles de suite avant d'alerter (toutes les ~5 min)
@@ -62,25 +57,7 @@ def evaluer(etapes: dict, ancien: dict, maintenant: datetime) -> tuple[dict, lis
     return nouvel, messages
 
 
-def poster(messages, env=None, ouvrir=urlopen) -> int:
-    env = os.environ if env is None else env
-    url = (env.get("ALERTE_SANTE_URL") or env.get("ALERTE_WEBHOOK_URL") or "").strip()
-    if not url.startswith("https://"):
-        return 0
-    envoyes = 0
-    for titre, corps, priorite in messages[:5]:
-        entetes = {"Content-Type": "text/plain; charset=utf-8", "User-Agent": "cotes-value", "Priority": priorite,
-                   "Title": "=?UTF-8?B?" + base64.b64encode(titre.encode()).decode() + "?=",
-                   "Tags": "warning" if priorite == "high" or "alerte" in titre else "white_check_mark"}
-        try:
-            with ouvrir(Request(url, data=corps.encode(), headers=entetes, method="POST"), timeout=5):
-                envoyes += 1
-        except (HTTPError, URLError, OSError, ValueError):
-            pass
-    return envoyes
-
-
-def surveiller(donnees: Path, etapes: dict, env=None, ouvrir=urlopen, maintenant: datetime | None = None) -> dict:
+def surveiller(donnees: Path, etapes: dict, maintenant: datetime | None = None) -> dict:
     try:
         maintenant = maintenant or datetime.now(timezone.utc)
         chemin = donnees / ETAT
@@ -89,10 +66,9 @@ def surveiller(donnees: Path, etapes: dict, env=None, ouvrir=urlopen, maintenant
         except (OSError, ValueError):
             ancien = {}
         nouvel, messages = evaluer(etapes, ancien if isinstance(ancien, dict) else {}, maintenant)
-        envoyes = poster(messages, env, ouvrir) if messages else 0
         tmp = chemin.with_suffix(".tmp")
         tmp.write_text(json.dumps(nouvel, ensure_ascii=False, indent=1), encoding="utf-8")
         tmp.replace(chemin)
-        return {"problemes": len(nouvel), "messages": len(messages), "envoyes": envoyes}
+        return {"problemes": len(nouvel), "messages": [titre for titre, _, _ in messages]}
     except Exception as e:  # noqa: BLE001
         return {"erreur": type(e).__name__}
