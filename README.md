@@ -139,6 +139,15 @@ mesures : les tranches se remplissent au fil des nouveaux paris. Le Bilan montre
 fictive 1 000 €, 2 % maximum) calculée sur les mêmes paris, à côté des 10 € fixes, ainsi que la part des paris qui
 battent la clôture et le profil horaire des détections par bookmaker.
 
+### Mise fixe ou mise Kelly (tous les bilans)
+
+Le sélecteur « Mise des bilans » (en haut du site) bascule **tous** les gains, ROI, CLV pondérés, courbes, segments et
+tableaux des stratégies entre les 10 € fixes et une mise **Kelly ¼** par pari (bankroll fictive 1 000 €, plafond 2 %,
+`simulation.mise_kelly`). Mêmes paris, seule la mise change : le serveur calcule les deux versions
+(`site_web.paris_en_mise_kelly` rejoue les mêmes fonctions sur des copies misées en Kelly) et le navigateur échange
+les blocs. Le choix est mémorisé. Seule l'étude figée du 14/10 (règles du laboratoire, `docs/comparaison-strategies.json`)
+reste en mises fixes.
+
 ### Laboratoire de comparaison
 
 **Stratégies** affiche les 36 règles, Claude et ChatGPT V1 dans un tableau triable

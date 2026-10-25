@@ -159,29 +159,37 @@ def intervalle_roi(retours: list[float], repetitions: int = 5000) -> list[float]
     return [round(sims[int((repetitions-1)*q)]*100, 2) for q in (.025, .975)]
 
 
+def mise_de(p: dict) -> float:
+    """Mise du pari : 10 € fixes par défaut, ou la mise propre au pari (rejeu en mise Kelly)."""
+    m = nombre(p.get("mise"))
+    return m if m is not None and m > 0 else MISE
+
+
 def resume(rows: list[dict], connu_avant: str, incertitude: bool = True) -> dict:
     cutoff = heure(connu_avant)
     assert cutoff is not None
     regles = [p for p in rows if p.get("statut") in GAIN and heure(p.get("regle_le"))
               and heure(p["detecte"]) <= heure(p["regle_le"]) < cutoff]
-    gains = [gain(p["statut"], MISE, p["cote"]) for p in regles]
+    gains = [gain(p["statut"], mise_de(p), p["cote"]) for p in regles]
     cs = [clv(p) for p in regles if clv(p) is not None]
     ids = {p["id"] for p in regles}
     attente = [p for p in rows if p["id"] not in ids]
     n, total = len(regles), sum(gains)
-    mises = n*MISE
+    mises = sum(mise_de(p) for p in regles)
     par_jour = defaultdict(float)
-    exposition = Counter(heure(p["detecte"]).astimezone(PARIS).date().isoformat() for p in rows)
+    exposition = defaultdict(float)
+    for p in rows:
+        exposition[heure(p["detecte"]).astimezone(PARIS).date().isoformat()] += mise_de(p)
     cumul = sommet = dd = 0.0
     for p in sorted(regles, key=lambda p: (heure(p["regle_le"]), p["id"])):
-        g = gain(p["statut"], MISE, p["cote"])
+        g = gain(p["statut"], mise_de(p), p["cote"])
         cumul += g
         sommet = max(sommet, cumul)
         dd = max(dd, sommet-cumul)
         par_jour[heure(p["debut"]).astimezone(PARIS).date().isoformat()] += g
     best = max([0]+gains)
-    g_degrade = sum(gain(p["statut"], MISE, max(1.01, p["cote"]*.99)) for p in regles)
-    full_stakes = len(rows)*MISE
+    g_degrade = sum(gain(p["statut"], mise_de(p), max(1.01, p["cote"]*.99)) for p in regles)
+    full_stakes = sum(mise_de(p) for p in rows)
     from .evenements import mesures
     evenements = mesures(rows, regles, clv)
     return {**evenements, "paris": len(rows), "regles": n, "attente": len(attente),
@@ -191,16 +199,16 @@ def resume(rows: list[dict], connu_avant: str, incertitude: bool = True) -> dict
             "gain": round(total, 2), "mise": mises, "roi": round(100*total/mises, 2) if n else None,
             "gains_bruts": round(sum(g for g in gains if g > 0), 2),
             "pertes_brutes": round(-sum(g for g in gains if g < 0), 2),
-            "ic95": intervalle_roi([g/MISE for g in gains]) if incertitude else None,
+            "ic95": intervalle_roi([g/mise_de(p) for g, p in zip(gains, regles)]) if incertitude else None,
             "clv": round(100*mean(cs), 2) if cs else None, "clv_n": len(cs),
             "couverture_clv": round(100*len(cs)/n, 1) if n else None,
             "drawdown": round(dd, 2), "meilleur_gain": best, "gain_sans_meilleur": round(total-best, 2),
             "roi_cote_moins_1pct": round(100*g_degrade/mises, 2) if n else None,
-            "roi_attente_pessimiste": round(100*(total-MISE*len(attente))/full_stakes, 2) if rows else None,
-            "roi_attente_optimiste": round(100*(total+sum(MISE*(p["cote"]-1) for p in attente))/full_stakes, 2) if rows else None,
+            "roi_attente_pessimiste": round(100*(total-sum(mise_de(p) for p in attente))/full_stakes, 2) if rows else None,
+            "roi_attente_optimiste": round(100*(total+sum(mise_de(p)*(p["cote"]-1) for p in attente))/full_stakes, 2) if rows else None,
             "profit_journalier": {d: round(g, 2) for d, g in sorted(par_jour.items())},
             "jours_positifs": sum(g > 0 for g in par_jour.values()), "jours_actifs": len(par_jour),
-            "mise_max_jour": max(exposition.values(), default=0)*MISE,
+            "mise_max_jour": max(exposition.values(), default=0),
             "reglements_manuels": sum((p.get("preuve_reglement") or {}).get("origine") != "automatique" for p in regles)}
 
 
