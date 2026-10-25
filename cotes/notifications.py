@@ -80,7 +80,9 @@ def empreinte_prix(p: dict) -> str:
 
 
 def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
-         maintenant: datetime | None = None) -> dict:
+         maintenant: datetime | None = None, retenues: list | None = None) -> dict:
+    """``retenues`` (facultatif, rempli sur place) : les prises décidées il y a moins de 15 min dont l'alerte est
+    écartée parce que la cote française est trop ancienne ; sert au diagnostic, jamais transmis."""
     maintenant = maintenant or datetime.now(timezone.utc)
     valides = {**retenus, "convergence": paris_convergence(paris, retenus)}
     observations = {}
@@ -107,11 +109,17 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
         debut = heure(o.get("debut"))
         recue = heure(o.get("collecte_recue") or o.get("detecte"))
         if (o.get("suspect") or o.get("pariable") is False or not debut
-                or debut <= maintenant + timedelta(minutes=1) or not recue
-                or not timedelta(0) <= maintenant-recue <= age_prix_max(o, debut, recue)):
+                or debut <= maintenant + timedelta(minutes=1) or not recue):
             continue
         key = (*cle_selection(o), o.get("cote"))
         dates = observations.get(key, {})
+        if not timedelta(0) <= maintenant-recue <= age_prix_max(o, debut, recue):
+            if retenues is not None and any(maintenant-timedelta(minutes=15) <= t <= maintenant for t in dates.values()):
+                retenues.append({"match": f'{o.get("domicile", "")} – {o.get("exterieur", "")}',
+                                 "bookmaker": o.get("bookmaker"), "cote": o.get("cote"),
+                                 "age_cote_min": round((maintenant-recue).total_seconds()/60, 1),
+                                 "raison": "cote trop ancienne"})
+            continue
         if not dates or not any(maintenant-timedelta(minutes=15) <= t <= maintenant for t in dates.values()):
             continue
         empreinte = empreinte_prix(o)

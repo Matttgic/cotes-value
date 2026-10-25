@@ -40,7 +40,7 @@ def test_alerte_prix_cinq_minutes_et_date_visible_sans_antidater_validation():
 
 
 def test_diagnostic_envoi_public_sans_secret(tmp_path,monkeypatch):
-    monkeypatch.setattr(envoi,'preparer',lambda d:{'generated_at':NOW.isoformat(),'alertes':[]})
+    monkeypatch.setattr(envoi,'preparer',lambda d,**kw:{'generated_at':NOW.isoformat(),'alertes':[]})
     monkeypatch.setattr(envoi,'transmettre',lambda f:{'ok':True,'sent':0})
     assert envoi.envoyer_et_journaliser(tmp_path,tmp_path/'flux.json')['ok']
     j=json.loads((tmp_path/'notifications_diagnostic.json').read_text())['cycles'][0]

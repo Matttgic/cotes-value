@@ -36,6 +36,12 @@ _FRAIS_MIN = 3
 ONGLETS_MIN = 10
 # Lectures de détail simultanées (5 en parallèle n'ont pas donné de 429).
 _CONCURRENCE = 4
+# Matchs proches : ceux sur lesquels on parie et on alerte (le prix doit avoir moins de 5 minutes). Une lecture
+# ratée ou vide y est retentée une fois dans le même passage ; si le détail revient sans aucun marché, les cotes
+# gardées du passage précédent sont retirées : il n'y a plus de prix à comparer, un ancien prix ne vaut rien.
+# Constaté le 25/10/2026 : un pari Anglet–Marseille pris sur une cote Betclic de 12 minutes, à 22 min du match.
+_PROCHE_H = 2
+_RELANCES_MAX = 12
 # Onglets lus en plus de « Le Top » : demi-temps, périodes, quarts-temps, sets, jeux.
 LIBELLES_ONGLETS = {"résultats", "buts", "points", "sets", "jeux"}
 # sport interne -> slug Betclic
@@ -885,22 +891,47 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
                                    and maintenant - lu <= timedelta(hours=2)]
         return ajoutees, lue
 
+    def proche(match) -> bool:
+        debut = _heure(match.get("debut"))
+        return debut is not None and maintenant < debut <= maintenant + timedelta(hours=_PROCHE_H)
+
     with ThreadPoolExecutor(max(1, concurrence)) as pool:
-        for recu in pool.map(lire, file):
-            if recu is None:
-                continue
-            ajoutees, lue = recu
-            if lue:
-                lectures += 1
-            lignes += ajoutees
-    fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures, age_max_h=2)
+        resultats = list(pool.map(lire, file))
+    # Lecture ratée (aucune réponse) ou vide (aucun marché) d'un match proche : une seconde tentative.
+    suivi = {"proches": 0, "relances": 0, "proches_non_lus": 0, "proches_vides": 0}
+    vides: set[str] = set()
+    for i, match in enumerate(file):
+        if not proche(match):
+            continue
+        suivi["proches"] += 1
+        recu = resultats[i]
+        if (recu is None or not recu[1] or not recu[0]) and suivi["relances"] < _RELANCES_MAX \
+                and not arret.is_set() and client._temps():
+            suivi["relances"] += 1
+            recu = lire(match) or recu
+            resultats[i] = recu
+        if recu is None or not recu[1]:
+            suivi["proches_non_lus"] += 1             # aucune réponse : les cotes gardées gardent leur âge réel
+        elif not recu[0]:
+            suivi["proches_vides"] += 1
+            vides.add(f"betclic|{match.get('id')}")   # réponse sans marché : plus de prix chez Betclic
+    for recu in resultats:
+        if recu is None:
+            continue
+        ajoutees, lue = recu
+        if lue:
+            lectures += 1
+        lignes += ajoutees
+    anciennes_gardees = [l for l in (reserve.get("lignes") or [])
+                         if not (isinstance(l, dict) and l.get("match_id") in vides)]
+    fusion = fusionner(anciennes_gardees, lignes, maintenant, heures, age_max_h=2)
     au_catalogue = {f"betclic|{m.get('id')}" for m in candidats}
     return fusion, {
         "ok": lectures > 0 or not client.erreurs or bool(fusion),
         "erreurs": list(client.erreurs),
         "requetes": client.requetes,
         "matchs": len({l.get("match_id") for l in fusion}),
-        "onglets": dict(compte),
+        "onglets": dict(compte), "proches": suivi,
         "reserve": {"offset": 0, "lignes": fusion,
                     "onglets": {mid: v for mid, v in onglets_lus.items() if mid in au_catalogue}},
     }

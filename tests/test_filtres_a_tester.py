@@ -120,3 +120,25 @@ def test_alerte_porte_la_mise_kelly_dans_le_texte_pushover_et_l_ordre():
     assert "Mise Kelly ¼ : 10,00 €" in corps
     assert "Mise Kelly" not in message_ntfy({"bookmaker": "PMU", "cote": 2.0, "pari": "x",
                                              "debut": "2026-10-26T18:00:00Z"})[1]
+
+
+def test_alerte_ecartee_pour_cote_trop_ancienne_est_journalisee_sans_changer_le_flux():
+    from datetime import datetime, timezone
+    from cotes.notifications import flux
+    from tests.test_notifications import selection
+    from tests.test_theodds import NOW
+    p = selection()
+    ancien = {**p, "collecte_recue": "2026-01-01T00:00:00Z"}            # lue bien avant : cote trop ancienne
+    retenues = []
+    sans = flux([ancien], [p], {"strategie": {id(p)}}, NOW)
+    avec = flux([ancien], [p], {"strategie": {id(p)}}, NOW, retenues=retenues)
+    assert sans == avec and avec["alertes"] == []                         # le flux transmis ne change pas
+    assert all(r["raison"] == "cote trop ancienne" and r["age_cote_min"] > 5 for r in retenues)
+
+
+def test_pari_enregistre_l_age_de_la_cote_a_la_decision():
+    from cotes.simulation import _age_s
+    from datetime import datetime, timezone
+    d = datetime(2026, 10, 25, 17, 39, 52, tzinfo=timezone.utc)
+    assert _age_s("2026-10-25T17:27:59+00:00", d) == 713
+    assert _age_s(None, d) is None and _age_s("n'importe quoi", d) is None

@@ -427,6 +427,9 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
                 journal["etapes"][nom]["ok"] = False
             lignes += list(lues)
             metas[nom] = meta
+        proches = (metas.get("betclic_direct") or {}).get("proches")
+        if isinstance(proches, dict):         # matchs proches de Betclic : relances, lectures ratées ou vides
+            journal["betclic_proches"] = proches
         if source_oly == "direct":
             oly_lignes, oly_meta = recevoir("olybet")
         else:
