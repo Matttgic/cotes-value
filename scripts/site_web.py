@@ -87,7 +87,28 @@ def cle_fiche(p: dict) -> tuple:
 CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
                 "ligue", "regle_le", "reporte_au", "id", "joueur", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le", "decide_le", "registre_version",
-                "ecart_polymarket", "ecart_smarkets")
+                "ecart_polymarket", "ecart_smarkets", "lien", "lien_repli")
+
+
+CHAMPS_PRISE = ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote", "reference", "ecart", "detecte",
+                "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le",
+                "alerte_demande_le", "lien", "lien_repli")
+
+
+def prise_strategie(p: dict) -> dict:
+    """Une prise des listes de stratégies (Eden, Gemini, JULES, M3) ; lien du match tant qu'il est en cours."""
+    f = {k: p.get(k) for k in CHAMPS_PRISE}
+    if p.get("statut") != "en_cours":
+        f["lien"] = f["lien_repli"] = None
+    return f
+
+
+def fiche(p: dict) -> dict:
+    """Champs publiés d'un pari ; le lien du match seulement tant qu'il est en cours (rien à jouer après)."""
+    f = {c: p.get(c) for c in CHAMPS_FICHE}
+    if p.get("statut") != "en_cours":
+        f["lien"] = f["lien_repli"] = None
+    return f
 
 
 PARIS_TZ = ZoneInfo("Europe/Paris")
@@ -174,7 +195,7 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
     fiches = []
     for lignes in groupes.values():
         lignes.sort(key=lambda r: r.get("detecte") or "")
-        f = {c: lignes[0].get(c) for c in CHAMPS_FICHE}
+        f = fiche(lignes[0])
         f["trace"] = trace(lignes[0])
         f["sims"] = sorted({r.get("simulation") for r in lignes})
         f["a_regler"] = any(r.get("statut") == "a_regler" for r in lignes)
@@ -329,7 +350,7 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]], regles: dic
     convergents = paris_convergence(paris, retenus)
     rows = []
     for p in sorted(paris, key=lambda p: p.get("detecte") or "", reverse=True):
-        f = {k: p.get(k) for k in CHAMPS_FICHE}
+        f = fiche(p)
         f.update(simulation=p.get("simulation"), clv=clv_finale(p), tranche=tranche(p["cote"]) if p.get("cote") else None,
                  strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents,
                  mise=p.get("mise"), mise_kelly=mise_kelly(p) or 1.0, unique_bilan=id(p) in uniques,
@@ -416,7 +437,6 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
             enregistrer(nom, [p for p in passe if id(p) in historique_ids],
                         [p for p in futur if id(p) in officiels[nom]])
 
-    champs = CHAMPS_FICHE + ("simulation",)
     courbes_comparateurs = {}
     for nom in laboratoire.get("comparateurs", {}):
         repartition = selection.get(nom, {})
@@ -428,7 +448,7 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
     return {
         "selections": selection,
         "courbes": courbes_comparateurs,
-        "paris": {pid: {**{k: index[pid].get(k) for k in champs},
+        "paris": {pid: {**fiche(index[pid]), "simulation": index[pid].get("simulation"),
                         "sims": [index[pid].get("simulation")],
                         "tranche": tranche(index[pid]["cote"]) if index[pid].get("cote") else None,
                         "clv": clv_finale(index[pid]),
@@ -550,30 +570,15 @@ def construire(donnees: Path, sortie: Path) -> Path:
                 "Eden (rejeu)": eden_ids,
                 "M3 (rejeu)": m3_ids,
             }
-            laboratoire["m3_paris"] = [{k: p.get(k) for k in
-                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-                for p in sorted((p for p in paris if id(p) in m3_ids),
+            laboratoire["m3_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in m3_ids),
                                 key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-            laboratoire["gemini_paris"] = [{k: p.get(k) for k in
-                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-                for p in sorted((p for p in paris if id(p) in gemini_ids),
+            laboratoire["gemini_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in gemini_ids),
                                 key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-            laboratoire["jules_paris"] = [{k: p.get(k) for k in
-                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-                for p in sorted((p for p in paris if id(p) in jules_ids),
+            laboratoire["jules_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in jules_ids),
                                 key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-            laboratoire["jules_v2_paris"] = [{k: p.get(k) for k in
-                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-                for p in sorted((p for p in paris if id(p) in jules_v2_ids),
+            laboratoire["jules_v2_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in jules_v2_ids),
                                 key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-            laboratoire["eden_paris"] = [{k: p.get(k) for k in
-                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-                for p in sorted((p for p in paris if id(p) in eden_ids),
+            laboratoire["eden_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in eden_ids),
                                 key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
             officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
             prudentes = selections_prudentes(paris, bases={cle: officiels[nom] for cle, _, _, nom, _ in STRATEGIES})
@@ -646,6 +651,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     web = Path(__file__).resolve().parent.parent / "web"
     html = MODELE
     html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
+    html = html.replace("__LIENS_JS__", (web / "liens.js").read_text(encoding="utf-8"))
     html = html.replace("__VISUELS_JS__", (web / "visuels.js").read_text(encoding="utf-8"))
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
     html = html.replace("__HORAIRES_JS__", (web / "horaires.js").read_text(encoding="utf-8"))
@@ -1010,6 +1016,7 @@ const STATUTS = {en_cours:"En cours",gagne:"Gagné",perdu:"Perdu",rembourse:"Rem
 const lire = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const ecrire = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
 
+__LIENS_JS__
 __VISUELS_JS__
 __HORAIRES_JS__
 __SUIVI_JS__
@@ -1409,8 +1416,9 @@ const carteParis = p => { const [etat,libelle] = etatLigne(p); return `<details 
 <span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span></span>
 <span class="pari-milieu"><span class="pari-bookmaker">${e(p.bookmaker)}${heureEnvoi(p) ? " · "+heureEnvoi(p) : ""}</span>
 <span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b> <span class="pari-ref" title="Cote ${e(p.reference)} sans marge">(${e(REF_COURTE[p.reference] ?? (p.reference||"")+" ")}${cote(p.cote_juste)})</span></span></span>
-<span class="pari-droite"><b class="ligne-valeur">${p.gain!=null ? eur(p.gain) : pct(p.ecart)}</b><span class="pari-etat">${libelle}${p.mise!=null ? " · mise "+Number(p.mise).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €" : ""}</span></span></summary><div class="ligne-corps"><article class="carte">
+<span class="pari-droite"><b class="ligne-valeur">${p.gain!=null ? eur(p.gain) : pct(p.ecart)}</b><span class="pari-etat">${libelle}${p.mise!=null ? " · mise "+Number(p.mise).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €" : ""}</span>${boutonBookmaker(p, true)}</span></summary><div class="ligne-corps"><article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span>${horairePari(p)}</div>
+${boutonBookmaker(p) ? `<div class="l1">${boutonBookmaker(p)}</div>` : ""}
 <div class="l1">${collectePari(p)}</div>
 <div class="l2">${e(p.pari)}</div>
 <div class="l3"><span><b>${e(p.bookmaker)} ${cote(p.cote)}</b></span><span>${e(p.reference)} ${cote(p.cote_juste)}</span>
@@ -1985,7 +1993,7 @@ function rendreStrategies() {
   document.getElementById("eden-picks-list").innerHTML = edenPicks.length
     ? edenPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
+       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
        ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection Eden depuis le 19/10 à 20 h (Paris).</p>';
@@ -1996,7 +2004,7 @@ function rendreStrategies() {
     const picks = (v.ids || []).map(id => navPrudent[id]).filter(Boolean).slice(-20).reverse();
     return `<details><summary>${e(v.nom)} · ${v.stats.paris} prises · ${v.stats.regles} réglées</summary>` +
       (picks.length ? picks.map(p => `<article class="carte"><b>${e(p.domicile)} – ${e(p.exterieur)}</b>
-       <div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div>${horairePari(p)}${collectePari(p)}<small>Prise ${quand(p.detecte)} · ${e(p.statut)}</small></article>`).join("")
+       <div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div>${boutonBookmaker(p)}${horairePari(p)}${collectePari(p)}<small>Prise ${quand(p.detecte)} · ${e(p.statut)}</small></article>`).join("")
        : '<p class="aide">Aucune prise depuis le lancement de cette variante.</p>') + '</details>';
   }).join("");
   document.getElementById("prudentes-reconstitution").innerHTML = Object.values(suivis.reconstitution_exploratoire || {}).map(v =>
@@ -2004,7 +2012,7 @@ function rendreStrategies() {
   document.getElementById("gemini-picks-list").innerHTML = gemPicks.length
     ? gemPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
+       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
        ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection Gemini Argon depuis son démarrage prospectif.</p>';
@@ -2012,7 +2020,7 @@ function rendreStrategies() {
   document.getElementById("jules-picks-list").innerHTML = julesPicks.length
     ? julesPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
+       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
        ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection JULES EDGE depuis sa publication du 14/10 à 23 h 04.</p>';
@@ -2020,7 +2028,7 @@ function rendreStrategies() {
   document.getElementById("jules-v2-picks-list").innerHTML = v2Picks.length
     ? v2Picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
+       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
        ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection JULES EDGE v2 depuis le lancement du 15/10 à 00 h 30.</p>';
@@ -2028,7 +2036,7 @@ function rendreStrategies() {
   document.getElementById("m3-picks-list").innerHTML = picks.length
     ? picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
        <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>
+       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
        ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
        </article>`).join("")
     : '<p class="aide">Aucune nouvelle sélection M3 depuis son démarrage prospectif du 15 octobre.</p>';
@@ -2160,7 +2168,7 @@ function rendreLaboratoire() {
       ${!f.paris ? '<p class="aide">Aucune sélection depuis le début du suivi.</p>' : f.ids_recents.slice().reverse().map(id => {
         const p = L.paris_recents.find(p => p.id === id);
         if (!p) return "";
-        return `<div class="carte"><b>${e(p.domicile)} — ${e(p.exterieur)}</b><div>${e(p.pari)} · ${e(p.bookmaker)} ·${cote(p.cote)}</div>
+        return `<div class="carte"><b>${e(p.domicile)} — ${e(p.exterieur)}</b><div>${e(p.pari)} · ${e(p.bookmaker)} ·${cote(p.cote)}</div>${boutonBookmaker(p)}
         ${horairePari(p)}${collectePari(p)}<small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] || p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
       }).join("")}</details>`;
   }

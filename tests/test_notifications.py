@@ -307,25 +307,48 @@ def test_alerte_porte_equipes_sport_et_lien():
 
 
 def test_liens_par_bookmaker():
-    from cotes.liens import completer_liens, lien_match
-    base = {"domicile": "Paris SG", "exterieur": "OM"}
-    assert lien_match({**base, "bookmaker": "Winamax", "match_id": "winamax|68932762"}) == \
-        "https://www.winamax.fr/paris-sportifs/match/68932762"
-    assert lien_match({**base, "bookmaker": "Betclic", "match_id": "betclic|1244",
-                       "lien": "/psg-om-m1244"}) == "https://www.betclic.fr/psg-om-m1244"
-    assert lien_match({**base, "bookmaker": "PMU", "match_id": "pmu|10266",
-                       "lien": "/sport/football/l1/psg---om/10266"}) == "https://paris-sportifs.pmu.fr/sport/football/l1/psg---om/10266"
-    assert lien_match({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|33851",
-                       "lien": "/paris-football/fr/l1/33851/psg-vs-om"}) == "https://www.unibet.fr/paris-football/fr/l1/33851/psg-vs-om"
-    recherche = lien_match({**base, "bookmaker": "OlyBet", "match_id": "olybet|31111875"})
-    assert recherche == "https://www.google.com/search?q=site%3Asports.olybet.fr+Paris+SG+OM"
-    # chemin relevé d'un autre match : on ne l'utilise pas
-    assert lien_match({**base, "bookmaker": "Betclic", "match_id": "betclic|1", "lien": "/autre-m999"}).startswith(
-        "https://www.google.com/search?q=site%3Awww.betclic.fr")
+    """Formats vérifiés le 25/10/2026 sur de vrais matchs (titre de la page = les deux équipes)."""
+    from cotes.liens import completer_liens, lien_info, lien_match
+    base = {"domicile": "Paris SG", "exterieur": "Lyon", "sport": "football", "ligue": "Ligue 1"}
+    # identifiant seul : Winamax, PMU (redirige vers la page du match), NetBet
+    assert lien_match({**base, "bookmaker": "Winamax", "match_id": "winamax|73265464"}) == \
+        "https://www.winamax.fr/paris-sportifs/match/73265464"
+    assert lien_match({**base, "bookmaker": "PMU", "match_id": "pmu|1027973885",
+                       "lien": "/sport/ancien/1027973885"}) == "https://www.pmu.fr/sport/event/1027973885"
+    assert lien_match({**base, "bookmaker": "NetBet", "match_id": "netbet|12230833"}) == \
+        "https://www.netbet.fr/evenement/12230833"
+    # Betclic : chemin relevé par la collecte, sinon construit (le site ne lit que -m<id>)
+    assert lien_match({**base, "bookmaker": "Betclic", "match_id": "betclic|1249813184126976",
+                       "lien": "/football-sfootball/espagne-laliga-c7/barcelone-real-madrid-m1249813184126976"}) == \
+        "https://www.betclic.fr/football-sfootball/espagne-laliga-c7/barcelone-real-madrid-m1249813184126976"
+    assert lien_info({**base, "bookmaker": "Betclic", "match_id": "betclic|1244", "sport": "hockey"}) == \
+        ("https://www.betclic.fr/hockey-sur-glace-sice_hockey/ligue-1-c1/paris-sg-lyon-m1244", False)
+    # Unibet et OlyBet : seul le chemin relevé par la collecte est exact ; sinon page du sport, annoncée
+    assert lien_info({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|3388199",
+                      "lien": "/paris-football/france/ligue-1-mcdonalds/3388199/paris-sg-vs-lyon"}) == \
+        ("https://www.unibet.fr/paris-football/france/ligue-1-mcdonalds/3388199/paris-sg-vs-lyon", False)
+    assert lien_info({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|1", "sport": "hockey"}) == \
+        ("https://www.unibet.fr/paris-hockey-sur-glace", True)
+    assert lien_info({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|1", "sport": "curling"}) == \
+        ("https://www.unibet.fr/paris-tous-sports", True)
+    assert lien_info({**base, "bookmaker": "OlyBet", "match_id": "olybet|31196570", "sport": "basket",
+                      "lien": "/sportsbook/pre-match/match/Basketball/North%20America/756/31196570"}) == \
+        ("https://www.olybet.fr/sportsbook/pre-match/match/Basketball/North%20America/756/31196570", False)
+    assert lien_info({**base, "bookmaker": "OlyBet", "match_id": "olybet|31111875"}) == \
+        ("https://www.olybet.fr/sportsbook/pre-match/match/Soccer", True)
+    # jamais de recherche Google ; un chemin relevé pour un autre match n'est pas pris
+    assert "google" not in lien_match({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|1",
+                                       "lien": "https://www.google.com/search?q=site%3Awww.unibet.fr+PSG"})
+    assert lien_info({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|1", "lien": "/paris-football/a/b/999/x"})[1]
     assert lien_match({"bookmaker": "Inconnu", "lien": "/x"}) is None
     lien_match({**base, "bookmaker": "Unibet", "match_id": "unibet-fr|1", "lien": "/é/1"}).encode("latin-1")
-    paris = [{**base, "bookmaker": "Winamax", "match_id": "winamax|5", "lien": "/paris-sportifs/match/5"}]
-    assert completer_liens(paris) == 1 and paris[0]["lien"].endswith("/match/5") and completer_liens(paris) == 0
+    # completer_liens : lien absolu, drapeau de repli posé puis retiré quand le chemin exact arrive
+    paris = [{**base, "bookmaker": "Winamax", "match_id": "winamax|5", "lien": "/paris-sportifs/match/5"},
+             {**base, "bookmaker": "Unibet", "match_id": "unibet-fr|9"}]
+    assert completer_liens(paris) == 2 and paris[0]["lien"].endswith("/match/5") and paris[1]["lien_repli"] is True
+    assert completer_liens(paris) == 0
+    paris[1]["lien"] = "/paris-football/france/ligue-1-mcdonalds/9/paris-sg-vs-lyon"
+    assert completer_liens(paris) == 1 and "lien_repli" not in paris[1]
 
 
 def test_match_lointain_prix_de_la_derniere_lecture_et_fenetre_depuis_la_decision():

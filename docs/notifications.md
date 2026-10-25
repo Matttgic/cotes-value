@@ -178,12 +178,26 @@ Lens – Lille
 Lens @ 2,10 (min 2,00)
 sam. 25/10 15h00
 Eden                      <- stratégie(s) qui ont retenu l'alerte
-[Ouvrir chez Winamax]     <- toucher ouvre la page du match
+[Ouvrir le match chez Winamax]  <- toucher ouvre la page du match
 ```
 
 Un lien qui remplit directement le panier n'existe chez aucun bookmaker : le lien ouvre la page du match, où il reste à
-toucher la cote. Le lien est celui de `cotes/liens.py` (vrai lien chez Winamax et, en football, Betclic ; recherche Google
-du match ailleurs).
+toucher la cote. Le lien est celui de `cotes/liens.py`, vérifié le 25/10/2026 sur de vrais matchs chez les six bookmakers :
+
+| Bookmaker | Page du match | D'où vient le lien |
+|---|---|---|
+| Winamax | `winamax.fr/paris-sportifs/match/<id>` | identifiant du match |
+| PMU | `pmu.fr/sport/event/<id>` (redirige vers la page du match) | identifiant du match |
+| NetBet | `netbet.fr/evenement/<id>` | identifiant du match |
+| Betclic | `betclic.fr/<sport>/<compétition>/<équipes>-m<id>` (le site ne lit que `-m<id>`) | identifiant du match |
+| Unibet | `unibet.fr/paris-<sport>/<pays>/<compétition>/<id>/<équipes>` | chemin relevé par la collecte |
+| OlyBet | `olybet.fr/sportsbook/pre-match/match/<sport>/<région>/<compétition>/<id>` | chemin relevé par la collecte |
+
+Chez Unibet et OlyBet, sport, pays et compétition doivent être exacts : sans le chemin de la collecte (vieux pari), le lien
+de **repli** ouvre la page du sport chez le bookmaker et l'annonce (« Page du sport chez Unibet (match à chercher) »).
+Plus aucune recherche Google. Le même lien est sur le site : bouton « Parier chez … » dans la ligne de chaque pari en
+cours (onglet Paris, Mes stratégies, listes des stratégies) ; l'application du bookmaker s'ouvre à la place du navigateur
+quand le téléphone l'associe à son site.
 
 **Mise en place (une fois)**
 

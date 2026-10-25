@@ -9,7 +9,6 @@ première trame, sans pagination et sans attendre la suite.
 from __future__ import annotations
 
 import re
-import unicodedata
 import struct
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -18,6 +17,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 from cotes.direct.horizon import fusionner
+from cotes.liens import BETCLIC_SPORTS, slug
 from cotes.pulsescore import traduire
 
 BASE = "https://offering.begmedia.com/web/offering.access.api/offering.access.api.MatchService"
@@ -216,16 +216,13 @@ def _match(data: bytes) -> dict | None:
     direct = False
     if 6 in champs and isinstance(champs[6][0], int):
         direct = champs[6][0] == 1
-    competition = comp_id = sport_id = None
+    competition = comp_id = None
     if 8 in champs and isinstance(champs[8][0], (bytes, bytearray)):
         comp = decode_protobuf(champs[8][0])
         if 2 in comp:
             competition = _texte(comp[2][0])
         if isinstance(comp.get(1, [None])[0], int):
             comp_id = comp[1][0]
-        if isinstance(comp.get(3, [None])[0], (bytes, bytearray)):
-            sport_id = decode_protobuf(comp[3][0]).get(3, [None])[0]
-            sport_id = sport_id if isinstance(sport_id, int) else None
     equipes = []
     for equipe in champs.get(12, []):
         if isinstance(equipe, (bytes, bytearray)):
@@ -240,28 +237,20 @@ def _match(data: bytes) -> dict | None:
     if not domicile or not exterieur:
         return None
     return {"id": ident, "domicile": domicile, "exterieur": exterieur, "debut": debut,
-            "competition": competition, "direct": direct, "competition_id": comp_id, "sport_id": sport_id}
-
-
-def _slug(texte) -> str:
-    """Minuscules sans accents, tout le reste en tirets (« Australie A-League » -> « australie-a-league »)."""
-    base = unicodedata.normalize("NFKD", str(texte or "")).encode("ascii", "ignore").decode().lower()
-    return re.sub(r"[^a-z0-9]+", "-", base).strip("-")
+            "competition": competition, "direct": direct, "competition_id": comp_id}
 
 
 def chemin_match(match: dict) -> str | None:
-    """Chemin de la page du match sur betclic.fr, ``/football-s1/<compétition>-c<id>/<équipes>-m<id>``.
+    """Chemin de la page du match sur betclic.fr, ``/<sport>-s<code>/<compétition>-c<id>/<équipes>-m<id>``.
 
-    Football seulement (les autres sports ont un identifiant de sport et un nom de rubrique que la collecte ne
-    donne pas). FORMAT NON VÉRIFIÉ EN LIGNE : betclic.fr répond 403 à tout accès automatique, même pour un vrai
-    match ; il vient de la forme des adresses du site. Les identifiants viennent de la collecte, les noms servent
-    seulement de décor. ``liens.lien_match`` ajoute le domaine et vérifie que l'identifiant du match y figure."""
-    if match.get("sport") != "football" or match.get("sport_id") != 1 or not isinstance(match.get("competition_id"), int):
+    Vérifié le 25/10/2026 depuis la France (Barcelone - Real Madrid, Brindisi - Avellino) : le site retrouve
+    le match par ``-m<id>`` seul, même avec un chemin faux, et corrige le reste. Sport, compétition et
+    équipes ne sont que du décor ; ``liens.lien_match`` ajoute le domaine."""
+    comp, equipes = slug(match.get("competition")), slug(f"{match.get('domicile')} {match.get('exterieur')}")
+    if not comp or not equipes or not isinstance(match.get("id"), int) or not isinstance(match.get("competition_id"), int):
         return None
-    comp, equipes = _slug(match.get("competition")), _slug(f"{match.get('domicile')} {match.get('exterieur')}")
-    if not comp or not equipes or not isinstance(match.get("id"), int):
-        return None
-    return f"/football-s1/{comp}-c{match['competition_id']}/{equipes}-m{match['id']}"
+    sport = BETCLIC_SPORTS.get(str(match.get("sport") or ""), "sport-s1")
+    return f"/{sport}/{comp}-c{match['competition_id']}/{equipes}-m{match['id']}"
 
 
 def matchs_de_la_liste(trame: bytes | None) -> list[dict]:

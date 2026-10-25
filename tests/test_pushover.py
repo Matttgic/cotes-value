@@ -38,7 +38,10 @@ def test_message_le_pari_puis_le_lien_cliquable_dessous():
     m = E.message_pushover(alerte(), ENV, NOW)
     assert m["title"] == "Winamax – Football"
     assert m["message"].startswith("Lens – Lille\nLens @ 2,10 (min 2,00)") and m["message"].endswith("Eden")
-    assert m["url"] == "https://www.winamax.fr/paris-sportifs/match/68932762" and m["url_title"] == "Ouvrir chez Winamax"
+    assert m["url"] == "https://www.winamax.fr/paris-sportifs/match/68932762" and m["url_title"] == "Ouvrir le match chez Winamax"
+    repli = E.message_pushover(alerte(bookmaker="Unibet", lien="https://www.unibet.fr/paris-football", lien_repli=True), ENV, NOW)
+    assert repli["url"] == "https://www.unibet.fr/paris-football"
+    assert repli["url_title"] == "Page du sport chez Unibet (match à chercher)"
     assert m["ttl"] == 3600 and m["priority"] == 0                           # plafonné à 1 h ; heures calmes respectées
     court = E.message_pushover(alerte(debut=(NOW + timedelta(minutes=20)).isoformat()), ENV, NOW)
     assert court["ttl"] == 1200

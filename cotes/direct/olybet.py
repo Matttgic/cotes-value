@@ -16,6 +16,7 @@ import json
 import os
 import re
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote
 
 from cotes.correspondance import ressemblance
 from cotes.pulsescore import traduire
@@ -98,19 +99,36 @@ def _donnees(doc) -> dict:
 
 
 def jeux_depuis(doc) -> list[dict]:
-    """Matchs d'une réponse ``get`` (sport / compétition / jeu)."""
+    """Matchs d'une réponse ``get`` (sport / [région /] compétition / jeu), avec le chemin de leur page."""
     out = []
     for sp in (_donnees(doc).get("sport") or {}).values():
         if not isinstance(sp, dict):
             continue
-        for comp in (sp.get("competition") or {}).values():
-            if not isinstance(comp, dict):
-                continue
-            ligue = comp.get("name")
-            for gid, jeu in (comp.get("game") or {}).items():
-                if isinstance(jeu, dict):
-                    out.append({**jeu, "id": jeu.get("id", gid), "league": ligue})
+        regions = [r for r in (sp.get("region") or {}).values() if isinstance(r, dict)] or [{"competition": sp.get("competition")}]
+        for region in regions:
+            for cid, comp in (region.get("competition") or {}).items():
+                if not isinstance(comp, dict):
+                    continue
+                ligue = comp.get("name")
+                for gid, jeu in (comp.get("game") or {}).items():
+                    if isinstance(jeu, dict):
+                        ident = jeu.get("id", gid)
+                        out.append({**jeu, "id": ident, "league": ligue,
+                                    "chemin": chemin_match(sp.get("alias"), region.get("alias"), comp.get("id", cid), ident)})
     return out
+
+
+def chemin_match(sport, region, competition, jeu) -> str | None:
+    """Chemin de la page du match sur olybet.fr, ``/sportsbook/pre-match/match/<sport>/<région>/<compétition>/<id>``.
+
+    Vérifié le 25/10/2026 (PSG - Lyon, Philadelphia - Detroit) : sport et région sont les alias BetConstruct
+    (« North America » garde son espace), compétition et match leurs identifiants. Une région ou une
+    compétition fausse renvoie à la page de la compétition : sans les quatre, pas de chemin."""
+    if not isinstance(sport, str) or not isinstance(region, str) or not sport.strip() or not region.strip():
+        return None
+    if not str(competition).isdigit() or not str(jeu).isdigit():
+        return None
+    return f"/sportsbook/pre-match/match/{quote(sport.strip(), safe='')}/{quote(region.strip(), safe='')}/{competition}/{jeu}"
 
 
 def marches_par_jeu(doc) -> dict:
@@ -285,7 +303,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, client=None,
                 break
             liste = swarm.appel("get", {
                 "source": "betting",
-                "what": {"sport": ["alias"], "competition": ["name"],
+                "what": {"sport": ["alias"], "region": ["alias"], "competition": ["id", "name"],
                          "game": ["id", "team1_name", "team2_name", "start_ts",
                                   "is_started", "is_blocked", "is_live"]},
                 "where": {"sport": {"alias": alias}, "game": {"type": {"@in": [0, 2]}}},
@@ -326,6 +344,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, client=None,
                         "league": ligue or None,
                         "startTime": debut.isoformat().replace("+00:00", "Z"),
                         "markets": marches,
+                        "slug": jeu.get("chemin"),
                     }
                     lignes += traduire(evenement, "olybet", sport, moment)
         erreurs = list(getattr(swarm, "erreurs", []))
