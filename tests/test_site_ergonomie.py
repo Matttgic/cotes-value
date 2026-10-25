@@ -30,7 +30,7 @@ def test_ancien_json_sans_nouveaux_comparateurs(tmp_path, monkeypatch):
     monkeypatch.setattr(site_web,"_lire",lire)
     d=donnees_html(site_web.construire(tmp_path,tmp_path/"site").read_text())
     labo=d["laboratoire"]; nav=labo["navigation"]
-    assert len(labo["comparateurs"]) == 13
+    assert len(labo["comparateurs"]) == 18
     for nom, comp in labo["comparateurs"].items():
         for periode, stats in comp.items():
             pts=nav["courbes"][nom][periode]
