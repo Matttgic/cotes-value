@@ -120,3 +120,23 @@ def test_pinnacle_budget_coupe_avant_le_reseau(monkeypatch):
     monkeypatch.setattr(pinnacle.requests, "post", lambda *a, **k: (_ for _ in ()).throw(AssertionError("réseau")))
     assert pinnacle.collecter({29: "football"}, echeance=Echeance(0)) == []
     assert "budget" in pinnacle.ERREURS
+
+
+def test_lecture_directe_en_echec_visible_pour_tous_les_lecteurs():
+    from cotes import surveillance
+    for nom in ("unibet_direct", "pmu_direct", "betclic_direct", "winamax_direct"):
+        journal = {"etapes": {nom: {"secondes": 0.7, "ok": True}}}
+        cycle.noter_lecture(journal, nom, {"ok": False, "erreurs": ["accueil HTTP 403"]})
+        assert journal["etapes"][nom]["ok"] is False and journal["etapes"][nom]["degrade"] is True
+        assert surveillance.problemes(journal["etapes"])[nom][0] == "panne"
+    # lecture partielle coupée par le budget : dégradée, pas en panne
+    journal = {"etapes": {"unibet_direct": {"secondes": 79, "ok": True}}}
+    cycle.noter_lecture(journal, "unibet_direct", {"ok": True, "erreurs": ["budget"]})
+    assert journal["etapes"]["unibet_direct"]["ok"] is True
+    assert "unibet_direct" not in surveillance.problemes(journal["etapes"])
+
+
+def test_budgets_winamax_et_unibet_sous_celui_de_betclic():
+    # sources lues en parallèle : la plus lente (Betclic) fixe la durée du cycle
+    assert cycle.BUDGETS["winamax_direct"] <= cycle.BUDGETS["betclic_direct"]
+    assert cycle.BUDGETS["unibet_direct"] <= cycle.BUDGETS["betclic_direct"]
