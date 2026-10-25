@@ -67,7 +67,7 @@ const e=s => String(s ?? "").replaceAll("<","&lt;").replaceAll('"','&quot;');
 const cote=e,pct=e,eur=e,quand=e,signe=()=>"",ouvrir=()=>{};
 const STATUTS={}, STRAT_PERIODES={futur:"Depuis le lancement",ensemble:"Historique"};
 const lire=()=>null, ecrire=()=>{};
-'''+(Path(__file__).resolve().parents[1]/'web/horaires.js').read_text()+(Path(__file__).resolve().parents[1]/'web/suivi.js').read_text()
+'''+(Path(__file__).resolve().parents[1]/'web/liens.js').read_text()+(Path(__file__).resolve().parents[1]/'web/horaires.js').read_text()+(Path(__file__).resolve().parents[1]/'web/suivi.js').read_text()
 
 
 def test_js_recherche_filtres_export_bom_echappement_et_archive_complete():

@@ -277,7 +277,9 @@ def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> d
     lien = a.get("lien")
     if isinstance(lien, str) and lien.startswith("https://") and len(lien) <= 500:
         champs["url"] = lien
-        champs["url_title"] = f"Ouvrir chez {a.get('bookmaker') or 'le bookmaker'}"[:100]
+        chez = a.get('bookmaker') or 'le bookmaker'
+        champs["url_title"] = (f"Page du sport chez {chez} (match à chercher)" if a.get("lien_repli")
+                               else f"Ouvrir le match chez {chez}")[:100]
     try:
         reste = (datetime.fromisoformat(str(a.get("debut")).replace("Z", "+00:00")) - maintenant).total_seconds()
         champs["ttl"] = int(max(60, min(PUSHOVER_TTL_MAX_S, reste)))

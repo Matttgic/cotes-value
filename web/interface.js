@@ -137,7 +137,7 @@ async function bandeauAlerte() {
   try {
     const o=((await (await fetch('ordres.json',{cache:'no-store'})).json()).ordres||[]).find(x=>x.id===id);
     if(o) {
-      const lien=o.lien?`<a class="btn" href="${e(o.lien)}" target="_blank" rel="noopener noreferrer">Ouvrir chez ${e(o.bookmaker)} ›</a>`:`<small>Pas de lien : chercher « ${e(o.recherche)} »</small>`;
+      const lien=o.lien?`<a class="btn" href="${e(o.lien)}" target="_blank" rel="noopener noreferrer">${o.lien_repli?'Page du sport chez '+e(o.bookmaker)+' › (match à chercher)':'Ouvrir le match chez '+e(o.bookmaker)+' ›'}</a>`:`<small>Pas de lien : chercher « ${e(o.recherche)} »</small>`;
       html=`<b>${e(o.domicile)} – ${e(o.exterieur)}</b><span>${e(o.pari)} · cote ${cote(o.cote_relevee)} chez ${e(o.bookmaker)}</span><small>Jouer seulement si la cote reste ≥ ${cote(o.cote_min)} · mise ${e(typeof miseMode!=='undefined' && miseMode==='kelly' && o.mise_kelly ? o.mise_kelly : o.mise)} € · avant ${hm(o.expire_le)}</small>${lien}`;
     }
   } catch {html='<b>Alerte indisponible</b><small>Réessayez dans un instant.</small>';}
