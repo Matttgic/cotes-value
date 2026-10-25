@@ -99,6 +99,12 @@ _LOIN_EVENTS = 200   # tous les matchs lointains à chaque cycle (mesuré : 263 
 _LOIN_COMP = 30
 _COMP_FRAIS_MIN = 45
 _PAUSE_PARALLELE = (0.4, 0.6)
+# Kambi ne renvoie jamais plus de 2 000 offres par requête multi-matchs. Un match NBA en compte ~740 (paris joueurs) :
+# un lot de 20 matchs plafonné perdait les marchés des derniers matchs, dont les cotes restaient alors en mémoire sans
+# être relues (mesuré le 25/10/2026 : deux lots à 2 000 offres pile, 8 matchs à moins de 6 h non relus). Un lot plafonné
+# est redemandé en deux moitiés, jusqu'au match seul.
+_PLAFOND_OFFRES = 2000
+_DECOUPES_MAX = 16
 _MARGE_S = 3.0
 
 
@@ -576,6 +582,26 @@ def _collecter_reserve(sports, heures, session, pause, maintenant, echeance, res
             connus.add(ev.get("id"))
             comp_ids.add(ev.get("id"))
             events.append((sport, ev))
+    # Matchs proches connus par la mémoire mais absents des listes de ce passage (ligue lue à tour de rôle, liste
+    # générale tronquée) : relus par identifiant. Sans cela, leurs cotes restaient jusqu'à 3 h sans être relues.
+    # Constaté le 25/10/2026 : 8 matchs sur 37 à moins de 6 h non relus (NBA, AHL…, cotes de 55 à 88 min), et un
+    # pari Gap–Nice décidé sur une cote de 9 min, alerte Pushover écartée.
+    memoire = 0
+    for ligne in reserve.get("lignes") or []:
+        if not isinstance(ligne, dict) or not str(ligne.get("match_id") or "").startswith("pmu|"):
+            continue
+        try:
+            ident = int(str(ligne["match_id"]).split("|", 1)[1])
+        except ValueError:
+            continue
+        debut = _heure(ligne.get("debut"))
+        if ident in connus or not debut or not (maintenant < debut <= proche_limite) or not ligne.get("sport"):
+            continue
+        connus.add(ident)
+        memoire += 1
+        events.append((ligne["sport"], {"id": ident, "homeName": ligne.get("domicile"), "awayName": ligne.get("exterieur"),
+                                        "group": ligne.get("ligue"), "start": ligne.get("debut"),
+                                        "state": "NOT_STARTED", "_memoire": True}))
     proches, lointains, queue_comp = [], [], []
     for sport, ev in events:
         if not _a_venir(ev, maintenant, heures):
@@ -609,19 +635,49 @@ def _collecter_reserve(sports, heures, session, pause, maintenant, echeance, res
             if client._bloque or not client._temps():
                 break
             offres_lots.append((lot, client.get(chemin)))
+    # Lots plafonnés : redemandés par moitiés tant qu'un lot de plusieurs matchs atteint le plafond.
+    decoupes = 0
+    a_voir = list(offres_lots)
+    offres_lots = []
+    while a_voir:
+        lot, doc = a_voir.pop(0)
+        offres_doc = (doc or {}).get("betOffers") if isinstance(doc, dict) else None
+        if (isinstance(offres_doc, list) and len(offres_doc) >= _PLAFOND_OFFRES and len(lot) > 1
+                and decoupes < _DECOUPES_MAX and not client._bloque and client._temps()):
+            moitie = len(lot) // 2
+            for partie in (lot[:moitie], lot[moitie:]):
+                ids_partie = ",".join(str(ev["id"]) for _sport, ev in partie if ev.get("id"))
+                decoupes += 1
+                a_voir.insert(0, (partie, client.get(f"betoffer/event/{ids_partie}.json")))
+            continue
+        offres_lots.append((lot, doc))
     lignes: list[dict] = []
     lus = 0
+    retires: set[str] = set()       # matchs relus par la mémoire et commencés ou sans marché : anciennes cotes retirées
     for lot, doc in offres_lots:
         offres = (doc or {}).get("betOffers") if isinstance(doc, dict) else []
         if not isinstance(offres, list):
             offres = []
+        frais_ev = {e.get("id"): e for e in ((doc or {}).get("events") or []) if isinstance(e, dict)} \
+            if isinstance(doc, dict) else {}
         for sport, event in lot:
             lus += 1
+            de_memoire = bool(event.get("_memoire"))
+            if de_memoire:
+                if doc is None:          # requête ratée : les anciennes cotes gardent leur âge réel
+                    continue
+                event = frais_ev.get(event["id"]) or {**event, "state": None}
+                if event.get("state") != "NOT_STARTED":
+                    retires.add(f"pmu|{event.get('id')}")
+                    continue
             ev = evenement_depuis(event, [o for o in offres if isinstance(o, dict)
                                           and o.get("eventId") == event.get("id")])
-            if ev:
-                lignes += _retenir(traduire(ev, "pmu", sport, moment))
-    fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures)
+            nouvelles = _retenir(traduire(ev, "pmu", sport, moment)) if ev else []
+            if de_memoire and not nouvelles:
+                retires.add(f"pmu|{event.get('id')}")
+            lignes += nouvelles
+    anciennes = [l for l in (reserve.get("lignes") or []) if not (isinstance(l, dict) and l.get("match_id") in retires)]
+    fusion = fusionner(anciennes, lignes, maintenant, heures)
     reserve_out = {
         "competitions": feuilles,
         "comp_lu": comp_lu_nouveau,
@@ -635,6 +691,7 @@ def _collecter_reserve(sports, heures, session, pause, maintenant, echeance, res
         "requetes": client.requetes,
         "matchs": len({l.get("match_id") for l in fusion}),
         "lus": lus,
+        "proches_memoire": memoire, "retires": len(retires), "decoupes": decoupes,
         "reserve": reserve_out,
     }
 

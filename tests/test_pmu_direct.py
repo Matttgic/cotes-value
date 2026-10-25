@@ -259,3 +259,68 @@ def test_pari_kalshi_historique_reste_dans_le_bilan():
     resume = bilan([pari])
     assert resume["C|Kalshi"]["regles"] == 1
     assert resume["C|Kalshi"]["gains"] == 8
+
+
+# --- Matchs proches connus par la mémoire, absents des listes du passage : relus par identifiant ---
+
+def _reserve_avec(eid, home, away, start):
+    """Mémoire d'un passage précédent : une cote 1N2 du match, lue il y a 20 minutes, compétitions déjà connues."""
+    ligne = {"match_id": f"pmu|{eid}", "source": "pmu", "bookmaker": "PMU", "sport": "football",
+             "domicile": home, "exterieur": away, "ligue": "Ligue", "debut": start,
+             "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None, "issue": "DOM", "cote": 1.5,
+             "collecte": (MAINTENANT - timedelta(minutes=20)).isoformat()}
+    return {"lignes": [ligne], "competitions": {"football": []}, "comp_lu": MAINTENANT.isoformat()}
+
+
+def _passe_reserve(reserve, plan):
+    session = Session(plan)
+    lignes, meta = pmu.collecter({"football"}, 36, session=session, pause=(0, 0), maintenant=MAINTENANT,
+                                 reserve=reserve)
+    return lignes, meta, session
+
+
+PROCHE = "2026-10-18T13:30:00Z"           # 1 h 30 après MAINTENANT
+
+
+def test_match_proche_absent_des_listes_est_relu_par_identifiant():
+    reserve = _reserve_avec(9, "Utah", "Denver", PROCHE)
+    liste = {"events": [_event(1, "Lens", "Lille", "2026-10-18T20:00:00Z")]}
+    offres = {"betOffers": [_offre_simple(1), _offre_simple(9)],
+              "events": [_event(1, "Lens", "Lille", "2026-10-18T20:00:00Z")["event"],
+                         _event(9, "Utah", "Denver", PROCHE)["event"]]}
+    lignes, meta, session = _passe_reserve(reserve, [(200, liste), (200, offres)])
+    assert meta["proches_memoire"] == 1
+    assert any("betoffer/event/" in u and "9" in u.split("betoffer/event/")[1] for u in session.urls)
+    utah = [l for l in lignes if l["match_id"] == "pmu|9"]
+    assert utah and all(l["collecte"].startswith("2026-10-18T12:00") for l in utah)        # cotes neuves
+
+
+def test_match_proche_de_la_memoire_commence_ou_retire_ne_garde_pas_ses_vieilles_cotes():
+    reserve = _reserve_avec(9, "Utah", "Denver", PROCHE)
+    liste = {"events": [_event(1, "Lens", "Lille", "2026-10-18T20:00:00Z")]}
+    commence = {"betOffers": [_offre_simple(1)],
+                "events": [_event(9, "Utah", "Denver", PROCHE, state="STARTED")["event"]]}
+    lignes, meta, _ = _passe_reserve(reserve, [(200, liste), (200, commence)])
+    assert meta["retires"] == 1 and not any(l["match_id"] == "pmu|9" for l in lignes)
+
+
+def test_match_lointain_de_la_memoire_n_est_pas_relu_hors_rotation():
+    reserve = _reserve_avec(9, "Utah", "Denver", "2026-10-19T10:00:00Z")     # 22 h : pas proche
+    liste = {"events": [_event(1, "Lens", "Lille", "2026-10-18T20:00:00Z")]}
+    offres = {"betOffers": [_offre_simple(1)]}
+    _, meta, session = _passe_reserve(reserve, [(200, liste), (200, offres)])
+    assert meta["proches_memoire"] == 0
+
+
+def test_lot_plafonne_a_2000_offres_est_redemande_par_moities():
+    reserve = {"lignes": [], "competitions": {"football": []}, "comp_lu": MAINTENANT.isoformat()}
+    liste = {"events": [_event(1, "Lens", "Lille", "2026-10-18T20:00:00Z"),
+                        _event(2, "Brest", "Nice", "2026-10-18T21:00:00Z")]}
+    remplissage = [{"id": 1000 + i, "eventId": 1, "betOfferType": {"englishName": "Player Occurrence Line"},
+                    "criterion": {"label": "x"}, "outcomes": []} for i in range(pmu._PLAFOND_OFFRES - 1)]
+    plafonne = {"betOffers": [_offre_simple(1)] + remplissage}          # 2 000 offres pile : Brest–Nice perdu
+    lignes, meta, session = _passe_reserve(reserve, [
+        (200, liste), (200, plafonne), (200, {"betOffers": [_offre_simple(1)]}),
+        (200, {"betOffers": [_offre_simple(2)]})])
+    assert meta["decoupes"] == 2
+    assert {l["match_id"] for l in lignes if l["marche"] == "RESULTAT_1N2"} == {"pmu|1", "pmu|2"}
