@@ -249,6 +249,32 @@ def _radar_depuis(lignes) -> list[dict]:
     return out
 
 
+# source du cycle -> clé de sa mémoire dans horizon_direct.json
+MEMOIRES = {"pmu_direct": "pmu", "unibet_direct": "unibet", "betclic_direct": "betclic", "netbet": "netbet"}
+AGE_REPLI_MIN = 30
+
+
+def repli_reserve(bloc: dict, maintenant: datetime) -> tuple[list[dict], dict]:
+    """Source coupée par son budget : ses cotes du passage précédent, au lieu de rien.
+
+    Constaté du 23 au 25/10/2026 : 22 cycles Unibet « lecture interrompue » donnaient zéro cote (les cycles à moins
+    de 130 000 cotes françaises). Les lignes gardent leur heure de lecture d'origine, donc leur âge reste honnête :
+    la fenêtre de 15 minutes de la comparaison et de la prise écarte les trop vieilles. Les matchs commencés
+    et les lignes de plus de ``AGE_REPLI_MIN`` minutes sont retirés. La mémoire de la source est conservée telle quelle."""
+    limite = maintenant - timedelta(minutes=AGE_REPLI_MIN)
+    lignes = []
+    for ligne in (bloc.get("lignes") or []) if isinstance(bloc, dict) else []:
+        if not isinstance(ligne, dict):
+            continue
+        debut, lu = _instant(ligne.get("debut")), _instant(ligne.get("collecte"))
+        if debut is not None and debut > maintenant and lu is not None and lu >= limite:
+            lignes.append(ligne)
+    meta = {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0, "repli": len(lignes)}
+    if isinstance(bloc, dict) and bloc:
+        meta["reserve"] = bloc
+    return lignes, meta
+
+
 def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: Path | None = None,
                        reprise_chemin: Path | None = None):
     """Pinnacle et Polymarket d'abord, puis les bookmakers français en parallèle.
@@ -386,7 +412,7 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
                 return recus[nom]
             recu = futurs[nom].result()
             if recu is None:
-                recus[nom] = ([], {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0})
+                recus[nom] = repli_reserve(_reserve(MEMOIRES.get(nom, "")), maintenant)
             else:
                 recus[nom] = recu
             return recus[nom]

@@ -271,7 +271,7 @@ def test_budget_rend_les_cotes_deja_lues(monkeypatch):
             return self.n < 1
 
         def reste(self):
-            return 10.0 if self.ok() else 0.0
+            return 20.0 if self.ok() else 0.0      # 8 s sont gardées pour traduire (unibet.MARGE_FIN_S)
 
         def timeout(self, plafond):
             return 4
@@ -309,3 +309,44 @@ def test_total_d_equipe_dont_le_nom_porte_un_nombre():
     m = unibet.marche_depuis("m3", offre("Plus / Moins Point(s) - PHI 76ers 57,5 - 1ère Mi-temps"),
                              "Boston Celtics", "PHI 76ers")
     assert m["canonicalMarket"] == "AWAY_OVER_UNDER" and {x["line"] for x in m["selections"]} == {57.5}
+
+
+def test_la_lecture_s_arrete_avant_la_fin_du_budget_pour_laisser_le_temps_de_traduire(monkeypatch):
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+
+    class Budget:
+        def ok(self):
+            return True
+
+        def reste(self):
+            return unibet.MARGE_FIN_S + 2.0         # moins que la marge de fin des appels (3 s) une fois réduite
+
+    session = Session([(200, {"items": {}, "numberOfEvents": 0}, {})] * 4)
+    lignes, meta = unibet.collecter({"football"}, 36, session=session, page=Page(), pause=(0, 0),
+                                    maintenant=MAINTENANT, echeance=Budget())
+    assert session.urls == [] and "budget" in meta["erreurs"]
+
+
+def test_accueil_refuse_une_fois_puis_accepte_ne_perd_pas_le_cycle(monkeypatch):
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+
+    class PageCapricieuse(Page):
+        def get(self, url, timeout=30, headers=None):
+            self.urls.append(url)
+            return Reponse(403 if len(self.urls) == 1 else 200, text=self.html)
+
+    page = PageCapricieuse()
+    session = Session([(200, {"items": {}, "numberOfEvents": 0}, {})] * 60)
+    lignes, meta = unibet.collecter({"football"}, 36, session=session, page=page, pause=(0, 0),
+                                    maintenant=MAINTENANT)
+    assert len(page.urls) == 2 and not any("accueil" in e for e in meta["erreurs"])
+
+
+def test_accueil_refuse_deux_fois_est_note_et_rend_la_memoire(monkeypatch):
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    page = Page(status=403)
+    memoire = {"lignes": [{"match_id": "unibet-fr|1", "cote": 2.0}], "curseur": 3}
+    lignes, meta = unibet.collecter({"football"}, 36, session=Session([]), page=page, pause=(0, 0),
+                                    maintenant=MAINTENANT, reserve=memoire)
+    assert len(page.urls) == 2 and meta["erreurs"] == ["accueil HTTP 403"] and meta["ok"] is False
+    assert lignes == memoire["lignes"] and meta["reserve"] is memoire
