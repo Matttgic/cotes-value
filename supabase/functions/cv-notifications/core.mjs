@@ -81,7 +81,7 @@ export function createHandler({db,config,authorize,send,clock=Date.now}) {
         const c=await config(); return reply({publicKey:c.publicKey});
       }
       if(req.method!=='POST') return reply({error:'Méthode refusée'},405);
-      if(action==='dispatch') {
+      if(action==='dispatch' || action==='strategies') {
         if(!await authorize(req.headers.get('Authorization')||'')) return reply({error:'Accès refusé'},401);
       } else if(origin!==ORIGIN) return reply({error:'Origine requise'},403);
       if(Number(req.headers.get('Content-Length')||0)>200000) return reply({error:'Requête trop grande'},413);
@@ -90,6 +90,13 @@ export function createHandler({db,config,authorize,send,clock=Date.now}) {
       let body; try {body=JSON.parse(raw);} catch {return reply({error:'JSON invalide'},400);}
       if(!body || typeof body!=='object' || Array.isArray(body)) return reply({error:'Requête invalide'},400);
       const now=clock();
+      // Stratégies cochées sur les appareils actifs : lues par le job GitHub (Pushover), même identité que « dispatch ».
+      // Seulement des clés de stratégie : ni abonnement, ni jeton, ni identifiant d'appareil.
+      if(action==='strategies') {
+        const devices=await db('cv_push_devices?enabled=eq.true&select=strategies');
+        const cles=[...new Set(devices.flatMap(d=>Array.isArray(d.strategies)?d.strategies:[]).filter(cleValide))].sort();
+        return reply({strategies:cles});
+      }
       if(action==='dispatch') {
         if(!Array.isArray(body.alertes) || body.alertes.length>100 ||
           !Number.isFinite(date(body.generated_at)) || Math.abs(now-date(body.generated_at))>10*60000)

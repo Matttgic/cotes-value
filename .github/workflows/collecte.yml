@@ -139,7 +139,8 @@ jobs:
           ALERTE_WEBHOOK_KEY: ${{ secrets.ALERTE_WEBHOOK_KEY }}
           ALERTE_WEBHOOK_CLE_ENTETE: ${{ vars.ALERTE_WEBHOOK_CLE_ENTETE || 'x-api-key' }}
           # Pushover (envoyé avant Chrome) : inactif sans les deux secrets ET sans stratégie cochée.
-          # PUSHOVER_STRATEGIES = clés séparées par des virgules (liste : scripts/envoyer_notifications.py --strategies).
+          # Stratégies : celles cochées sur le site (fonction cv-notifications redéployée). PUSHOVER_STRATEGIES, si elle est
+          # remplie (clés séparées par des virgules, liste : scripts/envoyer_notifications.py --strategies), les remplace.
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
           PUSHOVER_STRATEGIES: ${{ vars.PUSHOVER_STRATEGIES }}

@@ -191,8 +191,14 @@ du match ailleurs).
    d'accueil du compte) et créer une application (« Create an Application/API Token ») pour obtenir son jeton.
 2. Dépôt GitHub, Settings → Secrets and variables → Actions :
    - secrets `PUSHOVER_USER_KEY` et `PUSHOVER_APP_TOKEN` ;
-   - variable `PUSHOVER_STRATEGIES` : les stratégies cochées, clés séparées par des virgules, par exemple
-     `eden,labo:PIN-1.3-2-e2-h36`. `python scripts/envoyer_notifications.py --strategies` liste toutes les clés avec leur nom.
+   - **stratégies** : par défaut, celles que vous cochez sur le site (page Notifications, bouton « Enregistrer »). Le job
+     les lit auprès du service `cv-notifications` (action `strategies`, authentifiée par l'identité GitHub Actions) : il
+     faut avoir redéployé la fonction (`supabase functions deploy cv-notifications`). Elles sont enregistrées avec
+     l'abonnement Chrome de l'appareil : « Désactiver » sur le site les efface. Service injoignable : aucune alerte
+     Pushover (le champ `source` du diagnostic vaut « site indisponible »).
+   - variable `PUSHOVER_STRATEGIES` (facultative) : si elle est remplie, elle remplace les cases du site. Clés séparées par
+     des virgules, par exemple `eden,labo:PIN-1.3-2-e2-h36` ; `auto` ou vide = cases du site.
+     `python scripts/envoyer_notifications.py --strategies` liste toutes les clés avec leur nom.
    - variable facultative `PUSHOVER_PRIORITY` : `0` (défaut, respecte les heures calmes de Pushover), `1` (les ignore), `-1`.
 3. Rien d'autre : sans les deux secrets ou sans stratégie cochée, le canal est inactif. Un changement de la variable
    s'applique au cycle suivant.
@@ -203,5 +209,5 @@ du match ailleurs).
 - Au premier passage, les re-décisions anciennes de Pinnacle 2 sont mémorisées sans être envoyées (pas d'inondation).
 - Le message disparaît du téléphone au coup d'envoi, ou au bout d'une heure (`ttl`).
 - Quota gratuit de Pushover : 10 000 messages par mois et par application ; un 429 arrête l'envoi du passage.
-- Le bilan est dans `notifications_diagnostic.json` (champ `pushover` : actif, nombre de stratégies, envois, échecs, clés
+- Le bilan est dans `notifications_diagnostic.json` (champ `pushover` : actif, source des stratégies, nombre de stratégies, envois, échecs, clés
   inconnues), jamais le jeton ni la clé.
