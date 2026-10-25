@@ -138,6 +138,12 @@ jobs:
           ALERTE_WEBHOOK_URL: ${{ secrets.ALERTE_WEBHOOK_URL }}
           ALERTE_WEBHOOK_KEY: ${{ secrets.ALERTE_WEBHOOK_KEY }}
           ALERTE_WEBHOOK_CLE_ENTETE: ${{ vars.ALERTE_WEBHOOK_CLE_ENTETE || 'x-api-key' }}
+          # Pushover (envoyé avant Chrome) : inactif sans les deux secrets ET sans stratégie cochée.
+          # PUSHOVER_STRATEGIES = clés séparées par des virgules (liste : scripts/envoyer_notifications.py --strategies).
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_STRATEGIES: ${{ vars.PUSHOVER_STRATEGIES }}
+          PUSHOVER_PRIORITY: ${{ vars.PUSHOVER_PRIORITY || '0' }}
         run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
 
       - name: Règlement après les alertes et construction du site
