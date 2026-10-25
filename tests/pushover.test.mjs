@@ -97,3 +97,14 @@ test('chaque règle affiche son bilan : réussite, gain, ROI, et ce qui attend',
   assert.ok(html.includes('Aucun pari réglé depuis le 14/10 · 4 en attente'));
   assert.ok(!html.includes('NaN') && !html.includes('undefined'));
 });
+
+test('les comparateurs affichent aussi leur bilan',async()=>{
+  const p=page({serveur:(action)=>action==='pushover-lire'?[200,{defini:true,strategies:[]}]:[200,{ok:true}]});
+  p.ctx.D.laboratoire={futur:[],comparateurs_futur:{'Eden (rejeu)':{regles:20,gagnes:11,gain:35.5,roi:17.8,attente:2}}};
+  p.ctx.D.notifications.strategies={eden:'Eden',m3:'M3'};
+  p.ctx.D.notifications.comparateurs={eden:'Eden (rejeu)',m3:'M3 (rejeu)'};
+  await p.demarrer();
+  const html=p.elements['pushover-strategies'].innerHTML;
+  assert.ok(html.includes('Réussite <b>55 %</b> (11/20)') && html.includes('<b class="pos">+35,50 €</b>') && html.includes('2 en attente'));
+  assert.ok(!html.includes('undefined'));
+});

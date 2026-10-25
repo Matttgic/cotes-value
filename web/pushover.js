@@ -9,6 +9,10 @@
   const noms=D.notifications.strategies, details=D.notifications.details||{};
   // Bilan prospectif de chaque règle du laboratoire (mises de 10 €), comme sur la page Stratégies.
   const futur=new Map((D.laboratoire?.futur||[]).map(r=>['labo:'+r.id,r]));
+  for(const [k,nom] of Object.entries(D.notifications.comparateurs||{})) {
+    const r=D.laboratoire?.comparateurs_futur?.[nom];
+    if(r) futur.set(k,r);
+  }
   const fr=(x,d)=>x.toFixed(d).replace('.',',');
   const signe=(x,d)=>(x>0?'+':'')+fr(x,d);
   const classe=x=>x>0?'pos':x<0?'neg':'';
