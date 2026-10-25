@@ -96,6 +96,8 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
              "trj_bookmaker": o.get("trj_bookmaker"), "limite_pinnacle": o.get("limite_pinnacle"),
              "marge_pinnacle": o.get("marge_pinnacle"), "mouvement_pinnacle": o.get("mouvement_pinnacle"),
              "mouvement_s": o.get("mouvement_s"),
+             # âge de la cote française à la décision : ce qu'on peut vraiment jouer (les alertes exigent moins de 5 min)
+             "age_cote_prise_s": _age_s(o.get("collecte_recue") or o.get("detecte"), decision),
              "statut": "en_cours", "gain": None, "cote_juste_cloture": o["cote_juste"], "clv": None,
              "match_reference": o.get("match_reference"), "lien": lien_match(o),
              # trace de la prise : de quoi revérifier le pari après coup
@@ -111,6 +113,13 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
         paris.append(p)
         nouveaux.append(p)
     return nouveaux
+
+
+def _age_s(lecture, decision) -> int | None:
+    t = _heure(lecture)
+    if t is None or t.tzinfo is None:
+        return None
+    return max(0, round((decision - t).total_seconds()))
 
 
 def suivre_prix(paris: list[dict], lignes: list[dict]) -> None:

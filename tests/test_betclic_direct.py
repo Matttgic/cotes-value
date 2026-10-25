@@ -398,3 +398,43 @@ def test_les_lignes_betclic_football_portent_le_lien_du_match():
     lignes, _ = betclic.collecter({"football"}, 36, session=session, maintenant=MAINTENANT)
     assert {l["lien"] for l in lignes} == {"/football-s1/ligue-1-c4/lens-lille-m7"}
     assert lien_match(lignes[0]) == "https://www.betclic.fr/football-s1/ligue-1-c4/lens-lille-m7"
+
+
+# --- Matchs proches : relance d'une lecture ratée, cotes gardées retirées si Betclic ne propose plus rien ---
+
+PROCHE = "2026-10-18T12:40:00Z"          # 40 min après MAINTENANT
+
+
+def _passe_proche(reserve, minutes, *reponses):
+    from datetime import timedelta
+    session = Session([(_liste(_match(7, "Lens", "Lille", debut=PROCHE)), 200)] + list(reponses))
+    lignes, meta = betclic.collecter({"football"}, 36, session=session, concurrence=1, reserve=reserve,
+                                     maintenant=MAINTENANT + timedelta(minutes=minutes))
+    return lignes, meta, len(session.urls)
+
+
+def test_match_proche_lecture_ratee_est_relancee_dans_le_meme_passage():
+    _, m1, _ = _passe_proche({"lignes": []}, 0, (_top(TOTAL), 200), (MI_TEMPS, 200))
+    lignes, meta, n = _passe_proche(m1["reserve"], 5, (b"", 500), (_top(TOTAL), 200), (MI_TEMPS, 200))
+    assert meta["proches"]["relances"] == 1 and meta["proches"]["proches_non_lus"] == 0
+    assert all(l["collecte"].startswith("2026-10-18T12:05") for l in lignes if not l.get("onglet"))   # cotes neuves
+
+
+def test_match_proche_sans_reponse_garde_les_anciennes_cotes_avec_leur_age_reel():
+    _, m1, _ = _passe_proche({"lignes": []}, 0, (_top(TOTAL), 200), (MI_TEMPS, 200))
+    lignes, meta, _ = _passe_proche(m1["reserve"], 5, (b"", 500), (b"", 500))
+    assert meta["proches"]["proches_non_lus"] == 1
+    assert lignes and all(l["collecte"].startswith("2026-10-18T12:00") for l in lignes)
+
+
+def test_match_proche_sans_marche_retire_les_anciennes_cotes():
+    _, m1, _ = _passe_proche({"lignes": []}, 0, (_top(TOTAL), 200), (MI_TEMPS, 200))
+    vide = _detail("Résultat du match (t. rég)", [])
+    lignes, meta, _ = _passe_proche(m1["reserve"], 5, (vide, 200), (vide, 200))
+    assert lignes == [] and meta["proches"]["proches_vides"] == 1
+
+
+def test_match_lointain_n_est_pas_relance():
+    _, m1, _ = _passe({"lignes": []}, 0, _top(TOTAL), MI_TEMPS)
+    _, meta, _ = _passe(m1["reserve"], 5, b"", b"")
+    assert meta["proches"] == {"proches": 0, "relances": 0, "proches_non_lus": 0, "proches_vides": 0}

@@ -34,7 +34,7 @@ CHAMPS_WEBHOOK = ("id", "match", "ligue", "debut", "marche", "selection", "bookm
                   "cote_juste", "cote_pinnacle", "ecart", "recheck")
 
 
-def preparer(donnees: Path, maintenant: datetime | None = None) -> dict:
+def preparer(donnees: Path, maintenant: datetime | None = None, retenues: list | None = None) -> dict:
     """Même sélection que le site, sans attendre sa génération ni les résultats."""
     from cotes import stockage
     from cotes.convergence import selections
@@ -45,7 +45,7 @@ def preparer(donnees: Path, maintenant: datetime | None = None) -> dict:
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     retenus.update(selections_labo(paris))
-    return flux(actuelles, paris, retenus, maintenant)
+    return flux(actuelles, paris, retenus, maintenant, retenues=retenues)
 
 
 def charge_utile(a: dict) -> dict:
@@ -362,7 +362,8 @@ def pushover(donnees: Path, flux: dict, env=None) -> dict:
 
 def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
     from scripts.cycle import ecrire_json
-    flux = preparer(donnees)
+    retenues: list = []
+    flux = preparer(donnees, retenues=retenues)
     ecrire_json(destination, flux)
     push = pushover(donnees, flux)                  # d'abord : c'est le canal le plus rapide
     webhook = webhook_pinnacle2(donnees, flux)
@@ -372,6 +373,7 @@ def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
     # Données publiques de diagnostic uniquement, jamais d'abonnement ni de jeton.
     journal = {"prepare_le": flux["generated_at"], "envoi_demande_le": debut.isoformat(),
                "envoi_termine_le": fin.isoformat(), "resultat": bilan, "webhook": webhook, "pushover": push,
+               "retenues": retenues[:20],         # alertes écartées : cote française trop ancienne
                "alertes": [{k:a.get(k) for k in ("id","match","pari","bookmaker","cote","collecte_le","age_prix_secondes","detecte")}
                             for a in flux["alertes"]]}
     ancien = donnees / "notifications_diagnostic.json"
