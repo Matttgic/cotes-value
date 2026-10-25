@@ -93,9 +93,25 @@ export function createHandler({db,config,authorize,send,clock=Date.now}) {
       // Stratégies cochées sur les appareils actifs : lues par le job GitHub (Pushover), même identité que « dispatch ».
       // Seulement des clés de stratégie : ni abonnement, ni jeton, ni identifiant d'appareil.
       if(action==='strategies') {
+        // Le choix enregistré pour Pushover (page Notifications, code personnel) prime, même vide ; tant qu'aucun choix
+        // n'existe, repli sur les cases des appareils Chrome actifs.
+        const choix=await db('cv_pushover_choix?id=eq.true&select=strategies');
+        if(choix.length) return reply({strategies:[...new Set(choix[0].strategies.filter(cleValide))].sort(),source:'pushover'});
         const devices=await db('cv_push_devices?enabled=eq.true&select=strategies');
         const cles=[...new Set(devices.flatMap(d=>Array.isArray(d.strategies)?d.strategies:[]).filter(cleValide))].sort();
-        return reply({strategies:cles});
+        return reply({strategies:cles,source:'chrome'});
+      }
+      // Choix Pushover, depuis la page du site, sans abonnement Chrome. Lecture libre (de simples clés de stratégie) ;
+      // écriture seulement avec le code personnel (haché ici, comparé en base) : la première écriture le définit.
+      if(action==='pushover-lire') {
+        const choix=await db('cv_pushover_choix?id=eq.true&select=strategies,updated_at');
+        return reply(choix.length?{defini:true,strategies:choix[0].strategies.filter(cleValide),maj:choix[0].updated_at}:{defini:false,strategies:[]});
+      }
+      if(action==='pushover-ecrire') {
+        if(!/^[0-9a-f]{64}$/.test(body.token||'') || !Array.isArray(body.strategies) || body.strategies.length>MAX_STRATEGIES ||
+          !body.strategies.every(cleValide)) return reply({error:'Code ou stratégies invalides'},400);
+        const ok=await db('rpc/cv_pushover_choix_ecrire','POST',{p_token:await hash(body.token),p_strategies:[...new Set(body.strategies)]});
+        return reply(ok?{ok:true}:{error:'Code personnel refusé'},ok?200:403);
       }
       if(action==='dispatch') {
         if(!Array.isArray(body.alertes) || body.alertes.length>100 ||

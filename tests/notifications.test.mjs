@@ -197,20 +197,58 @@ test('toucher la notification ouvre le match chez le bookmaker, le bouton ouvre 
     'https://matttgic.github.io/cotes-value/?alerte='+'a'.repeat(64)+'#paris']);
 });
 
-test('les stratégies cochées sont lisibles par GitHub seulement, sans rien d\'autre',async()=>{
+test('GitHub lit le choix Pushover, sinon les cases des appareils Chrome, sans rien d\'autre',async()=>{
   const requetes=[];
-  const handler=app({authorize:async h=>h==='Bearer bon',db:async path=>{requetes.push(path);
-    return [{strategies:['eden','labo:PIN-1.3-2-e2-h12','pas valide!']},{strategies:['eden','jules']},{strategies:null},
-      {strategies:['labo:PIN-1.3-2-e2-h36'],subscription:{endpoint:'secret'},token_hash:'secret'}];}});
-  const appel=(auth)=>new Request('https://example.test/cv-notifications/strategies',{method:'POST',
+  const appareils=[{strategies:['eden','labo:PIN-1.3-2-e2-h12','pas valide!']},{strategies:['eden','jules']},{strategies:null},
+    {strategies:['labo:PIN-1.3-2-e2-h36'],subscription:{endpoint:'secret'},token_hash:'secret'}];
+  const construire=choix=>app({authorize:async h=>h==='Bearer bon',db:async path=>{requetes.push(path);
+    return path.startsWith('cv_pushover_choix')?choix:appareils;}});
+  const appel=auth=>new Request('https://example.test/cv-notifications/strategies',{method:'POST',
     headers:{'Content-Type':'application/json',...(auth?{Authorization:auth}:{})},body:'{}'});
-  assert.equal((await handler(appel(null))).status,401);
-  assert.equal((await handler(appel('Bearer mauvais'))).status,401);
+  const sans=construire([]);
+  assert.equal((await sans(appel(null))).status,401);
+  assert.equal((await sans(appel('Bearer mauvais'))).status,401);
   assert.equal(requetes.length,0);                                              // refusé avant toute lecture
-  const r=await handler(appel('Bearer bon'));
-  assert.equal(r.status,200);
-  const texte=await r.text();
-  assert.deepEqual(JSON.parse(texte),{strategies:['eden','jules','labo:PIN-1.3-2-e2-h12','labo:PIN-1.3-2-e2-h36']});
+  const chrome=await sans(appel('Bearer bon'));
+  const texte=await chrome.text();
+  assert.deepEqual(JSON.parse(texte),{strategies:['eden','jules','labo:PIN-1.3-2-e2-h12','labo:PIN-1.3-2-e2-h36'],source:'chrome'});
   assert.ok(!texte.includes('secret'));                                         // aucune donnée d'abonnement
-  assert.deepEqual(requetes,['cv_push_devices?enabled=eq.true&select=strategies']);   // seulement la colonne utile
+  assert.deepEqual(requetes,['cv_pushover_choix?id=eq.true&select=strategies','cv_push_devices?enabled=eq.true&select=strategies']);
+  const pushover=await construire([{strategies:['m3','jules','pas valide!','m3']}])(appel('Bearer bon'));
+  assert.deepEqual(await pushover.json(),{strategies:['jules','m3'],source:'pushover'});   // le choix Pushover prime
+  const vide=await construire([{strategies:[]}])(appel('Bearer bon'));                       // même vide : l'utilisateur a décidé
+  assert.deepEqual(await vide.json(),{strategies:[],source:'pushover'});
+});
+
+test('le choix Pushover se lit librement et ne s\'écrit qu\'avec le bon code',async()=>{
+  const code='c'.repeat(64);
+  const appels=[];
+  let ligne=null;
+  const handler=app({db:async(path,method,body)=>{
+    appels.push([path,method,body]);
+    if(path.startsWith('cv_pushover_choix')) return ligne?[ligne]:[];
+    if(path==='rpc/cv_pushover_choix_ecrire') {
+      if(ligne && ligne.token!==body.p_token) return false;
+      ligne={token:body.p_token,strategies:body.p_strategies,updated_at:iso(now)};return true;}
+    return [];}});
+  const post=(action,body,origin=ORIGIN)=>handler(req(action,body,origin));
+  let r=await post('pushover-lire',{});
+  assert.deepEqual(await r.json(),{defini:false,strategies:[]});
+  assert.equal((await post('pushover-lire',{},'https://evil.example')).status,403);          // origine du site seulement
+  assert.equal((await handler(new Request('https://example.test/cv-notifications/pushover-ecrire',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({token:code,strategies:['eden']})}))).status,403);   // sans origine
+  for(const mauvais of [{token:'trop court',strategies:['eden']},{token:code,strategies:'eden'},{token:code,strategies:['pas valide!']},
+    {token:code,strategies:Array.from({length:65},(_,i)=>'s'+i)},{strategies:['eden']}])
+    assert.equal((await post('pushover-ecrire',mauvais)).status,400);
+  assert.equal(appels.filter(a=>a[0]==='rpc/cv_pushover_choix_ecrire').length,0);               // rien d'invalide n'atteint la base
+  r=await post('pushover-ecrire',{token:code,strategies:['eden','eden','labo:PIN-1.3-2-e2-h12']});
+  assert.equal(r.status,200);
+  const ecrit=appels.find(a=>a[0]==='rpc/cv_pushover_choix_ecrire')[2];
+  assert.deepEqual(ecrit.p_strategies,['eden','labo:PIN-1.3-2-e2-h12']);
+  assert.equal(ecrit.p_token,await hash(code));assert.notEqual(ecrit.p_token,code);              // le code n'est jamais stocké en clair
+  r=await post('pushover-lire',{});
+  const lu=await r.json();assert.equal(lu.defini,true);assert.deepEqual(lu.strategies,['eden','labo:PIN-1.3-2-e2-h12']);
+  assert.ok(!JSON.stringify(lu).includes('token'));
+  assert.equal((await post('pushover-ecrire',{token:'d'.repeat(64),strategies:['m3']})).status,403);   // mauvais code
+  assert.equal((await post('pushover-ecrire',{token:code,strategies:[]})).status,200);                // vider est permis
 });

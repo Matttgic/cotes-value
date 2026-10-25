@@ -619,6 +619,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__ANALYSES_JS__", (web / "analyses.js").read_text(encoding="utf-8"))
     html = html.replace("__SUIVI_JS__", (web / "suivi.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
+    html = html.replace("__PUSHOVER_JS__", (web / "pushover.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
     version = hashlib.sha256(html.replace("__DONNEES__", donnees_json, 1).encode("utf-8")).hexdigest()
@@ -872,6 +873,15 @@ MODELE = r"""<!doctype html>
   </section>
   <section class="onglet" id="o-notifications">
     <div class="page-tete"><div><h2>Notifications</h2></div></div>
+    <h3 class="bu-titre">Alertes Pushover</h3>
+    <p class="aide" id="pushover-etat" role="status" aria-live="polite">Chargement du choix…</p>
+    <fieldset class="carte" id="pushover-strategies"><legend>Stratégies envoyées sur Pushover</legend></fieldset>
+    <p><label class="aide" for="pushover-code">Code personnel</label>
+      <input type="password" id="pushover-code" class="champ" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="pushover-aide"></p>
+    <p class="aide" id="pushover-aide">Le premier enregistrement définit ce code ; il protège ton choix, personne d’autre ne peut le modifier. Il est mémorisé sur cet appareil, à resaisir sur un autre.</p>
+    <p><button class="btn" id="pushover-sauver">Enregistrer pour Pushover</button></p>
+    <p class="aide" id="pushover-message" role="status" aria-live="polite"></p>
+    <h3 class="bu-titre">Notifications Chrome (facultatif)</h3>
     <div class="carte notif-appareil">
       <p id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
       <div class="notif-boutons"><button class="btn" id="notif-activer">Activer les notifications</button>
@@ -2022,6 +2032,7 @@ rendreLaboratoire();
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon Paris (« #jouer » reste un ancien raccourci vers Paris)
 const depart = location.hash.slice(1) || lire("onglet") || "paris";
 __NOTIFICATIONS_JS__
+__PUSHOVER_JS__
 const ONGLETS = ["jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
 ouvrir(ONGLETS.includes(depart) ? depart : "paris");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
