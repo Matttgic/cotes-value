@@ -166,3 +166,42 @@ Le webhook (ntfy compris) ne reçoit que les alertes Pinnacle 2 dont le bookmake
 (Winamax, Unibet, PMU…) ne passent plus par lui, y compris les paris re-décidés. Variable de dépôt facultative
 `ALERTE_WEBHOOK_BOOKMAKERS` : noms séparés par des virgules (`Betclic,Winamax`), ou `tous` pour ne pas filtrer.
 Les alertes Chrome ne sont pas concernées.
+
+## Pushover (alertes sur le téléphone, sans Chrome)
+
+Le canal le plus rapide : `scripts/envoyer_notifications.py` envoie chaque nouvelle alerte à l'API Pushover **avant** le
+service Web Push de Chrome. Le message donne le pari, puis le lien du match chez le bookmaker (lien cliquable sous le texte) :
+
+```
+Winamax – Football
+Lens – Lille
+Lens @ 2,10 (min 2,00)
+sam. 25/10 15h00
+Eden                      <- stratégie(s) qui ont retenu l'alerte
+[Ouvrir chez Winamax]     <- toucher ouvre la page du match
+```
+
+Un lien qui remplit directement le panier n'existe chez aucun bookmaker : le lien ouvre la page du match, où il reste à
+toucher la cote. Le lien est celui de `cotes/liens.py` (vrai lien chez Winamax et, en football, Betclic ; recherche Google
+du match ailleurs).
+
+**Mise en place (une fois)**
+
+1. Compte et application Pushover (iOS/Android, environ 5 € une fois par plateforme). Noter la clé utilisateur (page
+   d'accueil du compte) et créer une application (« Create an Application/API Token ») pour obtenir son jeton.
+2. Dépôt GitHub, Settings → Secrets and variables → Actions :
+   - secrets `PUSHOVER_USER_KEY` et `PUSHOVER_APP_TOKEN` ;
+   - variable `PUSHOVER_STRATEGIES` : les stratégies cochées, clés séparées par des virgules, par exemple
+     `eden,labo:PIN-1.3-2-e2-h36`. `python scripts/envoyer_notifications.py --strategies` liste toutes les clés avec leur nom.
+   - variable facultative `PUSHOVER_PRIORITY` : `0` (défaut, respecte les heures calmes de Pushover), `1` (les ignore), `-1`.
+3. Rien d'autre : sans les deux secrets ou sans stratégie cochée, le canal est inactif. Un changement de la variable
+   s'applique au cycle suivant.
+
+**Comportement**
+
+- Une alerte n'est envoyée qu'une fois (`pushover_envoyes.json`, trois jours d'historique).
+- Au premier passage, les re-décisions anciennes de Pinnacle 2 sont mémorisées sans être envoyées (pas d'inondation).
+- Le message disparaît du téléphone au coup d'envoi, ou au bout d'une heure (`ttl`).
+- Quota gratuit de Pushover : 10 000 messages par mois et par application ; un 429 arrête l'envoi du passage.
+- Le bilan est dans `notifications_diagnostic.json` (champ `pushover` : actif, nombre de stratégies, envois, échecs, clés
+  inconnues), jamais le jeton ni la clé.

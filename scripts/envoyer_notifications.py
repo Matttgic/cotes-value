@@ -20,12 +20,16 @@ from zoneinfo import ZoneInfo
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes.notifications import API, PIN2  # noqa: E402
+from cotes.notifications import API, NOMS, PIN2  # noqa: E402
 
 WEBHOOK_TIMEOUT_S = 5            # par requête
 WEBHOOK_BUDGET_S = 25            # pour tout le passage : ne jamais retarder le scan ni les alertes Chrome
 WEBHOOK_MAX = 20
 ENVOYES = "webhook_envoyes.json"
+PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
+PUSHOVER_ENVOYES = "pushover_envoyes.json"
+PUSHOVER_BUDGET_S = 20           # pour tout le passage
+PUSHOVER_TTL_MAX_S = 3600        # le message disparaît du téléphone au coup d'envoi, ou après une heure
 CHAMPS_WEBHOOK = ("id", "match", "ligue", "debut", "marche", "selection", "bookmaker", "cote", "cote_min",
                   "cote_juste", "cote_pinnacle", "ecart", "recheck")
 
@@ -192,17 +196,135 @@ def webhook_pinnacle2(donnees: Path, flux: dict) -> dict:
         return {"actif": False, "envoyees": 0, "echecs": 0, "erreurs": [type(e).__name__]}
 
 
+def strategies_pushover(env=None) -> tuple[set[str], list[str]]:
+    """(stratégies cochées, clés inconnues) d'après ``PUSHOVER_STRATEGIES`` : clés séparées par des virgules ou
+    des espaces. Liste vide : aucune alerte Pushover. Les clés s'obtiennent avec ``--strategies``."""
+    env = os.environ if env is None else env
+    voulues = [x for x in env.get("PUSHOVER_STRATEGIES", "").replace(",", " ").split() if x]
+    return {x for x in voulues if x in NOMS}, sorted({x for x in voulues if x not in NOMS})
+
+
+def alertes_pushover(flux: dict, paris: list[dict], envoyes: dict, choisies: set[str],
+                     maintenant: datetime | None = None, amorcage: bool = False) -> list[dict]:
+    """Alertes des stratégies cochées pas encore envoyées, les plus récentes d'abord. ``amorcage`` (premier passage,
+    aucun fichier d'envois) : les re-décisions anciennes sont seulement mémorisées, pour ne pas inonder le téléphone."""
+    from cotes.notifications import alertes_recheck
+    vues, out = set(envoyes), []
+    rechecks = alertes_recheck(paris, PIN2, maintenant) if PIN2 in choisies else []
+    for a in [x for x in flux.get("alertes", []) if set(x.get("strategies", [])) & choisies] + rechecks:
+        if a["id"] in vues:
+            continue
+        vues.add(a["id"])
+        if amorcage and a.get("recheck"):
+            envoyes[a["id"]] = ""             # mémorisé sans envoi
+            continue
+        out.append(a)
+    return out
+
+
+def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> dict:
+    """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable)."""
+    env = os.environ if env is None else env
+    maintenant = maintenant or datetime.now(timezone.utc)
+    titre, corps = message_ntfy(a)
+    labels = ", ".join(str(x) for x in (a.get("labels") or []))
+    champs = {"title": titre[:250], "message": (corps + (f"\n{labels}" if labels else ""))[:1000]}
+    lien = a.get("lien")
+    if isinstance(lien, str) and lien.startswith("https://") and len(lien) <= 500:
+        champs["url"] = lien
+        champs["url_title"] = f"Ouvrir chez {a.get('bookmaker') or 'le bookmaker'}"[:100]
+    try:
+        reste = (datetime.fromisoformat(str(a.get("debut")).replace("Z", "+00:00")) - maintenant).total_seconds()
+        champs["ttl"] = int(max(60, min(PUSHOVER_TTL_MAX_S, reste)))
+    except ValueError:
+        pass
+    try:                         # 0 (défaut) respecte les heures calmes ; 1 les ignore. 2 (accusé) est refusé.
+        priorite = int(env.get("PUSHOVER_PRIORITY", "0") or 0)
+    except ValueError:
+        priorite = 0
+    champs["priority"] = priorite if priorite in (-1, 0, 1) else 0
+    return champs
+
+
+def poster_pushover(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.monotonic) -> dict:
+    """Une requête par alerte. Ne lève jamais ; ni le jeton ni la clé n'apparaissent dans le résultat."""
+    env = os.environ if env is None else env
+    jeton, cle = env.get("PUSHOVER_APP_TOKEN", "").strip(), env.get("PUSHOVER_USER_KEY", "").strip()
+    bilan = {"envoyees": [], "echecs": 0, "erreurs": []}
+    if not jeton or not cle:
+        return {**bilan, "actif": False}
+    debut = horloge()
+    for a in alertes[:WEBHOOK_MAX]:
+        if horloge() - debut > PUSHOVER_BUDGET_S:
+            bilan["erreurs"].append("budget de temps atteint")
+            break
+        try:
+            donnees = urlencode({"token": jeton, "user": cle, **message_pushover(a, env)}).encode()
+            with ouvrir(Request(PUSHOVER_URL, data=donnees, method="POST",
+                                headers={"User-Agent": "cotes-value"}), timeout=WEBHOOK_TIMEOUT_S) as r:
+                code, corps = getattr(r, "status", 200), json.load(r)
+            if 200 <= code < 300 and corps.get("status") == 1:
+                bilan["envoyees"].append(a["id"])
+                continue
+            bilan["erreurs"].append(f"HTTP {code}")
+        except HTTPError as e:
+            bilan["erreurs"].append(f"HTTP {e.code}")
+            if e.code == 429:                   # quota mensuel : inutile d'insister
+                bilan["echecs"] += 1
+                break
+        except (URLError, OSError, ValueError, TypeError, AttributeError) as e:
+            bilan["erreurs"].append(type(e).__name__)
+        bilan["echecs"] += 1
+    bilan["erreurs"] = sorted(set(bilan["erreurs"]))[:5]
+    return {**bilan, "actif": True}
+
+
+def pushover(donnees: Path, flux: dict, env=None) -> dict:
+    """Envoie les nouvelles alertes des stratégies cochées et mémorise leurs id. Jamais de levée."""
+    from scripts.cycle import ecrire_json
+    env = os.environ if env is None else env
+    try:
+        choisies, inconnues = strategies_pushover(env)
+        actif = bool(env.get("PUSHOVER_APP_TOKEN", "").strip() and env.get("PUSHOVER_USER_KEY", "").strip())
+        base = {"actif": actif and bool(choisies), "strategies": len(choisies), "envoyees": 0, "echecs": 0}
+        if inconnues:
+            base["inconnues"] = inconnues
+        if not base["actif"]:
+            return base
+        chemin = donnees / PUSHOVER_ENVOYES
+        amorcage = not chemin.exists()
+        try:
+            envoyes = json.loads(chemin.read_text()) if chemin.exists() else {}
+        except ValueError:
+            envoyes, amorcage = {}, True
+        maintenant = datetime.now(timezone.utc)
+        limite = (maintenant - timedelta(days=3)).isoformat(timespec="seconds")
+        recents = {k: v for k, v in envoyes.items() if isinstance(v, str) and (v >= limite or v == "")}
+        paris = json.loads((donnees / "paris.json").read_text())
+        a_envoyer = alertes_pushover(flux, paris, recents, choisies, maintenant, amorcage)
+        bilan = poster_pushover(a_envoyer, env) if a_envoyer else {"envoyees": [], "echecs": 0, "erreurs": []}
+        for pid in bilan["envoyees"]:
+            recents[pid] = maintenant.isoformat(timespec="seconds")
+        if bilan["envoyees"] or amorcage or len(recents) != len(envoyes):
+            ecrire_json(chemin, recents)
+        return {**base, "envoyees": len(bilan["envoyees"]), "echecs": bilan["echecs"],
+                "erreurs": bilan["erreurs"]}
+    except Exception as e:  # noqa: BLE001 - le scan ne doit jamais dépendre de Pushover
+        return {"actif": False, "envoyees": 0, "echecs": 0, "erreurs": [type(e).__name__]}
+
+
 def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
     from scripts.cycle import ecrire_json
     flux = preparer(donnees)
     ecrire_json(destination, flux)
+    push = pushover(donnees, flux)                  # d'abord : c'est le canal le plus rapide
     webhook = webhook_pinnacle2(donnees, flux)
     debut = datetime.now(timezone.utc)
     bilan = transmettre(flux)
     fin = datetime.now(timezone.utc)
     # Données publiques de diagnostic uniquement, jamais d'abonnement ni de jeton.
     journal = {"prepare_le": flux["generated_at"], "envoi_demande_le": debut.isoformat(),
-               "envoi_termine_le": fin.isoformat(), "resultat": bilan, "webhook": webhook,
+               "envoi_termine_le": fin.isoformat(), "resultat": bilan, "webhook": webhook, "pushover": push,
                "alertes": [{k:a.get(k) for k in ("id","match","pari","bookmaker","cote","collecte_le","age_prix_secondes","detecte")}
                             for a in flux["alertes"]]}
     ancien = donnees / "notifications_diagnostic.json"
@@ -241,7 +363,13 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--flux", type=Path, default=Path("site/notifications.json"))
     p.add_argument("--donnees", type=Path, help="Préparer les alertes immédiatement depuis les données sauvegardées")
+    p.add_argument("--strategies", action="store_true",
+                   help="Lister les clés à cocher dans la variable PUSHOVER_STRATEGIES, puis quitter")
     args = p.parse_args()
+    if args.strategies:
+        for cle, nom in sorted(NOMS.items(), key=lambda x: x[1]):
+            print(f"{cle}\t{nom}")
+        sys.exit(0)
     bilan = envoyer_et_journaliser(args.donnees,args.flux) if args.donnees else transmettre(json.loads(args.flux.read_text(encoding="utf-8")))
     print(json.dumps(bilan, ensure_ascii=False))
     sys.exit(0 if bilan.get("ok") else 1)
