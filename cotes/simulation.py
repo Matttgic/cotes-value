@@ -334,7 +334,7 @@ def _cumuler(paris: list[dict], groupe) -> dict:
             clefs.append(f'{groupe(p)}|{QWEN["nom"]}')
         for clef in clefs:
             b = out.setdefault(clef, {"paris": 0, "regles": 0, "en_cours": 0, "mises": 0.0, "gains": 0.0,
-                                      "clv_somme": 0.0, "clv_n": 0, "gagnes": 0,
+                                      "clv_somme": 0.0, "clv_n": 0, "clv_positifs": 0, "gagnes": 0,
                                       # paris réglés avec / sans CLV mesurée : gain réel, et gain espéré d'après
                                       # la CLV (mise × CLV) pour ceux qui en ont une
                                       "gains_avec_clv": 0.0, "espere_clv": 0.0, "gains_sans_clv": 0.0,
@@ -356,6 +356,7 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                 ev[3] += 1
                 b["clv_somme"] += clv
                 b["clv_n"] += 1
+                b["clv_positifs"] += clv > 0      # a battu la cote de clôture
                 b["gains_avec_clv"] += p["gain"] or 0
                 b["espere_clv"] += p["mise"] * clv
             elif p["statut"] not in ("en_cours", "a_regler"):
@@ -407,6 +408,28 @@ def moyennes_ecarts(paris: list[dict]) -> dict:
 def bilan_bookmakers(paris: list[dict]) -> dict:
     """Par bookmaker et simulation (« PMU·A|Uniques »…) : la page additionne les simulations choisies."""
     return _cumuler(paris, lambda p: f'{p.get("bookmaker")}·{p.get("simulation")}')
+
+
+def profil_horaire(paris: list[dict]) -> dict:
+    """Détections par heure de Paris (0 à 23), par bookmaker : « PMU » -> 24 compteurs.
+
+    Paris uniques seulement (une cote française comptée une fois, quelle que soit la référence qui l'a
+    repérée) à leur première détection : on voit quand les erreurs de cote apparaissent chez chaque
+    bookmaker. « Tous » regroupe les bookmakers. Aucune lecture réseau, descriptif seulement."""
+    from zoneinfo import ZoneInfo
+    paris_tz = ZoneInfo("Europe/Paris")
+    uniques = premiers_par_selection(paris)
+    out: dict[str, list[int]] = {"Tous": [0] * 24}
+    for p in paris:
+        if id(p) not in uniques:
+            continue
+        t = _heure(p.get("detecte"))
+        if t is None or t.tzinfo is None:
+            continue
+        h = t.astimezone(paris_tz).hour
+        out["Tous"][h] += 1
+        out.setdefault(p.get("bookmaker") or "?", [0] * 24)[h] += 1
+    return out
 
 
 def bilan_tranches(paris: list[dict]) -> dict:
