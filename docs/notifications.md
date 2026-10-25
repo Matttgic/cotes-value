@@ -191,13 +191,14 @@ du match ailleurs).
    d'accueil du compte) et créer une application (« Create an Application/API Token ») pour obtenir son jeton.
 2. Dépôt GitHub, Settings → Secrets and variables → Actions :
    - secrets `PUSHOVER_USER_KEY` et `PUSHOVER_APP_TOKEN` ;
-   - **stratégies** : par défaut, celles que vous cochez sur le site (page Notifications, bouton « Enregistrer »). Le job
-     les lit auprès du service `cv-notifications` (action `strategies`, authentifiée par l'identité GitHub Actions) : il
-     faut avoir redéployé la fonction (`supabase functions deploy cv-notifications`). Elles sont enregistrées avec
-     l'abonnement Chrome de l'appareil : « Désactiver » sur le site les efface. Service injoignable : aucune alerte
-     Pushover (le champ `source` du diagnostic vaut « site indisponible »).
-   - variable `PUSHOVER_STRATEGIES` (facultative) : si elle est remplie, elle remplace les cases du site. Clés séparées par
-     des virgules, par exemple `eden,labo:PIN-1.3-2-e2-h36` ; `auto` ou vide = cases du site.
+   - **stratégies** : à choisir sur le site, page Notifications, bloc « Alertes Pushover » : cocher, saisir un code
+     personnel (au moins 8 caractères, défini au premier enregistrement, mémorisé sur l'appareil, à resaisir ailleurs),
+     « Enregistrer pour Pushover ». Aucun abonnement Chrome n'est nécessaire. Le choix est enregistré dans la table
+     `cv_pushover_choix` (une ligne, protégée par le code haché) ; le job le lit à chaque cycle auprès de la fonction
+     `cv-notifications` (action `strategies`, identité GitHub Actions). Tant qu'aucun choix n'est enregistré, le job
+     suit les cases de l'abonnement Chrome, s'il existe. Tout décocher et enregistrer coupe Pushover.
+   - variable `PUSHOVER_STRATEGIES` (facultative) : si elle est remplie, elle remplace tout. Clés séparées par des
+     virgules, par exemple `eden,labo:PIN-1.3-2-e2-h36` ; vide ou `auto` = choix du site.
      `python scripts/envoyer_notifications.py --strategies` liste toutes les clés avec leur nom.
    - variable facultative `PUSHOVER_PRIORITY` : `0` (défaut, respecte les heures calmes de Pushover), `1` (les ignore), `-1`.
 3. Rien d'autre : sans les deux secrets ou sans stratégie cochée, le canal est inactif. Un changement de la variable

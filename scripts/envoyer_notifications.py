@@ -229,8 +229,8 @@ def strategies_du_site(env=None, ouvrir=urlopen) -> list[str] | None:
 
 def choix_pushover(env=None, ouvrir=urlopen) -> tuple[set[str], list[str], str]:
     """(stratégies, clés inconnues, source). ``PUSHOVER_STRATEGIES`` rempli (et différent de « auto ») : cette liste.
-    Vide ou « auto » : les cases cochées sur le site ; si le service ne répond pas, aucune alerte (jamais de
-    liste inventée)."""
+    Vide ou « auto » : le choix fait sur le site (bloc « Alertes Pushover », sinon les cases de l'abonnement Chrome) ;
+    si le service ne répond pas, aucune alerte (jamais de liste inventée)."""
     env = os.environ if env is None else env
     brut = env.get("PUSHOVER_STRATEGIES", "").strip()
     if brut and brut.lower() != "auto":
