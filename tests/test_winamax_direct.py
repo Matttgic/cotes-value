@@ -271,3 +271,10 @@ def test_tennis_et_hockey_lisent_leurs_filtres():
     # Sans filtre, la route du sport ne porte que le vainqueur (2 cotes par match).
     assert {107, 108, 116, 121, 122, 123} <= set(winamax.FILTRES["tennis"])
     assert {247, 248, 249, 253, 255} <= set(winamax.FILTRES["hockey"])
+
+
+def test_filtres_handicap_et_totaux_par_equipe_lus():
+    # football : handicap 44, totaux par équipe 58/59, mi-temps ; basket : handicap 208, totaux par équipe 228/229
+    assert {44, 58, 59, 48, 45, 70, 71}.issubset(winamax.FILTRES["football"])
+    assert {207, 208, 228, 229, 231, 237}.issubset(winamax.FILTRES["basket"])
+    assert winamax.FILTRES["football"][:7] == (6, 13, 16, 56, 17, 74, 4)        # anciens d'abord

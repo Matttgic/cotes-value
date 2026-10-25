@@ -75,9 +75,15 @@ _PAR_SPORT = {
 # (108/120, 247/260…) renvoient les mêmes paris. Tennis : sets (314), jeux (189), écart de sets (188),
 # écart de jeux (187), jeux de chaque joueur (190, 191). Hockey : écart (410), total (412), les deux
 # équipes marquent (29), vainqueur (406), double chance (10).
+# Ajoutés le 25/10/2026 (sans eux, ni handicap ni total par équipe au football et au basket : 85 paris handicap
+# avant l'arrêt de PulseScore, 2 après). Football : handicap (44), totaux de chaque équipe (58, 59), mi-temps :
+# total (48), handicap (45), totaux par équipe (70, 71), double chance (18), remboursé si nul (19), les deux
+# équipes marquent (69). Basket : handicap (208), totaux par équipe (228, 229), mi-temps : total (231), handicap
+# (237), totaux par équipe (232, 233). Cotes vérifiées face à Pinnacle (rapport médian 0,85 à 0,91, comme les
+# autres marchés). Les filtres sont lus dans l'ordre : les plus utiles d'abord si le budget coupe.
 FILTRES = {
-    "football": (6, 13, 16, 56, 17, 74, 4),
-    "basket": (207,),
+    "football": (6, 13, 16, 56, 17, 74, 4, 44, 58, 59, 48, 45, 70, 71, 18, 19, 69),
+    "basket": (207, 208, 228, 229, 231, 237, 232, 233),
     "tennis": (107, 108, 116, 121, 122, 123),
     "hockey": (247, 248, 249, 253, 255),
 }

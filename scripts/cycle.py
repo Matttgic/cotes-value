@@ -48,8 +48,8 @@ BUDGETS = {
     "pinnacle": 45,
     "polymarket": 30,
     "pmu_direct": 75,
-    "winamax_direct": 45,
-    "unibet_direct": 75,
+    "winamax_direct": 80,       # 25 filtres depuis le 25/10 (handicaps, totaux par équipe, mi-temps) : ~70 s
+    "unibet_direct": 80,        # coupé par le budget dans la moitié des cycles les 23-24/10 (médiane 72 s)
     "olybet": 40,
     "netbet": 40,
     "betclic_direct": 80,
@@ -232,6 +232,15 @@ def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
     sinon « aucune source » pour un pari ne dit pas qu'une source était en panne."""
     if erreurs and nom in journal["etapes"]:
         journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:10]}
+
+
+def noter_lecture(journal: dict, nom: str, meta: dict) -> None:
+    """Erreurs d'un lecteur direct dans son étape. Lecture en échec (socket Winamax incomplet, accueil Unibet
+    refusé…) : l'étape passe en échec, même si la mémoire des cycles précédents fournit encore des cotes. Sans
+    cela, le refus 403 d'Unibet du 21/10 (115 cycles sans aucune cote) restait « ok » et n'alertait pas."""
+    signaler(journal, nom, list(meta.get("erreurs") or []))
+    if meta.get("ok") is False and nom in journal["etapes"]:
+        journal["etapes"][nom]["ok"] = False
 
 
 def _radar_depuis(lignes) -> list[dict]:
@@ -421,10 +430,7 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         metas = {}
         for nom in ("pmu_direct", "winamax_direct", "unibet_direct", "betclic_direct"):
             lues, meta = recevoir(nom)
-            signaler(journal, nom, list(meta.get("erreurs") or []))
-            # Le socket Winamax renvoie ok=False quand la lecture est incomplète : l'étape l'indique.
-            if nom == "winamax_direct" and meta.get("ok") is False and nom in journal["etapes"]:
-                journal["etapes"][nom]["ok"] = False
+            noter_lecture(journal, nom, meta)
             lignes += list(lues)
             metas[nom] = meta
         proches = (metas.get("betclic_direct") or {}).get("proches")
