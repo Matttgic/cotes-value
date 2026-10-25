@@ -1332,9 +1332,9 @@ function appliquerMise(mode) {
   miseMode = K ? "kelly" : "fixe";
   for (const k of CLES_MISE) D[k] = K ? K[k] : D_FIXE[k];
   for (const f of fiches) {
-    if (K && f.gain_fixe != null && f.mise_fixe) {
+    if (K && f.mise_kelly && f.mise_fixe) {        // la mise change aussi pour un pari encore en cours
       f.mise = f.mise_kelly;
-      f.gain = Math.round(100 * f.gain_fixe * f.mise_kelly / f.mise_fixe) / 100;
+      f.gain = f.gain_fixe == null ? f.gain_fixe : Math.round(100 * f.gain_fixe * f.mise_kelly / f.mise_fixe) / 100;
     } else { f.mise = f.mise_fixe; f.gain = f.gain_fixe; }
   }
   fusionnerNavigation();
