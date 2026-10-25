@@ -994,6 +994,9 @@ MODELE = r"""<!doctype html>
 // Mode jour/nuit appliqué dès le début du script unique de la page (les contrôles de publication exigent un seul script).
 try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}
 const D = __DONNEES__;
+// Blocs chiffrés qui existent en mise fixe et en mise Kelly (voir appliquerMise)
+const CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
+const D_FIXE = Object.fromEntries(CLES_MISE.map(k => [k, D[k]]));
 const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cote = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
 const pct = x => x==null ? "—" : (x>0?"+":"") + (100*x).toFixed(1).replace(".", ",") + " %";
@@ -1310,8 +1313,6 @@ if(D.laboratoire?.navigation?.paris) {
 document.getElementById("nb-paris").textContent = fiches.length || "";
 // --- Mise fixe (10 €) ou Kelly ¼ : les blocs chiffrés du serveur (bilans, courbes, segments, laboratoire) existent
 // dans les deux mises ; les fiches gardent leur mise et leur gain d'origine pour pouvoir revenir en arrière.
-const CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
-const D_FIXE = Object.fromEntries(CLES_MISE.map(k => [k, D[k]]));
 for (const f of fiches) { f.mise_fixe = f.mise; f.gain_fixe = f.gain; }
 // Les lignes de navigation portent les fiches (fusionnées au chargement) : après un échange de mise, seules la mise
 // et le gain sont remis à jour ; un bloc Kelly encore brut est d'abord fusionné comme l'était le bloc fixe.
