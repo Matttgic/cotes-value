@@ -77,3 +77,21 @@ test('prisesSuivi suit la mise des bilans (fixe ou Kelly)', async () => {
   const kelly = fabrique(D, 'kelly')();
   assert.deepEqual(kelly.map(p => [p.mise, p.gain]), [[4, 4.8], [6, -6], [5, null]]);
 });
+
+test('les stratégies Pushover entrent dans « Mes stratégies » sans effacer celles de Chrome', () => {
+  for (const k of Object.keys(mem)) delete mem[k];
+  const cle = 'cv-suivi-strategies-v1';
+  c.suiviPushover(['qwen_persistence', 'coeur_value']);
+  let etat = JSON.parse(mem[cle]);
+  assert.deepEqual(Object.keys(etat).sort(), ['coeur_value', 'qwen_persistence']);
+  assert.equal(etat.qwen_persistence[0][0], Date.parse('2026-10-25T12:44:00Z'));      // suivi depuis le choix sur le site
+  mem['cv-notifications-v1'] = JSON.stringify({enabled: true, strategies: ['claude_prudent']});
+  c.suiviEnregistrer(['claude_prudent']);                                              // coche Chrome : Pushover reste actif
+  etat = JSON.parse(mem[cle]);
+  assert.deepEqual(Object.keys(etat).sort(), ['claude_prudent', 'coeur_value', 'qwen_persistence']);
+  assert.ok(Object.values(etat).every(l => l[l.length - 1][1] == null));
+  c.suiviPushover(['coeur_value']);                                                    // décoche Pushover de Qwen : arrêtée
+  etat = JSON.parse(mem[cle]);
+  assert.notEqual(etat.qwen_persistence[0][1], null);
+  assert.equal(etat.claude_prudent[0][1], null);
+});
