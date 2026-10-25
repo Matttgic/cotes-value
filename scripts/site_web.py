@@ -1409,7 +1409,7 @@ const carteParis = p => { const [etat,libelle] = etatLigne(p); return `<details 
 <span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span></span>
 <span class="pari-milieu"><span class="pari-bookmaker">${e(p.bookmaker)}${heureEnvoi(p) ? " · "+heureEnvoi(p) : ""}</span>
 <span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b> <span class="pari-ref" title="Cote ${e(p.reference)} sans marge">(${e(REF_COURTE[p.reference] ?? (p.reference||"")+" ")}${cote(p.cote_juste)})</span></span></span>
-<span class="pari-droite"><b class="ligne-valeur">${p.gain!=null ? eur(p.gain) : pct(p.ecart)}</b><span class="pari-etat">${libelle}</span></span></summary><div class="ligne-corps"><article class="carte">
+<span class="pari-droite"><b class="ligne-valeur">${p.gain!=null ? eur(p.gain) : pct(p.ecart)}</b><span class="pari-etat">${libelle}${p.mise!=null ? " · mise "+Number(p.mise).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €" : ""}</span></span></summary><div class="ligne-corps"><article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span>${horairePari(p)}</div>
 <div class="l1">${collectePari(p)}</div>
 <div class="l2">${e(p.pari)}</div>
