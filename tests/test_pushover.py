@@ -163,3 +163,11 @@ def test_cycle_utilise_les_cases_du_site_et_n_appelle_rien_sans_secrets(tmp_path
     assert bilan["source"] == "site" and bilan["strategies"] == 1 and bilan["envoyees"] == 1
     monkeypatch.setattr(E, "strategies_du_site", lambda *a, **k: 1 / 0)
     assert E.pushover(tmp_path, flux, {})["source"] == "secrets absents"
+
+
+def test_message_liste_toutes_les_strategies_avec_leur_nombre():
+    from scripts.envoyer_notifications import message_pushover
+    a = {**alerte("x", ["labo:A", "labo:B"]), "labels": ["Pinnacle 1", "Pinnacle 2", "Polymarket 5", "Eden"]}
+    msg = message_pushover(a)["message"]
+    assert msg.endswith("4 stratégies : Pinnacle 1, Pinnacle 2, Polymarket 5, Eden")
+    assert "1 stratégie : Eden" in message_pushover({**a, "labels": ["Eden"]})["message"]

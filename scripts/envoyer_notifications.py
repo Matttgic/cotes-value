@@ -265,8 +265,9 @@ def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> d
     env = os.environ if env is None else env
     maintenant = maintenant or datetime.now(timezone.utc)
     titre, corps = message_ntfy(a)
-    labels = ", ".join(str(x) for x in (a.get("labels") or []))
-    champs = {"title": titre[:250], "message": (corps + (f"\n{labels}" if labels else ""))[:1000]}
+    noms = [str(x) for x in (a.get("labels") or [])]
+    ligne = f"\n{len(noms)} stratégie{'s' if len(noms) > 1 else ''} : {', '.join(noms)}" if noms else ""
+    champs = {"title": titre[:250], "message": (corps[:1000 - len(ligne)] + ligne)[:1000]}
     lien = a.get("lien")
     if isinstance(lien, str) and lien.startswith("https://") and len(lien) <= 500:
         champs["url"] = lien
