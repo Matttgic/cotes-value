@@ -158,8 +158,19 @@ function rendreMesStrategies() {
   const plus = document.getElementById('mes-plus');
   if (plus) plus.onclick = () => { suiviLimite += 50; rendreMesStrategies(); };
 }
-const carteSuivi = p => `<article class="carte"><div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span></div>
-  <div class="l2">${e(p.pari)}</div>
-  <div class="l3"><span><b>${e(p.bookmaker)} ${cote(p.cote)}</b></span><span>${new Date(p.detecte).toLocaleString('fr-FR', {timeZone: 'Europe/Paris', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit'})}</span></div>
-  <div class="l4"><span class="badge ${e(p.statut)}">${e(STATUTS[p.statut] || p.statut)}</span>${p.suivies.map(k => `<span class="badge">${e(nomStrategie(k))}</span>`).join('')}
-  ${suiviNombre(p.gain) != null ? `<b class="${signe(p.gain)}">${eur2(p.gain)}</b>` : ''}</div></article>`;
+// Même ligne colorée que l'onglet Paris : vert gagné, rouge perdu ; les stratégies qui l'ont pris sont listées dessous.
+const LIGNE_SUIVI = {gagne: ['gagne', '✓ Gagné'], demi_gagne: ['gagne', '✓ ½ gagné'], perdu: ['perdu', '✗ Perdu'],
+  demi_perdu: ['perdu', '✗ ½ perdu'], rembourse: ['rembourse', 'Remboursé']};
+const REF_SUIVI = {Pinnacle: '', Polymarket: 'Poly ', Consensus: 'Cons. ', Smarkets: 'Sm. '};
+const carteSuivi = p => {
+  const [etat, libelle] = LIGNE_SUIVI[p.statut] || ['cours', 'En cours'];
+  const quand = new Date(p.detecte).toLocaleString('fr-FR', {timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
+  const valeur = suiviNombre(p.gain) != null ? eur2(p.gain) : '';
+  return `<details class="ligne-detail ligne-pari pari-ligne etat-${etat}"><summary>
+<span class="pari-gauche"><span class="pari-tete"><span class="puce-sport">${e((typeof nomsSports !== 'undefined' && nomsSports[p.sport]) || p.sport || 'Sport')}</span><span class="pari-ligue">${e(p.ligue || '')}</span></span>
+<span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span></span>
+<span class="pari-milieu"><span class="pari-bookmaker">${e(p.bookmaker)} · ${quand}</span>
+<span><b class="ligne-cote">${cote(p.cote)}</b> <span class="pari-ref">(${e(REF_SUIVI[p.reference] ?? (p.reference || '') + ' ')}${cote(p.cote_juste)})</span></span></span>
+<span class="pari-droite"><b class="ligne-valeur">${valeur}</b><span class="pari-etat">${libelle}</span></span></summary>
+<div class="ligne-corps"><div class="carte"><div class="l4">${p.suivies.map(k => `<span class="badge">${e(nomStrategie(k))}</span>`).join('')}</div></div></div></details>`;
+};

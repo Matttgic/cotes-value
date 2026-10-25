@@ -184,7 +184,7 @@ table{font-size:13px}th,td{padding:14px 12px}th{background:var(--fond);font-size
 details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte[open]>summary{margin-bottom:14px}details.carte p{margin-top:10px}
 #laboratoire{margin-top:24px}.notif-choix{padding:9px 0;border-bottom:1px solid var(--ligne);min-height:56px}.notif-choix:last-child{border-bottom:0}#notif-strategies,#pushover-strategies{padding:8px 18px 14px}#notif-strategies legend,#pushover-strategies legend{font-size:13px}#notif-message{min-height:1.5em}
 .message-reseau{border:1px solid var(--jaune);background:var(--jaune-f);color:var(--jaune);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:12px}
-@media(min-width:1000px){#liste-paris,#liste-regler{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#liste-paris .carte,#liste-regler .carte{margin:0}.groupe-paris{grid-column:1/-1}.grille-filtres{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(min-width:1000px){#liste-paris,#liste-regler{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}:is(#liste-paris,#mes-liste) .carte,#liste-regler .carte{margin:0}.groupe-paris{grid-column:1/-1}.grille-filtres{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:1000px){.strategies-table{font-size:11px}.strategies-table th,.strategies-table td{padding:12px 5px}nav button{padding:12px 10px;font-size:12px}nav .icone{width:17px}}
 @media(max-width:760px){
   .haut{z-index:10}.titre{padding:13px 18px}.monogramme{width:34px;height:34px;border-radius:10px;font-size:22px}.marque{gap:9px}h1{font-size:19px}.signature{font-size:9px}.maj{font-size:9px}.fraicheur{font-size:10px}
@@ -405,29 +405,29 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .paris-puces button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--carte)}
 .paris-resume{display:flex;justify-content:space-between;gap:10px;margin:12px 0 0;font-size:13px;color:var(--doux);font-variant-numeric:tabular-nums}
 .paris-resume b{color:var(--texte)}.paris-resume b.pos{color:var(--gagne)}.paris-resume b.neg{color:var(--perdu)}
-.paris-colonnes,#liste-paris .pari-ligne>summary{display:grid;grid-template-columns:minmax(0,1fr) 118px 64px;gap:8px}
+.paris-colonnes,:is(#liste-paris,#mes-liste) .pari-ligne>summary{display:grid;grid-template-columns:minmax(0,1fr) 118px 64px;gap:8px}
 .paris-colonnes{margin-top:10px;padding:6px 10px;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--doux);border-block:1px solid var(--ligne)}
 .paris-colonnes>span:not(:first-child){text-align:right}
-#liste-paris .pari-ligne{border-bottom:1px solid var(--ligne);background:var(--carte)}
-#liste-paris .pari-ligne>summary{align-items:center;padding:9px 10px;min-height:0;white-space:normal;font-size:13px;color:var(--texte)}
-#liste-paris .pari-ligne>summary::before{display:none}
-#liste-paris .pari-ligne>summary:hover{background:transparent;filter:brightness(.97)}
+:is(#liste-paris,#mes-liste) .pari-ligne{border-bottom:1px solid var(--ligne);background:var(--carte)}
+:is(#liste-paris,#mes-liste) .pari-ligne>summary{align-items:center;padding:9px 10px;min-height:0;white-space:normal;font-size:13px;color:var(--texte)}
+:is(#liste-paris,#mes-liste) .pari-ligne>summary::before{display:none}
+:is(#liste-paris,#mes-liste) .pari-ligne>summary:hover{background:transparent;filter:brightness(.97)}
 .pari-gauche,.pari-milieu,.pari-droite{display:flex;flex-direction:column;min-width:0;gap:1px}
 .pari-milieu,.pari-droite{text-align:right;align-items:flex-end}.pari-ligne .pari-bookmaker{white-space:nowrap}
 .pari-tete{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:2px}
 .puce-sport{flex:none;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--accent-f);color:var(--texte)}
 .pari-ligue,.pari-ligne .pari-bookmaker,.pari-ref,.pari-etat{font-size:12px;color:var(--doux)}
 .pari-ligue{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
-#liste-paris .pari-ligne .pari-match{font-size:14px;font-weight:600;color:inherit;white-space:normal;overflow-wrap:anywhere}
-#liste-paris .pari-ligne .pari-selection{font-size:13px;font-weight:400;color:var(--doux);overflow-wrap:anywhere}
+:is(#liste-paris,#mes-liste) .pari-ligne .pari-match{font-size:14px;font-weight:600;color:inherit;white-space:normal;overflow-wrap:anywhere}
+:is(#liste-paris,#mes-liste) .pari-ligne .pari-selection{font-size:13px;font-weight:400;color:var(--doux);overflow-wrap:anywhere}
 .pari-ligne .ligne-cote{width:auto;font-size:14px;font-weight:700}.pari-ref{font-size:13px}
 .pari-ligne .ligne-valeur{width:auto;font-size:14px;font-weight:700}.pari-etat{font-weight:600}
-#liste-paris .etat-gagne{background:var(--gagne-f);border-color:var(--gagne-b)}
-#liste-paris .etat-perdu{background:var(--perdu-f);border-color:var(--perdu-b)}
-#liste-paris .etat-regler{background:var(--regler-f);border-color:var(--regler-b)}
-#liste-paris .etat-gagne>summary,#liste-paris .etat-gagne>summary *{color:var(--gagne)}
-#liste-paris .etat-perdu>summary,#liste-paris .etat-perdu>summary *{color:var(--perdu)}
-#liste-paris .etat-regler>summary :is(.pari-ligue,.pari-bookmaker,.pari-ref,.pari-etat,.pari-selection){color:var(--regler)}
+:is(#liste-paris,#mes-liste) .etat-gagne{background:var(--gagne-f);border-color:var(--gagne-b)}
+:is(#liste-paris,#mes-liste) .etat-perdu{background:var(--perdu-f);border-color:var(--perdu-b)}
+:is(#liste-paris,#mes-liste) .etat-regler{background:var(--regler-f);border-color:var(--regler-b)}
+:is(#liste-paris,#mes-liste) .etat-gagne>summary,:is(#liste-paris,#mes-liste) .etat-gagne>summary *{color:var(--gagne)}
+:is(#liste-paris,#mes-liste) .etat-perdu>summary,:is(#liste-paris,#mes-liste) .etat-perdu>summary *{color:var(--perdu)}
+:is(#liste-paris,#mes-liste) .etat-regler>summary :is(.pari-ligue,.pari-bookmaker,.pari-ref,.pari-etat,.pari-selection){color:var(--regler)}
 .etat-gagne .puce-sport{background:var(--gagne-b)}.etat-perdu .puce-sport{background:var(--perdu-b)}.etat-regler .puce-sport{background:var(--regler-b)}
 .etat-rembourse .pari-etat{font-style:italic}
 @media(min-width:1000px){#liste-paris{display:block}}
