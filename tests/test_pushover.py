@@ -171,3 +171,10 @@ def test_message_liste_toutes_les_strategies_avec_leur_nombre():
     msg = message_pushover(a)["message"]
     assert msg.endswith("4 stratégies : Pinnacle 1, Pinnacle 2, Polymarket 5, Eden")
     assert "1 stratégie : Eden" in message_pushover({**a, "labels": ["Eden"]})["message"]
+
+
+def test_seules_les_strategies_cochees_sont_nommees():
+    a = {**alerte("z" * 64, ["eden", "m3", "jules"]), "labels": ["Eden", "M3", "Jules v1"]}
+    sortie = E.alertes_pushover({"alertes": [a]}, [], {}, {"eden", "jules"})
+    assert sortie[0]["labels"] == ["Eden", "Jules v1"]
+    assert "2 stratégies : Eden, Jules v1" in E.message_pushover(sortie[0])["message"]
