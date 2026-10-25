@@ -104,6 +104,9 @@ def message_ntfy(a: dict) -> tuple[str, str]:
     age = a.get("age_prix_secondes")
     if isinstance(age, (int, float)) and age > 300:          # match lointain, lu à son rythme : on le dit
         lignes.append(f"Prix relevé il y a {round(age / 60)} min")
+    kelly = a.get("mise_kelly")
+    if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
+        lignes.append(f"Mise Kelly ¼ : {_fr(kelly, 2)} €")
     return f'{a.get("bookmaker") or "—"} – {_sport(a.get("sport"))}', "\n".join(lignes)
 
 

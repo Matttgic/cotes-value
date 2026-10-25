@@ -64,8 +64,9 @@ def _nombre(x):
 
 def champs_valeur(o: dict) -> dict:
     """Edge, cote juste, cote Pinnacle brute, ligue, cote minimale (garde l'edge ≥ 2 % : juste × 1,02), équipes et lien."""
+    from .simulation import mise_kelly      # import local : simulation n'a pas besoin de ce module
     juste = _nombre(o.get("cote_juste"))
-    return {"ecart": _nombre(o.get("ecart")), "cote_juste": juste,
+    return {"ecart": _nombre(o.get("ecart")), "cote_juste": juste, "mise_kelly": mise_kelly(o) or None,
             "cote_pinnacle": _nombre(o.get("cote_reference")) if o.get("reference") == "Pinnacle" else None,
             "ligue": o.get("ligue"), "marche": o.get("marche"), "selection": o.get("pari", "")[:180],
             "sport": o.get("sport"), "domicile": o.get("domicile"), "exterieur": o.get("exterieur"),

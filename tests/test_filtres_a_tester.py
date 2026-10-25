@@ -108,3 +108,15 @@ def test_bilan_filtres_marge_estimee_sur_ancien_pari():
     f = bilan_filtres([ancien])["marge"]
     assert f["n_mesures"] == 1 and f["n_estimees"] == 1
     assert sum(t["n"] for t in f["tranches"]) == 1
+
+
+def test_alerte_porte_la_mise_kelly_dans_le_texte_pushover_et_l_ordre():
+    from cotes.notifications import champs_valeur
+    from scripts.envoyer_notifications import message_ntfy
+    champs = champs_valeur({"cote": 2.0, "ecart": .04, "cote_juste": 1.92, "pari": "x"})
+    assert champs["mise_kelly"] == 10.0
+    titre, corps = message_ntfy({"bookmaker": "PMU", "sport": "football", "cote": 2.0, "pari": "x", "domicile": "A",
+                                 "exterieur": "B", "debut": "2026-10-26T18:00:00Z", **champs})
+    assert "Mise Kelly ¼ : 10,00 €" in corps
+    assert "Mise Kelly" not in message_ntfy({"bookmaker": "PMU", "cote": 2.0, "pari": "x",
+                                             "debut": "2026-10-26T18:00:00Z"})[1]

@@ -59,6 +59,7 @@ def construire(flux: dict, actuelles: list[dict], maintenant: datetime | None = 
             "marche": o.get("marche"), "periode": o.get("periode"), "ligne": o.get("ligne"), "issue": o.get("issue"),
             "pari": o.get("pari"), "libelle_bookmaker": o.get("libelle_bookmaker"),
             "cote_relevee": cote, "cote_min": round(cote * (1 - TOLERANCE_COTE), 2), "mise": MISE_EUR,
+            "mise_kelly": a.get("mise_kelly"),
             "expire_le": expire.isoformat(), "strategies": a.get("labels", []),
             "lien": lien_absolu(a.get("bookmaker"), o.get("lien")),
             "recherche": f'{o.get("domicile")} – {o.get("exterieur")} · {o.get("ligue")}',

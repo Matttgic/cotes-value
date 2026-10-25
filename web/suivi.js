@@ -121,7 +121,7 @@ function lierDates(racine, rapides) {
 }
 const bornesActuelles = () => { const p = suiviPeriode(); return suiviBornes(p.depuis, p.jusqua); };
 const resumeHtml = b => `<div class="carte resume-suivi"><div class="l1"><span><b>${b.regles}</b> réglé${b.regles > 1 ? 's' : ''} · ${b.gagnes} gagné${b.gagnes > 1 ? 's' : ''}${b.regles ? ' (' + Math.round(100 * b.gagnes / b.regles) + ' %)' : ''}${b.en_cours ? ' · ' + b.en_cours + ' en cours' : ''}</span></div>
-  <div class="l1"><span><b class="${signe(b.gains)}">${eur2(b.regles ? b.gains : null)}</b> <small class="roi ${signe(b.roi)}">ROI ${b.roi == null ? '—' : pctC(b.roi)}</small> <small>· 10 € par stratégie et par pari</small></span></div></div>`;
+  <div class="l1"><span><b class="${signe(b.gains)}">${eur2(b.regles ? b.gains : null)}</b> <small class="roi ${signe(b.roi)}">ROI ${b.roi == null ? '—' : pctC(b.roi)}</small> <small>· ${typeof miseMode !== 'undefined' && miseMode === 'kelly' ? 'mise Kelly ¼ par stratégie et par pari' : '10 € par stratégie et par pari'}</small></span></div></div>`;
 // Bilan « Paris uniques » : deux dates au choix en plus des périodes rapides.
 function rendreDatesBilan() {
   const zone = document.getElementById('bu-dates');
@@ -176,11 +176,12 @@ const carteSuivi = (p, mises = 1) => {
   const [etat, libelle] = LIGNE_SUIVI[p.statut] || ['cours', 'En cours'];
   const quand = new Date(p.detecte).toLocaleString('fr-FR', {timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
   const valeur = suiviNombre(p.gain) != null ? eur2(p.gain * mises) : '';
+  const miseTexte = suiviNombre(p.mise) != null ? ` · mise ${p.mise.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €` : '';
   return `<details class="ligne-detail ligne-pari pari-ligne etat-${etat}"><summary>
 <span class="pari-gauche"><span class="pari-tete"><span class="puce-sport">${e((typeof nomsSports !== 'undefined' && nomsSports[p.sport]) || p.sport || 'Sport')}</span><span class="pari-ligue">${e(p.ligue || '')}</span></span>
 <span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span></span>
 <span class="pari-milieu"><span class="pari-bookmaker">${e(p.bookmaker)} · ${quand}</span>
 <span><b class="ligne-cote">${cote(p.cote)}</b> <span class="pari-ref">(${e(REF_SUIVI[p.reference] ?? (p.reference || '') + ' ')}${cote(p.cote_juste)})</span></span></span>
-<span class="pari-droite"><b class="ligne-valeur">${valeur}</b><span class="pari-etat">${libelle}${mises > 1 ? ` · ${mises} mises` : ''}</span></span></summary>
+<span class="pari-droite"><b class="ligne-valeur">${valeur}</b><span class="pari-etat">${libelle}${miseTexte}${mises > 1 ? ` · ${mises} mises` : ''}</span></span></summary>
 <div class="ligne-corps"><div class="carte"><div class="l4">${p.suivies.map(k => `<span class="badge">${e(nomStrategie(k))}</span>`).join('')}</div></div></div></details>`;
 };
