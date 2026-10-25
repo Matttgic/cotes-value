@@ -3,6 +3,9 @@ name: Tester Pushover
 # Envoie un seul message de test avec les secrets PUSHOVER_USER_KEY et PUSHOVER_APP_TOKEN.
 on:
   workflow_dispatch:
+  push:
+    branches: [claude/paris-a-regler-pfjqyd]
+    paths: [.github/workflows/tester-pushover.yml]
 
 permissions: {}
 
