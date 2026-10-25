@@ -196,3 +196,21 @@ test('toucher la notification ouvre le match chez le bookmaker, le bouton ouvre 
     'https://matttgic.github.io/cotes-value/?alerte='+'a'.repeat(64)+'#paris',
     'https://matttgic.github.io/cotes-value/?alerte='+'a'.repeat(64)+'#paris']);
 });
+
+test('les stratégies cochées sont lisibles par GitHub seulement, sans rien d\'autre',async()=>{
+  const requetes=[];
+  const handler=app({authorize:async h=>h==='Bearer bon',db:async path=>{requetes.push(path);
+    return [{strategies:['eden','labo:PIN-1.3-2-e2-h12','pas valide!']},{strategies:['eden','jules']},{strategies:null},
+      {strategies:['labo:PIN-1.3-2-e2-h36'],subscription:{endpoint:'secret'},token_hash:'secret'}];}});
+  const appel=(auth)=>new Request('https://example.test/cv-notifications/strategies',{method:'POST',
+    headers:{'Content-Type':'application/json',...(auth?{Authorization:auth}:{})},body:'{}'});
+  assert.equal((await handler(appel(null))).status,401);
+  assert.equal((await handler(appel('Bearer mauvais'))).status,401);
+  assert.equal(requetes.length,0);                                              // refusé avant toute lecture
+  const r=await handler(appel('Bearer bon'));
+  assert.equal(r.status,200);
+  const texte=await r.text();
+  assert.deepEqual(JSON.parse(texte),{strategies:['eden','jules','labo:PIN-1.3-2-e2-h12','labo:PIN-1.3-2-e2-h36']});
+  assert.ok(!texte.includes('secret'));                                         // aucune donnée d'abonnement
+  assert.deepEqual(requetes,['cv_push_devices?enabled=eq.true&select=strategies']);   // seulement la colonne utile
+});

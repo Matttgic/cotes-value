@@ -204,6 +204,44 @@ def strategies_pushover(env=None) -> tuple[set[str], list[str]]:
     return {x for x in voulues if x in NOMS}, sorted({x for x in voulues if x not in NOMS})
 
 
+def strategies_du_site(env=None, ouvrir=urlopen) -> list[str] | None:
+    """Stratégies cochées sur le site (appareils actifs), lues auprès du service de notifications avec l'identité GitHub
+    Actions. ``None`` si le service est injoignable ou n'a pas encore l'action (fonction non redéployée)."""
+    env = os.environ if env is None else env
+    url, credential = env.get("ACTIONS_ID_TOKEN_REQUEST_URL", ""), env.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "")
+    if not url.startswith("https://") or not credential:
+        return None
+    try:
+        sep = "&" if "?" in url else "?"
+        with ouvrir(Request(url + sep + urlencode({"audience": "cotes-value-notifications"}),
+                            headers={"Authorization": f"Bearer {credential}"}), timeout=10) as r:
+            jeton = json.load(r).get("value")
+        if not isinstance(jeton, str) or not jeton:
+            return None
+        with ouvrir(Request(API + "/strategies", data=b"{}", method="POST",
+                            headers={"Authorization": f"Bearer {jeton}", "Content-Type": "application/json"}),
+                    timeout=10) as r:
+            cles = json.load(r).get("strategies")
+        return [c for c in cles if isinstance(c, str)] if isinstance(cles, list) else None
+    except (HTTPError, URLError, OSError, ValueError, TypeError, AttributeError):
+        return None
+
+
+def choix_pushover(env=None, ouvrir=urlopen) -> tuple[set[str], list[str], str]:
+    """(stratégies, clés inconnues, source). ``PUSHOVER_STRATEGIES`` rempli (et différent de « auto ») : cette liste.
+    Vide ou « auto » : les cases cochées sur le site ; si le service ne répond pas, aucune alerte (jamais de
+    liste inventée)."""
+    env = os.environ if env is None else env
+    brut = env.get("PUSHOVER_STRATEGIES", "").strip()
+    if brut and brut.lower() != "auto":
+        choisies, inconnues = strategies_pushover(env)
+        return choisies, inconnues, "variable"
+    cles = strategies_du_site(env, ouvrir)
+    if cles is None:
+        return set(), [], "site indisponible"
+    return {c for c in cles if c in NOMS}, [], "site"
+
+
 def alertes_pushover(flux: dict, paris: list[dict], envoyes: dict, choisies: set[str],
                      maintenant: datetime | None = None, amorcage: bool = False) -> list[dict]:
     """Alertes des stratégies cochées pas encore envoyées, les plus récentes d'abord. ``amorcage`` (premier passage,
@@ -284,9 +322,11 @@ def pushover(donnees: Path, flux: dict, env=None) -> dict:
     from scripts.cycle import ecrire_json
     env = os.environ if env is None else env
     try:
-        choisies, inconnues = strategies_pushover(env)
         actif = bool(env.get("PUSHOVER_APP_TOKEN", "").strip() and env.get("PUSHOVER_USER_KEY", "").strip())
-        base = {"actif": actif and bool(choisies), "strategies": len(choisies), "envoyees": 0, "echecs": 0}
+        if not actif:                    # sans secrets, on n'interroge même pas le service
+            return {"actif": False, "strategies": 0, "envoyees": 0, "echecs": 0, "source": "secrets absents"}
+        choisies, inconnues, source = choix_pushover(env)
+        base = {"actif": bool(choisies), "strategies": len(choisies), "source": source, "envoyees": 0, "echecs": 0}
         if inconnues:
             base["inconnues"] = inconnues
         if not base["actif"]:

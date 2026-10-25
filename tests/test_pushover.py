@@ -107,3 +107,59 @@ def test_cycle_complet_memorise_les_envois_et_ne_renvoie_pas(tmp_path, monkeypat
     assert E.pushover(tmp_path, flux, {**ENV, "PUSHOVER_STRATEGIES": ""})["actif"] is False
     assert E.pushover(tmp_path, flux, {})["actif"] is False
     assert "inconnues" in E.pushover(tmp_path, flux, {**ENV, "PUSHOVER_STRATEGIES": "eden faute"})
+
+
+# --- Stratégies cochées sur le site (lues auprès du service de notifications) ---
+
+GITHUB = {"ACTIONS_ID_TOKEN_REQUEST_URL": "https://token.actions.test/x?a=1", "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "jeton-gh"}
+
+
+def faux_service(cles, vus=None, echec_service=None):
+    def ouvrir(req, timeout):
+        if vus is not None:
+            vus.append((req.full_url, dict(req.header_items()), req.data))
+        if "token.actions" in req.full_url:
+            return Rep({"value": "jeton-oidc"})
+        if echec_service:
+            raise echec_service
+        return Rep({"strategies": cles})
+    return ouvrir
+
+
+def test_cases_du_site_lues_avec_l_identite_github():
+    vus = []
+    cles = E.strategies_du_site(GITHUB, faux_service(["eden", "labo:PIN-1.3-2-e2-h36"], vus))
+    assert cles == ["eden", "labo:PIN-1.3-2-e2-h36"]
+    assert vus[0][0].startswith("https://token.actions.test/x?a=1&audience=cotes-value-notifications")
+    assert vus[1][0] == E.API + "/strategies" and vus[1][2] == b"{}" and vus[1][1]["Authorization"] == "Bearer jeton-oidc"
+
+
+def test_service_injoignable_ou_pas_encore_deploye_donne_none():
+    erreur = HTTPError(E.API, 404, "inconnue", {}, None)
+    assert E.strategies_du_site(GITHUB, faux_service([], echec_service=erreur)) is None
+    assert E.strategies_du_site({}, faux_service(["eden"])) is None                       # pas d'identité GitHub
+    assert E.strategies_du_site(GITHUB, lambda req, timeout: Rep({"strategies": "x"})) is None
+
+
+def test_variable_remplie_prime_sinon_les_cases_du_site():
+    appels = []
+    ouvrir = lambda req, timeout: (appels.append(1), faux_service(["eden", "inconnue", "jules"])(req, timeout))[1]
+    env = {**GITHUB, "PUSHOVER_STRATEGIES": "m3, faute"}
+    assert E.choix_pushover(env, ouvrir) == ({"m3"}, ["faute"], "variable") and not appels
+    for vide in ("", "auto", " AUTO "):
+        choisies, inconnues, source = E.choix_pushover({**GITHUB, "PUSHOVER_STRATEGIES": vide}, ouvrir)
+        assert (choisies, source) == ({"eden", "jules"}, "site")                          # clés inconnues écartées
+    assert E.choix_pushover({"PUSHOVER_STRATEGIES": ""}, ouvrir) == (set(), [], "site indisponible")
+
+
+def test_cycle_utilise_les_cases_du_site_et_n_appelle_rien_sans_secrets(tmp_path, monkeypatch):
+    (tmp_path / "paris.json").write_text("[]")
+    monkeypatch.setattr(E, "strategies_du_site", lambda env=None, ouvrir=None: ["eden"])
+    monkeypatch.setattr(E, "poster_pushover", lambda al, env=None, ouvrir=None, horloge=None:
+                        {"envoyees": [a["id"] for a in al], "echecs": 0, "erreurs": [], "actif": True})
+    secrets = {"PUSHOVER_APP_TOKEN": "t", "PUSHOVER_USER_KEY": "u"}
+    flux = {"alertes": [alerte(strategies=["eden"]), alerte("2" * 64, ["jules"])]}
+    bilan = E.pushover(tmp_path, flux, secrets)
+    assert bilan["source"] == "site" and bilan["strategies"] == 1 and bilan["envoyees"] == 1
+    monkeypatch.setattr(E, "strategies_du_site", lambda *a, **k: 1 / 0)
+    assert E.pushover(tmp_path, flux, {})["source"] == "secrets absents"
