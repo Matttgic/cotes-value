@@ -256,6 +256,9 @@ def alertes_pushover(flux: dict, paris: list[dict], envoyes: dict, choisies: set
         if amorcage and a.get("recheck"):
             envoyes[a["id"]] = ""             # mémorisé sans envoi
             continue
+        cles, noms = a.get("strategies") or [], a.get("labels") or []
+        if len(cles) == len(noms):          # seules les stratégies cochées sont nommées (une mise chacune)
+            a = {**a, "labels": [n for k, n in zip(cles, noms) if k in choisies]}
         out.append(a)
     return out
 
