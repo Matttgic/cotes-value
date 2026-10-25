@@ -92,6 +92,41 @@ GROK_5 = {
 
 GROKS = (GROK_1, GROK_2, GROK_3, GROK_4, GROK_5)
 
+# Grok 6 à 8 : règles construites sur les paris réglés avant le 18/10/2026 puis
+# validées sur ceux du 18 au 24/10 (voir docs/strategie-grok.md). Référence sharp
+# uniquement (Pinnacle ou Polymarket), jamais un bookmaker français contre un autre.
+DEBUT_V2 = "2026-10-25T01:00:00+00:00"
+SPORTS_HORS_FOOT = ("basket", "hockey", "tennis", "handball", "baseball")
+
+GROK_6 = {
+    "cle": "grok_6", "nom": "Grok 6 · Pinnacle hors foot", "court": "Grok6 PIN hors foot",
+    "debut": DEBUT_V2, "version": "1", "mise": 10.0, "maximum_jour": 10,
+    "reference": "Pinnacle",
+    "cote_min": 1.50, "cote_max": 3.50, "edge_min": 0.03, "edge_max": 0.15,
+    "sports": SPORTS_HORS_FOOT,
+    "regles": "Pinnacle · basket/hockey/tennis/handball/baseball · cotes 1,50–3,50 · edge 3–15 % · 1/match · max 10/j",
+}
+
+GROK_7 = {
+    "cle": "grok_7", "nom": "Grok 7 · Pinnacle cote moyenne", "court": "Grok7 PIN 1,8–2,5",
+    "debut": DEBUT_V2, "version": "1", "mise": 10.0, "maximum_jour": 8,
+    "reference": "Pinnacle",
+    "cote_min": 1.80, "cote_max": 2.50, "edge_min": 0.04, "edge_max": 0.15,
+    "sports": SPORTS_OK,
+    "regles": "Pinnacle · tous sports suivis (football compris) · cotes 1,80–2,50 · edge 4–15 % · 1/match · max 8/j",
+}
+
+GROK_8 = {
+    "cle": "grok_8", "nom": "Grok 8 · Polymarket hors foot", "court": "Grok8 PM hors foot",
+    "debut": DEBUT_V2, "version": "1", "mise": 10.0, "maximum_jour": 8,
+    "reference": "Polymarket",
+    "cote_min": 1.50, "cote_max": 3.50, "edge_min": 0.03, "edge_max": 0.15,
+    "sports": SPORTS_HORS_FOOT,
+    "regles": "Polymarket · basket/hockey/tennis/handball/baseball · cotes 1,50–3,50 · edge 3–15 % · 1/match · max 8/j (exploratoire)",
+}
+
+GROKS_V2 = (GROK_6, GROK_7, GROK_8)
+
 
 def motif_refus_grok(p: dict, c: dict) -> str | None:
     if c["cle"] == "grok_5":
@@ -116,3 +151,6 @@ def paris_grok_2(paris, depuis=None): return paris_grok(paris, GROK_2, depuis)
 def paris_grok_3(paris, depuis=None): return paris_grok(paris, GROK_3, depuis)
 def paris_grok_4(paris, depuis=None): return paris_grok(paris, GROK_4, depuis)
 def paris_grok_5(paris, depuis=None): return paris_grok(paris, GROK_5, depuis)
+def paris_grok_6(paris, depuis=None): return paris_grok(paris, GROK_6, depuis)
+def paris_grok_7(paris, depuis=None): return paris_grok(paris, GROK_7, depuis)
+def paris_grok_8(paris, depuis=None): return paris_grok(paris, GROK_8, depuis)

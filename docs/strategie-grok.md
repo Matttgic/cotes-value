@@ -44,3 +44,19 @@ Toutes les stratégies :
 - Max 12 paris/jour
 
 Ces stratégies sont intégrées dans le système de décisions figées pour un suivi prospectif. Aucune n'est automatiquement promue ; elles sont là pour être testées en simulation.
+
+## Grok 6 à 8 (lancées le 25/10/2026 à 01:00 UTC, sans rejeu)
+
+Construites sur les paris **réglés** du 07 au 17/10/2026 (apprentissage) et vérifiées sur ceux du
+18 au 24/10/2026 (validation hors échantillon), 1 pari par match, mise plate 1 u. Référence
+de valeur : Pinnacle ou Polymarket uniquement (jamais un bookmaker français contre un autre,
+Smarkets et Kalshi exclus). Garde-fous communs identiques à Grok 1–5.
+
+| Stratégie | Règle | Apprentissage | Validation |
+|---|---|---|---|
+| Grok 6 | Pinnacle · basket/hockey/tennis (vainqueur)/handball/baseball · cote 1,50–3,50 · écart 3–15 % · max 10/j | n 52 · ROI +29 % · CLV +3,5 % | n 31 · ROI +40 % · CLV +2,0 % |
+| Grok 7 | Pinnacle · tous sports suivis · cote 1,80–2,50 · écart 4–15 % · max 8/j | n 38 · ROI +16 % · CLV +2,9 % | n 23 · ROI +12 % · CLV +4,2 % |
+| Grok 8 | Polymarket · mêmes sports que Grok 6 · cote 1,50–3,50 · écart 3–15 % · max 8/j | n 9 · ROI +29 % · CLV +2,6 % | n 17 · ROI +75 % · CLV +5,1 % |
+
+Échantillons courts (≈ 2 semaines) : ces chiffres sont indicatifs. Grok 8 est exploratoire
+(peu de paris Polymarket hors football avant le 18/10). Seul le suivi depuis le lancement compte.
