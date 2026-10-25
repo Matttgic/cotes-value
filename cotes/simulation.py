@@ -99,6 +99,7 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
                               "equipes_inversees": o.get("reference_inversee"),
                               "ressemblance_noms": o.get("score_association"),
                               "composantes": o.get("composantes"), "controle": o.get("controle"),
+                              "preuves_composantes": o.get("preuves_composantes"),
                               "lectures_references": o.get("lectures_references"),
                               "version": VERSION}}
         paris.append(p)
