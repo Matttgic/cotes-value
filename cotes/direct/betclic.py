@@ -28,6 +28,11 @@ _LISTE_MAX = 640
 # d'abord aux matchs encore jamais lus. Le cycle dure 5 min : au-delà de 3 min
 # de cache, des cotes de 10 min d'âge décidaient des paris.
 _FRAIS_MIN = 3
+# Mesuré le 25/10/2026 : un match coûte « Le Top » (1 requête) plus 2 à 3 onglets (~65 % des requêtes), mais les
+# onglets ne portent que 8 % des paris Betclic (44 sur 545, depuis le 15/10). Avec la réserve, « Le Top » est relu à
+# chaque passage et les onglets au plus toutes les ONGLETS_MIN minutes : leurs marchés restent entre-temps avec leur
+# heure de lecture, sous la fenêtre de 15 minutes de la comparaison.
+ONGLETS_MIN = 10
 # Lectures de détail simultanées (5 en parallèle n'ont pas donné de 429).
 _CONCURRENCE = 4
 # Onglets lus en plus de « Le Top » : demi-temps, périodes, quarts-temps, sets, jeux.
@@ -728,6 +733,9 @@ def _detailler(client: Client, match: dict, moment: str,
     if client._bloque:
         return [], bool(trame), False
     offres = marches_du_detail(trame)
+    # Marchés de « Le Top » : les autres lignes viennent d'un onglet et portent ``onglet`` (voir _collecter_reserve).
+    du_top = {f"betclic|{t['marketId']}" for o in offres
+              for t in marches_pulse(o, match["domicile"], match["exterieur"], match["sport"])}
     complet = bool(trame)
     if onglets and trame:
         for ident in onglets_utiles(trame):
@@ -755,6 +763,8 @@ def _detailler(client: Client, match: dict, moment: str,
         cle = (ligne["match_id"], ligne["marche"], ligne["periode"], ligne["ligne"], ligne["issue"])
         if cle not in vus:     # « Écart de buts » et « Ecart entre les équipes » donnent les mêmes handicaps
             vus.add(cle)
+            if ligne.get("cle_marche") not in du_top:
+                ligne["onglet"] = True
             lignes.append(ligne)
     return lignes, bool(trame), complet
 
@@ -812,18 +822,37 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
         if isinstance(ligne, dict) and ligne.get("match_id"):
             anciennes.setdefault(ligne["match_id"], []).append(ligne)
 
+    onglets_lus = {mid: v for mid, v in (reserve.get("onglets") or {}).items() if isinstance(v, str)} \
+        if isinstance(reserve.get("onglets"), dict) else {}
+    compte = {"avec_onglets": 0, "sans_onglets": 0}
+    verrou = threading.Lock()
+
+    def onglets_dus(mid: str) -> bool:
+        """Onglets jamais lus, sans marché gardé, ou lus il y a ``ONGLETS_MIN`` minutes ou plus."""
+        lu = _heure(onglets_lus.get(mid))
+        if lu is None or not any(l.get("onglet") for l in anciennes.get(mid, [])):
+            return True
+        return maintenant - lu >= timedelta(minutes=ONGLETS_MIN)
+
     def lire(match):
         if arret.is_set() or not client._temps():
             return None
-        ajoutees, lue, complet = _detailler(client, match, moment)
+        mid = f"betclic|{match.get('id')}"
+        dus = onglets_dus(mid)
+        ajoutees, lue, complet = _detailler(client, match, moment, onglets=dus)
         if client._bloque:
             arret.set()
-        if not complet and ajoutees:
-            # Onglets coupés par le budget : on garde les marchés déjà lus au cycle précédent.
+        if dus and lue and complet:
+            onglets_lus[mid] = moment
+        with verrou:
+            compte["avec_onglets" if dus else "sans_onglets"] += 1
+        if (not complet or not dus) and ajoutees:
+            # Onglets pas relus (à leur rythme, ou coupés par le budget) : leurs marchés du passage précédent,
+            # avec leur heure de lecture. Seulement des lignes d'onglet : un marché retiré de « Le Top » ne revient
+            # pas. Même limite d'âge (2 h) que la fusion du reste du catalogue.
             presentes = {l.get("cle_marche") for l in ajoutees}
-            # Même limite d'âge (2 h) que la fusion du reste du catalogue.
-            ajoutees = ajoutees + [l for l in anciennes.get(f"betclic|{match.get('id')}", [])
-                                   if l.get("cle_marche") not in presentes
+            ajoutees = ajoutees + [l for l in anciennes.get(mid, [])
+                                   if l.get("onglet") and l.get("cle_marche") not in presentes
                                    and (lu := _heure(l.get("collecte"))) is not None
                                    and maintenant - lu <= timedelta(hours=2)]
         return ajoutees, lue
@@ -837,12 +866,15 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
                 lectures += 1
             lignes += ajoutees
     fusion = fusionner(reserve.get("lignes") or [], lignes, maintenant, heures, age_max_h=2)
+    au_catalogue = {f"betclic|{m.get('id')}" for m in candidats}
     return fusion, {
         "ok": lectures > 0 or not client.erreurs or bool(fusion),
         "erreurs": list(client.erreurs),
         "requetes": client.requetes,
         "matchs": len({l.get("match_id") for l in fusion}),
-        "reserve": {"offset": 0, "lignes": fusion},
+        "onglets": dict(compte),
+        "reserve": {"offset": 0, "lignes": fusion,
+                    "onglets": {mid: v for mid, v in onglets_lus.items() if mid in au_catalogue}},
     }
 
 

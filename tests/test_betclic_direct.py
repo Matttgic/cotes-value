@@ -300,3 +300,64 @@ def test_ecart_de_points_entre_les_equipes_est_un_handicap_basket():
     traduits = betclic.marches_pulse(marche, "A", "B", "basket")
     assert [m["canonicalMarket"] for m in traduits] == ["ASIAN_HANDICAP"]
     assert betclic.marches_pulse({**marche, "nom": "Écart de points (3 options)"}, "A", "B", "basket") == []
+
+
+# --- Onglets à leur rythme (ONGLETS_MIN) : « Le Top » à chaque passage, les onglets au plus toutes les 10 min ---
+
+def _onglet(ident, libelle):
+    return betclic.encode_champ_octets(10, betclic.encode_champ_octets(2, ident) + betclic.encode_champ_octets(3, libelle))
+
+
+def _top(*marches):
+    corps = b"".join(betclic.encode_champ_octets(11, betclic.encode_champ_octets(3, m)) for m in marches)
+    match = corps + _onglet("ca_top", "Le Top") + _onglet("ca_buts", "Buts")
+    return betclic.trame_grpc(betclic.encode_champ_octets(1, betclic.encode_champ_octets(1, match)))
+
+
+def _marche(nom, *selections):
+    return betclic.encode_champ_octets(2, nom) + b"".join(betclic.encode_champ_octets(16, s) for s in selections)
+
+
+TOTAL = _marche("Nombre total de buts (t. rég)", _sel("+ de 2,5", 1.9), _sel("- de 2,5", 1.85))
+VAINQUEUR = _marche("Résultat du match (t. rég)", _sel("Lens", 1.8), _sel("Nul", 3.4), _sel("Lille", 4.5))
+MI_TEMPS = _detail("1ère mi-temps (seule) - Nombre total de buts", [_sel("+ de 0,5", 1.2), _sel("- de 0,5", 3.9)])
+
+
+def _passe(reserve, minutes, *details):
+    from datetime import timedelta
+    session = Session([(_liste(_match(7, "Lens", "Lille")), 200)] + [(d, 200) for d in details])
+    lignes, meta = betclic.collecter({"football"}, 36, session=session, concurrence=1, reserve=reserve,
+                                     maintenant=MAINTENANT + timedelta(minutes=minutes))
+    return lignes, meta, len(session.urls)
+
+
+def test_onglets_relus_au_plus_toutes_les_10_minutes_et_gardes_avec_leur_heure():
+    l1, m1, n1 = _passe({"lignes": []}, 0, _top(TOTAL), MI_TEMPS)
+    assert n1 == 3 and m1["onglets"] == {"avec_onglets": 1, "sans_onglets": 0}
+    assert {(l["periode"], bool(l.get("onglet"))) for l in l1} == {("MATCH", False), ("MT1", True)}
+    l2, m2, n2 = _passe(m1["reserve"], 4, _top(TOTAL))                           # Top seul : 1 requête de détail
+    assert n2 == 2 and m2["onglets"] == {"avec_onglets": 0, "sans_onglets": 1}
+    lus = {l["periode"]: l["collecte"] for l in l2}
+    assert lus["MATCH"].startswith("2026-10-18T12:04") and lus["MT1"].startswith("2026-10-18T12:00")   # âge honnête
+    _, m3, n3 = _passe(m2["reserve"], 11, _top(TOTAL), MI_TEMPS)                 # 11 min : onglets relus
+    assert n3 == 3 and m3["onglets"]["avec_onglets"] == 1
+
+
+def test_marche_retire_du_top_ne_revient_pas():
+    _, m1, _ = _passe({"lignes": []}, 0, _top(TOTAL), MI_TEMPS)
+    l2, _, _ = _passe(m1["reserve"], 4, _top(VAINQUEUR))                       # le total a disparu du Top
+    assert not any(l["marche"] == "TOTAL" and l["periode"] == "MATCH" for l in l2)
+    assert any(l["periode"] == "MT1" for l in l2) and any(l["marche"] == "RESULTAT_1N2" for l in l2)
+
+
+def test_sans_marche_d_onglet_en_memoire_les_onglets_sont_relus():
+    _, m1, _ = _passe({"lignes": []}, 0, _top(TOTAL), MI_TEMPS)
+    sans = {**m1["reserve"], "lignes": [l for l in m1["reserve"]["lignes"] if not l.get("onglet")]}
+    _, m2, n2 = _passe(sans, 4, _top(TOTAL), MI_TEMPS)
+    assert n2 == 3 and m2["onglets"]["avec_onglets"] == 1
+
+
+def test_memoire_abimee_ou_ancienne_relit_les_onglets():
+    for reserve in ({"lignes": [], "onglets": "x"}, {"lignes": [], "onglets": {"betclic|7": 3}}):
+        _, meta, n = _passe(reserve, 0, _top(TOTAL), MI_TEMPS)
+        assert n == 3 and meta["onglets"]["avec_onglets"] == 1
