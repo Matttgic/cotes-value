@@ -92,6 +92,10 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
              "lu_reference": o.get("lu_reference"), "ecart": o["ecart"], "mise": MISE,
              "ecart_polymarket": o.get("ecart_polymarket"),
              "ecart_smarkets": o.get("ecart_smarkets"),
+             # filtres à tester, descriptifs : mesurés à la prise, absents des anciens paris
+             "trj_bookmaker": o.get("trj_bookmaker"), "limite_pinnacle": o.get("limite_pinnacle"),
+             "marge_pinnacle": o.get("marge_pinnacle"), "mouvement_pinnacle": o.get("mouvement_pinnacle"),
+             "mouvement_s": o.get("mouvement_s"),
              "statut": "en_cours", "gain": None, "cote_juste_cloture": o["cote_juste"], "clv": None,
              "match_reference": o.get("match_reference"), "lien": lien_match(o),
              # trace de la prise : de quoi revérifier le pari après coup
@@ -185,6 +189,22 @@ def _lectures_fraiches(o: dict, decision: datetime, debut: datetime) -> bool:
         return False
     return all(t < debut and -TOLERANCE_HORLOGE_S <= (decision - t).total_seconds() <= FRAICHEUR_PRISE_MIN * 60
                for t in dates)
+
+
+# Mise « Kelly fractionné » : alternative simulée aux 10 € fixes, calculée sur les mêmes paris (rien n'est pris
+# en plus). Mise = bankroll fictive × fraction × écart / (cote − 1), plafonnée. Bankroll constante, sans cumul.
+KELLY_BANKROLL = 1000.0
+KELLY_FRACTION = 0.25
+KELLY_PLAFOND = 0.02          # 2 % de la bankroll par pari au plus
+
+
+def mise_kelly(p: dict) -> float:
+    """Mise Kelly fractionné d'un pari (0 si cote ou écart inexploitables)."""
+    cote, ecart = p.get("cote"), p.get("ecart")
+    if not (_nombre_fini(cote) and _nombre_fini(ecart)) or cote <= 1 or ecart <= 0:
+        return 0.0
+    plein = ecart / (cote - 1)
+    return round(min(KELLY_BANKROLL * KELLY_FRACTION * plein, KELLY_BANKROLL * KELLY_PLAFOND), 2)
 
 
 def clv_finale(p: dict) -> float | None:
@@ -338,7 +358,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                                       # paris réglés avec / sans CLV mesurée : gain réel, et gain espéré d'après
                                       # la CLV (mise × CLV) pour ceux qui en ont une
                                       "gains_avec_clv": 0.0, "espere_clv": 0.0, "gains_sans_clv": 0.0,
-                                      "regles_sans_clv": 0, "evenements_detail": {}})
+                                      "regles_sans_clv": 0, "mises_kelly": 0.0, "gains_kelly": 0.0,
+                                      "evenements_detail": {}})
             b["paris"] += 1
             ev = b["evenements_detail"].setdefault(str(numeros[liens[id(p)]]), [0,0,0.0,0])
             ev[0] += 1
@@ -350,6 +371,9 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                 b["mises"] += p["mise"]
                 b["gains"] += p["gain"] or 0
                 b["gagnes"] += p["statut"] in ("gagne", "demi_gagne")
+                k = mise_kelly(p)
+                b["mises_kelly"] += k
+                b["gains_kelly"] += (p["gain"] or 0) * k / p["mise"] if p.get("mise") else 0
             clv = clv_finale(p)
             if clv is not None:
                 ev[2] += clv
@@ -371,7 +395,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
         b["clv_evenements_n"] = len(cs)
         b["roi"] = round(b["gains"] / b["mises"], 4) if b["mises"] else None
         b["clv_moyenne"] = round(b["clv_somme"] / b["clv_n"], 4) if b["clv_n"] else None
-        for k in ("gains", "gains_avec_clv", "espere_clv", "gains_sans_clv"):
+        b["roi_kelly"] = round(b["gains_kelly"] / b["mises_kelly"], 4) if b["mises_kelly"] else None
+        for k in ("gains", "gains_avec_clv", "espere_clv", "gains_sans_clv", "mises_kelly", "gains_kelly"):
             b[k] = round(b[k], 2)
     return out
 
@@ -429,6 +454,56 @@ def profil_horaire(paris: list[dict]) -> dict:
         h = t.astimezone(paris_tz).hour
         out["Tous"][h] += 1
         out.setdefault(p.get("bookmaker") or "?", [0] * 24)[h] += 1
+    return out
+
+
+# Filtres à tester : TRJ du bookmaker, limite de mise Pinnacle (liquidité du marché sharp), mouvement de Pinnacle.
+# Chaque filtre = (champ du pari, tranches (libellé, minimum inclus, maximum exclus)). Descriptif : aucun n'est appliqué.
+FILTRES = {
+    "trj": ("trj_bookmaker", (("< 92 %", 0, .92), ("92 – 94 %", .92, .94), ("94 – 96 %", .94, .96), ("96 % et plus", .96, 9))),
+    "limite": ("limite_pinnacle", (("< 300 €", 0, 300), ("300 – 999 €", 300, 1000),
+                                   ("1 000 – 2 999 €", 1000, 3000), ("3 000 € et plus", 3000, 1e12))),
+    "mouvement": ("mouvement_pinnacle", (("Cote Pinnacle en baisse ≥ 2 %", .02, 9), ("En baisse de 0,5 à 2 %", .005, .02),
+                                         ("Stable (± 0,5 %)", -.005, .005), ("Cote Pinnacle en hausse", -9, -.005))),
+}
+
+
+def bilan_filtres(paris: list[dict]) -> dict:
+    """Par filtre et tranche : paris uniques réglés, gain, ROI, CLV, part battant la clôture, et mise Kelly.
+
+    Seuls les paris pris après l'ajout de la mesure la portent (``n_mesures`` donne leur nombre, réglés ou non).
+    Un tableau à zéro ligne veut dire « pas encore assez de paris », pas « sans effet »."""
+    uniques = premiers_par_selection(paris)
+    out: dict[str, dict] = {}
+    for nom, (champ, tranches) in FILTRES.items():
+        lignes = [{"tranche": t, "n": 0, "regles": 0, "gagnes": 0, "mises": 0.0, "gains": 0.0, "clv_n": 0,
+                   "clv_somme": 0.0, "clv_positifs": 0} for t, _, _ in tranches]
+        mesures = 0
+        for p in paris:
+            v = p.get(champ)
+            if id(p) not in uniques or not _nombre_fini(v):
+                continue
+            mesures += 1
+            for l, (_, bas, haut) in zip(lignes, tranches):
+                if bas <= v < haut:
+                    l["n"] += 1
+                    if p.get("statut") in REGLES:
+                        l["regles"] += 1
+                        l["gagnes"] += p["statut"] in ("gagne", "demi_gagne")
+                        l["mises"] += p["mise"]
+                        l["gains"] += p["gain"] or 0
+                        clv = clv_finale(p)
+                        if clv is not None:
+                            l["clv_n"] += 1
+                            l["clv_somme"] += clv
+                            l["clv_positifs"] += clv > 0
+                    break
+        for l in lignes:
+            l["roi"] = round(l["gains"] / l["mises"], 4) if l["mises"] else None
+            l["clv_moyenne"] = round(l["clv_somme"] / l["clv_n"], 4) if l["clv_n"] else None
+            l["gains"], l["mises"] = round(l["gains"], 2), round(l["mises"], 2)
+            del l["clv_somme"]
+        out[nom] = {"n_mesures": mesures, "tranches": lignes}
     return out
 
 

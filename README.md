@@ -129,6 +129,16 @@ sur le site, avec un panneau qui affiche les matchs et les paris sélectionnés.
 Voir [règles et limites](docs/strategie-m3.md) et
 [rapport chiffré](docs/strategie-m3.json).
 
+### Filtres à tester et mise Kelly (Bilan)
+
+Mesures prises à l'enregistrement du pari, **descriptives, jamais appliquées** : TRJ du marché chez le bookmaker
+français (`comparaison.taux_retour`), limite de mise de Pinnacle (liquidité du marché sharp) et mouvement de la cote
+juste de Pinnacle sur 10 à 60 minutes (`cotes/mouvement.py`, ancres gardées dans le cache Actions à côté de la
+reprise). Le Bilan compare le ROI et la CLV par tranche (`simulation.bilan_filtres`). Les anciens paris n'ont pas ces
+mesures : les tranches se remplissent au fil des nouveaux paris. Le Bilan montre aussi une mise **Kelly ¼** (bankroll
+fictive 1 000 €, 2 % maximum) calculée sur les mêmes paris, à côté des 10 € fixes, ainsi que la part des paris qui
+battent la clôture et le profil horaire des détections par bookmaker.
+
 ### Laboratoire de comparaison
 
 **Stratégies** affiche les 36 règles, Claude et ChatGPT V1 dans un tableau triable

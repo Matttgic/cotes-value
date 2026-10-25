@@ -154,6 +154,31 @@ def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str
     return index
 
 
+ISSUES_COMPLETES = ({"DOM", "EXT"}, {"PLUS", "MOINS"}, {"YES", "NO"}, {"DOM", "NUL", "EXT"})
+
+
+def taux_retour(groupe: list[dict]) -> float | None:
+    """Taux de retour joueur (TRJ) d'un marché complet d'un bookmaker : 1 / Σ(1/cote), p. ex. 0,94 = marge de 6 %.
+
+    None si le marché n'est pas complet (issues manquantes ou en double) ou si une cote est invalide : la
+    double chance (issues qui se recouvrent) et les marchés à nombreuses issues n'ont pas de TRJ ici."""
+    issues = [l.get("issue") for l in groupe]
+    if len(set(issues)) != len(issues) or set(issues) not in ISSUES_COMPLETES:
+        return None
+    cotes = [l.get("cote") for l in groupe]
+    if any(isinstance(c, bool) or not isinstance(c, (int, float)) or not isfinite(c) or c <= 1 for c in cotes):
+        return None
+    return round(1 / sum(1 / c for c in cotes), 4)
+
+
+def _trj_par_marche(francais: list[dict]) -> dict[tuple, float | None]:
+    groupes: dict[tuple, list[dict]] = {}
+    for l in francais:
+        if l.get("cote"):
+            groupes.setdefault((l["source"], l["match_id"], l["marche"], l["periode"], l.get("ligne")), []).append(l)
+    return {k: taux_retour(g) for k, g in groupes.items()}
+
+
 def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min: float = ECART_MIN,
              index: dict | None = None, controle: tuple[dict, dict] | None = None,
              hors_consensus: set[str] | None = None) -> list[dict]:
@@ -161,6 +186,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
     de conformité, matchs suspects) : une cote dont l'intitulé n'est pas contrôlé conforme est marquée
     suspecte (pas de pari)."""
     index = index if index is not None else indexer(francais, references)
+    trj = _trj_par_marche(francais)
     opportunites = []
     for l in francais:
         if hors_perimetre_anj(l):
@@ -211,7 +237,12 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 suspect = "références en désaccord"
             elif not suspect and ecart > (ECART_SUSPECT if l["cote"] <= 10 else ECART_SUSPECT_GROSSES):
                 suspect = "écart trop grand"
+            pin = trouvees.get("Pinnacle") or {}
             o = {
+                # filtres à tester (descriptifs, jamais appliqués) : TRJ du marché chez le bookmaker français,
+                # limite de mise et marge de Pinnacle sur la même sélection
+                "trj_bookmaker": trj.get((l["source"], l["match_id"], l["marche"], l["periode"], l.get("ligne"))),
+                "limite_pinnacle": pin.get("mise_max"), "marge_pinnacle": pin.get("marge_pinnacle"),
                 "detecte": l["collecte"], "bookmaker": l["source"], "sport": l["sport"], "ligue": l.get("ligue"),
                 "collecte_debut": l.get("collecte_debut"), "collecte_recue": l.get("collecte_recue"),
                 "match_id": l["match_id"], "domicile": l["domicile"], "exterieur": l["exterieur"],
