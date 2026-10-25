@@ -994,9 +994,6 @@ MODELE = r"""<!doctype html>
 // Mode jour/nuit appliqué dès le début du script unique de la page (les contrôles de publication exigent un seul script).
 try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}
 const D = __DONNEES__;
-// Blocs chiffrés qui existent en mise fixe et en mise Kelly (voir appliquerMise)
-const CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
-const D_FIXE = Object.fromEntries(CLES_MISE.map(k => [k, D[k]]));
 const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cote = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
 const pct = x => x==null ? "—" : (x>0?"+":"") + (100*x).toFixed(1).replace(".", ",") + " %";
@@ -1183,7 +1180,7 @@ function rendreBilan() {
 function rendreKelly() {
   const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "Qwen", ...D.references, "Toutes"];
   const lignes = refs.map(r => {
-    const t = additionner(SIMS, D_FIXE.bilan, "", r);
+    const t = additionner(SIMS, (D_FIXE || D).bilan, "", r);
     if (!t || !t.regles) return "";
     return `<tr><td><b>${e(NOMS_REF[r] || r)}</b></td><td>${t.regles}</td>
 <td class="${signe(t.gains)}">${eurC(t.gains)}<small class="roi ${signe(t.roi)}">${t.roi == null ? "" : pctC(t.roi)}</small></td>
@@ -1311,6 +1308,8 @@ if(D.laboratoire?.navigation?.paris) {
   }
 }
 document.getElementById("nb-paris").textContent = fiches.length || "";
+var CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
+var D_FIXE = Object.fromEntries(CLES_MISE.map(k => [k, D[k]]));   // « var » : lu par un rendu antérieur sans erreur
 // --- Mise fixe (10 €) ou Kelly ¼ : les blocs chiffrés du serveur (bilans, courbes, segments, laboratoire) existent
 // dans les deux mises ; les fiches gardent leur mise et leur gain d'origine pour pouvoir revenir en arrière.
 for (const f of fiches) { f.mise_fixe = f.mise; f.gain_fixe = f.gain; }
@@ -2194,6 +2193,7 @@ function choisirMise(mode) {
 document.querySelectorAll("[data-mise]").forEach(b => b.onclick = () => choisirMise(b.dataset.mise));
 const noteMise = document.getElementById("mode-mise-note");
 if (noteMise) noteMise.hidden = miseMode !== "kelly";
+if (miseMode === "kelly") rendreTout();     // mode mémorisé : les premiers rendus étaient en mise fixe
 initialiserAnalyses();
 initialiserInterface();
 __ACTUALISATION_JS__
