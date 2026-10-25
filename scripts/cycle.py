@@ -38,6 +38,7 @@ from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
+from cotes import reprise  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
@@ -248,7 +249,8 @@ def _radar_depuis(lignes) -> list[dict]:
     return out
 
 
-def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: Path | None = None):
+def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: Path | None = None,
+                       reprise_chemin: Path | None = None):
     """Pinnacle et Polymarket d'abord, puis les bookmakers français en parallèle.
 
     Chaque bookmaker est lu directement sur son site (PulseScore n'existe plus) ; la panne
@@ -335,6 +337,14 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         }
         signaler(journal, "pinnacle", list(pinnacle.ERREURS))
         signaler(journal, "polymarket", list(polymarket.ERREURS))
+        # Après le secours : un sport resté sans référence reprend son dernier passage (cotes/reprise.py).
+        # La panne reste notée dans l'étape ; les bookmakers français lisent encore ce sport.
+        repris, journal["reprise"] = reprise.appliquer(reprise_chemin, {"Pinnacle": pin, "Polymarket": poly},
+                                                       maintenant)
+        pin, poly = pin + repris.get("Pinnacle", []), poly + repris.get("Polymarket", [])
+        for nom, etape_nom in (("Pinnacle", "pinnacle"), ("Polymarket", "polymarket")):
+            if repris.get(nom) and etape_nom in journal["etapes"]:
+                journal["etapes"][etape_nom]["reprise"] = len(repris[nom])
         sports = sports_des(pin + poly)
         futurs = {}
 
@@ -637,6 +647,8 @@ def main() -> int:
                    help="Sauvegarder la collecte avant le chemin rapide d'alertes ; site construit ensuite")
     a.add_argument("--reglement", choices=["auto", "oui", "non"], default=os.environ.get("REGLEMENT", "auto"),
                    help="auto = si le dernier règlement date d'au moins REGLEMENT_MINUTES")
+    a.add_argument("--reprise", default=os.environ.get("REPRISE_CHEMIN", ""),
+                   help="Dernier bon état des références (gzip, hors branche « donnees ») ; vide = aucune reprise")
     a.add_argument("--seulement-reglement", action="store_true",
                    help="Régler les paris sans interroger les cotes ni créer de nouveaux paris")
     args = a.parse_args()
@@ -664,7 +676,8 @@ def main() -> int:
                           "etapes": journal.get("etapes", {})}, ensure_ascii=False))
         return 0
 
-    pin, poly, francais = collecter_prematch(args.mode, maintenant, journal, donnees)
+    pin, poly, francais = collecter_prematch(args.mode, maintenant, journal, donnees,
+                                             Path(args.reprise) if args.reprise else None)
     references = {"Pinnacle": pin, "Polymarket": poly}
     # Smarkets reste hors de `francais` : bookmaker « smarkets » n'est pas un book français.
     sports_sm = {"football"} if args.mode == "test" else {l["sport"] for l in francais if l.get("sport")}

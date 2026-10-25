@@ -65,8 +65,18 @@ jobs:
             mkdir donnees && cd donnees && git init -q -b donnees && git remote add origin "$url"
           fi
 
+      # Dernier bon état de Pinnacle et Polymarket (cotes/reprise.py) : quelques Mo en gzip, gardés dans le cache
+      # Actions et non dans la branche « donnees ». Absent (premier cycle, cache évincé) : aucune reprise.
+      - name: Restaurer le dernier bon état des références
+        uses: actions/cache/restore@v4
+        with:
+          path: reprise
+          key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: reprise-
+
       - name: Cycle (collecte, comparaison, paris, site)
         env:
+          REPRISE_CHEMIN: reprise/derniere_lecture.json.gz
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
           PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
@@ -98,6 +108,14 @@ jobs:
           SMARKETS_COLLECTE: ${{ vars.SMARKETS_COLLECTE || 'oui' }}
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
         run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
+
+      - name: Sauver le dernier bon état des références
+        if: always() && hashFiles('reprise/derniere_lecture.json.gz') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: reprise
+          key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Enregistrer les données
         run: |
