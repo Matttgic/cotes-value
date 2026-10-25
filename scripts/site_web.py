@@ -659,6 +659,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__SUIVI_JS__", (web / "suivi.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__PUSHOVER_JS__", (web / "pushover.js").read_text(encoding="utf-8"))
+    html = html.replace("__VOYANT_JS__", (web / "voyant.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
     version = hashlib.sha256(html.replace("__DONNEES__", donnees_json, 1).encode("utf-8")).hexdigest()
@@ -996,6 +997,7 @@ MODELE = r"""<!doctype html>
     </details>
   </section>
 </main>
+<footer id="voyant-pushover" class="voyant voyant-attention" role="status" aria-live="polite"><span class="voyant-point" aria-hidden="true"></span><span class="voyant-texte">Pushover : vérification en cours…</span></footer>
 <script>
 // Mode jour/nuit appliqué dès le début du script unique de la page (les contrôles de publication exigent un seul script).
 try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}
@@ -2181,6 +2183,7 @@ rendreLaboratoire();
 const depart = location.hash.slice(1) || lire("onglet") || "paris";
 __NOTIFICATIONS_JS__
 __PUSHOVER_JS__
+__VOYANT_JS__
 const ONGLETS = ["jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
 ouvrir(ONGLETS.includes(depart) ? depart : "paris");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
