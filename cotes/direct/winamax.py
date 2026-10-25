@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import random
 import re
+import select
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -116,6 +117,58 @@ def _heure_unix(valeur):
         return None
 
 
+# Diagnostic du 23 au 25/10/2026 (349 cycles, 21 en échec) : 13 fois la connexion ne s'ouvre plus (10 sports
+# × 3 essais en 20 s, cause non notée) ; 8 fois une réponse n'arrive jamais et ``recv_str`` de curl_cffi attend
+# sans limite : le budget du cycle tue alors la lecture et tout ce qui était lu est perdu.
+LECTURE_S = 12          # une demande (envoi et réponse, trames de plusieurs Mo comprises)
+CONNEXION_S = 10        # ouverture du socket
+MARGE_S = 3             # gardées sur le budget pour traduire et rendre ce qui est déjà lu
+OUVERTURES_MAX = 3      # ouvertures ratées de suite : Winamax n'est plus essayé de ce cycle
+_CAUSES = ("ouverture", "namespace", "délai", "fermeture")
+
+
+def _cause(e: BaseException) -> str:
+    """Nature d'une erreur réseau, sans son message (qui peut contenir une URL ou un corps)."""
+    if isinstance(e, OSError) and e.args and e.args[0] in _CAUSES:
+        return e.args[0]
+    code = getattr(e, "code", None)
+    nom = type(e).__name__
+    return f"{nom} {int(code)}" if isinstance(code, int) and not isinstance(code, bool) else nom
+
+
+def _recevoir(ws, fin: float) -> str:
+    """Une trame texte, au plus tard à ``fin`` (horloge ``time.monotonic``), sinon ``TimeoutError``.
+
+    Même assemblage que ``WebSocket.recv`` de curl_cffi, mais l'attente est bornée. Les doublures de test n'ont
+    que ``recv_str``."""
+    fragment = getattr(ws, "recv_fragment", None)
+    if fragment is None:
+        return ws.recv_str()
+    from curl_cffi import CurlECode, CurlError, CurlInfo, CurlWsFlag
+    prise = ws.curl.getinfo(CurlInfo.ACTIVESOCKET)
+    morceaux = []
+    while True:
+        try:
+            morceau, trame = fragment()
+        except CurlError as e:
+            if e.code != CurlECode.AGAIN:
+                raise
+            reste = fin - time.monotonic()
+            if reste <= 0:
+                raise TimeoutError("délai") from None
+            select.select([prise], [], [], min(0.5, reste))
+            continue
+        if trame.flags & (CurlWsFlag.PING | CurlWsFlag.PONG):
+            continue
+        if trame.flags & CurlWsFlag.CLOSE:
+            raise OSError("fermeture")
+        morceaux.append(morceau)
+        if trame.bytesleft == 0 and not trame.flags & CurlWsFlag.CONT:
+            return b"".join(morceaux).decode("utf-8")
+        if time.monotonic() >= fin:
+            raise TimeoutError("délai")
+
+
 class Socket:
     """Une connexion, des routes espacées. Le corps des messages n'est pas journalisé."""
 
@@ -129,6 +182,8 @@ class Socket:
         self._premier = True
         self.echeance = None
         self._seq = 0
+        self._ouvertures_ratees = 0
+        self.hors_service = False
 
     def fermer(self) -> None:
         try:
@@ -143,6 +198,25 @@ class Socket:
         if message not in self.erreurs and len(self.erreurs) < 30:
             self.erreurs.append(message)
 
+    def _reste(self) -> float | None:
+        reste = getattr(self.echeance, "reste", None) if self.echeance is not None else None
+        return reste() if reste is not None else None
+
+    def _temps(self) -> bool:
+        """Assez de budget pour une demande, marge comprise."""
+        if self.echeance is not None and not self.echeance.ok():
+            return False
+        reste = self._reste()
+        return reste is None or reste > MARGE_S + 1
+
+    def _fin(self, plafond: float) -> float:
+        """Échéance d'une étape, plafonnée par le budget moins la marge."""
+        delai = plafond
+        reste = self._reste()
+        if reste is not None:
+            delai = min(delai, reste - MARGE_S)
+        return time.monotonic() + max(1.0, delai)
+
     def _espacer(self) -> None:
         if self._premier:
             self._premier = False
@@ -151,48 +225,61 @@ class Socket:
         _pause(haut if bas == haut else random.uniform(bas, haut))
 
     def _ouvrir(self) -> None:
+        fin = self._fin(CONNEXION_S)
         if self._connecter is not None:
             self._ws = self._connecter()
         else:
             from curl_cffi.requests import Session
             self._session = Session(impersonate="chrome")
-            self._ws = self._session.ws_connect(URL, headers={"Origin": ORIGIN}, timeout=30)
-        if not str(self._lire() or "").startswith("0"):
+            self._ws = self._session.ws_connect(URL, headers={"Origin": ORIGIN},
+                                                timeout=max(1.0, fin - time.monotonic()))
+        if not str(self._lire(fin) or "").startswith("0"):
             raise OSError("ouverture")
         self._ws.send_str("40")
-        if not str(self._lire() or "").startswith("40"):
+        if not str(self._lire(fin) or "").startswith("40"):
             raise OSError("namespace")
 
     def _assurer(self) -> None:
-        if self._ws is None:
+        """Ouvre le socket s'il est fermé. Après un échec, attend 1 s puis 2 s ; au troisième de suite,
+        le socket est hors service pour le reste du cycle."""
+        if self._ws is not None:
+            return
+        if self._ouvertures_ratees:
+            attente = min(4.0, 2.0 ** (self._ouvertures_ratees - 1))
+            reste = self._reste()
+            if reste is not None and reste < attente + MARGE_S + 1:
+                raise TimeoutError("délai")
+            _pause(attente)
+        try:
             self._ouvrir()
+        except Exception:
+            self.fermer()
+            self._ouvertures_ratees += 1
+            if self._ouvertures_ratees >= OUVERTURES_MAX:
+                self.hors_service = True
+            raise
+        self._ouvertures_ratees = 0
 
-    def _reprise(self, essai: int) -> bool:
-        """Pause courte puis nouvel essai, tant que le budget le permet."""
-        if self.echeance is not None and not self.echeance.ok():
+    def _reprise(self) -> bool:
+        """Pause courte avant de reposer la demande, tant que le budget le permet."""
+        if not self._temps():
             return False
-        delai = min(1.0, 0.3 * (essai + 1))
-        reste = getattr(self.echeance, "reste", None) if self.echeance is not None else None
-        if reste is not None:
-            valeur = reste()
-            if valeur is not None and valeur < delai + 1:
-                return False
-        _pause(delai)
+        _pause(0.3)
         return True
 
-    def _lire(self) -> str:
+    def _lire(self, fin: float) -> str:
         for _ in range(12):
-            msg = self._ws.recv_str()
+            msg = _recevoir(self._ws, fin)
             if msg == "2":
                 self._ws.send_str("3")
                 continue
             return msg
         return ""
 
-    def _lire_reponse(self, identifiant: str) -> str:
+    def _lire_reponse(self, identifiant: str, fin: float) -> str:
         """Ignore les poussées sans l'identifiant de la demande en cours."""
         for _ in range(_REPONSES_MAX):
-            msg = self._lire()
+            msg = self._lire(fin)
             if not str(msg).startswith("42"):
                 continue
             try:
@@ -205,7 +292,9 @@ class Socket:
         return ""
 
     def demander(self, route: str, filtre: int | None = None) -> dict | None:
-        if self.echeance is not None and not self.echeance.ok():
+        if self.hors_service:
+            return None
+        if not self._temps():
             self._noter("budget")
             return None
         if not _ROUTE.fullmatch(route):
@@ -218,20 +307,23 @@ class Socket:
         if filtre is not None:
             corps["filterId"] = int(filtre)
         message = "42" + json.dumps(["m", corps], separators=(",", ":"))
-        for essai in range(3):
-            if self.echeance is not None and not self.echeance.ok():
+        for essai in range(2):
+            if not self._temps():
                 self._noter("budget")
                 return None
             try:
                 self._assurer()
                 self._ws.send_str(message)
                 self.requetes += 1
-                msg = self._lire_reponse(identifiant)
-            except Exception:  # noqa: BLE001
+                msg = self._lire_reponse(identifiant, self._fin(LECTURE_S))
+            except Exception as e:  # noqa: BLE001
                 self.fermer()
-                if essai < 2 and self._reprise(essai):
+                if self.hors_service:
+                    self._noter(f"connexion impossible ({_cause(e)})")
+                    return None
+                if essai == 0 and self._reprise():
                     continue
-                self._noter(f"{route} : réseau")
+                self._noter(f"{route} : réseau ({_cause(e)})")
                 return None
             if not str(msg).startswith("42"):
                 self._noter(f"{route} : réponse absente")
