@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bilan,  # noqa: E402
                               bilan_filtres, bilan_tranches, moyennes_ecarts, paris_strategie,
-                              premiers_par_selection, profil_horaire, REGLES, clv_finale, segments, tranche)
+                              mise_kelly, premiers_par_selection, profil_horaire, REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes, suivis_prudents  # noqa: E402
@@ -303,13 +303,27 @@ def courbe_comparateur(rows: list[dict], cutoff: str) -> list[list]:
     return points
 
 
+def paris_en_mise_kelly(paris: list[dict]) -> list[dict]:
+    """Copies des paris misés en Kelly ¼ : mise propre, gain réglé proportionnel (le gain suit la mise).
+
+    Les copies servent aux mêmes calculs que les paris d'origine ; rien n'est écrit dans les données."""
+    out = []
+    for p in paris:
+        k = mise_kelly(p) or 1.0
+        q = {**p, "mise": k}
+        if p.get("gain") is not None and p.get("mise"):
+            q["gain"] = round(p["gain"] * k / p["mise"], 2)
+        out.append(q)
+    return out
+
+
 def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]], regles: dict[str, set[int]] | None = None) -> dict:
     """Toutes les prises, en colonnes compactes ; le navigateur ne rend que 50 cartes.
 
     Une ligne = une prise enregistrée (référence comprise), prix/date exacts.
     La CLV exportée est uniquement celle de clôture validée, comme dans le bilan.
     """
-    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence", "mise", "unique_bilan", "regles"]
+    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence", "mise", "mise_kelly", "unique_bilan", "regles"]
     regles = regles or {}
     uniques = premiers_par_selection(paris)
     convergents = paris_convergence(paris, retenus)
@@ -318,7 +332,7 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]], regles: dic
         f = {k: p.get(k) for k in CHAMPS_FICHE}
         f.update(simulation=p.get("simulation"), clv=clv_finale(p), tranche=tranche(p["cote"]) if p.get("cote") else None,
                  strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents,
-                 mise=p.get("mise"), unique_bilan=id(p) in uniques,
+                 mise=p.get("mise"), mise_kelly=mise_kelly(p) or 1.0, unique_bilan=id(p) in uniques,
                  regles=[cle for cle in regles if id(p) in regles[cle]])      # règles Pinnacle/Polymarket (« Mes stratégies »)
         rows.append([f[k] for k in champs])
     return {"champs": champs, "lignes": rows}
@@ -495,92 +509,103 @@ def construire(donnees: Path, sortie: Path) -> Path:
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     liste, fiches_total, valeurs = selection_paris(paris)
-    laboratoire = _lire(Path(__file__).resolve().parent.parent / "docs/comparaison-strategies.json", {})
-    if laboratoire:
-        # L'étude figée contient encore les règles Betfair (BET-*) : seules les règles actuelles sont gardées.
-        ids_regles = {r.id for r in REGLES_LABO}
-        laboratoire["resultats"] = [r for r in laboratoire.get("resultats", []) if r["regle"]["id"] in ids_regles]
-        maintenant = datetime.now(timezone.utc).isoformat()
-        releve_str = laboratoire.get("releve") or maintenant
-        m3_ids = paris_m3(paris)
-        releve_dt = heure(releve_str) or heure(maintenant)
-        rapport_v2 = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-jules-v2.json", {})
-        v2_historique = rapport_v2.get("comparateurs", {}).get("JULES EDGE v2 reconstruite")
-        if v2_historique and heure(rapport_v2.get("releve")) == releve_dt:
-            laboratoire.setdefault("comparateurs", {})["JULES EDGE v2 (rejeu)"] = {
-                k: v2_historique[k] for k in ("construction", "validation", "test", "ensemble")}
-        else:
-            observes_v2 = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
-            ids_v2 = paris_jules_v2(observes_v2, depuis=DEBUT_ETUDE)
-            lignes_v2 = [p for p in observes_v2 if id(p) in ids_v2]
-            commun_v2 = [p for p in lignes_v2 if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
-            laboratoire.setdefault("comparateurs", {})["JULES EDGE v2 (rejeu)"] = {
-                **evaluer(lignes_v2, releve_str), "ensemble": resume(commun_v2, releve_str, incertitude=False)}
-        enrichir_comparateurs(paris, laboratoire, maintenant)
-        laboratoire["navigation"] = navigation_strategies(paris, laboratoire, maintenant)
-        laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
-                                    for r in laboratoire.get("resultats", [])]
-        laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
-        gemini_ids = paris_gemini(paris)
-        jules_ids = paris_jules(paris)
-        jules_v2_ids = paris_jules_v2(paris)
-        eden_ids = paris_eden(paris)
-        officiels = {
-            "Claude (rejeu)": paris_strategie(paris),
-            "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
-            "Gemini Argon v1 (rejeu)": gemini_ids,
-            "JULES EDGE v1 (rejeu)": jules_ids,
-            "JULES EDGE v2 (rejeu)": jules_v2_ids,
-            "Eden (rejeu)": eden_ids,
-            "M3 (rejeu)": m3_ids,
-        }
-        laboratoire["m3_paris"] = [{k: p.get(k) for k in
-            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-            for p in sorted((p for p in paris if id(p) in m3_ids),
-                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-        laboratoire["gemini_paris"] = [{k: p.get(k) for k in
-            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-            for p in sorted((p for p in paris if id(p) in gemini_ids),
-                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-        laboratoire["jules_paris"] = [{k: p.get(k) for k in
-            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-            for p in sorted((p for p in paris if id(p) in jules_ids),
-                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-        laboratoire["jules_v2_paris"] = [{k: p.get(k) for k in
-            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-            for p in sorted((p for p in paris if id(p) in jules_v2_ids),
-                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-        laboratoire["eden_paris"] = [{k: p.get(k) for k in
-            ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
-             "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
-            for p in sorted((p for p in paris if id(p) in eden_ids),
-                            key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-        officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
-        prudentes = selections_prudentes(paris, bases={cle: officiels[nom] for cle, _, _, nom, _ in STRATEGIES})
-        officiels.update({v["nom"]: prudentes[v["cle"]] for v in VARIANTES})
-        laboratoire["suivis_prudents"] = suivis_prudents(paris, maintenant)
-        laboratoire["comparateurs_futur"] = {
-            nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
-                         and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
-                        maintenant, incertitude=False) for nom, ids in officiels.items()}
-        enrichir_evenements(paris, laboratoire, maintenant)
-        ids_labo = {i for r in laboratoire["futur"] for i in r["ids_recents"]}
-        laboratoire["paris_recents"] = [{k: p.get(k) for k in (
-            "id", "domicile", "exterieur", "bookmaker", "pari", "cote", "ecart",
-            "detecte", "debut", "statut", "gain")} for p in paris if p["id"] in ids_labo]
+    def _laboratoire(paris):
+        """Laboratoire des stratégies pour un jeu de paris (mises fixes ou mises Kelly)."""
+        laboratoire = _lire(Path(__file__).resolve().parent.parent / "docs/comparaison-strategies.json", {})
+        if laboratoire:
+            # L'étude figée contient encore les règles Betfair (BET-*) : seules les règles actuelles sont gardées.
+            ids_regles = {r.id for r in REGLES_LABO}
+            laboratoire["resultats"] = [r for r in laboratoire.get("resultats", []) if r["regle"]["id"] in ids_regles]
+            maintenant = datetime.now(timezone.utc).isoformat()
+            releve_str = laboratoire.get("releve") or maintenant
+            m3_ids = paris_m3(paris)
+            releve_dt = heure(releve_str) or heure(maintenant)
+            rapport_v2 = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-jules-v2.json", {})
+            v2_historique = rapport_v2.get("comparateurs", {}).get("JULES EDGE v2 reconstruite")
+            if v2_historique and heure(rapport_v2.get("releve")) == releve_dt:
+                laboratoire.setdefault("comparateurs", {})["JULES EDGE v2 (rejeu)"] = {
+                    k: v2_historique[k] for k in ("construction", "validation", "test", "ensemble")}
+            else:
+                observes_v2 = [p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) <= releve_dt]
+                ids_v2 = paris_jules_v2(observes_v2, depuis=DEBUT_ETUDE)
+                lignes_v2 = [p for p in observes_v2 if id(p) in ids_v2]
+                commun_v2 = [p for p in lignes_v2 if heure(DEBUT_ETUDE) <= heure(p["debut"]) < heure(PERIODES[-1][2])]
+                laboratoire.setdefault("comparateurs", {})["JULES EDGE v2 (rejeu)"] = {
+                    **evaluer(lignes_v2, releve_str), "ensemble": resume(commun_v2, releve_str, incertitude=False)}
+            enrichir_comparateurs(paris, laboratoire, maintenant)
+            laboratoire["navigation"] = navigation_strategies(paris, laboratoire, maintenant)
+            laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
+                                        for r in laboratoire.get("resultats", [])]
+            laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
+            gemini_ids = paris_gemini(paris)
+            jules_ids = paris_jules(paris)
+            jules_v2_ids = paris_jules_v2(paris)
+            eden_ids = paris_eden(paris)
+            officiels = {
+                "Claude (rejeu)": paris_strategie(paris),
+                "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
+                "Gemini Argon v1 (rejeu)": gemini_ids,
+                "JULES EDGE v1 (rejeu)": jules_ids,
+                "JULES EDGE v2 (rejeu)": jules_v2_ids,
+                "Eden (rejeu)": eden_ids,
+                "M3 (rejeu)": m3_ids,
+            }
+            laboratoire["m3_paris"] = [{k: p.get(k) for k in
+                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
+                for p in sorted((p for p in paris if id(p) in m3_ids),
+                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+            laboratoire["gemini_paris"] = [{k: p.get(k) for k in
+                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
+                for p in sorted((p for p in paris if id(p) in gemini_ids),
+                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+            laboratoire["jules_paris"] = [{k: p.get(k) for k in
+                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
+                for p in sorted((p for p in paris if id(p) in jules_ids),
+                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+            laboratoire["jules_v2_paris"] = [{k: p.get(k) for k in
+                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
+                for p in sorted((p for p in paris if id(p) in jules_v2_ids),
+                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+            laboratoire["eden_paris"] = [{k: p.get(k) for k in
+                ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote",
+                 "reference", "ecart", "detecte", "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le")}
+                for p in sorted((p for p in paris if id(p) in eden_ids),
+                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
+            officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
+            prudentes = selections_prudentes(paris, bases={cle: officiels[nom] for cle, _, _, nom, _ in STRATEGIES})
+            officiels.update({v["nom"]: prudentes[v["cle"]] for v in VARIANTES})
+            laboratoire["suivis_prudents"] = suivis_prudents(paris, maintenant)
+            laboratoire["comparateurs_futur"] = {
+                nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
+                             and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
+                            maintenant, incertitude=False) for nom, ids in officiels.items()}
+            enrichir_evenements(paris, laboratoire, maintenant)
+            ids_labo = {i for r in laboratoire["futur"] for i in r["ids_recents"]}
+            laboratoire["paris_recents"] = [{k: p.get(k) for k in (
+                "id", "domicile", "exterieur", "bookmaker", "pari", "cote", "ecart",
+                "detecte", "debut", "statut", "gain")} for p in paris if p["id"] in ids_labo]
+        return laboratoire
+
+    laboratoire = _laboratoire(paris)
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     actuelles = valider_actuelles(actuelles, paris, retenus)
     # Une seule copie des contrats dans le catalogue. La navigation ne garde
     # ici que ses étiquettes historiques ; le client partage les mêmes fiches.
-    if laboratoire.get("navigation"):
-        laboratoire["navigation"]["paris"] = {pid: {k: p.get(k) for k in
-            ("strategies_historiques", "convergence_historique", "tranche", "cote", "strategies", "jules_v2", "eden")}
-            for pid, p in laboratoire["navigation"]["paris"].items()}
+    def _alleger_navigation(labo):
+        if labo.get("navigation"):
+            labo["navigation"]["paris"] = {pid: {k: p.get(k) for k in
+                ("strategies_historiques", "convergence_historique", "tranche", "cote", "strategies", "jules_v2", "eden")}
+                for pid, p in labo["navigation"]["paris"].items()}
+    _alleger_navigation(laboratoire)
+    # Même historique rejoué en mise Kelly : le navigateur échange ces blocs quand on choisit « Kelly ».
+    paris_k = paris_en_mise_kelly(paris)
+    laboratoire_k = _laboratoire(paris_k)
+    _alleger_navigation(laboratoire_k)
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS,
@@ -593,6 +618,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
             "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "incidents": _lire(donnees / "sante_incidents.json", {}), "bilan": bilan(paris),
+            "kelly": {"bilan": bilan(paris_k), "courbes": courbes(paris_k), "segments": segments(paris_k),
+                      "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"}
+                                         for k, b in bilan_tranches(paris_k).items()},
+                      "paris_segments": paris_des_segments(paris_k), "filtres": bilan_filtres(paris_k),
+                      "laboratoire": laboratoire_k},
             "ecarts_references": moyennes_ecarts(paris),
             "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "profil_horaire": profil_horaire(paris), "filtres": bilan_filtres(paris), "segments": segments(paris),
             "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
@@ -652,6 +682,11 @@ MODELE = r"""<!doctype html>
 <header class="haut">
   <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><label class="signature palette-label">Couleurs <select id="palette-site" aria-label="Couleurs du site"><option value="bleu">Bleu</option><option value="violet">Violet</option><option value="graphite">Graphite</option></select></label><label class="signature palette-label">Mode <select id="theme-site" aria-label="Mode jour ou nuit"><option value="auto">Auto</option><option value="nuit">Nuit</option><option value="jour">Jour</option></select></label></div></div>
     <div class="mise-a-jour"><span class="maj" id="maj"></span><span id="fraicheur" class="fraicheur"></span></div></div>
+  <div class="mode-mise" role="group" aria-label="Mode de mise des bilans"><span>Mise des bilans</span>
+    <button type="button" data-mise="fixe" aria-pressed="true">Fixe 10 €</button>
+    <button type="button" data-mise="kelly" aria-pressed="false">Kelly ¼</button></div>
+  <p class="aide mode-mise-note" id="mode-mise-note" hidden>Mode Kelly : tous les gains, ROI et CLV sont recalculés avec la mise Kelly ¼ de chaque pari
+    (1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 %). Mêmes paris, seule la mise change. L'étude figée du 14/10 (règles du laboratoire) reste en mises fixes.</p>
   <nav id="onglets" aria-label="Navigation principale">
     <button data-o="paris"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h4"/></svg><span>Paris<span class="nb" id="nb-paris"></span></span></button>
     <button data-o="bilan"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11l4 3 8-11M16 3h5v5M3 21h18"/></svg><span>Bilan</span></button>
@@ -1145,7 +1180,7 @@ function rendreBilan() {
 function rendreKelly() {
   const refs = ["Uniques", "Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "Qwen", ...D.references, "Toutes"];
   const lignes = refs.map(r => {
-    const t = additionner(SIMS, D.bilan, "", r);
+    const t = additionner(SIMS, (D_FIXE || D).bilan, "", r);
     if (!t || !t.regles) return "";
     return `<tr><td><b>${e(NOMS_REF[r] || r)}</b></td><td>${t.regles}</td>
 <td class="${signe(t.gains)}">${eurC(t.gains)}<small class="roi ${signe(t.roi)}">${t.roi == null ? "" : pctC(t.roi)}</small></td>
@@ -1273,6 +1308,40 @@ if(D.laboratoire?.navigation?.paris) {
   }
 }
 document.getElementById("nb-paris").textContent = fiches.length || "";
+var CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
+var D_FIXE = Object.fromEntries(CLES_MISE.map(k => [k, D[k]]));   // « var » : lu par un rendu antérieur sans erreur
+// --- Mise fixe (10 €) ou Kelly ¼ : les blocs chiffrés du serveur (bilans, courbes, segments, laboratoire) existent
+// dans les deux mises ; les fiches gardent leur mise et leur gain d'origine pour pouvoir revenir en arrière.
+for (const f of fiches) { f.mise_fixe = f.mise; f.gain_fixe = f.gain; }
+// Les lignes de navigation portent les fiches (fusionnées au chargement) : après un échange de mise, seules la mise
+// et le gain sont remis à jour ; un bloc Kelly encore brut est d'abord fusionné comme l'était le bloc fixe.
+function fusionnerNavigation() {
+  const nav = D.laboratoire?.navigation?.paris;
+  if (!nav) return;
+  const parId = new Map(fiches.map(p => [p.id, p]));
+  for (const [id, meta] of Object.entries(nav)) {
+    const p = parId.get(id);
+    if (!p) continue;
+    nav[id] = "domicile" in meta ? {...meta, mise: p.mise, gain: p.gain} : {...p, ...meta};
+  }
+}
+let miseMode = "fixe";
+try { if (localStorage.getItem("cv-mise") === "kelly" && D.kelly) miseMode = "kelly"; } catch {}
+function appliquerMise(mode) {
+  const K = mode === "kelly" && D.kelly ? D.kelly : null;
+  miseMode = K ? "kelly" : "fixe";
+  for (const k of CLES_MISE) D[k] = K ? K[k] : D_FIXE[k];
+  for (const f of fiches) {
+    if (K && f.gain_fixe != null && f.mise_fixe) {
+      f.mise = f.mise_kelly;
+      f.gain = Math.round(100 * f.gain_fixe * f.mise_kelly / f.mise_fixe) / 100;
+    } else { f.mise = f.mise_fixe; f.gain = f.gain_fixe; }
+  }
+  fusionnerNavigation();
+  document.querySelectorAll?.("[data-mise]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mise === miseMode)));
+  document.body?.classList.toggle("mise-kelly", miseMode === "kelly");
+}
+appliquerMise(miseMode);
 const normaliserRecherche = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr");
 let parisFiltres = [];
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
@@ -2109,6 +2178,22 @@ ouvrir(ONGLETS.includes(depart) ? depart : "paris");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 
 __ANALYSES_JS__
+function rendreTout() {
+  rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSegments(); rendreStrategies(); rendreAnalyses();
+  document.getElementById("labo-regle")?.onchange?.();
+  adapterTableaux();
+}
+function choisirMise(mode) {
+  if (mode === miseMode) return;
+  appliquerMise(mode);
+  try { localStorage.setItem("cv-mise", miseMode); } catch {}
+  document.getElementById("mode-mise-note").hidden = miseMode !== "kelly";
+  rendreTout();
+}
+document.querySelectorAll("[data-mise]").forEach(b => b.onclick = () => choisirMise(b.dataset.mise));
+const noteMise = document.getElementById("mode-mise-note");
+if (noteMise) noteMise.hidden = miseMode !== "kelly";
+if (miseMode === "kelly") rendreTout();     // mode mémorisé : les premiers rendus étaient en mise fixe
 initialiserAnalyses();
 initialiserInterface();
 __ACTUALISATION_JS__
