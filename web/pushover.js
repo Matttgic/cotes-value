@@ -7,6 +7,20 @@
   if(!zone) return;
   const api=D.notifications.api, cleCode='cv-pushover-v1';
   const noms=D.notifications.strategies, details=D.notifications.details||{};
+  // Bilan prospectif de chaque règle du laboratoire (mises de 10 €), comme sur la page Stratégies.
+  const futur=new Map((D.laboratoire?.futur||[]).map(r=>['labo:'+r.id,r]));
+  const fr=(x,d)=>x.toFixed(d).replace('.',',');
+  const signe=(x,d)=>(x>0?'+':'')+fr(x,d);
+  const classe=x=>x>0?'pos':x<0?'neg':'';
+  function bilan(k) {
+    const r=futur.get(k);
+    if(!r) return '';
+    if(!r.regles) return `<span class="notif-bilan">Aucun pari réglé depuis le 14/10${r.attente?` · ${r.attente} en attente`:''}</span>`;
+    const roi=Number.isFinite(r.roi)?r.roi:0, gain=Number.isFinite(r.gain)?r.gain:0;
+    return `<span class="notif-bilan"><span>Réussite <b>${Math.round(100*r.gagnes/r.regles)} %</b> (${r.gagnes}/${r.regles})</span>`+
+      `<span>Gain <b class="${classe(gain)}">${signe(gain,2)} €</b></span><span>ROI <b class="${classe(roi)}">${signe(roi,1)} %</b></span>`+
+      `${r.attente?`<span>${r.attente} en attente</span>`:''}</span>`;
+  };
   const say=(s,bad=false)=>{message.textContent=s;message.classList.toggle('neg',bad);};
   const empreinte=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('cotes-value-pushover:'+s)))]
     .map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -21,7 +35,7 @@
   try {memorise=lire(cleCode)||null;} catch {}
   let choisies=new Set(), defini=false;
   function dessiner() {
-    const ligne=([k,v])=>`<label class="notif-choix"><span>${e(v)}${details[k]?`<small>${e(details[k])}</small>`:''}</span><input type="checkbox" role="switch" class="interrupteur" value="${e(k)}" ${choisies.has(k)?'checked':''}></label>`;
+    const ligne=([k,v])=>`<label class="notif-choix"><span>${e(v)}${details[k]?`<small>${e(details[k])}</small>`:''}${bilan(k)}</span><input type="checkbox" role="switch" class="interrupteur" value="${e(k)}" ${choisies.has(k)?'checked':''}></label>`;
     const groupes=[['Comparateurs',k=>!k.startsWith('labo:')],['Règles Pinnacle',k=>k.startsWith('labo:PIN-')],['Règles Polymarket',k=>k.startsWith('labo:POL-')]]
       .map(([titre,f])=>[titre,Object.entries(noms).filter(([k])=>f(k))]).filter(([,l])=>l.length);
     zone.innerHTML='<legend>Stratégies envoyées sur Pushover</legend>'+groupes.map(([titre,l],i)=>{
