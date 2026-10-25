@@ -253,10 +253,15 @@ def test_js_sante_niveaux_et_resume_des_erreurs():
                  "resultats": {"paris_regles": 5, "paris_en_attente": 11, "sources_reglement": {"espn": 5}},
                  "etapes": {"resultats_espn_basket": {"ok": True}, "resultats_flashscore_basket": {"ok": True, "degrade": True, "erreurs": ["HTTP 429"]},
                             "resultats_nhl_officiel": {"ok": False}}}
+    incidents = {"en_cours": {"winamax_direct": {"source": "Winamax", "niveau": "panne", "genre": "panne", "detail": "sport:1 : réseau",
+                                                 "debut": "2026-10-15T08:50:00Z", "cycles": 3},
+                              "pinnacle": {"source": "Pinnacle", "niveau": "alerte", "genre": "refus", "detail": "Refus HTTP 403", "debut": "2026-10-15T08:55:00Z", "cycles": 2}},
+                 "termines": [{"source": "Unibet", "niveau": "panne", "genre": "panne", "detail": "lecture interrompue",
+                               "debut": "2026-10-15T07:00:00Z", "fin": "2026-10-15T07:10:00Z", "cycles": 2}]}
     executer(DOM + '''
-const D={etat:{dernier_cycle:%s,dernier_cycle_reglement:%s}};
+const D={etat:{dernier_cycle:%s,dernier_cycle_reglement:%s},incidents:%s};
 const hm=()=>"09:00",man=[],groupesReglement=new Map();
-''' % (json.dumps(cycle), json.dumps(reglement)) + section + '''
+''' % (json.dumps(cycle), json.dumps(reglement), json.dumps(incidents)) + section + '''
 const t0=Date.parse("2026-10-15T09:05:00Z");
 let d=diagnosticSante(t0); assert.equal(d.niveau,"ok"); assert.equal(d.mineures,2);
 assert.equal(diagnosticSante(Date.parse("2026-10-15T09:30:00Z")).niveau,"alerte");
@@ -278,4 +283,9 @@ assert.ok(h("sante-resultats").includes("ESPN") && h("sante-resultats").includes
 assert.ok(h("sante-resultats").includes("sante-mot-panne"));
 assert.ok(document.getElementById("sante-attente").textContent.includes("11 paris"));
 assert.ok(h("sante-global").includes("2 alertes mineures sans effet"));
+const inc=h("sante-incidents");
+assert.ok(inc.includes("Winamax") && inc.includes("sante-mot-panne") && inc.includes("15 min") && inc.includes("3 cycles"));
+assert.ok(inc.includes("Unibet") && inc.includes("terminé") && inc.includes("10 min"));
+assert.ok(!inc.includes("Pinnacle"));                      // 2 cycles de refus : pas encore un incident
+assert.ok(incidentsSante({}, t0).includes("Aucun incident") && incidentsSante(undefined, t0).includes("Aucun incident"));
 ''')
