@@ -372,8 +372,9 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         journal["netbet_source"] = source_net
         if source_net == "direct":
             sports_net = sports & {"football"} if mode == "test" else sports
+            # Lecture tournante : la mémoire du passage précédent dit quelles pages relire (cotes/direct/netbet.py).
             lancer("netbet", netbet_direct, BUDGETS["netbet"], netbet_direct.collecter,
-                   sports_net, 12 if mode == "test" else HORIZON_H)
+                   sports_net, 12 if mode == "test" else HORIZON_H, reserve=_reserve("netbet"))
 
         recus: dict = {}
 
@@ -428,12 +429,13 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
     if rythme_path is not None:
         ecrire_json(rythme_path, {k: rythme[k] for k in ("pmu", "unibet", "betclic") if k in rythme})
     for nom, meta in (("pmu", metas["pmu_direct"]), ("unibet", metas["unibet_direct"]),
-                      ("betclic", metas["betclic_direct"])):
+                      ("betclic", metas["betclic_direct"]), ("netbet", net_meta)):
         bloc = meta.get("reserve") if isinstance(meta, dict) else None
         if isinstance(bloc, dict):
             horizon[nom] = bloc
-    if horizon_path is not None and any(k in horizon for k in ("pmu", "unibet", "betclic")):
-        ecrire_json(horizon_path, {k: horizon[k] for k in ("pmu", "unibet", "betclic") if k in horizon})
+    gardes = ("pmu", "unibet", "betclic", "netbet")
+    if horizon_path is not None and any(k in horizon for k in gardes):
+        ecrire_json(horizon_path, {k: horizon[k] for k in gardes if k in horizon})
     return pin, poly, lignes
 
 
