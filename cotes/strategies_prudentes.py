@@ -14,6 +14,7 @@ from .decisions import appliquer
 from .strategie_m3_structure import M3_STRUCTURE, paris_m3_structure
 from .strategie_qwen import QWEN, paris_qwen
 from .strategie_coeur import COEUR, paris_coeur
+from .strategie_liquidite import LIQUIDITE, paris_liquidite
 from .strategie_grok import GROKS, GROKS_V2, paris_grok
 from .convergence import STRATEGIES, selections, votes
 from .laboratoire import heure
@@ -31,7 +32,7 @@ CONVERGENCE_3 = {
     "debut": DEBUT_VARIANTES, "version": "1", "mise": 10,
     "regles": "≥3 familles parmi Claude, ChatGPT, Gemini, Jules · 1 pari/match · mise fictive 10 €",
 }
-VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN, COEUR, *GROKS, *GROKS_V2)
+VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN, COEUR, LIQUIDITE, *GROKS, *GROKS_V2)
 PARIS = ZoneInfo("Europe/Paris")
 
 
@@ -151,6 +152,7 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
     resultat["m3_structure"] = paris_m3_structure(paris) if depuis is None else set()
     resultat["qwen_persistence"] = paris_qwen(paris, depuis)
     resultat["coeur_value"] = appliquer(paris, paris_coeur(paris, depuis), "coeur_value") if depuis is None else set()
+    resultat["liquidite_sure"] = appliquer(paris, paris_liquidite(paris, depuis), "liquidite_sure") if depuis is None else set()
     for g in GROKS:
         resultat[g["cle"]] = appliquer(paris, paris_grok(paris, g), g["cle"]) if depuis is None else set()
     for g in GROKS_V2:
