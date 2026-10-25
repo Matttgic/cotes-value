@@ -361,3 +361,40 @@ def test_memoire_abimee_ou_ancienne_relit_les_onglets():
     for reserve in ({"lignes": [], "onglets": "x"}, {"lignes": [], "onglets": {"betclic|7": 3}}):
         _, meta, n = _passe(reserve, 0, _top(TOTAL), MI_TEMPS)
         assert n == 3 and meta["onglets"]["avec_onglets"] == 1
+
+
+# --- Adresse du match chez Betclic (utilisée au toucher de la notification) ---
+
+def test_chemin_du_match_football_depuis_les_identifiants_de_la_collecte():
+    match = {"id": 1237010871255040, "sport": "football", "sport_id": 1, "competition_id": 1874,
+             "competition": "Australie A-League", "domicile": "Sydney", "exterieur": "Adelaide United"}
+    assert betclic.chemin_match(match) == "/football-s1/australie-a-league-c1874/sydney-adelaide-united-m1237010871255040"
+    assert betclic._slug("Ligue 1 McDonald's — Étoile Rouge") == "ligue-1-mcdonald-s-etoile-rouge"
+    for incomplet in ({**match, "sport": "tennis"}, {**match, "sport_id": 2}, {**match, "competition_id": None},
+                      {**match, "competition": None}, {**match, "id": "x"}):
+        assert betclic.chemin_match(incomplet) is None
+
+
+def test_la_liste_porte_les_identifiants_de_sport_et_de_competition():
+    corps = (betclic.encode_champ_varint(1, 42) + betclic.encode_champ_octets(3, DEBUT)
+             + betclic.encode_champ_octets(8, betclic.encode_champ_varint(1, 1874) + betclic.encode_champ_octets(2, "Ligue 1")
+                                           + betclic.encode_champ_octets(3, betclic.encode_champ_octets(1, "football")
+                                                                         + betclic.encode_champ_varint(3, 1)))
+             + betclic.encode_champ_octets(12, betclic.encode_champ_octets(3, "Lens"))
+             + betclic.encode_champ_octets(12, betclic.encode_champ_octets(3, "Lille")))
+    lu = betclic.matchs_de_la_liste(_liste(corps))[0]
+    assert (lu["competition_id"], lu["sport_id"]) == (1874, 1)
+
+
+def test_les_lignes_betclic_football_portent_le_lien_du_match():
+    from cotes.liens import lien_match
+    corps = (betclic.encode_champ_varint(1, 7) + betclic.encode_champ_octets(3, DEBUT)
+             + betclic.encode_champ_octets(8, betclic.encode_champ_varint(1, 4) + betclic.encode_champ_octets(2, "Ligue 1")
+                                           + betclic.encode_champ_octets(3, betclic.encode_champ_octets(1, "football")
+                                                                         + betclic.encode_champ_varint(3, 1)))
+             + betclic.encode_champ_octets(12, betclic.encode_champ_octets(3, "Lens"))
+             + betclic.encode_champ_octets(12, betclic.encode_champ_octets(3, "Lille")))
+    session = Session([(_liste(corps), 200), (_lens(), 200)])
+    lignes, _ = betclic.collecter({"football"}, 36, session=session, maintenant=MAINTENANT)
+    assert {l["lien"] for l in lignes} == {"/football-s1/ligue-1-c4/lens-lille-m7"}
+    assert lien_match(lignes[0]) == "https://www.betclic.fr/football-s1/ligue-1-c4/lens-lille-m7"

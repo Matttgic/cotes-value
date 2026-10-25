@@ -29,6 +29,18 @@ export function validAlert(a,now=Date.now()) {
     ['match','pari','bookmaker'].every(k=>typeof a[k]==='string' && a[k].length>0 && a[k].length<=250) &&
     date(a.debut)>now+60000 && date(a.detecte)<=now+60000 && date(a.detecte)>=now-15*60000;
 }
+// Page du match chez le bookmaker (champ « lien » de l'alerte, cotes/liens.py). Le téléphone l'ouvre tel quel au toucher :
+// seulement https, sans identifiants ni port, et seulement les sites suivis (ou la recherche Google de secours).
+const HOTES_BOOKMAKERS = /(^|\.)(winamax\.fr|betclic\.fr|pmu\.fr|unibet\.fr|olybet\.fr|netbet\.fr|google\.com)$/;
+export function lienSur(lien) {
+  if(typeof lien!=='string' || lien.length>600) return null;
+  try {
+    const u=new URL(lien);
+    if(u.protocol!=='https:' || u.port || u.username || u.password || !HOTES_BOOKMAKERS.test(u.hostname)) return null;
+    if(u.hostname.endsWith('google.com') && u.pathname!=='/search') return null;
+    return u.href;
+  } catch { return null; }
+}
 export function alertsFor(device,alerts,now=Date.now()) {
   return alerts.filter(a=>validAlert(a,now) && a.strategies.some(s=>device.strategies.includes(s) &&
     date(a.validations[s])>=date(device.since_at) && date(a.validations[s])>=now-15*60000 && date(a.validations[s])<=now+60000));
@@ -92,7 +104,8 @@ export function createHandler({db,config,authorize,send,clock=Date.now}) {
             const result=await send(d.subscription,{
               id:a.id,title:`${a.bookmaker} · ${a.cote.toFixed(2).replace('.',',')}`,
               body:`${a.match}\n${a.pari}\n${a.labels.join(' · ')}`.slice(0,500),
-              debut:a.debut,expires_at:new Date(now+ttl*1000).toISOString()
+              debut:a.debut,expires_at:new Date(now+ttl*1000).toISOString(),
+              ...(lienSur(a.lien)?{url:lienSur(a.lien)}:{})
             },ttl);
             if(result>=200 && result<300) {
               await db(`cv_push_deliveries?device_id=eq.${d.id}&alert_id=eq.${a.id}`,'PATCH',{sent_at:new Date(now).toISOString()});sent++;

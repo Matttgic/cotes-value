@@ -155,3 +155,44 @@ test('le service worker ne crée aucun cache réseau et les requêtes privées �
   const code=readFileSync(new URL('../web/notifications.js',import.meta.url),'utf8');
   assert.ok(code.includes("method:'POST',cache:'no-store',credentials:'omit'"));
 });
+
+test('le lien du match n\'est transmis que s\'il est sûr',async()=>{
+  const {lienSur}=await import('../supabase/functions/cv-notifications/core.mjs');
+  assert.equal(lienSur('https://www.winamax.fr/paris-sportifs/match/68932762'),'https://www.winamax.fr/paris-sportifs/match/68932762');
+  assert.ok(lienSur('https://www.betclic.fr/football-s1/ligue-1-c4/lens-lille-m123').startsWith('https://www.betclic.fr/'));
+  assert.ok(lienSur('https://www.google.com/search?q=site%3Awww.betclic.fr+Lens+Lille'));
+  for(const mauvais of [null,undefined,42,'','http://www.winamax.fr/x','javascript:alert(1)','https://evil.example/winamax.fr',
+    'https://winamax.fr.evil.example/x','https://user:mdp@www.winamax.fr/x','https://www.winamax.fr:8443/x',
+    'https://www.google.com/url?q=https://evil.example','https://notwinamax.fr/x','https://www.winamax.fr/'+'a'.repeat(700)])
+    assert.equal(lienSur(mauvais),null,String(mauvais).slice(0,60));
+});
+
+test('la notification envoyée porte l\'adresse du match, ou rien',async()=>{
+  const sentPackets=[];
+  const run=async lien=>{
+    const handler=createHandler({db:async path=>path.startsWith('cv_push_devices?enabled')?[device]:path==='rpc/cv_push_claim'?true:[],
+      config:async()=>({publicKey:'x'}),authorize:async()=>true,send:async(sub,packet)=>{sentPackets.push(packet);return 201;},clock:()=>now});
+    await handler(req('dispatch',{generated_at:iso(now),alertes:[{...alert,...(lien===undefined?{}:{lien})}]}));
+    return sentPackets.at(-1);
+  };
+  assert.equal((await run('https://www.winamax.fr/paris-sportifs/match/1')).url,'https://www.winamax.fr/paris-sportifs/match/1');
+  assert.equal('url' in await run('http://www.winamax.fr/x'),false);
+  assert.equal('url' in await run(undefined),false);
+});
+
+test('toucher la notification ouvre le match chez le bookmaker, le bouton ouvre le site',async()=>{
+  const handlers={},ouvertes=[];
+  const ctx={URL,Date,self:{addEventListener:(type,fn)=>{handlers[type]=fn;},
+    registration:{scope:'https://matttgic.github.io/cotes-value/',showNotification:async(...a)=>ouvertes.push(['montree',...a])},
+    clients:{matchAll:async()=>[],openWindow:async u=>{ouvertes.push(['ouverte',u]);},claim:async()=>{}}}};
+  vm.createContext(ctx);vm.runInContext(readFileSync(new URL('../web/sw.js',import.meta.url),'utf8'),ctx);
+  const clic=async(action,url)=>{let work;handlers.notificationclick({action,notification:{close(){},data:{id:'a'.repeat(64),url}},waitUntil:p=>{work=p;}});await work;};
+  await clic('', 'https://www.betclic.fr/football-s1/x-c1/y-m2');
+  await clic('site','https://www.betclic.fr/football-s1/x-c1/y-m2');
+  await clic('', 'https://evil.example/x');
+  await clic('', null);
+  assert.deepEqual(ouvertes.map(o=>o[1]),['https://www.betclic.fr/football-s1/x-c1/y-m2',
+    'https://matttgic.github.io/cotes-value/?alerte='+'a'.repeat(64)+'#paris',
+    'https://matttgic.github.io/cotes-value/?alerte='+'a'.repeat(64)+'#paris',
+    'https://matttgic.github.io/cotes-value/?alerte='+'a'.repeat(64)+'#paris']);
+});
