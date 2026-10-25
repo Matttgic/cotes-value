@@ -63,6 +63,8 @@ def test_football_traduit_et_ecarte_corners_et_commence():
     assert all("orner" not in t.lower() for t in demandes[0])
     marches = [p for c, p in client.params if c == "get" and "market" in (p.get("what") or {})]
     assert marches[0]["where"]["game"]["id"]["@in"] == [501]
+    liste = next(p for c, p in client.params if c == "get" and "game" in p.get("what", {}) and "market" not in p["what"])
+    assert liste["what"]["region"] == ["alias"] and "id" in liste["what"]["competition"]
 
 
 def test_hockey_et_basket_ambigus_ne_sont_pas_compares():

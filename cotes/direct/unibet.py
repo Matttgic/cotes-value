@@ -25,6 +25,7 @@ import requests
 from cotes.correspondance import ressemblance
 from cotes.delai import Reduite
 from cotes.direct.horizon import fusionner_marches, tranche
+from cotes.liens import slug
 from cotes.pulsescore import traduire
 
 ACCUEIL = "https://www.unibet.fr/"
@@ -482,6 +483,7 @@ def _integrer(sac: dict, items: dict, sport: str) -> list[str]:
             sac["events"].setdefault(cle, {
                 "home": val.get("a"), "away": val.get("b"), "league": val.get("pdesc"),
                 "start": val.get("start"), "sport": sport, "markets": {},
+                "chemin": chemin_match(cle[1:], val),
             })
             vus.append(cle)
         elif cle.startswith("m"):
@@ -489,6 +491,19 @@ def _integrer(sac: dict, items: dict, sport: str) -> list[str]:
         elif cle.startswith("o"):
             sac["outcomes"].setdefault(val.get("parent"), []).append(val)
     return vus
+
+
+def chemin_match(ident: str, event: dict) -> str | None:
+    """Chemin de la page du match sur unibet.fr, ``/paris-<sport>/<pays>/<compétition>/<id>/<équipes>``.
+
+    Vérifié le 25/10/2026 sur 255 liens de matchs du site (10 sports) : chaque segment est le nom de
+    ``path`` (Sport, Category, League) et de ``desc`` passé en minuscules, sans accents, tirets ailleurs.
+    Sport, pays et compétition doivent être exacts (sinon page introuvable) ; les équipes sont du décor."""
+    path = event.get("path") if isinstance(event.get("path"), dict) else {}
+    morceaux = [slug(path.get("Sport")), slug(path.get("Category")), slug(path.get("League"))]
+    if not all(morceaux) or not str(ident).isdigit():
+        return None
+    return f"/paris-{morceaux[0]}/{morceaux[1]}/{morceaux[2]}/{ident}/{slug(event.get('desc')) or 'match'}"
 
 
 def _attacher(sac: dict) -> None:
@@ -786,6 +801,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
             "league": event.get("league"),
             "startTime": debut.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "markets": marches,
+            "slug": event.get("chemin"),
         }
         lignes += traduire(ev, "unibet-fr", event["sport"], moment)
     meta = {"ok": not client.erreurs or bool(lignes), "erreurs": list(client.erreurs),

@@ -106,6 +106,7 @@ def test_fixture_traduit_les_marches_compares_et_renouvelle_le_jeton(monkeypatch
     assert ("Angers", "RESULTAT_1N2", "DOM", None, 2.1) in cles
     assert ("Angers", "RESULTAT_1N2", "NUL", None, 3.4) in cles
     assert ("Angers", "TOTAL", "PLUS", 2.5, 1.85) in cles
+    assert {l["lien"] for l in lignes} == {"/paris-football/france/ligue-1/1/angers-vs-marseille"}
     assert not any(l["domicile"] == "Lyon" or l["domicile"] == "Lens" for l in lignes)
     assert not any("corner" in (l.get("libelle") or "").lower() for l in lignes)
     assert "marketTypeId=1" in session.urls[0] and "periodId=100" in session.urls[0]

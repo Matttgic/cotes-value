@@ -11,7 +11,7 @@ def opportunite(**kw):
     return {"bookmaker": "Winamax", "sport": "football", "ligue": "Ligue 1", "domicile": "Rodez", "exterieur": "Montpellier",
             "debut": (NOW + timedelta(hours=3)).isoformat(), "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None,
             "issue": "DOM", "pari": "Rodez", "cote": 2.75, "lien": "/paris-sportifs/match/68932762",
-            "match_id": "winamax|1", "libelle_bookmaker": "Match", **kw}
+            "match_id": "winamax|68932762", "libelle_bookmaker": "Match", **kw}
 
 
 def alerte(o, recue=NOW - timedelta(minutes=2)):
@@ -38,10 +38,11 @@ def test_ordre_expire_ou_sans_correspondance_est_ecarte():
     assert ordres.construire({"alertes": [{**alerte(o), "cote": True}]}, [o], NOW)["ordres"] == []
 
 
-def test_liens_absolus_seulement_quand_la_base_est_connue():
-    assert ordres.lien_absolu("Betclic", "/x-m1") == "https://www.betclic.fr/x-m1"
-    assert ordres.lien_absolu("PMU", "sport/x") == "https://paris-sportifs.pmu.fr/sport/x"
-    assert ordres.lien_absolu("OlyBet", "/x") is None and ordres.lien_absolu("Winamax", None) is None
-    assert ordres.lien_absolu("OlyBet", "https://exemple.fr/x") == "https://exemple.fr/x"
-    o = opportunite(bookmaker="OlyBet", lien=None)
-    assert ordres.construire({"alertes": [alerte(o)]}, [o], NOW)["ordres"][0]["lien"] is None
+def test_lien_de_l_alerte_sinon_celui_du_prix_et_repli_annonce():
+    o = opportunite()
+    x = ordres.construire({"alertes": [{**alerte(o), "lien": "https://www.winamax.fr/paris-sportifs/match/7"}]}, [o], NOW)
+    assert x["ordres"][0]["lien"].endswith("/match/7") and x["ordres"][0]["lien_repli"] is False
+    assert ordres.construire({"alertes": [alerte(o)]}, [o], NOW)["ordres"][0]["lien_repli"] is False
+    o = opportunite(bookmaker="OlyBet", match_id="olybet|31187407", lien=None)
+    (x,) = ordres.construire({"alertes": [alerte(o)]}, [o], NOW)["ordres"]
+    assert x["lien"] == "https://www.olybet.fr/sportsbook/pre-match/match/Soccer" and x["lien_repli"] is True

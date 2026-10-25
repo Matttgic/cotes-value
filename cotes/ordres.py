@@ -9,16 +9,13 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from .laboratoire import heure
+from .liens import lien_info
 from .notifications import empreinte_prix
 
 MISE_EUR = 10.0               # mise de la simulation ; à régler ici avant tout pari réel
 TOLERANCE_COTE = 0.03         # on accepte une cote jusqu'à 3 % plus basse que celle relevée
 VALIDITE_MIN = 10             # un ordre n'est plus valable 10 minutes après le relevé du prix
 AVANT_DEBUT_MIN = 3           # ni dans les 3 dernières minutes avant le coup d'envoi
-# Adresse de base des liens relatifs relevés par la collecte. Non vérifiée en ligne : les sites refusent
-# les requêtes automatiques. Un lien qui ne mène nulle part se remplace par la recherche (champ « recherche »).
-SITES = {"Winamax": "https://www.winamax.fr", "Betclic": "https://www.betclic.fr",
-         "PMU": "https://paris-sportifs.pmu.fr", "Unibet": "https://www.unibet.fr"}
 REGLES = [
     "Jouer seulement si la cote affichée chez le bookmaker est au moins « cote_min » ; sinon abandonner.",
     "Miser exactement « mise » euros, jamais plus. Jamais de dépôt, de crédit, de bonus ni de pari combiné.",
@@ -30,13 +27,12 @@ REGLES = [
 ]
 
 
-def lien_absolu(bookmaker: str, lien) -> str | None:
-    if not isinstance(lien, str) or not lien.strip():
-        return None
-    if lien.startswith("https://"):
-        return lien
-    base = SITES.get(bookmaker)
-    return base + (lien if lien.startswith("/") else "/" + lien) if base else None
+def lien_ordre(a: dict, o: dict) -> dict:
+    """Lien de l'alerte (déjà calculé), sinon celui du prix ; ``lien_repli`` : page du sport, match à chercher."""
+    if a.get("lien"):
+        return {"lien": a["lien"], "lien_repli": bool(a.get("lien_repli"))}
+    lien, repli = lien_info({**o, "bookmaker": a.get("bookmaker")})
+    return {"lien": lien, "lien_repli": repli}
 
 
 def construire(flux: dict, actuelles: list[dict], maintenant: datetime | None = None) -> dict:
@@ -61,7 +57,7 @@ def construire(flux: dict, actuelles: list[dict], maintenant: datetime | None = 
             "cote_relevee": cote, "cote_min": round(cote * (1 - TOLERANCE_COTE), 2), "mise": MISE_EUR,
             "mise_kelly": a.get("mise_kelly"),
             "expire_le": expire.isoformat(), "strategies": a.get("labels", []),
-            "lien": lien_absolu(a.get("bookmaker"), o.get("lien")),
+            **lien_ordre(a, o),
             "recherche": f'{o.get("domicile")} – {o.get("exterieur")} · {o.get("ligue")}',
         })
     return {"genere_le": maintenant.isoformat(timespec="seconds"), "regles": REGLES,
