@@ -18,10 +18,10 @@ Toutes les stratégies :
 - Sports : football, tennis, hockey, basket
 - Max 8 paris/jour
 
-## Grok 2 — Smarkets low
-- Référence : Smarkets
+## Grok 2 — Pinnacle low (v2)
+- Référence : Pinnacle (v1 : Smarkets, abandonné ; Betfair n'est plus collecté)
 - Cotes : 1,30 – 2,00
-- Edge : ≥ 3 %
+- Edge : 3 % – 15 %
 - Max 6 paris/jour
 
 ## Grok 3 — Consensus mid
@@ -30,6 +30,10 @@ Toutes les stratégies :
 - Edge : 2 % – 10 %
 - Sports : football, basket, hockey
 - Max 8 paris/jour
+- v2 : le Consensus n'a pas de score de ressemblance propre. La preuve exigée est celle de chaque
+  composante (`preuve_prise.preuves_composantes`, score ≥ 0,85 et match associé), avec au moins
+  deux composantes, toutes parmi Pinnacle, Betfair et Polymarket. Un Consensus incluant Smarkets
+  ou Kalshi est refusé. Les paris enregistrés avant ce champ n'ont pas cette preuve et restent refusés.
 
 ## Grok 4 — Polymarket low-odds
 - Référence : Polymarket

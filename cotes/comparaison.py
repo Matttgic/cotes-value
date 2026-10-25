@@ -196,7 +196,12 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                                      "domicile": l["domicile"], "exterieur": l["exterieur"],
                                      "sources": "+".join(sorted(membres)),
                                      "lectures_references": {n: r.get("collecte") for n, r in membres.items()},
-                                     "composantes": {n: round(1 / r["proba_juste"], 3) for n, r in membres.items()}}
+                                     "composantes": {n: round(1 / r["proba_juste"], 3) for n, r in membres.items()},
+                                     # Preuve d'association de chaque référence moyennée. Champ distinct :
+                                     # score_association reste vide pour ne rien changer aux règles figées.
+                                     "preuves_composantes": {n: {"ressemblance_noms": r.get("score_association"),
+                                                                 "match_id_reference": r.get("match_id")}
+                                                             for n, r in membres.items()}}
         for nom, r in trouvees.items():
             ecart = l["cote"] * r["proba_juste"] - 1
             if ecart < ecart_min:
@@ -219,7 +224,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "match_reference": f'{r.get("domicile")} - {r.get("exterieur")}',
                 "score_association": r.get("score_association"), "sources": r.get("sources"),
                 "match_id_reference": r.get("match_id"), "reference_inversee": r.get("inverse"),
-                "composantes": r.get("composantes"), "controle": _controle_du_groupe(l, controle),
+                "composantes": r.get("composantes"), "preuves_composantes": r.get("preuves_composantes"),
+                "controle": _controle_du_groupe(l, controle),
                 "lien": l.get("lien"), "suspect": suspect,
                 "pariable": not bool(suspect)})
     return opportunites
