@@ -1,0 +1,29 @@
+name: Tester Pushover
+
+# Envoie un seul message de test avec les secrets PUSHOVER_USER_KEY et PUSHOVER_APP_TOKEN.
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Envoyer le message de test
+        env:
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+        run: |
+          if [ -z "$PUSHOVER_APP_TOKEN" ] || [ -z "$PUSHOVER_USER_KEY" ]; then
+            echo "Secrets Pushover absents"; exit 1
+          fi
+          reponse=$(curl -sS --max-time 20 \
+            --form-string "token=$PUSHOVER_APP_TOKEN" \
+            --form-string "user=$PUSHOVER_USER_KEY" \
+            --form-string "title=Cotes Value : test" \
+            --form-string "message=Si tu lis ça, Pushover fonctionne." \
+            https://api.pushover.net/1/messages.json)
+          echo "$reponse" | python3 -c "import json,sys; d=json.load(sys.stdin); print('status', d.get('status'), d.get('errors', ''))"
+          echo "$reponse" | grep -q '"status":1'
