@@ -1,21 +1,20 @@
-"""Alerte ntfy quand une source de cotes tombe pour de bon (et quand elle revient).
+"""Suivi de santé : repère une source de cotes tombée pour de bon (et son retour), sans rien envoyer.
 
 Une panne d'un seul cycle (coupure réseau) ou une lecture partielle « budget » (prévue, la suite est gardée en
-cache) ne préviennent pas : il faut SEUIL_CYCLES cycles de suite. L'état est dans donnees/sante_alertes.json.
+cache) ne préviennent pas : il faut SEUIL_CYCLES cycles de suite. L'état (dont le dernier message) est dans donnees/sante_alertes.json.
 Ne lève jamais : la surveillance ne doit pas arrêter la collecte.
 """
 from __future__ import annotations
 
-import base64
 import json
-import os
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 
 ETAT = "sante_alertes.json"
+INCIDENTS = "sante_incidents.json"  # journal des 24 dernières heures, affiché sur la page Santé du site
+GARDE_INCIDENTS = timedelta(hours=24)
+MAX_TERMINES = 60
+SEUIL_REFUS = 3                     # cycles de suite avant qu'un refus 403/429 devienne un incident (sinon bruit)
 SEUIL_CYCLES = 2                    # cycles de suite avant d'alerter (toutes les ~5 min)
 RAPPEL = timedelta(hours=3)         # une panne qui dure est rappelée
 SURVEILLEES_DEGRADE = {"pinnacle", "winamax_direct", "betclic_direct", "unibet_direct", "pmu_direct", "olybet"}
@@ -42,6 +41,59 @@ def problemes(etapes: dict) -> dict[str, tuple[str, str]]:
     return out
 
 
+def constats(etapes: dict) -> dict[str, tuple[str, str, str]]:
+    """{étape: (niveau, genre, détail)} pour le journal d'incidents.
+
+    Plus large que `problemes` : un refus 403/429 est relevé (genre « refus ») car il doit se voir sur la page
+    Santé s'il dure. Le budget dépassé reste ignoré (limite de temps chronique, traitée à part)."""
+    out = {nom: (niveau, "panne" if niveau == "panne" else "alerte", detail)
+           for nom, (niveau, detail) in problemes(etapes).items()}
+    for nom, v in etapes.items():
+        if nom in out or nom.startswith("resultats_") or v.get("desactive") or not v.get("ok") or not v.get("degrade"):
+            continue
+        erreurs = [str(e) for e in (v.get("erreurs") or [])]
+        refus = [e for e in erreurs if "HTTP 403" in e or "HTTP 429" in e]
+        if nom in SURVEILLEES_DEGRADE and refus:
+            codes = sorted({c for c in ("403", "429") if any(f"HTTP {c}" in e for e in refus)})
+            out[nom] = ("alerte", "refus", f"Refus HTTP {', '.join(codes)} sur {len(refus)} requête{'s' if len(refus) > 1 else ''}")
+    return out
+
+
+def journal_incidents(etapes: dict, ancien: dict, maintenant: datetime) -> dict:
+    """Met à jour le journal : {"en_cours": {étape: incident}, "termines": [incident, …]} sur 24 h.
+
+    Un incident garde son début, son nombre de cycles et son dernier détail. Il se termine quand l'étape va
+    mieux (ou, pour un refus, ne se répète plus). Un refus n'est « visible » qu'à partir de SEUIL_REFUS cycles."""
+    ancien = ancien if isinstance(ancien, dict) else {}
+    avant = ancien.get("en_cours") if isinstance(ancien.get("en_cours"), dict) else {}
+    termines = [t for t in (ancien.get("termines") if isinstance(ancien.get("termines"), list) else [])
+                if isinstance(t, dict)]
+    maintenant_iso = maintenant.isoformat(timespec="seconds")
+    courants, en_cours = constats(etapes), {}
+    for nom, (niveau, genre, detail) in courants.items():
+        vu = avant.get(nom) if isinstance(avant.get(nom), dict) else {}
+        meme = vu and vu.get("genre") == genre
+        en_cours[nom] = {"source": noms(nom), "niveau": niveau, "genre": genre, "detail": detail,
+                         "debut": vu["debut"] if meme else maintenant_iso,
+                         "cycles": vu.get("cycles", 0) + 1 if meme else 1, "dernier": maintenant_iso}
+        if vu and not meme:
+            termines.append({**vu, "fin": maintenant_iso})
+    for nom, vu in avant.items():
+        if nom not in courants and isinstance(vu, dict):
+            termines.append({**vu, "fin": maintenant_iso})
+    limite = maintenant - GARDE_INCIDENTS
+    gardes = []
+    for t in termines:
+        try:
+            fin = datetime.fromisoformat(str(t.get("fin")))
+        except ValueError:
+            continue
+        visible = t.get("genre") != "refus" or t.get("cycles", 0) >= SEUIL_REFUS
+        if fin >= limite and visible:
+            gardes.append(t)
+    return {"mis_a_jour": maintenant_iso, "en_cours": en_cours, "termines": gardes[-MAX_TERMINES:]}
+
+
 def evaluer(etapes: dict, ancien: dict, maintenant: datetime) -> tuple[dict, list[tuple[str, str, str]]]:
     """(nouvel état, messages [(titre, corps, priorité)])."""
     courants, nouvel, messages = problemes(etapes), {}, []
@@ -62,25 +114,7 @@ def evaluer(etapes: dict, ancien: dict, maintenant: datetime) -> tuple[dict, lis
     return nouvel, messages
 
 
-def poster(messages, env=None, ouvrir=urlopen) -> int:
-    env = os.environ if env is None else env
-    url = (env.get("ALERTE_SANTE_URL") or env.get("ALERTE_WEBHOOK_URL") or "").strip()
-    if not url.startswith("https://"):
-        return 0
-    envoyes = 0
-    for titre, corps, priorite in messages[:5]:
-        entetes = {"Content-Type": "text/plain; charset=utf-8", "User-Agent": "cotes-value", "Priority": priorite,
-                   "Title": "=?UTF-8?B?" + base64.b64encode(titre.encode()).decode() + "?=",
-                   "Tags": "warning" if priorite == "high" or "alerte" in titre else "white_check_mark"}
-        try:
-            with ouvrir(Request(url, data=corps.encode(), headers=entetes, method="POST"), timeout=5):
-                envoyes += 1
-        except (HTTPError, URLError, OSError, ValueError):
-            pass
-    return envoyes
-
-
-def surveiller(donnees: Path, etapes: dict, env=None, ouvrir=urlopen, maintenant: datetime | None = None) -> dict:
+def surveiller(donnees: Path, etapes: dict, maintenant: datetime | None = None) -> dict:
     try:
         maintenant = maintenant or datetime.now(timezone.utc)
         chemin = donnees / ETAT
@@ -89,10 +123,17 @@ def surveiller(donnees: Path, etapes: dict, env=None, ouvrir=urlopen, maintenant
         except (OSError, ValueError):
             ancien = {}
         nouvel, messages = evaluer(etapes, ancien if isinstance(ancien, dict) else {}, maintenant)
-        envoyes = poster(messages, env, ouvrir) if messages else 0
+        try:
+            ancien_i = json.loads((donnees / INCIDENTS).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            ancien_i = {}
+        incidents = journal_incidents(etapes, ancien_i, maintenant)
+        tmp_i = (donnees / INCIDENTS).with_suffix(".tmp")
+        tmp_i.write_text(json.dumps(incidents, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp_i.replace(donnees / INCIDENTS)
         tmp = chemin.with_suffix(".tmp")
         tmp.write_text(json.dumps(nouvel, ensure_ascii=False, indent=1), encoding="utf-8")
         tmp.replace(chemin)
-        return {"problemes": len(nouvel), "messages": len(messages), "envoyes": envoyes}
+        return {"problemes": len(nouvel), "messages": [titre for titre, _, _ in messages]}
     except Exception as e:  # noqa: BLE001
         return {"erreur": type(e).__name__}

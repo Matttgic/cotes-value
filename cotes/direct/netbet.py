@@ -18,6 +18,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from cotes.correspondance import ressemblance
+from cotes.direct.horizon import fusionner
 from cotes.pulsescore import traduire
 
 ACCUEIL = "https://www.netbet.fr"
@@ -42,6 +43,7 @@ MODES = ("direct", "off")
 ECART_RELATIF = 0.15
 ECHANTILLON = 5
 _MARGE_S = 3.0
+AGE_RESERVE_MIN = 15    # comme controle.FENETRE_MIN : une cote plus vieille n'est plus comparée
 _EXCLU = re.compile(
     r"corner|carton|\bcards?\b|booking|pair\s*/\s*impair|impair\s*/\s*pair|"
     r"buteur|\bscorer\b|\bjoueur\b|boost|garantie",
@@ -616,8 +618,11 @@ class Client:
 
 def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
               pause: tuple[float, float] = (0.25, 0.45),
-              maintenant: datetime | None = None, echeance=None) -> tuple[list[dict], dict]:
-    """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``netbet``)."""
+              maintenant: datetime | None = None, echeance=None, reserve=None) -> tuple[list[dict], dict]:
+    """Lignes déjà passées par ``pulsescore.traduire`` (bookmaker ``netbet``).
+
+    Avec ``reserve`` (le cycle : mémoire du passage précédent), lecture tournante : voir
+    ``_collecter_rotation``. Sans, les pages de sport puis leurs compétitions, dans le même ordre à chaque fois."""
     maintenant = maintenant or datetime.now(timezone.utc)
     if echeance is None:
         echeance = _echeance
@@ -628,6 +633,8 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     if echeance is not None and not echeance.ok():
         client._noter("budget")
         return [], {"ok": False, "erreurs": list(client.erreurs), "requetes": 0, "matchs": 0}
+    if reserve is not None:
+        return _collecter_rotation(client, voulu, heures, maintenant, reserve if isinstance(reserve, dict) else {})
     files: list[tuple[str, list[str]]] = []
     bruts: list[dict] = []
     for sport in voulu:
@@ -670,6 +677,17 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
             bruts.extend(evenements_de(etat, sport))
         if not progres or "HTTP 429" in client.erreurs:
             break
+    lignes, matchs = _traduire(bruts, maintenant, heures)
+    return lignes, {
+        "ok": not client.erreurs or bool(lignes),
+        "erreurs": list(client.erreurs),
+        "requetes": client.requetes,
+        "matchs": matchs,
+    }
+
+
+def _traduire(bruts: list[dict], maintenant: datetime, heures: float) -> tuple[list[dict], int]:
+    """(lignes PulseScore des événements à venir dans l'horizon, nombre de matchs)."""
     horizon = maintenant + timedelta(hours=heures)
     moment = maintenant.isoformat(timespec="seconds")
     lignes: list[dict] = []
@@ -692,11 +710,95 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
             "markets": event["markets"],
         }
         lignes += traduire(ev, "netbet", event["sport"], moment)
-    return lignes, {
-        "ok": not client.erreurs or bool(lignes),
+    return lignes, matchs
+
+
+def _instant(valeur) -> datetime | None:
+    try:
+        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return t if t.tzinfo else None
+
+
+def _collecter_rotation(client: Client, voulu: list[str], heures: float, maintenant: datetime,
+                        reserve: dict) -> tuple[list[dict], dict]:
+    """Pages les plus anciennement lues d'abord, jusqu'au budget ; les autres gardent leurs cotes récentes.
+
+    Mesuré le 25/10/2026 : 14 pages de sport et 157 pages de compétition, environ 1,2 s chacune. Le budget de
+    40 s en lit une trentaine : sans mémoire, c'étaient toujours les mêmes (les pages de sport puis les deux
+    plus grosses compétitions de chaque sport), et 140 compétitions n'étaient jamais lues. Ici, une page jamais
+    lue passe en tête (tour à tour entre les sports, les plus fournies d'abord), puis la plus ancienne : tout
+    le catalogue est relu en une demi-heure environ. Une page de sport met à jour la liste de ses compétitions.
+
+    Les cotes d'une page non relue restent ``AGE_RESERVE_MIN`` minutes avec leur heure de lecture : au-delà,
+    la comparaison ne les rapproche plus d'une référence fraîche."""
+    moment = maintenant.isoformat(timespec="seconds")
+    pages = {u: v for u, v in (reserve.get("pages") or {}).items() if isinstance(v, dict)} \
+        if isinstance(reserve.get("pages"), dict) else {}
+    liens = {s: [u for u in v if isinstance(u, str)] for s, v in (reserve.get("liens") or {}).items()
+             if isinstance(v, list)} if isinstance(reserve.get("liens"), dict) else {}
+    ordre_sport = {s: i for i, s in enumerate(voulu)}
+    candidats: dict[str, str] = {}
+    rang: dict[str, tuple[int, int]] = {}
+
+    def ajouter(url: str, sport: str, position: int) -> None:
+        if url not in candidats:
+            candidats[url] = sport
+            rang[url] = (position, ordre_sport[sport])
+
+    for sport in voulu:
+        ajouter(PAGES[sport], sport, -1)
+    for sport in voulu:
+        for i, url in enumerate(liens.get(sport, [])):
+            ajouter(url, sport, i)
+    jamais = datetime.min.replace(tzinfo=timezone.utc)
+
+    def cle(url: str):
+        return (_instant((pages.get(url) or {}).get("lu")) or jamais, rang[url])
+
+    tentes: set[str] = set()
+    bruts: list[dict] = []
+    lues = 0
+    while True:
+        restants = [u for u in candidats if u not in tentes]
+        if not restants:
+            break
+        url = min(restants, key=cle)
+        html = client.lire(url)
+        if html is None and ("budget" in client.erreurs or "HTTP 429" in client.erreurs):
+            break
+        tentes.add(url)
+        sport = candidats[url]
+        # Même en échec : une page cassée passe en fin de file au lieu d'occuper la tête à chaque cycle.
+        pages[url] = {"sport": sport, "lu": moment}
+        etat = etat_nuxt(html) if html is not None else None
+        if html is not None and etat is None:
+            client._noter("état illisible")
+        if etat is None:
+            continue
+        lues += 1
+        bruts.extend(evenements_de(etat, sport))
+        if url == PAGES[sport]:
+            nouveaux = _liens(etat)
+            for ancien in set(liens.get(sport, [])) - set(nouveaux):
+                pages.pop(ancien, None)
+                if ancien not in tentes:
+                    candidats.pop(ancien, None)
+            liens[sport] = nouveaux
+            for i, u in enumerate(nouveaux):
+                ajouter(u, sport, i)
+    lignes, _ = _traduire(bruts, maintenant, heures)
+    memoire = [l for l in reserve.get("lignes") or [] if isinstance(l, dict) and l.get("sport") in ordre_sport]
+    fusion = fusionner(memoire, lignes, maintenant, heures, age_max_h=AGE_RESERVE_MIN / 60)
+    connues = set(PAGES.values()) | {u for urls in liens.values() for u in urls}
+    return fusion, {
+        "ok": not client.erreurs or bool(fusion),
         "erreurs": list(client.erreurs),
         "requetes": client.requetes,
-        "matchs": matchs,
+        "matchs": len({l.get("match_id") for l in fusion}),
+        "pages": {"lues": lues, "a_lire": len(candidats)},
+        "reserve": {"pages": {u: v for u, v in pages.items() if u in connues}, "liens": liens, "lignes": fusion},
     }
 
 

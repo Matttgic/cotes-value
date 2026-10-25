@@ -34,18 +34,45 @@ def test_panne_qui_se_resout_avant_le_seuil_reste_silencieuse():
     assert msgs == [] and etat == {}
 
 
-def test_poster_utilise_ntfy_et_ne_leve_pas(tmp_path):
-    vus = []
+def test_surveiller_ecrit_l_etat_et_liste_les_messages_sans_rien_envoyer(tmp_path):
+    assert s.surveiller(tmp_path, PANNE, T0)["messages"] == []
+    r = s.surveiller(tmp_path, PANNE, T0 + timedelta(minutes=5))
+    assert r["messages"] == ["Winamax en panne"] and (tmp_path / s.ETAT).exists()
 
-    class R:
-        def __enter__(self): return self
-        def __exit__(self, *a): pass
 
-    def ouvrir(req, timeout):
-        vus.append(req)
-        return R()
-    env = {"ALERTE_WEBHOOK_URL": "https://ntfy.sh/x"}
-    r = s.surveiller(tmp_path, PANNE, env, ouvrir, T0)
-    r = s.surveiller(tmp_path, PANNE, env, ouvrir, T0 + timedelta(minutes=5))
-    assert r["envoyes"] == 1 and vus[0].get_header("Priority") == "high"
-    assert s.surveiller(tmp_path, PANNE, {}, ouvrir, T0)["envoyes"] == 0
+REFUS = {"pinnacle": {"ok": True, "degrade": True, "erreurs": ["sport 45 matchups : HTTP 403", "sport 6 matchups : HTTP 403"]}}
+
+
+def test_journal_incident_en_cours_puis_termine_avec_sa_duree():
+    j = s.journal_incidents(PANNE, {}, T0)
+    assert j["en_cours"]["winamax_direct"]["cycles"] == 1 and j["termines"] == []
+    j = s.journal_incidents(PANNE, j, T0 + timedelta(minutes=5))
+    inc = j["en_cours"]["winamax_direct"]
+    assert inc["cycles"] == 2 and inc["debut"] == T0.isoformat(timespec="seconds") and inc["source"] == "Winamax"
+    j = s.journal_incidents({"winamax_direct": {"ok": True}}, j, T0 + timedelta(minutes=10))
+    assert j["en_cours"] == {}
+    fini = j["termines"][0]
+    assert fini["cycles"] == 2 and fini["debut"] == T0.isoformat(timespec="seconds") and fini["fin"].endswith("12:10:00+00:00")
+
+
+def test_refus_releve_mais_budget_ignore_et_refus_bref_oublie():
+    assert s.constats({**BUDGET})  == {}
+    assert s.constats(REFUS)["pinnacle"][1] == "refus"
+    j = s.journal_incidents(REFUS, {}, T0)
+    j = s.journal_incidents({"pinnacle": {"ok": True}}, j, T0 + timedelta(minutes=5))
+    assert j["termines"] == []                                   # 1 cycle de refus : du bruit, pas un incident
+    for i in range(3):
+        j = s.journal_incidents(REFUS, j, T0 + timedelta(minutes=5 * i))
+    j = s.journal_incidents({"pinnacle": {"ok": True}}, j, T0 + timedelta(minutes=20))
+    assert j["termines"][0]["cycles"] == 3 and "403" in j["termines"][0]["detail"]
+
+
+def test_journal_garde_24_heures_et_survit_a_un_fichier_abime(tmp_path):
+    j = s.journal_incidents(PANNE, {}, T0)
+    j = s.journal_incidents({"winamax_direct": {"ok": True}}, j, T0 + timedelta(minutes=5))
+    assert len(s.journal_incidents({}, j, T0 + timedelta(hours=23))["termines"]) == 1
+    assert s.journal_incidents({}, j, T0 + timedelta(hours=25))["termines"] == []
+    assert s.journal_incidents(PANNE, "abime", T0)["en_cours"]["winamax_direct"]["cycles"] == 1
+    (tmp_path / s.INCIDENTS).write_text("{pas du json")
+    assert s.surveiller(tmp_path, PANNE, T0).get("erreur") is None
+    assert s.journal_incidents(PANNE, {}, T0)["mis_a_jour"] and (tmp_path / s.INCIDENTS).exists()

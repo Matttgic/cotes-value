@@ -165,10 +165,15 @@ def test_coupure_puis_reprise(monkeypatch):
     assert etat["n"] == 2
 
 
-def test_erreur_reseau_sans_corps():
+def test_erreur_reseau_sans_corps(monkeypatch):
+    monkeypatch.setattr(winamax.time, "sleep", lambda s: None)
+
     class Faux:
+        def __init__(self):
+            self.file = ["0{}", "40{}"]
+
         def recv_str(self):
-            return "0{}"
+            return self.file.pop(0)
 
         def send_str(self, msg):
             if msg.startswith("42"):
@@ -179,7 +184,7 @@ def test_erreur_reseau_sans_corps():
 
     client = winamax.Socket(pause=(0, 0), connecter=lambda: Faux())
     assert client.demander("match:1") is None
-    assert client.erreurs == ["match:1 : réseau"]
+    assert client.erreurs == ["match:1 : réseau (OSError)"]          # la nature, jamais le message
     assert "secret" not in " ".join(client.erreurs)
 
 

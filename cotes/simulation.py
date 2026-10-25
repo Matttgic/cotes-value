@@ -102,6 +102,8 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
                               "preuves_composantes": o.get("preuves_composantes"),
                               "lectures_references": o.get("lectures_references"),
                               "version": VERSION}}
+        if o.get("reference_reprise"):
+            p["preuve_prise"]["reference_reprise"] = True
         paris.append(p)
         nouveaux.append(p)
     return nouveaux

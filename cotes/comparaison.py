@@ -211,7 +211,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 suspect = "références en désaccord"
             elif not suspect and ecart > (ECART_SUSPECT if l["cote"] <= 10 else ECART_SUSPECT_GROSSES):
                 suspect = "écart trop grand"
-            opportunites.append({
+            o = {
                 "detecte": l["collecte"], "bookmaker": l["source"], "sport": l["sport"], "ligue": l.get("ligue"),
                 "collecte_debut": l.get("collecte_debut"), "collecte_recue": l.get("collecte_recue"),
                 "match_id": l["match_id"], "domicile": l["domicile"], "exterieur": l["exterieur"],
@@ -227,7 +227,11 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "composantes": r.get("composantes"), "preuves_composantes": r.get("preuves_composantes"),
                 "controle": _controle_du_groupe(l, controle),
                 "lien": l.get("lien"), "suspect": suspect,
-                "pariable": not bool(suspect)})
+                "pariable": not bool(suspect)}
+            # Référence reprise d'un cycle précédent (cotes/reprise.py) : notée seulement quand c'est le cas.
+            if r.get("reprise") or (nom == "Consensus" and any(m.get("reprise") for m in membres.values())):
+                o["reference_reprise"] = True
+            opportunites.append(o)
     return opportunites
 
 

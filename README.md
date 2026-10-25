@@ -66,6 +66,7 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
 7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages, en quatre onglets : Paris, Bilan, Notifications, Santé.
+   La page Santé garde un journal des incidents des dernières 24 heures (`sante_incidents.json`, écrit à chaque cycle par `cotes/surveillance.py`) : pannes, lectures dégradées et refus 403/429 qui durent au moins 3 cycles, avec début, durée et nombre de cycles. Le dépassement de budget n'en fait pas partie.
 
 ### Deux stratégies suivies séparément
 
@@ -158,6 +159,17 @@ Le délai depuis le réchauffeur ne compte que s'il a renouvelé l'entrée (`fre
 l'âge vu à Paris (`age_s`). Au-delà, ou si aucune mesure n'existe, la cote est périmée et ne
 déclenche pas de pari. Les corners, les cartons et les paris pair/impair ne sont pas comparés
 aux books français (périmètre ANJ).
+
+**Reprise des références** (`cotes/reprise.py`). Un sport que Pinnacle ou Polymarket n'a pas rendu au
+cycle (refus 403, panne, budget), même après le secours Pinnacle, reprend les lignes de son dernier passage
+réussi, marquées `reprise`. Elles gardent leur heure de lecture d'origine et vieillissent pour de vrai :
+âge du cache Pinnacle plus le temps écoulé, ou temps écoulé depuis la lecture pour Polymarket, avec les
+mêmes seuils (`PINNACLE_AGE_MAX_MIN`, `PINNACLE_AGE_MAX_LOIN_MIN`). Au-delà, la ligne est oubliée. Les
+cotes françaises ne sont jamais reprises : un pari se prend sur un prix lu au cycle même. Un pari pris
+contre une référence reprise porte `reference_reprise` dans `preuve_prise`. La panne reste notée dans
+l'étape (`ok`, `erreurs`) avec le nombre de lignes reprises (`reprise`). Le fichier
+(`reprise/derniere_lecture.json.gz`, environ 2 Mo) vit dans le cache GitHub Actions, pas dans la
+branche « donnees ». `REPRISE_CHEMIN` vide : aucune reprise.
 
 Les runners GitHub sont aux États-Unis : Pinnacle ne répond 200 que si le cache Cloudflare
 est déjà rempli (jusqu'à 900 s). La fonction `supabase/functions/pinnacle-rechauffe/index.ts`

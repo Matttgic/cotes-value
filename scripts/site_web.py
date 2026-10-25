@@ -589,7 +589,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
-            "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "bilan": bilan(paris),
+            "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "incidents": _lire(donnees / "sante_incidents.json", {}), "bilan": bilan(paris),
             "ecarts_references": moyennes_ecarts(paris),
             "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "segments": segments(paris),
             "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
@@ -910,6 +910,7 @@ MODELE = r"""<!doctype html>
     <div class="carte sante-global" id="sante-global" role="status"></div>
     <h3 class="bu-titre">Automatismes</h3><div class="bu-table" id="sante-auto"></div>
     <h3 class="bu-titre">Sources de cotes</h3><div class="bu-table" id="sante-cotes"></div>
+    <h3 class="bu-titre">Incidents des dernières 24 heures</h3><div class="bu-table" id="sante-incidents"></div>
     <h3 class="bu-titre">Sources de résultats</h3><div class="bu-table" id="sante-resultats"></div>
     <p class="aide" id="sante-attente"></p>
     <p><button type="button" class="btn secondaire" data-aller="regler" id="sante-saisie">Matchs à saisir à la main ›</button></p>
@@ -1640,6 +1641,20 @@ function ligneSecoursPinnacle(secours) {
   return ligneSante("Pinnacle · secours (pinnodds, PinBook)", detail, secours.lignes || secours.pause ? "alerte" : "panne");
 }
 const PIRE = ["ok","alerte","panne"];
+// Journal d'incidents (cotes/surveillance.py) : en cours d'abord, puis terminés ; un refus n'apparaît qu'à partir de 3 cycles.
+function dureeIncident(debut, fin) {
+  const m = Math.max(0, Math.round((new Date(fin) - new Date(debut)) / 60000));
+  return m < 1 ? "moins d'1 min" : m < 60 ? m+" min" : Math.floor(m/60)+" h "+String(m%60).padStart(2,"0");
+}
+function incidentsSante(j, maintenant=Date.now()) {
+  const visible = i => i.genre !== "refus" || (i.cycles || 0) >= 3;
+  const cours = Object.values((j||{}).en_cours || {}).filter(visible).sort((a,b) => PIRE.indexOf(b.niveau) - PIRE.indexOf(a.niveau));
+  const finis = [...((j||{}).termines || [])].filter(visible).sort((a,b) => String(b.fin).localeCompare(String(a.fin)));
+  const ligne = (i, fini) => ligneSante(i.source, (fini ? "Du "+quand(i.debut)+" · "+dureeIncident(i.debut, i.fin)+" · terminé" : "Depuis "+quand(i.debut)+" · "+dureeIncident(i.debut, maintenant))
+    +" · "+i.cycles+" cycle"+(i.cycles>1?"s":"")+" · "+i.detail, fini ? "ok" : i.niveau);
+  return cours.map(i => ligne(i, false)).join("") + finis.slice(0, 20).map(i => ligne(i, true)).join("")
+    || '<p class="aide sante-vide">Aucun incident ces dernières 24 heures.</p>';
+}
 function rendreSante(maintenant=Date.now()) {
   const {dc, niveau, texte, mineures, age} = diagnosticSante(maintenant);
   const etapes = dc.etapes || {}, jr = (D.etat||{}).dernier_cycle_reglement || {};
@@ -1660,6 +1675,7 @@ function rendreSante(maintenant=Date.now()) {
     ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus" : detailEtape(etapes[k]), niveauEtape(etapes[k]))
       + (k === "pinnacle" ? ligneFraicheurPinnacle(dc.pinnacle_fraicheur) + (secours ? ligneSecoursPinnacle(secours) : "") : "")).join("")
     || '<p class="aide sante-vide">Aucune lecture enregistrée.</p>';
+  document.getElementById("sante-incidents").innerHTML = incidentsSante(D.incidents, maintenant);
   const parSource = new Map();
   for (const [k,v] of Object.entries(jr.etapes || {})) {
     const m = /^resultats_([^_]+(?:-[^_]+)*)(?:_|$)/.exec(k);
