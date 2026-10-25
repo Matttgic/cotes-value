@@ -28,7 +28,7 @@ function page({serveur,stockage={}}) {
     }};
   vm.createContext(ctx);
   const demarrer=async()=>{vm.runInContext(SOURCE,ctx);await new Promise(r=>setTimeout(r,20));};
-  return {elements,appels,stockage,demarrer,cocher:(...cles)=>{cochees=new Set(cles);}};
+  return {ctx,elements,appels,stockage,demarrer,cocher:(...cles)=>{cochees=new Set(cles);}};
 }
 
 test('premier enregistrement : le code est exigé, haché, mémorisé, et jamais envoyé en clair',async()=>{
@@ -80,4 +80,20 @@ test('tout décocher est un choix valide, et un serveur muet laisse la page util
   await panne.demarrer();
   assert.match(panne.elements['pushover-etat'].textContent,/indisponible/);
   assert.equal(panne.elements['pushover-sauver'].disabled,true);
+});
+
+test('chaque règle affiche son bilan : réussite, gain, ROI, et ce qui attend',async()=>{
+  const p=page({serveur:(action)=>action==='pushover-lire'?[200,{defini:true,strategies:[]}]:[200,{ok:true}]});
+  p.ctx.D.laboratoire={futur:[
+    {id:'PIN-1.3-2-e2-h12',regles:74,gagnes:50,gain:119.6,roi:16.2,attente:10},
+    {id:'PIN-1.3-2-e2-h36',regles:10,gagnes:3,gain:-22.5,roi:-22.5,attente:0},
+    {id:'POL-1.3-2-e2-h12',regles:0,attente:4}]};
+  p.ctx.D.notifications.strategies={eden:'Eden','labo:PIN-1.3-2-e2-h12':'Pinnacle 1','labo:PIN-1.3-2-e2-h36':'Pinnacle 2','labo:POL-1.3-2-e2-h12':'Polymarket 1'};
+  await p.demarrer();
+  const html=p.elements['pushover-strategies'].innerHTML;
+  assert.ok(html.includes('Réussite <b>68 %</b> (50/74)') && html.includes('<b class="pos">+119,60 €</b>') && html.includes('<b class="pos">+16,2 %</b>'));
+  assert.ok(html.includes('10 en attente'));
+  assert.ok(html.includes('Réussite <b>30 %</b> (3/10)') && html.includes('<b class="neg">-22,50 €</b>') && html.includes('<b class="neg">-22,5 %</b>'));
+  assert.ok(html.includes('Aucun pari réglé depuis le 14/10 · 4 en attente'));
+  assert.ok(!html.includes('NaN') && !html.includes('undefined'));
 });

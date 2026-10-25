@@ -876,6 +876,7 @@ MODELE = r"""<!doctype html>
     <h3 class="bu-titre">Alertes Pushover</h3>
     <p class="aide" id="pushover-etat" role="status" aria-live="polite">Chargement du choix…</p>
     <fieldset class="carte" id="pushover-strategies"><legend>Stratégies envoyées sur Pushover</legend></fieldset>
+    <p class="aide">Chaque règle affiche son bilan depuis le 14/10 : paris réglés, réussite, gain net (mise de 10 € par pari) et ROI.</p>
     <p><label class="aide" for="pushover-code">Code personnel</label>
       <input type="password" id="pushover-code" class="champ" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="pushover-aide"></p>
     <p class="aide" id="pushover-aide">Le premier enregistrement définit ce code ; il protège ton choix, personne d’autre ne peut le modifier. Il est mémorisé sur cet appareil, à resaisir sur un autre.</p>
