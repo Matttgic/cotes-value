@@ -251,6 +251,8 @@ def _lignes(marches, base, dom, ext, sport) -> list[dict]:
         cible = TYPES.get(t)
         if not cible or mk.get("acceptingOrders") is not True or mk.get("closed") is not False:
             continue
+        if mk.get("bestBid") is None or mk.get("bestAsk") is None:
+            continue          # carnet vide ou d'un seul côté : aucun prix à lire, ce n'est pas une erreur de données
         bid, ask = _nombre(mk.get("bestBid")), _nombre(mk.get("bestAsk"))
         if bid is None or ask is None or not (0 < bid <= ask < 1):
             _erreur("prix bid/ask invalides")
