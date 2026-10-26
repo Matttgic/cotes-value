@@ -63,14 +63,88 @@ def _cles_match(p: dict) -> list[tuple]:
     return out
 
 
+def _signature_selection(p: dict) -> tuple:
+    """Sélection exacte : marché (type, période, ligne, joueur) et issue.
+
+    Le match n'est pas dans cette signature : il vient de l'alias déjà appris.
+    Le bookmaker n'y est pas : deux passages, ou deux books, du même choix ne
+    comptent qu'une fois.
+    """
+    return (p.get("marche"), p.get("periode"), p.get("ligne"), p.get("joueur"), p.get("issue"))
+
+
+def _selection_par_selection(paris: list[dict], eligibles: set[int], depuis: str) -> dict:
+    """Première prise par sélection, sans plafond journalier.
+
+    Même apprentissage d'alias que ``selection_unique`` : deux bookmakers du même
+    match partagent la sélection. Une fusion tardive est comptée et ne retire
+    jamais une mise déjà retenue. Les autres marchés du match restent jouables.
+    """
+    depart = heure(depuis)
+    if depart is None:
+        return {"selection": set(), "fusions_tardives": 0, "par_jour": {}}
+    lignes = sorted((p for p in paris if p.get("reference") != "Pinnacle brut"
+                     and heure(p.get("detecte"))), key=lambda p: heure(p["detecte"]))
+    parents, vues, jours, retenus = {}, {}, Counter(), set()
+    fusions = 0
+
+    def racine(cle):
+        parents.setdefault(cle, cle)
+        r = cle
+        while parents[r] != r:
+            r = parents[r]
+        while parents[cle] != cle:
+            prochain = parents[cle]
+            parents[cle] = r
+            cle = prochain
+        return r
+
+    for t, batch in groupby(lignes, key=lambda p: heure(p["detecte"])):
+        batch = list(batch)
+        for p in batch:
+            cles = _cles_match(p)
+            root = racine(cles[0])
+            for cle in cles[1:]:
+                autre = racine(cle)
+                if root != autre:
+                    a, b = vues.get(root), vues.get(autre)
+                    fusions += bool(a and b)
+                    parents[autre] = root
+                    if b:
+                        vues[root] = (a or set()) | b
+                        del vues[autre]
+        if t < depart:
+            continue
+        candidats = sorted((p for p in batch if id(p) in eligibles),
+                            key=lambda p: (-(p.get("ecart") or 0), str(p.get("id") or "")))
+        jour = t.astimezone(PARIS).date().isoformat()
+        for p in candidats:
+            root = racine(_cles_match(p)[0])
+            sig = _signature_selection(p)
+            deja = vues.setdefault(root, set())
+            if sig in deja:
+                continue
+            deja.add(sig)
+            retenus.add(id(p))
+            jours[jour] += 1
+    return {"selection": retenus, "fusions_tardives": fusions, "par_jour": dict(jours)}
+
+
 def selection_unique(paris: list[dict], eligibles: set[int], depuis: str,
-                     maximum_jour: int | None = None) -> dict:
+                     maximum_jour: int | None = None, *, portee: str = "match") -> dict:
     """Première prise par événement ; edge départage seulement les prises simultanées.
 
-    Les alias sont appris sur toutes les observations, y compris avant lancement
-    et sur les prix écartés. Une fusion tardive est comptée et ne retire jamais
-    une mise passée. Un match non identifiable reste une limite des données.
+    ``portee="match"`` (défaut, toutes les stratégies déjà lancées) : une mise par
+    match, puis le plafond journalier. ``portee="selection"`` : une mise par
+    sélection exacte, sans plafond. Les alias sont appris sur toutes les
+    observations, y compris avant lancement et sur les prix écartés. Une fusion
+    tardive est comptée et ne retire jamais une mise passée. Un match non
+    identifiable reste une limite des données.
     """
+    if portee == "selection":
+        return _selection_par_selection(paris, eligibles, depuis)
+    if portee != "match":
+        raise ValueError("portée de dédoublonnage inconnue")
     depart = heure(depuis)
     if depart is None:
         return {"selection": set(), "fusions_tardives": 0, "par_jour": {}}
