@@ -5,14 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value — repérer la cote mal ajustée</title>
 <meta name="description" content="Cotes Value compare en continu les cotes des bookmakers français à celles de Pinnacle et de Polymarket, et suit chaque pari signalé jusqu’au résultat.">
-<script>
-// Anciens liens de l'interface (alerte Chrome « ?alerte= », onglets « #paris »…) : ils s'ouvrent dans l'interface.
-(function(){
-  var o=location.hash.slice(1);
-  if(/[?&]alerte=/.test(location.search) || ['jouer','paris','mes','segments','notifications','regler','controle','analyses'].indexOf(o)>=0)
-    location.replace('interface.html'+location.search+location.hash);
-})();
-</script>
 <style>
 /* Polices OFL (maquettes/polices), converties en WOFF2 ; licence dans les métadonnées des fichiers. */
 @font-face{font-family:"Instrument Serif";font-display:swap;src:url("polices/InstrumentSerif-Regular.woff2") format("woff2")}
@@ -264,16 +256,12 @@ h2 i{color:var(--signal)}
 
 <header class="cadre">
   <div class="barre">
-    <a class="marque" href="./" aria-label="Cotes Value"><b>cv<i>.</i></b><span>Cotes Value</span></a>
+    <a class="marque" href="vitrine.html" aria-label="Cotes Value"><b>cv<i>.</i></b><span>Cotes Value</span></a>
     <nav>
       <a href="#methode"><em>01</em>Méthode</a>
       <a href="#bilan"><em>02</em>Bilan</a>
       <a href="#strategies"><em>03</em>Stratégies</a>
     </nav>
-    <div class="droite">
-      <a class="lien" href="interface.html">Se connecter</a>
-      <a class="btn" href="interface.html">S’inscrire <i>→</i></a>
-    </div>
   </div>
 </header>
 
@@ -290,10 +278,6 @@ h2 i{color:var(--signal)}
     <h1>Repérer la cote <i>mal <span>ajustée.</span></i></h1>
     <div class="chapeau">
       <p>Cotes Value compare en continu les cotes des bookmakers français à celles de Pinnacle et de Polymarket. Quand l’écart est trop grand, le pari est signalé, puis suivi jusqu’au résultat.</p>
-      <div class="actions">
-        <a class="btn" href="interface.html">S’inscrire <i>→</i></a>
-        <a class="lien" href="interface.html">Se connecter</a>
-      </div>
     </div>
   </div>
 
@@ -387,10 +371,6 @@ h2 i{color:var(--signal)}
   <h2>Le prochain relevé<br>part dans <i><span>5</span> minutes.</i></h2>
   <div class="bas">
     <p>Créez un compte pour voir les paris signalés, le journal complet et le bilan de chaque stratégie.</p>
-    <div class="actions">
-      <a class="lien" href="interface.html">Se connecter</a>
-      <a class="btn grand" href="interface.html">S’inscrire <i>→</i></a>
-    </div>
   </div>
   <footer class="pied">
     <div class="p1"><span class="age">18+</span><br>Cotes Value n’est pas un bookmaker et ne prend aucun pari.</div>

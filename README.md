@@ -66,10 +66,9 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
 7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages, en quatre onglets : Paris, Bilan, Notifications, Santé.
-   La page d'accueil (`index.html`) est la vitrine publique (`web/vitrine.html`, dont les deux chiffres Kelly ¼ sont
-   recalculés à chaque publication) ; « Se connecter » ouvre l'interface (`interface.html`). Les anciens liens
-   (`?alerte=…`, `#paris`…) y sont redirigés. L'habillage suit la direction artistique de `maquettes/` (polices OFL
-   en WOFF2 dans `web/polices/`).
+   L'habillage suit la direction artistique de `maquettes/` (polices OFL en WOFF2 dans `web/polices/`). La vitrine
+   publique (`web/vitrine.html`, deux chiffres Kelly ¼ recalculés à chaque publication) est publiée à part, en
+   `vitrine.html`, sans lien depuis l'interface ni bouton de connexion : l'interface reste la page d'accueil.
    La page Santé garde un journal des incidents des dernières 24 heures (`sante_incidents.json`, écrit à chaque cycle par `cotes/surveillance.py`) : pannes, lectures dégradées et refus 403/429 qui durent au moins 3 cycles, avec début, durée et nombre de cycles. Le dépassement de budget n'en fait pas partie.
 
 ### Deux stratégies suivies séparément

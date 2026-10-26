@@ -666,13 +666,13 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__VERSION_SITE__", version)
     # Les données externes ne passent jamais dans les remplacements du gabarit.
     html = html.replace("__DONNEES__", donnees_json, 1)
-    # Vitrine publique en page d'accueil ; ses deux grands chiffres sont ceux du bilan Kelly ¼ de l'interface.
+    # Vitrine publique, gardée à part (vitrine.html, liée nulle part) ; ses deux grands chiffres sont ceux du bilan Kelly ¼.
     vitrine = (web / "vitrine.html").read_text(encoding="utf-8")
     for ref in ("Uniques", "Toutes"):
         gain = sum(b["gains"] for k, b in data["kelly"]["bilan"].items() if k.endswith("|" + ref))
         vitrine = vitrine.replace(f"__GAIN_{ref.upper()}_KELLY__", montant_vitrine(gain))
-    (sortie / "interface.html").write_text(html, encoding="utf-8")
-    (sortie / "index.html").write_text(vitrine, encoding="utf-8")
+    (sortie / "index.html").write_text(html, encoding="utf-8")
+    (sortie / "vitrine.html").write_text(vitrine, encoding="utf-8")
     (sortie / "polices").mkdir(exist_ok=True)
     for police in (web / "polices").glob("*.woff2"):
         (sortie / "polices" / police.name).write_bytes(police.read_bytes())
@@ -682,7 +682,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
     (sortie / "ordres.json").write_text(ordres_json, encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
-    return sortie / "interface.html"
+    return sortie / "index.html"
 
 
 def montant_vitrine(gain: float) -> str:
