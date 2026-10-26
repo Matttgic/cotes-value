@@ -94,6 +94,12 @@ function couvertureCLV(s) {
   const n=s.clv_n || 0,total=s.regles || 0,largeur=total?Math.min(100,100*n/total):0;
   return `<span class="couverture-clv" aria-hidden="true"><i style="width:${largeur}%"></i></span><small>${n}/${total} mesurés</small>`;
 }
+// Mise moyenne par pari réglé : montrée seulement en mise Kelly ¼ (en 10 € fixes, chaque pari vaut 10 €).
+function miseMoyenne(s) {
+  if(typeof miseMode==='undefined' || miseMode!=='kelly' || !s.regles || !Number.isFinite(s.mise)) return '';
+  const moyenne=(s.mise/s.regles).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return `<div class="mise-moyenne"><dt>Mise moyenne</dt><dd>${moyenne} €</dd><small>Kelly ¼ · sur ${s.regles} réglés</small></div>`;
+}
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   const code=r.nom.startsWith('Convergence')?'CV':r.nom.startsWith('Claude')?'CL':r.nom.startsWith('Eden')?'ED':r.nom.startsWith('Gemini')?'GA':r.nom.startsWith('JULES')?'JL':r.nom.startsWith('M3')?'M3':r.nom.startsWith('ChatGPT')?'GP':'RF';
@@ -110,6 +116,7 @@ function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
       <div><dt>ROI</dt><dd class="${signe(s.roi)}">${pp(s.roi)}</dd><small>${r.reussite==null?'—':r.reussite.toFixed(1).replace('.',',')+' %'} de réussite</small></div>
       <div><dt>CLV moyenne</dt><dd class="${signe(s.clv)}">${pp(s.clv)}</dd>${couvertureCLV(s)}<small>Par match <b class="${signe(s.clv_evenement)}">${pp(s.clv_evenement)}</b> · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"} mesurés</small></div>
       <div><dt>Paris réglés</dt><dd>${s.regles} <small>(${s.evenements_regles ?? "—"} matchs)</small></dd><small>${s.paris} prises · ${s.attente} en attente</small></div>
+      ${miseMoyenne(s)}
     </dl>${repartitionResultats(s)}
     <details><summary>Règles et détail des résultats</summary><p>${e(r.detail)}</p>
       <div class="strat-secondaires"><span>Gains bruts<b class="pos">${s.regles?eur(s.gains_bruts):'—'}</b></span>

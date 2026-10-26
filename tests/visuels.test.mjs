@@ -88,3 +88,13 @@ test('les pastilles « meilleur » : une gagnante par critère, 50 paris réglé
   assert.equal((html.match(/class="medaille"/g)||[]).length,4);assert.ok(html.includes('50 paris réglés minimum'));
   assert.equal(fn('pastillesMedailles')([]),'');assert.equal(fn('pastillesMedailles')(undefined),'');
 });
+
+test('la mise moyenne n\'apparaît qu\'en mise Kelly',()=>{
+  const r={id:'X',nom:'Règle',detail:'d',stats:{regles:4,paris:4,attente:0,gagnes:2,perdus:2,mise:50,gain:5,roi:10}};
+  const carte=()=>fn('carteStrategieVisuelle')(r,[]);
+  assert.ok(!carte().includes('Mise moyenne'));                       // mise fixe : chaque pari vaut 10 €
+  contexte.miseMode='kelly';
+  assert.ok(carte().includes('Mise moyenne') && carte().includes('12,50 €'));
+  r.stats.regles=0;assert.ok(!carte().includes('Mise moyenne'));
+  contexte.miseMode='fixe';
+});
