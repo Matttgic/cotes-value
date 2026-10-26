@@ -584,10 +584,13 @@ def construire(donnees: Path, sortie: Path) -> Path:
             prudentes = selections_prudentes(paris, bases={cle: officiels[nom] for cle, _, _, nom, _ in STRATEGIES})
             officiels.update({v["nom"]: prudentes[v["cle"]] for v in VARIANTES})
             laboratoire["suivis_prudents"] = suivis_prudents(paris, maintenant)
+            # Les variantes lancées après le 14/10 comptent leurs jours depuis leur propre lancement.
+            lancements = {v["nom"]: max(v["debut"], DEBUT_SUIVI, key=heure) for v in VARIANTES}
             laboratoire["comparateurs_futur"] = {
                 nom: resume([p for p in paris if id(p) in ids and heure(p.get("detecte"))
                              and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
-                            maintenant, incertitude=False) for nom, ids in officiels.items()}
+                            maintenant, incertitude=False, depuis=lancements.get(nom, DEBUT_SUIVI))
+                for nom, ids in officiels.items()}
             enrichir_evenements(paris, laboratoire, maintenant)
             ids_labo = {i for r in laboratoire["futur"] for i in r["ids_recents"]}
             laboratoire["paris_recents"] = [{k: p.get(k) for k in (

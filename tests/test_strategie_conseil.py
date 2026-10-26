@@ -102,3 +102,11 @@ def test_conseil_retard_prospectif_hors_football_et_dans_les_choix():
     avant = pari("a", **{**hockey, "detecte": "2026-10-26T03:00:00Z", "lu_reference": "2026-10-26T03:00:00Z"})
     assert selections_prudentes([avant])["conseil_retard"] == set()                   # suivi prospectif seulement
     assert CONSEIL_RETARD in VARIANTES and NOMS["conseil_retard"] == "Conseil retard"
+
+
+def test_resume_donne_la_duree_du_suivi_pour_les_moyennes():
+    from cotes.laboratoire import resume
+    p = pari("a")
+    assert resume([p], "2026-10-25T12:00:00Z", incertitude=False, depuis="2026-10-15T12:00:00Z")["jours"] == 10
+    assert resume([p], "2026-10-15T13:00:00Z", incertitude=False, depuis="2026-10-15T12:00:00Z")["jours"] == 1   # au moins un jour
+    assert "jours" not in resume([p], "2026-10-25T12:00:00Z", incertitude=False)

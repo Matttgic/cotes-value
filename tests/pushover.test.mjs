@@ -92,7 +92,7 @@ test('chaque règle affiche son bilan : réussite, gain, ROI, et ce qui attend',
   await p.demarrer();
   const html=p.elements['pushover-strategies'].innerHTML;
   assert.ok(html.includes('Réussite <b>68 %</b> (50/74)') && html.includes('<b class="pos">+119,60 €</b>') && html.includes('<b class="pos">+16,2 %</b>'));
-  assert.ok(html.includes('10 en attente'));
+  assert.ok(html.includes('10 en attente') && !html.includes('paris/jour'));   // sans durée, pas de moyenne
   assert.ok(html.includes('Réussite <b>30 %</b> (3/10)') && html.includes('<b class="neg">-22,50 €</b>') && html.includes('<b class="neg">-22,5 %</b>'));
   assert.ok(html.includes('Aucun pari réglé depuis le 14/10 · 4 en attente'));
   assert.ok(!html.includes('NaN') && !html.includes('undefined'));
@@ -100,11 +100,13 @@ test('chaque règle affiche son bilan : réussite, gain, ROI, et ce qui attend',
 
 test('les comparateurs affichent aussi leur bilan',async()=>{
   const p=page({serveur:(action)=>action==='pushover-lire'?[200,{defini:true,strategies:[]}]:[200,{ok:true}]});
-  p.ctx.D.laboratoire={futur:[],comparateurs_futur:{'Eden (rejeu)':{regles:20,gagnes:11,gain:35.5,roi:17.8,attente:2}}};
+  p.ctx.D.laboratoire={futur:[],comparateurs_futur:{'Eden (rejeu)':{paris:22,regles:20,gagnes:11,gain:35.5,roi:17.8,attente:2,jours:10}}};
   p.ctx.D.notifications.strategies={eden:'Eden',m3:'M3'};
   p.ctx.D.notifications.comparateurs={eden:'Eden (rejeu)',m3:'M3 (rejeu)'};
   await p.demarrer();
   const html=p.elements['pushover-strategies'].innerHTML;
   assert.ok(html.includes('Réussite <b>55 %</b> (11/20)') && html.includes('<b class="pos">+35,50 €</b>') && html.includes('2 en attente'));
+  // moyennes sur la durée du suivi : 22 paris en 10 jours, +35,50 € en 10 jours ramenés à un mois moyen
+  assert.ok(html.includes('<b>2,2</b> paris/jour') && html.includes('<b class="pos">+108 €</b>/mois'));
   assert.ok(!html.includes('undefined'));
 });

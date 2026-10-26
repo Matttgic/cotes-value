@@ -165,7 +165,8 @@ def mise_de(p: dict) -> float:
     return m if m is not None and m > 0 else MISE
 
 
-def resume(rows: list[dict], connu_avant: str, incertitude: bool = True) -> dict:
+def resume(rows: list[dict], connu_avant: str, incertitude: bool = True, depuis: str | None = None) -> dict:
+    """``depuis`` (lancement du suivi) ajoute ``jours`` : durée observée, pour les moyennes par jour et par mois."""
     cutoff = heure(connu_avant)
     assert cutoff is not None
     regles = [p for p in rows if p.get("statut") in GAIN and heure(p.get("regle_le"))
@@ -192,7 +193,8 @@ def resume(rows: list[dict], connu_avant: str, incertitude: bool = True) -> dict
     full_stakes = sum(mise_de(p) for p in rows)
     from .evenements import mesures
     evenements = mesures(rows, regles, clv)
-    return {**evenements, "paris": len(rows), "regles": n, "attente": len(attente),
+    jours = {"jours": round(max((cutoff - heure(depuis)).total_seconds() / 86400, 1.0), 2)} if depuis else {}
+    return {**evenements, **jours, "paris": len(rows), "regles": n, "attente": len(attente),
             "gagnes": sum(p["statut"] in ("gagne", "demi_gagne") for p in regles),
             "perdus": sum(p["statut"] in ("perdu", "demi_perdu") for p in regles),
             "rembourses": sum(p["statut"] == "rembourse" for p in regles),
@@ -278,6 +280,6 @@ def suivi_futur(paris: list[dict], depuis: str, maintenant: str | None = None) -
     out = []
     for r in REGLES:
         selection = selectionner(rows, r, depuis)
-        out.append({"id": r.id, **resume(selection, cutoff, incertitude=False),
+        out.append({"id": r.id, **resume(selection, cutoff, incertitude=False, depuis=depuis),
                     "ids_recents": [p["id"] for p in selection[-30:]]})
     return out
