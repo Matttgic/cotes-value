@@ -49,8 +49,14 @@ def _motif_commun(p: dict, c: dict, preuve_ok=None) -> str | None:
     t, debut, lu = heure(p.get("detecte")), heure(p.get("debut")), heure(p.get("lu_reference"))
     if not t or not debut or not lu:
         return "date absente ou invalide"
-    if (debut - t).total_seconds() < c.get("avance_min_minutes", 15) * 60:
-        return "match trop proche"
+    # 15 min par défaut. Une stratégie peut descendre le plancher à 0 : on joue
+    # jusqu'au coup d'envoi, et on refuse seulement un pari déjà après le début.
+    avance = (debut - t).total_seconds()
+    seuil = c.get("avance_min_minutes", 15) * 60
+    if avance < seuil:
+        # Le motif des stratégies à 15 min ne change pas. Seul un plancher à 0
+        # distingue « déjà commencé » d'un simple refus de proximité.
+        return "match déjà commencé" if avance < 0 and seuil == 0 else "match trop proche"
     if abs((t - lu).total_seconds()) > c.get("fraicheur_max_minutes", 15) * 60:
         return "référence trop ancienne"
     cote, edge, juste = (nombre_fini(p.get(k)) for k in ("cote", "ecart", "cote_juste"))
@@ -153,9 +159,11 @@ GROK_8 = {
 GROKS_V2 = (GROK_6, GROK_7, GROK_8)
 
 # Grok 9 et 10 : même règle « Valeur », une référence chacune, sans rejeu.
-# Lancement le 26/10/2026 à 20:00 UTC. Les prises déjà figées ne reçoivent pas ces clés.
-# Fenêtre (15 min avant le match, référence de moins de 15 min) et dédoublonnage (1/match,
-# max 10/j comme Grok 4 et 6) identiques aux autres Grok.
+# Lancement le 26/10/2026 à 20:00 UTC. Version 2 le soir même : la stratégie vue
+# sur X n'a ni un pari par match, ni un plafond journalier, ni de marge de 15 min
+# avant le coup d'envoi. On joue jusqu'au début du match, jamais après.
+# Le dédoublonnage ne garde que la première prise d'une sélection exacte
+# (même match, même marché, même issue), pour ne pas recompter un passage suivant.
 # L'écart lu est déjà cote × probabilité juste − 1 : la cote juste vient du dévig power
 # (Pinnacle) ou du milieu renormalisé (Polymarket), appliqués à la collecte.
 # Plafond d'écart du filtre commun : avec une cote ≤ 4,50 et une cote juste > 1, l'écart
@@ -163,25 +171,29 @@ GROKS_V2 = (GROK_6, GROK_7, GROK_8)
 # « edge ≥ 4 % » accepterait. Pas de plafond à 15 % (celui de Grok 6 à 8).
 DEBUT_V3 = "2026-10-26T20:00:00+00:00"
 EDGE_MAX_VALEUR = 3.5
+_REGLES_VALEUR = ("cote juste déjà sans marge · cotes 1,50–4,50 · edge ≥ 4 % · "
+                  "plusieurs paris par match possibles · pas de limite par jour · "
+                  "jusqu'au coup d'envoi · référence de moins de 15 min · "
+                  "mise 10 € ou Kelly ¼ plafonné 2 %")
 
 GROK_9 = {
     "cle": "grok_9", "nom": "Grok 9 · Valeur Pinnacle", "court": "Grok9 PIN valeur",
-    "debut": DEBUT_V3, "version": "1", "mise": 10.0, "maximum_jour": 10,
+    "debut": DEBUT_V3, "version": "2", "mise": 10.0, "maximum_jour": None,
+    "portee": "selection", "avance_min_minutes": 0, "fraicheur_max_minutes": 15,
     "reference": "Pinnacle",
     "cote_min": 1.50, "cote_max": 4.50, "edge_min": 0.04, "edge_max": EDGE_MAX_VALEUR,
     "sports": SPORTS_OK,
-    "regles": ("Pinnacle seul · cote juste déjà sans marge · cotes 1,50–4,50 · edge ≥ 4 % · "
-               "1/match · max 10/j · mise 10 € ou Kelly ¼ plafonné 2 %"),
+    "regles": "Pinnacle seul · " + _REGLES_VALEUR,
 }
 
 GROK_10 = {
     "cle": "grok_10", "nom": "Grok 10 · Valeur Polymarket", "court": "Grok10 PM valeur",
-    "debut": DEBUT_V3, "version": "1", "mise": 10.0, "maximum_jour": 10,
+    "debut": DEBUT_V3, "version": "2", "mise": 10.0, "maximum_jour": None,
+    "portee": "selection", "avance_min_minutes": 0, "fraicheur_max_minutes": 15,
     "reference": "Polymarket",
     "cote_min": 1.50, "cote_max": 4.50, "edge_min": 0.04, "edge_max": EDGE_MAX_VALEUR,
     "sports": SPORTS_OK,
-    "regles": ("Polymarket seul · cote juste déjà sans marge · cotes 1,50–4,50 · edge ≥ 4 % · "
-               "1/match · max 10/j · mise 10 € ou Kelly ¼ plafonné 2 %"),
+    "regles": "Polymarket seul · " + _REGLES_VALEUR,
 }
 
 GROKS_V3 = (GROK_9, GROK_10)
@@ -205,7 +217,8 @@ def paris_grok(paris: list[dict], c: dict, depuis: str | None = None) -> set[int
     if depuis is not None:
         return set()
     eligibles = {id(p) for p in paris if motif_refus_grok(p, c) is None}
-    return selection_unique(paris, eligibles, c["debut"], c["maximum_jour"])["selection"]
+    return selection_unique(paris, eligibles, c["debut"], c["maximum_jour"],
+                            portee=c.get("portee", "match"))["selection"]
 
 
 def paris_grok_1(paris, depuis=None): return paris_grok(paris, GROK_1, depuis)

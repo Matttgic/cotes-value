@@ -67,16 +67,46 @@ def test_chaque_strategie_ignore_l_autre_reference_et_les_references_interdites(
     assert motif_refus_grok(pari("a", **{**PM, "bookmaker": "Kalshi"}), GROK_10)
 
 
-def test_une_prise_par_match_et_plafond_journalier():
-    memes = [pari("m", **{**PIN, "bookmaker": b, "match_id": f"{b}|m", "detecte": f"2026-10-26T20:3{i}:00Z",
-                          "lu_reference": f"2026-10-26T20:3{i}:00Z"}) for i, b in enumerate(("Winamax", "Betclic"))]
-    assert len(paris_grok_9(memes)) == 1
+def test_plusieurs_marches_par_match_sans_plafond_journalier():
+    assert GROK_9["maximum_jour"] is None and GROK_10["maximum_jour"] is None
+    assert GROK_9["portee"] == GROK_10["portee"] == "selection"
+    meme = dict(domicile="Paris", exterieur="Lyon", match_reference="Paris - Lyon")
+    vainqueur = pari("m", **{**PIN, **meme, "match_id": "winamax|m"})
+    autre_book = pari("m2", **{**PIN, **meme, "bookmaker": "Betclic", "match_id": "betclic|m",
+                               "detecte": "2026-10-26T20:31:00Z", "lu_reference": "2026-10-26T20:31:00Z"})
+    autre_issue = pari("m3", **{**PIN, **meme, "issue": "EXT", "match_id": "winamax|m",
+                                "detecte": "2026-10-26T20:32:00Z", "lu_reference": "2026-10-26T20:32:00Z"})
+    autre_marche = pari("m4", **{**PIN, **meme, "marche": "TOTAL", "issue": "PLUS", "ligne": 2.5,
+                                 "match_id": "winamax|m", "detecte": "2026-10-26T20:33:00Z",
+                                 "lu_reference": "2026-10-26T20:33:00Z"})
+    rejeu = pari("m5", **{**PIN, **meme, "match_id": "winamax|m",
+                          "detecte": "2026-10-26T20:34:00Z", "lu_reference": "2026-10-26T20:34:00Z"})
+    retenus = paris_grok_9([rejeu, autre_book, autre_marche, autre_issue, vainqueur])
+    assert retenus == {id(vainqueur), id(autre_issue), id(autre_marche)}
     autres = [pari(f"x{i}", **{**PIN, "domicile": f"Eq{i}", "exterieur": f"Ad{i}", "match_id": f"win|{i}",
                                "match_reference": f"Eq{i} - Ad{i}",
                                "detecte": f"2026-10-26T20:{10 + i}:00Z", "lu_reference": f"2026-10-26T20:{10 + i}:00Z"})
               for i in range(12)]
-    assert len(paris_grok_9(autres)) == GROK_9["maximum_jour"] == 10
-    assert GROK_10["maximum_jour"] == 10
+    assert len(paris_grok_9(autres)) == 12
+
+
+def test_jusqu_au_coup_denvoi_reference_fraiche():
+    assert GROK_9["avance_min_minutes"] == GROK_10["avance_min_minutes"] == 0
+    assert GROK_6["maximum_jour"] == 10 and GROK_6.get("avance_min_minutes", 15) == 15
+    proche = {**PIN, "detecte": "2026-10-26T21:55:00Z", "lu_reference": "2026-10-26T21:54:00Z",
+              "debut": "2026-10-26T22:00:00Z"}
+    pile = {**PM, "detecte": "2026-10-26T22:00:00Z", "lu_reference": "2026-10-26T21:59:00Z",
+            "debut": "2026-10-26T22:00:00Z"}
+    apres = {**PIN, "detecte": "2026-10-26T22:00:01Z", "lu_reference": "2026-10-26T22:00:00Z",
+             "debut": "2026-10-26T22:00:00Z"}
+    vieille = {**PIN, "detecte": "2026-10-26T21:00:00Z", "lu_reference": "2026-10-26T20:40:00Z",
+               "debut": "2026-10-26T22:00:00Z"}
+    assert motif_refus_grok(pari("a", **proche), GROK_9) is None
+    assert motif_refus_grok(pari("a", **pile), GROK_10) is None
+    assert paris_grok_9([pari("a", **proche)])
+    assert motif_refus_grok(pari("a", **apres), GROK_9) == "match déjà commencé"
+    assert motif_refus_grok(pari("a", **vieille), GROK_9) == "référence trop ancienne"
+    assert motif_refus_grok(pari("a", **{**proche, "sport": "basket", "reference": "Pinnacle"}), GROK_6)
 
 
 def test_prise_figee_ne_recoit_pas_la_nouvelle_cle():

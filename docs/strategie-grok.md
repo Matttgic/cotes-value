@@ -77,10 +77,18 @@ milieu achat/vente renormalisé pour Polymarket. L'edge exigé est `cote × prob
 
 | Stratégie | Règle |
 |---|---|
-| Grok 9 | Pinnacle seul · tous sports suivis · cote 1,50–4,50 · edge ≥ 4 % · 1/match · max 10/j |
-| Grok 10 | Polymarket seul · tous sports suivis · cote 1,50–4,50 · edge ≥ 4 % · 1/match · max 10/j |
+| Grok 9 | Pinnacle seul · tous sports suivis · cote 1,50–4,50 · edge ≥ 4 % · plusieurs paris par match · pas de limite par jour · jusqu'au coup d'envoi |
+| Grok 10 | Polymarket seul · tous sports suivis · cote 1,50–4,50 · edge ≥ 4 % · plusieurs paris par match · pas de limite par jour · jusqu'au coup d'envoi |
+
+Version 2, le soir du lancement. La stratégie « Valeur » n'a ni un seul pari par match, ni un
+plafond de 10 paris par jour, ni l'interdiction de jouer dans les 15 dernières minutes. Plusieurs
+marchés ou issues du même match sont donc retenus. On ne dédoublonne que la sélection exacte
+(même match, même marché, même issue), pour ne pas compter deux fois le même pari revu à un
+passage suivant. On peut parier jusqu'au coup d'envoi, jamais après le début du match. La
+référence doit toujours dater de moins de 15 minutes, et la preuve de correspondance reste exigée.
 
 Mise fictive 10 €, comme les autres Grok. Le Kelly ¼ du site (bankroll 1 000 €, plafond 2 %)
 reste le calcul commun : dans cette bande, la plus petite mise est ≈ 2,86 € (cote 4,50, edge 4 %),
 au-dessus du plancher 0,25 % (2,50 €). Le plancher n'est donc pas ajouté au calcul global, qui
-sert aussi aux stratégies déjà lancées.
+sert aussi aux stratégies déjà lancées. Grok 1 à 8 gardent leur règle d'un pari par match, leur
+plafond journalier et leurs 15 minutes avant le coup d'envoi.
