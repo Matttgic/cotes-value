@@ -7,16 +7,16 @@
 :root{color-scheme:light;--serif:"Instrument Serif",Georgia,serif;--sans:"Familjen Grotesk",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
 --fond:#ECE9E1;--carte:#ECE9E1;--texte:#12120F;--doux:#6F6C63;--discret:#9A968C;--ligne:#C9C4B8;--accent:#12120F;--accent-f:#E3DFD5;
 --signal:#F2541B;--vert:#12120F;--vert-f:#E3DFD5;--rouge:#9C3B2E;--rouge-f:#E4D8CF;--graph-neg:#9C3B2E;--jaune:#12120F;--jaune-f:#E3DFD5;
---serie:#12120F;--attendu:#9A968C;--attente:var(--rouge)}
+--serie:#12120F;--attendu:#9A968C;--attente:var(--rouge);--vert-gagne:#2F6B3F}
 /* Nuit : l'encre devient le fond, comme le bloc « Bilan » de la vitrine ; la brique est éclaircie pour rester lisible. */
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--fond:#12120F;--carte:#12120F;--texte:#ECE9E1;--doux:#A9A59A;--discret:#77746B;
 --ligne:#3A3934;--accent:#ECE9E1;--accent-f:#1F1E1A;--vert:#ECE9E1;--vert-f:#1F1E1A;--rouge:#C9705F;--rouge-f:#2A1A16;--graph-neg:#C9705F;
---jaune:#ECE9E1;--jaune-f:#1F1E1A;--serie:#ECE9E1;--attendu:#77746B;
+--jaune:#ECE9E1;--jaune-f:#1F1E1A;--serie:#ECE9E1;--attendu:#77746B;--vert-gagne:#7FC496;
 --courbe-claude:#86b9fb;--courbe-chatgpt:#f3a16c;--courbe-gemini:#75d6a0;--courbe-jules1:#e19de1;
 --courbe-jules2:#b7a5ff;--courbe-m3:#6bcbd4;--courbe-convergence2:#f594a9;--courbe-claudeprudent:#e6c66d;--courbe-convergence3:#f371c1}}
 :root[data-theme=dark]{color-scheme:dark;--fond:#12120F;--carte:#12120F;--texte:#ECE9E1;--doux:#A9A59A;--discret:#77746B;
 --ligne:#3A3934;--accent:#ECE9E1;--accent-f:#1F1E1A;--vert:#ECE9E1;--vert-f:#1F1E1A;--rouge:#C9705F;--rouge-f:#2A1A16;--graph-neg:#C9705F;
---jaune:#ECE9E1;--jaune-f:#1F1E1A;--serie:#ECE9E1;--attendu:#77746B;
+--jaune:#ECE9E1;--jaune-f:#1F1E1A;--serie:#ECE9E1;--attendu:#77746B;--vert-gagne:#7FC496;
 --courbe-claude:#86b9fb;--courbe-chatgpt:#f3a16c;--courbe-gemini:#75d6a0;--courbe-jules1:#e19de1;
 --courbe-jules2:#b7a5ff;--courbe-m3:#6bcbd4;--courbe-convergence2:#f594a9;--courbe-claudeprudent:#e6c66d;--courbe-convergence3:#f371c1}
 *{box-sizing:border-box}
@@ -384,8 +384,8 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .ligne-strategie .ligne-volume{width:48px;line-height:1.15}.ligne-volume>small{display:block;font-size:9px;white-space:nowrap;font-weight:400;margin-top:3px}
 .bilan-exposition{display:block;font-size:9px;font-weight:400;color:var(--doux);margin-top:3px}
 
-/* Paris : une ligne par pari ; gain à l'encre, perte en brique, « à régler » sur papier foncé (DA). */
-:root{--gagne:var(--texte);--gagne-f:transparent;--gagne-b:var(--ligne);--perdu:var(--rouge);--perdu-f:transparent;--perdu-b:var(--ligne);
+/* Paris : une ligne par pari ; gagné en vert, perdu en brique, « à régler » sur papier foncé. */
+:root{--gagne:var(--vert-gagne);--gagne-f:transparent;--gagne-b:var(--ligne);--perdu:var(--rouge);--perdu-f:transparent;--perdu-b:var(--ligne);
 --regler:var(--texte);--regler-f:var(--accent-f);--regler-b:var(--ligne);--sante-ok:var(--texte);--sante-alerte:var(--doux);--sante-panne:var(--rouge)}
 .paris-sante{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0 0 10px;padding:10px 12px;border:1px solid var(--ligne);background:var(--carte);color:var(--texte);font:inherit;text-align:left;cursor:pointer}
 .sante-point{width:10px;height:10px;flex:none;background:var(--sante-ok)}
@@ -416,8 +416,9 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 :is(#liste-paris,#mes-liste) .etat-gagne{background:var(--gagne-f);border-color:var(--gagne-b)}
 :is(#liste-paris,#mes-liste) .etat-perdu{background:var(--perdu-f);border-color:var(--perdu-b)}
 :is(#liste-paris,#mes-liste) .etat-regler{background:var(--regler-f);border-color:var(--regler-b)}
-:is(#liste-paris,#mes-liste) .etat-gagne>summary :is(.ligne-valeur,.pari-etat){color:var(--gagne)}
-:is(#liste-paris,#mes-liste) .etat-perdu>summary :is(.ligne-valeur,.pari-etat){color:var(--perdu)}
+/* Ligne entière en couleur : vert si gagné, brique si perdu (le bouton du bookmaker garde ses couleurs). */
+:is(#liste-paris,#mes-liste) .etat-gagne>summary,:is(#liste-paris,#mes-liste) .etat-gagne>summary :not(.btn){color:var(--gagne)}
+:is(#liste-paris,#mes-liste) .etat-perdu>summary,:is(#liste-paris,#mes-liste) .etat-perdu>summary :not(.btn){color:var(--perdu)}
 :is(#liste-paris,#mes-liste) .etat-regler>summary :is(.pari-ligue,.pari-bookmaker,.pari-ref,.pari-etat,.pari-selection){color:var(--regler)}
 /* Pari en cours : la valeur affichée est l'écart, seule place de l'orange. */
 :is(#liste-paris,#mes-liste) .etat-cours>summary .ligne-valeur{color:var(--signal)}
@@ -665,7 +666,8 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
   main table:not(.strategies-table) tr:not(.entete-table){background:transparent;border:0;border-top:1px solid var(--ligne);padding:12px 0;margin:0}
   main table:not(.strategies-table) td:not(:first-child)::before{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase}
   main table:not(.strategies-table) tr.total{background:var(--accent-f);border-color:var(--texte)}
-  :is(#liste-paris,#mes-liste) .pari-ligne>summary{padding:12px 0}
+  /* Cote en haut de sa colonne : le bouton du bookmaker, sous l'état, ne la recouvre plus. */
+  :is(#liste-paris,#mes-liste) .pari-ligne>summary{padding:12px 0;align-items:start}
   :is(#liste-paris,#mes-liste) .pari-ligne .pari-match{font-size:14.5px}
   .analyse-kpis strong{font-size:clamp(22px,6.5vw,28px)}
   .voyant{padding-left:16px;padding-right:16px}
