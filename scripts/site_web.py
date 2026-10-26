@@ -666,14 +666,31 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__VERSION_SITE__", version)
     # Les données externes ne passent jamais dans les remplacements du gabarit.
     html = html.replace("__DONNEES__", donnees_json, 1)
-    (sortie / "index.html").write_text(html, encoding="utf-8")
+    # Vitrine publique en page d'accueil ; ses deux grands chiffres sont ceux du bilan Kelly ¼ de l'interface.
+    vitrine = (web / "vitrine.html").read_text(encoding="utf-8")
+    for ref in ("Uniques", "Toutes"):
+        gain = sum(b["gains"] for k, b in data["kelly"]["bilan"].items() if k.endswith("|" + ref))
+        vitrine = vitrine.replace(f"__GAIN_{ref.upper()}_KELLY__", montant_vitrine(gain))
+    (sortie / "interface.html").write_text(html, encoding="utf-8")
+    (sortie / "index.html").write_text(vitrine, encoding="utf-8")
+    (sortie / "polices").mkdir(exist_ok=True)
+    for police in (web / "polices").glob("*.woff2"):
+        (sortie / "polices" / police.name).write_bytes(police.read_bytes())
     (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
     (sortie / "verification-responsive.html").write_text((web / "verification-responsive.html").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
     (sortie / "ordres.json").write_text(ordres_json, encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
-    return sortie / "index.html"
+    return sortie / "interface.html"
+
+
+def montant_vitrine(gain: float) -> str:
+    """Grand chiffre de la vitrine : euros entiers, signe à part (+ en signal), milliers espacés par la DA."""
+    n = round(gain)
+    signe = '<span class="s">+</span>' if n > 0 else '<span class="n">−</span>' if n < 0 else ""
+    tranches = f"{abs(n):,}".split(",")
+    return signe + tranches[0] + "".join(f'<span class="milliers">{t}</span>' for t in tranches[1:]) + "<sup>€</sup>"
 
 
 MODELE = r"""<!doctype html>
@@ -687,7 +704,7 @@ MODELE = r"""<!doctype html>
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
 <header class="haut">
-  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv.</span><div><h1>Cotes Value</h1><label class="signature palette-label">Couleurs <select id="palette-site" aria-label="Couleurs du site"><option value="bleu">Bleu</option><option value="violet">Violet</option><option value="graphite">Graphite</option></select></label><label class="signature palette-label">Mode <select id="theme-site" aria-label="Mode jour ou nuit"><option value="auto">Auto</option><option value="nuit">Nuit</option><option value="jour">Jour</option></select></label></div></div>
+  <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv<i>.</i></span><div><h1>Cotes Value</h1><label class="signature palette-label">Mode <select id="theme-site" aria-label="Mode jour ou nuit"><option value="auto">Auto</option><option value="nuit">Nuit</option><option value="jour">Jour</option></select></label></div></div>
     <div class="mise-a-jour"><span class="maj" id="maj"></span><span id="fraicheur" class="fraicheur"></span></div></div>
   <div class="mode-mise" role="group" aria-label="Mode de mise des bilans"><span>Mise des bilans</span>
     <button type="button" data-mise="fixe" aria-pressed="true">Fixe 10 €</button>
@@ -695,10 +712,10 @@ MODELE = r"""<!doctype html>
   <p class="aide mode-mise-note" id="mode-mise-note" hidden>Mode Kelly : tous les gains, ROI et CLV sont recalculés avec la mise Kelly ¼ de chaque pari
     (1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 %). Mêmes paris, seule la mise change. L'étude figée du 14/10 (règles du laboratoire) reste en mises fixes.</p>
   <nav id="onglets" aria-label="Navigation principale">
-    <button data-o="paris"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h4"/></svg><span>Paris<span class="nb" id="nb-paris"></span></span></button>
-    <button data-o="bilan"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11l4 3 8-11M16 3h5v5M3 21h18"/></svg><span>Bilan</span></button>
-    <button data-o="notifications"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Notifs</span></button>
-    <button data-o="controle"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Santé</span></button>
+    <button data-o="paris"><span>Paris<span class="nb" id="nb-paris"></span></span></button>
+    <button data-o="bilan"><span>Bilan</span></button>
+    <button data-o="notifications"><span>Notifs</span></button>
+    <button data-o="controle"><span>Santé</span></button>
   </nav>
 </header>
 <main id="contenu" tabindex="-1">
@@ -796,8 +813,8 @@ MODELE = r"""<!doctype html>
       </div>
       <p class="aide" id="strategies-total"></p>
       <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
-        <button data-vue-strategies="liste" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Comparaison</button>
-        <button data-vue-strategies="graphiques" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 6-6 4 3 8-10M3 21h18"/></svg>Graphiques</button>
+        <button data-vue-strategies="liste" aria-pressed="true">Comparaison</button>
+        <button data-vue-strategies="graphiques" aria-pressed="false">Graphiques</button>
       </div>
       <div id="strategies-vue-liste">
       <div class="ligne-colonnes" aria-hidden="true"><span>Stratégie</span><span>Réglés</span><span>ROI</span><span>Net</span></div>

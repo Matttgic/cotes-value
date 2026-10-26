@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cotes Value — repérer la cote mal ajustée</title>
+<meta name="description" content="Cotes Value compare en continu les cotes des bookmakers français à celles de Pinnacle et de Polymarket, et suit chaque pari signalé jusqu’au résultat.">
+<script>
+// Anciens liens de l'interface (alerte Chrome « ?alerte= », onglets « #paris »…) : ils s'ouvrent dans l'interface.
+(function(){
+  var o=location.hash.slice(1);
+  if(/[?&]alerte=/.test(location.search) || ['jouer','paris','mes','segments','notifications','regler','controle','analyses'].indexOf(o)>=0)
+    location.replace('interface.html'+location.search+location.hash);
+})();
+</script>
+<style>
+/* Polices OFL (maquettes/polices), converties en WOFF2 ; licence dans les métadonnées des fichiers. */
+@font-face{font-family:"Instrument Serif";font-display:swap;src:url("polices/InstrumentSerif-Regular.woff2") format("woff2")}
+@font-face{font-family:"Instrument Serif";font-style:italic;font-display:swap;src:url("polices/InstrumentSerif-Italic.woff2") format("woff2")}
+@font-face{font-family:"Familjen Grotesk";font-weight:400 700;font-display:swap;src:url("polices/FamiljenGrotesk-VariableFont_wght.woff2") format("woff2")}
+@font-face{font-family:"Geist Mono";font-weight:100 900;font-display:swap;src:url("polices/GeistMono-VariableFont_wght.woff2") format("woff2")}
+:root{
+  --papier:#ECE9E1; --papier2:#E3DFD5; --encre:#12120F; --gris:#77746B; --trait:#C9C4B8;
+  --signal:#F2541B;
+  --serif:"Instrument Serif",Georgia,serif; --sans:"Familjen Grotesk",sans-serif; --mono:"Geist Mono",monospace;
+  --marge:48px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--papier)}
+body{background:var(--papier);color:var(--encre);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum"}
+a{color:inherit;text-decoration:none}
+.mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
+.serif{font-family:var(--serif);font-weight:400}
+.s{color:var(--signal)}
+.g{color:var(--gris)}
+.cadre{padding:0 var(--marge)}
+.grille{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px}
+
+/* ---------- barre ---------- */
+.barre{display:flex;align-items:center;height:68px;border-bottom:1px solid var(--encre)}
+.marque{display:flex;align-items:baseline;gap:10px}
+.marque b{font-family:var(--serif);font-weight:400;font-size:30px;letter-spacing:-.02em;line-height:1}
+.marque b i{color:var(--signal);font-style:normal}
+.marque span{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.barre nav{display:flex;gap:36px;margin-left:96px}
+.barre nav a{font-size:14px;color:var(--gris)}
+.barre nav a em{font-family:var(--mono);font-style:normal;font-size:10.5px;margin-right:6px;color:var(--encre)}
+.droite{margin-left:auto;display:flex;align-items:center;gap:28px}
+.lien{font-size:14px;font-weight:600;border-bottom:1px solid var(--encre);padding-bottom:1px}
+.btn{display:inline-flex;align-items:center;gap:14px;background:var(--encre);color:var(--papier);font-weight:600;font-size:14px;padding:13px 20px;border-radius:0}
+.btn i{font-style:normal;font-family:var(--mono);font-size:13px}
+.btn.grand{font-size:17px;padding:20px 28px}
+.btn.clair{background:var(--papier);color:var(--encre)}
+
+/* ---------- ouverture ---------- */
+.ouverture{position:relative;height:832px;display:flex;flex-direction:column}
+.bandeau{display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--trait)}
+.bandeau .vif:before{content:"";display:inline-block;width:7px;height:7px;background:var(--signal);margin-right:9px;vertical-align:1px}
+.titre{margin-top:44px;align-items:end}
+h1{grid-column:1/10;white-space:nowrap;font-family:var(--serif);font-weight:400;font-size:184px;line-height:.86;letter-spacing:-.035em}
+h1 i{display:block;padding-left:1.04em}
+h1 i span{color:var(--signal)}
+.chapeau{grid-column:10/13;padding-bottom:14px}
+.chapeau p{font-size:19px;line-height:1.38;letter-spacing:-.005em;max-width:380px}
+.chapeau .actions{display:flex;align-items:center;gap:26px;margin-top:28px}
+
+/* specimen de cotes */
+.specimen{margin-top:auto;display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;border-top:1px solid var(--encre);padding-top:16px}
+.specimen .leg{grid-column:1/4;display:flex;flex-direction:column;justify-content:space-between;padding-bottom:4px}
+.specimen .leg p{font-size:14px;line-height:1.4;max-width:280px}
+.cotes{grid-column:4/13;display:grid;grid-template-columns:1fr 1fr 1fr 1.15fr;border-left:1px solid var(--trait)}
+.cote{padding:0 22px;border-right:1px solid var(--trait);position:relative}
+.cote .mono{display:block;margin-bottom:6px}
+.cote strong{font-family:var(--serif);font-weight:400;font-size:112px;line-height:.9;letter-spacing:-.03em;display:block}
+.cote small{display:block;font-size:13px;color:var(--gris);margin-top:8px}
+.cote.fr strong{color:var(--signal)}
+.cote.ecart{border-right:0;background:var(--encre);color:var(--papier);padding-top:12px;padding-bottom:14px}
+.cote.ecart .mono{color:#A9A59A}
+.cote.ecart small{color:#A9A59A}
+.regle{margin-top:22px;padding-bottom:28px}
+.regle .tics{display:flex;height:34px;align-items:flex-end;gap:0}
+.regle .tics span{flex:1;height:10px;border-left:1px solid var(--encre);opacity:.55}
+.regle .tics span.h{height:22px;opacity:1}
+.regle .tics span.x{height:34px;border-left:2px solid var(--signal);opacity:1}
+.regle .tics span.f{opacity:.18}
+.regle .heures.m{display:none}
+.eq .m{display:none}
+.regle .heures{display:flex;justify-content:space-between;margin-top:7px}
+
+/* ---------- sections ---------- */
+section.bloc{border-top:1px solid var(--encre);padding-top:22px}
+.ent{display:flex;justify-content:space-between;align-items:baseline}
+.ent .num{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em}
+h2{font-family:var(--serif);font-weight:400;font-size:104px;line-height:.9;letter-spacing:-.03em}
+h2 i{color:var(--signal)}
+
+/* methode */
+.methode{padding-bottom:96px}
+.methode .titre2{margin-top:56px}
+.methode h2{grid-column:1/9}
+.methode .intro{grid-column:9/13;align-self:end;font-size:17px;line-height:1.45}
+.equation{margin-top:76px;display:grid;grid-template-columns:1fr 64px 1fr 64px 1fr 64px 1fr;border-top:1px solid var(--trait);border-bottom:1px solid var(--trait)}
+.eq{padding:26px 0 28px}
+.eq .mono{display:block;color:var(--gris);margin-bottom:14px}
+.eq strong{font-family:var(--serif);font-weight:400;font-size:132px;line-height:.85;letter-spacing:-.03em;display:block}
+.eq p{font-size:14.5px;line-height:1.42;margin-top:18px;max-width:250px}
+.op{display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:72px;color:var(--gris);padding-top:30px}
+.eq.res strong{color:var(--signal)}
+.ligne{margin-top:72px;position:relative}
+.ligne .rail{position:absolute;left:0;right:0;top:9px;height:1px;background:var(--encre)}
+.etapes{display:grid;grid-template-columns:repeat(4,1fr);column-gap:24px;position:relative}
+.etape b{display:block;width:19px;height:19px;border:1px solid var(--encre);background:var(--papier);margin-bottom:22px}
+.etape.on b{background:var(--signal);border-color:var(--signal)}
+.etape .mono{color:var(--gris)}
+.etape h3{font-family:var(--serif);font-weight:400;font-size:38px;letter-spacing:-.02em;line-height:1;margin:8px 0 12px}
+.etape p{font-size:15px;line-height:1.45;max-width:290px}
+
+/* bilan */
+.bilan{background:var(--encre);color:var(--papier);margin:0;padding:22px var(--marge) 88px;border-top:0}
+.bilan .ent .num,.bilan .mono{color:#A9A59A}
+.bilan .chiffres{margin-top:40px}
+.chiffre{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;align-items:end;border-bottom:1px solid #3A3934;padding:6px 0 26px}
+.chiffre + .chiffre{padding-top:26px}
+.chiffre strong{grid-column:1/9;font-family:var(--serif);font-weight:400;font-size:236px;line-height:.8;letter-spacing:-.045em;white-space:nowrap}
+.chiffre strong sup{font-size:.36em;vertical-align:.95em;margin-left:.08em;letter-spacing:0}
+.chiffre strong .milliers{margin-left:.16em}
+.chiffre strong .s{color:var(--signal)}
+.chiffre strong .n{color:#C9705F}
+.chiffre div{grid-column:9/13;padding-bottom:18px}
+.chiffre h3{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:8px 0 8px}
+.chiffre p{font-size:15px;line-height:1.45;color:#CFCBC0;max-width:360px}
+.kelly{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;margin-top:40px}
+.kelly .k1{grid-column:1/5}
+.kelly .k1 h4{font-family:var(--serif);font-weight:400;font-size:44px;line-height:1;letter-spacing:-.02em;margin-top:8px}
+.kelly .formule{grid-column:5/10;font-family:var(--mono);font-size:19px;letter-spacing:0;line-height:1.6;border-left:1px solid #3A3934;padding-left:24px;text-transform:none}
+.kelly .formule span{color:#A9A59A;font-size:13px;display:block;line-height:1.5;margin-top:10px;font-family:var(--sans)}
+.kelly .avert{grid-column:10/13;font-size:13.5px;line-height:1.45;color:#A9A59A;border-left:1px solid #3A3934;padding-left:24px}
+
+/* strategies */
+.strategies{padding-bottom:90px}
+.strategies .titre2{margin-top:56px}
+.strategies h2{grid-column:1/8}
+.strategies .intro{grid-column:9/13;align-self:end;font-size:17px;line-height:1.45}
+.table{margin-top:64px;border-top:1px solid var(--encre)}
+.th,.tr{display:grid;grid-template-columns:90px 1.1fr 1fr 1.15fr 1fr;column-gap:24px;align-items:baseline}
+.th{padding:12px 0;border-bottom:1px solid var(--trait);color:var(--gris)}
+.tr{padding:20px 0 18px;border-bottom:1px solid var(--trait)}
+.tr .mono{color:var(--gris)}
+.tr .v{font-family:var(--serif);font-size:54px;line-height:1;letter-spacing:-.02em}
+.tr .suivi{font-size:14.5px}
+.tr .suivi:before{content:"";display:inline-block;width:7px;height:7px;background:var(--signal);margin-right:10px;vertical-align:1px}
+.tr.alt{background:var(--papier2)}
+.note{margin-top:18px;display:flex;justify-content:space-between}
+
+/* fin */
+.fin{border-top:1px solid var(--encre);padding-top:22px;padding-bottom:40px}
+.fin h2{font-size:200px;line-height:.84;letter-spacing:-.045em;margin-top:64px}
+.fin h2 i{color:var(--encre);font-style:italic}
+.fin h2 i span{color:var(--signal)}
+.fin .bas{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;margin-top:56px;align-items:end}
+.fin .bas p{grid-column:1/6;font-size:17px;line-height:1.45;max-width:440px}
+.fin .bas .actions{grid-column:7/13;display:flex;justify-content:flex-end;align-items:center;gap:30px}
+.pied{margin-top:88px;border-top:1px solid var(--encre);padding:18px 0 0;display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;font-size:13px;line-height:1.45;color:var(--gris)}
+.pied .p1{grid-column:1/4;color:var(--encre)}
+.pied .p2{grid-column:4/9}
+.pied .p3{grid-column:10/13;text-align:right}
+.age{display:inline-grid;place-items:center;width:34px;height:34px;border:1.5px solid var(--encre);border-radius:50%;font-weight:700;font-size:12px;color:var(--encre);margin-bottom:10px}
+
+/* ================= MOBILE ================= */
+@media (max-width:600px){
+  :root{--marge:20px}
+  body{font-size:15px}
+  .barre{height:58px}
+  .barre nav{display:none}
+  .marque b{font-size:26px}
+  .marque span{display:none}
+  .droite{gap:18px}
+  .btn{padding:11px 14px;font-size:13.5px}
+  .ouverture{height:auto}
+  .bandeau{padding:11px 0}
+  .bandeau .cache{display:none}
+  .grille{display:block}
+  .titre{margin-top:26px}
+  h1{font-size:76px;line-height:.88;white-space:normal}
+  h1 i{padding-left:.9em}
+  .chapeau{padding:0;margin-top:26px}
+  .chapeau p{font-size:17px}
+  .chapeau .actions{margin-top:22px}
+  .specimen{display:block;margin-top:40px;padding-top:12px}
+  .specimen .leg{display:block}
+  .specimen .leg p{margin-top:8px;font-size:13.5px}
+  .cotes{grid-template-columns:1fr 1fr 1fr;border-left:0;margin-top:18px;border-top:1px solid var(--trait)}
+  .cote{padding:12px 12px 14px 0;border-right:1px solid var(--trait)}
+  .cote + .cote{padding-left:12px}
+  .cote:nth-child(3){border-right:0}
+  .cote strong{font-size:52px}
+  .cote small{font-size:12px}
+  .cote.ecart{grid-column:1/4;padding:14px 16px 16px;display:grid;grid-template-columns:auto 1fr;column-gap:18px;align-items:end;margin-top:0}
+  .cote.ecart .mono{grid-column:1/3}
+  .cote.ecart strong{font-size:72px}
+  .regle{margin-top:20px}
+  .regle .tics{height:26px}
+  .regle .tics span.hors-m{display:none}
+  .regle .heures.d{display:none}
+  .regle .heures.m{display:flex}
+  .regle .tics span{border-left-width:1px}
+  .ent > span:last-child{display:none}
+  .eq.e3,.op.o2{display:none!important}
+  .eq .m{display:inline;color:var(--gris)}
+  .regle .tics span.h{height:16px}
+  .regle .tics span.x{height:26px}
+  .regle .tics span:not(.h):not(.x){height:7px}
+  h2{font-size:60px;line-height:.9}
+  .methode,.strategies{padding-bottom:64px}
+  .methode .titre2,.strategies .titre2{margin-top:30px}
+  .methode .intro,.strategies .intro{margin-top:20px;font-size:16px}
+  .equation{margin-top:40px;grid-template-columns:1fr 34px 1fr;row-gap:0}
+  .eq{padding:18px 0 20px}
+  .eq strong{font-size:68px}
+  .eq p{font-size:13.5px;margin-top:12px}
+  .op{font-size:40px;padding-top:24px}
+  .op.o3{display:none}
+  .eq.res{grid-column:1/4;border-top:1px solid var(--trait);display:grid;grid-template-columns:auto 1fr;column-gap:20px;align-items:end}
+  .eq.res .mono{grid-column:1/3}
+  .eq.res strong{font-size:96px}
+  .eq.e3{grid-column:1/2;border-top:1px solid var(--trait)}
+  .op.o2{display:none}
+  .ligne{margin-top:44px}
+  .ligne .rail{left:9px;right:auto;top:0;bottom:0;width:1px;height:auto}
+  .etapes{grid-template-columns:1fr;row-gap:28px}
+  .etape{display:grid;grid-template-columns:19px 1fr;column-gap:18px}
+  .etape b{grid-row:1/4;margin:0}
+  .etape h3{font-size:32px;margin:4px 0 8px}
+  .bilan{padding:18px var(--marge) 64px}
+  .bilan .chiffres{margin-top:26px}
+  .chiffre{display:block;padding:4px 0 22px}
+  .chiffre strong{font-size:112px;display:block}
+  .chiffre div{padding:14px 0 0}
+  .chiffre h3{font-size:19px}
+  .kelly{display:block;margin-top:30px}
+  .kelly .k1 h4{font-size:36px}
+  .kelly .formule{border-left:0;padding:0;border-top:1px solid #3A3934;padding-top:16px;margin-top:20px;font-size:13.6px;white-space:nowrap}
+  .kelly .formule span{white-space:normal}
+  .kelly .avert{border-left:0;padding:16px 0 0;margin-top:20px;border-top:1px solid #3A3934}
+  .table{margin-top:40px}
+  .th{display:none}
+  .tr{grid-template-columns:auto 1fr;row-gap:6px;padding:16px 0}
+  .tr .v{font-size:38px}
+  .tr .v.c{grid-column:1/3}
+  .tr .mono.n{grid-column:1/3}
+  .tr .suivi{grid-column:1/3;margin-top:4px}
+  .note{display:block}
+  .note span{display:block;margin-top:8px}
+  .fin h2{font-size:70px;margin-top:36px}
+  .fin .bas{display:block;margin-top:30px}
+  .fin .bas .actions{justify-content:flex-start;margin-top:28px;gap:22px}
+  .pied{display:block;margin-top:56px}
+  .pied > div{margin-bottom:14px}
+  .pied .p3{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<header class="cadre">
+  <div class="barre">
+    <a class="marque" href="./" aria-label="Cotes Value"><b>cv<i>.</i></b><span>Cotes Value</span></a>
+    <nav>
+      <a href="#methode"><em>01</em>Méthode</a>
+      <a href="#bilan"><em>02</em>Bilan</a>
+      <a href="#strategies"><em>03</em>Stratégies</a>
+    </nav>
+    <div class="droite">
+      <a class="lien" href="interface.html">Se connecter</a>
+      <a class="btn" href="interface.html">S’inscrire <i>→</i></a>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ============ OUVERTURE ============ -->
+<div class="cadre ouverture" id="ecran1">
+  <div class="bandeau mono">
+    <span class="vif">Relevé toutes les 5 minutes</span>
+    <span class="cache">Bookmakers agréés ANJ × Pinnacle × Polymarket</span>
+    <span class="cache">288 relevés / jour</span>
+  </div>
+
+  <div class="grille titre">
+    <h1>Repérer la cote <i>mal <span>ajustée.</span></i></h1>
+    <div class="chapeau">
+      <p>Cotes Value compare en continu les cotes des bookmakers français à celles de Pinnacle et de Polymarket. Quand l’écart est trop grand, le pari est signalé, puis suivi jusqu’au résultat.</p>
+      <div class="actions">
+        <a class="btn" href="interface.html">S’inscrire <i>→</i></a>
+        <a class="lien" href="interface.html">Se connecter</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="specimen">
+    <div class="leg">
+      <span class="mono">Exemple — un pari du journal</span>
+      <p>Tennis, Bruxelles. Struff – Griekspoor, victoire de Tallon&nbsp;Griekspoor.</p>
+    </div>
+    <div class="cotes">
+      <div class="cote fr"><span class="mono">PMU · France</span><strong>1,93</strong><small>cote proposée</small></div>
+      <div class="cote"><span class="mono">Pinnacle</span><strong>1,85</strong><small>référence</small></div>
+      <div class="cote"><span class="mono">Polymarket</span><strong>1,87</strong><small>référence</small></div>
+      <div class="cote ecart"><span class="mono">Écart vs Pinnacle</span><strong>+4,1<span style="font-size:.5em"> %</span></strong><small>1,93 ÷ 1,854 − 1</small></div>
+    </div>
+  </div>
+
+  <div class="regle">
+    <div class="tics" id="tics"></div>
+    <div class="heures mono g d"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:55</span></div><div class="heures mono g m"><span>12:00</span><span>15:00</span><span>18:00</span><span>21:00</span><span>23:55</span></div>
+  </div>
+</div>
+
+<!-- ============ 01 METHODE ============ -->
+<section class="cadre bloc methode" id="methode">
+  <div class="ent"><span class="num">01 — Méthode</span><span class="mono g">Une division, toutes les 5 minutes</span></div>
+  <div class="grille titre2">
+    <h2>Trois sources.<br>Une seule <i>question.</i></h2>
+    <p class="intro">La cote française est-elle plus généreuse que ce que le marché pense vraiment&nbsp;? Pinnacle, aux marges très fines, et Polymarket, marché de prédiction, servent d’étalon.</p>
+  </div>
+
+  <div class="equation">
+    <div class="eq"><span class="mono">Cote française</span><strong>1,93</strong><p>Betclic, PMU, NetBet, OlyBet… uniquement des opérateurs agréés par l’ANJ.</p></div>
+    <div class="op o1">÷</div>
+    <div class="eq"><span class="mono">Cote de référence</span><strong>1,854</strong><p>Pinnacle ou Polymarket, relevées au même moment, sur le même pari.</p></div>
+    <div class="op o2">−</div>
+    <div class="eq e3"><span class="mono">Constante</span><strong>1</strong><p>Pour lire le résultat comme un pourcentage.</p></div>
+    <div class="op o3">=</div>
+    <div class="eq res"><span class="mono">Écart de value</span><strong>+4,1 %</strong><p><span class="m">1,93 ÷ 1,854 − 1.<br></span>Au-dessus du seuil, le pari est signalé.</p></div>
+  </div>
+
+  <div class="ligne">
+    <div class="rail"></div>
+    <div class="etapes">
+      <div class="etape on"><b></b><span class="mono">Étape 1 · toutes les 5 min</span><h3>Relever</h3><p>Toutes les 5 minutes, les cotes des bookmakers français sont relevées.</p></div>
+      <div class="etape"><b></b><span class="mono">Étape 2</span><h3>Comparer</h3><p>Chaque cote est mise face à Pinnacle et Polymarket, pari par pari.</p></div>
+      <div class="etape"><b></b><span class="mono">Étape 3</span><h3>Signaler</h3><p>Un écart suffisant devient un pari signalé, avec sa mise conseillée.</p></div>
+      <div class="etape"><b></b><span class="mono">Étape 4</span><h3>Régler</h3><p>Le résultat est enregistré. Le bilan se met à jour, sans retouche.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 BILAN ============ -->
+<section class="bilan bloc" id="bilan">
+  <div class="ent"><span class="num">02 — Bilan</span><span class="mono">Mise Kelly ¼ · paris réglés</span></div>
+  <div class="chiffres">
+    <div class="chiffre">
+      <strong>__GAIN_UNIQUES_KELLY__</strong>
+      <div><span class="mono">Paris uniques</span><h3>Chaque cote française comptée une fois.</h3><p>Le chiffre le plus prudent&nbsp;: un pari signalé par plusieurs références n’est compté qu’une seule fois.</p></div>
+    </div>
+    <div class="chiffre">
+      <strong>__GAIN_TOUTES_KELLY__</strong>
+      <div><span class="mono">Toutes références</span><h3>Pinnacle, Polymarket et consensus.</h3><p>Le même pari peut être compté pour chaque référence qui l’a signalé.</p></div>
+    </div>
+  </div>
+  <div class="kelly">
+    <div class="k1"><span class="mono">Pourquoi Kelly ¼</span><h4>La mise grandit avec l’écart. Jamais au-delà de 2&nbsp;%.</h4></div>
+    <div class="formule">mise = 1 000 € × ¼ × écart ÷ (cote − 1)<span>Plafonnée à 2 % de la bankroll. Mêmes paris qu’en mise fixe&nbsp;: seule la taille de la mise change.</span></div>
+    <p class="avert">Bilan calculé sur l’historique des paris relevés et réglés. Les résultats passés ne garantissent pas les résultats futurs.</p>
+  </div>
+</section>
+
+<!-- ============ 03 STRATEGIES ============ -->
+<section class="cadre bloc strategies" id="strategies">
+  <div class="ent"><span class="num">03 — Stratégies suivies</span><span class="mono g">Des règles écrites, pas des intuitions</span></div>
+  <div class="grille titre2">
+    <h2>Chaque règle a son <i>propre</i> bilan.</h2>
+    <p class="intro">Une stratégie, c’est un filtre&nbsp;: une tranche de cotes, un écart minimum, un délai avant le match. Chacune est suivie séparément, pour savoir laquelle tient dans la durée.</p>
+  </div>
+  <div class="table">
+    <div class="th mono"><span>Règle</span><span>Tranche de cotes</span><span>Écart minimum</span><span>Avant le match</span><span>Statut</span></div>
+    <div class="tr"><span class="mono n">Exemple 1</span><span class="v c">1,30 – 2,00</span><span class="v">≥ 2 %</span><span class="v">≤ 12 h</span><span class="suivi">Suivie</span></div>
+    <div class="tr alt"><span class="mono n">Exemple 2</span><span class="v c">1,30 – 2,00</span><span class="v">≥ 5 %</span><span class="v">≤ 36 h</span><span class="suivi">Suivie</span></div>
+    <div class="tr"><span class="mono n">Exemple 3</span><span class="v c">1,50 – 3,00</span><span class="v">≥ 2 %</span><span class="v">≤ 12 h</span><span class="suivi">Suivie</span></div>
+  </div>
+  <div class="note mono g"><span>Exemples de règles — résultats visibles après inscription</span><span>Rien n’est joué à votre place</span></div>
+</section>
+
+<!-- ============ FIN ============ -->
+<section class="cadre fin" id="fin">
+  <div class="ent"><span class="num">04 — Accès</span><span class="mono g">Relevé toutes les 5 minutes</span></div>
+  <h2>Le prochain relevé<br>part dans <i><span>5</span> minutes.</i></h2>
+  <div class="bas">
+    <p>Créez un compte pour voir les paris signalés, le journal complet et le bilan de chaque stratégie.</p>
+    <div class="actions">
+      <a class="lien" href="interface.html">Se connecter</a>
+      <a class="btn grand" href="interface.html">S’inscrire <i>→</i></a>
+    </div>
+  </div>
+  <footer class="pied">
+    <div class="p1"><span class="age">18+</span><br>Cotes Value n’est pas un bookmaker et ne prend aucun pari.</div>
+    <div class="p2">Jouer comporte des risques&nbsp;: endettement, isolement, dépendance. Pour être aidé, appelez le 09&nbsp;74&nbsp;75&nbsp;13&nbsp;13 (appel non surtaxé).</div>
+    <div class="p3 mono">cv. — 2026</div>
+  </footer>
+</section>
+</main>
+
+<script>
+// 288 relevés par jour : un trait toutes les 5 minutes, heures marquées, relevé courant (heure de Paris) en signal
+(function(){
+  var p=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+  var val=function(type){for(var i=0;i<p.length;i++) if(p[i].type===type) return +p[i].value;return 0;};
+  var t=document.getElementById('tics'),now=Math.floor((val('hour')*60+val('minute'))/5),matin=now<144,h='';
+  for(var i=0;i<288;i++){
+    var c=i===now?'x':(i%12===0?'h':'');
+    if(i>now) c+=' f';
+    if(matin?i>=144:i<144) c+=' hors-m';     // sur mobile, seule la demi-journée en cours
+    h+='<span class="'+c+'"></span>';
+  }
+  t.innerHTML=h;
+  if(matin) document.querySelector('.regle .heures.m').innerHTML='<span>00:00</span><span>03:00</span><span>06:00</span><span>09:00</span><span>11:55</span>';
+})();
+</script>
+</body>
+</html>

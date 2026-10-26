@@ -111,12 +111,6 @@ function compacterFiltres() {
     elements[0].before(d);for(const el of elements) corps.append(el);d.append(summary,corps);
   }
 }
-function initialiserPalette() {
-  const sel=document.getElementById('palette-site');
-  const choix=lire('cv-palette-v1');sel.value=['bleu','violet','graphite'].includes(choix)?choix:'bleu';
-  document.documentElement.dataset.palette=sel.value;
-  sel.onchange=()=>{document.documentElement.dataset.palette=sel.value;ecrire('cv-palette-v1',sel.value);};
-}
 // Mode nuit : automatique (réglage du téléphone), ou forcé jour / nuit.
 function initialiserTheme() {
   const sel=document.getElementById('theme-site');
@@ -145,7 +139,7 @@ async function bandeauAlerte() {
 }
 // Appelé à la fin du rendu : les utilitaires du modèle sont alors initialisés.
 function initialiserInterface() {
-  initialiserPalette();initialiserTheme();bandeauAlerte();compacterFiltres();adapterTableaux();actualiserFraicheur();setInterval(actualiserFraicheur,60000);
+  initialiserTheme();bandeauAlerte();compacterFiltres();adapterTableaux();actualiserFraicheur();setInterval(actualiserFraicheur,60000);
   // Rapidité des alertes : délai d'envoi et trous entre relevés, puis les dernières alertes envoyées.
   const r=D.rapidite || {}, min=x=>x==null?'—':x<10?x.toFixed(1).replace('.',',')+' min':Math.round(x)+' min';
   document.getElementById('notif-rapidite').innerHTML=[
