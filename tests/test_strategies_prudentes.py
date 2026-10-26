@@ -31,7 +31,7 @@ def test_export_prospectif_et_reconstitution_14_restent_separes():
 def test_script_comparaison_exporte_les_deux_suivis_sans_changer_comparateurs_historiques():
     from scripts.comparer_strategies import comparer
     report=comparer([], '2026-10-16T00:00:00Z')
-    assert set(report['suivis_prudents']['officiel'])=={'claude_prudent','convergence_3','m3_structure','qwen_persistence','coeur_value','liquidite_sure','grok_1','grok_2','grok_3','grok_4','grok_5','grok_6','grok_7','grok_8','conseil_retard'}
+    assert set(report['suivis_prudents']['officiel'])=={'claude_prudent','convergence_3','m3_structure','qwen_persistence','coeur_value','liquidite_sure','grok_1','grok_2','grok_3','grok_4','grok_5','grok_6','grok_7','grok_8','grok_9','grok_10','conseil_retard'}
     assert 'Claude (rejeu)' in report['comparateurs']
     assert CLAUDE_PRUDENT['nom'] not in report['comparateurs']
 
