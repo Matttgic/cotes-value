@@ -64,3 +64,23 @@ Smarkets et Kalshi exclus). Garde-fous communs identiques à Grok 1–5.
 
 Échantillons courts (≈ 2 semaines) : ces chiffres sont indicatifs. Grok 8 est exploratoire
 (peu de paris Polymarket hors football avant le 18/10). Seul le suivi depuis le lancement compte.
+
+## Grok 9 et 10 — Valeur (lancées le 26/10/2026 à 20:00 UTC, sans rejeu)
+
+Même règle, une référence chacune. Inspirée d'une stratégie « Valeur » (marge retirée, edge ≥ 4 %,
+cote 1,50–4,50, Kelly au quart plafonné à 2 %, plancher 0,25 %), adaptée aux références déjà
+collectées. Jamais un bookmaker français contre un autre, jamais un consensus de bookmakers
+français. Smarkets, Kalshi, Betfair et le Consensus sont hors périmètre.
+
+La probabilité juste est celle déjà écrite sur le pari (`cote_juste`) : dévig power pour Pinnacle,
+milieu achat/vente renormalisé pour Polymarket. L'edge exigé est `cote × proba_juste − 1`.
+
+| Stratégie | Règle |
+|---|---|
+| Grok 9 | Pinnacle seul · tous sports suivis · cote 1,50–4,50 · edge ≥ 4 % · 1/match · max 10/j |
+| Grok 10 | Polymarket seul · tous sports suivis · cote 1,50–4,50 · edge ≥ 4 % · 1/match · max 10/j |
+
+Mise fictive 10 €, comme les autres Grok. Le Kelly ¼ du site (bankroll 1 000 €, plafond 2 %)
+reste le calcul commun : dans cette bande, la plus petite mise est ≈ 2,86 € (cote 4,50, edge 4 %),
+au-dessus du plancher 0,25 % (2,50 €). Le plancher n'est donc pas ajouté au calcul global, qui
+sert aussi aux stratégies déjà lancées.
