@@ -76,3 +76,15 @@ test('le mode jour/nuit est mémorisé et les valeurs inconnues reviennent à «
   ctx.initialiserTheme();assert.equal(controle.value,'auto');assert.equal(root.dataset.theme,undefined);
   controle.value='nuit';controle.onchange();assert.equal(root.dataset.theme,'dark');assert.deepEqual(sauves,[['cv-theme-v1','nuit']]);
 });
+
+test('les pastilles « meilleur » : une gagnante par critère, 50 paris réglés minimum',()=>{
+  const ligne=(id,regles,roi,gain,gagnes,clv)=>({id,stats:{regles,roi,gain,gagnes,clv},reussite:regles?100*gagnes/regles:null});
+  const rows=[ligne('A',60,10,100,30,1),ligne('B',80,5,300,60,-1),ligne('C',20,90,900,19,9),ligne('D',55,8,50,20,3)];
+  fn('attribuerMedailles')(rows);
+  const par=Object.fromEntries(rows.map(r=>[r.id,[...r.medailles]]));
+  assert.deepEqual(par.A,['roi']);assert.deepEqual(par.B,['gain','reussite']);assert.deepEqual(par.D,['clv']);
+  assert.deepEqual(par.C,[]);                       // 20 paris seulement : jamais en tête, même avec 90 % de ROI
+  const html=fn('pastillesMedailles')(['roi','gain','reussite','clv']);
+  assert.equal((html.match(/class="medaille"/g)||[]).length,4);assert.ok(html.includes('50 paris réglés minimum'));
+  assert.equal(fn('pastillesMedailles')([]),'');assert.equal(fn('pastillesMedailles')(undefined),'');
+});

@@ -648,7 +648,7 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
   .mode-mise{grid-column:1/-1;grid-row:2;padding:8px 0 10px;border-top:1px solid var(--ligne)}
   .mode-mise button{min-height:36px;flex:1}
   .mode-mise-note{grid-row:3}
-  #onglets{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0;
+  #onglets{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:0;
     padding:0 0 env(safe-area-inset-bottom);background:var(--fond);border-top:1px solid var(--texte)}
   #onglets button{min-height:54px;flex-direction:row;border:0;border-top:2px solid transparent;margin:-1px 0 0;font-size:13.5px;background:transparent!important}
   #onglets button.actif{border-top-color:var(--texte);background:transparent!important}
@@ -671,4 +671,53 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
   :is(#liste-paris,#mes-liste) .pari-ligne .pari-match{font-size:14.5px}
   .analyse-kpis strong{font-size:clamp(22px,6.5vw,28px)}
   .voyant{padding-left:16px;padding-right:16px}
+}
+
+/* ===== Accueil (maquettes/interface/accueil.html) : chiffres, values du moment, Top 5, gain cumulé, derniers résultats. ===== */
+.acc-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:20px 0 30px;border-top:1px solid var(--texte);border-bottom:1px solid var(--ligne)}
+.acc-kpi{padding:14px 20px 16px;border-left:1px solid var(--ligne);min-width:0}.acc-kpi:first-child{border-left:0;padding-left:0}
+.acc-kpi p{margin:0;font:400 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--doux)}
+.acc-kpi strong{display:block;font:400 clamp(38px,4.4vw,60px)/.95 var(--serif);letter-spacing:-.03em;margin:10px 0 6px;white-space:nowrap}
+.acc-kpi span{color:var(--doux);font-size:12.5px}
+.acc-grille{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:24px;align-items:start}
+.acc-grille>section{min-width:0}.acc-grille .bu-titre{margin-top:0}
+.acc-values{grid-column:1/9;grid-row:1/span 3}
+.acc-top5,.acc-courbe,.acc-derniers{grid-column:9/13;border-top:1px solid var(--texte);padding-top:14px;margin-bottom:28px}
+.acc-values{border-top:1px solid var(--texte);padding-top:14px}
+.acc-pari{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:13px 0;border-top:1px solid var(--ligne)}
+.acc-values #acc-values>.acc-pari:first-child{border-top:1px solid var(--texte)}
+.acc-pari-texte{display:flex;flex-direction:column;gap:2px;min-width:0}.acc-pari-texte b{font-size:15.5px;letter-spacing:-.005em;overflow-wrap:anywhere}
+.acc-meta,.acc-book,.acc-ref{font:400 10.5px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--doux)}
+.acc-pari-prix{display:grid;grid-template-columns:auto auto auto auto;gap:4px 12px;align-items:center;justify-items:end}
+.acc-pari-prix .acc-book{grid-column:1/-1;justify-self:end}
+.acc-cote{font:600 16px var(--mono)}.acc-ref{font-size:11.5px;text-transform:none}
+.acc-ecart{font:600 13px var(--mono);font-style:normal;color:var(--signal)}
+.acc-pari-prix .btn{grid-column:1/-1;margin:2px 0 0}
+.acc-rang{display:grid;grid-template-columns:24px minmax(0,1fr) auto auto;gap:8px;align-items:baseline;padding:10px 0;border-top:1px solid var(--ligne)}
+#acc-top5>.acc-rang:first-child{border-top:1px solid var(--texte)}
+.acc-num{font:400 13px var(--mono);color:var(--doux)}.acc-rang-nom{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}.acc-rang-nom b{font-weight:600}
+.acc-rang-gain{font:600 14px var(--mono);text-align:right;white-space:nowrap}.acc-rang small{font:400 11.5px var(--mono);color:var(--doux);min-width:60px;text-align:right}
+.acc-rang small.neg{color:var(--rouge)}
+.acc-resultat{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--ligne)}
+#acc-derniers>.acc-resultat:first-child{border-top:1px solid var(--texte)}
+.acc-resultat>span{display:flex;flex-direction:column;min-width:0}.acc-resultat b:first-child{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.acc-resultat small{font-size:12px;color:var(--doux)}.acc-resultat>b{font:600 14px var(--mono);white-space:nowrap}
+.acc-lien{min-height:0;padding:0 0 1px;border:0;border-bottom:1px solid var(--texte);background:transparent;color:var(--texte);font:600 13px var(--sans);cursor:pointer}
+.acc-legende{margin:10px 0 8px}
+.acc-courbe .grande-courbe{max-width:none}
+/* Pastilles « meilleur » : ROI (étoile), gain (€), réussite (trèfle), CLV (cible), 50 paris réglés minimum. */
+.medailles{display:inline-flex;gap:5px;align-items:center;flex:none;vertical-align:-2px;margin-left:6px}
+.medaille{display:inline-flex;width:15px;height:15px;color:var(--texte)}.medaille svg{width:15px;height:15px;display:block}
+.ligne-nom+.medailles{margin:0 8px 0 0}
+@media(max-width:760px){
+  /* Mobile : chiffres 2×2, puis le Top 5, les values, le gain cumulé et les derniers résultats. */
+  .acc-kpis{grid-template-columns:1fr 1fr;margin:14px 0 22px}
+  .acc-kpi{padding:12px 12px 14px}.acc-kpi:nth-child(odd){padding-left:0;border-left:0}.acc-kpi:nth-child(n+3){border-top:1px solid var(--ligne)}
+  .acc-kpi strong{font-size:38px;margin:8px 0 4px}.acc-kpi p{font-size:9.5px}.acc-kpi span{font-size:11.5px}
+  .acc-grille{display:flex;flex-direction:column}
+  .acc-top5{order:1}.acc-values{order:2;margin-bottom:28px}.acc-courbe{order:3}.acc-derniers{order:4}
+  .acc-pari{grid-template-columns:1fr;gap:8px}
+  .acc-pari-prix{grid-template-columns:auto 1fr auto auto;justify-items:start;align-items:center}
+  .acc-pari-prix .acc-book{grid-column:1/-1;justify-self:start}
+  .acc-pari-prix .btn{grid-column:1/-1;justify-self:stretch;text-align:center}
 }
