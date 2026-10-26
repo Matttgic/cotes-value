@@ -68,11 +68,11 @@ test('les règles par référence ont un libellé court et gardent leur identit�
   assert.ok(html.includes('>PIN 1,5–3 · 2%/36h</span>'));
   assert.ok(html.includes('<h3>Pinnacle · PIN-1.5-3-e2-h36</h3>'));
 });
-test('le choix de palette est mémorisé et les valeurs inconnues reviennent au bleu',()=>{
+test('le mode jour/nuit est mémorisé et les valeurs inconnues reviennent à « auto »',()=>{
   const code=readFileSync(new URL('../web/interface.js',import.meta.url),'utf8');
   const controle={value:''},root={dataset:{}},sauves=[];
   const ctx=vm.createContext({document:{getElementById:()=>controle,documentElement:root},lire:()=>'<inconnu>',ecrire:(k,v)=>sauves.push([k,v])});
-  vm.runInContext(code.slice(code.indexOf('function initialiserPalette'),code.indexOf('function connexion')),ctx);
-  ctx.initialiserPalette();assert.equal(root.dataset.palette,'bleu');
-  controle.value='violet';controle.onchange();assert.equal(root.dataset.palette,'violet');assert.deepEqual(sauves,[['cv-palette-v1','violet']]);
+  vm.runInContext(code.slice(code.indexOf('function initialiserTheme'),code.indexOf('function connexion')),ctx);
+  ctx.initialiserTheme();assert.equal(controle.value,'auto');assert.equal(root.dataset.theme,undefined);
+  controle.value='nuit';controle.onchange();assert.equal(root.dataset.theme,'dark');assert.deepEqual(sauves,[['cv-theme-v1','nuit']]);
 });

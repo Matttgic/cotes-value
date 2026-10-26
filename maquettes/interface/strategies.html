@@ -1,0 +1,158 @@
+<!doctype html><html lang=fr><head><meta charset=utf-8><meta name="viewport" content="width=device-width, initial-scale=1"><style>
+@font-face{font-family:"Instrument Serif";src:url("../polices/InstrumentSerif-Regular.ttf")}
+@font-face{font-family:"Familjen Grotesk";font-weight:400 700;src:url("../polices/FamiljenGrotesk-VariableFont_wght.ttf")}
+@font-face{font-family:"Geist Mono";font-weight:100 900;src:url("../polices/GeistMono-VariableFont_wght.ttf")}
+:root{--papier:#ECE9E1;--papier2:#E3DFD5;--encre:#12120F;--gris:#6F6C63;--gris2:#9A968C;--trait:#C9C4B8;--signal:#F2541B;--perte:#9C3B2E;
+--serif:"Instrument Serif",Georgia,serif;--sans:"Familjen Grotesk",sans-serif;--mono:"Geist Mono",monospace;--marge:48px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--papier)}
+body{font-family:var(--sans);color:var(--encre);font-size:14.5px;line-height:1.35;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum"}
+.num{font-variant-numeric:tabular-nums}
+/* gain = encre, perte = brique sourde, vide = gris ; l'orange ne sert qu'à l'écart et au signe + des gros chiffres */
+.pos{color:var(--encre)}.neg{color:var(--perte)}.nul{color:var(--gris2)}
+.plus{color:var(--signal)}
+header{border-bottom:1px solid var(--encre)}
+.bar{max-width:1440px;margin:0 auto;padding:0 var(--marge);height:60px;display:flex;align-items:center;gap:24px}
+.logo{display:flex;align-items:baseline;gap:10px;font-weight:600;font-size:15px;letter-spacing:-.01em}
+.logo i{font-style:normal;font-family:var(--serif);font-size:30px;letter-spacing:-.02em;line-height:1}
+.logo i b{font-weight:400;color:var(--signal)}
+nav.tabs{display:flex;gap:30px;margin-left:56px;align-self:stretch}
+nav.tabs a{display:flex;align-items:center;font-size:14.5px;color:var(--gris);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+nav.tabs a.on{color:var(--encre);font-weight:600;border-bottom-color:var(--encre)}
+.droite{margin-left:auto;display:flex;align-items:center;gap:28px}
+.statut{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;white-space:nowrap}
+.statut b{width:7px;height:7px;background:var(--encre)}
+.statut small{color:var(--gris);font-weight:400;font-size:13px}
+.mode{display:flex;align-items:center;gap:10px}
+.mode>em{font-style:normal;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris)}
+.seg{display:flex;border:1px solid var(--encre)}
+.seg span{padding:6px 11px;font-family:var(--mono);font-size:12px;color:var(--encre);white-space:nowrap}
+.seg span.on{background:var(--encre);color:var(--papier)}
+main{max-width:1440px;margin:0 auto;padding:26px var(--marge) 48px}
+h2{font-family:var(--serif);font-weight:400;font-size:46px;line-height:1;letter-spacing:-.02em}
+h3{font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.05;letter-spacing:-.015em;margin-bottom:14px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h3 small{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--gris)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);margin:20px 0 30px;border-top:1px solid var(--encre);border-bottom:1px solid var(--trait)}
+.kpi{padding:14px 20px 16px;border-left:1px solid var(--trait)}
+.kpi:first-child{border-left:0;padding-left:0}
+.kpi p{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris)}
+.kpi strong{display:block;font-family:var(--serif);font-weight:400;font-size:60px;line-height:.95;letter-spacing:-.03em;margin:10px 0 6px;white-space:nowrap}
+.kpi strong sup{font-size:.42em;vertical-align:.9em;margin-left:.06em;letter-spacing:0}
+.kpi span{color:var(--gris);font-size:12.5px}
+.kpi span b{color:var(--encre);font-weight:600}
+.kpi.alerte{background:var(--papier2)}
+.kpi.alerte p{color:var(--perte)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;align-items:start}
+.grid>section{grid-column:1/9}.grid>aside{grid-column:9/13}
+.grid>*,.value>*{min-width:0}
+.card{border-top:1px solid var(--encre);padding-top:14px}
+.filtres{display:flex;gap:0;margin-bottom:6px;flex-wrap:wrap;align-items:stretch}
+.chip{padding:7px 14px;border:1px solid var(--trait);margin-right:-1px;font-weight:600;font-size:13px;color:var(--encre)}
+.chip.on{background:var(--encre);border-color:var(--encre);color:var(--papier)}
+.chip em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--gris);margin-left:6px}
+.chip.on em{color:var(--gris2)}
+.search{flex:1;min-width:160px;margin-left:16px;border:0;border-bottom:1px solid var(--encre);padding:8px 0;color:var(--gris);font-size:13px}
+.value{display:grid;grid-template-columns:1fr auto;gap:16px;padding:13px 0;border-top:1px solid var(--trait);align-items:center}
+.filtres+.value{border-top:1px solid var(--encre)}
+.tm{display:none}
+.meta{font-family:var(--mono);font-size:10.5px;color:var(--gris);letter-spacing:.05em;text-transform:uppercase}
+.match{font-weight:600;font-size:15.5px;margin:3px 0 1px;letter-spacing:-.005em}
+.pari{color:#3A3934;font-size:14px}
+.offres{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.offre{display:flex;align-items:center;gap:12px;white-space:nowrap}
+.offre .bk{font-size:13px;color:var(--gris);width:96px;text-align:right}
+.offre .bk .t{font-family:var(--mono);font-size:11.5px}
+.offre .cote{font-family:var(--mono);font-weight:600;font-size:16px;width:58px;text-align:right}
+.offre .ref{font-family:var(--mono);font-size:11.5px;color:var(--gris);width:112px}
+.badge{font-family:var(--mono);font-weight:600;font-size:13px;padding:4px 0;color:var(--signal);width:66px;text-align:right}
+.badge.fort{background:var(--signal);color:var(--papier);text-align:center}
+.btn{background:var(--encre);color:var(--papier);padding:7px 12px;font-weight:600;font-size:12.5px}
+.side{display:flex;flex-direction:column;gap:28px}
+.side h3{font-size:26px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--trait);gap:10px}
+.card>h3+.row{border-top:1px solid var(--encre)}
+.row .n{font-weight:600}
+.row .s{color:var(--gris);font-size:12px}
+.row .v{font-family:var(--mono);font-weight:600;font-size:14px;text-align:right;white-space:nowrap}
+.row .v .s{font-family:var(--mono);font-weight:400;font-size:11.5px}
+.lien{color:var(--encre);font-weight:600;font-size:13px;margin-top:12px;display:inline-block;border-bottom:1px solid var(--encre)}
+.note{font-size:12px;color:var(--gris);margin-top:8px}
+/* stratégies */
+table{width:100%;border-collapse:collapse}
+th{font-family:var(--mono);font-size:10.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;text-align:right;padding:10px 12px;border-bottom:1px solid var(--trait);font-weight:400}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+td{padding:10px 12px;border-bottom:1px solid var(--trait);text-align:right}
+td.num{font-family:var(--mono);font-size:13.5px}
+td .nm{font-weight:600;font-size:14.5px}
+td .nm .mk{display:inline-block;width:7px;height:7px;background:var(--encre);margin-right:9px;vertical-align:1px}
+td .rg{font-size:12px;color:var(--gris);margin-top:2px}
+tr.mes td{background:var(--papier2)}
+tr.mes td:first-child{padding-left:10px}
+tr.vide td{color:var(--gris2)}tr.vide td .nm,tr.vide td .rg{color:var(--gris2)}
+.pe{font-family:var(--mono);font-size:9.5px;font-weight:400;letter-spacing:.05em;text-transform:uppercase;color:var(--gris);border:1px solid var(--gris2);padding:1px 5px;margin-left:8px;white-space:nowrap;vertical-align:1px}
+.bell{display:inline-block;width:30px;height:16px;border:1px solid var(--encre);position:relative;vertical-align:middle}
+.bell:after{content:"";position:absolute;width:10px;height:10px;background:var(--gris2);top:2px;left:2px}
+.bell.on{background:var(--encre)}.bell.on:after{left:16px;background:var(--papier)}
+.roibar{display:inline-flex;align-items:center;gap:10px;justify-content:flex-end;font-family:var(--mono);font-size:13.5px}
+.roibar i{display:inline-block;height:4px;background:var(--encre)}
+.roibar i.n{background:var(--perte)}
+td.net{font-family:var(--mono);font-weight:600;font-size:14px}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);column-gap:24px;margin-top:18px}
+.mini .card h3{font-size:22px}
+.mini .row .s{font-family:var(--mono);font-size:11.5px}
+.pagehead{display:flex;align-items:baseline;gap:20px}
+@media (max-width:700px){
+ :root{--marge:16px}
+ .bar{padding:0 var(--marge);height:auto;flex-wrap:wrap;gap:0 10px;padding-top:10px}
+ .logo i{font-size:26px}
+ nav.tabs{order:3;margin:10px 0 0;width:100%;justify-content:space-between;gap:0;border-top:1px solid var(--trait)}
+ nav.tabs a{flex:1;justify-content:center;padding:11px 6px}
+ .droite .mode{display:none}
+ .statut small{display:none}
+ .statut{font-size:13px}
+ main{padding:18px var(--marge) 32px}
+ h2{font-size:38px}
+ .kpis{grid-template-columns:1fr 1fr;margin:14px 0 22px}
+ .kpi{padding:12px 12px 14px}
+ .kpi:nth-child(3){border-left:0;padding-left:0}
+ .kpi:nth-child(n+3){border-top:1px solid var(--trait)}
+ .kpi strong{font-size:38px;margin:8px 0 4px}
+ .grid{display:block}
+ .side{margin-top:30px}
+ .value{grid-template-columns:1fr;gap:8px}
+ .offres{align-items:stretch}
+ .offre .bk{width:auto;text-align:left;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+ .offre{gap:10px}
+ .offre .ref{width:auto;font-size:11px}
+ .offre .cote{width:auto}
+ .offre .badge{width:auto;min-width:56px}
+ .offre .btn{padding:6px 10px}
+ .value:nth-of-type(n+6){display:none}
+ .kpi p{font-size:9.5px}
+ .kpi span{font-size:11.5px}
+ .hide-m{display:none}
+ .offre .t{display:none}
+ .tm{display:inline}
+ .chip{padding:7px 11px;font-size:12.5px}
+ .mini{grid-template-columns:1fr;row-gap:26px}
+ table .hm{display:none}
+ td,th{padding:10px 5px;white-space:nowrap}
+ td:first-child{white-space:normal}
+ .roibar i{display:none}
+ td .rg{font-size:11px}
+ th{font-size:9.5px}
+ h3{font-size:24px}
+ .pagehead{display:block}
+}
+.kpi strong .plus{font-size:inherit;color:var(--signal)}
+.kpi span b{white-space:nowrap}
+</style></head><body><header><div class="bar"><div class="logo"><i>cv<b>.</b></i>Cotes Value</div><nav class="tabs"><a class="">Accueil</a><a class="on">Stratégies</a><a class="">Réglages</a></nav>
+<div class="droite"><div class="mode"><em>Mise</em><div class="seg"><span>Fixe 10 €</span><span class="on">Kelly ¼</span></div></div>
+<div class="statut"><b></b>Tout fonctionne <small>· relevé il y a 5 min</small></div></div></div></header>
+<main><div class="pagehead"><h2>Stratégies</h2><p class="note" style="font-size:13.5px;margin-top:6px">Une seule liste : le classement, ton suivi (<span style="display:inline-block;width:7px;height:7px;background:#12120F;vertical-align:1px"></span>) et les alertes Pushover (interrupteur). Suivi prospectif depuis le 14/10 · 10 € par prise.</p></div>
+<div class="filtres" style="margin-top:14px"><span class="chip on">Toutes <em>46</em></span><span class="chip">Pinnacle <em>12</em></span><span class="chip">Polymarket <em>12</em></span><span class="chip">Comparateurs</span><span class="chip">Grok <em>8</em></span><span class="chip">Exploratoire</span><span class="search hide-m">Classer par : Gain net ↓</span></div>
+<div class="card" style="padding-top:0"><table><thead><tr><th>Stratégie</th><th class="hm">Réglés</th><th class="hm">Réussite</th><th>ROI</th><th>Net</th><th>Alerte</th></tr></thead><tbody><tr class="mes"><td><div class="nm"><span class="mk"></span>Pinnacle 6</div><div class="rg">Cotes 1,50–3,00 · edge ≥ 2 % · ≤ 36 h</div></td><td class="num hm">182</td><td class="num hm">59 %</td><td><span class="roibar"><i class="" style="width:20px"></i><span class="num pos">+16,5 %</span></span></td><td class="net num pos">+301,10 €</td><td><span class="bell on"></span></td></tr><tr class="mes"><td><div class="nm"><span class="mk"></span>Pinnacle 2</div><div class="rg">Cotes 1,30–2,00 · edge ≥ 2 % · ≤ 36 h</div></td><td class="num hm">144</td><td class="num hm">70 %</td><td><span class="roibar"><i class="" style="width:22px"></i><span class="num pos">+18,6 %</span></span></td><td class="net num pos">+268,30 €</td><td><span class="bell on"></span></td></tr><tr class="mes"><td><div class="nm"><span class="mk"></span>Pinnacle 5</div><div class="rg">Cotes 1,50–3,00 · edge ≥ 2 % · ≤ 12 h</div></td><td class="num hm">116</td><td class="num hm">58 %</td><td><span class="roibar"><i class="" style="width:18px"></i><span class="num pos">+15,0 %</span></span></td><td class="net num pos">+174,10 €</td><td><span class="bell on"></span></td></tr><tr class="mes"><td><div class="nm"><span class="mk"></span>Pinnacle 1</div><div class="rg">Cotes 1,30–2,00 · edge ≥ 2 % · ≤ 12 h</div></td><td class="num hm">83</td><td class="num hm">66 %</td><td><span class="roibar"><i class="" style="width:16px"></i><span class="num pos">+13,1 %</span></span></td><td class="net num pos">+108,60 €</td><td><span class="bell on"></span></td></tr><tr class=""><td><div class="nm">Polymarket 10</div><div class="rg">Règle Polymarket</div></td><td class="num hm">70</td><td class="num hm">—</td><td><span class="roibar"><i class="" style="width:42px"></i><span class="num pos">+35,2 %</span></span></td><td class="net num pos">+246,40 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Pinnacle 10</div><div class="rg">Cotes 2,00–5,00 · edge ≥ 2 % · ≤ 36 h</div></td><td class="num hm">160</td><td class="num hm">39 %</td><td><span class="roibar"><i class="" style="width:12px"></i><span class="num pos">+9,6 %</span></span></td><td class="net num pos">+153,20 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">M3 · MultiSport</div><div class="rg">Comparateur</div></td><td class="num hm">162</td><td class="num hm">56 %</td><td><span class="roibar"><i class="" style="width:10px"></i><span class="num pos">+8,2 %</span></span></td><td class="net num pos">+132,70 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Polymarket 12 <span class="pe">petit échantillon</span></div><div class="rg">Règle Polymarket</div></td><td class="num hm">17</td><td class="num hm">—</td><td><span class="roibar"><i class="" style="width:60px"></i><span class="num pos">+51,8 %</span></span></td><td class="net num pos">+88,00 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Convergence ≥ 2 stratégies</div><div class="rg">Exploratoire</div></td><td class="num hm">143</td><td class="num hm">57 %</td><td><span class="roibar"><i class="" style="width:7px"></i><span class="num pos">+5,8 %</span></span></td><td class="net num pos">+83,20 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Pinnacle 12</div><div class="rg">Cotes 2,00–5,00 · edge ≥ 5 % · ≤ 36 h</div></td><td class="num hm">56</td><td class="num hm">39 %</td><td><span class="roibar"><i class="" style="width:13px"></i><span class="num pos">+10,9 %</span></span></td><td class="net num pos">+61,10 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Gemini Argon V1</div><div class="rg">Comparateur</div></td><td class="num hm">72</td><td class="num hm">57 %</td><td><span class="roibar"><i class="" style="width:4px"></i><span class="num pos">+3,4 %</span></span></td><td class="net num pos">+24,30 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Eden</div><div class="rg">Comparateur</div></td><td class="num hm">45</td><td class="num hm">62 %</td><td><span class="roibar"><i class="" style="width:5px"></i><span class="num pos">+4,5 %</span></span></td><td class="net num pos">+20,30 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">ChatGPT V1</div><div class="rg">Comparateur</div></td><td class="num hm">30</td><td class="num hm">50 %</td><td><span class="roibar"><i class="" style="width:4px"></i><span class="num pos">+3,6 %</span></span></td><td class="net num pos">+10,90 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Grok 1 · Polymarket mid <span class="pe">petit échantillon</span></div><div class="rg">Grok</div></td><td class="num hm">1</td><td class="num hm">100 %</td><td><span class="roibar"><i class="" style="width:60px"></i><span class="num pos">+93,0 %</span></span></td><td class="net num pos">+9,30 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Grok 8 · Polymarket hors foot <span class="pe">petit échantillon</span></div><div class="rg">Grok</div></td><td class="num hm">1</td><td class="num hm">100 %</td><td><span class="roibar"><i class="" style="width:60px"></i><span class="num pos">+93,0 %</span></span></td><td class="net num pos">+9,30 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Claude 1/match · max 10/j</div><div class="rg">Exploratoire</div></td><td class="num hm">106</td><td class="num hm">53 %</td><td><span class="roibar"><i class="" style="width:0px"></i><span class="num pos">+0,4 %</span></span></td><td class="net num pos">+4,50 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Grok 2 · Pinnacle low <span class="pe">petit échantillon</span></div><div class="rg">Grok</div></td><td class="num hm">3</td><td class="num hm">33 %</td><td><span class="roibar"><i class="n" style="width:43px"></i><span class="num neg">−35,7 %</span></span></td><td class="net num neg">−10,70 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Grok 7 · Pinnacle cote moyenne <span class="pe">petit échantillon</span></div><div class="rg">Grok</div></td><td class="num hm">3</td><td class="num hm">33 %</td><td><span class="roibar"><i class="n" style="width:43px"></i><span class="num neg">−35,7 %</span></span></td><td class="net num neg">−10,70 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Grok 6 · Pinnacle hors foot <span class="pe">petit échantillon</span></div><div class="rg">Grok</div></td><td class="num hm">5</td><td class="num hm">20 %</td><td><span class="roibar"><i class="n" style="width:60px"></i><span class="num neg">−61,4 %</span></span></td><td class="net num neg">−30,70 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">JULES EDGE V1</div><div class="rg">Comparateur</div></td><td class="num hm">37</td><td class="num hm">49 %</td><td><span class="roibar"><i class="n" style="width:8px"></i><span class="num neg">−6,7 %</span></span></td><td class="net num neg">−24,60 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">JULES EDGE V2</div><div class="rg">Comparateur</div></td><td class="num hm">58</td><td class="num hm">45 %</td><td><span class="roibar"><i class="n" style="width:11px"></i><span class="num neg">−9,4 %</span></span></td><td class="net num neg">−54,30 €</td><td><span class="bell"></span></td></tr><tr class=""><td><div class="nm">Claude</div><div class="rg">Comparateur</div></td><td class="num hm">395</td><td class="num hm">53 %</td><td><span class="roibar"><i class="n" style="width:2px"></i><span class="num neg">−1,6 %</span></span></td><td class="net num neg">−61,30 €</td><td><span class="bell"></span></td></tr><tr class=" vide"><td><div class="nm">Grok 3 · Consensus mid</div><div class="rg">Grok</div></td><td class="num hm">0</td><td class="num hm">—</td><td><span class="roibar"><i class="" style="width:0px"></i><span class="num nul">—</span></span></td><td class="net num nul">—</td><td><span class="bell"></span></td></tr><tr class=" vide"><td><div class="nm">Grok 4 · Polymarket low-odds</div><div class="rg">Grok</div></td><td class="num hm">0</td><td class="num hm">—</td><td><span class="roibar"><i class="" style="width:0px"></i><span class="num nul">—</span></span></td><td class="net num nul">—</td><td><span class="bell"></span></td></tr><tr class=" vide"><td><div class="nm">Grok 5 · Multi-sharp low</div><div class="rg">Grok</div></td><td class="num hm">0</td><td class="num hm">—</td><td><span class="roibar"><i class="" style="width:0px"></i><span class="num nul">—</span></span></td><td class="net num nul">—</td><td><span class="bell"></span></td></tr></tbody></table>
+<p class="note" style="padding:10px 0">Extrait de 25 stratégies sur 46 (vraies valeurs du site). Sans pari réglé : en bas, grisées. Moins de 30 paris réglés : badge « petit échantillon ».</p></div>
+<h3 style="margin-top:40px">Bilan des paris uniques <small>2 777 réglés · Kelly ¼ <span class="plus">+</span>631 € · toutes réf. <span class="plus">+</span>1 198 € · ROI ci-dessous en 10 € fixes (−1 591,20 € · −5,7 %)</small></h3>
+<div class="mini"><div class="card"><h3>Par écart de value</h3><div class="row"><span class="n">A · 2 à 3 %</span><span class="num s">860 p. · 51 %</span><span class="v num pos">+2,5 %</span></div><div class="row"><span class="n">B · 3 à 4 %</span><span class="num s">442 p. · 50 %</span><span class="v num pos">+1,5 %</span></div><div class="row"><span class="n">C · 4 à 5 %</span><span class="num s">285 p. · 50 %</span><span class="v num pos">+3,5 %</span></div><div class="row"><span class="n">D · 5 à 7 %</span><span class="num s">257 p. · 49 %</span><span class="v num neg">−1,0 %</span></div><div class="row"><span class="n">E · 7 % et +</span><span class="num s">365 p. · 41 %</span><span class="v num pos">+4,0 %</span></div><div class="row"><span class="n">X · cote > 10</span><span class="num s">568 p. · 2 %</span><span class="v num neg">−36,8 %</span></div></div><div class="card"><h3>Par tranche de cote</h3><div class="row"><span class="n">1,01 – 1,50</span><span class="num s">302 p. · 74 %</span><span class="v num pos">+2,2 %</span></div><div class="row"><span class="n">1,51 – 2,00</span><span class="num s">868 p. · 59 %</span><span class="v num pos">+6,9 %</span></div><div class="row"><span class="n">2,01 – 3,00</span><span class="num s">618 p. · 39 %</span><span class="v num neg">−2,4 %</span></div><div class="row"><span class="n">3,01 – 5,00</span><span class="num s">310 p. · 29 %</span><span class="v num pos">+12,8 %</span></div><div class="row"><span class="n">5,01 – 10</span><span class="num s">111 p. · 10 %</span><span class="v num neg">−37,8 %</span></div><div class="row"><span class="n">plus de 10</span><span class="num s">568 p. · 2 %</span><span class="v num neg">−36,8 %</span></div></div><div class="card"><h3>Par sport</h3><div class="row"><span class="n">Football</span><span class="num s">1671 p. · 30 %</span><span class="v num neg">−13,8 %</span></div><div class="row"><span class="n">Basket</span><span class="num s">392 p. · 58 %</span><span class="v num pos">+10,3 %</span></div><div class="row"><span class="n">Hockey</span><span class="num s">284 p. · 49 %</span><span class="v num pos">+3,7 %</span></div><div class="row"><span class="n">Tennis</span><span class="num s">146 p. · 36 %</span><span class="v num pos">+3,7 %</span></div><div class="row"><span class="n">Volley</span><span class="num s">85 p. · 53 %</span><span class="v num neg">−9,6 %</span></div><div class="row"><span class="n">Autres</span><span class="num s">199 p. · 61 %</span><span class="v num pos">+11,4 %</span></div></div></div>
+</main></body></html>

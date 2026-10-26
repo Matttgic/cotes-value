@@ -58,8 +58,12 @@ jobs:
           if len(scripts) != 1:
               raise SystemExit(f"Nombre de scripts inattendu : {len(scripts)}")
           Path("/tmp/cotes-value-site.js").write_text(scripts[0], encoding="utf-8")
+          vitrine = Path("site/vitrine.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\s[^>]*)?>([\s\S]*?)</script>", vitrine)
+          Path("/tmp/cotes-value-vitrine.js").write_text("\n;\n".join(scripts), encoding="utf-8")
           PY
           node --check /tmp/cotes-value-site.js
+          node --check /tmp/cotes-value-vitrine.js
           node --check site/sw.js
       - uses: actions/upload-pages-artifact@v3
         with:
