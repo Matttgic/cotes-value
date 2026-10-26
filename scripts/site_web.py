@@ -656,6 +656,7 @@ def construire(donnees: Path, sortie: Path) -> Path:
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
     html = html.replace("__HORAIRES_JS__", (web / "horaires.js").read_text(encoding="utf-8"))
     html = html.replace("__ANALYSES_JS__", (web / "analyses.js").read_text(encoding="utf-8"))
+    html = html.replace("__ACCUEIL_JS__", (web / "accueil.js").read_text(encoding="utf-8"))
     html = html.replace("__SUIVI_JS__", (web / "suivi.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__PUSHOVER_JS__", (web / "pushover.js").read_text(encoding="utf-8"))
@@ -712,6 +713,7 @@ MODELE = r"""<!doctype html>
   <p class="aide mode-mise-note" id="mode-mise-note" hidden>Mode Kelly : tous les gains, ROI et CLV sont recalculés avec la mise Kelly ¼ de chaque pari
     (1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 %). Mêmes paris, seule la mise change. L'étude figée du 14/10 (règles du laboratoire) reste en mises fixes.</p>
   <nav id="onglets" aria-label="Navigation principale">
+    <button data-o="accueil"><span>Accueil</span></button>
     <button data-o="paris"><span>Paris<span class="nb" id="nb-paris"></span></span></button>
     <button data-o="bilan"><span>Bilan</span></button>
     <button data-o="notifications"><span>Notifs</span></button>
@@ -721,6 +723,21 @@ MODELE = r"""<!doctype html>
 <main id="contenu" tabindex="-1">
   <div class="message-reseau" id="hors-ligne" role="status" hidden>Connexion indisponible. Le dernier relevé reste consultable.</div>
   <noscript><p class="vide">Active JavaScript dans Chrome pour afficher les paris et les stratégies.</p></noscript>
+  <section class="onglet" id="o-accueil">
+    <div class="page-tete"><div><h2 id="acc-titre">Accueil</h2></div></div>
+    <div class="acc-kpis" id="acc-kpis"></div>
+    <div class="acc-grille">
+      <section class="acc-values"><h3 class="bu-titre">Values du moment <small id="acc-values-n"></small></h3>
+        <div id="acc-values"></div>
+        <p><button type="button" class="acc-lien" data-aller="paris">Voir tous les paris, filtres avancés et export CSV →</button></p></section>
+      <section class="acc-top5"><h3 class="bu-titre">Top 5 stratégies <small id="acc-top5-mise"></small></h3>
+        <div id="acc-top5"></div>
+        <p class="aide acc-legende">Pastilles, 50 paris réglés minimum : étoile = meilleur ROI, cercle € = meilleur gain net, trèfle = meilleure réussite, cible = meilleure CLV.</p>
+        <p><button type="button" class="acc-lien" data-aller="strategies">Classement complet →</button></p></section>
+      <section class="acc-courbe"><h3 class="bu-titre">Gain cumulé <small id="acc-courbe-mise"></small></h3><div id="acc-courbe"></div></section>
+      <section class="acc-derniers"><h3 class="bu-titre">Derniers résultats <small>paris uniques réglés</small></h3><div id="acc-derniers"></div></section>
+    </div>
+  </section>
   <section class="onglet" id="o-bilan">
     <div class="page-tete"><div><h2>Bilan</h2></div></div>
     <div class="bilan-onglets" role="tablist" aria-label="Vue du bilan">
@@ -1071,6 +1088,7 @@ function ouvrir(o) {
   ecrire("onglet", nom); history.replaceState(null, "", "#"+nom);
   if (page === "bilan") montrerVueBilan(vueBilan);
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
+  if (page === "accueil") rendreAccueil();
 }
 document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
   const hash = b.dataset.bilan === "uniques" ? "bilan" : b.dataset.bilan;
@@ -1933,14 +1951,9 @@ function rendreCourbesStrategies(rows) {
     }).join("");
 }
 let periodeStrategies = "futur";
-function rendreStrategies() {
-  const lignesOuvertes=new Set([...document.querySelectorAll("#strategies-mobile > details[open]")].map(d=>d.id));
-  const L = D.laboratoire;
-  if (!L || (!L.resultats?.length && !Object.keys(L.comparateurs || {}).length)) {
-    document.getElementById("strategies-quoi").textContent = "Aucune comparaison disponible.";
-    return;
-  }
-  const pp = n => n == null ? "—" : pct(n/100);
+// Lignes de la comparaison des stratégies pour une période : onglet Stratégies et Accueil.
+function lignesStrategies(periode) {
+  const L = D.laboratoire || {};
   const bornes = n => String(n).replace(".",",");
   const futur = new Map((L.futur || []).map(r => [r.id,r]));
   // Règles numérotées par référence (Pinnacle 1, 2…) ; le détail reste dans la fiche.
@@ -1949,10 +1962,10 @@ function rendreStrategies() {
     nom:`${r.regle.reference} ${numeros[r.regle.reference] = (numeros[r.regle.reference] || 0) + 1}`, reference:r.regle.reference,
     detail:`Cotes ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · edge ≥ ${r.regle.edge_min*100} % · ≤ ${r.regle.avance_max_h} h`,
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
-    stats:periodeStrategies === "futur" ? futur.get(r.regle.id) : r[periodeStrategies]}));
+    stats:periode === "futur" ? futur.get(r.regle.id) : r[periode]}));
   for (const [id,per] of Object.entries(L.comparateurs || {})) {
     const variante = D.variantes?.[id];
-    if(variante?.prospectif_seulement && periodeStrategies!=="futur") continue;
+    if(variante?.prospectif_seulement && periode!=="futur") continue;
     const nomComp = variante ? variante.nom : id.startsWith("Convergence") ? "Convergence ≥ 2 stratégies"
     : id.startsWith("JULES EDGE v2") ? "JULES EDGE V2"
     : id.startsWith("JULES") ? "JULES EDGE V1"
@@ -1961,9 +1974,9 @@ function rendreStrategies() {
       : id.startsWith("Gemini") ? "Gemini Argon V1"
       : id.startsWith("Eden") ? "Eden"
       : "ChatGPT V1";
-    const detailComp = variante ? (periodeStrategies === "futur"
+    const detailComp = variante ? (periode === "futur"
       ? `Depuis le ${quand(variante.debut)} · ${variante.regles}`
-      : `Rejeu exploratoire après audit · ${variante.regles}`) : periodeStrategies === "futur"
+      : `Rejeu exploratoire après audit · ${variante.regles}`) : periode === "futur"
       ? (id.startsWith("Convergence") ? "Depuis le 15/10 à 01 h · 2 familles minimum · M3 incluse · Eden à partir du 19/10"
          : id.startsWith("JULES EDGE v2") ? "Depuis le 15/10 à 00 h 30 · multi-réf. · max 8/j"
          : id.startsWith("JULES") ? "Depuis le 14/10 à 23 h 04 · 1 pari/match · max 6/j"
@@ -1979,9 +1992,19 @@ function rendreStrategies() {
          : id.startsWith("Eden") ? "Rejeu descriptif · Pinnacle et Polymarket · 1,30–2,00 · edge 2–12 % · 30 min–24 h"
          : "Rejeu hypothétique · mêmes dates que la famille");
     rows.push({id, nom:nomComp, reference:"comparateurs", detail:detailComp,
-      graphe:"Comparateur", stats:periodeStrategies === "futur" ? L.comparateurs_futur?.[id] : per[periodeStrategies]});
+      graphe:"Comparateur", stats:periode === "futur" ? L.comparateurs_futur?.[id] : per[periode]});
   }
-  rows = rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
+  return rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
+}
+function rendreStrategies() {
+  const lignesOuvertes=new Set([...document.querySelectorAll("#strategies-mobile > details[open]")].map(d=>d.id));
+  const L = D.laboratoire;
+  if (!L || (!L.resultats?.length && !Object.keys(L.comparateurs || {}).length)) {
+    document.getElementById("strategies-quoi").textContent = "Aucune comparaison disponible.";
+    return;
+  }
+  const pp = n => n == null ? "—" : pct(n/100);
+  let rows = lignesStrategies(periodeStrategies);
   // Courbe d'une règle reconstituée depuis ses paris réglés (les comparateurs ont la leur, calculée au relevé).
   const courbeDe = r => L.navigation?.courbes?.[r.id]?.[periodeStrategies] || (() => {
     let total = 0;
@@ -1989,10 +2012,7 @@ function rendreStrategies() {
       .filter(p => p && p.gain != null && p.regle_le).sort((a,b) => Date.parse(a.regle_le)-Date.parse(b.regle_le))
       .map(p => [Math.floor(Date.parse(p.regle_le)/1000), total = Math.round((total+p.gain)*100)/100]);
   })();
-  // ★ : meilleur ROI parmi les stratégies d'au moins 30 paris réglés sur la période.
-  const eligibles = rows.filter(r => r.stats.regles >= 30 && r.stats.roi != null);
-  const meilleure = eligibles.length ? eligibles.reduce((a,b) => b.stats.roi > a.stats.roi ? b : a) : null;
-  if (meilleure) meilleure.nomCourt = meilleure.nom + " ★";
+  attribuerMedailles(rows);       // ★ € ☘ ◎ : meilleur ROI, gain, réussite et CLV (50 paris réglés minimum)
   const ref = document.getElementById("strategies-ref").value;
   if (ref) rows = rows.filter(r => r.reference === ref);
   const tri = document.getElementById("strategies-tri").value;
@@ -2073,7 +2093,7 @@ function rendreStrategies() {
     ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, Eden, M3, convergence ≥ 2 et trois variantes encadrées) ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
-    return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nomCourt || r.nom)}</b><span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
+    return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
       <td>${s.paris}<small>${s.regles} réglés (${s.evenements_regles ?? "—"} matchs) · ${s.attente} en attente</small></td><td>${s.gagnes}</td><td>${s.perdus}</td>
       <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}</td>
       <td class="${signe(s.clv)}">${pp(s.clv)}<small>${s.clv_n || 0}/${s.regles} tickets mesurés</small><small>Par match ${pp(s.clv_evenement)} · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"}</small></td>
@@ -2197,17 +2217,18 @@ function rendreLaboratoire() {
 rendreLaboratoire();
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon Paris (« #jouer » reste un ancien raccourci vers Paris)
-const depart = location.hash.slice(1) || lire("onglet") || "paris";
+const depart = location.hash.slice(1) || lire("onglet") || "accueil";
 __NOTIFICATIONS_JS__
 __PUSHOVER_JS__
 __VOYANT_JS__
-const ONGLETS = ["jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
-ouvrir(ONGLETS.includes(depart) ? depart : "paris");
+const ONGLETS = ["accueil","jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
+ouvrir(ONGLETS.includes(depart) ? depart : "accueil");
 window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
 
 __ANALYSES_JS__
+__ACCUEIL_JS__
 function rendreTout() {
-  rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSegments(); rendreStrategies(); rendreAnalyses();
+  rendreAccueil(); rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSegments(); rendreStrategies(); rendreAnalyses();
   document.getElementById("labo-regle")?.onchange?.();
   adapterTableaux();
 }
@@ -2251,7 +2272,7 @@ installerActualisation({
     periodeStrategies = s.periodeStrategies in STRAT_PERIODES ? s.periodeStrategies : "futur";
     courbesMasquees.clear();
     for (const id of s.courbes || []) courbesMasquees.add(id);
-    rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSante(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
+    rendreAccueil(); rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSante(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
     document.getElementById("labo-regle")?.onchange?.();
     adapterTableaux();
     for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));

@@ -14,6 +14,35 @@ function iconeSport(sport) {
   return `<svg class="sport-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${chemins[sport] || '<circle cx="12" cy="12" r="8"/><path d="M8 12h8m-4-4v8"/>'}</svg>`;
 }
 const nomsSports={football:'Football',basket:'Basket',tennis:'Tennis',hockey:'Hockey',volley:'Volley',handball:'Handball',rugby:'Rugby',football_americain:'Foot US',baseball:'Baseball'};
+// Pastilles « meilleur » d'une stratégie : ROI (étoile), gain net (euro), réussite (trèfle), CLV (cible).
+// Une seule gagnante par critère, parmi les stratégies d'au moins 50 paris réglés sur la période affichée.
+const MEDAILLES_MIN_PARIS=50;
+const MEDAILLES=[
+  {cle:'roi',nom:'Meilleur ROI',valeur:r=>r.stats.roi,
+    dessin:'<path d="M8 1.4l1.9 4.2 4.5.5-3.4 3 1 4.5L8 11.4l-4 2.2 1-4.5-3.4-3 4.5-.5z" fill="currentColor"/>'},
+  {cle:'gain',nom:'Meilleur gain net',valeur:r=>r.stats.gain,
+    dessin:'<circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.4"/><text x="8" y="11.2" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">€</text>'},
+  {cle:'reussite',nom:'Meilleure réussite',valeur:r=>r.reussite,
+    dessin:'<g fill="currentColor"><circle cx="8" cy="4.3" r="2.9"/><circle cx="4.3" cy="8" r="2.9"/><circle cx="11.7" cy="8" r="2.9"/><circle cx="8" cy="11.7" r="2.9"/></g><path d="M8 11.5c0 2-.8 3-2.4 3.6" fill="none" stroke="currentColor" stroke-width="1.4"/>'},
+  {cle:'clv',nom:'Meilleure CLV',valeur:r=>r.stats.clv,
+    dessin:'<g fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.4"/><circle cx="8" cy="8" r="3.2"/></g><circle cx="8" cy="8" r="1" fill="currentColor"/>'}
+];
+function attribuerMedailles(rows) {
+  for(const r of rows) r.medailles=[];
+  const eligibles=rows.filter(r=>r.stats && r.stats.regles>=MEDAILLES_MIN_PARIS);
+  for(const m of MEDAILLES) {
+    let meilleure=null,max=-Infinity;
+    for(const r of eligibles) {const v=m.valeur(r);if(Number.isFinite(v) && v>max){max=v;meilleure=r;}}
+    if(meilleure) meilleure.medailles.push(m.cle);
+  }
+}
+function pastillesMedailles(cles) {
+  const pastilles=MEDAILLES.filter(m=>(cles || []).includes(m.cle)).map(m=>{
+    const titre=`${m.nom} (${MEDAILLES_MIN_PARIS} paris réglés minimum)`;
+    return `<span class="medaille" role="img" aria-label="${titre}" title="${titre}"><svg viewBox="0 0 16 16" aria-hidden="true">${m.dessin}</svg></span>`;
+  });
+  return pastilles.length ? `<span class="medailles">${pastilles.join('')}</span>` : '';
+}
 function monogrammeBookmaker(nom) {
   const codes={Winamax:'w',Betclic:'b',Unibet:'u',PMU:'p',OlyBet:'o'};
   return `<span class="book-monogramme book-${codes[nom] || 'autre'}" aria-hidden="true">${e(String(nom || '?').slice(0,1))}</span>`;
@@ -69,7 +98,7 @@ function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   const code=r.nom.startsWith('Convergence')?'CV':r.nom.startsWith('Claude')?'CL':r.nom.startsWith('Eden')?'ED':r.nom.startsWith('Gemini')?'GA':r.nom.startsWith('JULES')?'JL':r.nom.startsWith('M3')?'M3':r.nom.startsWith('ChatGPT')?'GP':'RF';
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}</span><span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}</span>${pastillesMedailles(r.medailles)}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><span class="strategie-avatar" aria-hidden="true">${code}</span><h3>${e(r.nom)}</h3></div>

@@ -35,7 +35,7 @@ const courbesMasquees=new Set(['M3']);
 const rendus=[];
 const rendreBilan=()=>rendus.push(refBilan),
  rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},rendreBilanUniques=()=>{},rendreSante=()=>{},
- rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{},rendreMesStrategies=()=>{};
+ rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{},rendreMesStrategies=()=>{},rendreAccueil=()=>{};
 function installerActualisation(config) {
   const etat=config.capturer();
   refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
