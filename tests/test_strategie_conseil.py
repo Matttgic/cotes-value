@@ -81,3 +81,24 @@ def test_une_prise_par_match_avant_lancement_rien_et_plafond_jour():
 def test_le_moteur_ne_lit_aucun_resultat():
     p, q = pari("a"), pari("a", statut="perdu", gain=-10.0, clv=-.5, cote_juste_cloture=9.0)
     assert motif_refus(p, REGLE) == motif_refus(q, REGLE) is None
+
+
+def test_conseil_retard_prospectif_hors_football_et_dans_les_choix():
+    from cotes.notifications import NOMS
+    from cotes.strategie_conseil import CONSEIL_RETARD
+    from cotes.strategies_prudentes import VARIANTES, selections_prudentes
+    hockey = dict(sport="hockey", marche="HANDICAP", ligne=1.5, issue="DOM", cote=2.1, cote_juste=2.0, ecart=.05,
+                  detecte="2026-10-26T09:00:00Z", debut="2026-10-26T18:00:00Z", lu_reference="2026-10-26T08:57:00Z")
+    p = pari("h", **hockey)
+    assert motif_refus(p, CONSEIL_RETARD) is None
+    assert selections_prudentes([p])["conseil_retard"] == {id(p)}
+    assert motif_refus(pari("f", **{**hockey, "sport": "football"}), CONSEIL_RETARD) == "bookmaker ou sport hors périmètre"
+    assert motif_refus(pari("t", **{**hockey, "marche": "TOTAL", "issue": "PLUS"}), CONSEIL_RETARD) \
+        == "marché ou période hors périmètre"
+    assert motif_refus(pari("e", **{**hockey, "cote": 2.04, "cote_juste": 2.0, "ecart": .02}), CONSEIL_RETARD) \
+        == "écart hors intervalle"                                                     # écart minimum 3 %
+    assert motif_refus(pari("v", **{**hockey, "lu_reference": "2026-10-26T08:54:00Z"}), CONSEIL_RETARD) \
+        == "référence trop ancienne"                                                   # lue il y a plus de 5 min
+    avant = pari("a", **{**hockey, "detecte": "2026-10-26T03:00:00Z", "lu_reference": "2026-10-26T03:00:00Z"})
+    assert selections_prudentes([avant])["conseil_retard"] == set()                   # suivi prospectif seulement
+    assert CONSEIL_RETARD in VARIANTES and NOMS["conseil_retard"] == "Conseil retard"

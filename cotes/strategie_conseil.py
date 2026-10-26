@@ -117,3 +117,22 @@ def paris_conseil(paris: list[dict], regle: dict, depuis: str | None = None) -> 
     convergence = index_convergence(paris) if regle.get("convergence_min") else None
     eligibles = {id(p) for p in paris if motif_refus(p, regle, convergence) is None}
     return selection_unique(paris, eligibles, depuis or regle["debut"], _r(regle, "maximum_jour"))["selection"]
+
+
+# Seule règle du conseil du 26/10/2026 confirmée par son critère fixé avant le test (docs/strategie-conseil.md) :
+# CLV de sa partie Pinnacle > 0 sur les matchs du 22 au 25/10 (+3,5 %, t = 1,1 : signal faible). Proposée par le
+# conseiller « premiers principes » : l'écart ne tient que si le bookmaker est en retard, ce qui se voit hors football.
+CONSEIL_RETARD = {
+    "cle": "conseil_retard", "nom": "Conseil · bookmaker en retard (hors foot)", "court": "Conseil retard",
+    "debut": "2026-10-26T04:00:00+00:00", "version": "1", "mise": 10, "prospectif_seulement": True,
+    "regles": ("Pinnacle/Polymarket · hors football · 1N2, vainqueur, double chance, handicap · cote 1,30–5 · "
+               "écart 3–15 % · référence lue ≤ 5 min · 15 min à 36 h avant le match · 1 pari/match · max 10/j"),
+    "references": ("Pinnacle", "Polymarket"),
+    "bookmakers": ("Winamax", "Betclic", "Unibet", "PMU", "OlyBet", "NetBet"),
+    "sports": ("basket", "hockey", "tennis", "volley", "handball", "baseball", "rugby", "football_americain", "snooker"),
+    "marches": ("RESULTAT_1N2", "VAINQUEUR", "DOUBLE_CHANCE", "HANDICAP"), "periodes": ("MATCH", "TEMPS_REG"),
+    "cote_min": 1.30, "cote_max": 5.0, "edge_min": 0.03, "edge_max": 0.15,
+    "avance_min_minutes": 15, "avance_max_h": 36, "fraicheur_max_minutes": 5, "ressemblance_min": 0.85,
+    "exclure_jeunes": True, "exclure_feminin": False, "maximum_jour": 10,
+}
+CONSEILS = (CONSEIL_RETARD,)
