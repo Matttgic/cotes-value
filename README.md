@@ -17,6 +17,7 @@ par lui) est arrêté depuis le 18/10/2026. `cotes/pulsescore.py` ne fait plus d
 |---|---|---|---|
 | Pinnacle | Référence | API publique du site (`cotes/pinnacle.py`) | Gratuit |
 | Polymarket | Référence | API officielle gamma (`cotes/polymarket.py`) | Gratuit |
+| Matchbook | Référence | API publique edge, sans compte ni clé (`cotes/direct/matchbook.py`) | Gratuit |
 | Smarkets | Affiché, hors décision | API publique v3, sans compte (`cotes/smarkets.py`) | Gratuit |
 | Winamax | Cotes à comparer | Socket (`cotes/direct/winamax.py`) | Gratuit |
 | Betclic | Cotes à comparer | API gRPC-web (`cotes/direct/betclic.py`) | Gratuit |
@@ -42,6 +43,12 @@ n'est retirée en plus. Le bilan a une table Smarkets, comme Polymarket :
 réglés à part. L'écart affiché (écart vs Smarkets) reste à côté.
 `SMARKETS_DANS_DECISION` vaut `non` par défaut : Smarkets n'entre pas dans le
 consensus partagé. `oui` l'y ajoute, sans changer les autres tables.
+
+Matchbook est une bourse lue sans compte (`SOURCE_MATCHBOOK` = `direct` par
+défaut, `shadow` pour lire sans prendre de pari, `off` pour couper). Les paris
+value utilisent les mêmes seuils que Pinnacle (2 %, 3 %, 5 %…). Matchbook a sa
+colonne dans le bilan et dans le filtre par référence. Il ne rejoint pas le
+consensus, et aucune stratégie (Grok, Défi, sélecteurs figés) ne le prend.
 
 ## Comment ça marche
 

@@ -6,7 +6,7 @@ Simulations = tranches d'écart qui ne se chevauchent pas (écart = cote frança
     X « cotes > 10 », écart ≥ 3 %                               (à part : cote juste imprécise, gros aléa)
 Un pari n'est pris qu'une fois par référence, bookmaker et sélection (à la cote vue à la première
 détection) et appartient à une seule simulation : « A+B » = les paris de 2 à 4 %, chacun compté une fois.
-Chaque référence (Pinnacle, Betfair, Polymarket, Smarkets, Consensus) a ses paris.
+Chaque référence (Pinnacle, Betfair, Polymarket, Matchbook, Smarkets, Consensus) a ses paris.
 Kalshi n'est plus collecté ; le nom reste dans la liste pour les paris déjà enregistrés.
 """
 from __future__ import annotations
@@ -49,7 +49,7 @@ def simulation_de(ecart: float, cote: float) -> str | None:
         if s["ecart"] <= ecart < s["ecart_max"] and s["cote_min"] <= cote <= s["cote_max"]:
             return code
     return None
-REFERENCES = ["Pinnacle", "Betfair", "Polymarket", "Smarkets", "Kalshi", "Consensus"]
+REFERENCES = ["Pinnacle", "Betfair", "Polymarket", "Matchbook", "Smarkets", "Kalshi", "Consensus"]
 
 
 def _id(*parts) -> str:

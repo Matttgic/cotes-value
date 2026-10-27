@@ -1392,8 +1392,11 @@ const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], s
   cote:["tranche","Cotes"], book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
   // cotes : les tranches du bilan ; simulations : + « Stratégie », « ChatGPT », « Gemini Argon »
-  const vals = champ === "tranche" ? D.tranches || [] : [...((D.valeurs_filtres || {})[champ] || []),
-    ...(champ === "sims" ? ["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "M3", "Convergence ≥ 2", ...Object.keys(D.variantes || {})] : [])];
+  const deja = champ === "tranche" ? (D.tranches || []) : ((D.valeurs_filtres || {})[champ] || []);
+  const extra = champ === "sims"
+    ? ["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "M3", "Convergence ≥ 2", ...Object.keys(D.variantes || {})]
+    : champ === "reference" ? (D.references || []) : [];
+  const vals = [...new Set([...deja, ...extra])];
   const sel = document.getElementById("f-" + id);
   sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
     champ==="statut" ? STATUTS[v]||v : champ==="sims" && D.simulations[v] ? v + " " + D.simulations[v] : v)}</option>`).join("");
@@ -1439,7 +1442,7 @@ document.getElementById("export-csv").onclick = () => {
 const ETAT_LIGNE = {gagne:["gagne","✓ Gagné"], demi_gagne:["gagne","✓ ½ gagné"], perdu:["perdu","✗ Perdu"],
   demi_perdu:["perdu","✗ ½ perdu"], rembourse:["rembourse","Remboursé"], a_regler:["regler","À régler"]};
 const etatLigne = p => ETAT_LIGNE[p.statut] || (p.a_regler ? ETAT_LIGNE.a_regler : ["cours","En cours"]);
-const REF_COURTE = {Pinnacle:"", Polymarket:"Poly ", Consensus:"Cons. ", Smarkets:"Sm. "};
+const REF_COURTE = {Pinnacle:"", Polymarket:"Poly ", Matchbook:"Mb ", Consensus:"Cons. ", Smarkets:"Sm. "};
 const heureEnvoi = p => {
   const t = new Date(p.alerte_demande_le || p.detecte || "");
   if (!Number.isFinite(t.getTime())) return "";

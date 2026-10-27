@@ -106,6 +106,8 @@ jobs:
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
           # Smarkets (quota de 60 requêtes par minute, lecture en plusieurs passages) ; variable de dépôt SMARKETS_COLLECTE=non pour couper
           SMARKETS_COLLECTE: ${{ vars.SMARKETS_COLLECTE || 'oui' }}
+          # Matchbook, sans clé. direct = paris value ; shadow = lecture seule ; off = aucun appel.
+          SOURCE_MATCHBOOK: ${{ vars.SOURCE_MATCHBOOK || 'direct' }}
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
         run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
 
