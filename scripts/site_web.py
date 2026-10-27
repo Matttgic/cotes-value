@@ -754,10 +754,16 @@ MODELE = r"""<!doctype html>
       <p class="aide">★ meilleur ROI parmi les lignes de 50 paris ou plus.</p>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
+      <h3 class="bu-titre">Par référence</h3>
+      <p class="aide">Paris uniques, toute la période : première détection de chaque cote française, réglés et en cours.
+      Les boutons 7 j et 30 j ne changent pas ce tableau. Une ligne ouvre la liste Paris déjà filtrée sur cette référence :
+      même nombre, même mise, même gain et même ROI.</p>
+      <div class="bu-table" id="bu-reference"></div>
       <h3 class="bu-titre">Essais en cours <small>à comparer, rien n'est appliqué</small></h3>
       <details class="mode-emploi" open><summary>Mise Kelly ¼ contre 10 € fixes, rejouée sur tout l'historique</summary>
       <p class="aide">Mêmes paris, seule la mise change : 1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 % (20 €), bankroll fixe.
-      Gain = gain réel × mise Kelly / mise fixe, sur les paris réglés. Une simulation de taille de mise, pas une sélection.</p>
+      Gain = gain réel × mise Kelly / mise fixe, sur les paris réglés. Une simulation de taille de mise, pas une sélection.
+      Les lignes par bookmaker additionnent toutes les simulations de cette référence. Le tableau « Par référence », au-dessus, est le bilan des paris uniques.</p>
       <div class="tableau"><table id="essai-kelly"></table></div></details>
       <details class="mode-emploi" open><summary>TRJ, liquidité Pinnacle, mouvement de cote : ROI et CLV par tranche</summary>
       <p class="aide">Paris uniques. <b>Marge Pinnacle</b> : indicateur de liquidité, disponible aussi sur les anciens paris à 2 issues
@@ -940,7 +946,8 @@ MODELE = r"""<!doctype html>
       <label>Sport<select id="f-sport"></select></label>
     </div>
     <div class="outils-paris"><button class="btn secondaire" id="reinitialiser-filtres">Réinitialiser les filtres</button>
-    <details class="mode-emploi"><summary>Comptage et export CSV</summary><p class="aide">Une prise par référence, au prix enregistré. L’export inclut tous les paris filtrés. Écarts et CLV en ratios dans le CSV.</p></details></div>
+    <details class="mode-emploi"><summary>Comptage et export CSV</summary><p class="aide">Une prise par référence, au prix enregistré. Le filtre Référence ne garde que les paris uniques du bilan (première détection), réglés et en cours : le total égale la ligne « Par référence ». L’export inclut tous les paris filtrés. Écarts et CLV en ratios dans le CSV.</p></details></div>
+    <p class="aide" id="paris-ref-aide">Référence : paris uniques du bilan, toute la période. Mise, gain et ROI sur les réglés seulement.</p>
     <p class="paris-resume" id="paris-resume" aria-live="polite"></p>
     <div class="paris-colonnes" aria-hidden="true"><span>Sport · match · pari</span><span>Book · envoi<br>Cote (réf.)</span><span>Écart<br>Net</span></div>
     <div id="liste-paris"></div>
@@ -1085,7 +1092,10 @@ function ouvrir(o) {
     if (b.dataset.o===groupe) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
   });
   document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+page));
-  ecrire("onglet", nom); history.replaceState(null, "", "#"+nom);
+  let hash = nom;
+  if (page === "paris" && typeof hashParis === "string" && hashParis) { hash = hashParis; hashParis = null; }
+  ecrire("onglet", nom);
+  try { history.replaceState(null, "", "#"+hash); } catch {}
   if (page === "bilan") montrerVueBilan(vueBilan);
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
   if (page === "accueil") rendreAccueil();
@@ -1388,20 +1398,38 @@ function appliquerMise(mode) {
 appliquerMise(miseMode);
 const normaliserRecherche = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr");
 let parisFiltres = [];
+let hashParis = null;
+function lireAncre() {
+  try {
+    const brut = String(location.hash || "").replace(/^#/, "");
+    const i = brut.indexOf("?");
+    const page = i < 0 ? brut : brut.slice(0, i);
+    return {page, ref: new URLSearchParams(i < 0 ? "" : brut.slice(i + 1)).get("ref") || ""};
+  } catch { return {page: "", ref: ""}; }
+}
 const FILTRES = {sim:["sims","Simulations"], ref:["reference","Références"], statut:["statut","Statuts"],
   cote:["tranche","Cotes"], book:["bookmaker","Bookmakers"], sport:["sport","Sports"]};
 for (const [id,[champ,tous]] of Object.entries(FILTRES)) {
   // cotes : les tranches du bilan ; simulations : + « Stratégie », « ChatGPT », « Gemini Argon »
+  // référence : valeurs déjà vues, références publiées (Matchbook compris) et noms encore présents dans l'historique
   const deja = champ === "tranche" ? (D.tranches || []) : ((D.valeurs_filtres || {})[champ] || []);
+  const depuisFiches = champ === "reference" ? fiches.map(p => p.reference).filter(v => v != null && String(v) !== "") : [];
   const extra = champ === "sims"
     ? ["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "M3", "Convergence ≥ 2", ...Object.keys(D.variantes || {})]
-    : champ === "reference" ? (D.references || []) : [];
-  const vals = [...new Set([...deja, ...extra])];
+    : champ === "reference" ? [...(D.references || []), ...depuisFiches] : [];
+  const vals = [...new Set([...deja, ...extra])].filter(v => v !== "");
   const sel = document.getElementById("f-" + id);
   sel.innerHTML = `<option value="">${tous}</option>` + vals.map(v => `<option value="${e(v)}">${e(
     champ==="statut" ? STATUTS[v]||v : champ==="sims" && D.simulations[v] ? v + " " + D.simulations[v] : v)}</option>`).join("");
   sel.setAttribute("aria-label", tous);
   sel.onchange = () => { limite = 50; rendreParis(); };
+  if (champ === "reference") {
+    const ancre = lireAncre();
+    if ((ancre.page === "paris" || ancre.page === "jouer") && vals.includes(ancre.ref)) {
+      sel.value = ancre.ref;
+      hashParis = "paris?ref=" + encodeURIComponent(ancre.ref);
+    }
+  }
 }
 let limite = 50;
 let strategieChoisie = null;
@@ -1412,6 +1440,8 @@ document.getElementById("reinitialiser-filtres").onclick = () => {
   document.getElementById("paris-horaire").value="";
   document.getElementById("paris-tri").value="";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value="";
+  hashParis = null;
+  try { history.replaceState(null, "", "#paris"); } catch {}
   rendreParis();
 };
 const COLONNES_CSV = ["date_detecte","debut","sport","ligue","domicile","exterieur","pari","bookmaker","cote","reference","cote_juste","ecart","ecart_polymarket","ecart_smarkets","clv","statut","gain","strategies","collecte_recue","collecte_debut","prix_revu","prix_revu_le"];
@@ -1482,10 +1512,27 @@ document.getElementById("paris-puces").onclick = ev => {
   puceStatut = b.dataset.puce; limite = 50; rendreParis();
 };
 const resumeParis = L => {
-  const regles = L.filter(p => p.gain != null), net = regles.reduce((s,p) => s+p.gain, 0),
-    mises = regles.reduce((s,p) => s+(p.mise ?? 10), 0);
-  return `<span><b>${regles.length}</b> réglé${regles.length>1?"s":""} sur ${L.length}</span>
-<span>Net <b class="${signe(net)}">${eur(net)}</b></span><span>ROI <b class="${signe(net)}">${mises ? pct(net/mises) : "—"}</b></span>`;
+  const s = statsListe(L);
+  return `<span><b>${s.regles}</b> réglé${s.regles>1?"s":""} sur ${s.n}</span>
+<span>Mise <b>${miseListe(s.mises)}</b></span><span>Net <b class="${signe(s.gain)}">${eur(s.gain)}</b></span><span>ROI <b class="${signe(s.gain)}">${s.roi == null ? "—" : pct(s.roi)}</b></span>`;
+};
+function statsListe(L) {
+  const regles = L.filter(p => p.gain != null);
+  const mises = regles.reduce((s,p) => s+(p.mise ?? 10), 0);
+  const gain = regles.reduce((s,p) => s+p.gain, 0);
+  const gagnes = regles.filter(p => ["gagne","demi_gagne"].includes(p.statut)).length;
+  return {n:L.length, regles:regles.length, enCours:L.length-regles.length, mises, gain,
+    roi:mises ? gain/mises : null, reussite:regles.length ? gagnes/regles.length : null};
+}
+const miseListe = x => Number(x).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+function selectionUniqueReference(ref) {
+  return fiches.filter(p => p.unique_bilan === true && p.reference === ref);
+}
+const passeFiltre = (p, k, v) => {
+  if (!v) return true;
+  if (k === "sims") return v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="Eden" ? p.eden : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v);
+  if (k === "reference") return p.unique_bilan === true && p.reference === v;
+  return p[k] === v;
 };
 function rendreParis() {
   document.getElementById("paris-puces").innerHTML = PUCES.map(([v,t]) =>
@@ -1503,10 +1550,10 @@ function rendreParis() {
   const maintenant=Date.now(),triHoraire=document.getElementById('paris-tri').value;
   const L = trierHoraires(source.filter(p => accepteHoraire(p,document.getElementById('paris-horaire').value,maintenant) && accepteePuce(p) &&
     (!q || normaliserRecherche([p.domicile,p.exterieur,p.ligue,p.pari].join(" ")).includes(q)) &&
-    Object.entries(f).every(([k,v]) => !v || (k==="sims" ? (v==="Stratégie" ? p.strategie : v==="ChatGPT" ? p.chatgpt : v==="Gemini Argon" ? p.gemini : v==="JULES EDGE" ? p.jules : v==="JULES EDGE v2" ? p.jules_v2 : v==="Eden" ? p.eden : v==="M3" ? p.m3 : v==="Convergence ≥ 2" ? p.convergence : D.variantes?.[v] ? p[D.variantes[v].cle] : (p.sims||[]).includes(v)) : p[k]===v))),triHoraire);
+    Object.entries(f).every(([k,v]) => passeFiltre(p, k, v))),triHoraire);
   parisFiltres = L;
   document.getElementById("paris-resume").innerHTML = resumeParis(L);
-  document.getElementById("paris-compte").textContent = `${L.length} prise(s) · ${Math.min(limite,L.length)} affichées · export des ${L.length} prises filtrées.`;
+  document.getElementById("paris-compte").textContent = `${L.length} prise(s)${f.reference ? " · " + f.reference + " · paris uniques" : ""} · ${Math.min(limite,L.length)} affichées · export des ${L.length} prises filtrées.`;
   const banner = document.getElementById("paris-strategie-banner");
   const plus = document.getElementById("plus");
   banner.hidden = !strategieChoisie;
@@ -1518,6 +1565,8 @@ function rendreParis() {
       strategieChoisie = null;
       document.getElementById("f-q").value = "";
       for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value = "";
+      hashParis = null;
+      try { history.replaceState(null, "", "#paris"); } catch {}
       limite = 50;
       rendreParis();
     };
@@ -1621,12 +1670,50 @@ function rendreBilanUniques(maintenant=Date.now()) {
   const autres = sports.slice(5).flatMap(([,l]) => l);
   document.getElementById("bu-sport").innerHTML = tableBU([...sports.slice(0,5).map(([sp,l]) => [nomSport(sp),l]),
     ...(autres.length ? [["Autres",autres]] : [])]);
+  document.getElementById("bu-reference").innerHTML = tableReferences();
 }
+function referencesAffichees() {
+  const noms = [], vu = new Set(), ajouter = n => { if (n != null && n !== "" && !vu.has(n)) { vu.add(n); noms.push(n); } };
+  for (const n of (D.valeurs_filtres || {}).reference || []) ajouter(n);
+  for (const n of D.references || []) ajouter(n);
+  for (const p of fiches) ajouter(p.reference);
+  return noms;
+}
+function tableReferences() {
+  const lignes = referencesAffichees().map(nom => ({nom, ...statsListe(selectionUniqueReference(nom))})).filter(r => r.n);
+  if (!lignes.length) return '<p class="aide">Aucun pari unique.</p>';
+  const eligibles = lignes.filter(r => r.regles >= 50 && r.roi != null);
+  const meilleur = eligibles.length ? eligibles.reduce((a,b) => b.roi > a.roi ? b : a) : null;
+  return `<div class="bu-ligne bu-entete"><span></span><span>Paris</span><span>Mise</span><span>Réuss.</span><span>Net</span><span>ROI</span></div>` +
+    lignes.map(r => `<a class="bu-ligne bu-ref" href="#paris?ref=${encodeURIComponent(r.nom)}" data-ref="${e(r.nom)}" data-n="${r.n}" data-regles="${r.regles}" data-mises="${r.mises}" data-gain="${r.gain}" data-roi="${r.roi == null ? "" : r.roi}"><span>${e(r.nom)}${r===meilleur ? ' <b class="bu-etoile" title="Meilleur ROI, 50 paris réglés ou plus">★</b>' : ""}</span>
+<span>${r.n}</span><span>${miseListe(r.mises)}</span><span>${pctEntier(r.reussite)}</span><span class="${signe(r.gain)}">${eur(r.gain)}</span><b class="${signe(r.gain)}">${pct(r.roi)}</b></a>`).join("");
+}
+function voirReference(nom) {
+  strategieChoisie = null;
+  puceStatut = "";
+  limite = 50;
+  document.getElementById("f-q").value = "";
+  document.getElementById("paris-horaire").value = "";
+  document.getElementById("paris-tri").value = "";
+  for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value = "";
+  document.getElementById("f-ref").value = nom;
+  hashParis = "paris?ref=" + encodeURIComponent(nom);
+  rendreParis();
+  ouvrir("paris");
+  try { window.scrollTo(0, 0); } catch {}
+}
+document.getElementById("bu-reference").onclick = ev => {
+  const a = ev.target && ev.target.closest ? ev.target.closest("a.bu-ref") : null;
+  if (!a) return;
+  if (ev.preventDefault) ev.preventDefault();
+  voirReference(a.dataset.ref);
+};
 rendreBilanUniques();
 document.getElementById("voir-chatgpt").onclick = () => {
   strategieChoisie = null;
   document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
+  hashParis = null;
   document.getElementById("f-sim").value = "ChatGPT";
   limite = 50;
   rendreParis();
@@ -1636,6 +1723,7 @@ document.getElementById("voir-gemini").onclick = () => {
   strategieChoisie = null;
   document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
+  hashParis = null;
   document.getElementById("f-sim").value = "Gemini Argon";
   limite = 50;
   rendreParis();
@@ -1645,6 +1733,7 @@ document.getElementById("voir-jules").onclick = () => {
   strategieChoisie = null;
   document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
+  hashParis = null;
   document.getElementById("f-sim").value = "JULES EDGE";
   limite = 50;
   rendreParis();
@@ -1654,6 +1743,7 @@ document.getElementById("voir-eden").onclick = () => {
   strategieChoisie = null;
   document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
+  hashParis = null;
   document.getElementById("f-sim").value = "Eden";
   limite = 50;
   rendreParis();
@@ -1663,6 +1753,7 @@ document.getElementById("voir-jules-v2").onclick = () => {
   strategieChoisie = null;
   document.getElementById("f-q").value = "";
   for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
+  hashParis = null;
   document.getElementById("f-sim").value = "JULES EDGE v2";
   limite = 50;
   rendreParis();
@@ -2120,6 +2211,7 @@ function rendreStrategies() {
       document.getElementById("paris-tri").value="";
       document.getElementById("f-q").value = "";
       for (const id of Object.keys(FILTRES)) document.getElementById("f-"+id).value = "";
+      hashParis = null;
       limite = 50;
       rendreParis();
       ouvrir("paris");
@@ -2220,13 +2312,25 @@ function rendreLaboratoire() {
 rendreLaboratoire();
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon Paris (« #jouer » reste un ancien raccourci vers Paris)
-const depart = location.hash.slice(1) || lire("onglet") || "accueil";
+// « #paris?ref=Smarkets » : la page est avant le ?, la référence est appliquée au filtre des paris uniques.
+const ancreDepart = lireAncre();
+const depart = ancreDepart.page || lire("onglet") || "accueil";
 __NOTIFICATIONS_JS__
 __PUSHOVER_JS__
 __VOYANT_JS__
 const ONGLETS = ["accueil","jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
 ouvrir(ONGLETS.includes(depart) ? depart : "accueil");
-window.addEventListener("hashchange", () => { const o = location.hash.slice(1); if (ONGLETS.includes(o)) ouvrir(o); });
+window.addEventListener("hashchange", () => {
+  const a = lireAncre();
+  if (!ONGLETS.includes(a.page)) return;
+  if (a.page === "paris" || a.page === "jouer") {
+    const sel = document.getElementById("f-ref");
+    if (a.ref && sel && sel.value !== a.ref) { voirReference(a.ref); return; }
+    if (!a.ref && sel && sel.value) { sel.value = ""; limite = 50; rendreParis(); }
+    if (a.ref) hashParis = "paris?ref=" + encodeURIComponent(a.ref);
+  }
+  ouvrir(a.page);
+});
 
 __ANALYSES_JS__
 __ACCUEIL_JS__
