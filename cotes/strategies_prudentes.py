@@ -17,6 +17,7 @@ from .strategie_coeur import COEUR, paris_coeur
 from .strategie_liquidite import LIQUIDITE, paris_liquidite
 from .strategie_grok import GROKS, GROKS_V2, GROKS_V3, paris_grok
 from .strategie_conseil import CONSEILS, paris_conseil
+from .strategie_defi import DEFIS, paris_defi
 from .convergence import STRATEGIES, selections, votes
 from .laboratoire import heure
 from .simulation import REFERENCES, paris_strategie
@@ -33,7 +34,8 @@ CONVERGENCE_3 = {
     "debut": DEBUT_VARIANTES, "version": "1", "mise": 10,
     "regles": "≥3 familles parmi Claude, ChatGPT, Gemini, Jules · 1 pari/match · mise fictive 10 €",
 }
-VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN, COEUR, LIQUIDITE, *GROKS, *GROKS_V2, *GROKS_V3, *CONSEILS)
+VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN, COEUR, LIQUIDITE,
+             *GROKS, *GROKS_V2, *GROKS_V3, *CONSEILS, *DEFIS)
 PARIS = ZoneInfo("Europe/Paris")
 
 
@@ -236,6 +238,8 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
         resultat[g["cle"]] = appliquer(paris, paris_grok(paris, g), g["cle"]) if depuis is None else set()
     for c in CONSEILS:
         resultat[c["cle"]] = appliquer(paris, paris_conseil(paris, c), c["cle"]) if depuis is None else set()
+    for d in DEFIS:
+        resultat[d["cle"]] = appliquer(paris, paris_defi(paris, d), d["cle"]) if depuis is None else set()
     return resultat
 
 
