@@ -23,6 +23,7 @@
     const roi=Number.isFinite(r.roi)?r.roi:0, gain=Number.isFinite(r.gain)?r.gain:0;
     return `<span class="notif-bilan"><span>Réussite <b>${Math.round(100*r.gagnes/r.regles)} %</b> (${r.gagnes}/${r.regles})</span>`+
       `<span>Gain <b class="${classe(gain)}">${signe(gain,2)} €</b></span><span>ROI <b class="${classe(roi)}">${signe(roi,1)} %</b></span>`+
+      `${r.jours?`<span><b>${fr(r.paris/r.jours,1)}</b> paris/jour</span><span><b class="${classe(gain)}">${signe(gain/r.jours*30.44,0)} €</b>/mois</span>`:''}`+
       `${r.attente?`<span>${r.attente} en attente</span>`:''}</span>`;
   };
   const say=(s,bad=false)=>{message.textContent=s;message.classList.toggle('neg',bad);};
