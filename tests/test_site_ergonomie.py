@@ -41,6 +41,7 @@ def test_ancien_json_sans_nouveaux_comparateurs(tmp_path, monkeypatch):
             assert len(pts) == stats["regles"]
             assert (pts[-1][1] if pts else 0) == stats["gain"]
     assert labo["comparateurs"]["Convergence ≥ 2"]["ensemble"]["paris"] == 2
+    assert len(labo["mises"]["methodes"]) == 16 and "Paris uniques" in labo["mises"]["selections"]   # comparaison des mises
     assert labo["comparateurs"]["Convergence ≥ 2"]["construction"]["attente"] == 1
     assert not labo["comparateurs_futur"]["Convergence ≥ 2"]["paris"]
     assert nav["paris"]["avant"]["convergence_historique"]
