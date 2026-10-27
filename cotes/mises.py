@@ -39,6 +39,18 @@ def _gain_constant(cible: float, plafond: float):
     return lambda p, bankroll, serie: min(cible / (p["cote"] - 1), plafond) if p["cote"] > 1 else 0.0
 
 
+def _kelly_prudent(p, bankroll, serie):
+    """Kelly ¼ sur la moitié de l'écart (l'écart affiché est presque toujours un peu optimiste), cote 6 au plus, 20 € au plus."""
+    e, c = p.get("ecart"), p["cote"]
+    if not _fini(e) or e <= 0 or c <= 1 or c > 6:
+        return 0.0
+    return min(BANKROLL * 0.25 * (e * 0.5) / (c - 1), 20.0)
+
+
+def _kelly_sans_grosses_cotes(p, bankroll, serie):
+    return _kelly(0.25, 0.02)(p, bankroll, serie) if p["cote"] <= 4 else 0.0
+
+
 def _paliers(p, bankroll, serie):
     e = p.get("ecart")
     if not _fini(e) or e <= 0:
@@ -74,6 +86,8 @@ METHODES = {
     "kelly_4_p3": ("Kelly ¼ plafond 3 %", "plafond 30 €", _kelly(0.25, 0.03)),
     "kelly_4_evol": ("Kelly ¼ sur bankroll évolutive", "bankroll = solde du moment, plafond 2 %", _kelly(0.25, 0.02, True)),
     "kelly_4_liquide": ("Kelly ¼ limité à 10 €", "hypothèse : le bookmaker n'accepte pas plus", _kelly(0.25, 0.02, borne=10.0)),
+    "kelly_prudent": ("Kelly prudent", "¼ de Kelly sur la moitié de l'écart, cote 6 au plus, plafond 20 €", _kelly_prudent),
+    "kelly_sans_gros": ("Kelly sans grosses cotes", "Kelly ¼ (plafond 2 %), aucune mise au-dessus de la cote 4", _kelly_sans_grosses_cotes),
     "pct_1": ("1 % de la bankroll", "1 % du solde du moment, sans tenir compte de l'écart", _pct_bankroll(0.01)),
     "par_ecart": ("Proportionnelle à l'écart", "2,50 € par point d'écart, plafond 25 €", _par_point(2.5, 25.0)),
     "gain_constant": ("Gain constant", "miser pour gagner 10 €, plafond 25 €", _gain_constant(10.0, 25.0)),

@@ -780,13 +780,19 @@ MODELE = r"""<!doctype html>
       Gain = gain réel × mise Kelly / mise fixe, sur les paris réglés. Une simulation de taille de mise, pas une sélection.
       Les lignes par bookmaker additionnent toutes les simulations de cette référence. Le tableau « Par référence », au-dessus, est le bilan des paris uniques.</p>
       <div class="tableau"><table id="essai-kelly"></table></div></details>
-      <details class="mode-emploi" open><summary>Quelle méthode de mise aurait été la meilleure ? 16 méthodes sur les mêmes paris</summary>
+      <details class="mode-emploi" open><summary>Quelle méthode de mise aurait été la meilleure ? 18 méthodes sur les mêmes paris</summary>
       <p class="aide">Paris réglés du suivi depuis le 14/10 (ou depuis le lancement de la stratégie), tous misés au moment de leur détection avec
       une bankroll de départ de 1 000 €. Le solde et la série de résultats ne comptent que les paris déjà réglés à cet instant. Simulation :
       rien n'est appliqué. <b>★</b> plus gros gain, <b>◆</b> meilleur gain par euro de baisse (la plus forte baisse du gain cumulé), 20 paris
       au moins. Avec peu de paris, la chance domine : ne choisis pas avant 150 paris réglés.</p>
       <label class="aide">Sélection <select id="mises-selection"></select></label>
       <div class="tableau"><table id="essai-mises"></table></div></details>
+      <details class="mode-emploi" open><summary>Le meilleur compromis : stratégie × méthode de mise</summary>
+      <p class="aide">Toutes les combinaisons de stratégies et de méthodes de mise, classées. 50 paris au moins par combinaison. <b>Attention</b> :
+      en testant des centaines de combinaisons, la première est souvent la plus chanceuse, pas la meilleure. Une combinaison est solide seulement
+      si elle reste en tête sur les nouveaux paris : suis-la quelques semaines avant de la retenir.</p>
+      <label class="aide">Classer par <select id="combos-critere"><option value="rendement">Gain par euro de baisse</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="baisse">Plus faible baisse (gain positif)</option></select></label>
+      <div class="tableau"><table id="essai-combos"></table></div></details>
       <details class="mode-emploi" open><summary>TRJ, liquidité Pinnacle, mouvement de cote : ROI et CLV par tranche</summary>
       <p class="aide">Paris uniques. <b>Marge Pinnacle</b> : indicateur de liquidité, disponible aussi sur les anciens paris à 2 issues
       (retrouvée à partir de la cote et de la cote juste, « estimée »). <b>TRJ</b> du bookmaker français, <b>limite de mise
@@ -1250,6 +1256,7 @@ function rendreBilan() {
   rendreFiltres();
   rendreKelly();
   rendreMises();
+  rendreCombos();
   document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     (D.tranches || []).map(t => ligne(`<b>${e(t)}</b>`, (D.bilan_tranches || {})[t + "|" + refBilan])).join("");
 }
@@ -1289,6 +1296,22 @@ function rendreMises() {
       return `<tr><td><b>${e(m.nom)}${pastille}</b><small>${e(m.regle)}</small></td><td>${eurC(r.mise_moyenne)}<small>max ${eurC(r.mise_max)}</small></td>
 <td class="${signe(r.gain)}">${eurC(r.gain)}<small class="roi ${signe(r.gain)}">${pct1(r.roi)}</small></td><td>${eurC(-r.baisse)}</td>
 <td class="${r.solde_min <= 0 ? "neg" : ""}">${eurC(r.solde_min)}<small>final ${eurC(r.solde)}</small></td></tr>`; }).join("");
+}
+function rendreCombos() {
+  const M = D.laboratoire?.mises, critere = document.getElementById("combos-critere"), table = document.getElementById("essai-combos");
+  if (!M || !critere || !table) return;
+  critere.onchange = rendreCombos;
+  const valeur = {rendement: r => r.baisse > 0 ? r.gain / r.baisse : -1e9, gain: r => r.gain, roi: r => r.roi ?? -1e9,
+                  baisse: r => r.gain > 0 ? -r.baisse : -1e9}[critere.value];
+  const combos = [];
+  for (const [sel, methodes] of Object.entries(M.selections))
+    for (const [k, r] of Object.entries(methodes)) if (r.paris >= 50) combos.push({sel, k, r, v: valeur(r)});
+  combos.sort((a, b) => b.v - a.v);
+  const pct1 = x => x == null ? "—" : (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",") + " %";
+  table.innerHTML = `<tr><th>Stratégie · méthode</th><th>Paris</th><th>Gain<small>ROI</small></th><th>Plus forte baisse</th><th>Gain / baisse</th></tr>` +
+    (combos.slice(0, 15).map(({sel, k, r}) => `<tr><td><b>${e(sel)}</b><small>${e(M.methodes[k].nom)}</small></td><td>${r.paris}</td>
+<td class="${signe(r.gain)}">${eurC(r.gain)}<small class="roi ${signe(r.gain)}">${pct1(r.roi)}</small></td><td>${eurC(-r.baisse)}</td><td>${r.baisse > 0 ? (r.gain / r.baisse).toFixed(2).replace(".", ",") : "—"}</td></tr>`).join("")
+    || `<tr><td>Aucune combinaison avec 50 paris réglés pour le moment.</td></tr>`);
 }
 const TITRES_FILTRES = {marge: "Marge de Pinnacle (liquidité, ancien et nouveau)", trj: "TRJ du bookmaker", limite: "Limite de mise Pinnacle (liquidité)", mouvement: "Mouvement de la cote Pinnacle"};
 function rendreFiltres() {
