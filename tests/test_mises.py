@@ -10,11 +10,12 @@ def regle(pid, statut, detecte, regle_le, **kw):
 def test_toutes_les_methodes_sont_simulees_sur_un_pari_gagne():
     p = regle("a", "gagne", "2026-10-15T09:00:00Z", "2026-10-15T15:00:00Z", cote=2.0, ecart=.05)
     r = comparer([p])
-    assert set(r) == set(METHODES) and len(METHODES) == 16
+    assert set(r) == set(METHODES) and len(METHODES) == 18
     assert r["fixe"]["mise"] == 10 and r["fixe"]["gain"] == 10 and r["fixe"]["roi"] == 100
     assert r["kelly_4"]["mise"] == 12.5 and r["kelly_2"]["mise"] == 20 and r["kelly_8"]["mise"] == 6.25   # 1000 × f × 0,05 / 1
     assert r["kelly_1"]["mise"] == 50 and r["kelly_4_p1"]["mise"] == 10 and r["kelly_4_p3"]["mise"] == 12.5
     assert r["kelly_4_liquide"]["mise"] == 10
+    assert r["kelly_prudent"]["mise"] == 6.25 and r["kelly_sans_gros"]["mise"] == 12.5   # ¼ de Kelly sur 2,5 % d'écart
     assert r["par_ecart"]["mise"] == 12.5 and r["gain_constant"]["mise"] == 10 and r["paliers"]["mise"] == 10
     assert r["pct_1"]["mise"] == 10 and r["kelly_4_evol"]["mise"] == 12.5
 
@@ -59,3 +60,10 @@ def test_les_paris_en_cours_et_les_donnees_d_origine_sont_ignores_ou_intacts():
     avant = [dict(en_cours), dict(gagne)]
     r = comparer([en_cours, gagne])
     assert r["fixe"]["paris"] == 1 and [en_cours, gagne] == avant
+
+
+def test_les_grosses_cotes_sont_ecartees_par_les_deux_methodes_prudentes():
+    gros = regle("g", "perdu", "2026-10-15T09:00:00Z", "2026-10-15T15:00:00Z", cote=7.0, ecart=.05)
+    moyen = regle("m", "perdu", "2026-10-15T09:00:00Z", "2026-10-15T15:00:00Z", cote=5.0, ecart=.05)
+    assert simuler([gros], "kelly_prudent")["paris"] == 0 and simuler([gros], "kelly_sans_gros")["paris"] == 0
+    assert simuler([moyen], "kelly_prudent")["paris"] == 1 and simuler([moyen], "kelly_sans_gros")["paris"] == 0
