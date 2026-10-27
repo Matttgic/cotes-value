@@ -161,6 +161,72 @@ assert.ok(!h("bu-ecart").includes("B · 3"));
 ''')
 
 
+def test_js_filtre_reference_egal_bilan_uniques():
+    """La liste Paris filtrée sur une référence égale la ligne du bilan des paris uniques."""
+    def ligne(i, ref, unique, statut, gain):
+        return {"id": i, "simulation": "A", "reference": ref, "statut": statut, "gain": gain,
+                "mise": 10, "unique_bilan": unique, "sport": "football", "bookmaker": "Winamax",
+                "domicile": "Domicile", "exterieur": "Exterieur", "ligue": "Ligue", "pari": "1",
+                "cote": 2.0, "cote_juste": 1.8, "ecart": 0.05, "clv": None,
+                "detecte": "2026-10-01T10:00:00Z", "strategies": [], "convergence": False,
+                "tranche": "1,51 – 2,00", "regle_le": "2026-10-01T12:00:00Z" if gain is not None else None}
+    rows = [ligne("s1", "Smarkets", True, "gagne", 12),
+            ligne("s1b", "Smarkets", False, "perdu", -10),
+            ligne("s2", "Smarkets", True, "en_cours", None),
+            ligne("s3", "Smarkets", False, "gagne", 5),
+            ligne("p1", "Pinnacle", True, "perdu", -10),
+            ligne("k1", "Kalshi", False, "gagne", 8)]
+    champs = list(rows[0])
+    data = {"paris": [], "catalogue": {"champs": champs, "lignes": [list(p.values()) for p in rows]},
+            "strategies_badges": {}, "tranches": ["1,51 – 2,00"], "simulations": {},
+            "valeurs_filtres": {"reference": ["Pinnacle", "Smarkets"]},
+            "references": ["Pinnacle", "Betfair", "Polymarket", "Matchbook", "Smarkets", "Kalshi", "Consensus"]}
+    section = MODELE[MODELE.index("const recentes ="):MODELE.index("// --- Segments")]
+    executer(DOM + "const D=" + json.dumps(data) + ";\nconst eurC=e;\nconst badgeStrategies=()=>'';\nconst ecartsReferences=()=>'';\n" + section + r'''
+const options = document.getElementById("f-ref").innerHTML;
+for (const nom of ["Smarkets", "Kalshi", "Matchbook", "Pinnacle", "Betfair", "Polymarket"])
+  assert.ok(options.includes('value="' + nom + '"'), nom);
+assert.equal(parisFiltres.length, 6);
+function ligneEgale(nom) {
+  const L = selectionUniqueReference(nom);
+  const s = statsListe(L);
+  const html = document.getElementById("bu-reference").innerHTML;
+  const m = html.match(new RegExp('data-ref="' + nom + '" data-n="(\\d+)" data-regles="(\\d+)" data-mises="([^"]*)" data-gain="([^"]*)" data-roi="([^"]*)"'));
+  assert.ok(m, nom);
+  assert.equal(Number(m[1]), s.n);
+  assert.equal(Number(m[2]), s.regles);
+  assert.equal(Number(m[3]), s.mises);
+  assert.equal(Number(m[4]), s.gain);
+  assert.equal(m[5] === "" ? null : Number(m[5]), s.roi);
+  document.getElementById("f-ref").value = nom;
+  rendreParis();
+  assert.deepEqual(parisFiltres.map(p => p.id), L.map(p => p.id));
+  const total = statsListe(parisFiltres);
+  assert.equal(total.n, s.n);
+  assert.equal(total.regles, s.regles);
+  assert.equal(total.mises, s.mises);
+  assert.equal(total.gain, s.gain);
+  assert.equal(total.roi, s.roi);
+}
+ligneEgale("Smarkets");
+assert.deepEqual(parisFiltres.map(p => p.id), ["s1", "s2"]);
+assert.equal(statsListe(parisFiltres).gain, 12);
+assert.equal(statsListe(parisFiltres).mises, 10);
+assert.equal(statsListe(parisFiltres).roi, 1.2);
+ligneEgale("Pinnacle");
+assert.ok(!document.getElementById("bu-reference").innerHTML.includes('data-ref="Matchbook"'));
+assert.ok(!document.getElementById("bu-reference").innerHTML.includes('data-ref="Kalshi"'));
+periodeBU = "7";
+rendreBilanUniques(Date.parse("2026-10-27T00:00:00Z"));
+assert.ok(document.getElementById("bu-reference").innerHTML.includes('data-ref="Smarkets" data-n="2"'));
+voirReference("Smarkets");
+assert.equal(document.getElementById("f-ref").value, "Smarkets");
+assert.equal(document.getElementById("f-sim").value, "");
+assert.deepEqual(parisFiltres.map(p => p.id), selectionUniqueReference("Smarkets").map(p => p.id));
+assert.equal(hashParis, "paris?ref=Smarkets");
+''')
+
+
 def test_js_courbes_legend_masquage_et_periode_vide():
     outils = MODELE[MODELE.index("const eurC ="):MODELE.index("\n", MODELE.index("const eurC ="))] + "\n"
     outils += MODELE[MODELE.index("function pas("):MODELE.index("function rendreCourbe()")]
