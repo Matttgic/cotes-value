@@ -310,7 +310,8 @@ def test_filtre_reference_et_liste_des_bilans():
     assert REFERENCES == ["Pinnacle", "Betfair", "Polymarket", "Matchbook", "Smarkets", "Kalshi", "Consensus"]
     texte = Path("scripts/site_web.py").read_text()
     assert 'Matchbook:"Mb "' in texte
-    assert 'champ === "reference" ? (D.references || [])' in texte
+    assert 'champ === "reference" ? [...(D.references || []), ...depuisFiches]' in texte
+    assert 'k === "reference") return p.unique_bilan === true && p.reference === v' in texte
     assert "<option>Matchbook</option>" not in texte.split('id="strategies-ref"')[1].split("</select>")[0]
 
 
