@@ -26,6 +26,7 @@ from cotes.strategie_qwen import QWEN, paris_qwen  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
                               evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
+from cotes.mises import METHODES as METHODES_MISE, comparer as comparer_mises  # noqa: E402
 from cotes.securite import json_public
 from cotes import notifications as notifications_mod  # noqa: E402
 from cotes import ordres as ordres_mod  # noqa: E402
@@ -591,6 +592,17 @@ def construire(donnees: Path, sortie: Path) -> Path:
                              and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)],
                             maintenant, incertitude=False, depuis=lancements.get(nom, DEBUT_SUIVI))
                 for nom, ids in officiels.items()}
+            # Méthodes de mise comparées sur les mêmes paris réglés du suivi (rien n'est appliqué).
+            uniques_suivi = premiers_par_selection(paris)
+            depart = heure(DEBUT_SUIVI)
+            laboratoire["mises"] = {"methodes": {k: {"nom": m[0], "regle": m[1]} for k, m in METHODES_MISE.items()},
+                                    "selections": {"Paris uniques": comparer_mises(
+                                        [p for p in paris if id(p) in uniques_suivi and heure(p.get("detecte"))
+                                         and depart <= heure(p["detecte"])])}}
+            for nom, ids in officiels.items():
+                debut_nom = heure(lancements.get(nom, DEBUT_SUIVI))
+                laboratoire["mises"]["selections"][nom] = comparer_mises(
+                    [p for p in paris if id(p) in ids and heure(p.get("detecte")) and debut_nom <= heure(p["detecte"])])
             enrichir_evenements(paris, laboratoire, maintenant)
             ids_labo = {i for r in laboratoire["futur"] for i in r["ids_recents"]}
             laboratoire["paris_recents"] = [{k: p.get(k) for k in (
@@ -768,6 +780,13 @@ MODELE = r"""<!doctype html>
       Gain = gain réel × mise Kelly / mise fixe, sur les paris réglés. Une simulation de taille de mise, pas une sélection.
       Les lignes par bookmaker additionnent toutes les simulations de cette référence. Le tableau « Par référence », au-dessus, est le bilan des paris uniques.</p>
       <div class="tableau"><table id="essai-kelly"></table></div></details>
+      <details class="mode-emploi" open><summary>Quelle méthode de mise aurait été la meilleure ? 16 méthodes sur les mêmes paris</summary>
+      <p class="aide">Paris réglés du suivi depuis le 14/10 (ou depuis le lancement de la stratégie), tous misés au moment de leur détection avec
+      une bankroll de départ de 1 000 €. Le solde et la série de résultats ne comptent que les paris déjà réglés à cet instant. Simulation :
+      rien n'est appliqué. <b>★</b> plus gros gain, <b>◆</b> meilleur gain par euro de baisse (la plus forte baisse du gain cumulé), 20 paris
+      au moins. Avec peu de paris, la chance domine : ne choisis pas avant 150 paris réglés.</p>
+      <label class="aide">Sélection <select id="mises-selection"></select></label>
+      <div class="tableau"><table id="essai-mises"></table></div></details>
       <details class="mode-emploi" open><summary>TRJ, liquidité Pinnacle, mouvement de cote : ROI et CLV par tranche</summary>
       <p class="aide">Paris uniques. <b>Marge Pinnacle</b> : indicateur de liquidité, disponible aussi sur les anciens paris à 2 issues
       (retrouvée à partir de la cote et de la cote juste, « estimée »). <b>TRJ</b> du bookmaker français, <b>limite de mise
@@ -1230,6 +1249,7 @@ function rendreBilan() {
   rendreProfilHoraire();
   rendreFiltres();
   rendreKelly();
+  rendreMises();
   document.getElementById("bilan-tranches").innerHTML = `<tr><th>Cote</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     (D.tranches || []).map(t => ligne(`<b>${e(t)}</b>`, (D.bilan_tranches || {})[t + "|" + refBilan])).join("");
 }
@@ -1244,6 +1264,31 @@ function rendreKelly() {
 <td class="${signe(t.gains_kelly)}">${eurC(t.gains_kelly)}<small class="roi ${signe(t.roi_kelly)}">${t.roi_kelly == null ? "" : pctC(t.roi_kelly)}</small><small>${eurC(t.mises_kelly / t.regles)} par pari</small></td></tr>`;
   }).join("");
   document.getElementById("essai-kelly").innerHTML = `<tr><th>Sélection</th><th>Réglés</th><th>10 € fixes<small>gain · ROI</small></th><th>Kelly ¼<small>gain · ROI</small></th></tr>` + lignes;
+}
+function rendreMises() {
+  const M = D.laboratoire?.mises, choix = document.getElementById("mises-selection"), table = document.getElementById("essai-mises");
+  if (!M || !choix || !table) return;
+  const noms = Object.keys(M.selections).filter(n => Object.values(M.selections[n]).some(x => x.paris));
+  if (!noms.length) { table.innerHTML = "<tr><td>Aucun pari réglé pour le moment.</td></tr>"; return; }
+  if (choix.dataset.n !== String(noms.length)) {
+    choix.innerHTML = noms.map(n => `<option>${e(n)}</option>`).join("");
+    choix.dataset.n = String(noms.length);
+    choix.onchange = rendreMises;
+  }
+  const nom = noms.includes(choix.value) ? choix.value : noms[0];
+  choix.value = nom;
+  const S = M.selections[nom], cles = Object.keys(M.methodes);
+  const solides = cles.filter(k => S[k].paris >= 20);
+  const meilleur = f => solides.length ? solides.reduce((a, b) => f(b) > f(a) ? b : a) : null;
+  const etoile = meilleur(k => S[k].gain);
+  const rendement = meilleur(k => S[k].baisse > 0 ? S[k].gain / S[k].baisse : -1e9);
+  const pct1 = x => x == null ? "—" : (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",") + " %";
+  table.innerHTML = `<tr><th>Méthode</th><th>Mise moy.</th><th>Gain<small>ROI</small></th><th>Plus forte baisse</th><th>Solde<small>minimum</small></th></tr>` +
+    cles.map(k => { const r = S[k], m = M.methodes[k]; if (!r.paris) return "";
+      const pastille = (k === etoile ? " ★" : "") + (k === rendement ? " ◆" : "");
+      return `<tr><td><b>${e(m.nom)}${pastille}</b><small>${e(m.regle)}</small></td><td>${eurC(r.mise_moyenne)}<small>max ${eurC(r.mise_max)}</small></td>
+<td class="${signe(r.gain)}">${eurC(r.gain)}<small class="roi ${signe(r.gain)}">${pct1(r.roi)}</small></td><td>${eurC(-r.baisse)}</td>
+<td class="${r.solde_min <= 0 ? "neg" : ""}">${eurC(r.solde_min)}<small>final ${eurC(r.solde)}</small></td></tr>`; }).join("");
 }
 const TITRES_FILTRES = {marge: "Marge de Pinnacle (liquidité, ancien et nouveau)", trj: "TRJ du bookmaker", limite: "Limite de mise Pinnacle (liquidité)", mouvement: "Mouvement de la cote Pinnacle"};
 function rendreFiltres() {
