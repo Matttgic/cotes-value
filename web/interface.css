@@ -664,7 +664,9 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
   .bu-kpis>div:nth-child(2){border-left:0;padding-left:0}
   .bu-kpis b{font-size:38px}
   .bu-ligne{grid-template-columns:minmax(0,1fr) 40px 36px 68px 60px;gap:4px;font-size:13px}.bu-ligne>:not(:first-child){font-size:12px}.bu-ligne>b{font-size:12.5px}
-  #bu-reference .bu-ligne{grid-template-columns:minmax(0,1.3fr) 32px 46px 32px 52px 46px}
+  /* Colonnes à la largeur de leur contenu (mise « 17 861,89 € », net « +354,85 € ») : plus de chevauchement. */
+  #bu-reference .bu-ligne{grid-template-columns:minmax(0,1fr) repeat(5,auto);gap:4px 7px;font-size:12px}
+  #bu-reference .bu-ligne>:not(:first-child){font-size:11px}#bu-reference .bu-ligne>b{font-size:11px}
   .bu-entete{font-size:9px;letter-spacing:.02em}
   .tete-strategies .periode-badge{max-width:none;white-space:nowrap;font-size:9.5px;letter-spacing:.04em}
   main table:not(.strategies-table) tr:not(.entete-table){background:transparent;border:0;border-top:1px solid var(--ligne);padding:12px 0;margin:0}
