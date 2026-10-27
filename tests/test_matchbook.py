@@ -31,16 +31,16 @@ DOC = json.loads((ICI / "fixtures" / "matchbook_events.json").read_text())
 LILLE = DOC["events"][0]
 TENNIS = DOC["events"][1]
 AVANT_LILLE = datetime(2026, 10, 30, 8, 0, tzinfo=timezone.utc)
-SECRET = "SECRET-NE-PAS-JOURNALISER"
+MARQUE = "corps-interdit"
 
 
 class Rep:
-    def __init__(self, code, doc=None, text=SECRET):
+    def __init__(self, code, doc=None, text=MARQUE):
         self.status_code, self._doc, self.text = code, doc, text
 
     def json(self):
         if self._doc is None:
-            raise ValueError(SECRET)
+            raise ValueError(MARQUE)
         return self._doc
 
 
@@ -133,7 +133,7 @@ def test_collecte_une_requete_par_sport_sans_identifiant():
     assert params["before"] == int(AVANT_LILLE.timestamp()) + 36 * 3600
     assert headers["Accept"] == "application/json"
     assert not any("session" in k.lower() or "auth" in k.lower() for k in headers)
-    assert SECRET not in str(info)
+    assert MARQUE not in str(info)
 
 
 def test_direct_par_defaut_lit_les_deux_sports():
@@ -158,7 +158,7 @@ def test_403_429_401_arretent_sans_corps():
         justes, info = mb.collecter(session=s, maintenant=AVANT_LILLE,
                                     environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
         assert justes == [] and info["erreurs"] == [f"HTTP {code}"] and len(s.appels) == 1
-        assert info["ok"] is False and SECRET not in str(info)
+        assert info["ok"] is False and MARQUE not in str(info)
 
 
 def test_500_trois_essais_sans_journaliser_le_corps():
@@ -166,7 +166,7 @@ def test_500_trois_essais_sans_journaliser_le_corps():
     justes, info = mb.collecter(sports={"football"}, session=s, maintenant=AVANT_LILLE,
                                 environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
     assert justes == [] and info["erreurs"] == ["HTTP 500"] and info["requetes"] == 3
-    assert SECRET not in str(info)
+    assert MARQUE not in str(info)
 
 
 def _ligne(mid, proba, source, domicile, exterieur):
@@ -351,7 +351,7 @@ def test_cycle_off_shadow_403_et_exception(monkeypatch):
     assert cycle.appliquer_matchbook({"football"}, 36, AVANT_LILLE, journal) == []
     assert journal["matchbook"]["erreurs"] == ["HTTP 403"]
     assert journal["etapes"]["matchbook"]["ok"] is False
-    assert SECRET not in str(journal)
+    assert MARQUE not in str(journal)
 
     def casse(*_a, **_k):
         raise RuntimeError("coupure")
