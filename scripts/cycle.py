@@ -35,6 +35,7 @@ from cotes.direct import olybet as olybet_direct  # noqa: E402
 from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes.direct import unibet as unibet_direct  # noqa: E402
 from cotes.direct import winamax as winamax_direct  # noqa: E402
+from cotes.direct import matchbook as matchbook_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
@@ -54,6 +55,7 @@ BUDGETS = {
     "netbet": 40,
     "betclic_direct": 80,
     "smarkets": 60,
+    "matchbook": 25,
 }
 PRES_H = 6
 RYTHME_MIN = 20
@@ -225,6 +227,47 @@ def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
             et["degrade"] = True
     journal["smarkets_cache"] = {"reutilise": bool(perime and precedentes), "perime": perime}
     return lignes, info
+
+
+def appliquer_matchbook(sports: set, heures: float, maintenant: datetime, journal: dict):
+    """Lit Matchbook si ``SOURCE_MATCHBOOK`` n'est pas ``off``.
+
+    ``shadow`` enregistre l'état et ne renvoie aucune ligne : pas de pari.
+    ``direct`` (défaut) renvoie les cotes justes. Un 401, 403, 429, un budget
+    ou une exception coupent ce lecteur seulement. Le résumé va dans le journal,
+    donc dans ``etat.json`` ; aucun corps de réponse n'y est copié.
+    """
+    actif = matchbook_direct.mode()
+    if actif == "off":
+        journal["etapes"]["matchbook"] = {"secondes": 0.0, "ok": True, "desactive": True}
+        journal["matchbook"] = {"mode": "off", "ok": True, "requetes": 0, "erreurs": [],
+                                "matchs": 0, "lignes": 0, "desactive": True}
+        return []
+    recu = source_bornee(matchbook_direct, "matchbook", journal, BUDGETS["matchbook"],
+                         matchbook_direct.collecter, sports, heures, maintenant=maintenant)
+    if not isinstance(recu, tuple) or len(recu) != 2:
+        info = {"mode": actif, "ok": False, "requetes": 0, "erreurs": ["lecture interrompue"],
+                "matchs": 0, "lignes": 0}
+        journal["matchbook"] = info
+        signaler(journal, "matchbook", info["erreurs"])
+        if "matchbook" in journal["etapes"]:
+            journal["etapes"]["matchbook"]["ok"] = False
+        return []
+    lignes, info = recu
+    if not isinstance(lignes, list):
+        lignes = []
+    resume = {"mode": info.get("mode", actif), "ok": bool(info.get("ok")),
+              "requetes": info.get("requetes") or 0, "erreurs": list(info.get("erreurs") or [])[:10],
+              "matchs": info.get("matchs") or 0, "lignes": len(lignes)}
+    journal["matchbook"] = resume
+    signaler(journal, "matchbook", resume["erreurs"])
+    if not resume["ok"] and "matchbook" in journal["etapes"]:
+        journal["etapes"]["matchbook"]["ok"] = False
+    if actif != "direct":
+        if "matchbook" in journal["etapes"]:
+            journal["etapes"]["matchbook"]["shadow"] = True
+        return []
+    return lignes
 
 
 def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
@@ -728,14 +771,21 @@ def main() -> int:
     journal["smarkets_dans_decision"] = smarkets.dans_decision()
     # Table propre. Le drapeau ne retire que le consensus partagé.
     smarkets.ajouter_table(references, sm_lignes)
-    hors = smarkets.hors_consensus()
+    sports_mb = {"football"} if args.mode == "test" else {"football", "tennis"}
+    mb_lignes = appliquer_matchbook(sports_mb, 12 if args.mode == "test" else HORIZON_H, maintenant, journal)
+    if mb_lignes:
+        references["Matchbook"] = mb_lignes
+    # Matchbook a sa table de paris (mêmes seuils que Pinnacle). Il reste hors
+    # de la moyenne : le Consensus et le désaccord des tables déjà en place
+    # ne changent pas, donc les stratégies figées non plus.
+    hors = smarkets.hors_consensus() | matchbook_direct.hors_consensus()
 
     # 3. contrôle de conformité des marchés (cumulé d'un cycle à l'autre), comparaison et paris simulés :
     #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari.
     #    Le contrôle reste celui des références déjà en place : Smarkets a sa table,
     #    pas une nouvelle mesure de conformité.
     index = etape("association", journal, comparaison.indexer, francais, references) or {}
-    index_controle = {n: v for n, v in index.items() if n != "Smarkets"}
+    index_controle = {n: v for n, v in index.items() if n not in ("Smarkets", "Matchbook")}
     mesures = controle.mesurer(francais, index_controle)
     etat_controle = controle.mettre_a_jour(lire_json(donnees / "controle.json", {}), mesures,
                                            journal["debut"])
@@ -803,7 +853,7 @@ def main() -> int:
     journal.update({
         "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "cotes": {"francaises": len(francais), "pinnacle": len(pin), "polymarket": len(poly),
-                  "smarkets": len(sm_lignes)},
+                  "smarkets": len(sm_lignes), "matchbook": len(mb_lignes)},
         "matchs_francais": len({l["match_id"] for l in francais}),
         "opportunites": sum(not o.get("suspect") for o in opportunites),
         "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),
