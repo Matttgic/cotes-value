@@ -42,7 +42,9 @@ def test_message_le_pari_puis_le_lien_cliquable_dessous():
     repli = E.message_pushover(alerte(bookmaker="Unibet", lien="https://www.unibet.fr/paris-football", lien_repli=True), ENV, NOW)
     assert repli["url"] == "https://www.unibet.fr/paris-football"
     assert repli["url_title"] == "Page du sport chez Unibet (match à chercher)"
-    assert m["ttl"] == 3600 and m["priority"] == 0                           # plafonné à 1 h ; heures calmes respectées
+    assert m["ttl"] == 3 * 3600 and m["priority"] == 0                       # reste jusqu'au coup d'envoi ; heures calmes respectées
+    loin = E.message_pushover(alerte(debut=(NOW + timedelta(hours=40)).isoformat()), ENV, NOW)
+    assert loin["ttl"] == 86400                                              # plafonné à 24 h
     court = E.message_pushover(alerte(debut=(NOW + timedelta(minutes=20)).isoformat()), ENV, NOW)
     assert court["ttl"] == 1200
 

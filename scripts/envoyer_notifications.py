@@ -29,7 +29,7 @@ ENVOYES = "webhook_envoyes.json"
 PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
 PUSHOVER_ENVOYES = "pushover_envoyes.json"
 PUSHOVER_BUDGET_S = 20           # pour tout le passage
-PUSHOVER_TTL_MAX_S = 3600        # le message disparaît du téléphone au coup d'envoi, ou après une heure
+PUSHOVER_TTL_MAX_S = 86400       # le message reste sur le téléphone jusqu'au coup d'envoi, 24 h au plus (1 h le faisait disparaître avant lecture)
 CHAMPS_WEBHOOK = ("id", "match", "ligue", "debut", "marche", "selection", "bookmaker", "cote", "cote_min",
                   "cote_juste", "cote_pinnacle", "ecart", "recheck")
 
