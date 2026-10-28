@@ -222,7 +222,7 @@ quand le téléphone l'associe à son site.
 
 - Une alerte n'est envoyée qu'une fois (`pushover_envoyes.json`, trois jours d'historique).
 - Au premier passage, les re-décisions anciennes de Pinnacle 2 sont mémorisées sans être envoyées (pas d'inondation).
-- Le message disparaît du téléphone au coup d'envoi, ou au bout d'une heure (`ttl`).
+- Le message reste sur le téléphone jusqu'au coup d'envoi, 24 heures au plus (`ttl`). Avec une heure seulement, une alerte reçue pendant la nuit avait disparu avant d'être lue.
 - Quota gratuit de Pushover : 10 000 messages par mois et par application ; un 429 arrête l'envoi du passage.
 - Le bilan est dans `notifications_diagnostic.json` (champ `pushover` : actif, source des stratégies, nombre de stratégies, envois, échecs, clés
   inconnues), jamais le jeton ni la clé.
