@@ -765,6 +765,7 @@ MODELE = r"""<!doctype html>
       <div id="bu-dates"></div>
       <div class="bu-kpis" id="bu-kpis"></div>
       <p class="aide" id="bu-note"></p>
+      <p class="aide" id="bu-note-cotes"></p>
       <h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div>
       <p class="aide">★ meilleur ROI parmi les lignes de 50 paris ou plus.</p>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
@@ -1733,6 +1734,11 @@ function rendreBilanUniques(maintenant=Date.now()) {
     ["Réussite",pctEntier(s.reussite),""]].map(([t,v,c]) => `<div><span>${t}</span><b class="${c}">${v}</b></div>`).join("");
   document.getElementById("bu-note").textContent =
     `${s.n} paris réglés · mise ${Math.round(s.mises).toLocaleString("fr-FR")} € · chaque cote française comptée une fois`;
+  // Les cotes de plus de 10 sont de la loterie (quelques gains sur des dizaines de paris) : leur résultat est montré à part.
+  const petites = statsBU(L.filter(p => !(p.cote > 10))), grosses = statsBU(L.filter(p => p.cote > 10));
+  const resume = (t, x) => x.n ? `${t} : ${x.n} paris, ${eur(x.net)}, ROI ${pct(x.roi)}` : "";
+  document.getElementById("bu-note-cotes").textContent = grosses.n
+    ? [resume("Cote de 10 au plus", petites), resume("Cote supérieure à 10", grosses)].filter(Boolean).join(" · ") : "";
   document.getElementById("bu-ecart").innerHTML = tableBU(Object.entries(NOMS_ECART).map(([k,nom]) => [nom, L.filter(p => p.simulation===k)]));
   document.getElementById("bu-cote").innerHTML = tableBU((D.tranches || []).map(t => [t, L.filter(p => p.tranche===t)]));
   const parSport = new Map();

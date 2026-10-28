@@ -155,6 +155,7 @@ assert.ok(h("bu-ecart").indexOf("★")<h("bu-ecart").indexOf("B · 3"));
 assert.ok(h("bu-cote").includes("1,51 – 2,00") && !h("bu-cote").includes("1,01 – 1,50"));
 assert.ok(h("bu-sport").includes("tennis") || h("bu-sport").includes("Tennis"));
 assert.ok(h("bu-kpis").includes(">55<"));
+assert.equal(document.getElementById("bu-note-cotes").textContent,"");      // aucune cote de plus de 10 : rien à séparer
 periodeBU="30"; rendreBilanUniques(Date.parse("2026-10-19T00:00:00Z"));
 assert.equal(document.getElementById("bu-note").textContent.split(" ")[0],"50");
 assert.ok(!h("bu-ecart").includes("B · 3"));
@@ -354,4 +355,19 @@ assert.ok(inc.includes("Winamax") && inc.includes("sante-mot-panne") && inc.incl
 assert.ok(inc.includes("Unibet") && inc.includes("terminé") && inc.includes("10 min"));
 assert.ok(!inc.includes("Pinnacle"));                      // 2 cycles de refus : pas encore un incident
 assert.ok(incidentsSante({}, t0).includes("Aucun incident") && incidentsSante(undefined, t0).includes("Aucun incident"));
+''')
+
+
+def test_js_bilan_separe_les_cotes_de_plus_de_10():
+    def pari(i, cote, statut, gain):
+        return {"id":str(i),"simulation":"A","statut":statut,"gain":gain,"mise":10,"unique_bilan":True,"sport":"football","cote":cote,
+                "tranche":"1,51 – 2,00","regle_le":"2026-10-18T10:00:00Z","detecte":"2026-10-18T10:00:00Z","reference":"Pinnacle","strategies":[]}
+    rows=[pari(1,2.0,"gagne",10),pari(2,2.0,"perdu",-10),pari(3,30.0,"perdu",-10),pari(4,40.0,"perdu",-10)]
+    champs=list(rows[0]); data={"paris":[],"catalogue":{"champs":champs,"lignes":[list(p.values()) for p in rows]},
+        "strategies_badges":{},"tranches":["1,51 – 2,00"],"valeurs_filtres":{},"simulations":{}}
+    section=MODELE[MODELE.index("const recentes ="):MODELE.index("// --- Segments")]
+    executer(DOM+"const D="+json.dumps(data)+";\nconst eurC=e;\nconst badgeStrategies=()=>'';\nconst ecartsReferences=()=>'';\n"+section+'''
+const note=document.getElementById("bu-note-cotes").textContent;
+assert.ok(note.includes("Cote de 10 au plus : 2 paris") && note.includes("Cote supérieure à 10 : 2 paris"), note);
+assert.ok(note.includes("−20") || note.includes("-20"), note);
 ''')
