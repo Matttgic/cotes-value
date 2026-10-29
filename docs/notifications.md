@@ -34,7 +34,8 @@ ne promet pas de réserver un prix et ne place aucun pari.
 - Seules les prises après activation ou changement des préférences sont
   recevables. Pas de rattrapage historique à l'inscription.
 - Prise datant de moins de 15 minutes, coup d'envoi à plus d'une minute,
-  relevé transmis depuis moins de dix minutes. Expiration du push après cinq
+  relevé transmis depuis moins de dix minutes. Pour un match à moins de 6 h : prix français de 5 minutes au plus (Winamax,
+  OlyBet, NetBet) ou 10 minutes (PMU, Unibet, Betclic, dont les marchés secondaires sont relus en rotation). Expiration du push après cinq
   minutes au maximum ; une notification reçue trop tard n'est pas affichée.
 
 ## Architecture

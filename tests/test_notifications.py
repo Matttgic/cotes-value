@@ -365,3 +365,14 @@ def test_match_lointain_prix_de_la_derniere_lecture_et_fenetre_depuis_la_decisio
     # au-delà du rythme de la source : écarté
     vieux = {**p, "detecte": (NOW-timedelta(minutes=26)).isoformat()}
     assert not flux([dict(vieux)], [vieux], {PIN2: {id(vieux)}}, NOW)["alertes"]
+
+
+def test_match_proche_prix_de_7_min_accepte_chez_les_bookmakers_lents_seulement():
+    # Mac.Tel Aviv – Paris (29/10) : total Unibet relu en rotation, cote de 7 min quand Pinnacle arrive, match dans 2 h.
+    def alerte(bookmaker, minutes):
+        p = pari(detecte=(NOW-timedelta(minutes=minutes)).isoformat(), debut=(NOW+timedelta(hours=2)).isoformat(),
+                 reference="Pinnacle", pari="Plus de 185,5 points", bookmaker=bookmaker, decide_le=(NOW-timedelta(minutes=1)).isoformat())
+        return flux([dict(p)], [p], {PIN2: {id(p)}}, NOW)["alertes"]
+    assert len(alerte("Unibet", 7)) == 1 and len(alerte("PMU", 9)) == 1 and len(alerte("Betclic", 7)) == 1
+    assert not alerte("Winamax", 7)                      # lu à chaque cycle : 5 min suffisent
+    assert not alerte("Unibet", 11)                      # au-delà de 10 min : écarté

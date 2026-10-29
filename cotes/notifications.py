@@ -22,11 +22,15 @@ AGE_PRIX_MAX_MINUTES = 5
 # Le prix de la dernière lecture reste le bon ; la limite de 5 min ferait taire l'alerte jusqu'à la lecture suivante.
 LOINTAIN_H = 6
 AGE_PRIX_LOINTAIN_MINUTES = {"PMU": 25, "Unibet": 32, "Betclic": 39}
+# Matchs à moins de 6 h : ces trois bookmakers lisent leurs marchés secondaires (totaux, handicaps) en rotation ; leur prix a
+# souvent 5 à 8 min quand Pinnacle arrive (Mac.Tel Aviv – Paris, 29/10 : cote Unibet de 7,2 min, alerte écartée). 10 min.
+AGE_PRIX_LENTS_MINUTES = {"PMU": 10, "Unibet": 10, "Betclic": 10}
 
 
 def age_prix_max(o: dict, debut: datetime, recue: datetime) -> timedelta:
     loin = debut - recue > timedelta(hours=LOINTAIN_H)
-    return timedelta(minutes=AGE_PRIX_LOINTAIN_MINUTES.get(o.get("bookmaker"), AGE_PRIX_MAX_MINUTES) if loin else AGE_PRIX_MAX_MINUTES)
+    table = AGE_PRIX_LOINTAIN_MINUTES if loin else AGE_PRIX_LENTS_MINUTES
+    return timedelta(minutes=table.get(o.get("bookmaker"), AGE_PRIX_MAX_MINUTES))
 
 
 def _noms_labo() -> dict[str, str]:
