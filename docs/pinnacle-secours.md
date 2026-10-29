@@ -47,7 +47,7 @@ confrontés à la lecture directe.
 
 ## Entre deux lectures
 
-Le secours ne lit que toutes les 30 minutes (offre gratuite). Entre deux lectures, le dernier passage est rejoué depuis `pinnacle_secours_cache.json` avec son âge réel : une ligne plus vieille que le seuil (`PINNACLE_AGE_MAX_MIN`, 10 minutes, pour un match dans les 2 heures ; `PINNACLE_AGE_MAX_LOIN_MIN`, 16 minutes, au-delà) reste marquée périmée et ne sert pas de référence, un match commencé est retiré, et le cache est ignoré au-delà de 3 heures. Limite : avec 90 requêtes par jour, l'offre gratuite ne donne une référence fraîche que quelques dizaines de minutes par jour.
+Le secours ne lit que toutes les 30 minutes (offre gratuite). Entre deux lectures, le dernier passage est rejoué depuis la mémoire `pinnacle_secours_cache.json.gz` (cache GitHub Actions, hors branche « donnees », voir cotes/memoire.py) avec son âge réel : une ligne plus vieille que le seuil (`PINNACLE_AGE_MAX_MIN`, 10 minutes, pour un match dans les 2 heures ; `PINNACLE_AGE_MAX_LOIN_MIN`, 16 minutes, au-delà) reste marquée périmée et ne sert pas de référence, un match commencé est retiré, et le cache est ignoré au-delà de 3 heures. Limite : avec 90 requêtes par jour, l'offre gratuite ne donne une référence fraîche que quelques dizaines de minutes par jour.
 
 ## Second secours : PinBook (offre gratuite)
 

@@ -52,7 +52,10 @@ def test_diagnostic_envoi_public_sans_secret(tmp_path,monkeypatch):
 def test_workflow_sauvegarde_alerte_reglement_puis_site():
     s=(Path(__file__).resolve().parents[1]/'.github/workflows/collecte.yml').read_text()
     assert '--reglement non --sans-site' in s
-    assert s.index('name: Enregistrer les données')<s.index('name: Envoyer les nouvelles alertes')
     assert s.index('name: Envoyer les nouvelles alertes')<s.index('name: Règlement après les alertes')
+    # Un seul commit et un seul push par cycle (30/10/2026), après les alertes et le règlement, même en cas d'échec.
+    assert s.count('name: Enregistrer') == 1 and s.count('git push -q origin donnees') == 1
+    assert s.index('name: Règlement après les alertes')<s.index('name: Enregistrer les données')
+    assert "if: always()\n        run: |\n          cd donnees" in s
     assert '--seulement-reglement --reglement auto' in s
     assert '--donnees donnees --flux notifications-rapides.json' in s

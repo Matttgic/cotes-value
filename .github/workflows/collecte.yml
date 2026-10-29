@@ -74,9 +74,21 @@ jobs:
           key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: reprise-
 
+      # Mémoire de travail du cycle (cotes/memoire.py) : horizon_direct (cotes PMU, Unibet, Betclic, NetBet gardées
+      # entre deux lectures), caches Pinnacle secours et Smarkets, contrôle des intitulés. Gzip, hors de la branche
+      # « donnees » (elle grossissait de 256 Mo par jour). Absente (premier cycle, cache évincé après 7 jours sans
+      # accès ou au-delà de 10 Go) : démarrage à froid, le cycle relit tout et repart de controle.json (publication horaire).
+      - name: Restaurer la mémoire de travail
+        uses: actions/cache/restore@v4
+        with:
+          path: memoire
+          key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: memoire-
+
       - name: Cycle (collecte, comparaison, paris, site)
         env:
           REPRISE_CHEMIN: reprise/derniere_lecture.json.gz
+          MEMOIRE_CHEMIN: memoire
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
           PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
@@ -119,19 +131,13 @@ jobs:
           path: reprise
           key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Enregistrer les données
-        run: |
-          cd donnees
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --quiet || git commit -qm "Cycle $(date -u +%FT%TZ)"
-          # un résultat saisi à la main pendant le cycle (autre fichier) : on le reprend avant de pousser
-          for i in 1 2 3; do
-            git push -q origin donnees && exit 0
-            git pull -q --rebase origin donnees
-          done
-          exit 1
+      - name: Sauver la mémoire de travail
+        if: always() && hashFiles('memoire/*.json.gz') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: memoire
+          key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Envoyer les nouvelles alertes Chrome
         continue-on-error: true
@@ -151,6 +157,7 @@ jobs:
 
       - name: Règlement après les alertes et construction du site
         env:
+          MEMOIRE_CHEMIN: memoire
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
           THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
           THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
@@ -158,14 +165,23 @@ jobs:
           THE_ODDS_API_KEY_4: ${{ secrets.THE_ODDS_API_KEY_4 }}
         run: python scripts/cycle.py --seulement-reglement --reglement auto --donnees donnees --site site
 
-      - name: Enregistrer les résultats et le diagnostic des alertes
+      # Un seul commit et un seul push par cycle (collecte, alertes, règlement), même si une étape a échoué.
+      # Les caches sortis de la branche ne sont jamais ajoutés ; au premier cycle, ils sont retirés de l'index
+      # (git rm --cached) : l'historique de « donnees » n'est pas réécrit.
+      - name: Enregistrer les données
         if: always()
         run: |
           cd donnees
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for f in horizon_direct pinnacle_secours_cache smarkets_cache controle; do
+            printf '/%s.json.gz\n' "$f" >> .git/info/exclude
+          done
+          printf '%s\n' /horizon_direct.json /pinnacle_secours_cache.json /smarkets_cache.json '*.tmp' >> .git/info/exclude
+          git rm -q --cached --ignore-unmatch horizon_direct.json pinnacle_secours_cache.json smarkets_cache.json
           git add -A
-          git diff --cached --quiet || git commit -qm "Résultats et alertes $(date -u +%FT%TZ)"
+          git diff --cached --quiet || git commit -qm "Cycle $(date -u +%FT%TZ)"
+          # un résultat saisi à la main pendant le cycle (autre fichier) : on le reprend avant de pousser
           for i in 1 2 3; do
             git push -q origin donnees && exit 0
             git pull -q --rebase origin donnees
