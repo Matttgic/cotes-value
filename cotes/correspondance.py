@@ -158,6 +158,25 @@ def matchs_de(lignes: list[dict]) -> dict[str, dict]:
     return out
 
 
+def _derby(f: dict, r: dict) -> bool:
+    """Deux équipes d'un même match aux noms proches (même ville : « Sydney FC » / « West. Sydney »)."""
+    return max(ressemblance(f["domicile"], f["exterieur"]), ressemblance(r["domicile"], r["exterieur"])) >= 0.75
+
+
+def _ordre(paire: tuple) -> tuple:
+    """Clé de choix de l'ordre : la moins bonne des deux ressemblances, puis leur somme, puis l'ordre direct."""
+    (s1, s2), inverse = paire
+    return min(s1, s2), s1 + s2, not inverse
+
+
+def _ordre_derby(paire: tuple) -> tuple:
+    """Sur un derby, un nom identique (≥ 0,99) prime : sinon le nom de la ville seul (« Sydney », « Tokyo »),
+    inclus dans les deux noms d'équipe, fait gagner l'ordre croisé à 0,9 / 0,9 (cas réels des 14-16/10/2026 :
+    Sydney FC – West. Sydney, Tokyo Verdy – FC Tokyo, associés à l'envers et CLV fausse)."""
+    (s1, s2), _ = paire
+    return (s1 >= 0.99) + (s2 >= 0.99), *_ordre(paire)
+
+
 def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[str, tuple[str, bool, float]]:
     """Pour chaque match français : (match de référence, inversé ?, score) quand un match correspond."""
     index: dict[tuple[str, int], list[dict]] = {}
@@ -182,7 +201,7 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
                 # même ville se ressemblent assez (0,82) pour que l'ordre direct passe à tort
                 paires = [((ressemblance(f["domicile"], r["domicile"]), ressemblance(f["exterieur"], r["exterieur"])), False),
                           ((ressemblance(f["domicile"], r["exterieur"]), ressemblance(f["exterieur"], r["domicile"])), True)]
-                (s1, s2), inverse = max(paires, key=lambda p: (min(p[0]), sum(p[0]), not p[1]))
+                (s1, s2), inverse = max(paires, key=_ordre_derby if _derby(f, r) else _ordre)
                 score = min(s1, s2)
                 # tolérance sur l'heure : 20 min ; plus large si les deux noms sont très proches
                 # (heures approximatives : Kalshi, ordre de passage au tennis, erreurs d'horaire)
