@@ -1,18 +1,22 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-30T07:08:14+00:00",
+  "debut": "2026-10-30T07:12:54+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.4,
+    "secondes": 4.0,
     "ok": true
    },
    "olybet": {
-    "secondes": 9.6,
+    "secondes": 10.6,
+    "ok": true
+   },
+   "pinnacle": {
+    "secondes": 21.7,
     "ok": true
    },
    "polymarket": {
-    "secondes": 19.8,
+    "secondes": 25.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,20 +24,6 @@
      "prix bid/ask invalides",
      "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
-   },
-   "pinnacle": {
-    "secondes": 28.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 17 markets/straight : HTTP 403",
-     "sport 45 matchups : HTTP 403"
-    ],
-    "reprise": 32
-   },
-   "pmu_direct": {
-    "secondes": 35.6,
-    "ok": true
    },
    "netbet": {
     "secondes": 37.3,
@@ -43,37 +33,44 @@
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 65.3,
+   "pmu_direct": {
+    "secondes": 39.5,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 42.8,
+   "winamax_direct": {
+    "secondes": 74.5,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.5,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "unibet_direct": {
+    "secondes": 56.2,
+    "ok": true
+   },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 29.4,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 39.4,
+    "secondes": 112.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.5,
+    "secondes": 4.2,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 1.0,
     "ok": true
    }
   },
@@ -87,39 +84,49 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 261,
-   "lignes": 14770
+   "matchs": 262,
+   "lignes": 14601
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 47542,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 801,
-   "age_min_s": 13,
-   "lignes": 159804,
-   "lignes_perimees": 48,
-   "rechauffeur": "indisponible",
+   "age_max_s": 888,
+   "age_min_s": 139,
+   "lignes": 159874,
+   "lignes_perimees": 1689,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 28,
-    "head_403": 3,
+    "head_200": 39,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 7,
+    "choisi_fixe": 10,
     "choisi_autre": 6,
-    "reprise_403": 3,
-    "reprise_403_ok": 1,
-    "sport_vide": 3
+    "sport_vide": 4
    }
   },
   "reprise": {
-   "actif": true,
-   "Pinnacle": {
-    "golf": 32
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -158,175 +165,175 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Wolfsburg – VfL Osnabrück",
-     "source": "Pinnacle",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.562,
-     "ecart_relatif": 0.0396,
-     "aberrant": false
-    },
-    {
-     "match": "Wolfsburg – VfL Osnabrück",
+     "match": "Standard de Liège – Courtrai",
      "source": "PMU",
-     "cote_olybet": 1.5,
-     "cote_reference": 1.41,
-     "ecart_relatif": 0.0638,
+     "cote_olybet": 1.64,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.025,
      "aberrant": false
     },
     {
-     "match": "Energie Cottbus – Bochum",
-     "source": "Pinnacle",
-     "cote_olybet": 2.73,
-     "cote_reference": 2.95,
-     "ecart_relatif": 0.0746,
-     "aberrant": false
-    },
-    {
-     "match": "Energie Cottbus – Bochum",
+     "match": "Zulte Waregem – Club Bruges",
      "source": "PMU",
-     "cote_olybet": 2.73,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0073,
+     "cote_olybet": 6.2,
+     "cote_reference": 6.75,
+     "ecart_relatif": 0.0815,
      "aberrant": false
     },
     {
-     "match": "Arminia Bielefeld – Braunschweig",
+     "match": "Nomme United – Levadia Tallinn",
      "source": "Pinnacle",
-     "cote_olybet": 1.77,
-     "cote_reference": 1.885,
-     "ecart_relatif": 0.061,
+     "cote_olybet": 4.5,
+     "cote_reference": 4.98,
+     "ecart_relatif": 0.0964,
      "aberrant": false
     },
     {
-     "match": "Arminia Bielefeld – Braunschweig",
+     "match": "Nomme United – Levadia Tallinn",
      "source": "PMU",
-     "cote_olybet": 1.77,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0859,
-     "aberrant": false
+     "cote_olybet": 4.5,
+     "cote_reference": 6.25,
+     "ecart_relatif": 0.28,
+     "aberrant": true
     },
     {
-     "match": "Darmstadt – 1.FC Magdeburg",
-     "source": "Pinnacle",
-     "cote_olybet": 2.8,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.0667,
-     "aberrant": false
-    },
-    {
-     "match": "Darmstadt – 1.FC Magdeburg",
+     "match": "Tammeka Tartu – Harju JK Laagri",
      "source": "PMU",
-     "cote_olybet": 2.8,
-     "cote_reference": 2.8,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 2.12,
+     "cote_reference": 2.16,
+     "ecart_relatif": 0.0185,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Nomme United – Levadia Tallinn",
+     "source": "PMU",
+     "cote_olybet": 4.5,
+     "cote_reference": 6.25,
+     "ecart_relatif": 0.28,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Arminia Bielefeld – Eintracht Braunschweig",
+     "match": "Sheffield United – Wrexham",
      "source": "Pinnacle",
-     "cote_netbet": 1.72,
-     "cote_reference": 1.885,
-     "ecart_relatif": 0.0875,
+     "cote_netbet": 2.25,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.0816,
      "aberrant": false
     },
     {
-     "match": "Arminia Bielefeld – Eintracht Braunschweig",
+     "match": "Sheffield United – Wrexham",
      "source": "PMU",
-     "cote_netbet": 1.72,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0552,
+     "cote_netbet": 2.25,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0426,
      "aberrant": false
     },
     {
-     "match": "Energie Cottbus – Bochum",
+     "match": "Lincoln City – Birmingham",
      "source": "Pinnacle",
-     "cote_netbet": 2.67,
-     "cote_reference": 2.95,
-     "ecart_relatif": 0.0949,
+     "cote_netbet": 3.0,
+     "cote_reference": 3.36,
+     "ecart_relatif": 0.1071,
      "aberrant": false
     },
     {
-     "match": "Energie Cottbus – Bochum",
+     "match": "Lincoln City – Birmingham",
      "source": "PMU",
-     "cote_netbet": 2.67,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0291,
+     "cote_netbet": 3.0,
+     "cote_reference": 3.05,
+     "ecart_relatif": 0.0164,
      "aberrant": false
     },
     {
-     "match": "Darmstadt 98 – Magdeburg",
+     "match": "Norwich – Watford",
      "source": "Pinnacle",
-     "cote_netbet": 2.77,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.0767,
+     "cote_netbet": 1.43,
+     "cote_reference": 1.538,
+     "ecart_relatif": 0.07,
      "aberrant": false
     },
     {
-     "match": "Darmstadt 98 – Magdeburg",
+     "match": "Norwich – Watford",
      "source": "PMU",
-     "cote_netbet": 2.77,
-     "cote_reference": 2.8,
-     "ecart_relatif": 0.0107,
+     "cote_netbet": 1.43,
+     "cote_reference": 1.5,
+     "ecart_relatif": 0.0467,
      "aberrant": false
     },
     {
-     "match": "Wolfsburg – VfL Osnabrück",
+     "match": "Stoke City – Preston North End",
      "source": "Pinnacle",
-     "cote_netbet": 1.45,
-     "cote_reference": 1.562,
-     "ecart_relatif": 0.0716,
+     "cote_netbet": 1.63,
+     "cote_reference": 1.775,
+     "ecart_relatif": 0.0818,
      "aberrant": false
     },
     {
-     "match": "Wolfsburg – VfL Osnabrück",
+     "match": "Stoke City – Preston North End",
      "source": "PMU",
-     "cote_netbet": 1.45,
-     "cote_reference": 1.41,
-     "ecart_relatif": 0.0284,
+     "cote_netbet": 1.63,
+     "cote_reference": 1.68,
+     "ecart_relatif": 0.0298,
+     "aberrant": false
+    },
+    {
+     "match": "Bolton Wanderers – Bristol City",
+     "source": "Pinnacle",
+     "cote_netbet": 2.65,
+     "cote_reference": 2.9,
+     "ecart_relatif": 0.0862,
+     "aberrant": false
+    },
+    {
+     "match": "Bolton Wanderers – Bristol City",
+     "source": "PMU",
+     "cote_netbet": 2.65,
+     "cote_reference": 2.7,
+     "ecart_relatif": 0.0185,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-30T07:03:52+00:00",
-   "pinnacle_derniere_lecture": "2026-10-30T07:08:40+00:00",
+   "pinnacle_premiere_lecture": "2026-10-30T07:13:05+00:00",
+   "pinnacle_derniere_lecture": "2026-10-30T07:13:23+00:00",
    "books_premiere_lecture": "2026-10-30T05:35:05+00:00",
-   "books_derniere_lecture": "2026-10-30T07:08:14+00:00",
-   "ecart_enveloppe_secondes": 5615.0
+   "books_derniere_lecture": "2026-10-30T07:12:55+00:00",
+   "ecart_enveloppe_secondes": 5898.0
   },
   "historique_cotes": {
-   "lignes": 4313
+   "lignes": 1711
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 641,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 60647,
+   "mesures": 57463,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 162784,
-   "mesures": 60963,
-   "annotees": 3
+   "ancres": 160431,
+   "mesures": 61348,
+   "annotees": 6
   },
   "redecision": {
    "ajoutees": 0
@@ -342,26 +349,20 @@
    "dernier_reglement": "2026-10-30T06:39:03+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-30T07:10:20+00:00",
+  "fin": "2026-10-30T07:17:02+00:00",
   "cotes": {
-   "francaises": 203144,
-   "pinnacle": 159836,
-   "polymarket": 33182,
-   "smarkets": 4022,
-   "matchbook": 14770
+   "francaises": 194774,
+   "pinnacle": 207416,
+   "polymarket": 32552,
+   "smarkets": 4049,
+   "matchbook": 14601
   },
-  "matchs_francais": 2639,
-  "opportunites": 15,
+  "matchs_francais": 2629,
+  "opportunites": 16,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-29T15:09:18+00:00",
-   "mode": "complet",
-   "opportunites": 9,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-29T15:13:52+00:00",
    "mode": "complet",
@@ -1560,6 +1561,12 @@
    "debut": "2026-10-30T07:08:14+00:00",
    "mode": "complet",
    "opportunites": 15,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-30T07:12:54+00:00",
+   "mode": "complet",
+   "opportunites": 16,
    "nouveaux_paris": 0
   }
  ],
