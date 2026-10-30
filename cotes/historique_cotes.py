@@ -3,7 +3,7 @@
 Avant le 30/10/2026, cet historique n'existait que dans les versions successives de ``horizon_direct.json``
 de la branche « donnees » (53 Mo réécrits toutes les 5 minutes). Désormais, seules les lignes dont la cote a
 changé depuis le cycle précédent (ou nouvelles) sont ajoutées à ``cotes/AAAA-MM-JJ.jsonl.gz`` (jour UTC,
-gzip en mode « at » comme ``opportunites/``), avec des champs réduits :
+membres gzip ajoutés de façon atomique comme ``opportunites/``), avec des champs réduits :
 
     {"t": heure de lecture, "b": source, "m": match_id, "k": "marché|période|ligne|issue[|joueur]", "c": cote}
 
@@ -16,10 +16,11 @@ mémoire sont écrites une fois : c'est l'état de départ de l'historique.
 """
 from __future__ import annotations
 
-import gzip
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+
+from .ecriture import ajouter_gzip
 
 
 def _cle(l: dict) -> tuple:
@@ -78,6 +79,6 @@ def ajouter(donnees: Path, avant: dict[tuple, object], horizon: dict | None, mai
         return 0
     jour = Path(donnees) / "cotes" / f"{maintenant.astimezone(timezone.utc):%Y-%m-%d}.jsonl.gz"
     jour.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(jour, "at", encoding="utf-8") as f:
-        f.write("".join(json.dumps(x, ensure_ascii=False, separators=(",", ":")) + "\n" for x in lignes))
+    # Ajout atomique (cotes/ecriture.py) : un job tué pendant l'écriture ne tronque jamais le fichier du jour.
+    ajouter_gzip(jour, "".join(json.dumps(x, ensure_ascii=False, separators=(",", ":")) + "\n" for x in lignes))
     return len(lignes)

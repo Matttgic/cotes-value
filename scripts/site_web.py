@@ -2025,6 +2025,14 @@ function incidentsSante(j, maintenant=Date.now()) {
   return cours.map(i => ligne(i, false)).join("") + finis.slice(0, 20).map(i => ligne(i, true)).join("")
     || '<p class="aide sante-vide">Aucun incident ces dernières 24 heures.</p>';
 }
+// Échecs non bloquants (cotes/echecs.py, etat.json › echecs_recents) : historique, redécision, Qwen, alertes Chrome.
+function ligneEchecs(bloc, maintenant=Date.now()) {
+  const liste = ((bloc||{}).liste || []).filter(x => x && maintenant - new Date(x.quand) <= 86400000);
+  const total = Number.isInteger((bloc||{}).total) && bloc.total ? ` · ${bloc.total} depuis le début du suivi` : "";
+  if (!liste.length) return ligneSante("Erreurs non bloquantes", "Aucune ces dernières 24 heures"+total, "ok");
+  const der = liste[liste.length-1];
+  return ligneSante("Erreurs non bloquantes", `${liste.length} ces dernières 24 heures · dernière ${quand(der.quand)} · ${der.etape} : ${der.message}`, "alerte");
+}
 function rendreSante(maintenant=Date.now()) {
   const {dc, niveau, texte, mineures, age} = diagnosticSante(maintenant);
   const etapes = dc.etapes || {}, jr = (D.etat||{}).dernier_cycle_reglement || {};
@@ -2039,7 +2047,8 @@ function rendreSante(maintenant=Date.now()) {
   document.getElementById("sante-auto").innerHTML =
     ligneSante("Collecte et comparaison", dc.debut ? `Dernier relevé ${hm(dc.debut)}${duree != null ? " · "+duree+" s" : ""} · toutes les 5 min environ` : "Aucun relevé", age == null ? "panne" : age > 60 ? "panne" : age > 15 ? "alerte" : "ok") +
     ligneSante("Règlement des paris", jr.debut ? `Dernier passage ${quand(jr.debut)}${Number.isInteger(nReglements) ? " · "+nReglements+" enregistrement"+(nReglements>1?"s":"")+" réglé"+(nReglements>1?"s":"") : ""}` : "Aucun passage enregistré",
-      ageReglement == null ? "alerte" : ageReglement > 720 ? "panne" : ageReglement > 180 ? "alerte" : "ok");
+      ageReglement == null ? "alerte" : ageReglement > 720 ? "panne" : ageReglement > 180 ? "alerte" : "ok") +
+    ligneEchecs((D.etat||{}).echecs_recents, maintenant);
   const secours = dc.pinnacle_secours;
   document.getElementById("sante-cotes").innerHTML = SOURCES_COTES.filter(([k]) => etapes[k]).map(([k,nom]) =>
     ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus" : detailEtape(etapes[k]), niveauEtape(etapes[k]))

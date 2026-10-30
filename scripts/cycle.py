@@ -16,7 +16,6 @@ Mémoire de travail (cache Actions, MEMOIRE_CHEMIN) : horizon_direct, caches de 
 from __future__ import annotations
 
 import argparse
-import gzip
 import json
 import os
 import sys
@@ -42,6 +41,8 @@ from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsd
 from cotes import liens  # noqa: E402
 from cotes import reprise  # noqa: E402
 from cotes import historique_cotes, memoire  # noqa: E402
+from cotes import echecs  # noqa: E402
+from cotes.ecriture import ajouter_gzip  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
@@ -590,7 +591,7 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
             journal["historique_cotes"] = {"lignes": historique_cotes.ajouter(donnees, cotes_avant, horizon,
                                                                                maintenant)}
         except Exception as e:  # noqa: BLE001
-            journal["historique_cotes"] = {"erreur": f"{type(e).__name__}: {e}"[:200]}
+            journal["historique_cotes"] = {"erreur": echecs.noter(journal, "historique_cotes", e, maintenant)}
     return pin, poly, lignes
 
 
@@ -834,6 +835,26 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
     return regler
 
 
+def redecider(registre: list, maintenant: datetime, journal: dict, redecider_ouverts) -> None:
+    """Redécision des paris ouverts. Jamais bloquante ; un échec est annoncé et noté (cotes/echecs.py)."""
+    try:
+        journal["redecision"] = {"ajoutees": redecider_ouverts(registre, maintenant)}
+    except Exception as e:      # une correction ratée ne doit jamais arrêter la collecte
+        journal["redecision"] = {"erreur": echecs.noter(journal, "redecision", e, maintenant)}
+
+
+def suivre_qwen(donnees: Path, registre: list, opportunites: list, maintenant: datetime, journal: dict) -> None:
+    """Qwen : validation après deux cycles consécutifs. Jamais bloquante ; un échec est annoncé et noté."""
+    try:
+        from cotes import strategie_qwen
+        chemin_qwen = donnees / "persistance_qwen.json"
+        etat_qwen, vues_qwen = strategie_qwen.suivre(lire_json(chemin_qwen, {}), opportunites, maintenant, journal["debut"])
+        journal["qwen"] = strategie_qwen.valider(registre, vues_qwen, maintenant)
+        ecrire_json(chemin_qwen, etat_qwen)
+    except Exception as e:  # noqa: BLE001
+        journal["qwen"] = {"erreur": echecs.noter(journal, "qwen", e, maintenant)}
+
+
 def main() -> int:
     a = argparse.ArgumentParser()
     a.add_argument("--mode", choices=["complet", "test"], default=os.environ.get("MODE_COLLECTE", "complet"))
@@ -865,6 +886,7 @@ def main() -> int:
         etat = lire_json(donnees / "etat.json", {})
         journal["fin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         conserver_journal_reglement(etat, journal, regler)
+        echecs.fusionner(etat, journal.get("echecs", []), maintenant)
         ecrire_json(donnees / "etat.json", etat)
         from site_web import construire
         construire(donnees, Path(args.site))
@@ -947,18 +969,8 @@ def main() -> int:
     from cotes.decisions import figer_nouveaux, redecider_ouverts
     registre = stockage.fusionner_paris(paris, stockage.lire_archives(donnees))
     figer_nouveaux(registre, nouveaux)
-    try:
-        journal["redecision"] = {"ajoutees": redecider_ouverts(registre, maintenant)}
-    except Exception as e:      # une correction ratée ne doit jamais arrêter la collecte
-        journal["redecision"] = {"erreur": f"{type(e).__name__}: {e}"[:200]}
-    try:                              # Qwen : validation après deux cycles consécutifs ; jamais bloquante
-        from cotes import strategie_qwen
-        chemin_qwen = donnees / "persistance_qwen.json"
-        etat_qwen, vues_qwen = strategie_qwen.suivre(lire_json(chemin_qwen, {}), opportunites, maintenant, journal["debut"])
-        journal["qwen"] = strategie_qwen.valider(registre, vues_qwen, maintenant)
-        ecrire_json(chemin_qwen, etat_qwen)
-    except Exception as e:  # noqa: BLE001
-        journal["qwen"] = {"erreur": f"{type(e).__name__}: {e}"[:200]}
+    redecider(registre, maintenant, journal, redecider_ouverts)
+    suivre_qwen(donnees, registre, opportunites, maintenant, journal)
     simulation.suivre_prix(paris, francais)
     justes = etape("cotes_cloture", journal, comparaison.cotes_justes_depuis, index,
                    hors_consensus=hors) or {}
@@ -976,9 +988,8 @@ def main() -> int:
     if opportunites:
         jour = donnees / "opportunites" / f"{maintenant:%Y-%m-%d}.jsonl.gz"
         jour.parent.mkdir(parents=True, exist_ok=True)
-        with gzip.open(jour, "at", encoding="utf-8") as f:
-            for o in opportunites:
-                f.write(json.dumps(o, ensure_ascii=False) + "\n")
+        # Ajout atomique (copie + nouveau membre gzip + os.replace) : un job tué ne tronque jamais le fichier.
+        ajouter_gzip(jour, "".join(json.dumps(o, ensure_ascii=False) + "\n" for o in opportunites))
     etat = lire_json(donnees / "etat.json", {})
     journal.update({
         "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -990,6 +1001,7 @@ def main() -> int:
         "nouveaux_paris": len(nouveaux)})
     etat.pop("requetes_par_mois", None)     # compteur de l'ancien abonnement PulseScore
     etat.update({"dernier_cycle": journal})
+    echecs.fusionner(etat, journal.get("echecs", []), maintenant)
     conserver_journal_reglement(etat, journal, regler)
     historique = etat.get("historique", [])[-200:] + [{k: journal[k] for k in ("debut", "mode", "opportunites",
                                                                                 "nouveaux_paris")}]
