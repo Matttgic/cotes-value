@@ -137,7 +137,10 @@ jobs:
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
         run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
 
+      # Non bloquante (continue-on-error), mais visible : le script annonce l'échec (::warning::) et l'ajoute à
+      # etat.json › echecs_recents (page Santé) ; l'étape suivante l'annonce aussi s'il s'est arrêté avant.
       - name: Envoyer les nouvelles alertes Chrome
+        id: alertes_chrome
         continue-on-error: true
         env:
           # Webhook Pinnacle 2 : inactif sans ALERTE_WEBHOOK_URL ; l'en-tête de la clé vaut x-api-key par défaut
@@ -152,6 +155,10 @@ jobs:
           PUSHOVER_STRATEGIES: ${{ vars.PUSHOVER_STRATEGIES }}
           PUSHOVER_PRIORITY: ${{ vars.PUSHOVER_PRIORITY || '0' }}
         run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
+
+      - name: Signaler un échec des alertes Chrome
+        if: steps.alertes_chrome.outcome == 'failure'
+        run: echo "::warning title=Alertes Chrome (non bloquant)::Envoi en échec ; détail dans le journal de l'étape précédente et dans etat.json › echecs_recents (page Santé)."
 
       # Toujours, même si le push échoue plus bas : un cycle suivant ne renvoie pas les mêmes alertes.
       - name: Copier les alertes déjà envoyées

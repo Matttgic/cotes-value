@@ -355,6 +355,16 @@ assert.ok(inc.includes("Winamax") && inc.includes("sante-mot-panne") && inc.incl
 assert.ok(inc.includes("Unibet") && inc.includes("terminé") && inc.includes("10 min"));
 assert.ok(!inc.includes("Pinnacle"));                      // 2 cycles de refus : pas encore un incident
 assert.ok(incidentsSante({}, t0).includes("Aucun incident") && incidentsSante(undefined, t0).includes("Aucun incident"));
+// Échecs non bloquants (etat.json › echecs_recents) : ligne « Erreurs non bloquantes » des automatismes.
+assert.ok(h("sante-auto").includes("Erreurs non bloquantes") && h("sante-auto").includes("Aucune ces dernières 24 heures"));
+const ech={total:4,liste:[{quand:"2026-10-13T08:00:00Z",etape:"redecision",message:"ancien"},
+  {quand:"2026-10-15T08:40:00Z",etape:"qwen",message:"KeyError: cle"}]};
+const le=ligneEchecs(ech, t0);
+assert.ok(le.includes("sante-mot-alerte") && le.includes("1 ces dernières 24 heures") && le.includes("qwen") && le.includes("KeyError: cle"), le);
+assert.ok(!le.includes("ancien"));
+const vieux=ligneEchecs({total:4,liste:[ech.liste[0]]}, t0);
+assert.ok(vieux.includes("sante-mot-ok") && vieux.includes("4 depuis le début du suivi"), vieux);
+assert.ok(ligneEchecs(undefined, t0).includes("sante-mot-ok"));
 ''')
 
 

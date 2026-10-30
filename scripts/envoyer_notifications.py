@@ -396,6 +396,16 @@ def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
     return bilan
 
 
+def signaler_echec(donnees: Path | None, erreur) -> None:
+    """L'étape reste non bloquante (continue-on-error), mais l'échec se voit : annotation ``::warning::`` et
+    ``etat.json`` › ``echecs_recents`` (page Santé). Message court, jamais de jeton (cotes/echecs.py)."""
+    from cotes import echecs
+    if donnees is not None:
+        echecs.enregistrer(donnees, "alertes_chrome", erreur)
+    else:
+        echecs.annoter("alertes_chrome", echecs.message_court(erreur))
+
+
 def transmettre(flux: dict, env=None, ouvrir=urlopen) -> dict:
     env = os.environ if env is None else env
     url = env.get("ACTIONS_ID_TOKEN_REQUEST_URL", "")
@@ -433,6 +443,12 @@ if __name__ == "__main__":
         for cle, nom in sorted(NOMS.items(), key=lambda x: x[1]):
             print(f"{cle}\t{nom}")
         sys.exit(0)
-    bilan = envoyer_et_journaliser(args.donnees,args.flux) if args.donnees else transmettre(json.loads(args.flux.read_text(encoding="utf-8")))
+    try:
+        bilan = envoyer_et_journaliser(args.donnees,args.flux) if args.donnees else transmettre(json.loads(args.flux.read_text(encoding="utf-8")))
+    except Exception as e:  # noqa: BLE001 - noté et annoncé, puis code 1 comme avant (étape non bloquante)
+        signaler_echec(args.donnees, e)
+        raise
     print(json.dumps(bilan, ensure_ascii=False))
+    if not bilan.get("ok"):
+        signaler_echec(args.donnees, bilan.get("erreur") or "Envoi des alertes Chrome en échec")
     sys.exit(0 if bilan.get("ok") else 1)
