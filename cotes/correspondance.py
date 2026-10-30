@@ -54,7 +54,18 @@ JEUNES = re.compile(r"^(u\d{2}|ii|b|reserves?|youth)$")
 
 
 def normaliser(nom: str | None) -> tuple[tuple[str, ...], bool, frozenset]:
-    """(mots significatifs, féminin, marqueurs jeunes/réserve)."""
+    """(mots significatifs, féminin, marqueurs jeunes/réserve).
+
+    Fonction pure (expressions et tables constantes), appelée des centaines de milliers de fois par cycle sur
+    quelques milliers de noms : le calcul est mis en cache (``_normaliser``). Le résultat est entièrement
+    immuable (tuple de str, bool, frozenset) : il peut être partagé sans risque entre appelants. Toute valeur
+    « vide » (None, "", 0, liste vide…) donnait déjà le résultat de "" : elle est ramenée à "" avant le cache,
+    si bien qu'une valeur vide non hachable reste acceptée ; une valeur non vide non textuelle lève toujours."""
+    return _normaliser(nom or "")
+
+
+@functools.lru_cache(maxsize=65536)
+def _normaliser(nom: str) -> tuple[tuple[str, ...], bool, frozenset]:
     s = unicodedata.normalize("NFKD", nom or "").encode("ascii", "ignore").decode().lower().strip()
     s = re.sub(r"\bf\.\s?c\.?", "fc", s)                 # « F.C. » -> fc
     s = re.sub(r"\bb\.\s?c\.?", "bc", s)                 # « AEK B.C. » (club de basket) -> bc, pas l'équipe B

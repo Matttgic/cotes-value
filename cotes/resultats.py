@@ -20,8 +20,10 @@ from datetime import datetime, timedelta
 
 import requests
 
+from .connexion import Client
 from .correspondance import normaliser, ressemblance
 
+_http = Client()                 # connexion gardée : ESPN et API-Sports, un appel par jour et par ligue
 ECART_HEURE_MIN = 45
 SECOURS_HEURE_MIN = 15
 SECOURS_NOM_MIN = 0.95
@@ -102,7 +104,7 @@ ERREURS_ESPN: list[str] = []          # lectures ESPN en échec (pour le journal
 
 def _espn_json(chemin: str, params: dict | None = None) -> dict | None:
     try:
-        r = requests.get(f"{ESPN}/{chemin}", params=params, timeout=20)
+        r = _http.get(f"{ESPN}/{chemin}", params=params, timeout=20)
         if r.ok:
             return r.json()
         ERREURS_ESPN.append(f"{chemin} : HTTP {r.status_code}")
@@ -199,9 +201,10 @@ def apisports_match(sport: str, g: dict) -> dict | None:
 
 
 def lire_apisports(cle: str, sport: str, jours: list[str], cache: dict, maintenant: datetime,
-                   http=requests) -> tuple[list[dict], dict]:
+                   http=None) -> tuple[list[dict], dict]:
     """Matchs terminés d'API-Sports pour ces jours (AAAA-MM-JJ, UTC). `cache` (modifié) : « sport|jour » ->
     {"lu": heure, "matchs": [...]}, relu seulement s'il est trop vieux. Renvoie (matchs, quota restant)."""
+    http = _http if http is None else http
     out, quota = [], {}
     for jour in sorted(set(jours)):
         k = f"{sport}|{jour}"

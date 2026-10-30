@@ -19,11 +19,14 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
+from .connexion import Client
+
 BASE = "https://gamma-api.polymarket.com"
 TAG_MATCHS = 100639            # étiquette « games » : événements de match (pas les paris à long terme)
 ERREURS: list[str] = []
 logger = logging.getLogger(__name__)
 _bloque = False
+_http = Client()               # connexion gardée entre les pages d'événements
 
 
 def _erreur(message: str) -> None:
@@ -74,7 +77,7 @@ def _get(path: str, params: dict, essais: int = 3):
         return None
     for i in range(essais):
         try:
-            r = requests.get(BASE + path, params=params, timeout=60)
+            r = _http.get(BASE + path, params=params, timeout=60)
             if r.status_code == 200:
                 try:
                     d = r.json()

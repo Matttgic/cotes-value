@@ -55,7 +55,7 @@ def appeler(module, essais=3):
 def test_statut_bloquant_une_seule_requete_sans_fuite(module,statut,monkeypatch,caplog):
     calls=[];rep=Reponse(status=statut)
     monkeypatch.setenv('PINNACLE_API_KEY','secret-test-prive')
-    monkeypatch.setattr(module.requests,'get',lambda *a,**kw:calls.append(kw) or rep)
+    monkeypatch.setattr(module._http,'get',lambda *a,**kw:calls.append(kw) or rep)
     monkeypatch.setattr(module.time,'sleep',lambda _:pytest.fail('Aucun délai après un statut bloquant'))
     assert appeler(module) is None and appeler(module) is None
     assert len(calls)==1 and not rep.json_lu and f'HTTP {statut}' in ' '.join(module.ERREURS)
@@ -65,7 +65,7 @@ def test_statut_bloquant_une_seule_requete_sans_fuite(module,statut,monkeypatch,
 @pytest.mark.parametrize('module',[P,M])
 def test_reessais_500_bornes_et_pas_de_sleep_apres_dernier_echec(module,monkeypatch):
     calls=[];delais=[]
-    monkeypatch.setattr(module.requests,'get',lambda *a,**kw:calls.append(1) or Reponse(status=503))
+    monkeypatch.setattr(module._http,'get',lambda *a,**kw:calls.append(1) or Reponse(status=503))
     monkeypatch.setattr(module.time,'sleep',delais.append)
     assert appeler(module) is None and len(calls)==3 and delais==[2,4]
 
@@ -78,7 +78,7 @@ def test_reprise_apres_panne_reseau_sans_texte_exception(module,monkeypatch,capl
         n+=1
         if n==1:raise requests.Timeout('secret-test-prive URL et en-têtes')
         return Reponse([{'id':1}])
-    monkeypatch.setattr(module.requests,'get',get)
+    monkeypatch.setattr(module._http,'get',get)
     monkeypatch.setattr(module.time,'sleep',lambda _:None)
     assert appeler(module)==[{'id':1}] and n==2
     assert 'secret-test-prive' not in caplog.text+json.dumps(module.ERREURS)
@@ -88,7 +88,7 @@ def test_reprise_apres_panne_reseau_sans_texte_exception(module,monkeypatch,capl
 @pytest.mark.parametrize('rep',[Reponse(invalide=True),Reponse({}),Reponse(None),Reponse(status=404)])
 def test_json_schema_et_http_permanent_sans_reessai(module,rep,monkeypatch,caplog):
     calls=[]
-    monkeypatch.setattr(module.requests,'get',lambda *a,**kw:calls.append(1) or rep)
+    monkeypatch.setattr(module._http,'get',lambda *a,**kw:calls.append(1) or rep)
     monkeypatch.setattr(module.time,'sleep',lambda _:pytest.fail('Pas de réessai de schéma ou HTTP 404'))
     assert appeler(module) is None and len(calls)==1 and module.ERREURS
     assert 'secret-test-prive' not in caplog.text+json.dumps(module.ERREURS)
@@ -304,7 +304,7 @@ def test_diagnostic_pinnacle_remonte_dans_cycle_sans_cle(monkeypatch):
 
 def test_403_pinnacle_na_bloque_pas_le_sport_suivant(monkeypatch):
     calls=[]; pauses=[]
-    monkeypatch.setattr(P.requests,'get',lambda *a,**kw:calls.append(1) or Reponse(status=403))
+    monkeypatch.setattr(P._http,'get',lambda *a,**kw:calls.append(1) or Reponse(status=403))
     monkeypatch.setattr(P.time,'sleep',pauses.append)
     P._reprises_403=0; P.choix_prix.clear()
     assert appeler(P) is None and appeler(P) is None
@@ -316,7 +316,7 @@ def test_403_pinnacle_na_bloque_pas_le_sport_suivant(monkeypatch):
 def test_403_aleatoire_repris_une_fois_sans_erreur_notee(monkeypatch):
     # Cas réel du 18/10 : un 403 aléatoire sur le football faisait tomber le cycle à 28 000 cotes.
     reponses=[Reponse(status=403),Reponse([matchup()])]
-    monkeypatch.setattr(P.requests,'get',lambda *a,**kw:reponses.pop(0))
+    monkeypatch.setattr(P._http,'get',lambda *a,**kw:reponses.pop(0))
     monkeypatch.setattr(P.time,'sleep',lambda _:None)
     P._reprises_403=0; P.choix_prix.clear(); P.ERREURS.clear()
     assert appeler(P)==[matchup()]
@@ -325,7 +325,7 @@ def test_403_aleatoire_repris_une_fois_sans_erreur_notee(monkeypatch):
 
 def test_reprises_403_plafonnees_par_cycle(monkeypatch):
     calls=[]
-    monkeypatch.setattr(P.requests,'get',lambda *a,**kw:calls.append(1) or Reponse(status=403))
+    monkeypatch.setattr(P._http,'get',lambda *a,**kw:calls.append(1) or Reponse(status=403))
     monkeypatch.setattr(P.time,'sleep',lambda _:None)
     P._reprises_403=0; P.choix_prix.clear()
     for _ in range(P.REPRISES_403_MAX+3): appeler(P)
@@ -341,7 +341,7 @@ def test_403_dun_sport_laisse_passer_le_suivant(monkeypatch):
         if 'matchups' in url:
             return Reponse([matchup()])
         return Reponse([marche_pin()])
-    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P._http,'get',get)
     monkeypatch.setattr(P.time,'sleep',lambda _:None)
     out=P.collecter({13:'hockey_sur_gazon',29:'football'})
     assert len(out)==2 and {l['issue'] for l in out}=={'DOM','EXT'}
@@ -397,7 +397,7 @@ def test_age_http_perime_frais_ou_absent(monkeypatch):
             if 'markets' in url:
                 return Reponse([marche_pin()], headers=entetes)
             return Reponse([matchup()])
-        monkeypatch.setattr(P.requests,'get',get)
+        monkeypatch.setattr(P._http,'get',get)
         return P.collecter({29:'football'})
     vieux=lire('601')
     assert vieux and all(l['cote_perimee'] and l['age_cache_s']==601 for l in vieux)
@@ -517,7 +517,7 @@ def test_rechauffeur_n_impose_plus_ses_chemins_et_date_la_fraicheur(monkeypatch,
             return Reponse([matchup()])
         return Reponse([marche_pin()])
     monkeypatch.setattr(P.requests,'post',post)
-    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P._http,'get',get)
     out=P.collecter({29:'football'})
     assert vu['url']=='https://exemple.test/rechauffe' and vu['timeout']==120
     assert vu['headers']['x-region']=='eu-west-3' and vu['headers']['x-secret']=='secret-rechauffe'
@@ -543,7 +543,7 @@ def test_hit_sans_age_reste_perime_et_age_s_est_utilise(monkeypatch):
                   'markets':'/sports/29/markets/straight?primaryOnly=false&withSpecials=true',
                   't':datetime.now(timezone.utc).isoformat(),'cache':'HIT','fresh':False,'age_s':290}}]
     monkeypatch.setattr(P.requests,'post',lambda *a, **k: Reponse(plans.pop(0)))
-    monkeypatch.setattr(P.requests,'get',lambda url, **kw: (
+    monkeypatch.setattr(P._http,'get',lambda url, **kw: (
         Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])))
     inconnu=P.collecter({29:'football'})
     assert inconnu and all(l['cote_perimee'] is True and l['age_cache_s'] is None for l in inconnu)
@@ -563,7 +563,7 @@ def test_rechauffeur_en_panne_garde_les_url_habituelles(monkeypatch,caplog):
             return Reponse([matchup()], headers={'Age':'12'})
         return Reponse([marche_pin()], headers={'Age':'12'})
     monkeypatch.setattr(P.requests,'post',post)
-    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P._http,'get',get)
     out=P.collecter({29:'football'})
     assert any(u.endswith('/sports/29/matchups?withSpecials=true') for u in urls)
     assert any(u.endswith('/sports/29/markets/straight?primaryOnly=false&withSpecials=true') for u in urls)
@@ -580,7 +580,7 @@ def test_chemin_rechauffe_invalide_et_proxy(monkeypatch):
         'matchups':'https://evil.exemple/vol','markets':'/sports/29/markets/straight?primaryOnly=false',
         't':datetime.now(timezone.utc).isoformat(),'cache':'MISS'}}))
     urls=[]
-    monkeypatch.setattr(P.requests,'get',lambda url, **kw: urls.append(url) or (
+    monkeypatch.setattr(P._http,'get',lambda url, **kw: urls.append(url) or (
         Reponse([matchup()], headers={'Age':'4'}) if 'matchups' in url else Reponse([marche_pin()], headers={'Age':'4'})))
     out=P.collecter({29:'football'})
     assert urls[0]=='https://proxy.exemple.test/pinnacle/sports/29/matchups?withSpecials=true'
@@ -684,8 +684,8 @@ def _brancher(monkeypatch, tetes, prix_par_url=None):
             if url.endswith(suffixe):
                 return rep
         return Reponse([marche_pin()], headers={'cf-cache-status':'HIT','Age':'800'})
-    monkeypatch.setattr(P.requests,'head',head)
-    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P._http,'head',head)
+    monkeypatch.setattr(P._http,'get',get)
     return heads, gets
 
 
@@ -768,7 +768,7 @@ def test_403_sur_sport_vide_verifie_par_url_simple_sans_erreur(monkeypatch):
         if '/sports/9/' in url:
             return Reponse(status=403) if 'withSpecials' in url else Reponse([])
         return Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])
-    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P._http,'get',get)
     monkeypatch.setattr(P.time,'sleep',pauses.append)
     out=P.collecter({9:'curling',29:'football'})
     assert len(out)==2 and not P.ERREURS and not pauses
@@ -782,7 +782,7 @@ def test_403_avec_matchs_sur_url_simple_les_garde_sans_speciaux(monkeypatch):
         if 'matchups?withSpecials' in url:
             return Reponse(status=403)
         return Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])
-    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P._http,'get',get)
     monkeypatch.setattr(P.time,'sleep',lambda _:None)
     out=P.collecter({29:'football'})
     # la reprise habituelle a échoué (refus noté) : les matchs de l'URL simple servent quand même
@@ -799,7 +799,7 @@ def test_403_aleatoire_sur_sport_actif_garde_la_reprise_avec_speciaux(monkeypatc
         if 'matchups?withSpecials' in url and refus:
             return refus.pop()
         return Reponse([matchup()]) if 'matchups' in url else Reponse([marche_pin()])
-    monkeypatch.setattr(P.requests,'get',get)
+    monkeypatch.setattr(P._http,'get',get)
     monkeypatch.setattr(P.time,'sleep',lambda _:None)
     out=P.collecter({29:'football'})
     assert len(out)==2 and not P.ERREURS and 'matchups_sans_speciaux' not in P.choix_prix
@@ -832,7 +832,7 @@ def test_sondes_dans_l_ordre_decalent_les_copies_sans_autre_client(monkeypatch):
     def head(url, **kw):
         q='?'+url.split('?',1)[1] if '?' in url else ''
         return toucher(q) if q in rempli else Tete(403,'BYPASS')
-    monkeypatch.setattr(P.requests,'head',head)
+    monkeypatch.setattr(P._http,'head',head)
     ages=[]
     for cycle in range(40):
         horloge['t']=cycle*280

@@ -34,13 +34,21 @@ CHAMPS_WEBHOOK = ("id", "match", "ligue", "debut", "marche", "selection", "bookm
                   "cote_juste", "cote_pinnacle", "ecart", "recheck")
 
 
-def preparer(donnees: Path, maintenant: datetime | None = None, retenues: list | None = None) -> dict:
+def lire_paris(donnees: Path) -> list[dict]:
+    """``paris.json`` tel qu'écrit par le cycle. Lu une seule fois par passage (8 Mo) : la sélection, Pushover et
+    le webhook ne font que lire ces objets, aucun ne les modifie."""
+    return json.loads((donnees / "paris.json").read_text())
+
+
+def preparer(donnees: Path, maintenant: datetime | None = None, retenues: list | None = None,
+             paris_bruts: list[dict] | None = None) -> dict:
     """Même sélection que le site, sans attendre sa génération ni les résultats."""
     from cotes import stockage
     from cotes.convergence import selections
     from cotes.strategies_prudentes import selections_prudentes
     from cotes.notifications import flux, selections_labo
-    paris = stockage.fusionner_paris(json.loads((donnees / "paris.json").read_text()), stockage.lire_archives(donnees))
+    paris = stockage.fusionner_paris(lire_paris(donnees) if paris_bruts is None else paris_bruts,
+                                     stockage.lire_archives(donnees))
     actuelles = json.loads((donnees / "opportunites_actuelles.json").read_text())
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
@@ -172,7 +180,7 @@ def poster_webhook(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.m
     return {**bilan, "actif": True}
 
 
-def webhook_pinnacle2(donnees: Path, flux: dict) -> dict:
+def webhook_pinnacle2(donnees: Path, flux: dict, paris: list[dict] | None = None) -> dict:
     """Envoie les nouvelles alertes Pinnacle 2 et mémorise leurs id. Toute erreur est journalisée, jamais levée."""
     from scripts.cycle import ecrire_json
     try:
@@ -184,7 +192,7 @@ def webhook_pinnacle2(donnees: Path, flux: dict) -> dict:
         maintenant = datetime.now(timezone.utc)
         limite = (maintenant - timedelta(days=3)).isoformat(timespec="seconds")
         recents = {k: v for k, v in envoyes.items() if isinstance(v, str) and v >= limite}
-        paris = json.loads((donnees / "paris.json").read_text())
+        paris = lire_paris(donnees) if paris is None else paris
         a_envoyer = alertes_webhook(flux, paris, recents, maintenant)
         if not a_envoyer:
             return {"actif": bool(os.environ.get("ALERTE_WEBHOOK_URL", "").strip()), "envoyees": 0, "echecs": 0}
@@ -326,7 +334,7 @@ def poster_pushover(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.
     return {**bilan, "actif": True}
 
 
-def pushover(donnees: Path, flux: dict, env=None) -> dict:
+def pushover(donnees: Path, flux: dict, env=None, paris: list[dict] | None = None) -> dict:
     """Envoie les nouvelles alertes des stratégies cochées et mémorise leurs id. Jamais de levée."""
     from scripts.cycle import ecrire_json
     env = os.environ if env is None else env
@@ -349,7 +357,7 @@ def pushover(donnees: Path, flux: dict, env=None) -> dict:
         maintenant = datetime.now(timezone.utc)
         limite = (maintenant - timedelta(days=3)).isoformat(timespec="seconds")
         recents = {k: v for k, v in envoyes.items() if isinstance(v, str) and (v >= limite or v == "")}
-        paris = json.loads((donnees / "paris.json").read_text())
+        paris = lire_paris(donnees) if paris is None else paris
         a_envoyer = alertes_pushover(flux, paris, recents, choisies, maintenant, amorcage)
         bilan = poster_pushover(a_envoyer, env) if a_envoyer else {"envoyees": [], "echecs": 0, "erreurs": []}
         for pid in bilan["envoyees"]:
@@ -365,10 +373,14 @@ def pushover(donnees: Path, flux: dict, env=None) -> dict:
 def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
     from scripts.cycle import ecrire_json
     retenues: list = []
-    flux = preparer(donnees, retenues=retenues)
+    try:
+        paris = lire_paris(donnees)                 # une seule lecture pour les trois usages
+    except (OSError, ValueError):
+        paris = None                                # chacun relit et gère l'erreur comme avant
+    flux = preparer(donnees, retenues=retenues, paris_bruts=paris)
     ecrire_json(destination, flux)
-    push = pushover(donnees, flux)                  # d'abord : c'est le canal le plus rapide
-    webhook = webhook_pinnacle2(donnees, flux)
+    push = pushover(donnees, flux, paris=paris)     # d'abord : c'est le canal le plus rapide
+    webhook = webhook_pinnacle2(donnees, flux, paris=paris)
     debut = datetime.now(timezone.utc)
     bilan = transmettre(flux)
     fin = datetime.now(timezone.utc)
