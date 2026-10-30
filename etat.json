@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-30T07:37:20+00:00",
+  "debut": "2026-10-30T07:42:04+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
@@ -8,29 +8,49 @@
     "ok": true
    },
    "olybet": {
-    "secondes": 11.8,
+    "secondes": 13.7,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 24.5,
-    "ok": true
-   },
-   "polymarket": {
-    "secondes": 26.3,
+    "secondes": 28.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "1N2 incomplet ou issues dupliquées : référence rejetée"
+     "sport 45 matchups : HTTP 403"
+    ]
+   },
+   "polymarket": {
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ],
+    "reprise": 33722
+   },
+   "netbet": {
+    "secondes": 37.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
     ]
    },
    "pmu_direct": {
-    "secondes": 37.7,
+    "secondes": 44.6,
     "ok": true
    },
-   "netbet": {
-    "secondes": 37.7,
+   "winamax_direct": {
+    "secondes": 76.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
+   "betclic_direct": {
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -38,15 +58,7 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 21.2,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 75.3,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 71.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,11 +71,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 83.2,
+    "secondes": 87.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.4,
+    "secondes": 4.6,
     "ok": true
    },
    "cotes_cloture": {
@@ -81,37 +93,62 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 270,
-   "lignes": 15094
+   "matchs": 269,
+   "lignes": 15196
+  },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 47542,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 47542,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 894,
-   "age_min_s": 91,
-   "lignes": 176990,
-   "lignes_perimees": 194,
-   "rechauffeur": "ok",
+   "age_max_s": 850,
+   "age_min_s": 80,
+   "lignes": 177091,
+   "lignes_perimees": 1901,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 43,
+    "head_200": 40,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 9,
-    "choisi_fixe": 7,
-    "sport_vide": 4
+    "choisi_autre": 13,
+    "choisi_fixe": 3,
+    "reprise_403": 1,
+    "sport_vide": 3
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Polymarket": {
+    "football_americain": 2516,
+    "hockey": 248,
+    "football": 28243,
+    "basket": 1404,
+    "esport": 190,
+    "cricket": 30,
+    "baseball": 2,
+    "volley": 22,
+    "tennis_de_table": 644,
+    "tennis": 270,
+    "handball": 32,
+    "flechettes": 50,
+    "autre": 22,
+    "rugby": 49
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -142,160 +179,167 @@
    "plus_chez_les_references": []
   },
   "betclic_proches": {
-   "proches": 8,
+   "proches": 7,
    "relances": 0,
-   "proches_non_lus": 0,
+   "proches_non_lus": 7,
    "proches_vides": 0
   },
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Lyngby – Randers",
+     "match": "CSKA 1948 Sofia – Spartak Varna",
      "source": "Pinnacle",
-     "cote_olybet": 2.14,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0696,
+     "cote_olybet": 1.35,
+     "cote_reference": 1.405,
+     "ecart_relatif": 0.0391,
      "aberrant": false
     },
     {
-     "match": "Lyngby – Randers",
+     "match": "CSKA 1948 Sofia – Spartak Varna",
      "source": "PMU",
-     "cote_olybet": 2.14,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.07,
+     "cote_olybet": 1.35,
+     "cote_reference": 1.36,
+     "ecart_relatif": 0.0074,
      "aberrant": false
     },
     {
-     "match": "Tammeka Tartu – Harju JK Laagri",
-     "source": "PMU",
-     "cote_olybet": 2.12,
-     "cote_reference": 2.16,
-     "ecart_relatif": 0.0185,
-     "aberrant": false
-    },
-    {
-     "match": "Parnu JK Vaprus – Paide Linnameeskond",
+     "match": "CSKA Sofia – Slavia Sofia",
      "source": "Pinnacle",
-     "cote_olybet": 3.1,
-     "cote_reference": 3.35,
-     "ecart_relatif": 0.0746,
+     "cote_olybet": 1.19,
+     "cote_reference": 1.215,
+     "ecart_relatif": 0.0207,
      "aberrant": false
     },
     {
-     "match": "Parnu JK Vaprus – Paide Linnameeskond",
+     "match": "CSKA Sofia – Slavia Sofia",
      "source": "PMU",
-     "cote_olybet": 3.1,
-     "cote_reference": 3.1,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 1.19,
+     "cote_reference": 1.13,
+     "ecart_relatif": 0.0531,
      "aberrant": false
     },
     {
-     "match": "Nomme United – Levadia Tallinn",
+     "match": "Lokomotiv Sofia – Botev Plovdiv",
      "source": "Pinnacle",
-     "cote_olybet": 4.5,
-     "cote_reference": 4.98,
-     "ecart_relatif": 0.0964,
+     "cote_olybet": 2.79,
+     "cote_reference": 3.01,
+     "ecart_relatif": 0.0731,
      "aberrant": false
     },
     {
-     "match": "Nomme United – Levadia Tallinn",
+     "match": "Lokomotiv Sofia – Botev Plovdiv",
      "source": "PMU",
-     "cote_olybet": 4.5,
-     "cote_reference": 5.8,
-     "ecart_relatif": 0.2241,
-     "aberrant": true
+     "cote_olybet": 2.79,
+     "cote_reference": 2.55,
+     "ecart_relatif": 0.0941,
+     "aberrant": false
     },
     {
-     "match": "Vissel Kobe – Nagoya Grampus Eight",
+     "match": "Dunav Ruse – Levski Sofia",
      "source": "Pinnacle",
-     "cote_olybet": 1.9,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0594,
+     "cote_olybet": 8.9,
+     "cote_reference": 9.47,
+     "ecart_relatif": 0.0602,
      "aberrant": false
     },
     {
-     "match": "Vissel Kobe – Nagoya Grampus Eight",
+     "match": "Dunav Ruse – Levski Sofia",
      "source": "PMU",
-     "cote_olybet": 1.9,
-     "cote_reference": 1.84,
-     "ecart_relatif": 0.0326,
+     "cote_olybet": 8.9,
+     "cote_reference": 9.0,
+     "ecart_relatif": 0.0111,
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Nomme United – Levadia Tallinn",
-     "source": "PMU",
-     "cote_olybet": 4.5,
-     "cote_reference": 5.8,
-     "ecart_relatif": 0.2241,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 3,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Rubin Kazan – Fakel Voronezh",
+     "match": "Shakhtar Donetsk – Obolon Kiev",
      "source": "Pinnacle",
-     "cote_netbet": 1.77,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.115,
+     "cote_netbet": 1.04,
+     "cote_reference": 1.095,
+     "ecart_relatif": 0.0504,
      "aberrant": false
     },
     {
-     "match": "Dynamo Moscou – Akhmat Grozny",
-     "source": "Pinnacle",
-     "cote_netbet": 1.35,
-     "cote_reference": 1.526,
-     "ecart_relatif": 0.1155,
-     "aberrant": false
-    },
-    {
-     "match": "Veres Rivne – Chornomorets Odesa",
+     "match": "Cracovia Krakow – Motor Lublin",
      "source": "Pinnacle",
      "cote_netbet": 2.07,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0717,
+     "cote_reference": 2.24,
+     "ecart_relatif": 0.0759,
+     "aberrant": false
+    },
+    {
+     "match": "Cracovia Krakow – Motor Lublin",
+     "source": "PMU",
+     "cote_netbet": 2.07,
+     "cote_reference": 1.96,
+     "ecart_relatif": 0.0561,
+     "aberrant": false
+    },
+    {
+     "match": "Karmiotissa – Olympiakos Nicosia",
+     "source": "Pinnacle",
+     "cote_netbet": 2.7,
+     "cote_reference": 2.94,
+     "ecart_relatif": 0.0816,
+     "aberrant": false
+    },
+    {
+     "match": "Villarreal – Espanyol Barcelone",
+     "source": "Pinnacle",
+     "cote_netbet": 1.36,
+     "cote_reference": 1.415,
+     "ecart_relatif": 0.0388,
+     "aberrant": false
+    },
+    {
+     "match": "Villarreal – Espanyol Barcelone",
+     "source": "PMU",
+     "cote_netbet": 1.36,
+     "cote_reference": 1.35,
+     "ecart_relatif": 0.0074,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-30T07:37:32+00:00",
-   "pinnacle_derniere_lecture": "2026-10-30T07:37:40+00:00",
+   "pinnacle_premiere_lecture": "2026-10-30T07:13:23+00:00",
+   "pinnacle_derniere_lecture": "2026-10-30T07:42:28+00:00",
    "books_premiere_lecture": "2026-10-30T05:35:05+00:00",
-   "books_derniere_lecture": "2026-10-30T07:37:21+00:00",
-   "ecart_enveloppe_secondes": 7355.0
+   "books_derniere_lecture": "2026-10-30T07:42:05+00:00",
+   "ecart_enveloppe_secondes": 7643.0
   },
   "historique_cotes": {
-   "lignes": 3471
+   "lignes": 1519
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.4
+   "age_min": 10.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 641,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 62629,
+   "mesures": 61907,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 178136,
-   "mesures": 158754,
-   "annotees": 13
+   "ancres": 175334,
+   "mesures": 160626,
+   "annotees": 12
   },
   "redecision": {
    "ajoutees": 0
@@ -311,26 +355,20 @@
    "dernier_reglement": "2026-10-30T07:35:43+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-30T07:40:16+00:00",
+  "fin": "2026-10-30T07:45:37+00:00",
   "cotes": {
-   "francaises": 206491,
-   "pinnacle": 176990,
+   "francaises": 205433,
+   "pinnacle": 224633,
    "polymarket": 33722,
    "smarkets": 4021,
-   "matchbook": 15094
+   "matchbook": 15196
   },
-  "matchs_francais": 2640,
-  "opportunites": 13,
+  "matchs_francais": 2560,
+  "opportunites": 12,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-29T15:37:16+00:00",
-   "mode": "complet",
-   "opportunites": 12,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-29T15:41:59+00:00",
    "mode": "complet",
@@ -1529,6 +1567,12 @@
    "debut": "2026-10-30T07:37:20+00:00",
    "mode": "complet",
    "opportunites": 13,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-30T07:42:04+00:00",
+   "mode": "complet",
+   "opportunites": 12,
    "nouveaux_paris": 0
   }
  ],
