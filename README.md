@@ -48,7 +48,7 @@ Matchbook est une bourse lue sans compte (`SOURCE_MATCHBOOK` = `direct` par
 défaut, `shadow` pour lire sans prendre de pari, `off` pour couper). Les paris
 value utilisent les mêmes seuils que Pinnacle (2 %, 3 %, 5 %…). Matchbook a sa
 colonne dans le bilan et dans le filtre par référence. Il ne rejoint pas le
-consensus, et aucune stratégie (Grok, Défi, sélecteurs figés) ne le prend.
+consensus, et aucune stratégie (Grok, Défi, Gemini Défi, sélecteurs figés) ne le prend.
 
 ## Comment ça marche
 
