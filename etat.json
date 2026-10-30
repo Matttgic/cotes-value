@@ -1,18 +1,28 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-30T20:12:27+00:00",
+  "debut": "2026-10-30T20:17:43+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.7,
+    "secondes": 4.5,
     "ok": true
    },
+   "winamax_direct": {
+    "secondes": 4.6,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau (CurlError 22)",
+     "connexion impossible (CurlError 22)",
+     "lecture vide"
+    ]
+   },
    "olybet": {
-    "secondes": 8.4,
+    "secondes": 11.1,
     "ok": true
    },
    "polymarket": {
-    "secondes": 24.0,
+    "secondes": 29.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -22,18 +32,11 @@
     ]
    },
    "pinnacle": {
-    "secondes": 33.7,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 28 markets/straight : HTTP 403",
-     "sport 17 matchups : HTTP 403",
-     "sport 37 matchups : HTTP 403"
-    ],
-    "reprise": 70
+    "secondes": 29.6,
+    "ok": true
    },
    "netbet": {
-    "secondes": 38.0,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -41,43 +44,36 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 49.5,
+    "secondes": 51.2,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 32.8,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 66.2,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 76.1,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
-   },
-   "unibet_direct": {
-    "secondes": 62.0,
-    "ok": true
    },
    "smarkets": {
-    "secondes": 28.0,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 98.1,
+    "secondes": 86.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.7,
+    "secondes": 3.3,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.3,
+    "secondes": 1.1,
     "ok": true
    }
   },
@@ -92,41 +88,33 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 354,
-   "lignes": 16112
+   "lignes": 16101
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 890,
-   "age_min_s": 95,
-   "lignes": 180330,
-   "lignes_perimees": 1308,
-   "rechauffeur": "ok",
+   "age_max_s": 758,
+   "age_min_s": 8,
+   "lignes": 180112,
+   "lignes_perimees": 966,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 30,
-    "choisi_fixe": 9,
-    "head_403": 3,
+    "head_200": 42,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 3,
-    "reprise_403": 3,
-    "matchups_sans_speciaux": 2,
+    "choisi_autre": 11,
+    "choisi_fixe": 5,
     "sport_vide": 4
    }
   },
   "reprise": {
-   "actif": true,
-   "Pinnacle": {
-    "snooker": 70
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -155,7 +143,7 @@
    "plus_chez_les_references": []
   },
   "betclic_proches": {
-   "proches": 10,
+   "proches": 9,
    "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 0
@@ -163,66 +151,91 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Racing Club Avellaneda – CA Aldosivi",
+     "match": "Nomme United – Levadia Tallinn",
      "source": "Pinnacle",
-     "cote_olybet": 1.58,
-     "cote_reference": 1.676,
-     "ecart_relatif": 0.0571,
+     "cote_olybet": 4.5,
+     "cote_reference": 5.07,
+     "ecart_relatif": 0.1124,
      "aberrant": false
     },
     {
-     "match": "Racing Club Avellaneda – CA Aldosivi",
+     "match": "Nomme United – Levadia Tallinn",
      "source": "PMU",
-     "cote_olybet": 1.58,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0125,
+     "cote_olybet": 4.5,
+     "cote_reference": 5.8,
+     "ecart_relatif": 0.2241,
+     "aberrant": true
+    },
+    {
+     "match": "Tammeka Tartu – Harju JK Laagri",
+     "source": "PMU",
+     "cote_olybet": 2.1,
+     "cote_reference": 2.16,
+     "ecart_relatif": 0.0278,
      "aberrant": false
     },
     {
-     "match": "Estudiantes de La Plata – Instituto AC Cordoba",
+     "match": "Parnu JK Vaprus – Paide Linnameeskond",
      "source": "Pinnacle",
-     "cote_olybet": 1.88,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0507,
+     "cote_olybet": 3.1,
+     "cote_reference": 3.35,
+     "ecart_relatif": 0.0746,
      "aberrant": false
     },
     {
-     "match": "Estudiantes de La Plata – Instituto AC Cordoba",
+     "match": "Parnu JK Vaprus – Paide Linnameeskond",
      "source": "PMU",
-     "cote_olybet": 1.88,
-     "cote_reference": 1.92,
-     "ecart_relatif": 0.0208,
+     "cote_olybet": 3.1,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "CA Huracan – Tigre",
+     "match": "Bayern Munich – Dortmund",
      "source": "Pinnacle",
-     "cote_olybet": 2.12,
-     "cote_reference": 2.31,
-     "ecart_relatif": 0.0823,
+     "cote_olybet": 1.31,
+     "cote_reference": 1.351,
+     "ecart_relatif": 0.0303,
      "aberrant": false
     },
     {
-     "match": "CA Huracan – Tigre",
+     "match": "Bayern Munich – Dortmund",
      "source": "PMU",
-     "cote_olybet": 2.12,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0707,
+     "cote_olybet": 1.31,
+     "cote_reference": 1.3,
+     "ecart_relatif": 0.0077,
      "aberrant": false
     },
     {
-     "match": "Deportivo Riestra – Atlético Talleres",
+     "match": "Augsburg – Fribourg",
+     "source": "Pinnacle",
+     "cote_olybet": 3.02,
+     "cote_reference": 3.18,
+     "ecart_relatif": 0.0503,
+     "aberrant": false
+    },
+    {
+     "match": "Augsburg – Fribourg",
      "source": "PMU",
-     "cote_olybet": 2.12,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0192,
+     "cote_olybet": 3.02,
+     "cote_reference": 2.8,
+     "ecart_relatif": 0.0786,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Nomme United – Levadia Tallinn",
+     "source": "PMU",
+     "cote_olybet": 4.5,
+     "cote_reference": 5.8,
+     "ecart_relatif": 0.2241,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
@@ -313,32 +326,33 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-30T20:08:07+00:00",
-   "pinnacle_derniere_lecture": "2026-10-30T20:12:57+00:00",
+   "pinnacle_premiere_lecture": "2026-10-30T20:17:54+00:00",
+   "pinnacle_derniere_lecture": "2026-10-30T20:18:06+00:00",
    "books_premiere_lecture": "2026-10-30T17:23:19+00:00",
-   "books_derniere_lecture": "2026-10-30T20:12:28+00:00",
-   "ecart_enveloppe_secondes": 10178.0
+   "books_derniere_lecture": "2026-10-30T20:17:44+00:00",
+   "ecart_enveloppe_secondes": 10487.0
   },
   "historique_cotes": {
-   "lignes": 3025
+   "lignes": 1997
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 643,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 62749,
+   "mesures": 48223,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 184737,
-   "mesures": 154200,
-   "annotees": 6
+   "ancres": 153720,
+   "mesures": 108563,
+   "annotees": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -354,26 +368,20 @@
    "dernier_reglement": "2026-10-30T20:01:14+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-30T20:16:34+00:00",
+  "fin": "2026-10-30T20:20:39+00:00",
   "cotes": {
-   "francaises": 184769,
-   "pinnacle": 180400,
-   "polymarket": 34542,
+   "francaises": 145271,
+   "pinnacle": 180112,
+   "polymarket": 34450,
    "smarkets": 2693,
-   "matchbook": 16112
+   "matchbook": 16101
   },
-  "matchs_francais": 2184,
+  "matchs_francais": 1871,
   "opportunites": 6,
-  "opportunites_suspectes": 2,
-  "nouveaux_paris": 1
+  "opportunites_suspectes": 0,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T03:57:32+00:00",
-   "mode": "complet",
-   "opportunites": 12,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-30T04:02:11+00:00",
    "mode": "complet",
@@ -1573,6 +1581,12 @@
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-30T20:17:43+00:00",
+   "mode": "complet",
+   "opportunites": 6,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-30T20:01:14+00:00",
