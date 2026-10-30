@@ -206,3 +206,31 @@ def test_equipe_au_nom_partiel_pas_confondue():
     a = associer(fr, ref)
     assert "w1" not in a and "w2" not in a
     assert a["w3"][0] == "p3"                             # nom du bookmaker inclus dans celui de Pinnacle : gardé
+
+
+def _associer_derby(fr_dom, fr_ext, ref_dom, ref_ext, sport="football"):
+    from cotes.correspondance import associer, matchs_de
+    m = lambda mid, src, d, e: {"match_id": mid, "source": src, "sport": sport, "domicile": d,  # noqa: E731
+                                "exterieur": e, "debut": "2026-10-15T09:00:00+00:00"}
+    return associer(matchs_de([m("f1", "unibet", fr_dom, fr_ext)]),
+                    matchs_de([m("r1", "pinnacle", ref_dom, ref_ext)]))["f1"]
+
+
+def test_derbies_meme_ville_pas_inverses():
+    # cas réels des 14-16/10/2026 : le nom de la ville seul (« Sydney FC » -> sydney, « FC Tokyo » -> tokyo) est
+    # inclus dans les deux noms d'équipe ; l'ordre croisé obtenait 0,9 / 0,9 et battait l'ordre direct (32 paris
+    # réglés avec une CLV fictive). Même défaut vu dans le journal sur FC Vitebsk – ML Vitebsk.
+    assert _associer_derby("Sydney FC", "West. Sydney", "Sydney FC", "Western Sydney Wanderers")[:2] == ("r1", False)
+    assert _associer_derby("Sydney FC", "West. Sydney", "Sydney FC", "Western Sydney Wanderers FC")[:2] == ("r1", False)
+    assert _associer_derby("Tokyo Verdy", "FC Tokyo", "Tokyo-V", "FC Tokyo")[:2] == ("r1", False)
+    assert _associer_derby("FC Vitebsk", "ML Vitebsk", "FC Vitebsk", "Maxline Vitebsk")[:2] == ("r1", False)
+    assert _associer_derby("Vitebsk", "FK ML Vitebsk", "FC Vitebsk", "Maxline Vitebsk")[:2] == ("r1", False)
+
+
+def test_vraies_inversions_conservees():
+    # un derby réellement inversé chez la référence reste inversé, comme un match ordinaire inversé
+    assert _associer_derby("Tokyo Verdy", "FC Tokyo", "FC Tokyo", "Tokyo Verdy")[:2] == ("r1", True)
+    assert _associer_derby("Sydney FC", "West. Sydney", "Western Sydney Wanderers", "Sydney FC")[:2] == ("r1", True)
+    assert _associer_derby("Balzan FC", "Floriana FC", "Floriana", "Balzan")[:2] == ("r1", True)
+    assert _associer_derby("New York Islanders", "New York Rangers", "New York Rangers", "New York Islanders",
+                           sport="hockey")[:2] == ("r1", True)
