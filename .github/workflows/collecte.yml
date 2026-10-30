@@ -85,6 +85,20 @@ jobs:
           key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: memoire-
 
+      # Ids des alertes Pushover et webhook déjà envoyées (dédoublonnage, branche « donnees »). Si le push de « donnees »
+      # échoue, ces fichiers seraient perdus et les alertes renvoyées au cycle suivant : une copie est aussi gardée
+      # dans le cache Actions (toujours sauvegardée), fusionnée ici avec la version de la branche (union des ids).
+      - name: Restaurer les alertes déjà envoyées
+        uses: actions/cache/restore@v4
+        with:
+          path: envoyes
+          key: envoyes-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: envoyes-
+
+      - name: Fusionner les alertes déjà envoyées
+        continue-on-error: true
+        run: python scripts/envoyes_secours.py fusionner --donnees donnees --secours envoyes
+
       - name: Cycle (collecte, comparaison, paris, site)
         env:
           REPRISE_CHEMIN: reprise/derniere_lecture.json.gz
@@ -123,22 +137,6 @@ jobs:
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
         run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
 
-      - name: Sauver le dernier bon état des références
-        if: always() && hashFiles('reprise/derniere_lecture.json.gz') != ''
-        continue-on-error: true
-        uses: actions/cache/save@v4
-        with:
-          path: reprise
-          key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
-
-      - name: Sauver la mémoire de travail
-        if: always() && hashFiles('memoire/*.json.gz') != ''
-        continue-on-error: true
-        uses: actions/cache/save@v4
-        with:
-          path: memoire
-          key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
-
       - name: Envoyer les nouvelles alertes Chrome
         continue-on-error: true
         env:
@@ -155,6 +153,20 @@ jobs:
           PUSHOVER_PRIORITY: ${{ vars.PUSHOVER_PRIORITY || '0' }}
         run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
 
+      # Toujours, même si le push échoue plus bas : un cycle suivant ne renvoie pas les mêmes alertes.
+      - name: Copier les alertes déjà envoyées
+        if: always()
+        continue-on-error: true
+        run: python scripts/envoyes_secours.py sauver --donnees donnees --secours envoyes
+
+      - name: Sauver les alertes déjà envoyées
+        if: always() && hashFiles('envoyes/*.json') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: envoyes
+          key: envoyes-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Règlement après les alertes et construction du site
         env:
           MEMOIRE_CHEMIN: memoire
@@ -169,6 +181,7 @@ jobs:
       # Les caches sortis de la branche ne sont jamais ajoutés ; au premier cycle, ils sont retirés de l'index
       # (git rm --cached) : l'historique de « donnees » n'est pas réécrit.
       - name: Enregistrer les données
+        id: enregistrer
         if: always()
         run: |
           cd donnees
@@ -187,6 +200,29 @@ jobs:
             git pull -q --rebase origin donnees
           done
           exit 1
+
+      # Le dernier bon état des références ne dépend pas de « donnees » (lectures Pinnacle et Polymarket) :
+      # gardé même si une étape ou le push a échoué.
+      - name: Sauver le dernier bon état des références
+        if: always() && hashFiles('reprise/derniere_lecture.json.gz') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: reprise
+          key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # La mémoire de travail doit rester alignée sur la branche « donnees » : historique_cotes n'ajoute que les
+      # cotes qui ont changé depuis la mémoire. Si le push a échoué, sauver la nouvelle mémoire laisserait un trou
+      # dans cotes/AAAA-MM-JJ.jsonl.gz ; on ne la sauve donc qu'après un push réussi. Sinon, le cycle suivant
+      # restaure la mémoire du dernier push réussi (clé unique par lancement, restore-keys = la plus récente) et
+      # réécrit les changements perdus.
+      - name: Sauver la mémoire de travail
+        if: always() && steps.enregistrer.outcome == 'success' && hashFiles('memoire/*.json.gz') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: memoire
+          key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -242,18 +278,43 @@ jobs:
           # L'API GitHub renvoie parfois une erreur passagère (HTTP 500 le 7/10/2026 à 16:59, chaîne
           # arrêtée 2 h) : jusqu'à 6 essais espacés, en revérifiant à chaque fois qu'aucun lancement plus
           # récent n'existe (une erreur 500 peut quand même avoir créé le lancement).
+          # Seules les erreurs 5xx et réseau (aucun code HTTP) sont réessayées. Workflow désactivé ou HTTP 422
+          # (relance refusée) : arrêt immédiat et propre, rien à réessayer. Autre 4xx : échec immédiat.
+          erreur=$(mktemp)
+          # 0 = succès ; 10 = arrêt propre ; 11 = échec définitif ; 12 = passager (à réessayer)
+          classer() {
+            if grep -qiE 'HTTP 422|disabled|désactivé' "$erreur"; then return 10; fi
+            if grep -qE 'HTTP 5[0-9][0-9]' "$erreur"; then return 12; fi
+            if grep -qE 'HTTP [0-9]{3}' "$erreur"; then return 11; fi
+            return 12
+          }
           for essai in 1 2 3 4 5 6; do
-            cree=$(gh api "repos/$DEPOT/actions/runs/${{ github.run_id }}" --jq .created_at || true)
-            plus_recents=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 20 \
-              --json createdAt,conclusion \
-              --jq "[.[] | select(.createdAt > \"$cree\") | select(.conclusion != \"cancelled\" and .conclusion != \"skipped\")] | length" || echo erreur)
-            if [ -n "$cree" ] && [ "$plus_recents" != erreur ]; then
+            code=0
+            etat=$(gh api "repos/$DEPOT/actions/workflows/collecte.yml" --jq .state 2>"$erreur") || { classer || code=$?; }
+            if [ "$code" -eq 0 ] && [ -n "$etat" ] && [ "$etat" != active ]; then
+              echo "Workflow de collecte non actif ($etat) : pas de relance."; exit 0
+            fi
+            if [ "$code" -eq 0 ]; then
+              cree=$(gh api "repos/$DEPOT/actions/runs/${{ github.run_id }}" --jq .created_at 2>"$erreur") || { classer || code=$?; }
+              if [ "$code" -eq 0 ] && [ -z "$cree" ]; then code=12; fi
+            fi
+            if [ "$code" -eq 0 ]; then
+              plus_recents=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 20 \
+                --json createdAt,conclusion \
+                --jq "[.[] | select(.createdAt > \"$cree\") | select(.conclusion != \"cancelled\" and .conclusion != \"skipped\")] | length" 2>"$erreur") \
+                || { classer || code=$?; }
+            fi
+            if [ "$code" -eq 0 ]; then
               if [ "$plus_recents" -gt 0 ]; then echo "Un lancement plus récent continue la chaîne."; exit 0; fi
               if gh workflow run collecte.yml --repo "$DEPOT" --ref "${{ github.ref_name }}" \
-                  -f mode="${{ vars.MODE_COLLECTE || 'complet' }}"; then
+                  -f mode="${{ vars.MODE_COLLECTE || 'complet' }}" 2>"$erreur"; then
                 echo "Cycle suivant lancé."; exit 0
               fi
+              classer || code=$?
             fi
+            sed -n "1,5s/^/  /p" "$erreur"
+            if [ "$code" -eq 10 ]; then echo "Relance refusée (HTTP 422 ou workflow désactivé) : arrêt propre."; exit 0; fi
+            if [ "$code" -eq 11 ]; then echo "::error::Relance refusée par l'API GitHub (erreur 4xx, voir ci-dessus)."; exit 1; fi
             echo "API GitHub indisponible (essai $essai), nouvel essai dans $((essai * 20)) s"
             sleep $((essai * 20))
           done
