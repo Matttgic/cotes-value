@@ -1,35 +1,37 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-30T17:33:01+00:00",
+  "debut": "2026-10-30T17:44:34+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.4,
+    "secondes": 4.2,
     "ok": true
    },
    "olybet": {
-    "secondes": 12.0,
+    "secondes": 9.6,
     "ok": true
    },
-   "pinnacle": {
-    "secondes": 26.1,
+   "polymarket": {
+    "secondes": 20.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403"
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides",
+     "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+   "pinnacle": {
+    "secondes": 28.7,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
+     "sport 17 matchups : HTTP 403",
+     "sport 37 matchups : HTTP 403"
     ]
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -37,11 +39,15 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 53.1,
+    "secondes": 52.9,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 22.2,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 76.2,
+    "secondes": 76.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -49,15 +55,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
-   "unibet_direct": {
-    "secondes": 71.8,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -65,20 +63,23 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.0,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 103.0,
+    "secondes": 46.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.6,
+    "secondes": 2.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 1.2,
     "ok": true
    }
   },
@@ -93,44 +94,31 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 344,
-   "lignes": 12707
-  },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 50543,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 50543,
-   "retard": [
-    "football"
-   ]
+   "lignes": 16791
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 863,
-   "age_min_s": 178,
-   "lignes": 193348,
-   "lignes_perimees": 16652,
-   "rechauffeur": "ok",
+   "age_max_s": 872,
+   "age_min_s": 98,
+   "lignes": 191844,
+   "lignes_perimees": 3598,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 42,
+    "head_200": 40,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 6,
-    "reprise_403": 1,
-    "sport_vide": 3
+    "choisi_autre": 8,
+    "choisi_fixe": 8,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 2,
+    "sport_vide": 4
    }
   },
   "reprise": {
@@ -162,103 +150,90 @@
    ],
    "nouveaux_au_cycle_suivant": [],
    "plus_chez_les_references": [
-    "autre",
-    "cricket",
-    "esport",
-    "flechettes",
-    "padel",
-    "tennis_de_table"
+    "padel"
    ]
   },
   "betclic_proches": {
    "proches": 92,
    "relances": 0,
-   "proches_non_lus": 92,
+   "proches_non_lus": 0,
    "proches_vides": 0
   },
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "PSV Eindhoven – Willem II Tilburg",
-     "source": "Pinnacle",
-     "cote_olybet": 1.05,
-     "cote_reference": 1.065,
-     "ecart_relatif": 0.0144,
-     "aberrant": false
-    },
-    {
-     "match": "PSV Eindhoven – Willem II Tilburg",
-     "source": "PMU",
-     "cote_olybet": 1.05,
-     "cote_reference": 1.02,
-     "ecart_relatif": 0.0294,
-     "aberrant": false
-    },
-    {
-     "match": "Cambuur Leeuwarden – Go Ahead Eagles",
-     "source": "Pinnacle",
-     "cote_olybet": 2.75,
-     "cote_reference": 2.87,
-     "ecart_relatif": 0.0418,
-     "aberrant": false
-    },
-    {
-     "match": "Cambuur Leeuwarden – Go Ahead Eagles",
-     "source": "PMU",
-     "cote_olybet": 2.75,
-     "cote_reference": 2.7,
-     "ecart_relatif": 0.0185,
-     "aberrant": false
-    },
-    {
-     "match": "Ajax – AZ Alkmaar",
-     "source": "Pinnacle",
-     "cote_olybet": 1.59,
-     "cote_reference": 1.654,
-     "ecart_relatif": 0.0385,
-     "aberrant": false
-    },
-    {
-     "match": "Ajax – AZ Alkmaar",
-     "source": "PMU",
-     "cote_olybet": 1.59,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0461,
-     "aberrant": false
-    },
-    {
-     "match": "Heerenveen – NEC Nimègue",
+     "match": "Kispest Honved FC – Kisvarda Master Good",
      "source": "Pinnacle",
      "cote_olybet": 2.01,
-     "cote_reference": 2.09,
-     "ecart_relatif": 0.0383,
+     "cote_reference": 2.13,
+     "ecart_relatif": 0.0563,
      "aberrant": false
     },
     {
-     "match": "Heerenveen – NEC Nimègue",
-     "source": "PMU",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.005,
-     "aberrant": false
-    },
-    {
-     "match": "Feyenoord – Fortuna Sittard",
+     "match": "Gyor ETO – Vasas",
      "source": "Pinnacle",
-     "cote_olybet": 1.13,
-     "cote_reference": 1.161,
-     "ecart_relatif": 0.0263,
+     "cote_olybet": 2.05,
+     "cote_reference": 2.13,
+     "ecart_relatif": 0.0376,
      "aberrant": false
     },
     {
-     "match": "Feyenoord – Fortuna Sittard",
+     "match": "Gyor ETO – Vasas",
      "source": "PMU",
-     "cote_olybet": 1.13,
-     "cote_reference": 1.1,
-     "ecart_relatif": 0.0273,
+     "cote_olybet": 2.05,
+     "cote_reference": 1.92,
+     "ecart_relatif": 0.0677,
+     "aberrant": false
+    },
+    {
+     "match": "Zalaegerszeg TE – MTK Budapest",
+     "source": "Pinnacle",
+     "cote_olybet": 2.15,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.057,
+     "aberrant": false
+    },
+    {
+     "match": "Zalaegerszeg TE – MTK Budapest",
+     "source": "PMU",
+     "cote_olybet": 2.15,
+     "cote_reference": 2.14,
+     "ecart_relatif": 0.0047,
+     "aberrant": false
+    },
+    {
+     "match": "Kocaelispor – Caykur Rizespor",
+     "source": "Pinnacle",
+     "cote_olybet": 2.4,
+     "cote_reference": 2.59,
+     "ecart_relatif": 0.0734,
+     "aberrant": false
+    },
+    {
+     "match": "Kocaelispor – Caykur Rizespor",
+     "source": "PMU",
+     "cote_olybet": 2.4,
+     "cote_reference": 2.5,
+     "ecart_relatif": 0.04,
+     "aberrant": false
+    },
+    {
+     "match": "Fenerbahçe – Goztepe SK",
+     "source": "Pinnacle",
+     "cote_olybet": 1.31,
+     "cote_reference": 1.364,
+     "ecart_relatif": 0.0393,
+     "aberrant": false
+    },
+    {
+     "match": "Fenerbahçe – Goztepe SK",
+     "source": "PMU",
+     "cote_olybet": 1.31,
+     "cote_reference": 1.26,
+     "ecart_relatif": 0.0397,
      "aberrant": false
     }
    ],
@@ -267,103 +242,118 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Cremonese – Benevento Calcio",
+     "match": "SV Elversberg – Mayence",
      "source": "Pinnacle",
-     "cote_netbet": 2.52,
-     "cote_reference": 2.81,
-     "ecart_relatif": 0.1032,
+     "cote_netbet": 3.3,
+     "cote_reference": 3.6,
+     "ecart_relatif": 0.0833,
      "aberrant": false
     },
     {
-     "match": "Cremonese – Benevento Calcio",
+     "match": "SV Elversberg – Mayence",
      "source": "PMU",
-     "cote_netbet": 2.52,
-     "cote_reference": 2.45,
-     "ecart_relatif": 0.0286,
+     "cote_netbet": 3.3,
+     "cote_reference": 3.2,
+     "ecart_relatif": 0.0312,
      "aberrant": false
     },
     {
-     "match": "Südtirol – Cesena",
+     "match": "Augsbourg – Fribourg",
      "source": "Pinnacle",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.36,
-     "ecart_relatif": 0.1102,
+     "cote_netbet": 2.87,
+     "cote_reference": 3.19,
+     "ecart_relatif": 0.1003,
      "aberrant": false
     },
     {
-     "match": "Südtirol – Cesena",
+     "match": "Augsbourg – Fribourg",
      "source": "PMU",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0396,
+     "cote_netbet": 2.87,
+     "cote_reference": 2.8,
+     "ecart_relatif": 0.025,
      "aberrant": false
     },
     {
-     "match": "Catanzaro – Padova",
+     "match": "Bayer Leverkusen – Stuttgart",
      "source": "Pinnacle",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0966,
+     "cote_netbet": 1.71,
+     "cote_reference": 1.8,
+     "ecart_relatif": 0.05,
      "aberrant": false
     },
     {
-     "match": "Catanzaro – Padova",
+     "match": "Bayer Leverkusen – Stuttgart",
      "source": "PMU",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0644,
+     "cote_netbet": 1.71,
+     "cote_reference": 1.7,
+     "ecart_relatif": 0.0059,
      "aberrant": false
     },
     {
-     "match": "Sampdoria – Virtus Entella",
+     "match": "Borussia Mönchengladbach – Paderborn",
      "source": "Pinnacle",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.35,
-     "ecart_relatif": 0.1064,
+     "cote_netbet": 1.88,
+     "cote_reference": 2.01,
+     "ecart_relatif": 0.0647,
      "aberrant": false
     },
     {
-     "match": "Sampdoria – Virtus Entella",
+     "match": "Borussia Mönchengladbach – Paderborn",
      "source": "PMU",
-     "cote_netbet": 2.1,
-     "cote_reference": 1.97,
-     "ecart_relatif": 0.066,
+     "cote_netbet": 1.88,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.0053,
+     "aberrant": false
+    },
+    {
+     "match": "Schalke 04 – RB Leipzig",
+     "source": "Pinnacle",
+     "cote_netbet": 3.7,
+     "cote_reference": 4.28,
+     "ecart_relatif": 0.1355,
+     "aberrant": false
+    },
+    {
+     "match": "Schalke 04 – RB Leipzig",
+     "source": "PMU",
+     "cote_netbet": 3.7,
+     "cote_reference": 3.65,
+     "ecart_relatif": 0.0137,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-30T17:18:08+00:00",
-   "pinnacle_derniere_lecture": "2026-10-30T17:33:23+00:00",
-   "books_premiere_lecture": "2026-10-30T15:37:08+00:00",
-   "books_derniere_lecture": "2026-10-30T17:33:02+00:00",
-   "ecart_enveloppe_secondes": 6975.0
+   "pinnacle_premiere_lecture": "2026-10-30T17:44:45+00:00",
+   "pinnacle_derniere_lecture": "2026-10-30T17:45:00+00:00",
+   "books_premiere_lecture": "2026-10-30T17:07:53+00:00",
+   "books_derniere_lecture": "2026-10-30T17:44:35+00:00",
+   "ecart_enveloppe_secondes": 2227.0
   },
   "historique_cotes": {
-   "lignes": 11616
+   "lignes": 4754
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 9.7
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 643,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 56048,
+   "mesures": 64099,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 191493,
-   "mesures": 54987,
-   "annotees": 3
+   "ancres": 199739,
+   "mesures": 181214,
+   "annotees": 8
   },
   "redecision": {
    "ajoutees": 0
@@ -379,26 +369,20 @@
    "dernier_reglement": "2026-10-30T17:06:04+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-30T17:36:50+00:00",
+  "fin": "2026-10-30T17:47:09+00:00",
   "cotes": {
-   "francaises": 220702,
-   "pinnacle": 243891,
-   "polymarket": 0,
-   "smarkets": 3493,
-   "matchbook": 12707
+   "francaises": 194631,
+   "pinnacle": 191844,
+   "polymarket": 34781,
+   "smarkets": 2835,
+   "matchbook": 16791
   },
-  "matchs_francais": 2640,
-  "opportunites": 10,
+  "matchs_francais": 2661,
+  "opportunites": 9,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-30T01:18:59+00:00",
-   "mode": "complet",
-   "opportunites": 10,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-30T01:44:16+00:00",
    "mode": "complet",
@@ -1597,6 +1581,12 @@
    "debut": "2026-10-30T17:33:01+00:00",
    "mode": "complet",
    "opportunites": 10,
+   "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-30T17:44:34+00:00",
+   "mode": "complet",
+   "opportunites": 9,
    "nouveaux_paris": 1
   }
  ],
