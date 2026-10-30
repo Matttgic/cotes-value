@@ -1,6 +1,7 @@
 """Une source coupée par son budget rend sa mémoire du passage précédent au lieu de rien."""
 from datetime import datetime, timedelta, timezone
 
+from cotes import memoire
 from scripts import cycle
 
 NOW = datetime(2026, 10, 25, 12, 0, tzinfo=timezone.utc)
@@ -42,4 +43,4 @@ def test_cycle_complet_unibet_coupe_rend_sa_memoire_et_la_garde(monkeypatch):
         j = {"etapes": {}}
         _, _, lignes = cycle.collecter_prematch("complet", NOW, j, Path(d))
         assert [l["match_id"] for l in lignes] == ["unibet-fr|1"]
-        assert json.loads((Path(d) / "horizon_direct.json").read_text())["unibet"] == bloc     # mémoire intacte
+        assert memoire.lire(Path(d), "horizon_direct")["unibet"] == bloc     # mémoire intacte

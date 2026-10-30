@@ -2,6 +2,7 @@
 import json
 from datetime import datetime, timedelta, timezone
 
+from cotes import memoire
 from cotes.direct import betclic, pmu, unibet
 from cotes.direct.horizon import fusionner, fusionner_marches, tranche
 
@@ -175,7 +176,7 @@ def test_cycle_enregistre_l_horizon(monkeypatch, tmp_path):
     assert vus["pmu"][0][1] == 36 and vus["pmu"][1]["reserve"] == {} and vus["pmu"][1]["concurrence"] == 2
     assert vus["unibet"][0][1] == 36 and vus["unibet"][1]["reserve"] == {}
     assert vus["betclic"][0][1] == 36 and vus["betclic"][1]["reserve"] == {}
-    sauve = json.loads((tmp_path / "horizon_direct.json").read_text())
+    sauve = memoire.lire(tmp_path, "horizon_direct")
     assert sauve["pmu"]["curseur"] == 3 and sauve["unibet"]["lignes"][0]["match_id"] == "unibet"
     cycle.collecter_prematch("complet", maintenant, {"etapes": {}}, donnees=tmp_path)
     assert vus["pmu"][1]["reserve"]["curseur"] == 3

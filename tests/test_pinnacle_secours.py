@@ -237,7 +237,7 @@ def test_cache_ignore_les_matchs_commences_et_les_caches_trop_vieux(tmp_path):
     assert S.collecter({29}, NOW + timedelta(hours=5, minutes=1), tmp_path, Session(Reponse(statut=503))) == []   # match commencé
     assert S.collecter({29}, NOW + timedelta(hours=3, minutes=1), tmp_path, Session(Reponse(statut=503))) == []   # cache trop vieux
     assert S.collecter({33}, NOW + timedelta(minutes=10), tmp_path, Session(Reponse(statut=503))) == []           # autre sport
-    (tmp_path / "pinnacle_secours_cache.json").write_text("{pas du json")
+    (tmp_path / "pinnacle_secours_cache.json.gz").write_bytes(b"pas du gzip")   # mémoire illisible
     assert S.collecter({29}, NOW + timedelta(minutes=10), tmp_path, Session(Reponse(statut=503))) == []
 
 

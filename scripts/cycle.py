@@ -9,8 +9,9 @@ Lancé toutes les 5 minutes par GitHub Actions (.github/workflows/collecte.yml).
 Le règlement des paris (lecture des résultats : environ 6 minutes, 220 requêtes) n'a lieu qu'une fois par
 heure (REGLEMENT_MINUTES, 55 par défaut) : les cotes, elles, sont lues à chaque cycle.
 
-Données (branche « donnees ») : paris.json, etat.json, opportunites/AAAA-MM-JJ.jsonl,
+Données (branche « donnees ») : paris.json, etat.json, opportunites/AAAA-MM-JJ.jsonl, cotes/AAAA-MM-JJ.jsonl.gz,
 resultats_manuels.json (règlements faits à la main ; « supprime » retire un pari). Site : dossier site/.
+Mémoire de travail (cache Actions, MEMOIRE_CHEMIN) : horizon_direct, caches de secours, contrôle (cotes/memoire.py).
 """
 from __future__ import annotations
 
@@ -40,6 +41,7 @@ from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
 from cotes import reprise  # noqa: E402
+from cotes import historique_cotes, memoire  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 
@@ -78,11 +80,14 @@ def lire_json(chemin: Path, defaut):
     return json.loads(texte)
 
 
-def ecrire_json(chemin: Path, donnees) -> None:
-    """Écriture atomique : un cycle interrompu ne laisse jamais un fichier à moitié écrit."""
+def ecrire_json(chemin: Path, donnees, compact: bool = False) -> None:
+    """Écriture atomique : un cycle interrompu ne laisse jamais un fichier à moitié écrit.
+    ``compact`` : sans indentation ni espaces (fichiers lourds réécrits souvent, comme controle.json)."""
     chemin.parent.mkdir(parents=True, exist_ok=True)
     tmp = chemin.with_name(chemin.name + ".tmp")
-    tmp.write_text(json.dumps(donnees, ensure_ascii=False, indent=1), encoding="utf-8")
+    texte = (json.dumps(donnees, ensure_ascii=False, separators=(",", ":")) if compact
+             else json.dumps(donnees, ensure_ascii=False, indent=1))
+    tmp.write_text(texte, encoding="utf-8")
     os.replace(tmp, chemin)
 
 
@@ -158,11 +163,9 @@ def heures_ombre(nom: str, mode: str, mode_collecte: str, maintenant: datetime,
     return float(PRES_H), False
 
 
-def _cache_sm(chemin: Path) -> dict:
-    try:
-        doc = json.loads(chemin.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+def _cache_sm(donnees: Path) -> dict:
+    """Cache Smarkets (mémoire hors « donnees », cotes/memoire.py) ; {} s'il est absent ou illisible."""
+    doc = memoire.lire(donnees, "smarkets_cache", {})
     return doc if isinstance(doc, dict) else {}
 
 
@@ -178,8 +181,7 @@ def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
         journal["etapes"]["smarkets"] = {"secondes": 0.0, "ok": True, "desactive": True}
         journal["smarkets_cache"] = {"reutilise": False, "perime": False, "desactive": True}
         return [], {"ok": True, "erreurs": [], "requetes": 0, "desactive": True}
-    chemin = donnees / "smarkets_cache.json"
-    cache = _cache_sm(chemin)
+    cache = _cache_sm(donnees)
     if _instant(cache.get("lu")) and maintenant - _instant(cache.get("lu")) < timedelta(minutes=SMARKETS_FRAIS_MIN):
         perime = bool(cache.get("perime"))
         lu = _instant(cache.get("lu"))
@@ -213,7 +215,7 @@ def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
     precedentes = cache.get("lignes") if isinstance(cache.get("lignes"), list) else []
     if perime and precedentes:
         lignes = list(precedentes)
-    ecrire_json(chemin, {
+    memoire.ecrire(donnees, "smarkets_cache", {
         "lu": maintenant.isoformat(), "lignes": lignes, "perime": perime, "matchs": info.get("matchs"),
         "lus": info.get("lus"), "evenements": info.get("evenements") or cache.get("evenements"),
     })
@@ -301,7 +303,7 @@ def _radar_depuis(lignes) -> list[dict]:
     return out
 
 
-# source du cycle -> clé de sa mémoire dans horizon_direct.json
+# source du cycle -> clé de sa mémoire dans horizon_direct (cotes/memoire.py, hors branche « donnees »)
 MEMOIRES = {"pmu_direct": "pmu", "unibet_direct": "unibet", "betclic_direct": "betclic", "netbet": "netbet"}
 AGE_REPLI_MIN = 30
 
@@ -360,10 +362,11 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
     rythme = lire_json(rythme_path, {}) if rythme_path else {}
     if not isinstance(rythme, dict):
         rythme = {}
-    horizon_path = donnees / "horizon_direct.json" if donnees else None
-    horizon = lire_json(horizon_path, {}) if horizon_path else {}
+    # Mémoire de travail (gzip, cache Actions) : absente ou illisible = démarrage à froid, lecture complète.
+    horizon = memoire.lire(donnees, "horizon_direct", {}) if donnees else {}
     if not isinstance(horizon, dict):
         horizon = {}
+    cotes_avant = historique_cotes.index(horizon) if donnees else {}
 
     def _reserve(nom: str) -> dict:
         bloc = horizon.get(nom)
@@ -512,9 +515,54 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         if isinstance(bloc, dict):
             horizon[nom] = bloc
     gardes = ("pmu", "unibet", "betclic", "netbet")
-    if horizon_path is not None and any(k in horizon for k in gardes):
-        ecrire_json(horizon_path, {k: horizon[k] for k in gardes if k in horizon})
+    if donnees and any(k in horizon for k in gardes):
+        horizon = {k: horizon[k] for k in gardes if k in horizon}
+        memoire.ecrire(donnees, "horizon_direct", horizon)
+        try:            # historique en ajout seul : jamais bloquant pour la collecte
+            journal["historique_cotes"] = {"lignes": historique_cotes.ajouter(donnees, cotes_avant, horizon,
+                                                                               maintenant)}
+        except Exception as e:  # noqa: BLE001
+            journal["historique_cotes"] = {"erreur": f"{type(e).__name__}: {e}"[:200]}
     return pin, poly, lignes
+
+
+# controle.json (3 Mo) n'est publié dans « donnees » qu'une fois par heure ; la version de chaque cycle vit
+# dans la mémoire (controle.json.gz). Mémoire perdue : on repart de la dernière publication (moins d'une heure).
+CONTROLE_PUBLICATION_MIN = float(os.environ.get("CONTROLE_PUBLICATION_MIN", "55"))
+
+
+def _derniere_mesure(doc) -> datetime | None:
+    groupes = doc.get("groupes") if isinstance(doc, dict) else None
+    moments = [_instant(g.get("maj")) for g in groupes.values() if isinstance(g, dict)] if isinstance(groupes, dict) else []
+    moments = [m for m in moments if m is not None]
+    return max(moments) if moments else None
+
+
+def lire_controle(donnees: Path) -> dict:
+    """État cumulé du contrôle : la mémoire du cycle précédent, ou la publication horaire si elle est plus
+    récente (mémoire absente ou restaurée d'un vieux cache). Publication illisible : erreur, comme avant."""
+    publie = lire_json(donnees / "controle.json", {})
+    publie = publie if isinstance(publie, dict) else {}
+    doc = memoire.lire(donnees, "controle", None, ancien_aussi=False)
+    if not isinstance(doc, dict) or (_derniere_mesure(publie) or datetime.min.replace(tzinfo=timezone.utc)) > (
+            _derniere_mesure(doc) or datetime.min.replace(tzinfo=timezone.utc)):
+        doc = publie
+    doc.pop("publie", None)
+    return doc
+
+
+def enregistrer_controle(donnees: Path, etat_controle: dict, maintenant: datetime) -> bool:
+    """Mémoire à chaque cycle ; copie compacte dans « donnees » si la dernière date d'au moins 55 min."""
+    memoire.ecrire(donnees, "controle", etat_controle, retirer_ancien=False)
+    publie = donnees / "controle.json"
+    try:
+        derniere = _instant(json.loads(publie.read_text(encoding="utf-8")).get("publie"))
+    except (OSError, ValueError, AttributeError):
+        derniere = None
+    if derniere is not None and timedelta(0) <= maintenant - derniere < timedelta(minutes=CONTROLE_PUBLICATION_MIN):
+        return False
+    ecrire_json(publie, {**etat_controle, "publie": maintenant.isoformat(timespec="seconds")}, compact=True)
+    return True
 
 
 def reglement_echu(etat: dict, maintenant: datetime, mode: str) -> bool:
@@ -787,8 +835,7 @@ def main() -> int:
     index = etape("association", journal, comparaison.indexer, francais, references) or {}
     index_controle = {n: v for n, v in index.items() if n not in ("Smarkets", "Matchbook")}
     mesures = controle.mesurer(francais, index_controle)
-    etat_controle = controle.mettre_a_jour(lire_json(donnees / "controle.json", {}), mesures,
-                                           journal["debut"])
+    etat_controle = controle.mettre_a_jour(lire_controle(donnees), mesures, journal["debut"])
     suspects = controle.matchs_suspects(mesures)
     etat_controle["matchs_suspects"] = [
         {"match_id": l["match_id"], "bookmaker": l["source"], "match": f'{l["domicile"]} – {l["exterieur"]}',
@@ -841,7 +888,7 @@ def main() -> int:
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
     liens.completer_liens(paris)                              # lien direct vers le match chez le bookmaker
     ecrire_json(donnees / "paris.json", paris)
-    ecrire_json(donnees / "controle.json", etat_controle)
+    journal["controle_publie"] = enregistrer_controle(donnees, etat_controle, maintenant)
     ecrire_json(donnees / "opportunites_actuelles.json", sorted(opportunites, key=lambda o: -o["ecart"]))
     if opportunites:
         jour = donnees / "opportunites" / f"{maintenant:%Y-%m-%d}.jsonl.gz"

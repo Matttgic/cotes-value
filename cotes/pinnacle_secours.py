@@ -17,7 +17,8 @@ Prudence :
 - l'offre gratuite plafonne à 100 requêtes par jour : ``PINNODDS_LIMITE_JOUR`` (90 par défaut) et
   ``PINNODDS_PAUSE_MIN`` (30 minutes entre deux lectures par défaut). Avec un abonnement, relever la
   limite et mettre la pause à 0 ;
-- entre deux lectures, le dernier passage est rejoué avec son âge réel (``pinnacle_secours_cache.json``) :
+- entre deux lectures, le dernier passage est rejoué avec son âge réel (mémoire ``pinnacle_secours_cache.json.gz``,
+  hors branche « donnees » : cotes/memoire.py) :
   une ligne plus vieille que le seuil de ``pinnacle.est_perimee`` reste marquée périmée et ne sert pas de référence ;
 - PinBook (``PINBOOK_API_KEY``, offre gratuite RapidAPI : 550 requêtes par mois) passe après pinnodds et ne comble
   que les sports sans ligne fraîche : ``PINBOOK_SPORTS`` (football, tennis, basket par défaut),
@@ -33,7 +34,7 @@ from pathlib import Path
 
 import requests
 
-from . import pinnacle
+from . import memoire, pinnacle
 
 BASE = "https://pinnodds.com"
 # sport Pinnacle -> identifiant pinnodds (volley et handball ont chacun leur identifiant)
@@ -300,7 +301,8 @@ def collecter(sports: set[int], maintenant: datetime | None = None, donnees: Pat
     if not disponible():
         return []
     chemin = donnees / "pinnacle_secours.json" if donnees is not None else None
-    chemin_cache = donnees / "pinnacle_secours_cache.json" if donnees is not None else None
+    # Mémoire hors « donnees » (gzip, cache Actions) ; absente ou illisible : rien à rejouer, jamais d'exception.
+    cache_doc = memoire.lire(donnees, "pinnacle_secours_cache", {}) if donnees is not None else None
     etat = _etat_budget(chemin, maintenant)
     handicaps = os.environ.get("PINNODDS_HANDICAPS", "").strip().lower() == "oui"
     session = session or requests.Session()
@@ -311,28 +313,23 @@ def collecter(sports: set[int], maintenant: datetime | None = None, donnees: Pat
     if cle_pinbook():
         # seulement les sports sans ligne fraîche (ni lecture, ni cache encore valable) : on ménage les 550 requêtes
         frais = {sid for sid in demandes
-                 if any(not l.get("cote_perimee") for l in par_sport.get(sid, []) + _lire_cache(chemin_cache, {sid}, maintenant))}
+                 if any(not l.get("cote_perimee") for l in par_sport.get(sid, []) + _lire_cache(cache_doc, {sid}, maintenant))}
         trous = (demandes & sports_pinbook()) - frais
         if trous:
             par_sport.update(_passer("pinbook", trous, etat, maintenant, session, handicaps))
     if RESUME["requetes"] and chemin is not None:
         chemin.write_text(json.dumps(etat), encoding="utf-8")
-    rejoues = _lire_cache(chemin_cache, demandes - set(par_sport), maintenant)
-    _ecrire_cache(chemin_cache, {sid: [l for l in ls if isinstance(l.get("age_cache_s"), int)] for sid, ls in par_sport.items()}, maintenant)
+    rejoues = _lire_cache(cache_doc, demandes - set(par_sport), maintenant)
+    _ecrire_cache(donnees, cache_doc, {sid: [l for l in ls if isinstance(l.get("age_cache_s"), int)] for sid, ls in par_sport.items()}, maintenant)
     RESUME["cache_lignes"] = len(rejoues)
     lignes = [l for ls in par_sport.values() for l in ls] + rejoues
     RESUME["lignes"] = len(lignes)
     return lignes
 
 
-def _lire_cache(chemin: Path | None, sports: set[int], maintenant: datetime) -> list[dict]:
+def _lire_cache(cache_doc, sports: set[int], maintenant: datetime) -> list[dict]:
     """Lignes du dernier passage des sports demandés, avec leur âge réel ; [] si rien d'exploitable."""
-    if chemin is None or not chemin.exists():
-        return []
-    try:
-        cache = json.loads(chemin.read_text(encoding="utf-8")).get("sports", {})
-    except (OSError, ValueError, AttributeError):
-        return []
+    cache = cache_doc.get("sports", {}) if isinstance(cache_doc, dict) else {}
     out: list[dict] = []
     for sid in sports:
         bloc = cache.get(str(sid)) if isinstance(cache, dict) else None
@@ -368,18 +365,14 @@ def _debut(ligne: dict):
     return _heure(ligne.get("debut"))
 
 
-def _ecrire_cache(chemin: Path | None, par_sport: dict[int, list[dict]], maintenant: datetime) -> None:
-    if chemin is None or not par_sport:
+def _ecrire_cache(donnees: Path | None, cache_doc, par_sport: dict[int, list[dict]], maintenant: datetime) -> None:
+    if donnees is None or not par_sport:
         return
-    try:
-        cache = json.loads(chemin.read_text(encoding="utf-8")).get("sports", {}) if chemin.exists() else {}
-    except (OSError, ValueError, AttributeError):
-        cache = {}
-    if not isinstance(cache, dict):
-        cache = {}
+    cache = cache_doc.get("sports", {}) if isinstance(cache_doc, dict) else {}
+    cache = dict(cache) if isinstance(cache, dict) else {}
     for sid, lignes in par_sport.items():
         cache[str(sid)] = {"lu": maintenant.isoformat(timespec="seconds"), "lignes": lignes}
-    chemin.write_text(json.dumps({"sports": cache}, separators=(",", ":")), encoding="utf-8")
+    memoire.ecrire(donnees, "pinnacle_secours_cache", {"sports": cache})
 
 
 def comparer(direct: list[dict], secours: list[dict]) -> dict:

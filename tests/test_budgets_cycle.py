@@ -3,6 +3,7 @@ import json
 import time
 from datetime import datetime, timedelta, timezone
 
+from cotes import memoire
 from cotes.delai import Echeance
 from cotes.direct import unibet
 from scripts import cycle
@@ -63,7 +64,7 @@ def test_smarkets_eteint_ne_fait_aucun_appel(tmp_path, monkeypatch):
     lignes, info = cycle.appliquer_smarkets(tmp_path, {"football"}, 36, [{"sport": "football"}], NOW, journal)
     assert lignes == [] and info["requetes"] == 0 and info["desactive"] is True
     assert journal["etapes"]["smarkets"]["desactive"] is True
-    cache = json.loads((tmp_path / "smarkets_cache.json").read_text(encoding="utf-8"))
+    cache = memoire.lire(tmp_path, "smarkets_cache")
     assert cache["lignes"] == [{"cote": 2}]
 
 
@@ -98,7 +99,7 @@ def test_429_garde_le_cache_perime(tmp_path, monkeypatch):
     journal = {"etapes": {}}
     lignes, info = cycle.appliquer_smarkets(tmp_path, {"football"}, 36, [], NOW, journal)
     assert lignes == [{"cote": 2}]
-    cache = json.loads((tmp_path / "smarkets_cache.json").read_text(encoding="utf-8"))
+    cache = memoire.lire(tmp_path, "smarkets_cache")
     assert cache["perime"] is True and cache["lignes"] == [{"cote": 2}]
     assert journal["etapes"]["smarkets"]["degrade"] is True
     assert "périmé" in journal["etapes"]["smarkets"]["erreurs"]

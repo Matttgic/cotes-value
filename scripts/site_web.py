@@ -517,7 +517,11 @@ def construire(donnees: Path, sortie: Path) -> Path:
     etat = _lire(donnees / "etat.json", {})
     actuelles = [o for o in _lire(donnees / "opportunites_actuelles.json", [])
                  if not o.get("suspect")]
-    ctl = _lire(donnees / "controle.json", {})
+    # version du dernier cycle (mémoire, cotes/memoire.py) si elle existe ; sinon la publication horaire
+    from cotes import memoire
+    ctl = memoire.lire(donnees, "controle", None, ancien_aussi=False)
+    if not isinstance(ctl, dict):
+        ctl = _lire(donnees / "controle.json", {})
     # seulement les groupes mesurés dans les 6 dernières heures (les anciens restent dans controle.json)
     dernier = (etat.get("dernier_cycle") or {}).get("debut") or ""
     try:

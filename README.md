@@ -262,6 +262,16 @@ suivent les scans et ne garantissent pas que la cote reste disponible.
   de l'intitulé, version du moteur) et `preuve_reglement` (score retenu, ses sources ou la saisie manuelle,
   scores par période comparés à la ligne) ;
 - `opportunites/AAAA-MM-JJ.jsonl.gz` : toutes les erreurs de cote détectées ;
+- `cotes/AAAA-MM-JJ.jsonl.gz` (depuis le 30/10/2026) : historique des cotes PMU, Unibet, Betclic et NetBet,
+  en ajout seul : seules les cotes nouvelles ou changées d'un cycle à l'autre, champs réduits
+  (`t` heure de lecture, `b` bookmaker, `m` match, `k` marché|période|ligne|issue[|joueur], `c` cote), plus une
+  ligne de description (équipes, ligue, début) à la première apparition d'un match (cotes/historique_cotes.py) ;
+- `controle.json` : contrôle des intitulés, JSON compact publié au plus une fois par heure (champ `publie`) ;
+  la version de chaque cycle reste dans la mémoire de travail.
+
+Mémoire de travail, hors de la branche (gzip, cache GitHub Actions `memoire-`, comme `reprise/`) :
+`horizon_direct`, `pinnacle_secours_cache`, `smarkets_cache` et `controle` (cotes/memoire.py). Absente (premier
+cycle, cache évincé) : démarrage à froid, le cycle relit tout. Un seul commit et un seul push par cycle.
 - `etat.json` : dernier cycle, dernier règlement et historique des 200 derniers relevés ;
 - `theodds.json` : scores de secours en cache et compteurs de crédits, sans clés API ;
 - `resultats_manuels.json` : règlements à la main, par exemple
