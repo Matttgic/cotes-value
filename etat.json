@@ -1,18 +1,26 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-30T06:12:18+00:00",
+  "debut": "2026-10-30T06:16:59+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.6,
+    "secondes": 4.1,
     "ok": true
    },
    "olybet": {
-    "secondes": 9.7,
+    "secondes": 9.6,
     "ok": true
    },
+   "pinnacle": {
+    "secondes": 21.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "marché rejeté : cotes ou issues incohérentes"
+    ]
+   },
    "polymarket": {
-    "secondes": 20.7,
+    "secondes": 23.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -21,37 +29,32 @@
      "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
-   "pinnacle": {
-    "secondes": 24.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 45 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
+   "pmu_direct": {
+    "secondes": 35.6,
+    "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "pmu_direct": {
-    "secondes": 38.7,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 72.1,
+   "unibet_direct": {
+    "secondes": 42.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 73.3,
-    "ok": true
+    "secondes": 76.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
-   "unibet_direct": {
-    "secondes": 70.9,
+   "betclic_direct": {
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,16 +62,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 19.2,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 59.5,
+    "secondes": 64.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.0,
+    "secondes": 3.5,
     "ok": true
    },
    "cotes_cloture": {
@@ -87,44 +93,29 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 247,
-   "lignes": 13806
-  },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 39583,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 39583,
-   "retard": [
-    "football"
-   ]
+   "lignes": 13914
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 896,
-   "age_min_s": 125,
-   "lignes": 156663,
-   "lignes_perimees": 404,
-   "rechauffeur": "ok",
+   "age_max_s": 819,
+   "age_min_s": 2,
+   "lignes": 157242,
+   "lignes_perimees": 600,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_autre": 10,
-    "choisi_fixe": 6,
-    "reprise_403": 1,
-    "sport_vide": 3
+    "head_200": 35,
+    "choisi_fixe": 9,
+    "head_403": 4,
+    "ortho_refusee": 4,
+    "choisi_autre": 6,
+    "sport_vide": 4
    }
   },
   "reprise": {
@@ -167,192 +158,174 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "FC Hegelmann – FK Kauno Zalgiris",
+     "match": "Al-Shabab Riyad – Al Ahli Djeddah",
      "source": "Pinnacle",
-     "cote_olybet": 7.5,
-     "cote_reference": 8.61,
-     "ecart_relatif": 0.1289,
+     "cote_olybet": 3.64,
+     "cote_reference": 3.94,
+     "ecart_relatif": 0.0761,
      "aberrant": false
     },
     {
-     "match": "FC Hegelmann – FK Kauno Zalgiris",
+     "match": "Al-Shabab Riyad – Al Ahli Djeddah",
      "source": "PMU",
-     "cote_olybet": 7.5,
-     "cote_reference": 6.25,
-     "ecart_relatif": 0.2,
-     "aberrant": true
-    },
-    {
-     "match": "FA Siauliai – Dziugas Telsiai",
-     "source": "Pinnacle",
-     "cote_olybet": 2.9,
-     "cote_reference": 3.11,
-     "ecart_relatif": 0.0675,
+     "cote_olybet": 3.64,
+     "cote_reference": 3.4,
+     "ecart_relatif": 0.0706,
      "aberrant": false
     },
     {
-     "match": "FK Panevezys – FK Transinvest",
-     "source": "Pinnacle",
-     "cote_olybet": 4.5,
-     "cote_reference": 4.93,
-     "ecart_relatif": 0.0872,
-     "aberrant": false
-    },
-    {
-     "match": "FK Panevezys – FK Transinvest",
+     "match": "Al-Draih – Neom SC",
      "source": "PMU",
-     "cote_olybet": 4.5,
-     "cote_reference": 3.9,
-     "ecart_relatif": 0.1538,
-     "aberrant": true
-    },
-    {
-     "match": "Aluminij – Radomlje",
-     "source": "Pinnacle",
-     "cote_olybet": 1.83,
-     "cote_reference": 1.901,
-     "ecart_relatif": 0.0373,
+     "cote_olybet": 2.45,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.0987,
      "aberrant": false
     },
     {
-     "match": "Aluminij – Radomlje",
+     "match": "Al Hilal-Riyadh – Al-Fateh",
+     "source": "Pinnacle",
+     "cote_olybet": 1.06,
+     "cote_reference": 1.069,
+     "ecart_relatif": 0.0082,
+     "aberrant": false
+    },
+    {
+     "match": "Al-Taawoun Buraidah – Al Ettifaq Club",
+     "source": "Pinnacle",
+     "cote_olybet": 2.17,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0482,
+     "aberrant": false
+    },
+    {
+     "match": "Al-Taawoun Buraidah – Al Ettifaq Club",
      "source": "PMU",
-     "cote_olybet": 1.83,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0214,
-     "aberrant": false
-    },
-    {
-     "match": "Maribor – Olimpija Ljubljana",
-     "source": "Pinnacle",
-     "cote_olybet": 2.28,
-     "cote_reference": 2.39,
-     "ecart_relatif": 0.046,
+     "cote_olybet": 2.17,
+     "cote_reference": 2.02,
+     "ecart_relatif": 0.0743,
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "FC Hegelmann – FK Kauno Zalgiris",
-     "source": "PMU",
-     "cote_olybet": 7.5,
-     "cote_reference": 6.25,
-     "ecart_relatif": 0.2,
-     "aberrant": true
-    },
-    {
-     "match": "FK Panevezys – FK Transinvest",
-     "source": "PMU",
-     "cote_olybet": 4.5,
-     "cote_reference": 3.9,
-     "ecart_relatif": 0.1538,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Cremonese – Benevento Calcio",
+     "match": "Charlotte – Orlando City",
      "source": "Pinnacle",
-     "cote_netbet": 2.5,
-     "cote_reference": 2.8,
-     "ecart_relatif": 0.1071,
+     "cote_netbet": 1.75,
+     "cote_reference": 1.84,
+     "ecart_relatif": 0.0491,
      "aberrant": false
     },
     {
-     "match": "Cremonese – Benevento Calcio",
+     "match": "Charlotte – Orlando City",
      "source": "PMU",
-     "cote_netbet": 2.5,
-     "cote_reference": 2.25,
-     "ecart_relatif": 0.1111,
+     "cote_netbet": 1.75,
+     "cote_reference": 1.78,
+     "ecart_relatif": 0.0169,
      "aberrant": false
     },
     {
-     "match": "Südtirol – Cesena",
+     "match": "Cincinnati – Philadelphia Union",
      "source": "Pinnacle",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.31,
-     "ecart_relatif": 0.0909,
+     "cote_netbet": 2.3,
+     "cote_reference": 2.42,
+     "ecart_relatif": 0.0496,
      "aberrant": false
     },
     {
-     "match": "Südtirol – Cesena",
+     "match": "Cincinnati – Philadelphia Union",
      "source": "PMU",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0396,
+     "cote_netbet": 2.3,
+     "cote_reference": 2.38,
+     "ecart_relatif": 0.0336,
      "aberrant": false
     },
     {
-     "match": "Catanzaro – Padova",
+     "match": "Columbus Crew – DC United",
      "source": "Pinnacle",
-     "cote_netbet": 2.2,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.1129,
+     "cote_netbet": 1.27,
+     "cote_reference": 1.336,
+     "ecart_relatif": 0.0491,
      "aberrant": false
     },
     {
-     "match": "Catanzaro – Padova",
+     "match": "Columbus Crew – DC United",
      "source": "PMU",
-     "cote_netbet": 2.2,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0891,
+     "cote_netbet": 1.27,
+     "cote_reference": 1.26,
+     "ecart_relatif": 0.0079,
      "aberrant": false
     },
     {
-     "match": "Grenoble – Dijon",
+     "match": "New York City FC – CF Montreal",
      "source": "Pinnacle",
-     "cote_netbet": 2.95,
-     "cote_reference": 3.25,
-     "ecart_relatif": 0.0923,
+     "cote_netbet": 1.35,
+     "cote_reference": 1.405,
+     "ecart_relatif": 0.0391,
      "aberrant": false
     },
     {
-     "match": "Grenoble – Dijon",
+     "match": "New York City FC – CF Montreal",
      "source": "PMU",
-     "cote_netbet": 2.95,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0727,
+     "cote_netbet": 1.35,
+     "cote_reference": 1.34,
+     "ecart_relatif": 0.0075,
+     "aberrant": false
+    },
+    {
+     "match": "Arminia Bielefeld – Eintracht Braunschweig",
+     "source": "Pinnacle",
+     "cote_netbet": 1.72,
+     "cote_reference": 1.885,
+     "ecart_relatif": 0.0875,
+     "aberrant": false
+    },
+    {
+     "match": "Arminia Bielefeld – Eintracht Braunschweig",
+     "source": "PMU",
+     "cote_netbet": 1.72,
+     "cote_reference": 1.63,
+     "ecart_relatif": 0.0552,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-30T05:59:09+00:00",
-   "pinnacle_derniere_lecture": "2026-10-30T06:12:40+00:00",
+   "pinnacle_premiere_lecture": "2026-10-30T06:17:10+00:00",
+   "pinnacle_derniere_lecture": "2026-10-30T06:17:17+00:00",
    "books_premiere_lecture": "2026-10-30T05:35:05+00:00",
-   "books_derniere_lecture": "2026-10-30T06:12:19+00:00",
-   "ecart_enveloppe_secondes": 2255.0
+   "books_derniere_lecture": "2026-10-30T06:17:00+00:00",
+   "ecart_enveloppe_secondes": 2532.0
   },
   "historique_cotes": {
-   "lignes": 7145
+   "lignes": 1823
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 641,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 59241,
+   "mesures": 58923,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 156666,
-   "mesures": 35969,
-   "annotees": 4
+   "ancres": 155099,
+   "mesures": 136176,
+   "annotees": 12
   },
   "redecision": {
    "ajoutees": 0
@@ -368,26 +341,20 @@
    "dernier_reglement": "2026-10-30T05:43:01+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-30T06:15:13+00:00",
+  "fin": "2026-10-30T06:19:53+00:00",
   "cotes": {
-   "francaises": 194552,
-   "pinnacle": 196246,
-   "polymarket": 33152,
-   "smarkets": 4014,
-   "matchbook": 13806
+   "francaises": 194872,
+   "pinnacle": 157242,
+   "polymarket": 33142,
+   "smarkets": 3972,
+   "matchbook": 13914
   },
-  "matchs_francais": 2505,
+  "matchs_francais": 2426,
   "opportunites": 16,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 2
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-29T14:12:30+00:00",
-   "mode": "complet",
-   "opportunites": 9,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-29T14:17:08+00:00",
    "mode": "complet",
@@ -1587,6 +1554,12 @@
    "mode": "complet",
    "opportunites": 16,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-30T06:16:59+00:00",
+   "mode": "complet",
+   "opportunites": 16,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-30T05:43:01+00:00",
