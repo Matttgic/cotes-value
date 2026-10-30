@@ -1,18 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-30T05:21:09+00:00",
+  "debut": "2026-10-30T05:25:50+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 2.8,
+    "secondes": 2.9,
     "ok": true
    },
    "olybet": {
-    "secondes": 8.1,
+    "secondes": 11.2,
     "ok": true
    },
    "polymarket": {
-    "secondes": 20.2,
+    "secondes": 23.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -21,7 +21,7 @@
     ]
    },
    "pinnacle": {
-    "secondes": 34.1,
+    "secondes": 27.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -29,28 +29,28 @@
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
+   "pmu_direct": {
+    "secondes": 35.6,
+    "ok": true
+   },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "pmu_direct": {
-    "secondes": 40.1,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 59.1,
+   "unibet_direct": {
+    "secondes": 35.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 72.5,
+    "secondes": 73.2,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 70.8,
+   "betclic_direct": {
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,23 +58,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 18.6,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 67.9,
+    "secondes": 52.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.0,
+    "secondes": 2.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 0.8,
     "ok": true
    }
   },
@@ -89,16 +86,28 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 237,
-   "lignes": 12688
+   "lignes": 12573
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 39331,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 886,
-   "age_min_s": 104,
+   "age_max_s": 850,
+   "age_min_s": 55,
    "lignes": 154551,
-   "lignes_perimees": 90,
+   "lignes_perimees": 380,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -109,13 +118,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
+    "head_200": 38,
     "head_403": 2,
     "ortho_refusee": 2,
     "choisi_autre": 10,
     "choisi_fixe": 5,
-    "reprise_403": 2,
-    "reprise_403_ok": 1,
+    "reprise_403": 1,
     "sport_vide": 4
    }
   },
@@ -158,141 +166,175 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Zulte Waregem – Club Bruges",
-     "source": "PMU",
-     "cote_olybet": 5.9,
-     "cote_reference": 6.75,
-     "ecart_relatif": 0.1259,
-     "aberrant": false
-    },
-    {
-     "match": "Standard de Liège – Courtrai",
-     "source": "PMU",
-     "cote_olybet": 1.64,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.025,
-     "aberrant": false
-    },
-    {
-     "match": "Dunav Ruse – Levski Sofia",
+     "match": "FC Hegelmann – FK Kauno Zalgiris",
      "source": "Pinnacle",
-     "cote_olybet": 8.9,
-     "cote_reference": 9.47,
-     "ecart_relatif": 0.0602,
+     "cote_olybet": 7.5,
+     "cote_reference": 8.61,
+     "ecart_relatif": 0.1289,
      "aberrant": false
     },
     {
-     "match": "Dunav Ruse – Levski Sofia",
+     "match": "FC Hegelmann – FK Kauno Zalgiris",
      "source": "PMU",
-     "cote_olybet": 8.9,
-     "cote_reference": 9.0,
-     "ecart_relatif": 0.0111,
+     "cote_olybet": 7.5,
+     "cote_reference": 6.25,
+     "ecart_relatif": 0.2,
+     "aberrant": true
+    },
+    {
+     "match": "FA Siauliai – Dziugas Telsiai",
+     "source": "Pinnacle",
+     "cote_olybet": 2.9,
+     "cote_reference": 3.11,
+     "ecart_relatif": 0.0675,
      "aberrant": false
+    },
+    {
+     "match": "FK Panevezys – FK Transinvest",
+     "source": "Pinnacle",
+     "cote_olybet": 4.5,
+     "cote_reference": 4.93,
+     "ecart_relatif": 0.0872,
+     "aberrant": false
+    },
+    {
+     "match": "FK Panevezys – FK Transinvest",
+     "source": "PMU",
+     "cote_olybet": 4.5,
+     "cote_reference": 3.9,
+     "ecart_relatif": 0.1538,
+     "aberrant": true
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "FC Hegelmann – FK Kauno Zalgiris",
+     "source": "PMU",
+     "cote_olybet": 7.5,
+     "cote_reference": 6.25,
+     "ecart_relatif": 0.2,
+     "aberrant": true
+    },
+    {
+     "match": "FK Panevezys – FK Transinvest",
+     "source": "PMU",
+     "cote_olybet": 4.5,
+     "cote_reference": 3.9,
+     "ecart_relatif": 0.1538,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Arminia Bielefeld – Eintracht Braunschweig",
+     "match": "Estudiantes Río Cuarto – Gimnasia de La Plata",
      "source": "Pinnacle",
-     "cote_netbet": 1.72,
-     "cote_reference": 1.877,
-     "ecart_relatif": 0.0837,
+     "cote_netbet": 4.2,
+     "cote_reference": 4.53,
+     "ecart_relatif": 0.0728,
      "aberrant": false
     },
     {
-     "match": "Arminia Bielefeld – Eintracht Braunschweig",
+     "match": "Estudiantes Río Cuarto – Gimnasia de La Plata",
      "source": "PMU",
-     "cote_netbet": 1.72,
-     "cote_reference": 1.63,
-     "ecart_relatif": 0.0552,
+     "cote_netbet": 4.2,
+     "cote_reference": 4.4,
+     "ecart_relatif": 0.0455,
      "aberrant": false
     },
     {
-     "match": "Energie Cottbus – Bochum",
+     "match": "Huracán – Tigre",
      "source": "Pinnacle",
-     "cote_netbet": 2.7,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.0909,
+     "cote_netbet": 2.12,
+     "cote_reference": 2.33,
+     "ecart_relatif": 0.0901,
      "aberrant": false
     },
     {
-     "match": "Energie Cottbus – Bochum",
+     "match": "Huracán – Tigre",
      "source": "PMU",
-     "cote_netbet": 2.7,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0182,
+     "cote_netbet": 2.12,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0707,
      "aberrant": false
     },
     {
-     "match": "Darmstadt 98 – Magdeburg",
+     "match": "Club Atletico Sarmiento De Junin – Rosario Central",
      "source": "Pinnacle",
-     "cote_netbet": 2.77,
-     "cote_reference": 2.99,
-     "ecart_relatif": 0.0736,
+     "cote_netbet": 3.85,
+     "cote_reference": 4.21,
+     "ecart_relatif": 0.0855,
      "aberrant": false
     },
     {
-     "match": "Darmstadt 98 – Magdeburg",
+     "match": "Club Atletico Sarmiento De Junin – Rosario Central",
      "source": "PMU",
-     "cote_netbet": 2.77,
-     "cote_reference": 2.8,
-     "ecart_relatif": 0.0107,
+     "cote_netbet": 3.85,
+     "cote_reference": 3.95,
+     "ecart_relatif": 0.0253,
      "aberrant": false
     },
     {
-     "match": "Wolfsburg – VfL Osnabrück",
+     "match": "Racing Club – Aldosivi",
      "source": "Pinnacle",
-     "cote_netbet": 1.45,
-     "cote_reference": 1.562,
-     "ecart_relatif": 0.0716,
+     "cote_netbet": 1.57,
+     "cote_reference": 1.662,
+     "ecart_relatif": 0.0555,
      "aberrant": false
     },
     {
-     "match": "Wolfsburg – VfL Osnabrück",
+     "match": "Racing Club – Aldosivi",
      "source": "PMU",
-     "cote_netbet": 1.45,
-     "cote_reference": 1.41,
-     "ecart_relatif": 0.0284,
+     "cote_netbet": 1.57,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0188,
+     "aberrant": false
+    },
+    {
+     "match": "Zulte Waregem – Club Bruges",
+     "source": "PMU",
+     "cote_netbet": 6.0,
+     "cote_reference": 6.75,
+     "ecart_relatif": 0.1111,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-30T05:21:25+00:00",
-   "pinnacle_derniere_lecture": "2026-10-30T05:21:35+00:00",
-   "books_premiere_lecture": "2026-10-30T05:07:17+00:00",
-   "books_derniere_lecture": "2026-10-30T05:21:10+00:00",
-   "ecart_enveloppe_secondes": 858.0
+   "pinnacle_premiere_lecture": "2026-10-30T05:26:02+00:00",
+   "pinnacle_derniere_lecture": "2026-10-30T05:26:21+00:00",
+   "books_premiere_lecture": "2026-10-30T05:11:50+00:00",
+   "books_derniere_lecture": "2026-10-30T05:25:51+00:00",
+   "ecart_enveloppe_secondes": 871.0
   },
   "historique_cotes": {
-   "lignes": 3266
+   "lignes": 1227
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 639,
    "a_verifier": 12,
    "non_conforme": 10,
-   "mesures": 54374,
+   "mesures": 54478,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 146335,
-   "mesures": 120333,
+   "ancres": 147127,
+   "mesures": 115952,
    "annotees": 8
   },
   "redecision": {
@@ -309,26 +351,20 @@
    "dernier_reglement": "2026-10-30T04:47:10+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-30T05:24:39+00:00",
+  "fin": "2026-10-30T05:28:10+00:00",
   "cotes": {
-   "francaises": 179326,
-   "pinnacle": 154551,
-   "polymarket": 31304,
+   "francaises": 179670,
+   "pinnacle": 193882,
+   "polymarket": 31147,
    "smarkets": 4038,
-   "matchbook": 12688
+   "matchbook": 12573
   },
-  "matchs_francais": 2293,
+  "matchs_francais": 2315,
   "opportunites": 13,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-29T13:20:49+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-29T13:26:01+00:00",
    "mode": "complet",
@@ -1525,6 +1561,12 @@
   },
   {
    "debut": "2026-10-30T05:21:09+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-30T05:25:50+00:00",
    "mode": "complet",
    "opportunites": 13,
    "nouveaux_paris": 0
