@@ -1,22 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-30T11:37:04+00:00",
+  "debut": "2026-10-30T11:41:43+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 1.2,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "HTTP 403"
-    ]
+    "secondes": 4.4,
+    "ok": true
    },
    "olybet": {
-    "secondes": 12.7,
+    "secondes": 12.2,
     "ok": true
    },
    "polymarket": {
-    "secondes": 22.3,
+    "secondes": 25.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -25,35 +21,33 @@
      "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
-   "netbet": {
-    "secondes": 37.2,
+   "pinnacle": {
+    "secondes": 30.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "HTTP 403",
+     "sport 37 markets/straight : HTTP 403"
+    ],
+    "reprise": 4
+   },
+   "netbet": {
+    "secondes": 37.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
      "budget"
     ]
    },
    "pmu_direct": {
-    "secondes": 43.5,
+    "secondes": 40.0,
     "ok": true
    },
-   "pinnacle": {
-    "secondes": 45.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "reprise": 171351
-   },
    "winamax_direct": {
-    "secondes": 76.0,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 72.9,
+    "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.3,
+    "secondes": 77.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -61,8 +55,12 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 33.3,
-    "ok": true
+    "secondes": 71.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -70,15 +68,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 80.0,
+    "secondes": 87.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.5,
+    "secondes": 4.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 1.2,
     "ok": true
    }
   },
@@ -89,49 +87,43 @@
   "netbet_source": "direct",
   "matchbook": {
    "mode": "direct",
-   "ok": false,
-   "requetes": 1,
-   "erreurs": [
-    "HTTP 403"
-   ],
-   "matchs": 0,
-   "lignes": 0
+   "ok": true,
+   "requetes": 3,
+   "erreurs": [],
+   "matchs": 297,
+   "lignes": 16267
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": null,
-   "age_min_s": null,
-   "lignes": 0,
-   "lignes_perimees": 0,
-   "rechauffeur": "indisponible",
+   "age_max_s": 869,
+   "age_min_s": 91,
+   "lignes": 178547,
+   "lignes_perimees": 352,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 50,
-    "choisi_autre": 16
+    "head_200": 35,
+    "choisi_fixe": 8,
+    "head_403": 3,
+    "ortho_refusee": 2,
+    "choisi_autre": 8,
+    "reprise_403": 1,
+    "sport_vide": 1
    }
   },
   "reprise": {
    "actif": true,
    "Pinnacle": {
-    "football": 134741,
-    "tennis": 3616,
-    "basket": 16340,
-    "hockey": 7200,
-    "handball": 922,
-    "volley": 1612,
-    "football_americain": 6708,
-    "mma": 64,
-    "boxe": 14,
-    "golf": 26,
-    "rugby_league": 34,
-    "snooker": 68,
-    "padel": 6
+    "padel": 4
    }
   },
   "sports_francais": {
@@ -159,9 +151,7 @@
     "volley"
    ],
    "nouveaux_au_cycle_suivant": [],
-   "plus_chez_les_references": [
-    "curling"
-   ]
+   "plus_chez_les_references": []
   },
   "betclic_proches": {
    "proches": 4,
@@ -172,54 +162,62 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "Sampdoria – Entella",
+     "match": "Deportivo Pereira – Jaguares de Córdoba",
      "source": "Pinnacle",
-     "cote_olybet": 2.17,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0565,
+     "cote_olybet": 2.74,
+     "cote_reference": 2.94,
+     "ecart_relatif": 0.068,
      "aberrant": false
     },
     {
-     "match": "Sampdoria – Entella",
+     "match": "Deportivo Pereira – Jaguares de Córdoba",
      "source": "PMU",
-     "cote_olybet": 2.17,
-     "cote_reference": 1.93,
-     "ecart_relatif": 0.1244,
+     "cote_olybet": 2.74,
+     "cote_reference": 2.48,
+     "ecart_relatif": 0.1048,
      "aberrant": false
     },
     {
-     "match": "Cremonese – Benevento",
+     "match": "Llaneros Villavicencio – Atlético Junior  Barranquilla",
      "source": "Pinnacle",
-     "cote_olybet": 2.63,
-     "cote_reference": 2.8,
-     "ecart_relatif": 0.0607,
+     "cote_olybet": 2.43,
+     "cote_reference": 2.56,
+     "ecart_relatif": 0.0508,
      "aberrant": false
     },
     {
-     "match": "Cremonese – Benevento",
-     "source": "PMU",
-     "cote_olybet": 2.63,
-     "cote_reference": 2.45,
-     "ecart_relatif": 0.0735,
-     "aberrant": false
-    },
-    {
-     "match": "FC Sudtirol – Cesena FC",
+     "match": "Atlético Bucaramanga – Deportivo Pasto",
      "source": "Pinnacle",
-     "cote_olybet": 2.18,
-     "cote_reference": 2.31,
-     "ecart_relatif": 0.0563,
+     "cote_olybet": 1.6,
+     "cote_reference": 1.676,
+     "ecart_relatif": 0.0452,
      "aberrant": false
     },
     {
-     "match": "FC Sudtirol – Cesena FC",
+     "match": "Atlético Bucaramanga – Deportivo Pasto",
      "source": "PMU",
-     "cote_olybet": 2.18,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0792,
+     "cote_olybet": 1.6,
+     "cote_reference": 1.47,
+     "ecart_relatif": 0.0884,
+     "aberrant": false
+    },
+    {
+     "match": "Feyenoord – Fortuna Sittard",
+     "source": "Pinnacle",
+     "cote_olybet": 1.14,
+     "cote_reference": 1.155,
+     "ecart_relatif": 0.013,
+     "aberrant": false
+    },
+    {
+     "match": "Feyenoord – Fortuna Sittard",
+     "source": "PMU",
+     "cote_olybet": 1.14,
+     "cote_reference": 1.11,
+     "ecart_relatif": 0.027,
      "aberrant": false
     }
    ],
@@ -228,79 +226,103 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Kifisia – Olympiakos",
+     "match": "Cremonese – Benevento Calcio",
      "source": "Pinnacle",
-     "cote_netbet": 6.4,
-     "cote_reference": 7.25,
-     "ecart_relatif": 0.1172,
+     "cote_netbet": 2.52,
+     "cote_reference": 2.8,
+     "ecart_relatif": 0.1,
      "aberrant": false
     },
     {
-     "match": "Kifisia – Olympiakos",
+     "match": "Cremonese – Benevento Calcio",
      "source": "PMU",
-     "cote_netbet": 6.4,
-     "cote_reference": 6.1,
-     "ecart_relatif": 0.0492,
+     "cote_netbet": 2.52,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.0286,
      "aberrant": false
     },
     {
-     "match": "Hapoel Haifa – Hapoel Petah Tikva",
+     "match": "Südtirol – Cesena",
      "source": "Pinnacle",
-     "cote_netbet": 1.71,
-     "cote_reference": 1.813,
-     "ecart_relatif": 0.0568,
+     "cote_netbet": 2.1,
+     "cote_reference": 2.31,
+     "ecart_relatif": 0.0909,
      "aberrant": false
     },
     {
-     "match": "Bnei Sakhnin – Ironi Tiberias",
-     "source": "Pinnacle",
-     "cote_netbet": 2.05,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0807,
+     "match": "Südtirol – Cesena",
+     "source": "PMU",
+     "cote_netbet": 2.1,
+     "cote_reference": 2.02,
+     "ecart_relatif": 0.0396,
      "aberrant": false
     },
     {
-     "match": "Maccabi Netanya – Hapoel Jerusalem",
+     "match": "Catanzaro – Padova",
      "source": "Pinnacle",
-     "cote_netbet": 1.52,
-     "cote_reference": 1.61,
-     "ecart_relatif": 0.0558,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.48,
+     "ecart_relatif": 0.1129,
+     "aberrant": false
+    },
+    {
+     "match": "Catanzaro – Padova",
+     "source": "PMU",
+     "cote_netbet": 2.2,
+     "cote_reference": 2.02,
+     "ecart_relatif": 0.0891,
+     "aberrant": false
+    },
+    {
+     "match": "Sampdoria – Virtus Entella",
+     "source": "Pinnacle",
+     "cote_netbet": 2.1,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.087,
+     "aberrant": false
+    },
+    {
+     "match": "Sampdoria – Virtus Entella",
+     "source": "PMU",
+     "cote_netbet": 2.1,
+     "cote_reference": 1.93,
+     "ecart_relatif": 0.0881,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-30T11:32:38+00:00",
-   "pinnacle_derniere_lecture": "2026-10-30T11:32:55+00:00",
+   "pinnacle_premiere_lecture": "2026-10-30T11:32:55+00:00",
+   "pinnacle_derniere_lecture": "2026-10-30T11:42:05+00:00",
    "books_premiere_lecture": "2026-10-30T09:58:39+00:00",
-   "books_derniere_lecture": "2026-10-30T11:37:05+00:00",
-   "ecart_enveloppe_secondes": 5656.0
+   "books_derniere_lecture": "2026-10-30T11:41:44+00:00",
+   "ecart_enveloppe_secondes": 6206.0
   },
   "historique_cotes": {
-   "lignes": 2938
+   "lignes": 6083
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 641,
    "a_verifier": 10,
    "non_conforme": 10,
-   "mesures": 65393,
+   "mesures": 67762,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 193391,
-   "mesures": 173645,
-   "annotees": 10
+   "ancres": 196534,
+   "mesures": 171401,
+   "annotees": 11
   },
   "redecision": {
    "ajoutees": 0
@@ -315,27 +337,21 @@
    "saute": true,
    "dernier_reglement": "2026-10-30T11:21:32+00:00"
   },
-  "controle_publie": false,
-  "fin": "2026-10-30T11:40:04+00:00",
+  "controle_publie": true,
+  "fin": "2026-10-30T11:45:19+00:00",
   "cotes": {
-   "francaises": 220695,
-   "pinnacle": 171351,
-   "polymarket": 35061,
+   "francaises": 224906,
+   "pinnacle": 178551,
+   "polymarket": 35143,
    "smarkets": 4045,
-   "matchbook": 0
+   "matchbook": 16267
   },
-  "matchs_francais": 2733,
-  "opportunites": 11,
+  "matchs_francais": 2817,
+  "opportunites": 12,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-29T19:36:09+00:00",
-   "mode": "complet",
-   "opportunites": 10,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-29T19:40:45+00:00",
    "mode": "complet",
@@ -1535,6 +1551,12 @@
    "mode": "complet",
    "opportunites": 11,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-30T11:41:43+00:00",
+   "mode": "complet",
+   "opportunites": 12,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-30T11:21:32+00:00",
