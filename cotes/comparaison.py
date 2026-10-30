@@ -116,13 +116,21 @@ def _fiable(nom: str, l: dict) -> bool:
 # --------------------------------------------------------------------------- comparaison
 
 def annoter_ecarts(opportunites: list[dict], francais: list[dict],
-                   references: dict[str, list[dict]]) -> list[dict]:
+                   references: dict[str, list[dict]], index: dict[str, dict] | None = None) -> list[dict]:
     """Écart de chaque cote française contre Polymarket et Smarkets.
 
     Ces champs servent au bilan. Ils ne créent pas de pari : seules les clés
     présentes dans le dictionnaire passé à ``comparer`` décident.
+
+    ``index`` : l'index déjà construit par ``indexer`` sur les mêmes cotes françaises et les mêmes lignes de
+    référence (étape « association » du cycle). ``indexer`` traite chaque référence séparément : l'entrée
+    Polymarket ou Smarkets de cet index est celle qu'on recalculerait ici. Une référence absente de ``index``
+    est recalculée.
     """
-    index = indexer(francais, {n: references.get(n) or [] for n, _ in ECARTS_AFFICHES})
+    deja = index or {}
+    a_calculer = {n: references.get(n) or [] for n, _ in ECARTS_AFFICHES if n not in deja}
+    index = {**{n: deja[n] for n, _ in ECARTS_AFFICHES if n in deja},
+             **(indexer(francais, a_calculer) if a_calculer else {})}
     for o in opportunites:
         if not o.get("cote"):
             continue

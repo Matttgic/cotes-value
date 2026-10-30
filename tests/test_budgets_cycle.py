@@ -117,7 +117,7 @@ def test_page_unibet_lointaine_s_arrete():
 
 def test_pinnacle_budget_coupe_avant_le_reseau(monkeypatch):
     from cotes import pinnacle
-    monkeypatch.setattr(pinnacle.requests, "get", lambda *a, **k: (_ for _ in ()).throw(AssertionError("réseau")))
+    monkeypatch.setattr(pinnacle._http, "get", lambda *a, **k: (_ for _ in ()).throw(AssertionError("réseau")))
     monkeypatch.setattr(pinnacle.requests, "post", lambda *a, **k: (_ for _ in ()).throw(AssertionError("réseau")))
     assert pinnacle.collecter({29: "football"}, echeance=Echeance(0)) == []
     assert "budget" in pinnacle.ERREURS

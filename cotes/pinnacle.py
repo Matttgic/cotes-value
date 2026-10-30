@@ -40,6 +40,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
+from .connexion import Client
 from .marge import marge, proba_justes
 
 BASE = "https://guest.api.arcadia.pinnacle.com/0.1"
@@ -73,6 +74,7 @@ PAUSE_REPRISE_403_S = 3
 _reprises_403 = 0
 _dernier_code: int | None = None    # statut HTTP de la dernière réponse lue par _get
 _plans: dict[int, dict] = {}
+_http = Client()                    # connexion gardée : matchups, prix et HEAD de chaque sport
 
 
 def oublier_cle() -> None:
@@ -254,10 +256,15 @@ def _choisir_chemin_prix(sid: int) -> str:
         return fixe
     meilleur, age_min = fixe, None
     suffisant = age_max_secondes() // 2
+    echeance = _echeance_active
     for q in candidates:
+        if echeance is not None and not echeance.ok():
+            _compter("head_budget")          # budget épuisé : pas de HEAD de plus, le GET qui suit le notera
+            break
         chemin = f"/sports/{sid}/markets/straight{q}"
         try:
-            r = requests.head(base_api() + chemin, headers=headers(), timeout=15, allow_redirects=False)
+            r = _http.head(base_api() + chemin, headers=headers(),
+                           timeout=15 if echeance is None else echeance.timeout(15), allow_redirects=False)
         except requests.RequestException:
             _compter("head_reseau")
             continue
@@ -370,7 +377,7 @@ def _get(path: str, essais: int = 3, echeance=None, sonde_403: bool = False):
             _erreur("budget")
             return None
         try:
-            r = requests.get(base_api() + path, headers=headers(), timeout=delai)
+            r = _http.get(base_api() + path, headers=headers(), timeout=delai)
             _dernier_code = r.status_code
             if r.status_code == 200:
                 try:

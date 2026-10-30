@@ -459,7 +459,7 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
                         "strategies_historiques": [cle for cle, nom in BADGES_COMPARATEURS if id(index[pid]) in historiques[nom]],
                         "convergence_historique": id(index[pid]) in historiques[CONVERGENCE["nom"]],
                         "trace": []}
-                 for pid in toutes if pid in index},
+                 for pid in sorted(toutes) if pid in index},  # ordre stable : un set de str varie d'un processus à l'autre
     }
 
 

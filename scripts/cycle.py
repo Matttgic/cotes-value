@@ -329,12 +329,65 @@ def repli_reserve(bloc: dict, maintenant: datetime) -> tuple[list[dict], dict]:
     return lignes, meta
 
 
+# Un sport reste lu chez les bookmakers français 2 h après sa dernière présence chez les références : un 403
+# passager de Pinnacle sur un sport ne le retire pas du cycle suivant.
+SPORTS_PRECEDENTS_GARDE_H = 2
+
+
+def _chemin_sports(reprise_chemin: Path | None) -> Path | None:
+    return Path(reprise_chemin).with_name("sports_cycle.json") if reprise_chemin else None
+
+
+def _sports_vus(reprise_chemin: Path | None) -> dict[str, datetime]:
+    chemin = _chemin_sports(reprise_chemin)
+    if chemin is None:
+        return {}
+    try:
+        vus = json.loads(chemin.read_text(encoding="utf-8")).get("vus")
+    except (OSError, ValueError, AttributeError):
+        return {}
+    if not isinstance(vus, dict):
+        return {}
+    return {k: t for k, v in vus.items() if isinstance(k, str) and k and (t := _instant(v)) is not None}
+
+
+def sports_precedents(reprise_chemin: Path | None, maintenant: datetime) -> set[str] | None:
+    """Sports des références (Pinnacle, Polymarket) vus dans les 2 dernières heures, gardés à côté de la reprise
+    (cache Actions). ``None`` (absent, illisible ou rien de récent) : les bookmakers français attendent les
+    références, comme avant. Ne lève jamais."""
+    garde = timedelta(hours=SPORTS_PRECEDENTS_GARDE_H)
+    sports = {k for k, t in _sports_vus(reprise_chemin).items() if timedelta(0) <= maintenant - t <= garde}
+    return sports or None
+
+
+def memoriser_sports(reprise_chemin: Path | None, sports: set[str], maintenant: datetime) -> None:
+    """Note les sports de ce cycle (heure de dernière présence) pour le suivant. Ne lève jamais."""
+    chemin = _chemin_sports(reprise_chemin)
+    if chemin is None:
+        return
+    garde = timedelta(hours=SPORTS_PRECEDENTS_GARDE_H)
+    vus = {k: t for k, t in _sports_vus(reprise_chemin).items() if timedelta(0) <= maintenant - t <= garde}
+    vus.update({x: maintenant for x in sports if isinstance(x, str) and x})
+    try:
+        ecrire_json(chemin, {"maj": maintenant.isoformat(timespec="seconds"),
+                             "vus": {k: vus[k].isoformat(timespec="seconds") for k in sorted(vus)}})
+    except OSError:
+        pass
+
+
 def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: Path | None = None,
                        reprise_chemin: Path | None = None):
-    """Pinnacle et Polymarket d'abord, puis les bookmakers français en parallèle.
+    """Pinnacle, Polymarket et les bookmakers français en parallèle.
 
     Chaque bookmaker est lu directement sur son site (PulseScore n'existe plus) ; la panne
     d'un lecteur n'arrête pas les autres.
+
+    Les bookmakers français (sauf Unibet) partent tout de suite avec les sports vus chez les références dans
+    les 2 dernières heures (``sports_cycle.json`` à côté de la reprise), sans attendre Pinnacle (jusqu'à 45 s).
+    Sans ce fichier (premier cycle, cache évincé, lecture locale) : ils attendent les références, comme avant.
+    Compromis : un sport qui apparaît chez les références n'est lu chez ces bookmakers qu'au cycle suivant
+    (5 minutes plus tard), il est noté dans ``journal["sports_francais"]``. Unibet garde le radar Pinnacle du
+    cycle, il part donc toujours après Pinnacle avec les sports du cycle.
     """
     limite = maintenant + timedelta(hours=HORIZON_H)
 
@@ -387,6 +440,39 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         fpin = pool.submit(etape_bornee, "pinnacle", journal, BUDGETS["pinnacle"], _lire_pinnacle)
         fpoly = pool.submit(etape_bornee, "polymarket", journal, BUDGETS["polymarket"],
                             polymarket.collecter, HORIZON_H)
+        futurs = {}
+
+        def lancer(nom, module, budget, fonction, *args, **kwargs):
+            futurs[nom] = pool.submit(source_bornee, module, nom, journal, budget,
+                                      fonction, *args, **kwargs)
+
+        source_oly = olybet_direct.mode_source()
+        journal["olybet_source"] = source_oly
+        source_net = netbet_direct.mode_source()
+        journal["netbet_source"] = source_net
+
+        def lancer_francais(sports_fr):
+            """PMU, Winamax, Betclic, OlyBet et NetBet : seul Unibet dépend du radar Pinnacle du cycle."""
+            lancer("pmu_direct", pmu_direct, BUDGETS["pmu_direct"], pmu_direct.collecter,
+                   sports_fr, heures_directes, reserve=_reserve("pmu"), concurrence=2)
+            lancer("winamax_direct", winamax_direct, BUDGETS["winamax_direct"],
+                   winamax_direct.collecter, sports_fr, heures_directes, maintenant=maintenant)
+            lancer("betclic_direct", betclic_direct, BUDGETS["betclic_direct"],
+                   betclic_direct.collecter, sports_fr, heures_directes, maintenant=maintenant,
+                   reserve=_reserve("betclic"))
+            if source_oly == "direct":
+                sports_oly = sports_fr & {"football"} if mode == "test" else sports_fr
+                lancer("olybet", olybet_direct, BUDGETS["olybet"], olybet_direct.collecter,
+                       sports_oly, 12 if mode == "test" else HORIZON_H)
+            if source_net == "direct":
+                sports_net = sports_fr & {"football"} if mode == "test" else sports_fr
+                # Lecture tournante : la mémoire du passage précédent dit quelles pages relire (cotes/direct/netbet.py).
+                lancer("netbet", netbet_direct, BUDGETS["netbet"], netbet_direct.collecter,
+                       sports_net, 12 if mode == "test" else HORIZON_H, reserve=_reserve("netbet"))
+
+        precedents = sports_precedents(reprise_chemin, maintenant)
+        if precedents:
+            lancer_francais(precedents)
         pin, poly = fpin.result() or [], fpoly.result() or []
         # Fraîcheur de la lecture directe seule (avant le secours) : c'est elle que la page Santé affiche.
         ages = [l.get("age_cache_s") for l in pin
@@ -427,35 +513,17 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
             if repris.get(nom) and etape_nom in journal["etapes"]:
                 journal["etapes"][etape_nom]["reprise"] = len(repris[nom])
         sports = sports_des(pin + poly)
-        futurs = {}
-
-        def lancer(nom, module, budget, fonction, *args, **kwargs):
-            futurs[nom] = pool.submit(source_bornee, module, nom, journal, budget,
-                                      fonction, *args, **kwargs)
-
-        lancer("pmu_direct", pmu_direct, BUDGETS["pmu_direct"], pmu_direct.collecter,
-               sports, heures_directes, reserve=_reserve("pmu"), concurrence=2)
-        lancer("winamax_direct", winamax_direct, BUDGETS["winamax_direct"],
-               winamax_direct.collecter, sports, heures_directes, maintenant=maintenant)
+        if precedents:
+            journal["sports_francais"] = {"source": "cycle précédent", "sports": sorted(precedents),
+                                          "nouveaux_au_cycle_suivant": sorted(sports - precedents),
+                                          "plus_chez_les_references": sorted(precedents - sports)}
+        else:
+            journal["sports_francais"] = {"source": "références du cycle", "sports": sorted(sports)}
+            lancer_francais(sports)
+        memoriser_sports(reprise_chemin, sports, maintenant)
         lancer("unibet_direct", unibet_direct, BUDGETS["unibet_direct"],
                unibet_direct.collecter, sports, heures_directes, maintenant=maintenant,
                concurrence=3, radar=_radar_depuis(pin) or None, reserve=_reserve("unibet"))
-        lancer("betclic_direct", betclic_direct, BUDGETS["betclic_direct"],
-               betclic_direct.collecter, sports, heures_directes, maintenant=maintenant,
-               reserve=_reserve("betclic"))
-        source_oly = olybet_direct.mode_source()
-        journal["olybet_source"] = source_oly
-        if source_oly == "direct":
-            sports_oly = sports & {"football"} if mode == "test" else sports
-            lancer("olybet", olybet_direct, BUDGETS["olybet"], olybet_direct.collecter,
-                   sports_oly, 12 if mode == "test" else HORIZON_H)
-        source_net = netbet_direct.mode_source()
-        journal["netbet_source"] = source_net
-        if source_net == "direct":
-            sports_net = sports & {"football"} if mode == "test" else sports
-            # Lecture tournante : la mémoire du passage précédent dit quelles pages relire (cotes/direct/netbet.py).
-            lancer("netbet", netbet_direct, BUDGETS["netbet"], netbet_direct.collecter,
-                   sports_net, 12 if mode == "test" else HORIZON_H, reserve=_reserve("netbet"))
 
         recus: dict = {}
 
@@ -804,6 +872,13 @@ def main() -> int:
                           "etapes": journal.get("etapes", {})}, ensure_ascii=False))
         return 0
 
+    # Matchbook ne dépend d'aucune autre source (sports fixes) : lu dès le départ, en parallèle de la collecte,
+    # au lieu d'attendre Pinnacle, les bookmakers français puis Smarkets. Son résultat n'est lu qu'au même endroit.
+    sports_mb = {"football"} if args.mode == "test" else {"football", "tennis"}
+    pool_mb = ThreadPoolExecutor(max_workers=1, thread_name_prefix="matchbook")
+    futur_mb = pool_mb.submit(appliquer_matchbook, sports_mb, 12 if args.mode == "test" else HORIZON_H,
+                              maintenant, journal)
+    pool_mb.shutdown(wait=False)
     pin, poly, francais = collecter_prematch(args.mode, maintenant, journal, donnees,
                                              Path(args.reprise) if args.reprise else None)
     references = {"Pinnacle": pin, "Polymarket": poly}
@@ -819,8 +894,12 @@ def main() -> int:
     journal["smarkets_dans_decision"] = smarkets.dans_decision()
     # Table propre. Le drapeau ne retire que le consensus partagé.
     smarkets.ajouter_table(references, sm_lignes)
-    sports_mb = {"football"} if args.mode == "test" else {"football", "tennis"}
-    mb_lignes = appliquer_matchbook(sports_mb, 12 if args.mode == "test" else HORIZON_H, maintenant, journal)
+    try:
+        mb_lignes = futur_mb.result()
+    except Exception as e:  # noqa: BLE001 - appliquer_matchbook ne lève pas ; garde-fou
+        journal["matchbook"] = {"mode": matchbook_direct.mode(), "ok": False, "requetes": 0,
+                                "erreurs": [type(e).__name__], "matchs": 0, "lignes": 0}
+        mb_lignes = []
     if mb_lignes:
         references["Matchbook"] = mb_lignes
     # Matchbook a sa table de paris (mêmes seuils que Pinnacle). Il reste hors
@@ -855,7 +934,11 @@ def main() -> int:
         Path(args.reprise).with_name("ancres_mouvement.json.gz") if args.reprise else None, maintenant)
     # Écarts d'affichage, y compris quand Smarkets ne décide pas. Avant le placement :
     # le pari enregistre les trois champs.
-    comparaison.annoter_ecarts(opportunites, francais, {"Polymarket": poly, "Smarkets": sm_lignes})
+    # L'index de l'association contient déjà Polymarket et Smarkets (mêmes lignes) : pas de seconde association.
+    references_ecarts = {"Polymarket": poly, "Smarkets": sm_lignes}
+    comparaison.annoter_ecarts(opportunites, francais, references_ecarts,
+                               index={n: index[n] for n in references_ecarts
+                                      if n in index and references.get(n) is references_ecarts[n]})
     paris = charger_paris(donnees, journal)
     # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
     manuels = lire_json(donnees / "resultats_manuels.json", {})
