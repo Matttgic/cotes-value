@@ -137,6 +137,8 @@ marge comprise), `ecart` (edge) et `recheck`.
 - Les paris ajoutés par la re-décision (`redecider_ouverts`) sont envoyés avec `recheck: true`, tant que le match
   n'a pas commencé, même s'ils datent de plus de 15 minutes : le prix a pu bouger, à revérifier contre `cote_min`.
 - Les id déjà envoyés sont gardés trois jours dans `webhook_envoyes.json` (branche `donnees`) : pas de doublon.
+  Une copie vit aussi dans le cache Actions (`envoyes/`, `scripts/envoyes_secours.py`) : si le push de `donnees`
+  échoue, le cycle suivant la fusionne et ne renvoie pas les mêmes alertes.
 - Délai de 5 s par requête et 25 s au total, 20 alertes au plus par passage. Une erreur est comptée dans
   `notifications_diagnostic.json` (champ `webhook`, sans URL ni clé) et ne bloque ni le scan ni les alertes Chrome.
 
@@ -220,7 +222,8 @@ quand le téléphone l'associe à son site.
 
 **Comportement**
 
-- Une alerte n'est envoyée qu'une fois (`pushover_envoyes.json`, trois jours d'historique).
+- Une alerte n'est envoyée qu'une fois (`pushover_envoyes.json`, trois jours d'historique, copie de secours dans le
+  cache Actions comme `webhook_envoyes.json`).
 - Au premier passage, les re-décisions anciennes de Pinnacle 2 sont mémorisées sans être envoyées (pas d'inondation).
 - Le message reste sur le téléphone jusqu'au coup d'envoi, 24 heures au plus (`ttl`). Avec une heure seulement, une alerte reçue pendant la nuit avait disparu avant d'être lue.
 - Quota gratuit de Pushover : 10 000 messages par mois et par application ; un 429 arrête l'envoi du passage.

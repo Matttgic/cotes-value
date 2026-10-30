@@ -52,13 +52,23 @@ jobs:
           THE_ODDS_API_KEY_4: ${{ secrets.THE_ODDS_API_KEY_4 }}
         run: python scripts/cycle.py --seulement-reglement --reglement auto --donnees donnees --site site
 
+      # Même enregistrement que collecte.yml : même si le règlement a échoué en cours de route (les paris déjà
+      # réglés sont gardés), sans jamais ajouter les caches sortis de la branche (mémoire de travail écrite dans
+      # « donnees » faute de MEMOIRE_CHEMIN ici, fichiers temporaires), avec reprise d'un push concurrent.
       - name: Enregistrer les paris regles
+        if: always()
         run: |
           cd donnees
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for f in horizon_direct pinnacle_secours_cache smarkets_cache controle; do
+            printf '/%s.json.gz\n' "$f" >> .git/info/exclude
+          done
+          printf '%s\n' /horizon_direct.json /pinnacle_secours_cache.json /smarkets_cache.json '*.tmp' >> .git/info/exclude
+          git rm -q --cached --ignore-unmatch horizon_direct.json pinnacle_secours_cache.json smarkets_cache.json
           git add -A
           git diff --cached --quiet || git commit -qm "Reglement $(date -u +%FT%TZ)"
+          # un cycle de collecte ou un résultat saisi à la main entre-temps : on le reprend avant de pousser
           for i in 1 2 3; do
             git push -q origin donnees && exit 0
             git pull -q --rebase origin donnees
