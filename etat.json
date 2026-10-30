@@ -1,22 +1,32 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-30T23:43:29+00:00",
+  "debut": "2026-10-30T23:48:05+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.8,
+    "secondes": 3.7,
     "ok": true
    },
+   "winamax_direct": {
+    "secondes": 4.0,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau (CurlError 22)",
+     "connexion impossible (CurlError 22)",
+     "lecture vide"
+    ]
+   },
    "olybet": {
-    "secondes": 8.8,
+    "secondes": 8.2,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 23.5,
+    "secondes": 19.9,
     "ok": true
    },
    "polymarket": {
-    "secondes": 26.1,
+    "secondes": 22.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -26,7 +36,7 @@
     ]
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -34,47 +44,32 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 45.0,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 72.6,
+    "secondes": 43.1,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.2,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 55.4,
+    "ok": true
    },
    "unibet_direct": {
-    "secondes": 70.4,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "secondes": 61.6,
+    "ok": true
    },
    "smarkets": {
-    "secondes": 29.2,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 73.5,
+    "secondes": 55.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.1,
+    "secondes": 1.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.2,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -89,15 +84,16 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 357,
-   "lignes": 17564
+   "lignes": 17590
   },
   "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 47783,
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 48025,
    "erreurs": [],
-   "pause": true,
-   "cache_lignes": 47783,
+   "cache_lignes": 0,
    "retard": [
     "football"
    ]
@@ -106,25 +102,21 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 878,
-   "age_min_s": 101,
-   "lignes": 182690,
-   "lignes_perimees": 4703,
-   "rechauffeur": "ok",
+   "age_max_s": 857,
+   "age_min_s": 213,
+   "lignes": 183145,
+   "lignes_perimees": 143262,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 7,
+    "head_403": 1,
+    "choisi_fixe": 1,
+    "reprise_403": 1,
+    "reprise_403_ok": 1,
     "sport_vide": 5
    }
   },
@@ -166,78 +158,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Racing Club Avellaneda – CA Aldosivi",
+     "match": "AE Kifisia FC – Olympiakos",
      "source": "Pinnacle",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.775,
+     "cote_olybet": 6.5,
+     "cote_reference": 7.42,
+     "ecart_relatif": 0.124,
+     "aberrant": false
+    },
+    {
+     "match": "AE Kifisia FC – Olympiakos",
+     "source": "PMU",
+     "cote_olybet": 6.5,
+     "cote_reference": 6.1,
+     "ecart_relatif": 0.0656,
+     "aberrant": false
+    },
+    {
+     "match": "Petrolul Ploiesti – CFR Cluj",
+     "source": "Pinnacle",
+     "cote_olybet": 2.38,
+     "cote_reference": 2.53,
      "ecart_relatif": 0.0593,
      "aberrant": false
     },
     {
-     "match": "Racing Club Avellaneda – CA Aldosivi",
+     "match": "Petrolul Ploiesti – CFR Cluj",
      "source": "PMU",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0437,
+     "cote_olybet": 2.38,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0083,
      "aberrant": false
     },
     {
-     "match": "Sarmiento – CA Rosario Central",
+     "match": "Corvinul Hunedoara – Argesul Pitesti",
      "source": "Pinnacle",
-     "cote_olybet": 4.0,
-     "cote_reference": 4.51,
-     "ecart_relatif": 0.1131,
+     "cote_olybet": 2.05,
+     "cote_reference": 2.16,
+     "ecart_relatif": 0.0509,
      "aberrant": false
     },
     {
-     "match": "Sarmiento – CA Rosario Central",
+     "match": "Corvinul Hunedoara – Argesul Pitesti",
      "source": "PMU",
-     "cote_olybet": 4.0,
-     "cote_reference": 4.0,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 2.05,
+     "cote_reference": 1.81,
+     "ecart_relatif": 0.1326,
      "aberrant": false
     },
     {
-     "match": "Estudiantes de La Plata – Instituto AC Cordoba",
+     "match": "Cliftonville – Carrick Rangers",
      "source": "Pinnacle",
-     "cote_olybet": 1.91,
-     "cote_reference": 2.01,
-     "ecart_relatif": 0.0498,
+     "cote_olybet": 2.07,
+     "cote_reference": 2.19,
+     "ecart_relatif": 0.0548,
      "aberrant": false
     },
     {
-     "match": "Estudiantes de La Plata – Instituto AC Cordoba",
-     "source": "PMU",
-     "cote_olybet": 1.91,
-     "cote_reference": 1.92,
-     "ecart_relatif": 0.0052,
-     "aberrant": false
-    },
-    {
-     "match": "Deportivo Riestra – Atlético Talleres",
-     "source": "PMU",
-     "cote_olybet": 2.11,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0144,
-     "aberrant": false
-    },
-    {
-     "match": "Vélez Sarsfield – San Lorenzo de Almagro",
+     "match": "Linfield – Dungannon Swifts",
      "source": "Pinnacle",
-     "cote_olybet": 1.85,
-     "cote_reference": 1.962,
-     "ecart_relatif": 0.0568,
-     "aberrant": false
-    },
-    {
-     "match": "Vélez Sarsfield – San Lorenzo de Almagro",
-     "source": "PMU",
-     "cote_olybet": 1.85,
-     "cote_reference": 1.83,
-     "ecart_relatif": 0.0109,
+     "cote_olybet": 1.41,
+     "cote_reference": 1.461,
+     "ecart_relatif": 0.0348,
      "aberrant": false
     }
    ],
@@ -246,118 +230,103 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Rangers – Aberdeen",
+     "match": "Spartak Trnava – KFC Komarno",
      "source": "Pinnacle",
-     "cote_netbet": 1.35,
-     "cote_reference": 1.442,
-     "ecart_relatif": 0.0641,
+     "cote_netbet": 1.58,
+     "cote_reference": 1.709,
+     "ecart_relatif": 0.0756,
      "aberrant": false
     },
     {
-     "match": "Rangers – Aberdeen",
+     "match": "Spartak Trnava – KFC Komarno",
      "source": "PMU",
-     "cote_netbet": 1.35,
-     "cote_reference": 1.38,
-     "ecart_relatif": 0.0217,
-     "aberrant": false
-    },
-    {
-     "match": "Club Atletico Sarmiento De Junin – Rosario Central",
-     "source": "Pinnacle",
-     "cote_netbet": 4.0,
-     "cote_reference": 4.51,
-     "ecart_relatif": 0.1131,
-     "aberrant": false
-    },
-    {
-     "match": "Club Atletico Sarmiento De Junin – Rosario Central",
-     "source": "PMU",
-     "cote_netbet": 4.0,
-     "cote_reference": 4.0,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Racing Club – Aldosivi",
-     "source": "Pinnacle",
-     "cote_netbet": 1.61,
-     "cote_reference": 1.775,
-     "ecart_relatif": 0.0931,
-     "aberrant": false
-    },
-    {
-     "match": "Racing Club – Aldosivi",
-     "source": "PMU",
-     "cote_netbet": 1.61,
+     "cote_netbet": 1.58,
      "cote_reference": 1.6,
-     "ecart_relatif": 0.0063,
+     "ecart_relatif": 0.0125,
      "aberrant": false
     },
     {
-     "match": "Deportivo Riestra – Talleres de Córdoba",
+     "match": "Trencin – FK Košice",
      "source": "Pinnacle",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.24,
-     "ecart_relatif": 0.0759,
+     "cote_netbet": 2.82,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.0903,
      "aberrant": false
     },
     {
-     "match": "Deportivo Riestra – Talleres de Córdoba",
-     "source": "PMU",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.08,
-     "ecart_relatif": 0.0048,
-     "aberrant": false
-    },
-    {
-     "match": "Vélez Sarsfield – San Lorenzo de Almagro",
+     "match": "Zilina – Zemplin Michalovce",
      "source": "Pinnacle",
-     "cote_netbet": 1.83,
-     "cote_reference": 1.962,
-     "ecart_relatif": 0.067,
+     "cote_netbet": 1.42,
+     "cote_reference": 1.51,
+     "ecart_relatif": 0.0597,
      "aberrant": false
     },
     {
-     "match": "Vélez Sarsfield – San Lorenzo de Almagro",
+     "match": "Zilina – Zemplin Michalovce",
      "source": "PMU",
-     "cote_netbet": 1.83,
-     "cote_reference": 1.83,
-     "ecart_relatif": 0.0,
+     "cote_netbet": 1.42,
+     "cote_reference": 1.47,
+     "ecart_relatif": 0.034,
+     "aberrant": false
+    },
+    {
+     "match": "Železiarne Podbrezová – Slovan Bratislava",
+     "source": "Pinnacle",
+     "cote_netbet": 3.2,
+     "cote_reference": 3.42,
+     "ecart_relatif": 0.0643,
+     "aberrant": false
+    },
+    {
+     "match": "Grasshopper Zürich – Vaduz",
+     "source": "Pinnacle",
+     "cote_netbet": 2.37,
+     "cote_reference": 2.56,
+     "ecart_relatif": 0.0742,
+     "aberrant": false
+    },
+    {
+     "match": "Grasshopper Zürich – Vaduz",
+     "source": "PMU",
+     "cote_netbet": 2.37,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0125,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-30T23:15:38+00:00",
-   "pinnacle_derniere_lecture": "2026-10-30T23:43:47+00:00",
+   "pinnacle_premiere_lecture": "2026-10-30T23:48:18+00:00",
+   "pinnacle_derniere_lecture": "2026-10-30T23:48:30+00:00",
    "books_premiere_lecture": "2026-10-30T20:50:06+00:00",
-   "books_derniere_lecture": "2026-10-30T23:43:30+00:00",
-   "ecart_enveloppe_secondes": 10421.0
+   "books_derniere_lecture": "2026-10-30T23:48:05+00:00",
+   "ecart_enveloppe_secondes": 10704.0
   },
   "historique_cotes": {
-   "lignes": 1524
+   "lignes": 6379
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 643,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 66441,
+   "mesures": 36488,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 183320,
-   "mesures": 66614,
-   "annotees": 5
+   "ancres": 58955,
+   "mesures": 27001,
+   "annotees": 3
   },
   "redecision": {
    "ajoutees": 0
@@ -373,26 +342,20 @@
    "dernier_reglement": "2026-10-30T22:58:56+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-30T23:47:06+00:00",
+  "fin": "2026-10-30T23:50:37+00:00",
   "cotes": {
-   "francaises": 192746,
-   "pinnacle": 230473,
-   "polymarket": 35488,
+   "francaises": 155868,
+   "pinnacle": 231170,
+   "polymarket": 35538,
    "smarkets": 3967,
-   "matchbook": 17564
+   "matchbook": 17590
   },
-  "matchs_francais": 2383,
-  "opportunites": 11,
+  "matchs_francais": 1961,
+  "opportunites": 5,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T07:17:58+00:00",
-   "mode": "complet",
-   "opportunites": 16,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-30T07:22:37+00:00",
    "mode": "complet",
@@ -1591,6 +1554,12 @@
    "debut": "2026-10-30T23:43:29+00:00",
    "mode": "complet",
    "opportunites": 11,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-30T23:48:05+00:00",
+   "mode": "complet",
+   "opportunites": 5,
    "nouveaux_paris": 0
   }
  ],
