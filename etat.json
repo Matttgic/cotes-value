@@ -1,31 +1,48 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T00:13:17+00:00",
+  "debut": "2026-10-31T00:18:08+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.8,
+    "secondes": 4.5,
     "ok": true
    },
    "olybet": {
-    "secondes": 7.5,
+    "secondes": 11.2,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 22.3,
+    "secondes": 26.3,
     "ok": true
    },
    "polymarket": {
-    "secondes": 30.1,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ],
+    "reprise": 35061
+   },
+   "netbet": {
+    "secondes": 39.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides"
+     "budget"
     ]
    },
-   "netbet": {
-    "secondes": 37.1,
+   "pmu_direct": {
+    "secondes": 46.4,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 20.8,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 76.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -33,19 +50,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 38.4,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 40.8,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 73.7,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 71.5,
+    "secondes": 78.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -58,15 +63,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 109.7,
+    "secondes": 172.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.3,
+    "secondes": 4.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.1,
+    "secondes": 1.4,
     "ok": true
    }
   },
@@ -80,37 +85,62 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 356,
-   "lignes": 17874
+   "matchs": 357,
+   "lignes": 17714
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 48372,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 844,
-   "age_min_s": 65,
-   "lignes": 182672,
-   "lignes_perimees": 1770,
-   "rechauffeur": "ok",
+   "age_max_s": 879,
+   "age_min_s": 23,
+   "lignes": 183146,
+   "lignes_perimees": 4346,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
+    "head_200": 37,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "choisi_fixe": 8,
+    "choisi_autre": 13,
+    "choisi_fixe": 2,
     "sport_vide": 5
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Polymarket": {
+    "football": 29229,
+    "hockey": 358,
+    "mma": 100,
+    "basket": 610,
+    "esport": 66,
+    "football_americain": 3772,
+    "rugby": 46,
+    "cricket": 30,
+    "autre": 30,
+    "handball": 10,
+    "flechettes": 4,
+    "volley": 22,
+    "tennis": 140,
+    "tennis_de_table": 644
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -139,7 +169,7 @@
    "plus_chez_les_references": []
   },
   "betclic_proches": {
-   "proches": 10,
+   "proches": 8,
    "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 0
@@ -147,59 +177,74 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Eibar – Almeria",
+     "match": "Aalesunds – Sandefjord",
      "source": "Pinnacle",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.68,
-     "ecart_relatif": 0.0634,
+     "cote_olybet": 1.81,
+     "cote_reference": 1.909,
+     "ecart_relatif": 0.0519,
      "aberrant": false
     },
     {
-     "match": "Eibar – Almeria",
+     "match": "Aalesunds – Sandefjord",
      "source": "PMU",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.1009,
+     "cote_olybet": 1.81,
+     "cote_reference": 1.74,
+     "ecart_relatif": 0.0402,
      "aberrant": false
     },
     {
-     "match": "Albacete – CE Sabadell",
+     "match": "Fredrikstad – Rosenborg",
      "source": "Pinnacle",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0714,
+     "cote_olybet": 3.88,
+     "cote_reference": 4.25,
+     "ecart_relatif": 0.0871,
      "aberrant": false
     },
     {
-     "match": "Albacete – CE Sabadell",
+     "match": "Fredrikstad – Rosenborg",
      "source": "PMU",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.2,
-     "ecart_relatif": 0.0045,
+     "cote_olybet": 3.88,
+     "cote_reference": 3.65,
+     "ecart_relatif": 0.063,
      "aberrant": false
     },
     {
-     "match": "Celta Vigo B – Cordoue",
+     "match": "Cardiff Metropolitan University – Penybont FC",
+     "source": "Pinnacle",
+     "cote_olybet": 3.61,
+     "cote_reference": 3.85,
+     "ecart_relatif": 0.0623,
+     "aberrant": false
+    },
+    {
+     "match": "The New Saints – Connahs Quay Nomads FC",
+     "source": "Pinnacle",
+     "cote_olybet": 1.25,
+     "cote_reference": 1.287,
+     "ecart_relatif": 0.0291,
+     "aberrant": false
+    },
+    {
+     "match": "Machida Zelvia – Gamba Osaka",
+     "source": "Pinnacle",
+     "cote_olybet": 1.65,
+     "cote_reference": 1.73,
+     "ecart_relatif": 0.0462,
+     "aberrant": false
+    },
+    {
+     "match": "Machida Zelvia – Gamba Osaka",
      "source": "PMU",
-     "cote_olybet": 3.39,
-     "cote_reference": 2.9,
-     "ecart_relatif": 0.169,
-     "aberrant": true
+     "cote_olybet": 1.65,
+     "cote_reference": 1.64,
+     "ecart_relatif": 0.0061,
+     "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Celta Vigo B – Cordoue",
-     "source": "PMU",
-     "cote_olybet": 3.39,
-     "cote_reference": 2.9,
-     "ecart_relatif": 0.169,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -274,33 +319,33 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T00:13:28+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T00:13:34+00:00",
+   "pinnacle_premiere_lecture": "2026-10-31T00:18:21+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T00:18:42+00:00",
    "books_premiere_lecture": "2026-10-30T23:10:30+00:00",
-   "books_derniere_lecture": "2026-10-31T00:13:18+00:00",
-   "ecart_enveloppe_secondes": 3784.0
+   "books_derniere_lecture": "2026-10-31T00:18:09+00:00",
+   "ecart_enveloppe_secondes": 4092.0
   },
   "historique_cotes": {
-   "lignes": 10998
+   "lignes": 1570
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.6
+   "age_min": 14.5
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 643,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 65122,
+   "mesures": 64446,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 179917,
-   "mesures": 152956,
-   "annotees": 8
+   "ancres": 175359,
+   "mesures": 155678,
+   "annotees": 6
   },
   "redecision": {
    "ajoutees": 0
@@ -315,27 +360,21 @@
    "saute": true,
    "dernier_reglement": "2026-10-30T23:56:30+00:00"
   },
-  "controle_publie": true,
-  "fin": "2026-10-31T00:17:09+00:00",
+  "controle_publie": false,
+  "fin": "2026-10-31T00:22:35+00:00",
   "cotes": {
-   "francaises": 193786,
-   "pinnacle": 182672,
-   "polymarket": 35270,
+   "francaises": 193344,
+   "pinnacle": 231518,
+   "polymarket": 35061,
    "smarkets": 3695,
-   "matchbook": 17874
+   "matchbook": 17714
   },
-  "matchs_francais": 2301,
-  "opportunites": 11,
+  "matchs_francais": 2252,
+  "opportunites": 9,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T07:46:49+00:00",
-   "mode": "complet",
-   "opportunites": 12,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-30T07:51:30+00:00",
    "mode": "complet",
@@ -1534,6 +1573,12 @@
    "debut": "2026-10-31T00:13:17+00:00",
    "mode": "complet",
    "opportunites": 11,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-31T00:18:08+00:00",
+   "mode": "complet",
+   "opportunites": 9,
    "nouveaux_paris": 0
   }
  ],
