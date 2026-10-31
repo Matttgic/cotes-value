@@ -1,22 +1,22 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T15:02:00+00:00",
+  "debut": "2026-10-31T15:06:44+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.8,
-    "ok": true
+    "secondes": 1.1,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 9.9,
-    "ok": true
-   },
-   "pinnacle": {
-    "secondes": 22.2,
+    "secondes": 13.4,
     "ok": true
    },
    "polymarket": {
-    "secondes": 29.8,
+    "secondes": 28.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -24,24 +24,29 @@
      "prix bid/ask invalides"
     ]
    },
+   "pinnacle": {
+    "secondes": 33.0,
+    "ok": true
+   },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "HTTP 403",
      "budget"
     ]
    },
-   "betclic_direct": {
-    "secondes": 50.4,
-    "ok": true
-   },
    "pmu_direct": {
-    "secondes": 58.5,
+    "secondes": 58.6,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 76.2,
+    "secondes": 74.9,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -49,7 +54,7 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 67.2,
+    "secondes": 42.1,
     "ok": true
    },
    "smarkets": {
@@ -58,15 +63,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 96.3,
+    "secondes": 83.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.6,
+    "secondes": 4.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.2,
+    "secondes": 1.0,
     "ok": true
    }
   },
@@ -77,44 +82,35 @@
   "netbet_source": "direct",
   "matchbook": {
    "mode": "direct",
-   "ok": true,
-   "requetes": 3,
-   "erreurs": [],
-   "matchs": 422,
-   "lignes": 14193
-  },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 37572,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 37572,
-   "retard": [
-    "football"
-   ]
+   "ok": false,
+   "requetes": 1,
+   "erreurs": [
+    "HTTP 403"
+   ],
+   "matchs": 0,
+   "lignes": 0
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 847,
-   "age_min_s": 16,
-   "lignes": 182279,
-   "lignes_perimees": 48673,
-   "rechauffeur": "indisponible",
+   "age_max_s": 212,
+   "age_min_s": 0,
+   "lignes": 169938,
+   "lignes_perimees": 22338,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
     "head_200": 41,
-    "head_403": 2,
-    "ortho_refusee": 2,
-    "choisi_autre": 5,
-    "choisi_fixe": 11,
-    "sport_vide": 4
+    "choisi_autre": 14,
+    "choisi_fixe": 2
    }
   },
   "reprise": {
@@ -148,7 +144,7 @@
    "plus_chez_les_references": []
   },
   "betclic_proches": {
-   "proches": 84,
+   "proches": 83,
    "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 0
@@ -159,67 +155,67 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "Kolos Kovalivka – Polissya Zhytomyr",
+     "match": "Sigma Olomouc – Zbrojovka Brno",
      "source": "Pinnacle",
-     "cote_olybet": 5.7,
-     "cote_reference": 6.21,
-     "ecart_relatif": 0.0821,
+     "cote_olybet": 1.81,
+     "cote_reference": 1.909,
+     "ecart_relatif": 0.0519,
      "aberrant": false
     },
     {
-     "match": "FC LNZ Cherkasy – FC Kharkiv",
-     "source": "Pinnacle",
-     "cote_olybet": 3.17,
-     "cote_reference": 3.33,
-     "ecart_relatif": 0.048,
-     "aberrant": false
-    },
-    {
-     "match": "CS Constantine – USM Alger",
-     "source": "Pinnacle",
-     "cote_olybet": 2.36,
-     "cote_reference": 2.53,
-     "ecart_relatif": 0.0672,
-     "aberrant": false
-    },
-    {
-     "match": "CS Constantine – USM Alger",
+     "match": "Sigma Olomouc – Zbrojovka Brno",
      "source": "PMU",
-     "cote_olybet": 2.36,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0261,
+     "cote_olybet": 1.81,
+     "cote_reference": 1.84,
+     "ecart_relatif": 0.0163,
      "aberrant": false
     },
     {
-     "match": "MB Rouissat – ES Ben Aknoun",
+     "match": "Mlada Boleslav – Hradec Kralove",
      "source": "Pinnacle",
-     "cote_olybet": 1.98,
-     "cote_reference": 2.09,
-     "ecart_relatif": 0.0526,
+     "cote_olybet": 2.13,
+     "cote_reference": 2.24,
+     "ecart_relatif": 0.0491,
      "aberrant": false
     },
     {
-     "match": "MB Rouissat – ES Ben Aknoun",
+     "match": "Mlada Boleslav – Hradec Kralove",
      "source": "PMU",
-     "cote_olybet": 1.98,
-     "cote_reference": 1.92,
-     "ecart_relatif": 0.0312,
+     "cote_olybet": 2.13,
+     "cote_reference": 2.25,
+     "ecart_relatif": 0.0533,
      "aberrant": false
     },
     {
-     "match": "Racing de Santander – Real Madrid",
+     "match": "Banik Ostrava – Viktoria Plzen",
      "source": "Pinnacle",
-     "cote_olybet": 9.3,
-     "cote_reference": 10.36,
-     "ecart_relatif": 0.1023,
+     "cote_olybet": 3.23,
+     "cote_reference": 3.48,
+     "ecart_relatif": 0.0718,
      "aberrant": false
     },
     {
-     "match": "Racing de Santander – Real Madrid",
+     "match": "Banik Ostrava – Viktoria Plzen",
      "source": "PMU",
-     "cote_olybet": 9.3,
-     "cote_reference": 9.5,
-     "ecart_relatif": 0.0211,
+     "cote_olybet": 3.23,
+     "cote_reference": 3.05,
+     "ecart_relatif": 0.059,
+     "aberrant": false
+    },
+    {
+     "match": "Auda – FS Jelgava",
+     "source": "Pinnacle",
+     "cote_olybet": 1.44,
+     "cote_reference": 1.493,
+     "ecart_relatif": 0.0352,
+     "aberrant": false
+    },
+    {
+     "match": "Auda – FS Jelgava",
+     "source": "PMU",
+     "cote_olybet": 1.44,
+     "cote_reference": 1.34,
+     "ecart_relatif": 0.0746,
      "aberrant": false
     }
    ],
@@ -290,33 +286,33 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T14:46:37+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T15:02:17+00:00",
-   "books_premiere_lecture": "2026-10-31T14:35:30+00:00",
-   "books_derniere_lecture": "2026-10-31T15:02:01+00:00",
-   "ecart_enveloppe_secondes": 1607.0
+   "pinnacle_premiere_lecture": "2026-10-31T15:06:57+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T15:07:14+00:00",
+   "books_premiere_lecture": "2026-10-31T14:46:04+00:00",
+   "books_derniere_lecture": "2026-10-31T15:06:45+00:00",
+   "ecart_enveloppe_secondes": 1270.0
   },
   "historique_cotes": {
-   "lignes": 14367
+   "lignes": 3064
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 5.4
+   "age_min": 10.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 646,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 61955,
+   "mesures": 66099,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 195440,
-   "mesures": 174479,
-   "annotees": 13
+   "ancres": 203223,
+   "mesures": 157008,
+   "annotees": 11
   },
   "redecision": {
    "ajoutees": 0
@@ -332,26 +328,20 @@
    "dernier_reglement": "2026-10-31T14:29:02+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T15:05:37+00:00",
+  "fin": "2026-10-31T15:09:49+00:00",
   "cotes": {
-   "francaises": 233250,
-   "pinnacle": 219851,
-   "polymarket": 32207,
+   "francaises": 231920,
+   "pinnacle": 169938,
+   "polymarket": 32212,
    "smarkets": 3792,
-   "matchbook": 14193
+   "matchbook": 0
   },
-  "matchs_francais": 2911,
-  "opportunites": 12,
+  "matchs_francais": 2993,
+  "opportunites": 17,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 3
  },
  "historique": [
-  {
-   "debut": "2026-10-30T21:01:45+00:00",
-   "mode": "complet",
-   "opportunites": 7,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-30T21:06:27+00:00",
    "mode": "complet",
@@ -1551,6 +1541,12 @@
    "mode": "complet",
    "opportunites": 12,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-31T15:06:44+00:00",
+   "mode": "complet",
+   "opportunites": 17,
+   "nouveaux_paris": 3
   }
  ],
  "dernier_reglement": "2026-10-31T14:29:02+00:00",
