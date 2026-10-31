@@ -1,22 +1,26 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T23:45:54+00:00",
+  "debut": "2026-10-31T23:50:35+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 2.8,
+    "secondes": 4.4,
     "ok": true
    },
    "olybet": {
-    "secondes": 9.9,
+    "secondes": 10.1,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 19.9,
-    "ok": true
+    "secondes": 22.7,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "polymarket": {
-    "secondes": 30.0,
+    "secondes": 28.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -24,7 +28,7 @@
     ]
    },
    "netbet": {
-    "secondes": 37.7,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -32,11 +36,15 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 54.2,
+    "secondes": 53.6,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 26.2,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 61.6,
+    "secondes": 63.2,
     "ok": true
    },
    "betclic_direct": {
@@ -47,25 +55,24 @@
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 48.7,
-    "ok": true
-   },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.4,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 73.9,
+    "secondes": 62.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.2,
+    "secondes": 3.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 1.1,
     "ok": true
    }
   },
@@ -80,29 +87,16 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 278,
-   "lignes": 12731
-  },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 33751,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
+   "lignes": 12777
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 844,
-   "age_min_s": 186,
-   "lignes": 124887,
-   "lignes_perimees": 4457,
+   "age_max_s": 812,
+   "age_min_s": 32,
+   "lignes": 124808,
+   "lignes_perimees": 966,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -113,12 +107,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 38,
-    "head_403": 2,
-    "ortho_refusee": 2,
+    "head_200": 37,
     "choisi_fixe": 9,
     "choisi_autre": 5,
-    "sport_vide": 6
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "sport_vide": 5,
+    "reprise_403": 1
    }
   },
   "reprise": {
@@ -134,6 +129,7 @@
     "esport",
     "football",
     "football_americain",
+    "golf",
     "handball",
     "hockey",
     "mma",
@@ -144,9 +140,7 @@
     "tennis_de_table",
     "volley"
    ],
-   "nouveaux_au_cycle_suivant": [
-    "golf"
-   ],
+   "nouveaux_au_cycle_suivant": [],
    "plus_chez_les_references": []
   },
   "betclic_proches": {
@@ -161,51 +155,51 @@
    "examines": 6,
    "comparaisons": [
     {
-     "match": "Shamakhi FK – Neftchi Bakou",
+     "match": "Excelsior – Twente",
      "source": "Pinnacle",
-     "cote_olybet": 4.8,
-     "cote_reference": 5.01,
-     "ecart_relatif": 0.0419,
+     "cote_olybet": 5.0,
+     "cote_reference": 5.45,
+     "ecart_relatif": 0.0826,
      "aberrant": false
     },
     {
-     "match": "Kapaz – Imisli FC",
-     "source": "Pinnacle",
-     "cote_olybet": 2.1,
-     "cote_reference": 2.16,
-     "ecart_relatif": 0.0278,
-     "aberrant": false
-    },
-    {
-     "match": "V-Varen Nagasaki – Tokyo Verdy",
-     "source": "Pinnacle",
-     "cote_olybet": 2.34,
-     "cote_reference": 2.52,
-     "ecart_relatif": 0.0714,
-     "aberrant": false
-    },
-    {
-     "match": "V-Varen Nagasaki – Tokyo Verdy",
+     "match": "Excelsior – Twente",
      "source": "PMU",
-     "cote_olybet": 2.34,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.0263,
+     "cote_olybet": 5.0,
+     "cote_reference": 4.7,
+     "ecart_relatif": 0.0638,
      "aberrant": false
     },
     {
-     "match": "Yokohama F. Marinos – Kawasaki Frontale",
+     "match": "Groningue – Sparta Rotterdam",
      "source": "Pinnacle",
-     "cote_olybet": 2.71,
-     "cote_reference": 2.96,
-     "ecart_relatif": 0.0845,
+     "cote_olybet": 1.7,
+     "cote_reference": 1.775,
+     "ecart_relatif": 0.0424,
      "aberrant": false
     },
     {
-     "match": "Yokohama F. Marinos – Kawasaki Frontale",
+     "match": "Groningue – Sparta Rotterdam",
      "source": "PMU",
-     "cote_olybet": 2.71,
-     "cote_reference": 2.85,
-     "ecart_relatif": 0.0491,
+     "cote_olybet": 1.7,
+     "cote_reference": 1.7,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Telstar – Utrecht",
+     "source": "Pinnacle",
+     "cote_olybet": 2.77,
+     "cote_reference": 2.94,
+     "ecart_relatif": 0.0578,
+     "aberrant": false
+    },
+    {
+     "match": "Telstar – Utrecht",
+     "source": "PMU",
+     "cote_olybet": 2.77,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0073,
      "aberrant": false
     }
    ],
@@ -217,116 +211,115 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Brann – Molde",
+     "match": "PEC Zwolle – ADO Den Haag",
      "source": "Pinnacle",
-     "cote_netbet": 2.7,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.0909,
+     "cote_netbet": 2.1,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.0948,
      "aberrant": false
     },
     {
-     "match": "Brann – Molde",
+     "match": "PEC Zwolle – ADO Den Haag",
      "source": "PMU",
-     "cote_netbet": 2.7,
-     "cote_reference": 2.7,
-     "ecart_relatif": 0.0,
+     "cote_netbet": 2.1,
+     "cote_reference": 2.08,
+     "ecart_relatif": 0.0096,
      "aberrant": false
     },
     {
-     "match": "IK Start – Lillestrøm",
+     "match": "Excelsior – FC Twente",
      "source": "Pinnacle",
-     "cote_netbet": 2.6,
-     "cote_reference": 2.84,
-     "ecart_relatif": 0.0845,
+     "cote_netbet": 4.8,
+     "cote_reference": 5.45,
+     "ecart_relatif": 0.1193,
      "aberrant": false
     },
     {
-     "match": "IK Start – Lillestrøm",
+     "match": "Excelsior – FC Twente",
      "source": "PMU",
-     "cote_netbet": 2.6,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0189,
+     "cote_netbet": 4.8,
+     "cote_reference": 4.7,
+     "ecart_relatif": 0.0213,
      "aberrant": false
     },
     {
-     "match": "KFUM Fotball Oslo – HamKam",
+     "match": "SC Telstar – Utrecht",
      "source": "Pinnacle",
-     "cote_netbet": 1.88,
-     "cote_reference": 2.01,
-     "ecart_relatif": 0.0647,
+     "cote_netbet": 2.67,
+     "cote_reference": 2.94,
+     "ecart_relatif": 0.0918,
      "aberrant": false
     },
     {
-     "match": "KFUM Fotball Oslo – HamKam",
+     "match": "SC Telstar – Utrecht",
      "source": "PMU",
-     "cote_netbet": 1.88,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0505,
+     "cote_netbet": 2.67,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0291,
      "aberrant": false
     },
     {
-     "match": "Sarpsborg 08 – Kristiansund",
+     "match": "Groningen – Sparta Rotterdam",
      "source": "Pinnacle",
-     "cote_netbet": 1.42,
-     "cote_reference": 1.51,
-     "ecart_relatif": 0.0597,
+     "cote_netbet": 1.65,
+     "cote_reference": 1.775,
+     "ecart_relatif": 0.0705,
      "aberrant": false
     },
     {
-     "match": "Sarpsborg 08 – Kristiansund",
+     "match": "Groningen – Sparta Rotterdam",
      "source": "PMU",
-     "cote_netbet": 1.42,
-     "cote_reference": 1.46,
-     "ecart_relatif": 0.0274,
+     "cote_netbet": 1.65,
+     "cote_reference": 1.7,
+     "ecart_relatif": 0.0294,
      "aberrant": false
     },
     {
-     "match": "Vålerenga – Tromsø",
+     "match": "FC Anyang – Bucheon FC 1995",
      "source": "Pinnacle",
-     "cote_netbet": 2.3,
-     "cote_reference": 2.51,
-     "ecart_relatif": 0.0837,
+     "cote_netbet": 1.82,
+     "cote_reference": 1.926,
+     "ecart_relatif": 0.055,
      "aberrant": false
     },
     {
-     "match": "Vålerenga – Tromsø",
+     "match": "FC Anyang – Bucheon FC 1995",
      "source": "PMU",
-     "cote_netbet": 2.3,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0336,
+     "cote_netbet": 1.82,
+     "cote_reference": 1.88,
+     "ecart_relatif": 0.0319,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T23:46:05+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T23:46:28+00:00",
-   "books_premiere_lecture": "2026-10-31T23:27:11+00:00",
-   "books_derniere_lecture": "2026-10-31T23:45:55+00:00",
-   "ecart_enveloppe_secondes": 1157.0
+   "pinnacle_premiere_lecture": "2026-10-31T23:50:45+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T23:50:50+00:00",
+   "books_premiere_lecture": "2026-10-31T23:31:47+00:00",
+   "books_derniere_lecture": "2026-10-31T23:50:36+00:00",
+   "ecart_enveloppe_secondes": 1143.0
   },
   "historique_cotes": {
-   "lignes": 1698
+   "lignes": 1229
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.1
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 646,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 55734,
+   "mesures": 56224,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 158635,
-   "mesures": 72506,
-   "annotees": 8
+   "ancres": 163648,
+   "mesures": 140803,
+   "annotees": 11
   },
   "redecision": {
    "ajoutees": 0
@@ -342,26 +335,20 @@
    "dernier_reglement": "2026-10-31T22:57:03+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T23:48:46+00:00",
+  "fin": "2026-10-31T23:53:28+00:00",
   "cotes": {
-   "francaises": 163468,
-   "pinnacle": 158638,
-   "polymarket": 27213,
-   "smarkets": 3919,
-   "matchbook": 12731
+   "francaises": 163250,
+   "pinnacle": 124808,
+   "polymarket": 27231,
+   "smarkets": 3872,
+   "matchbook": 12777
   },
-  "matchs_francais": 2165,
+  "matchs_francais": 2138,
   "opportunites": 18,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-31T06:40:05+00:00",
-   "mode": "complet",
-   "opportunites": 22,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-31T06:44:41+00:00",
    "mode": "complet",
@@ -1561,11 +1548,17 @@
    "mode": "complet",
    "opportunites": 18,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-31T23:50:35+00:00",
+   "mode": "complet",
+   "opportunites": 18,
+   "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-10-31T22:57:03+00:00",
+ "dernier_reglement": "2026-10-31T23:53:35+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-10-31T22:57:03+00:00",
+  "debut": "2026-10-31T23:53:35+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_volley": {
@@ -1573,11 +1566,11 @@
     "ok": true
    },
    "resultats_espn_hockey": {
-    "secondes": 0.9,
+    "secondes": 0.8,
     "ok": true
    },
    "resultats_espn_basket": {
-    "secondes": 1.0,
+    "secondes": 1.1,
     "ok": true
    },
    "resultats_espn_tennis_de_table": {
@@ -1597,11 +1590,11 @@
     "ok": true
    },
    "resultats_livescore_hockey": {
-    "secondes": 2.0,
+    "secondes": 1.7,
     "ok": true
    },
    "resultats_livescore_basket": {
-    "secondes": 1.3,
+    "secondes": 1.1,
     "ok": true
    },
    "resultats_livescore_football": {
@@ -1613,11 +1606,11 @@
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 3.8,
+    "secondes": 3.6,
     "ok": true
    },
    "resultats_flashscore_hockey": {
-    "secondes": 4.2,
+    "secondes": 4.7,
     "ok": true
    },
    "resultats_flashscore_basket": {
@@ -1625,32 +1618,30 @@
     "ok": true
    },
    "resultats_flashscore_football": {
-    "secondes": 3.4,
+    "secondes": 3.2,
     "ok": true
    },
    "resultats_flashscore_handball": {
-    "secondes": 1.0,
+    "secondes": 0.9,
     "ok": true
    },
    "resultats_flashscore_rugby": {
-    "secondes": 1.1,
+    "secondes": 0.8,
     "ok": true
    },
    "resultats_thesportsdb": {
-    "secondes": 42.3,
+    "secondes": 38.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "basket Olympiakos_Pireaus_(F)_vs_Panathinaikos_Athens_(F) : ValueError('HTTP 429')",
-     "basket Olympiacos_Women_vs_Panathinaikos_BC_Women : ValueError('HTTP 429')",
-     "volley Osaka_Marvelous_(F)_vs_Aranmare_Yamagata_(F) : ValueError('HTTP 429')",
-     "volley JT_Marvelous_Women_vs_Aranmare_Akita_Shonai_Women : ValueError('HTTP 429')",
-     "volley JT_Marvelous_F._vs_Prestige_International_Aranmare_F. : ValueError('HTTP 429')",
-     "volley JT_Marvelous_Women_vs_Aranmare_Akita_Shonai_Women : ValueError('HTTP 429')",
-     "basket Granada_vs_Partizán_de_Fuenlabrada : ValueError('HTTP 429')",
-     "basket Granada_vs_Baloncesto_Fuenlabrada : ValueError('HTTP 429')",
-     "volley Monza_vs_Perugia : ValueError('HTTP 429')",
-     "volley VV_Monza_vs_Perugia : ValueError('HTTP 429')"
+     "rugby ASM_Clermont-Auvergne_vs_Racing_92 : ValueError('HTTP 429')",
+     "rugby Clermont_vs_Racing_92 : ValueError('HTTP 429')",
+     "volley AMSL_Frejus_vs_Chalon : ValueError('HTTP 429')",
+     "volley Frejus_vs_Saone : ValueError('HTTP 429')",
+     "football Cambuur_Leeuwarden_vs_Go_Ahead_Eagles : ValueError('HTTP 429')",
+     "football Cambuur_Leeuwaarden_vs_Go_Ahead_Eagles : ValueError('HTTP 429')",
+     "volley AMSL_Fréjus_Volley_vs_Vbc_Chalon_Sur_Saone : ValueError('HTTP 429')",
+     "volley Frejus_vs_Saone : ValueError('HTTP 429')"
     ]
    },
    "resultats_theodds": {
@@ -1664,7 +1655,7 @@
   },
   "reglement": true,
   "thesportsdb": {
-   "appels": 20,
+   "appels": 18,
    "trouves": 1,
    "cle_publique": true
   },
@@ -1678,10 +1669,10 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "marche_non_couvert": 13,
-    "competition_non_couverte": 27,
-    "deja_valide": 6,
-    "trop_recent": 16,
+    "marche_non_couvert": 10,
+    "competition_non_couverte": 32,
+    "deja_valide": 4,
+    "trop_recent": 11,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1728,10 +1719,10 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "deja_valide": 6,
-    "marche_non_couvert": 13,
-    "competition_non_couverte": 27,
-    "trop_recent": 16,
+    "deja_valide": 4,
+    "marche_non_couvert": 10,
+    "competition_non_couverte": 32,
+    "trop_recent": 11,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1739,8 +1730,8 @@
    "requetes_jour": 0
   },
   "resultats": {
-   "enregistrements": 8933,
-   "matchs_valides": 4,
+   "enregistrements": 8992,
+   "matchs_valides": 3,
    "reportes": 0,
    "non_regles": [
     {
@@ -1884,6 +1875,63 @@
      "validation_apres": null
     },
     {
+     "match_id": "olybet|31273313",
+     "match": "FC Leviy Bereg – FSC Bukovyna Chernivtsi",
+     "sport": "football",
+     "debut": "2026-10-31T11:00:00Z",
+     "sources": {},
+     "retenues": [],
+     "raison": "aucune source",
+     "validation_apres": null
+    },
+    {
+     "match_id": "betclic|1266055174426624",
+     "match": "Gebze Bld – Istanbul Genclik Spor",
+     "sport": "volley",
+     "debut": "2026-10-31T11:00:00.0000000Z",
+     "sources": {},
+     "retenues": [],
+     "raison": "aucune source",
+     "validation_apres": null
+    },
+    {
+     "match_id": "unibet-fr|3385093",
+     "match": "Gebze Genclik – Istanbul Gencl",
+     "sport": "volley",
+     "debut": "2026-10-31T11:00:00Z",
+     "sources": {
+      "flashscore": {
+       "score": [
+        3,
+        1
+       ],
+       "periodes": [
+        [
+         25,
+         21
+        ],
+        [
+         25,
+         19
+        ],
+        [
+         17,
+         25
+        ],
+        [
+         25,
+         23
+        ]
+       ]
+      }
+     },
+     "retenues": [
+      "flashscore"
+     ],
+     "raison": "source unique : délai de validation automatique",
+     "validation_apres": "2026-11-01T11:00:00+00:00"
+    },
+    {
      "match_id": "winamax|72636410",
      "match": "Osaka Marvelous (F) – Aranmare Yamagata (F)",
      "sport": "volley",
@@ -1948,21 +1996,49 @@
      ],
      "raison": "source unique : délai de validation automatique",
      "validation_apres": "2026-11-01T09:05:00+00:00"
+    },
+    {
+     "match_id": "pmu|1029322489",
+     "match": "Gebze Genclik – Istanbul Genclik Spor",
+     "sport": "volley",
+     "debut": "2026-10-31T11:00:00Z",
+     "sources": {},
+     "retenues": [],
+     "raison": "aucune source",
+     "validation_apres": null
+    },
+    {
+     "match_id": "olybet|31261512",
+     "match": "Cardiff Metropolitan University – Penybont FC",
+     "sport": "football",
+     "debut": "2026-10-31T11:30:00Z",
+     "sources": {
+      "flashscore": {
+       "score": [
+        0,
+        5
+       ],
+       "periodes": []
+      }
+     },
+     "retenues": [
+      "flashscore"
+     ],
+     "raison": "source unique : délai de validation automatique",
+     "validation_apres": "2026-11-01T11:30:00+00:00"
     }
    ],
-   "paris_en_attente": 19,
-   "paris_regles": 6,
-   "selections_en_attente": 19,
+   "paris_en_attente": 24,
+   "paris_regles": 4,
+   "selections_en_attente": 24,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
    "sources_reglement": {
-    "flashscore": 1,
-    "livescore": 6,
-    "espn": 5
+    "livescore": 4
    }
   },
-  "fin": "2026-10-31T22:58:13+00:00"
+  "fin": "2026-10-31T23:54:42+00:00"
  },
  "echecs_recents": {
   "total": 0,
