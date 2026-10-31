@@ -1,32 +1,38 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T00:42:36+00:00",
+  "debut": "2026-10-31T00:47:26+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.4,
+    "secondes": 4.3,
     "ok": true
    },
    "olybet": {
-    "secondes": 9.1,
+    "secondes": 11.6,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 20.4,
-    "ok": true
+    "secondes": 26.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 37 matchups : HTTP 403"
+    ]
    },
    "polymarket": {
-    "secondes": 23.3,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
      "prix bid/ask invalides",
      "1N2 incomplet ou issues dupliquées : référence rejetée"
-    ]
+    ],
+    "reprise": 35270
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -34,35 +40,28 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 39.7,
+    "secondes": 41.7,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 72.8,
+    "secondes": 69.6,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 31.9,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
-   "unibet_direct": {
-    "secondes": 62.4,
+    "secondes": 70.2,
     "ok": true
    },
    "smarkets": {
-    "secondes": 20.2,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 56.1,
+    "secondes": 77.8,
     "ok": true
    },
    "comparaison": {
@@ -84,17 +83,30 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 360,
-   "lignes": 18095
+   "matchs": 361,
+   "lignes": 18173
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 48604,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 794,
-   "age_min_s": 15,
-   "lignes": 183931,
-   "lignes_perimees": 1270,
+   "age_max_s": 872,
+   "age_min_s": 72,
+   "lignes": 184133,
+   "lignes_perimees": 2473,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -105,16 +117,33 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 39,
-    "head_403": 3,
-    "ortho_refusee": 3,
-    "choisi_autre": 6,
-    "choisi_fixe": 9,
-    "sport_vide": 5
+    "head_200": 38,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "choisi_autre": 12,
+    "choisi_fixe": 3,
+    "sport_vide": 4,
+    "reprise_403": 1
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Polymarket": {
+    "football": 29448,
+    "hockey": 358,
+    "mma": 100,
+    "basket": 612,
+    "esport": 66,
+    "football_americain": 3772,
+    "rugby": 46,
+    "cricket": 28,
+    "autre": 30,
+    "handball": 10,
+    "flechettes": 2,
+    "volley": 22,
+    "tennis": 140,
+    "tennis_de_table": 636
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -151,96 +180,88 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Atlético San Luis – Atlas de Guadalajara",
-     "source": "Pinnacle",
-     "cote_olybet": 2.16,
-     "cote_reference": 2.33,
-     "ecart_relatif": 0.073,
-     "aberrant": false
-    },
-    {
-     "match": "Atlético San Luis – Atlas de Guadalajara",
+     "match": "Tammeka Tartu – Harju JK Laagri",
      "source": "PMU",
-     "cote_olybet": 2.16,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.0526,
+     "cote_olybet": 2.03,
+     "cote_reference": 2.16,
+     "ecart_relatif": 0.0602,
      "aberrant": false
     },
     {
-     "match": "Juarez – Querétaro",
+     "match": "Parnu JK Vaprus – Paide Linnameeskond",
      "source": "Pinnacle",
-     "cote_olybet": 2.76,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.08,
+     "cote_olybet": 3.1,
+     "cote_reference": 3.35,
+     "ecart_relatif": 0.0746,
      "aberrant": false
     },
     {
-     "match": "Juarez – Querétaro",
+     "match": "Parnu JK Vaprus – Paide Linnameeskond",
      "source": "PMU",
-     "cote_olybet": 2.76,
-     "cote_reference": 2.8,
-     "ecart_relatif": 0.0143,
+     "cote_olybet": 3.1,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "CF Puebla – Pumas",
+     "match": "Nomme United – Levadia Tallinn",
      "source": "Pinnacle",
-     "cote_olybet": 3.41,
-     "cote_reference": 3.75,
-     "ecart_relatif": 0.0907,
+     "cote_olybet": 4.5,
+     "cote_reference": 5.07,
+     "ecart_relatif": 0.1124,
      "aberrant": false
     },
     {
-     "match": "CF Puebla – Pumas",
+     "match": "Nomme United – Levadia Tallinn",
      "source": "PMU",
-     "cote_olybet": 3.41,
-     "cote_reference": 2.9,
-     "ecart_relatif": 0.1759,
+     "cote_olybet": 4.5,
+     "cote_reference": 5.5,
+     "ecart_relatif": 0.1818,
      "aberrant": true
     },
     {
-     "match": "Pachuca – Tigres de l`UANL",
+     "match": "Flora Tallinn – Narva Trans",
      "source": "Pinnacle",
-     "cote_olybet": 2.06,
-     "cote_reference": 2.21,
-     "ecart_relatif": 0.0679,
+     "cote_olybet": 1.12,
+     "cote_reference": 1.143,
+     "ecart_relatif": 0.0202,
      "aberrant": false
     },
     {
-     "match": "Pachuca – Tigres de l`UANL",
+     "match": "Flora Tallinn – Narva Trans",
      "source": "PMU",
-     "cote_olybet": 2.06,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0098,
+     "cote_olybet": 1.12,
+     "cote_reference": 1.15,
+     "ecart_relatif": 0.0261,
      "aberrant": false
     },
     {
-     "match": "Chivas de Guadalajara – CF Atlante",
+     "match": "Nomme Kalju – FC Kuressaare",
      "source": "Pinnacle",
-     "cote_olybet": 1.41,
-     "cote_reference": 1.476,
-     "ecart_relatif": 0.0448,
+     "cote_olybet": 1.45,
+     "cote_reference": 1.5,
+     "ecart_relatif": 0.0333,
      "aberrant": false
     },
     {
-     "match": "Chivas de Guadalajara – CF Atlante",
+     "match": "Nomme Kalju – FC Kuressaare",
      "source": "PMU",
-     "cote_olybet": 1.41,
-     "cote_reference": 1.42,
-     "ecart_relatif": 0.007,
+     "cote_olybet": 1.45,
+     "cote_reference": 1.47,
+     "ecart_relatif": 0.0136,
      "aberrant": false
     }
    ],
    "aberrants": [
     {
-     "match": "CF Puebla – Pumas",
+     "match": "Nomme United – Levadia Tallinn",
      "source": "PMU",
-     "cote_olybet": 3.41,
-     "cote_reference": 2.9,
-     "ecart_relatif": 0.1759,
+     "cote_olybet": 4.5,
+     "cote_reference": 5.5,
+     "ecart_relatif": 0.1818,
      "aberrant": true
     }
    ]
@@ -251,99 +272,109 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "O'Higgins – Ñublense",
+     "match": "Hajduk Split – HNK Gorica",
      "source": "Pinnacle",
-     "cote_netbet": 1.88,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0784,
+     "cote_netbet": 1.24,
+     "cote_reference": 1.315,
+     "ecart_relatif": 0.0574,
      "aberrant": false
     },
     {
-     "match": "O'Higgins – Ñublense",
+     "match": "Hajduk Split – HNK Gorica",
      "source": "PMU",
-     "cote_netbet": 1.88,
-     "cote_reference": 1.74,
-     "ecart_relatif": 0.0805,
+     "cote_netbet": 1.24,
+     "cote_reference": 1.23,
+     "ecart_relatif": 0.0081,
      "aberrant": false
     },
     {
-     "match": "Spartak Trnava – KFC Komarno",
+     "match": "NK Rudes – GNK Dinamo Zagreb",
      "source": "Pinnacle",
-     "cote_netbet": 1.58,
-     "cote_reference": 1.709,
-     "ecart_relatif": 0.0756,
+     "cote_netbet": 8.75,
+     "cote_reference": 9.4,
+     "ecart_relatif": 0.0691,
      "aberrant": false
     },
     {
-     "match": "Spartak Trnava – KFC Komarno",
+     "match": "NK Rudes – GNK Dinamo Zagreb",
      "source": "PMU",
-     "cote_netbet": 1.58,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0125,
-     "aberrant": false
+     "cote_netbet": 8.75,
+     "cote_reference": 10.5,
+     "ecart_relatif": 0.1667,
+     "aberrant": true
     },
     {
-     "match": "Trencin – FK Košice",
+     "match": "Kilmarnock – St. Johnstone",
      "source": "Pinnacle",
-     "cote_netbet": 2.82,
-     "cote_reference": 3.1,
-     "ecart_relatif": 0.0903,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.34,
+     "ecart_relatif": 0.0598,
      "aberrant": false
     },
     {
-     "match": "Zilina – Zemplin Michalovce",
-     "source": "Pinnacle",
-     "cote_netbet": 1.42,
-     "cote_reference": 1.5,
-     "ecart_relatif": 0.0533,
-     "aberrant": false
-    },
-    {
-     "match": "Zilina – Zemplin Michalovce",
+     "match": "Kilmarnock – St. Johnstone",
      "source": "PMU",
-     "cote_netbet": 1.42,
-     "cote_reference": 1.47,
-     "ecart_relatif": 0.034,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0351,
      "aberrant": false
     },
     {
-     "match": "Železiarne Podbrezová – Slovan Bratislava",
+     "match": "Motherwell – St. Mirren",
      "source": "Pinnacle",
-     "cote_netbet": 3.2,
-     "cote_reference": 3.42,
-     "ecart_relatif": 0.0643,
+     "cote_netbet": 1.72,
+     "cote_reference": 1.862,
+     "ecart_relatif": 0.0763,
+     "aberrant": false
+    },
+    {
+     "match": "Motherwell – St. Mirren",
+     "source": "PMU",
+     "cote_netbet": 1.72,
+     "cote_reference": 1.7,
+     "ecart_relatif": 0.0118,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "NK Rudes – GNK Dinamo Zagreb",
+     "source": "PMU",
+     "cote_netbet": 8.75,
+     "cote_reference": 10.5,
+     "ecart_relatif": 0.1667,
+     "aberrant": true
+    }
+   ]
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T00:42:47+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T00:42:52+00:00",
+   "pinnacle_premiere_lecture": "2026-10-31T00:47:37+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T00:48:00+00:00",
    "books_premiere_lecture": "2026-10-30T23:10:30+00:00",
-   "books_derniere_lecture": "2026-10-31T00:42:36+00:00",
-   "ecart_enveloppe_secondes": 5542.0
+   "books_derniere_lecture": "2026-10-31T00:47:27+00:00",
+   "ecart_enveloppe_secondes": 5850.0
   },
   "historique_cotes": {
-   "lignes": 3559
+   "lignes": 2073
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.8
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 643,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 67323,
+   "mesures": 67293,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 188635,
-   "mesures": 161755,
-   "annotees": 7
+   "ancres": 190153,
+   "mesures": 142759,
+   "annotees": 10
   },
   "redecision": {
    "ajoutees": 0
@@ -359,26 +390,20 @@
    "dernier_reglement": "2026-10-30T23:56:30+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T00:45:31+00:00",
+  "fin": "2026-10-31T00:50:05+00:00",
   "cotes": {
-   "francaises": 199179,
-   "pinnacle": 183931,
-   "polymarket": 35274,
+   "francaises": 195937,
+   "pinnacle": 232737,
+   "polymarket": 35270,
    "smarkets": 3695,
-   "matchbook": 18095
+   "matchbook": 18173
   },
-  "matchs_francais": 2407,
-  "opportunites": 7,
+  "matchs_francais": 2451,
+  "opportunites": 10,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T08:14:38+00:00",
-   "mode": "complet",
-   "opportunites": 12,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-30T08:19:14+00:00",
    "mode": "complet",
@@ -1577,6 +1602,12 @@
    "debut": "2026-10-31T00:42:36+00:00",
    "mode": "complet",
    "opportunites": 7,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-31T00:47:26+00:00",
+   "mode": "complet",
+   "opportunites": 10,
    "nouveaux_paris": 0
   }
  ],
