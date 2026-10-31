@@ -1,60 +1,54 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T13:15:10+00:00",
+  "debut": "2026-10-31T13:21:23+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 6.7,
+    "secondes": 5.2,
     "ok": true
    },
    "olybet": {
-    "secondes": 13.8,
+    "secondes": 10.7,
     "ok": true
    },
    "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+    "secondes": 27.3,
+    "ok": true,
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
      "prix bid/ask invalides",
      "1N2 incomplet ou issues dupliquées : référence rejetée"
-    ],
-    "reprise": 34730
+    ]
    },
    "pinnacle": {
-    "secondes": 36.2,
+    "secondes": 31.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "sport 26 matchups : HTTP 403",
-     "sport 9 matchups : HTTP 403"
+     "sport 9 matchups : HTTP 403",
+     "sport 37 matchups : HTTP 403"
     ]
    },
    "netbet": {
-    "secondes": 40.4,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "lecture interrompue"
-    ]
-   },
-   "pmu_direct": {
-    "secondes": 66.5,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 76.2,
+    "secondes": 37.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "pmu_direct": {
+    "secondes": 60.2,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 73.9,
+    "ok": true
+   },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -62,28 +56,27 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 71.0,
+    "secondes": 51.7,
+    "ok": true
+   },
+   "smarkets": {
+    "secondes": 18.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "smarkets": {
-    "secondes": 0.0,
-    "ok": true,
-    "cache": true
-   },
    "association": {
-    "secondes": 162.6,
+    "secondes": 127.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 5.6,
+    "secondes": 4.3,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.5,
+    "secondes": 1.3,
     "ok": true
    }
   },
@@ -97,17 +90,17 @@
    "ok": true,
    "requetes": 4,
    "erreurs": [],
-   "matchs": 454,
-   "lignes": 22214
+   "matchs": 453,
+   "lignes": 22382
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 855,
-   "age_min_s": 54,
-   "lignes": 189271,
-   "lignes_perimees": 2814,
+   "age_max_s": 875,
+   "age_min_s": 21,
+   "lignes": 189311,
+   "lignes_perimees": 66,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -115,33 +108,18 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 43,
-    "choisi_autre": 14,
+    "head_200": 37,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 2,
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 2,
+    "choisi_autre": 7,
+    "choisi_fixe": 9,
+    "reprise_403": 3,
+    "matchups_sans_speciaux": 3,
     "sport_vide": 4
    }
   },
   "reprise": {
-   "actif": true,
-   "Polymarket": {
-    "hockey": 380,
-    "football": 28448,
-    "football_americain": 4306,
-    "esport": 2,
-    "mma": 100,
-    "basket": 1228,
-    "rugby": 46,
-    "cricket": 14,
-    "autre": 22,
-    "handball": 26,
-    "volley": 10,
-    "tennis_de_table": 144,
-    "tennis": 4
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -175,44 +153,68 @@
   "betclic_proches": {
    "proches": 87,
    "relances": 0,
-   "proches_non_lus": 87,
+   "proches_non_lus": 0,
    "proches_vides": 0
   },
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "Dnepr Moguilev – Gomel",
+     "match": "FC Hegelmann – FK Kauno Zalgiris",
      "source": "Pinnacle",
-     "cote_olybet": 2.94,
-     "cote_reference": 3.08,
-     "ecart_relatif": 0.0455,
+     "cote_olybet": 7.5,
+     "cote_reference": 8.28,
+     "ecart_relatif": 0.0942,
      "aberrant": false
     },
     {
-     "match": "FC Isloch – Slaviya Mozyr",
-     "source": "Pinnacle",
-     "cote_olybet": 1.48,
-     "cote_reference": 1.516,
-     "ecart_relatif": 0.0234,
+     "match": "FC Hegelmann – FK Kauno Zalgiris",
+     "source": "PMU",
+     "cote_olybet": 7.5,
+     "cote_reference": 7.5,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Dinamo Minsk – Neman Grodno",
+     "match": "FA Siauliai – Dziugas Telsiai",
      "source": "Pinnacle",
-     "cote_olybet": 1.76,
-     "cote_reference": 1.8,
-     "ecart_relatif": 0.0222,
+     "cote_olybet": 2.91,
+     "cote_reference": 3.11,
+     "ecart_relatif": 0.0643,
      "aberrant": false
     },
     {
-     "match": "Omonia Nicosie – AEL Limassol",
+     "match": "Suduva Marijampole – Banga",
      "source": "Pinnacle",
-     "cote_olybet": 1.25,
-     "cote_reference": 1.281,
-     "ecart_relatif": 0.0241,
+     "cote_olybet": 1.55,
+     "cote_reference": 1.617,
+     "ecart_relatif": 0.0416,
+     "aberrant": false
+    },
+    {
+     "match": "Suduva Marijampole – Banga",
+     "source": "PMU",
+     "cote_olybet": 1.55,
+     "cote_reference": 1.67,
+     "ecart_relatif": 0.0719,
+     "aberrant": false
+    },
+    {
+     "match": "Résidence Walferdange – Wiltz 71",
+     "source": "Pinnacle",
+     "cote_olybet": 1.88,
+     "cote_reference": 1.926,
+     "ecart_relatif": 0.0238,
+     "aberrant": false
+    },
+    {
+     "match": "US Rumelange – Racing Union Luxembourg",
+     "source": "Pinnacle",
+     "cote_olybet": 6.0,
+     "cote_reference": 6.42,
+     "ecart_relatif": 0.0654,
      "aberrant": false
     }
    ],
@@ -221,119 +223,94 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "Fredrikstad – Rosenborg",
+     "match": "Al Taawon – Al Ettifaq Dammam",
      "source": "Pinnacle",
-     "cote_netbet": 3.65,
-     "cote_reference": 4.06,
-     "ecart_relatif": 0.101,
+     "cote_netbet": 2.45,
+     "cote_reference": 2.73,
+     "ecart_relatif": 0.1026,
      "aberrant": false
     },
     {
-     "match": "Fredrikstad – Rosenborg",
+     "match": "Al Hilal – Al Fateh",
+     "source": "Pinnacle",
+     "cote_netbet": 1.03,
+     "cote_reference": 1.079,
+     "ecart_relatif": 0.0459,
+     "aberrant": false
+    },
+    {
+     "match": "Al Hilal – Al Fateh",
      "source": "PMU",
-     "cote_netbet": 3.65,
-     "cote_reference": 3.65,
+     "cote_netbet": 1.03,
+     "cote_reference": 1.03,
      "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Aalesund FK – Sandefjord",
+     "match": "Rangers – Aberdeen",
      "source": "Pinnacle",
-     "cote_netbet": 1.95,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.1055,
+     "cote_netbet": 1.34,
+     "cote_reference": 1.417,
+     "ecart_relatif": 0.0541,
      "aberrant": false
     },
     {
-     "match": "Aalesund FK – Sandefjord",
+     "match": "Rangers – Aberdeen",
      "source": "PMU",
-     "cote_netbet": 1.95,
-     "cote_reference": 1.97,
-     "ecart_relatif": 0.0102,
+     "cote_netbet": 1.34,
+     "cote_reference": 1.35,
+     "ecart_relatif": 0.0074,
      "aberrant": false
     },
     {
-     "match": "Brann – Molde",
+     "match": "Heart of Midlothian – Hibernian",
      "source": "Pinnacle",
-     "cote_netbet": 2.67,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.101,
+     "cote_netbet": 1.78,
+     "cote_reference": 1.862,
+     "ecart_relatif": 0.0441,
      "aberrant": false
     },
     {
-     "match": "Brann – Molde",
+     "match": "Heart of Midlothian – Hibernian",
      "source": "PMU",
-     "cote_netbet": 2.67,
-     "cote_reference": 2.7,
+     "cote_netbet": 1.78,
+     "cote_reference": 1.8,
      "ecart_relatif": 0.0111,
-     "aberrant": false
-    },
-    {
-     "match": "IK Start – Lillestrøm",
-     "source": "Pinnacle",
-     "cote_netbet": 2.6,
-     "cote_reference": 2.84,
-     "ecart_relatif": 0.0845,
-     "aberrant": false
-    },
-    {
-     "match": "IK Start – Lillestrøm",
-     "source": "PMU",
-     "cote_netbet": 2.6,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0189,
-     "aberrant": false
-    },
-    {
-     "match": "KFUM Fotball Oslo – HamKam",
-     "source": "Pinnacle",
-     "cote_netbet": 1.88,
-     "cote_reference": 1.99,
-     "ecart_relatif": 0.0553,
-     "aberrant": false
-    },
-    {
-     "match": "KFUM Fotball Oslo – HamKam",
-     "source": "PMU",
-     "cote_netbet": 1.88,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0505,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T13:15:23+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T13:15:41+00:00",
-   "books_premiere_lecture": "2026-10-31T12:47:24+00:00",
-   "books_derniere_lecture": "2026-10-31T13:15:11+00:00",
-   "ecart_enveloppe_secondes": 1697.0
+   "pinnacle_premiere_lecture": "2026-10-31T13:21:35+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T13:21:51+00:00",
+   "books_premiere_lecture": "2026-10-31T12:53:17+00:00",
+   "books_derniere_lecture": "2026-10-31T13:21:24+00:00",
+   "ecart_enveloppe_secondes": 1714.0
   },
   "historique_cotes": {
-   "lignes": 3536
+   "lignes": 5988
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 10.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 646,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 80890,
+   "mesures": 77829,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 258489,
-   "mesures": 206472,
-   "annotees": 10
+   "ancres": 255021,
+   "mesures": 179042,
+   "annotees": 12
   },
   "redecision": {
    "ajoutees": 0
@@ -349,26 +326,20 @@
    "dernier_reglement": "2026-10-31T12:34:37+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T13:20:10+00:00",
+  "fin": "2026-10-31T13:25:34+00:00",
   "cotes": {
-   "francaises": 263225,
-   "pinnacle": 189271,
-   "polymarket": 34730,
-   "smarkets": 3702,
-   "matchbook": 22214
+   "francaises": 250607,
+   "pinnacle": 189311,
+   "polymarket": 34963,
+   "smarkets": 3907,
+   "matchbook": 22382
   },
-  "matchs_francais": 3278,
-  "opportunites": 15,
+  "matchs_francais": 3269,
+  "opportunites": 11,
   "opportunites_suspectes": 2,
-  "nouveaux_paris": 6
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T19:23:06+00:00",
-   "mode": "complet",
-   "opportunites": 9,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-30T19:28:19+00:00",
    "mode": "complet",
@@ -1568,6 +1539,12 @@
    "mode": "complet",
    "opportunites": 15,
    "nouveaux_paris": 6
+  },
+  {
+   "debut": "2026-10-31T13:21:23+00:00",
+   "mode": "complet",
+   "opportunites": 11,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-31T12:34:37+00:00",
