@@ -1,38 +1,37 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T10:57:20+00:00",
+  "debut": "2026-10-31T11:02:13+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 5.6,
+    "secondes": 4.6,
     "ok": true
    },
    "olybet": {
-    "secondes": 14.7,
+    "secondes": 14.2,
     "ok": true
    },
-   "polymarket": {
-    "secondes": 29.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "1N2 incomplet ou issues dupliquées : référence rejetée"
-    ]
-   },
    "pinnacle": {
-    "secondes": 33.7,
+    "secondes": 26.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 26 matchups : HTTP 403",
      "sport 9 matchups : HTTP 403",
      "sport 37 matchups : HTTP 403"
     ]
    },
+   "polymarket": {
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ],
+    "reprise": 35963
+   },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -40,11 +39,11 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 61.4,
+    "secondes": 60.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 76.5,
+    "secondes": 76.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -52,7 +51,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.4,
+    "secondes": 77.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -60,27 +59,28 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 41.2,
-    "ok": true
-   },
-   "smarkets": {
-    "secondes": 20.4,
+    "secondes": 70.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "smarkets": {
+    "secondes": 0.0,
+    "ok": true,
+    "cache": true
+   },
    "association": {
-    "secondes": 119.5,
+    "secondes": 81.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.0,
+    "secondes": 3.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.5,
+    "secondes": 1.4,
     "ok": true
    }
   },
@@ -94,36 +94,54 @@
    "ok": true,
    "requetes": 4,
    "erreurs": [],
-   "matchs": 462,
-   "lignes": 24740
+   "matchs": 464,
+   "lignes": 24361
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 896,
-   "age_min_s": 20,
-   "lignes": 202338,
-   "lignes_perimees": 1612,
-   "rechauffeur": "indisponible",
+   "age_max_s": 850,
+   "age_min_s": 53,
+   "lignes": 202349,
+   "lignes_perimees": 1102,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 44,
-    "choisi_autre": 7,
+    "head_200": 43,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 9,
-    "reprise_403": 3,
-    "matchups_sans_speciaux": 3,
+    "choisi_fixe": 10,
+    "choisi_autre": 6,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 2,
     "sport_vide": 4
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Polymarket": {
+    "hockey": 362,
+    "football": 29730,
+    "football_americain": 4304,
+    "mma": 100,
+    "basket": 1186,
+    "esport": 12,
+    "rugby": 49,
+    "cricket": 16,
+    "autre": 22,
+    "handball": 26,
+    "volley": 18,
+    "tennis_de_table": 126,
+    "tennis": 12
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -153,86 +171,70 @@
    "plus_chez_les_references": []
   },
   "betclic_proches": {
-   "proches": 27,
+   "proches": 31,
    "relances": 0,
-   "proches_non_lus": 27,
+   "proches_non_lus": 31,
    "proches_vides": 0
   },
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "Viborg – AC Horsens",
+     "match": "Perth Glory – Adelaide United",
      "source": "Pinnacle",
-     "cote_olybet": 1.49,
-     "cote_reference": 1.556,
-     "ecart_relatif": 0.0422,
+     "cote_olybet": 2.39,
+     "cote_reference": 2.6,
+     "ecart_relatif": 0.0808,
      "aberrant": false
     },
     {
-     "match": "Viborg – AC Horsens",
+     "match": "Perth Glory – Adelaide United",
      "source": "PMU",
-     "cote_olybet": 1.49,
-     "cote_reference": 1.5,
-     "ecart_relatif": 0.0067,
+     "cote_olybet": 2.39,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0042,
      "aberrant": false
     },
     {
-     "match": "Odense BK – Silkeborg",
+     "match": "Melbourne Victory – Central Coast Mariners",
      "source": "Pinnacle",
-     "cote_olybet": 1.79,
-     "cote_reference": 1.877,
-     "ecart_relatif": 0.0465,
+     "cote_olybet": 1.37,
+     "cote_reference": 1.442,
+     "ecart_relatif": 0.0503,
      "aberrant": false
     },
     {
-     "match": "Odense BK – Silkeborg",
+     "match": "Melbourne Victory – Central Coast Mariners",
      "source": "PMU",
-     "cote_olybet": 1.79,
-     "cote_reference": 1.71,
-     "ecart_relatif": 0.0468,
+     "cote_olybet": 1.37,
+     "cote_reference": 1.36,
+     "ecart_relatif": 0.0074,
      "aberrant": false
     },
     {
-     "match": "FC Nordsjaelland – Midtjylland",
+     "match": "Progrès Niederkorn – Swift Hesperange",
      "source": "Pinnacle",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.057,
+     "cote_olybet": 1.012,
+     "cote_reference": 1.021,
+     "ecart_relatif": 0.0092,
      "aberrant": false
     },
     {
-     "match": "FC Nordsjaelland – Midtjylland",
-     "source": "PMU",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.12,
-     "ecart_relatif": 0.0142,
-     "aberrant": false
-    },
-    {
-     "match": "Brøndby IF – AGF Aarhus",
-     "source": "PMU",
-     "cote_olybet": 2.03,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.015,
-     "aberrant": false
-    },
-    {
-     "match": "Ferencváros TC – Paksi",
+     "match": "AS Jeunesse d'Esch – Differdange  03",
      "source": "Pinnacle",
-     "cote_olybet": 1.43,
-     "cote_reference": 1.47,
-     "ecart_relatif": 0.0269,
+     "cote_olybet": 7.8,
+     "cote_reference": 8.28,
+     "ecart_relatif": 0.058,
      "aberrant": false
     },
     {
-     "match": "Ferencváros TC – Paksi",
-     "source": "PMU",
-     "cote_olybet": 1.43,
-     "cote_reference": 1.4,
-     "ecart_relatif": 0.0214,
+     "match": "Résidence Walferdange – Wiltz 71",
+     "source": "Pinnacle",
+     "cote_olybet": 1.88,
+     "cote_reference": 1.926,
+     "ecart_relatif": 0.0238,
      "aberrant": false
     }
    ],
@@ -327,32 +329,33 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T10:57:32+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T10:57:50+00:00",
+   "pinnacle_premiere_lecture": "2026-10-31T11:02:24+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T11:02:37+00:00",
    "books_premiere_lecture": "2026-10-31T10:26:43+00:00",
-   "books_derniere_lecture": "2026-10-31T10:57:21+00:00",
-   "ecart_enveloppe_secondes": 1867.0
+   "books_derniere_lecture": "2026-10-31T11:02:14+00:00",
+   "ecart_enveloppe_secondes": 2154.0
   },
   "historique_cotes": {
-   "lignes": 2274
+   "lignes": 9967
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.9
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 645,
+   "conforme": 646,
    "a_verifier": 11,
-   "non_conforme": 11,
-   "mesures": 74102,
+   "non_conforme": 10,
+   "mesures": 83513,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 260030,
-   "mesures": 228498,
-   "annotees": 11
+   "ancres": 262497,
+   "mesures": 218704,
+   "annotees": 9
   },
   "redecision": {
    "ajoutees": 0
@@ -368,26 +371,20 @@
    "dernier_reglement": "2026-10-31T10:35:57+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T11:01:15+00:00",
+  "fin": "2026-10-31T11:05:34+00:00",
   "cotes": {
-   "francaises": 262924,
-   "pinnacle": 202338,
-   "polymarket": 36162,
+   "francaises": 270462,
+   "pinnacle": 202349,
+   "polymarket": 35963,
    "smarkets": 4012,
-   "matchbook": 24740
+   "matchbook": 24361
   },
-  "matchs_francais": 3248,
-  "opportunites": 13,
+  "matchs_francais": 3288,
+  "opportunites": 16,
   "opportunites_suspectes": 2,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-30T17:07:53+00:00",
-   "mode": "complet",
-   "opportunites": 10,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-30T17:12:58+00:00",
    "mode": "complet",
@@ -1587,6 +1584,12 @@
    "mode": "complet",
    "opportunites": 13,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-31T11:02:13+00:00",
+   "mode": "complet",
+   "opportunites": 16,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-10-31T10:35:57+00:00",
