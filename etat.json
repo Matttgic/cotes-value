@@ -1,36 +1,32 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T02:52:08+00:00",
+  "debut": "2026-10-31T02:57:56+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.9,
+    "secondes": 3.6,
     "ok": true
    },
    "olybet": {
-    "secondes": 7.8,
+    "secondes": 10.9,
     "ok": true
    },
-   "pinnacle": {
-    "secondes": 26.2,
+   "polymarket": {
+    "secondes": 20.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403"
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides",
+     "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ],
-    "reprise": 35263
+   "pinnacle": {
+    "secondes": 23.6,
+    "ok": true
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -38,15 +34,15 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 43.7,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 75.6,
+    "secondes": 37.9,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 76.2,
+    "secondes": 66.9,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 77.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,23 +50,20 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 43.3,
+    "secondes": 57.1,
     "ok": true
    },
    "smarkets": {
-    "secondes": 18.6,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 177.3,
+    "secondes": 60.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.3,
+    "secondes": 2.6,
     "ok": true
    },
    "cotes_cloture": {
@@ -88,64 +81,34 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 417,
-   "lignes": 20518
-  },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 51416,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 51416,
-   "retard": [
-    "football"
-   ]
+   "matchs": 414,
+   "lignes": 20586
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 840,
-   "age_min_s": 120,
-   "lignes": 193114,
-   "lignes_perimees": 2641,
-   "rechauffeur": "ok",
+   "age_max_s": 863,
+   "age_min_s": 13,
+   "lignes": 193361,
+   "lignes_perimees": 622,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 39,
+    "head_200": 40,
+    "choisi_autre": 11,
+    "choisi_fixe": 4,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 5,
-    "choisi_fixe": 10,
-    "reprise_403": 1,
-    "sport_vide": 4
+    "sport_vide": 5
    }
   },
   "reprise": {
-   "actif": true,
-   "Polymarket": {
-    "hockey": 360,
-    "football": 29395,
-    "mma": 100,
-    "basket": 914,
-    "esport": 40,
-    "football_americain": 3710,
-    "rugby": 46,
-    "cricket": 26,
-    "autre": 28,
-    "handball": 14,
-    "volley": 22,
-    "tennis_de_table": 522,
-    "tennis": 86
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -171,9 +134,7 @@
     "volley"
    ],
    "nouveaux_au_cycle_suivant": [],
-   "plus_chez_les_references": [
-    "baseball"
-   ]
+   "plus_chez_les_references": []
   },
   "betclic_proches": {
    "proches": 9,
@@ -184,54 +145,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Kyoto Sanga – Shimizu S-P.",
+     "match": "O´Higgins – Deportivo Nublense",
      "source": "Pinnacle",
-     "cote_olybet": 2.34,
-     "cote_reference": 2.52,
-     "ecart_relatif": 0.0714,
+     "cote_olybet": 1.93,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0539,
      "aberrant": false
     },
     {
-     "match": "Kyoto Sanga – Shimizu S-P.",
+     "match": "O´Higgins – Deportivo Nublense",
      "source": "PMU",
-     "cote_olybet": 2.34,
-     "cote_reference": 2.35,
-     "ecart_relatif": 0.0043,
+     "cote_olybet": 1.93,
+     "cote_reference": 1.74,
+     "ecart_relatif": 0.1092,
      "aberrant": false
     },
     {
-     "match": "Kashiwa Reysol – Urawa  Red Diamonds",
+     "match": "Wisla Plock – Piast Gliwice",
      "source": "Pinnacle",
-     "cote_olybet": 2.02,
-     "cote_reference": 2.17,
-     "ecart_relatif": 0.0691,
+     "cote_olybet": 2.11,
+     "cote_reference": 2.26,
+     "ecart_relatif": 0.0664,
      "aberrant": false
     },
     {
-     "match": "Kashiwa Reysol – Urawa  Red Diamonds",
+     "match": "Wisla Plock – Piast Gliwice",
      "source": "PMU",
-     "cote_olybet": 2.02,
-     "cote_reference": 1.86,
-     "ecart_relatif": 0.086,
+     "cote_olybet": 2.11,
+     "cote_reference": 1.95,
+     "ecart_relatif": 0.0821,
      "aberrant": false
     },
     {
-     "match": "V-Varen Nagasaki – Tokyo Verdy",
+     "match": "KS Wieczysta Krakow – Jagiellonia Bialystok",
      "source": "Pinnacle",
-     "cote_olybet": 2.31,
-     "cote_reference": 2.47,
-     "ecart_relatif": 0.0648,
+     "cote_olybet": 2.24,
+     "cote_reference": 2.34,
+     "ecart_relatif": 0.0427,
      "aberrant": false
     },
     {
-     "match": "V-Varen Nagasaki – Tokyo Verdy",
+     "match": "KS Wieczysta Krakow – Jagiellonia Bialystok",
      "source": "PMU",
-     "cote_olybet": 2.31,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.0132,
+     "cote_olybet": 2.24,
+     "cote_reference": 2.14,
+     "ecart_relatif": 0.0467,
+     "aberrant": false
+    },
+    {
+     "match": "GKS Katowice – Widzew Lodz",
+     "source": "Pinnacle",
+     "cote_olybet": 2.04,
+     "cote_reference": 2.16,
+     "ecart_relatif": 0.0556,
+     "aberrant": false
+    },
+    {
+     "match": "GKS Katowice – Widzew Lodz",
+     "source": "PMU",
+     "cote_olybet": 2.04,
+     "cote_reference": 2.02,
+     "ecart_relatif": 0.0099,
      "aberrant": false
     }
    ],
@@ -240,117 +217,102 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Milford – Sekhukhune United",
-     "source": "Pinnacle",
-     "cote_netbet": 2.95,
-     "cote_reference": 3.29,
-     "ecart_relatif": 0.1033,
-     "aberrant": false
-    },
-    {
-     "match": "Milford – Sekhukhune United",
-     "source": "PMU",
-     "cote_netbet": 2.95,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.1132,
-     "aberrant": false
-    },
-    {
-     "match": "Orlando Pirates – Kaizer Chiefs",
-     "source": "Pinnacle",
-     "cote_netbet": 1.57,
-     "cote_reference": 1.69,
-     "ecart_relatif": 0.0708,
-     "aberrant": false
-    },
-    {
-     "match": "Orlando Pirates – Kaizer Chiefs",
-     "source": "PMU",
-     "cote_netbet": 1.57,
-     "cote_reference": 1.47,
-     "ecart_relatif": 0.068,
-     "aberrant": false
-    },
-    {
-     "match": "AmaZulu – Golden Arrows",
+     "match": "Altach – Ried",
      "source": "Pinnacle",
      "cote_netbet": 2.07,
-     "cote_reference": 2.27,
-     "ecart_relatif": 0.0881,
+     "cote_reference": 2.26,
+     "ecart_relatif": 0.0841,
      "aberrant": false
     },
     {
-     "match": "AmaZulu – Golden Arrows",
+     "match": "Altach – Ried",
      "source": "PMU",
      "cote_netbet": 2.07,
-     "cote_reference": 1.91,
-     "ecart_relatif": 0.0838,
+     "cote_reference": 2.12,
+     "ecart_relatif": 0.0236,
      "aberrant": false
     },
     {
-     "match": "Polokwane City – TS Galaxy",
+     "match": "LASK – WSG Tirol",
      "source": "Pinnacle",
-     "cote_netbet": 1.95,
-     "cote_reference": 2.05,
-     "ecart_relatif": 0.0488,
+     "cote_netbet": 1.26,
+     "cote_reference": 1.339,
+     "ecart_relatif": 0.059,
      "aberrant": false
     },
     {
-     "match": "Polokwane City – TS Galaxy",
+     "match": "LASK – WSG Tirol",
      "source": "PMU",
-     "cote_netbet": 1.95,
-     "cote_reference": 1.96,
-     "ecart_relatif": 0.0051,
+     "cote_netbet": 1.26,
+     "cote_reference": 1.23,
+     "ecart_relatif": 0.0244,
      "aberrant": false
     },
     {
-     "match": "Stellenbosch FC – Chippa United",
+     "match": "Wolfsberger AC – Sturm Graz",
      "source": "Pinnacle",
-     "cote_netbet": 1.63,
-     "cote_reference": 1.709,
-     "ecart_relatif": 0.0463,
+     "cote_netbet": 4.1,
+     "cote_reference": 4.62,
+     "ecart_relatif": 0.1126,
      "aberrant": false
     },
     {
-     "match": "Stellenbosch FC – Chippa United",
+     "match": "Wolfsberger AC – Sturm Graz",
      "source": "PMU",
-     "cote_netbet": 1.63,
-     "cote_reference": 1.68,
-     "ecart_relatif": 0.0298,
+     "cote_netbet": 4.1,
+     "cote_reference": 3.95,
+     "ecart_relatif": 0.038,
+     "aberrant": false
+    },
+    {
+     "match": "Odense – Silkeborg",
+     "source": "Pinnacle",
+     "cote_netbet": 1.72,
+     "cote_reference": 1.855,
+     "ecart_relatif": 0.0726,
+     "aberrant": false
+    },
+    {
+     "match": "Odense – Silkeborg",
+     "source": "PMU",
+     "cote_netbet": 1.72,
+     "cote_reference": 1.71,
+     "ecart_relatif": 0.0058,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T02:36:47+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T02:52:25+00:00",
+   "pinnacle_premiere_lecture": "2026-10-31T02:58:07+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T02:58:15+00:00",
    "books_premiere_lecture": "2026-10-31T02:00:01+00:00",
-   "books_derniere_lecture": "2026-10-31T02:52:09+00:00",
-   "ecart_enveloppe_secondes": 3144.0
+   "books_derniere_lecture": "2026-10-31T02:57:57+00:00",
+   "ecart_enveloppe_secondes": 3494.0
   },
   "historique_cotes": {
-   "lignes": 2140
+   "lignes": 1179
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 5.8
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 642,
    "a_verifier": 11,
    "non_conforme": 11,
-   "mesures": 62526,
+   "mesures": 68187,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 205839,
-   "mesures": 165667,
+   "ancres": 209104,
+   "mesures": 191864,
    "annotees": 11
   },
   "redecision": {
@@ -367,26 +329,20 @@
    "dernier_reglement": "2026-10-31T02:50:54+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T02:57:02+00:00",
+  "fin": "2026-10-31T03:00:31+00:00",
   "cotes": {
-   "francaises": 204018,
-   "pinnacle": 244530,
-   "polymarket": 35263,
+   "francaises": 204006,
+   "pinnacle": 193361,
+   "polymarket": 35274,
    "smarkets": 4058,
-   "matchbook": 20518
+   "matchbook": 20586
   },
-  "matchs_francais": 2572,
-  "opportunites": 11,
+  "matchs_francais": 2688,
+  "opportunites": 12,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T10:12:35+00:00",
-   "mode": "complet",
-   "opportunites": 15,
-   "nouveaux_paris": 3
-  },
   {
    "debut": "2026-10-30T10:17:35+00:00",
    "mode": "complet",
@@ -1585,6 +1541,12 @@
    "debut": "2026-10-31T02:52:08+00:00",
    "mode": "complet",
    "opportunites": 11,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-31T02:57:56+00:00",
+   "mode": "complet",
+   "opportunites": 12,
    "nouveaux_paris": 0
   }
  ],
