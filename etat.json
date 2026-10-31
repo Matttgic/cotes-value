@@ -1,35 +1,40 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T19:58:51+00:00",
+  "debut": "2026-10-31T20:03:28+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.5,
+    "secondes": 3.4,
     "ok": true
    },
+   "winamax_direct": {
+    "secondes": 4.2,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau (CurlError 22)",
+     "connexion impossible (CurlError 22)",
+     "lecture vide"
+    ]
+   },
    "olybet": {
-    "secondes": 10.0,
+    "secondes": 9.3,
+    "ok": true
+   },
+   "pinnacle": {
+    "secondes": 21.3,
     "ok": true
    },
    "polymarket": {
-    "secondes": 28.3,
+    "secondes": 27.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "prix bid/ask invalides"
     ]
    },
-   "pinnacle": {
-    "secondes": 32.2,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 29 matchups : HTTP 403",
-     "sport 9 matchups : HTTP 403"
-    ]
-   },
    "netbet": {
-    "secondes": 39.4,
+    "secondes": 37.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -37,11 +42,7 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 57.6,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 65.8,
+    "secondes": 47.3,
     "ok": true
    },
    "betclic_direct": {
@@ -53,7 +54,7 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 53.3,
+    "secondes": 65.2,
     "ok": true
    },
    "smarkets": {
@@ -62,15 +63,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 72.0,
+    "secondes": 45.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.8,
+    "secondes": 3.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 0.7,
     "ok": true
    }
   },
@@ -84,41 +85,32 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 286,
-   "lignes": 11765
-  },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 33181,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": []
+   "matchs": 280,
+   "lignes": 10917
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 762,
-   "age_min_s": 126,
-   "lignes": 127528,
-   "lignes_perimees": 1400,
-   "rechauffeur": "indisponible",
+   "age_max_s": 894,
+   "age_min_s": 85,
+   "lignes": 127274,
+   "lignes_perimees": 1670,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 2,
-    "head_200": 44,
-    "choisi_autre": 9,
+    "head_200": 45,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 7,
+    "choisi_fixe": 8,
+    "choisi_autre": 8,
     "sport_vide": 4
    }
   },
@@ -151,7 +143,7 @@
    "plus_chez_les_references": []
   },
   "betclic_proches": {
-   "proches": 18,
+   "proches": 8,
    "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 0
@@ -256,119 +248,103 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Vélez Sarsfield – San Lorenzo de Almagro",
+     "match": "AD Ceuta FC – Gijon",
      "source": "Pinnacle",
-     "cote_netbet": 1.83,
-     "cote_reference": 2.03,
-     "ecart_relatif": 0.0985,
-     "aberrant": false
-    },
-    {
-     "match": "Vélez Sarsfield – San Lorenzo de Almagro",
-     "source": "PMU",
-     "cote_netbet": 1.83,
-     "cote_reference": 1.83,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Estudiantes de La Plata – Instituto",
-     "source": "Pinnacle",
-     "cote_netbet": 1.78,
-     "cote_reference": 1.901,
-     "ecart_relatif": 0.0636,
-     "aberrant": false
-    },
-    {
-     "match": "Estudiantes de La Plata – Instituto",
-     "source": "PMU",
-     "cote_netbet": 1.78,
-     "cote_reference": 1.8,
-     "ecart_relatif": 0.0111,
-     "aberrant": false
-    },
-    {
-     "match": "Boca Juniors – River Plate",
-     "source": "Pinnacle",
-     "cote_netbet": 2.12,
-     "cote_reference": 2.29,
+     "cote_netbet": 2.37,
+     "cote_reference": 2.56,
      "ecart_relatif": 0.0742,
      "aberrant": false
     },
     {
-     "match": "Boca Juniors – River Plate",
+     "match": "AD Ceuta FC – Gijon",
      "source": "PMU",
-     "cote_netbet": 2.12,
-     "cote_reference": 1.95,
-     "ecart_relatif": 0.0872,
+     "cote_netbet": 2.37,
+     "cote_reference": 2.38,
+     "ecart_relatif": 0.0042,
      "aberrant": false
     },
     {
-     "match": "Belgrano – Barracas Central",
+     "match": "Burgos CF – Castellón",
      "source": "Pinnacle",
-     "cote_netbet": 1.8,
-     "cote_reference": 1.962,
-     "ecart_relatif": 0.0823,
+     "cote_netbet": 3.35,
+     "cote_reference": 3.85,
+     "ecart_relatif": 0.1299,
      "aberrant": false
     },
     {
-     "match": "Belgrano – Barracas Central",
+     "match": "Burgos CF – Castellón",
      "source": "PMU",
-     "cote_netbet": 1.8,
-     "cote_reference": 1.76,
-     "ecart_relatif": 0.0227,
+     "cote_netbet": 3.35,
+     "cote_reference": 3.0,
+     "ecart_relatif": 0.1167,
      "aberrant": false
     },
     {
-     "match": "Newell's Old Boys – Unión de Santa Fe",
+     "match": "Tenerife – FC Andorra",
      "source": "Pinnacle",
-     "cote_netbet": 1.9,
-     "cote_reference": 1.99,
-     "ecart_relatif": 0.0453,
+     "cote_netbet": 1.98,
+     "cote_reference": 2.08,
+     "ecart_relatif": 0.0481,
      "aberrant": false
     },
     {
-     "match": "Newell's Old Boys – Unión de Santa Fe",
+     "match": "Tenerife – FC Andorra",
      "source": "PMU",
-     "cote_netbet": 1.9,
-     "cote_reference": 1.95,
-     "ecart_relatif": 0.0256,
+     "cote_netbet": 1.98,
+     "cote_reference": 2.06,
+     "ecart_relatif": 0.0388,
+     "aberrant": false
+    },
+    {
+     "match": "PEC Zwolle – ADO Den Haag",
+     "source": "Pinnacle",
+     "cote_netbet": 2.1,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.1064,
+     "aberrant": false
+    },
+    {
+     "match": "PEC Zwolle – ADO Den Haag",
+     "source": "PMU",
+     "cote_netbet": 2.1,
+     "cote_reference": 2.08,
+     "ecart_relatif": 0.0096,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T19:59:10+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T19:59:26+00:00",
-   "books_premiere_lecture": "2026-10-31T19:21:39+00:00",
-   "books_derniere_lecture": "2026-10-31T19:58:52+00:00",
-   "ecart_enveloppe_secondes": 2267.0
+   "pinnacle_premiere_lecture": "2026-10-31T20:03:39+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T20:03:46+00:00",
+   "books_premiere_lecture": "2026-10-31T19:44:54+00:00",
+   "books_derniere_lecture": "2026-10-31T20:03:29+00:00",
+   "ecart_enveloppe_secondes": 1132.0
   },
   "historique_cotes": {
-   "lignes": 1410
+   "lignes": 7513
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 13.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 646,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 57687,
+   "mesures": 43337,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 166308,
-   "mesures": 135080,
-   "annotees": 13
+   "ancres": 131043,
+   "mesures": 112600,
+   "annotees": 11
   },
   "redecision": {
    "ajoutees": 0
@@ -384,26 +360,20 @@
    "dernier_reglement": "2026-10-31T19:10:11+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T20:01:55+00:00",
+  "fin": "2026-10-31T20:06:01+00:00",
   "cotes": {
-   "francaises": 164461,
-   "pinnacle": 160709,
-   "polymarket": 29537,
+   "francaises": 131611,
+   "pinnacle": 127274,
+   "polymarket": 28670,
    "smarkets": 3707,
-   "matchbook": 11765
+   "matchbook": 10917
   },
-  "matchs_francais": 2083,
-  "opportunites": 17,
+  "matchs_francais": 1635,
+  "opportunites": 13,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 1
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-31T02:16:00+00:00",
-   "mode": "complet",
-   "opportunites": 8,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-31T02:21:13+00:00",
    "mode": "complet",
@@ -1603,11 +1573,17 @@
    "mode": "complet",
    "opportunites": 17,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-31T20:03:28+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-10-31T19:10:11+00:00",
+ "dernier_reglement": "2026-10-31T20:06:07+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-10-31T19:10:11+00:00",
+  "debut": "2026-10-31T20:06:07+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_volley": {
@@ -1615,11 +1591,11 @@
     "ok": true
    },
    "resultats_espn_hockey": {
-    "secondes": 0.4,
+    "secondes": 0.9,
     "ok": true
    },
    "resultats_espn_basket": {
-    "secondes": 0.7,
+    "secondes": 1.3,
     "ok": true
    },
    "resultats_espn_tennis_de_table": {
@@ -1627,27 +1603,27 @@
     "ok": true
    },
    "resultats_espn_football": {
-    "secondes": 0.2,
-    "ok": true
-   },
-   "resultats_espn_rugby": {
-    "secondes": 0.0,
+    "secondes": 0.5,
     "ok": true
    },
    "resultats_espn_handball": {
     "secondes": 0.0,
     "ok": true
    },
+   "resultats_espn_rugby": {
+    "secondes": 0.0,
+    "ok": true
+   },
    "resultats_livescore_hockey": {
-    "secondes": 1.8,
+    "secondes": 1.9,
     "ok": true
    },
    "resultats_livescore_basket": {
-    "secondes": 1.3,
+    "secondes": 1.1,
     "ok": true
    },
    "resultats_livescore_football": {
-    "secondes": 0.6,
+    "secondes": 0.5,
     "ok": true
    },
    "resultats_nhl_officiel": {
@@ -1655,27 +1631,27 @@
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 3.4,
+    "secondes": 4.8,
     "ok": true
    },
    "resultats_flashscore_hockey": {
-    "secondes": 4.2,
+    "secondes": 6.1,
     "ok": true
    },
    "resultats_flashscore_basket": {
-    "secondes": 3.7,
+    "secondes": 4.6,
     "ok": true
    },
    "resultats_flashscore_football": {
-    "secondes": 4.1,
+    "secondes": 3.0,
+    "ok": true
+   },
+   "resultats_flashscore_handball": {
+    "secondes": 1.2,
     "ok": true
    },
    "resultats_flashscore_rugby": {
     "secondes": 1.2,
-    "ok": true
-   },
-   "resultats_flashscore_handball": {
-    "secondes": 1.1,
     "ok": true
    },
    "resultats_thesportsdb": {
@@ -1683,15 +1659,15 @@
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "basket Olympiacos_Women_vs_Panathinaikos_BC_Women : ValueError('HTTP 429')",
-     "volley Osaka_Marvelous_(F)_vs_Aranmare_Yamagata_(F) : ValueError('HTTP 429')",
-     "volley JT_Marvelous_Women_vs_Aranmare_Akita_Shonai_Women : ValueError('HTTP 429')",
-     "volley JT_Marvelous_F._vs_Prestige_International_Aranmare_F. : ValueError('HTTP 429')",
-     "volley JT_Marvelous_Women_vs_Aranmare_Akita_Shonai_Women : ValueError('HTTP 429')",
-     "basket Granada_vs_Partizán_de_Fuenlabrada : ValueError('HTTP 429')",
-     "basket Granada_vs_Baloncesto_Fuenlabrada : ValueError('HTTP 429')",
-     "volley Monza_vs_Perugia : ValueError('HTTP 429')",
-     "volley VV_Monza_vs_Perugia : ValueError('HTTP 429')"
+     "volley Proton_Saratov_Women_vs_Dinamo_Krasnodar_Women : ValueError('HTTP 429')",
+     "volley Proton_vs_Dinamo_Krasnodar : ValueError('HTTP 429')",
+     "volley Proton_Saratov_vs_Dinamo_Krasnodar : ValueError('HTTP 429')",
+     "rugby ASM_Clermont-Auvergne_vs_Racing_92 : ValueError('HTTP 429')",
+     "rugby Clermont_vs_Racing_92 : ValueError('HTTP 429')",
+     "volley AMSL_Frejus_vs_Chalon : ValueError('HTTP 429')",
+     "volley Frejus_vs_Saone : ValueError('HTTP 429')",
+     "volley AMSL_Fréjus_Volley_vs_Vbc_Chalon_Sur_Saone : ValueError('HTTP 429')",
+     "volley Frejus_vs_Saone : ValueError('HTTP 429')"
     ]
    },
    "resultats_theodds": {
@@ -1719,9 +1695,9 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "marche_non_couvert": 35,
-    "competition_non_couverte": 28,
-    "deja_valide": 25,
+    "marche_non_couvert": 33,
+    "competition_non_couverte": 26,
+    "deja_valide": 16,
     "trop_recent": 39,
     "hors_fenetre": 0,
     "eligibles": 0
@@ -1769,9 +1745,9 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "deja_valide": 25,
-    "marche_non_couvert": 35,
-    "competition_non_couverte": 28,
+    "deja_valide": 16,
+    "marche_non_couvert": 33,
+    "competition_non_couverte": 26,
     "trop_recent": 39,
     "hors_fenetre": 0,
     "eligibles": 0
@@ -1780,8 +1756,8 @@
    "requetes_jour": 0
   },
   "resultats": {
-   "enregistrements": 7789,
-   "matchs_valides": 18,
+   "enregistrements": 8383,
+   "matchs_valides": 12,
    "reportes": 0,
    "non_regles": [
     {
@@ -1923,50 +1899,21 @@
      "retenues": [],
      "raison": "aucune source",
      "validation_apres": null
-    },
-    {
-     "match_id": "betclic|1244290041806848",
-     "match": "Biarritz Olympique PB – Valence Romans",
-     "sport": "rugby",
-     "debut": "2026-10-30T20:00:00.0000000Z",
-     "sources": {
-      "flashscore": {
-       "score": [
-        34,
-        30
-       ],
-       "periodes": [
-        [
-         25,
-         13
-        ],
-        [
-         9,
-         17
-        ]
-       ]
-      }
-     },
-     "retenues": [
-      "flashscore"
-     ],
-     "raison": "source unique : délai de validation automatique",
-     "validation_apres": "2026-10-31T20:00:00+00:00"
     }
    ],
-   "paris_en_attente": 20,
-   "paris_regles": 25,
-   "selections_en_attente": 20,
+   "paris_en_attente": 17,
+   "paris_regles": 16,
+   "selections_en_attente": 17,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
    "sources_reglement": {
-    "flashscore": 22,
-    "livescore": 21,
-    "espn": 3
+    "espn": 8,
+    "livescore": 13,
+    "flashscore": 8
    }
   },
-  "fin": "2026-10-31T19:11:28+00:00"
+  "fin": "2026-10-31T20:07:26+00:00"
  },
  "echecs_recents": {
   "total": 0,
