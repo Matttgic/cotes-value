@@ -1,33 +1,32 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T16:39:28+00:00",
+  "debut": "2026-10-31T16:44:22+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.2,
+    "secondes": 4.0,
     "ok": true
    },
    "olybet": {
-    "secondes": 13.1,
+    "secondes": 11.8,
     "ok": true
    },
-   "pinnacle": {
-    "secondes": 28.2,
+   "polymarket": {
+    "secondes": 22.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403"
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides"
     ]
    },
-   "polymarket": {
-    "secondes": 30.0,
-    "ok": false,
-    "erreur": "budget dépassé",
+   "pinnacle": {
+    "secondes": 26.6,
+    "ok": true,
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ],
-    "reprise": 34307
+     "sport 19 matchups : HTTP 403"
+    ]
    },
    "netbet": {
     "secondes": 37.3,
@@ -38,11 +37,15 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 61.3,
+    "secondes": 46.6,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 22.3,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 75.6,
+    "secondes": 67.0,
     "ok": true
    },
    "betclic_direct": {
@@ -50,33 +53,27 @@
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "réseau",
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 71.9,
+   "smarkets": {
+    "secondes": 19.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "smarkets": {
-    "secondes": 0.0,
-    "ok": true,
-    "cache": true
-   },
    "association": {
-    "secondes": 96.8,
+    "secondes": 61.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 5.2,
+    "secondes": 3.6,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.4,
+    "secondes": 1.5,
     "ok": true
    }
   },
@@ -91,53 +88,44 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 390,
-   "lignes": 14292
+   "lignes": 14317
+  },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 0,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 892,
-   "age_min_s": 26,
-   "lignes": 158283,
-   "lignes_perimees": 0,
-   "rechauffeur": "ok",
+   "age_max_s": 887,
+   "age_min_s": 259,
+   "lignes": 158079,
+   "lignes_perimees": 7094,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 40,
-    "choisi_autre": 13,
+    "head_200": 45,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 3,
+    "choisi_autre": 7,
+    "choisi_fixe": 9,
     "reprise_403": 1,
-    "sport_vide": 3
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 4
    }
   },
   "reprise": {
-   "actif": true,
-   "Polymarket": {
-    "hockey": 528,
-    "football": 27775,
-    "football_americain": 3642,
-    "esport": 10,
-    "mma": 100,
-    "basket": 1492,
-    "rugby": 18,
-    "cricket": 64,
-    "autre": 18,
-    "handball": 30,
-    "volley": 28,
-    "tennis_de_table": 312,
-    "tennis": 288,
-    "baseball": 2
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -163,16 +151,18 @@
     "tennis_de_table",
     "volley"
    ],
-   "nouveaux_au_cycle_suivant": [],
+   "nouveaux_au_cycle_suivant": [
+    "flechettes"
+   ],
    "plus_chez_les_references": [
     "curling",
     "padel"
    ]
   },
   "betclic_proches": {
-   "proches": 110,
+   "proches": 109,
    "relances": 0,
-   "proches_non_lus": 0,
+   "proches_non_lus": 104,
    "proches_vides": 0
   },
   "olybet_controle": {
@@ -180,6 +170,22 @@
    "seuil_relatif": 0.15,
    "examines": 10,
    "comparaisons": [
+    {
+     "match": "AE Kifisia FC – Olympiakos",
+     "source": "Pinnacle",
+     "cote_olybet": 6.6,
+     "cote_reference": 7.48,
+     "ecart_relatif": 0.1176,
+     "aberrant": false
+    },
+    {
+     "match": "AE Kifisia FC – Olympiakos",
+     "source": "PMU",
+     "cote_olybet": 6.6,
+     "cote_reference": 6.1,
+     "ecart_relatif": 0.082,
+     "aberrant": false
+    },
     {
      "match": "Panathinaïkos – AEK Athènes",
      "source": "Pinnacle",
@@ -211,22 +217,6 @@
      "cote_reference": 3.15,
      "ecart_relatif": 0.1651,
      "aberrant": true
-    },
-    {
-     "match": "AE Kifisia FC – Olympiakos",
-     "source": "Pinnacle",
-     "cote_olybet": 6.5,
-     "cote_reference": 7.48,
-     "ecart_relatif": 0.131,
-     "aberrant": false
-    },
-    {
-     "match": "AE Kifisia FC – Olympiakos",
-     "source": "PMU",
-     "cote_olybet": 6.5,
-     "cote_reference": 6.1,
-     "ecart_relatif": 0.0656,
-     "aberrant": false
     },
     {
      "match": "PAOK – Asteras Tripolis",
@@ -275,103 +265,118 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Frosinone – Torino",
+     "match": "Cincinnati – Philadelphia Union",
      "source": "Pinnacle",
-     "cote_netbet": 2.05,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0596,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.29,
+     "ecart_relatif": 0.0393,
      "aberrant": false
     },
     {
-     "match": "Frosinone – Torino",
+     "match": "Cincinnati – Philadelphia Union",
      "source": "PMU",
-     "cote_netbet": 2.05,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.025,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.0135,
      "aberrant": false
     },
     {
-     "match": "Lazio Rome – Cagliari",
+     "match": "Columbus Crew – DC United",
      "source": "Pinnacle",
-     "cote_netbet": 1.4,
-     "cote_reference": 1.459,
-     "ecart_relatif": 0.0402,
+     "cote_netbet": 1.35,
+     "cote_reference": 1.465,
+     "ecart_relatif": 0.0786,
      "aberrant": false
     },
     {
-     "match": "Lazio Rome – Cagliari",
+     "match": "Columbus Crew – DC United",
      "source": "PMU",
-     "cote_netbet": 1.4,
-     "cote_reference": 1.4,
+     "cote_netbet": 1.35,
+     "cote_reference": 1.35,
      "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Lecce – Genoa",
+     "match": "New York City FC – CF Montreal",
      "source": "Pinnacle",
-     "cote_netbet": 3.1,
-     "cote_reference": 3.41,
-     "ecart_relatif": 0.0909,
+     "cote_netbet": 1.34,
+     "cote_reference": 1.463,
+     "ecart_relatif": 0.0841,
      "aberrant": false
     },
     {
-     "match": "Lecce – Genoa",
+     "match": "New York City FC – CF Montreal",
      "source": "PMU",
-     "cote_netbet": 3.1,
-     "cote_reference": 3.1,
+     "cote_netbet": 1.34,
+     "cote_reference": 1.34,
      "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Juventus – Naples",
+     "match": "Saint Louis FC – San Diego FC",
      "source": "Pinnacle",
-     "cote_netbet": 2.17,
-     "cote_reference": 2.33,
-     "ecart_relatif": 0.0687,
+     "cote_netbet": 1.72,
+     "cote_reference": 1.813,
+     "ecart_relatif": 0.0513,
      "aberrant": false
     },
     {
-     "match": "Juventus – Naples",
+     "match": "Saint Louis FC – San Diego FC",
      "source": "PMU",
-     "cote_netbet": 2.17,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.0483,
+     "cote_netbet": 1.72,
+     "cote_reference": 1.77,
+     "ecart_relatif": 0.0282,
+     "aberrant": false
+    },
+    {
+     "match": "Sporting Kansas City – FC Dallas",
+     "source": "Pinnacle",
+     "cote_netbet": 3.4,
+     "cote_reference": 3.78,
+     "ecart_relatif": 0.1005,
+     "aberrant": false
+    },
+    {
+     "match": "Sporting Kansas City – FC Dallas",
+     "source": "PMU",
+     "cote_netbet": 3.4,
+     "cote_reference": 3.4,
+     "ecart_relatif": 0.0,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T16:39:40+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T16:39:52+00:00",
+   "pinnacle_premiere_lecture": "2026-10-31T16:44:33+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T16:44:46+00:00",
    "books_premiere_lecture": "2026-10-31T15:27:19+00:00",
-   "books_derniere_lecture": "2026-10-31T16:39:29+00:00",
-   "ecart_enveloppe_secondes": 4353.0
+   "books_derniere_lecture": "2026-10-31T16:44:23+00:00",
+   "ecart_enveloppe_secondes": 4647.0
   },
   "historique_cotes": {
-   "lignes": 19244
+   "lignes": 2795
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.1
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 646,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 76255,
+   "mesures": 74831,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 229729,
-   "mesures": 66320,
-   "annotees": 2
+   "ancres": 224756,
+   "mesures": 74011,
+   "annotees": 10
   },
   "redecision": {
    "ajoutees": 0
@@ -387,26 +392,20 @@
    "dernier_reglement": "2026-10-31T16:23:22+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T16:43:14+00:00",
+  "fin": "2026-10-31T16:47:18+00:00",
   "cotes": {
-   "francaises": 226094,
-   "pinnacle": 158283,
-   "polymarket": 34307,
-   "smarkets": 3044,
-   "matchbook": 14292
+   "francaises": 225801,
+   "pinnacle": 158079,
+   "polymarket": 34224,
+   "smarkets": 3509,
+   "matchbook": 14317
   },
-  "matchs_francais": 2902,
-  "opportunites": 19,
+  "matchs_francais": 2899,
+  "opportunites": 18,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 3
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-30T22:39:59+00:00",
-   "mode": "complet",
-   "opportunites": 13,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-30T22:44:59+00:00",
    "mode": "complet",
@@ -1606,6 +1605,12 @@
    "mode": "complet",
    "opportunites": 19,
    "nouveaux_paris": 3
+  },
+  {
+   "debut": "2026-10-31T16:44:22+00:00",
+   "mode": "complet",
+   "opportunites": 18,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-10-31T16:23:22+00:00",
