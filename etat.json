@@ -1,14 +1,14 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T11:17:43+00:00",
+  "debut": "2026-10-31T11:24:36+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 5.3,
+    "secondes": 6.0,
     "ok": true
    },
    "olybet": {
-    "secondes": 13.6,
+    "secondes": 16.0,
     "ok": true
    },
    "polymarket": {
@@ -17,17 +17,18 @@
     "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)"
-    ],
-    "reprise": 33454
+     "liste d'événements tronquée (plafond de pagination)",
+     "prix bid/ask invalides",
+     "1N2 incomplet ou issues dupliquées : référence rejetée"
+    ]
    },
    "pinnacle": {
-    "secondes": 31.9,
+    "secondes": 35.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 37 matchups : HTTP 403",
-     "sport 39 matchups : HTTP 403"
+     "sport 17 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403"
     ]
    },
    "netbet": {
@@ -39,14 +40,19 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 55.4,
+    "secondes": 67.8,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 24.2,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 76.3,
+    "secondes": 76.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport:2 : réponse absente",
      "budget"
     ]
    },
@@ -58,32 +64,21 @@
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 71.4,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
    "smarkets": {
-    "secondes": 32.1,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 181.6,
+    "secondes": 206.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 6.0,
+    "secondes": 5.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.5,
+    "secondes": 1.3,
     "ok": true
    }
   },
@@ -98,52 +93,47 @@
    "requetes": 4,
    "erreurs": [],
    "matchs": 461,
-   "lignes": 24346
+   "lignes": 24425
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 54459,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 862,
-   "age_min_s": 79,
-   "lignes": 199205,
-   "lignes_perimees": 974,
-   "rechauffeur": "ok",
+   "age_max_s": 852,
+   "age_min_s": 89,
+   "lignes": 199199,
+   "lignes_perimees": 24338,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 43,
+    "head_200": 42,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 13,
-    "choisi_autre": 3,
-    "sport_vide": 3,
+    "choisi_fixe": 5,
+    "choisi_autre": 11,
     "reprise_403": 2,
-    "matchups_sans_speciaux": 1
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 3
    }
   },
   "reprise": {
-   "actif": true,
-   "Polymarket": {
-    "hockey": 370,
-    "football": 27304,
-    "football_americain": 4304,
-    "mma": 100,
-    "basket": 1164,
-    "rugby": 46,
-    "cricket": 14,
-    "autre": 22,
-    "handball": 26,
-    "volley": 12,
-    "tennis_de_table": 86,
-    "tennis": 6
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -171,13 +161,16 @@
    ],
    "nouveaux_au_cycle_suivant": [],
    "plus_chez_les_references": [
-    "esport"
+    "autre",
+    "cricket",
+    "esport",
+    "tennis_de_table"
    ]
   },
   "betclic_proches": {
    "proches": 29,
    "relances": 0,
-   "proches_non_lus": 0,
+   "proches_non_lus": 29,
    "proches_vides": 0
   },
   "olybet_controle": {
@@ -186,67 +179,67 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "Huachipato – CD La Serena",
+     "match": "Union Berlin – 1.Cologne",
      "source": "Pinnacle",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.34,
-     "ecart_relatif": 0.0556,
+     "cote_olybet": 2.6,
+     "cote_reference": 2.76,
+     "ecart_relatif": 0.058,
      "aberrant": false
     },
     {
-     "match": "Huachipato – CD La Serena",
+     "match": "Union Berlin – 1.Cologne",
      "source": "PMU",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0941,
-     "aberrant": false
-    },
-    {
-     "match": "Universidad Catolica – Universidad de Chile",
-     "source": "Pinnacle",
-     "cote_olybet": 2.34,
+     "cote_olybet": 2.6,
      "cote_reference": 2.48,
-     "ecart_relatif": 0.0565,
+     "ecart_relatif": 0.0484,
      "aberrant": false
     },
     {
-     "match": "Universidad Catolica – Universidad de Chile",
-     "source": "PMU",
-     "cote_olybet": 2.34,
-     "cote_reference": 2.28,
-     "ecart_relatif": 0.0263,
-     "aberrant": false
-    },
-    {
-     "match": "Cobresal – Everton",
+     "match": "Schalke 04 – Leipzig",
      "source": "Pinnacle",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.67,
-     "ecart_relatif": 0.0599,
+     "cote_olybet": 3.91,
+     "cote_reference": 4.24,
+     "ecart_relatif": 0.0778,
      "aberrant": false
     },
     {
-     "match": "Cobresal – Everton",
+     "match": "Schalke 04 – Leipzig",
      "source": "PMU",
-     "cote_olybet": 2.51,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0546,
+     "cote_olybet": 3.91,
+     "cote_reference": 3.75,
+     "ecart_relatif": 0.0427,
      "aberrant": false
     },
     {
-     "match": "O´Higgins – Deportivo Nublense",
+     "match": "Leverkusen – Stuttgart",
      "source": "Pinnacle",
-     "cote_olybet": 1.91,
-     "cote_reference": 2.03,
-     "ecart_relatif": 0.0591,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.694,
+     "ecart_relatif": 0.038,
      "aberrant": false
     },
     {
-     "match": "O´Higgins – Deportivo Nublense",
+     "match": "Leverkusen – Stuttgart",
      "source": "PMU",
-     "cote_olybet": 1.91,
-     "cote_reference": 1.74,
-     "ecart_relatif": 0.0977,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0187,
+     "aberrant": false
+    },
+    {
+     "match": "Augsburg – Fribourg",
+     "source": "Pinnacle",
+     "cote_olybet": 2.69,
+     "cote_reference": 2.88,
+     "ecart_relatif": 0.066,
+     "aberrant": false
+    },
+    {
+     "match": "Augsburg – Fribourg",
+     "source": "PMU",
+     "cote_olybet": 2.69,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0218,
      "aberrant": false
     }
    ],
@@ -258,82 +251,82 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Lincoln City – Birmingham",
+     "match": "Charlotte – Orlando City",
      "source": "Pinnacle",
-     "cote_netbet": 2.85,
-     "cote_reference": 3.24,
-     "ecart_relatif": 0.1204,
+     "cote_netbet": 1.73,
+     "cote_reference": 1.877,
+     "ecart_relatif": 0.0784,
      "aberrant": false
     },
     {
-     "match": "Lincoln City – Birmingham",
+     "match": "Charlotte – Orlando City",
      "source": "PMU",
-     "cote_netbet": 2.85,
-     "cote_reference": 2.95,
-     "ecart_relatif": 0.0339,
+     "cote_netbet": 1.73,
+     "cote_reference": 1.76,
+     "ecart_relatif": 0.017,
      "aberrant": false
     },
     {
-     "match": "Norwich – Watford",
+     "match": "Cincinnati – Philadelphia Union",
      "source": "Pinnacle",
-     "cote_netbet": 1.37,
-     "cote_reference": 1.474,
-     "ecart_relatif": 0.0705,
+     "cote_netbet": 2.27,
+     "cote_reference": 2.47,
+     "ecart_relatif": 0.081,
      "aberrant": false
     },
     {
-     "match": "Norwich – Watford",
+     "match": "Cincinnati – Philadelphia Union",
      "source": "PMU",
-     "cote_netbet": 1.37,
-     "cote_reference": 1.45,
-     "ecart_relatif": 0.0552,
+     "cote_netbet": 2.27,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0318,
      "aberrant": false
     },
     {
-     "match": "Stoke City – Preston North End",
+     "match": "Columbus Crew – DC United",
      "source": "Pinnacle",
-     "cote_netbet": 1.63,
-     "cote_reference": 1.8,
-     "ecart_relatif": 0.0944,
+     "cote_netbet": 1.32,
+     "cote_reference": 1.42,
+     "ecart_relatif": 0.0706,
      "aberrant": false
     },
     {
-     "match": "Stoke City – Preston North End",
+     "match": "Columbus Crew – DC United",
      "source": "PMU",
-     "cote_netbet": 1.63,
-     "cote_reference": 1.67,
-     "ecart_relatif": 0.024,
+     "cote_netbet": 1.32,
+     "cote_reference": 1.3,
+     "ecart_relatif": 0.0154,
      "aberrant": false
     },
     {
-     "match": "Bolton Wanderers – Bristol City",
+     "match": "New York City FC – CF Montreal",
      "source": "Pinnacle",
-     "cote_netbet": 2.77,
-     "cote_reference": 3.04,
-     "ecart_relatif": 0.0888,
+     "cote_netbet": 1.34,
+     "cote_reference": 1.457,
+     "ecart_relatif": 0.08,
      "aberrant": false
     },
     {
-     "match": "Bolton Wanderers – Bristol City",
+     "match": "New York City FC – CF Montreal",
      "source": "PMU",
-     "cote_netbet": 2.77,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0073,
+     "cote_netbet": 1.34,
+     "cote_reference": 1.34,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Burnley – Portsmouth",
+     "match": "Saint Louis FC – San Diego FC",
      "source": "Pinnacle",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.4,
-     "ecart_relatif": 0.125,
+     "cote_netbet": 1.77,
+     "cote_reference": 1.917,
+     "ecart_relatif": 0.0769,
      "aberrant": false
     },
     {
-     "match": "Burnley – Portsmouth",
+     "match": "Saint Louis FC – San Diego FC",
      "source": "PMU",
-     "cote_netbet": 2.1,
-     "cote_reference": 2.1,
+     "cote_netbet": 1.77,
+     "cote_reference": 1.77,
      "ecart_relatif": 0.0,
      "aberrant": false
     }
@@ -341,32 +334,33 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T11:17:55+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T11:18:07+00:00",
+   "pinnacle_premiere_lecture": "2026-10-31T11:24:48+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T11:25:16+00:00",
    "books_premiere_lecture": "2026-10-31T10:32:25+00:00",
-   "books_derniere_lecture": "2026-10-31T11:17:44+00:00",
-   "ecart_enveloppe_secondes": 2742.0
+   "books_derniere_lecture": "2026-10-31T11:24:38+00:00",
+   "ecart_enveloppe_secondes": 3171.0
   },
   "historique_cotes": {
-   "lignes": 19962
+   "lignes": 2941
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 6.9
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 646,
+   "conforme": 645,
    "a_verifier": 11,
-   "non_conforme": 10,
-   "mesures": 86653,
+   "non_conforme": 11,
+   "mesures": 69120,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 270987,
-   "mesures": 216632,
-   "annotees": 10
+   "ancres": 251791,
+   "mesures": 102131,
+   "annotees": 6
   },
   "redecision": {
    "ajoutees": 0
@@ -382,26 +376,20 @@
    "dernier_reglement": "2026-10-31T10:35:57+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T11:23:28+00:00",
+  "fin": "2026-10-31T11:29:44+00:00",
   "cotes": {
-   "francaises": 278370,
-   "pinnacle": 199205,
-   "polymarket": 33454,
+   "francaises": 241472,
+   "pinnacle": 253658,
+   "polymarket": 0,
    "smarkets": 3739,
-   "matchbook": 24346
+   "matchbook": 24425
   },
-  "matchs_francais": 3381,
-  "opportunites": 12,
+  "matchs_francais": 3285,
+  "opportunites": 14,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-10-30T17:28:26+00:00",
-   "mode": "complet",
-   "opportunites": 10,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-30T17:33:01+00:00",
    "mode": "complet",
@@ -1601,6 +1589,12 @@
    "mode": "complet",
    "opportunites": 12,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-31T11:24:36+00:00",
+   "mode": "complet",
+   "opportunites": 14,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-10-31T10:35:57+00:00",
