@@ -1,28 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T11:06:49+00:00",
+  "debut": "2026-10-31T11:11:26+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 5.2,
+    "secondes": 6.4,
     "ok": true
    },
    "olybet": {
-    "secondes": 13.0,
+    "secondes": 13.3,
     "ok": true
    },
-   "polymarket": {
-    "secondes": 26.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "1N2 incomplet ou issues dupliquées : référence rejetée"
-    ]
-   },
    "pinnacle": {
-    "secondes": 30.1,
+    "secondes": 28.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -30,8 +20,18 @@
      "sport 45 matchups : HTTP 403"
     ]
    },
+   "polymarket": {
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
+    "degrade": true,
+    "erreurs": [
+     "liste d'événements tronquée (plafond de pagination)"
+    ],
+    "reprise": 36005
+   },
    "netbet": {
-    "secondes": 37.3,
+    "secondes": 37.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -39,11 +39,11 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 58.0,
+    "secondes": 61.3,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 76.1,
+    "secondes": 76.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -59,7 +59,7 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 55.4,
+    "secondes": 69.4,
     "ok": true
    },
    "smarkets": {
@@ -68,15 +68,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 107.2,
+    "secondes": 183.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.9,
+    "secondes": 5.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.4,
+    "secondes": 1.8,
     "ok": true
    }
   },
@@ -90,28 +90,17 @@
    "ok": true,
    "requetes": 4,
    "erreurs": [],
-   "matchs": 464,
-   "lignes": 24352
-  },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 53915,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 53915,
-   "retard": [
-    "football"
-   ]
+   "matchs": 462,
+   "lignes": 24410
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 855,
-   "age_min_s": 38,
-   "lignes": 202289,
-   "lignes_perimees": 26035,
+   "age_max_s": 865,
+   "age_min_s": 63,
+   "lignes": 199425,
+   "lignes_perimees": 2176,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -122,18 +111,33 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
+    "head_200": 40,
+    "choisi_fixe": 13,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 7,
-    "choisi_autre": 9,
+    "choisi_autre": 3,
     "reprise_403": 2,
     "matchups_sans_speciaux": 1,
     "sport_vide": 3
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Polymarket": {
+    "hockey": 372,
+    "football": 29772,
+    "football_americain": 4304,
+    "mma": 100,
+    "basket": 1190,
+    "esport": 12,
+    "rugby": 49,
+    "cricket": 16,
+    "autre": 22,
+    "handball": 26,
+    "volley": 18,
+    "tennis_de_table": 112,
+    "tennis": 12
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -165,76 +169,52 @@
   "betclic_proches": {
    "proches": 31,
    "relances": 0,
-   "proches_non_lus": 0,
+   "proches_non_lus": 31,
    "proches_vides": 0
   },
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Corvinul Hunedoara – Argesul Pitesti",
+     "match": "Apollon Limassol – Pafos FC",
      "source": "Pinnacle",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.29,
-     "ecart_relatif": 0.0611,
-     "aberrant": false
-    },
-    {
-     "match": "Corvinul Hunedoara – Argesul Pitesti",
-     "source": "PMU",
-     "cote_olybet": 2.15,
-     "cote_reference": 1.94,
-     "ecart_relatif": 0.1082,
-     "aberrant": false
-    },
-    {
-     "match": "Petrolul Ploiesti – CFR Cluj",
-     "source": "Pinnacle",
-     "cote_olybet": 2.24,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0588,
-     "aberrant": false
-    },
-    {
-     "match": "Petrolul Ploiesti – CFR Cluj",
-     "source": "PMU",
-     "cote_olybet": 2.24,
-     "cote_reference": 2.2,
-     "ecart_relatif": 0.0182,
-     "aberrant": false
-    },
-    {
-     "match": "Universitatea Craiova – Botosani",
-     "source": "Pinnacle",
-     "cote_olybet": 1.29,
-     "cote_reference": 1.321,
-     "ecart_relatif": 0.0238,
-     "aberrant": false
-    },
-    {
-     "match": "Universitatea Craiova – Botosani",
-     "source": "PMU",
-     "cote_olybet": 1.29,
-     "cote_reference": 1.23,
-     "ecart_relatif": 0.0488,
-     "aberrant": false
-    },
-    {
-     "match": "Otelul Galati – ACS Sepsi OSK",
-     "source": "Pinnacle",
-     "cote_olybet": 1.96,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0297,
-     "aberrant": false
-    },
-    {
-     "match": "Otelul Galati – ACS Sepsi OSK",
-     "source": "PMU",
-     "cote_olybet": 1.96,
-     "cote_reference": 1.88,
+     "cote_olybet": 2.47,
+     "cote_reference": 2.58,
      "ecart_relatif": 0.0426,
+     "aberrant": false
+    },
+    {
+     "match": "Apollon Limassol – Pafos FC",
+     "source": "PMU",
+     "cote_olybet": 2.47,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.1076,
+     "aberrant": false
+    },
+    {
+     "match": "Omonia Aradippou – APOEL Nicosie",
+     "source": "Pinnacle",
+     "cote_olybet": 6.0,
+     "cote_reference": 6.38,
+     "ecart_relatif": 0.0596,
+     "aberrant": false
+    },
+    {
+     "match": "Aris Limassol – Anorthosis",
+     "source": "Pinnacle",
+     "cote_olybet": 1.6,
+     "cote_reference": 1.649,
+     "ecart_relatif": 0.03,
+     "aberrant": false
+    },
+    {
+     "match": "Omonia Nicosie – AEL Limassol",
+     "source": "Pinnacle",
+     "cote_olybet": 1.23,
+     "cote_reference": 1.261,
+     "ecart_relatif": 0.0247,
      "aberrant": false
     }
    ],
@@ -297,8 +277,8 @@
      "match": "Slovacko – Teplice",
      "source": "Pinnacle",
      "cote_netbet": 2.42,
-     "cote_reference": 2.67,
-     "ecart_relatif": 0.0936,
+     "cote_reference": 2.82,
+     "ecart_relatif": 0.1418,
      "aberrant": false
     },
     {
@@ -329,32 +309,32 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T10:37:49+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T11:07:15+00:00",
+   "pinnacle_premiere_lecture": "2026-10-31T11:11:38+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T11:11:50+00:00",
    "books_premiere_lecture": "2026-10-31T10:26:43+00:00",
-   "books_derniere_lecture": "2026-10-31T11:06:50+00:00",
-   "ecart_enveloppe_secondes": 2432.0
+   "books_derniere_lecture": "2026-10-31T11:11:27+00:00",
+   "ecart_enveloppe_secondes": 2707.0
   },
   "historique_cotes": {
-   "lignes": 9185
+   "lignes": 5108
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.5
+   "age_min": 14.1
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 646,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 77470,
+   "mesures": 81893,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 255260,
-   "mesures": 202167,
+   "ancres": 276671,
+   "mesures": 227628,
    "annotees": 8
   },
   "redecision": {
@@ -371,26 +351,20 @@
    "dernier_reglement": "2026-10-31T10:35:57+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T11:10:27+00:00",
+  "fin": "2026-10-31T11:16:35+00:00",
   "cotes": {
-   "francaises": 261466,
-   "pinnacle": 256204,
-   "polymarket": 36007,
+   "francaises": 262281,
+   "pinnacle": 199425,
+   "polymarket": 36005,
    "smarkets": 4012,
-   "matchbook": 24352
+   "matchbook": 24410
   },
-  "matchs_francais": 3358,
-  "opportunites": 13,
-  "opportunites_suspectes": 0,
-  "nouveaux_paris": 1
+  "matchs_francais": 3416,
+  "opportunites": 11,
+  "opportunites_suspectes": 1,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T17:17:34+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-10-30T17:23:17+00:00",
    "mode": "complet",
@@ -1590,6 +1564,12 @@
    "mode": "complet",
    "opportunites": 13,
    "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-10-31T11:11:26+00:00",
+   "mode": "complet",
+   "opportunites": 11,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-31T10:35:57+00:00",
