@@ -1,14 +1,14 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T11:30:55+00:00",
+  "debut": "2026-10-31T11:37:49+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 6.6,
+    "secondes": 6.8,
     "ok": true
    },
    "olybet": {
-    "secondes": 15.9,
+    "secondes": 15.8,
     "ok": true
    },
    "polymarket": {
@@ -17,23 +17,20 @@
     "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "1N2 incomplet ou issues dupliquées : référence rejetée"
+     "liste d'événements tronquée (plafond de pagination)"
     ]
    },
    "pinnacle": {
-    "secondes": 35.6,
+    "secondes": 32.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 28 matchups : HTTP 403",
-     "sport 26 matchups : HTTP 403",
-     "sport 17 matchups : HTTP 403"
+     "sport 17 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403"
     ]
    },
    "netbet": {
-    "secondes": 39.2,
+    "secondes": 38.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -41,11 +38,11 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 57.5,
+    "secondes": 68.2,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 76.2,
+    "secondes": 76.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,7 +51,7 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 77.6,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -62,7 +59,7 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 71.2,
+    "secondes": 72.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -70,16 +67,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.5,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 155.4,
+    "secondes": 171.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 4.9,
+    "secondes": 5.0,
     "ok": true
    },
    "cotes_cloture": {
@@ -98,16 +98,27 @@
    "requetes": 4,
    "erreurs": [],
    "matchs": 461,
-   "lignes": 24462
+   "lignes": 24570
+  },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 54047,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 54047,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 856,
-   "age_min_s": 31,
-   "lignes": 200156,
-   "lignes_perimees": 1062,
+   "age_max_s": 877,
+   "age_min_s": 13,
+   "lignes": 200066,
+   "lignes_perimees": 27188,
    "rechauffeur": "indisponible",
    "rechauffeur_detail": {
     "statuts": {},
@@ -115,14 +126,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 43,
+    "head_200": 41,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "choisi_fixe": 9,
-    "reprise_403": 3,
-    "matchups_sans_speciaux": 3,
-    "sport_vide": 4
+    "choisi_autre": 10,
+    "choisi_fixe": 6,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 3
    }
   },
   "reprise": {
@@ -163,36 +174,60 @@
   "betclic_proches": {
    "proches": 35,
    "relances": 0,
-   "proches_non_lus": 35,
+   "proches_non_lus": 0,
    "proches_vides": 0
   },
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 3,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "Birkirkara – Birzebbuga St. Peters FC",
+     "match": "LASK Linz – WSG Tirol",
      "source": "Pinnacle",
-     "cote_olybet": 1.53,
-     "cote_reference": 1.571,
-     "ecart_relatif": 0.0263,
+     "cote_olybet": 1.29,
+     "cote_reference": 1.351,
+     "ecart_relatif": 0.0451,
      "aberrant": false
     },
     {
-     "match": "Sliema Wanderers – Hamrun Spartans",
-     "source": "Pinnacle",
-     "cote_olybet": 2.92,
-     "cote_reference": 3.04,
-     "ecart_relatif": 0.0395,
-     "aberrant": false
-    },
-    {
-     "match": "Sliema Wanderers – Hamrun Spartans",
+     "match": "LASK Linz – WSG Tirol",
      "source": "PMU",
-     "cote_olybet": 2.92,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.0267,
+     "cote_olybet": 1.29,
+     "cote_reference": 1.23,
+     "ecart_relatif": 0.0488,
+     "aberrant": false
+    },
+    {
+     "match": "Wolfsberger AC – Sturm Graz",
+     "source": "Pinnacle",
+     "cote_olybet": 4.3,
+     "cote_reference": 4.63,
+     "ecart_relatif": 0.0713,
+     "aberrant": false
+    },
+    {
+     "match": "Wolfsberger AC – Sturm Graz",
+     "source": "PMU",
+     "cote_olybet": 4.3,
+     "cote_reference": 3.95,
+     "ecart_relatif": 0.0886,
+     "aberrant": false
+    },
+    {
+     "match": "Rheindorf Altach – Ried",
+     "source": "PMU",
+     "cote_olybet": 2.04,
+     "cote_reference": 2.12,
+     "ecart_relatif": 0.0377,
+     "aberrant": false
+    },
+    {
+     "match": "Austria Vienne – Rapid Vienne",
+     "source": "Pinnacle",
+     "cote_olybet": 4.5,
+     "cote_reference": 4.88,
+     "ecart_relatif": 0.0779,
      "aberrant": false
     }
    ],
@@ -204,116 +239,115 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Rayo Vallecano – Celta Vigo",
+     "match": "Yokohama F.Marinos – Kawasaki Frontale",
      "source": "Pinnacle",
-     "cote_netbet": 2.35,
-     "cote_reference": 2.58,
-     "ecart_relatif": 0.0891,
+     "cote_netbet": 2.82,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.0903,
      "aberrant": false
     },
     {
-     "match": "Rayo Vallecano – Celta Vigo",
+     "match": "Yokohama F.Marinos – Kawasaki Frontale",
      "source": "PMU",
-     "cote_netbet": 2.35,
-     "cote_reference": 2.4,
-     "ecart_relatif": 0.0208,
+     "cote_netbet": 2.82,
+     "cote_reference": 2.85,
+     "ecart_relatif": 0.0105,
      "aberrant": false
     },
     {
-     "match": "FC Barcelone – Alaves",
+     "match": "Jef United Chiba – Avispa Fukuoka",
      "source": "Pinnacle",
-     "cote_netbet": 1.07,
-     "cote_reference": 1.109,
-     "ecart_relatif": 0.0353,
+     "cote_netbet": 2.9,
+     "cote_reference": 3.07,
+     "ecart_relatif": 0.0554,
      "aberrant": false
     },
     {
-     "match": "FC Barcelone – Alaves",
+     "match": "Jef United Chiba – Avispa Fukuoka",
      "source": "PMU",
-     "cote_netbet": 1.07,
-     "cote_reference": 1.08,
-     "ecart_relatif": 0.0093,
+     "cote_netbet": 2.9,
+     "cote_reference": 3.05,
+     "ecart_relatif": 0.0492,
      "aberrant": false
     },
     {
-     "match": "Getafe – Séville",
+     "match": "V-Varen Nagasaki – Tokyo Verdy",
      "source": "Pinnacle",
-     "cote_netbet": 3.0,
-     "cote_reference": 3.29,
-     "ecart_relatif": 0.0881,
+     "cote_netbet": 2.27,
+     "cote_reference": 2.51,
+     "ecart_relatif": 0.0956,
      "aberrant": false
     },
     {
-     "match": "Getafe – Séville",
+     "match": "V-Varen Nagasaki – Tokyo Verdy",
      "source": "PMU",
-     "cote_netbet": 3.0,
-     "cote_reference": 2.95,
-     "ecart_relatif": 0.0169,
+     "cote_netbet": 2.27,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0044,
      "aberrant": false
     },
     {
-     "match": "Racing Santander – Real Madrid",
+     "match": "Machida Zelvia – Gamba Osaka",
      "source": "Pinnacle",
-     "cote_netbet": 9.25,
-     "cote_reference": 10.23,
-     "ecart_relatif": 0.0958,
+     "cote_netbet": 1.65,
+     "cote_reference": 1.781,
+     "ecart_relatif": 0.0737,
      "aberrant": false
     },
     {
-     "match": "Racing Santander – Real Madrid",
+     "match": "Machida Zelvia – Gamba Osaka",
      "source": "PMU",
-     "cote_netbet": 9.25,
-     "cote_reference": 9.5,
-     "ecart_relatif": 0.0263,
+     "cote_netbet": 1.65,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0312,
      "aberrant": false
     },
     {
-     "match": "Elche – Valence",
+     "match": "Panevežys – FK Transinvest",
      "source": "Pinnacle",
-     "cote_netbet": 2.22,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0672,
+     "cote_netbet": 4.0,
+     "cote_reference": 4.66,
+     "ecart_relatif": 0.1416,
      "aberrant": false
     },
     {
-     "match": "Elche – Valence",
+     "match": "Panevežys – FK Transinvest",
      "source": "PMU",
-     "cote_netbet": 2.22,
-     "cote_reference": 2.25,
-     "ecart_relatif": 0.0133,
+     "cote_netbet": 4.0,
+     "cote_reference": 3.9,
+     "ecart_relatif": 0.0256,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T11:31:08+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T11:31:26+00:00",
-   "books_premiere_lecture": "2026-10-31T10:32:25+00:00",
-   "books_derniere_lecture": "2026-10-31T11:30:56+00:00",
-   "ecart_enveloppe_secondes": 3541.0
+   "pinnacle_premiere_lecture": "2026-10-31T11:25:16+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T11:38:16+00:00",
+   "books_premiere_lecture": "2026-10-31T11:02:13+00:00",
+   "books_derniere_lecture": "2026-10-31T11:37:50+00:00",
+   "ecart_enveloppe_secondes": 2163.0
   },
   "historique_cotes": {
-   "lignes": 3205
+   "lignes": 14917
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.2
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 645,
    "a_verifier": 11,
    "non_conforme": 11,
-   "mesures": 71631,
+   "mesures": 66293,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 264911,
-   "mesures": 221624,
-   "annotees": 10
+   "ancres": 242808,
+   "mesures": 226069,
+   "annotees": 12
   },
   "redecision": {
    "ajoutees": 0
@@ -326,29 +360,23 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-10-31T10:35:57+00:00"
+   "dernier_reglement": "2026-10-31T11:35:52+00:00"
   },
-  "controle_publie": false,
-  "fin": "2026-10-31T11:35:45+00:00",
+  "controle_publie": true,
+  "fin": "2026-10-31T11:43:12+00:00",
   "cotes": {
-   "francaises": 241160,
-   "pinnacle": 200156,
+   "francaises": 246652,
+   "pinnacle": 254113,
    "polymarket": 0,
-   "smarkets": 3739,
-   "matchbook": 24462
+   "smarkets": 4054,
+   "matchbook": 24570
   },
-  "matchs_francais": 3287,
-  "opportunites": 16,
+  "matchs_francais": 3226,
+  "opportunites": 14,
   "opportunites_suspectes": 0,
-  "nouveaux_paris": 2
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T17:44:34+00:00",
-   "mode": "complet",
-   "opportunites": 9,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-10-30T17:55:06+00:00",
    "mode": "complet",
@@ -1548,6 +1576,12 @@
    "mode": "complet",
    "opportunites": 16,
    "nouveaux_paris": 2
+  },
+  {
+   "debut": "2026-10-31T11:37:49+00:00",
+   "mode": "complet",
+   "opportunites": 14,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-10-31T11:35:52+00:00",
