@@ -1,53 +1,54 @@
 {
  "dernier_cycle": {
-  "debut": "2026-10-31T03:23:22+00:00",
+  "debut": "2026-10-31T03:28:02+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.7,
+    "secondes": 4.9,
     "ok": true
    },
    "olybet": {
-    "secondes": 10.3,
+    "secondes": 12.8,
     "ok": true
    },
    "polymarket": {
-    "secondes": 21.4,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
-     "liste d'événements tronquée (plafond de pagination)",
-     "prix bid/ask invalides",
-     "1N2 incomplet ou issues dupliquées : référence rejetée"
-    ]
+     "liste d'événements tronquée (plafond de pagination)"
+    ],
+    "reprise": 35720
    },
    "pinnacle": {
-    "secondes": 23.6,
+    "secondes": 30.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 45 matchups : HTTP 403"
-    ]
-   },
-   "pmu_direct": {
-    "secondes": 36.7,
-    "ok": true
+     "sport 27 markets/straight : HTTP 403"
+    ],
+    "reprise": 420
    },
    "netbet": {
-    "secondes": 37.2,
+    "secondes": 37.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "unibet_direct": {
-    "secondes": 20.2,
+   "pmu_direct": {
+    "secondes": 47.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 71.9,
-    "ok": true
+    "secondes": 76.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "betclic_direct": {
     "secondes": 77.3,
@@ -57,20 +58,25 @@
      "budget"
     ]
    },
-   "smarkets": {
-    "secondes": 19.0,
+   "unibet_direct": {
+    "secondes": 71.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "smarkets": {
+    "secondes": 0.0,
+    "ok": true,
+    "cache": true
+   },
    "association": {
-    "secondes": 88.3,
+    "secondes": 147.7,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.7,
+    "secondes": 5.2,
     "ok": true
    },
    "cotes_cloture": {
@@ -89,45 +95,55 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 426,
-   "lignes": 21179
-  },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 51575,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 51575,
-   "retard": [
-    "football"
-   ]
+   "lignes": 21345
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 879,
-   "age_min_s": 191,
-   "lignes": 193885,
-   "lignes_perimees": 6138,
-   "rechauffeur": "indisponible",
+   "age_max_s": 748,
+   "age_min_s": 46,
+   "lignes": 195547,
+   "lignes_perimees": 1192,
+   "rechauffeur": "ok",
    "rechauffeur_detail": {
-    "statuts": {},
+    "statuts": {
+     "matchups_200": 22,
+     "markets_200": 22
+    },
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 41,
-    "head_403": 2,
+    "head_200": 14,
+    "choisi_autre": 5,
+    "choisi_fixe": 2,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "choisi_fixe": 9,
     "reprise_403": 1,
-    "sport_vide": 4
+    "sport_vide": 6
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Pinnacle": {
+    "rugby": 420
+   },
+   "Polymarket": {
+    "hockey": 364,
+    "football": 29762,
+    "mma": 100,
+    "basket": 1042,
+    "esport": 40,
+    "football_americain": 3710,
+    "rugby": 46,
+    "cricket": 26,
+    "autre": 28,
+    "handball": 16,
+    "volley": 22,
+    "tennis_de_table": 486,
+    "tennis": 78
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -158,44 +174,92 @@
   "betclic_proches": {
    "proches": 16,
    "relances": 0,
-   "proches_non_lus": 0,
+   "proches_non_lus": 16,
    "proches_vides": 0
   },
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "FC Dynamo Makhachkala – Rostov",
+     "match": "Perth Glory – Adelaide United",
      "source": "Pinnacle",
-     "cote_olybet": 3.18,
-     "cote_reference": 3.41,
-     "ecart_relatif": 0.0674,
+     "cote_olybet": 2.36,
+     "cote_reference": 2.56,
+     "ecart_relatif": 0.0781,
      "aberrant": false
     },
     {
-     "match": "FC Baltika Kaliningrad – FK Akron",
-     "source": "Pinnacle",
-     "cote_olybet": 1.66,
-     "cote_reference": 1.725,
-     "ecart_relatif": 0.0375,
+     "match": "Perth Glory – Adelaide United",
+     "source": "PMU",
+     "cote_olybet": 2.36,
+     "cote_reference": 2.6,
+     "ecart_relatif": 0.0923,
      "aberrant": false
     },
     {
-     "match": "Rubin Kazan – Fakel Voronezh",
+     "match": "Melbourne Victory – Central Coast Mariners",
      "source": "Pinnacle",
-     "cote_olybet": 1.91,
-     "cote_reference": 2.03,
-     "ecart_relatif": 0.0591,
+     "cote_olybet": 1.36,
+     "cote_reference": 1.431,
+     "ecart_relatif": 0.0496,
      "aberrant": false
     },
     {
-     "match": "Rodina – Krasnodar",
+     "match": "Melbourne Victory – Central Coast Mariners",
+     "source": "PMU",
+     "cote_olybet": 1.36,
+     "cote_reference": 1.36,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Macarthur FC – Western Sydney Wanderers",
      "source": "Pinnacle",
-     "cote_olybet": 4.5,
-     "cote_reference": 4.99,
-     "ecart_relatif": 0.0982,
+     "cote_olybet": 2.51,
+     "cote_reference": 2.82,
+     "ecart_relatif": 0.1099,
+     "aberrant": false
+    },
+    {
+     "match": "Macarthur FC – Western Sydney Wanderers",
+     "source": "PMU",
+     "cote_olybet": 2.51,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.0245,
+     "aberrant": false
+    },
+    {
+     "match": "Melbourne City – Sydney",
+     "source": "Pinnacle",
+     "cote_olybet": 1.88,
+     "cote_reference": 2.05,
+     "ecart_relatif": 0.0829,
+     "aberrant": false
+    },
+    {
+     "match": "Melbourne City – Sydney",
+     "source": "PMU",
+     "cote_olybet": 1.88,
+     "cote_reference": 1.95,
+     "ecart_relatif": 0.0359,
+     "aberrant": false
+    },
+    {
+     "match": "Newcastle   Jets – Wellington Phoenix",
+     "source": "Pinnacle",
+     "cote_olybet": 2.36,
+     "cote_reference": 2.58,
+     "ecart_relatif": 0.0853,
+     "aberrant": false
+    },
+    {
+     "match": "Newcastle   Jets – Wellington Phoenix",
+     "source": "PMU",
+     "cote_olybet": 2.36,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0727,
      "aberrant": false
     }
    ],
@@ -242,32 +306,33 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-10-31T03:07:57+00:00",
-   "pinnacle_derniere_lecture": "2026-10-31T03:23:38+00:00",
+   "pinnacle_premiere_lecture": "2026-10-31T03:23:36+00:00",
+   "pinnacle_derniere_lecture": "2026-10-31T03:28:25+00:00",
    "books_premiere_lecture": "2026-10-31T02:00:01+00:00",
-   "books_derniere_lecture": "2026-10-31T03:23:23+00:00",
-   "ecart_enveloppe_secondes": 5017.0
+   "books_derniere_lecture": "2026-10-31T03:28:03+00:00",
+   "ecart_enveloppe_secondes": 5304.0
   },
   "historique_cotes": {
-   "lignes": 2227
+   "lignes": 849
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
-   "conforme": 642,
+   "conforme": 643,
    "a_verifier": 11,
-   "non_conforme": 11,
-   "mesures": 70917,
+   "non_conforme": 10,
+   "mesures": 77003,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 214256,
-   "mesures": 190641,
-   "annotees": 13
+   "ancres": 219314,
+   "mesures": 187732,
+   "annotees": 12
   },
   "redecision": {
    "ajoutees": 0
@@ -283,26 +348,20 @@
    "dernier_reglement": "2026-10-31T02:50:54+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-10-31T03:26:38+00:00",
+  "fin": "2026-10-31T03:32:35+00:00",
   "cotes": {
-   "francaises": 224732,
-   "pinnacle": 245460,
-   "polymarket": 35722,
+   "francaises": 224772,
+   "pinnacle": 195967,
+   "polymarket": 35720,
    "smarkets": 3948,
-   "matchbook": 21179
+   "matchbook": 21345
   },
-  "matchs_francais": 2800,
+  "matchs_francais": 2748,
   "opportunites": 13,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-30T10:41:15+00:00",
-   "mode": "complet",
-   "opportunites": 13,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-10-30T10:45:56+00:00",
    "mode": "complet",
@@ -1499,6 +1558,12 @@
   },
   {
    "debut": "2026-10-31T03:23:22+00:00",
+   "mode": "complet",
+   "opportunites": 13,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-10-31T03:28:02+00:00",
    "mode": "complet",
    "opportunites": 13,
    "nouveaux_paris": 0
