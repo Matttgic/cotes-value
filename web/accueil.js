@@ -8,6 +8,16 @@ function ligneAccueilPari(p) {
 <b class="acc-cote">${cote(p.cote)}</b><small class="acc-ref">${e(ref)}${cote(p.cote_juste)}</small><i class="acc-ecart">${pct(p.ecart)}</i>${boutonBookmaker(p,true)}</div></article>`;
 }
 function rangTexte(n) {return `${n}<sup>${n===1 ? 'er' : 'e'}</sup>`;}
+// Bilan des paris uniques réglés dans une mise donnée, quel que soit le mode affiché : même règle qu'appliquerMise
+// (mise Kelly quand le pari en a une, sinon la mise fixe d'origine).
+function bilanEnMise(ps, kelly) {
+  let mises = 0, net = 0;
+  for (const p of ps) {
+    if (kelly && p.mise_kelly && p.mise_fixe) { mises += p.mise_kelly; net += p.gain_fixe * p.mise_kelly / p.mise_fixe; }
+    else { mises += p.mise_fixe ?? p.mise ?? 0; net += p.gain_fixe ?? p.gain ?? 0; }
+  }
+  return {net: Math.round(net * 100) / 100, roi: mises ? net / mises : null};
+}
 function rendreAccueil() {
   const cible=document.getElementById('acc-kpis');if(!cible) return;
   const heure=Number(new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',hourCycle:'h23'}).format(new Date()));
@@ -15,9 +25,12 @@ function rendreAccueil() {
   const mise=miseMode==='kelly' ? 'Kelly ¼' : '10 € fixes';
   const reglees=fiches.filter(p=>p.unique_bilan && p.gain!=null),s=statsBU(reglees);
   const enCours=fiches.filter(p=>p.statut==='en_cours' && !p.a_regler);
+  // L'autre mise reste visible : en 10 € fixes, les grosses cotes perdantes pèsent autant que les petites ;
+  // en Kelly ¼, la mise suit l'écart et la cote. Les deux lectures se complètent.
+  const autreKelly=miseMode!=='kelly', autre=bilanEnMise(reglees,autreKelly), nomAutre=autreKelly ? 'Kelly ¼' : '10 € fixes';
   cible.innerHTML=[
-    [`Gain net · paris uniques · ${mise}`,eurC(s.net),signe(s.net),`${s.n} réglés · mise ${Math.round(s.mises).toLocaleString('fr-FR')} €`],
-    ['ROI',pct(s.roi),signe(s.net),'Gain net / mises réglées'],
+    [`Gain net · paris uniques · ${mise}`,eurC(s.net),signe(s.net),`${s.n} réglés · en ${nomAutre} : ${eurC(autre.net)}`],
+    ['ROI',pct(s.roi),signe(s.net),`Gain net / mises réglées · en ${nomAutre} : ${pct(autre.roi)}`],
     ['Réussite',pctEntier(s.reussite),'','Gagnés et demi-gagnés / réglés'],
     ['En cours',String(enCours.length),'','Paris pas encore réglés']
   ].map(([t,v,c,d])=>`<div class="acc-kpi"><p>${e(t)}</p><strong class="${c}">${e(v)}</strong><span>${e(d)}</span></div>`).join('');

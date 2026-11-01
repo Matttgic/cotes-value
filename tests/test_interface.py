@@ -28,7 +28,7 @@ def test_document_autonome_navigation_unique_et_apercu(tmp_path):
     p.feed(html)
     assert not [k for k, n in Counter(p.ids).items() if n > 1]
     # Cinq onglets (Accueil en tête) : « À jouer », Stratégies, Analyses, Segments et À régler vivent sous Paris, Bilan et Santé.
-    assert p.onglets == ["accueil", "paris", "bilan", "notifications", "controle"]
+    assert p.onglets == ["accueil", "paris", "bilan", "notifications"]
     assert {"strategies-mobile", "fraicheur", "liste-paris"} <= set(p.ids)
     assert set(p.labels) <= set(p.ids)
     # Les fragments servent au routeur, jamais à une ancre située sous les filtres.
