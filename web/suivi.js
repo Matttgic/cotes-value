@@ -19,6 +19,21 @@ function suiviSynchroniser(etat, cochees, maintenant, depuis) {
   }
   return out;
 }
+// « Repartir de zéro » : seules les stratégies encore cochées restent, suivies à partir de `maintenant`.
+function suiviRepartir(etat, maintenant) {
+  const out = {};
+  for (const [k, l] of Object.entries(etat || {})) {
+    const d = l[l.length - 1];
+    if (d && d[1] == null) out[k] = [[maintenant, null]];
+  }
+  return out;
+}
+// « Retirer » : efface une stratégie arrêtée et son historique (une stratégie encore cochée reste).
+function suiviRetirer(etat, cle) {
+  const out = {...(etat || {})}, l = out[cle], d = l && l[l.length - 1];
+  if (d && d[1] != null) delete out[cle];
+  return out;
+}
 // La prise détectée à `t` compte pour la stratégie si elle l'était alors.
 const suiviCompte = (intervalles, t) => (intervalles || []).some(([a, b]) => t >= a && (b == null || t < b));
 const suiviNombre = x => typeof x === 'number' && Number.isFinite(x) ? x : null;
@@ -167,7 +182,7 @@ function rendreMesStrategies() {
     const l = etat[k], d = l[l.length - 1], actif = d && d[1] == null;
     const debut = new Date(l[0][0]).toLocaleString('fr-FR', {timeZone: 'Europe/Paris', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit'});
     return `<div class="sante-ligne"><div><b>${e(nomStrategie(k))}</b><small>Suivie depuis le ${debut}${actif ? '' : ' · arrêtée le ' + new Date(d[1]).toLocaleString('fr-FR', {timeZone: 'Europe/Paris', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit'})}</small></div>
-      <span class="sante-mot sante-mot-${actif ? 'ok' : 'alerte'}">${actif ? '✓ Active' : 'Arrêtée'}</span></div>`;
+      <span class="sante-mot sante-mot-${actif ? 'ok' : 'alerte'}">${actif ? '✓ Active' : 'Arrêtée'}</span>${actif ? '' : ` <button type="button" class="btn secondaire" data-retirer="${e(k)}">Retirer</button>`}</div>`;
   }).join('');
   const puce = (k, nom, n) => `<button type="button" data-suivi="${e(k)}" class="${suiviFiltre === k ? 'actif' : ''}">${e(nom)} <small>${n}</small></button>`;
   sortie.innerHTML = `<div class="puces" aria-label="Filtrer par stratégie">${puce('', 'Toutes', toutes.length)}${cles.map(k => puce(k, nomStrategie(k), nb[k])).join('')}</div>`
@@ -175,10 +190,21 @@ function rendreMesStrategies() {
     + `<div id="mes-liste">${vues.slice(0, suiviLimite).map(p => carteSuivi(p, suiviFiltre ? 1 : p.suivies.length)).join('') || '<p class="vide">Aucun pari sur cette période.</p>'}</div>`
     + (vues.length > suiviLimite ? '<p><button type="button" class="btn secondaire" id="mes-plus">Voir plus</button></p>' : '')
     + `<details class="mode-emploi"><summary>Stratégies suivies</summary><div class="carte">${lignesSuivi}</div>
-       <p class="aide">Seuls comptent les paris détectés pendant que la stratégie était cochée. Une décoche enregistrée arrête l’ajout de ses nouveaux paris, l’historique déjà suivi reste. Ce suivi est enregistré sur cet appareil.</p></details>`;
+       <p class="aide">Seuls comptent les paris détectés pendant que la stratégie était cochée. Une décoche enregistrée arrête l’ajout de ses nouveaux paris, l’historique déjà suivi reste : « Retirer » l’efface. Ce suivi est enregistré sur cet appareil.</p>
+       <p><button type="button" class="btn secondaire" id="mes-zero">Repartir de zéro</button></p>
+       <p class="aide">Les stratégies cochées recommencent leurs statistiques maintenant ; les stratégies arrêtées sont effacées. Les paris eux-mêmes ne changent pas.</p></details>`;
   sortie.querySelectorAll('[data-suivi]').forEach(b => b.onclick = () => { suiviFiltre = b.dataset.suivi; suiviLimite = 50; rendreMesStrategies(); });
   const plus = document.getElementById('mes-plus');
   if (plus) plus.onclick = () => { suiviLimite += 50; rendreMesStrategies(); };
+  sortie.querySelectorAll('[data-retirer]').forEach(b => b.onclick = () => {
+    if (!confirm(`Retirer « ${nomStrategie(b.dataset.retirer)} » et son historique de Mes stratégies ?`)) return;
+    ecrire(CLE_SUIVI, JSON.stringify(suiviRetirer(suiviLire(), b.dataset.retirer))); rendreMesStrategies();
+  });
+  const zero = document.getElementById('mes-zero');
+  if (zero) zero.onclick = () => {
+    if (!confirm('Repartir de zéro ? Les statistiques des stratégies cochées recommencent maintenant ; les stratégies arrêtées sont effacées.')) return;
+    ecrire(CLE_SUIVI, JSON.stringify(suiviRepartir(suiviLire(), Date.now()))); suiviFiltre = ''; rendreMesStrategies();
+  };
 }
 // Même ligne colorée que l'onglet Paris : vert gagné, rouge perdu ; les stratégies qui l'ont pris sont listées dessous.
 const LIGNE_SUIVI = {gagne: ['gagne', '✓ Gagné'], demi_gagne: ['gagne', '✓ ½ gagné'], perdu: ['perdu', '✗ Perdu'],
