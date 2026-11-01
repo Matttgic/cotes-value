@@ -98,3 +98,18 @@ test('la mise moyenne n\'apparaît qu\'en mise Kelly',()=>{
   r.stats.regles=0;assert.ok(!carte().includes('Mise moyenne'));
   contexte.miseMode='fixe';
 });
+test('valeur : rang moyen ROI + CLV, seulement avec assez de paris et de CLV',()=>{
+  const r=(id,roi,clv,regles=40,clv_n=30)=>({id,stats:{roi,clv,regles,clv_n}});
+  const rows=[r('a',10,1),r('b',5,5),r('c',2,3),r('d',50,9,10),r('e',20,null),r('f',8,2,40,5)];
+  const classees=fn('attribuerValeur')(rows);
+  assert.deepEqual(classees.map(x=>x.id).sort(),['a','b','c']);         // d : 10 réglés, e : sans CLV, f : 5 CLV
+  const [a,b,c]=rows;
+  assert.equal(a.rang_roi,1);assert.equal(a.rang_clv,3);assert.equal(a.valeur,2);
+  assert.equal(b.rang_roi,2);assert.equal(b.rang_clv,1);assert.equal(b.valeur,1.5);
+  assert.equal(c.valeur,2.5);
+  assert.equal(rows[3].valeur,null);assert.equal(rows[4].valeur,null);
+  assert.deepEqual(fn('classerParValeur')(rows).map(x=>x.id),['b','a','c']);
+  // ex aequo : même rang
+  const eg=[r('x',5,2),r('y',5,1)];fn('attribuerValeur')(eg);
+  assert.equal(eg[0].rang_roi,1);assert.equal(eg[1].rang_roi,1);
+});
