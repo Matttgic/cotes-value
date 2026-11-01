@@ -11,13 +11,13 @@ VIDE = ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0})
 
 
 def montage(monkeypatch, sports_pin=("football",)):
-    """Pinnacle bloque jusqu'à ce que Winamax ait démarré (ou 3 s) : on voit qui attend qui."""
+    """Pinnacle bloque jusqu'à ce que Winamax ait démarré (ou 1 s) : on voit qui attend qui."""
     _sans_reseau(monkeypatch)
     winamax_parti, pinnacle_fini = threading.Event(), threading.Event()
     vu = {}
 
     def pinnacle():
-        vu["pinnacle_a_vu_winamax"] = winamax_parti.wait(3)
+        vu["pinnacle_a_vu_winamax"] = winamax_parti.wait(1)
         pinnacle_fini.set()
         return [ligne(s, "pinnacle") for s in sports_pin]
 

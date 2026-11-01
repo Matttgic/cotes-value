@@ -69,6 +69,8 @@ def test_un_passage_regle_ce_qui_est_prouve_et_compte_les_selections_en_attente(
     for key in ['API_SPORTS_KEY','PROPLINE_API_KEY',*[f'THE_ODDS_API_KEY_{i}' for i in range(1,5)]]:
         monkeypatch.delenv(key,raising=False)
     monkeypatch.setattr(cycle.resultats_mod,'a_lire',lambda *a:{})
+    monkeypatch.setattr(cycle.livescore,'lire',lambda *a,**k:[])
+    monkeypatch.setattr(cycle.flashscore,'lire',lambda *a,**k:[])
     monkeypatch.setattr(cycle.resultats_nhl,'collecter',lambda *a:([],[]))
     monkeypatch.setattr(cycle.resultats_mod,'consensus',lambda *a:None)
     monkeypatch.setattr(cycle.resultats_mod,'reporte',lambda *a:None)
