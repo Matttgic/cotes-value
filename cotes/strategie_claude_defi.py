@@ -1,4 +1,4 @@
-"""Stratégies Claude Défi 1, 2 et 3 : règles de Claude (recherche du 1er novembre 2026), suivies dès DEBUT.
+"""Stratégies Claude Défi 1 à 5 et Claude Fusion : règles de Claude (recherches du 1er novembre 2026), suivies dès DEBUT.
 
 Famille distincte des Grok, des Défi et des Gemini Défi : ce module a ses propres règles, son propre
 dédoublonnage et ses propres clés (« claude_defi_1 », « _2 », « _3 »). Il ne modifie aucune stratégie
@@ -54,12 +54,43 @@ CLAUDE_DEFI_3 = _regle(
     delai_min_minutes=120, delai_max_minutes=720,
     regles="Betclic et PMU seulement · cote 1,30–10 · écart 5–30 % · 120 < délai ≤ 720 min · " + _COMMUN)
 
-CLAUDE_DEFIS = (CLAUDE_DEFI_1, CLAUDE_DEFI_2, CLAUDE_DEFI_3)
+# Deuxième salve (1er novembre 2026, soir) : règles choisies sur tout l'historique (5/10 → 31/10) découpé en trois
+# périodes, retenues seulement si la CLV est positive dans chacune. Le Consensus (Pinnacle + Polymarket) est accepté.
+SHARP_ET_CONSENSUS = ("Pinnacle", "Betfair", "Polymarket", "Consensus")
+_COMMUN_2 = _COMMUN.replace("Pinnacle, Betfair ou Polymarket", "Pinnacle, Betfair, Polymarket ou Consensus")
+
+CLAUDE_DEFI_4 = _regle(
+    cle="claude_defi_4", nom="Claude Défi 4 · Gros écart hors Winamax", court="ClDéfi4 hors Winamax",
+    references=SHARP_ET_CONSENSUS, bookmakers=("Betclic", "PMU", "Unibet", "OlyBet", "NetBet"),
+    cote_min=1.30, cote_max=30.0, ecart_min_pct=8.0, ecart_max_pct=30.0, delai_max_minutes=720,
+    regles="tous books sauf Winamax · tous sports et marchés · cote 1,30–30 · écart 8–30 % · "
+           "0 < délai ≤ 720 min · " + _COMMUN_2)
+
+CLAUDE_DEFI_5 = _regle(
+    cle="claude_defi_5", nom="Claude Défi 5 · Books lents, cotes courtes", court="ClDéfi5 cotes courtes",
+    references=SHARP_ET_CONSENSUS, bookmakers=("Betclic", "PMU"),
+    cote_min=1.30, cote_max=3.0, ecart_min_pct=6.0, ecart_max_pct=30.0, delai_max_minutes=1440,
+    regles="Betclic et PMU seulement · cote 1,30–3 · écart 6–30 % · 0 < délai ≤ 1 440 min · " + _COMMUN_2)
+
+# Fusion : une détection passe si elle passe Défi 4 OU Défi 5 ; toujours une seule mise par cote française.
+CLAUDE_FUSION = _regle(
+    cle="claude_fusion", nom="Claude Fusion · Défi 4 + Défi 5", court="ClFusion 4+5",
+    references=SHARP_ET_CONSENSUS, union=("claude_defi_4", "claude_defi_5"),
+    cote_min=None, cote_max=None, ecart_min_pct=None, ecart_max_pct=None, delai_max_minutes=None,
+    regles="passe Claude Défi 4 ou Claude Défi 5 · une seule mise par cote française, la première détection "
+           "qui passe l'une des deux règles · mise fictive 10 € · règles de Claude")
+
+CLAUDE_DEFIS = (CLAUDE_DEFI_1, CLAUDE_DEFI_2, CLAUDE_DEFI_3, CLAUDE_DEFI_4, CLAUDE_DEFI_5, CLAUDE_FUSION)
+_PAR_CLE = {c["cle"]: c for c in CLAUDE_DEFIS}
 
 
 def motif_refus_claude_defi(p: dict, c: dict) -> str | None:
     """Raison du refus, ou None si la détection passe la règle (avant dédoublonnage). Bornes incluses,
-    sauf le délai : 0 < délai (Claude Défi 3 : 120 < délai), délai ≤ borne haute."""
+    sauf le délai : 0 < délai (Claude Défi 3 : 120 < délai), délai ≤ borne haute. Une règle d'union (Fusion)
+    passe dès qu'une de ses règles passe."""
+    if c.get("union"):
+        motifs = [motif_refus_claude_defi(p, _PAR_CLE[k]) for k in c["union"]]
+        return None if None in motifs else motifs[0]
     if p.get("reference") not in c["references"]:
         return "référence hors périmètre"
     preuve = preuve_de(p)
@@ -123,5 +154,9 @@ def _selecteur(c: dict):
 paris_claude_defi_1 = _selecteur(CLAUDE_DEFI_1)
 paris_claude_defi_2 = _selecteur(CLAUDE_DEFI_2)
 paris_claude_defi_3 = _selecteur(CLAUDE_DEFI_3)
+paris_claude_defi_4 = _selecteur(CLAUDE_DEFI_4)
+paris_claude_defi_5 = _selecteur(CLAUDE_DEFI_5)
+paris_claude_fusion = _selecteur(CLAUDE_FUSION)
 SELECTEURS = {c["cle"]: f for c, f in zip(CLAUDE_DEFIS, (
-    paris_claude_defi_1, paris_claude_defi_2, paris_claude_defi_3))}
+    paris_claude_defi_1, paris_claude_defi_2, paris_claude_defi_3,
+    paris_claude_defi_4, paris_claude_defi_5, paris_claude_fusion))}

@@ -1,4 +1,4 @@
-"""Claude Défi 1, 2, 3 : chaque filtre, le dédoublonnage, le lancement sans rejeu, le gel.
+"""Claude Défi 1 à 5 et Claude Fusion : chaque filtre, le dédoublonnage, le lancement sans rejeu, le gel.
 
 Le dernier test rejoue les trois règles sur l'export de recherche (tests/fixtures/gemini_defi_rejeu.csv)
 et retrouve les N annoncés (construction, validation).
@@ -18,6 +18,7 @@ from tests.test_strategie_jules_v2 import pari
 
 T0 = datetime(2026, 11, 2, 2, 0, tzinfo=timezone.utc)
 REGLES = {c["cle"]: c for c in CLAUDE_DEFIS}
+SIMPLES = [k for k, c in REGLES.items() if not c.get("union")]          # règles à bornes (hors Fusion)
 # Un pari type par stratégie, au milieu de ses intervalles (horloge : délai 360 min, référence lue 60 s avant).
 TYPES = {
     "claude_defi_1": base(sport="hockey", cote=2.5, ecart=0.10, **horloge(detecte=T0)),
@@ -25,6 +26,9 @@ TYPES = {
                           **horloge(detecte=T0)),
     "claude_defi_3": base(bookmaker="Betclic", match_id="betclic|m", cote=2.5, ecart=0.08,
                           **horloge(detecte=T0)),
+    "claude_defi_4": base(bookmaker="Unibet", match_id="unibet|m", cote=2.5, ecart=0.10, **horloge(detecte=T0)),
+    "claude_defi_5": base(bookmaker="PMU", match_id="pmu|m", cote=2.0, ecart=0.07, **horloge(detecte=T0)),
+    "claude_fusion": base(bookmaker="Betclic", match_id="betclic|f", cote=2.0, ecart=0.10, **horloge(detecte=T0)),
 }
 
 
@@ -40,7 +44,7 @@ def test_pari_type_retenu_apres_lancement_mise_10(cle):
     assert REGLES[cle]["mise"] == 10.0 and REGLES[cle]["debut"] == DEBUT == "2026-11-02T01:00:00+00:00"
 
 
-@pytest.mark.parametrize("cle", list(REGLES))
+@pytest.mark.parametrize("cle", SIMPLES)
 def test_bornes_de_cote_et_d_ecart_incluses(cle):
     c = REGLES[cle]
     assert refus(cle, cote=c["cote_min"]) is None and refus(cle, cote=c["cote_max"]) is None
@@ -51,11 +55,12 @@ def test_bornes_de_cote_et_d_ecart_incluses(cle):
     assert refus(cle, ecart=c["ecart_max_pct"] / 100 + 0.0001) == "écart hors intervalle"
 
 
-@pytest.mark.parametrize("cle", list(REGLES))
+@pytest.mark.parametrize("cle", SIMPLES)
 def test_delai_et_age_de_la_reference(cle):
     c = REGLES[cle]
-    assert refus(cle, **horloge(delai_min=720, detecte=T0)) is None
-    assert refus(cle, **horloge(delai_min=720.5, detecte=T0)) == "détection trop tôt"
+    haut = c["delai_max_minutes"]
+    assert refus(cle, **horloge(delai_min=haut, detecte=T0)) is None
+    assert refus(cle, **horloge(delai_min=haut + 0.5, detecte=T0)) == "détection trop tôt"
     assert refus(cle, **horloge(delai_min=0, detecte=T0)) == "match déjà commencé"
     assert refus(cle, **horloge(age_s=180, detecte=T0)) is None
     assert refus(cle, **horloge(age_s=181, detecte=T0)) == "référence trop ancienne"
@@ -68,11 +73,14 @@ def test_delai_et_age_de_la_reference(cle):
         assert refus(cle, **horloge(delai_min=1, detecte=T0)) is None
 
 
-@pytest.mark.parametrize("cle", list(REGLES))
+@pytest.mark.parametrize("cle", SIMPLES)
 def test_tronc_commun_references_et_equipes_inversees(cle):
     for ref in ("Pinnacle", "Betfair", "Polymarket"):
         assert refus(cle, reference=ref) is None
-    for ref in ("Smarkets", "Matchbook", "Kalshi", "Consensus"):
+    # Consensus : accepté par Défi 4 et 5 seulement.
+    attendu = None if cle in ("claude_defi_4", "claude_defi_5") else "référence hors périmètre"
+    assert refus(cle, reference="Consensus") == attendu
+    for ref in ("Smarkets", "Matchbook", "Kalshi"):
         assert refus(cle, reference=ref) == "référence hors périmètre"
     assert refus(cle, preuve_prise=preuve(inversees=True)) == "équipes inversées"
     assert refus(cle, preuve_prise=preuve(inversees=None)) is None
@@ -89,6 +97,31 @@ def test_perimetres_propres():
     assert refus("claude_defi_3", bookmaker="PMU") is None
     for book in ("Winamax", "Unibet", "OlyBet", "NetBet"):
         assert refus("claude_defi_3", bookmaker=book) == "bookmaker hors périmètre"
+
+
+def test_defi_4_et_5_perimetres():
+    assert refus("claude_defi_4", bookmaker="Winamax") == "bookmaker hors périmètre"
+    for book in ("Betclic", "PMU", "Unibet", "OlyBet", "NetBet"):
+        assert refus("claude_defi_4", bookmaker=book) is None
+    assert refus("claude_defi_4", ecart=0.0799) == "écart hors intervalle"
+    assert refus("claude_defi_4", cote=30.0) is None
+    for book in ("Winamax", "Unibet"):
+        assert refus("claude_defi_5", bookmaker=book) == "bookmaker hors périmètre"
+    assert refus("claude_defi_5", **horloge(delai_min=1440, detecte=T0)) is None
+    assert refus("claude_defi_5", cote=3.01) == "cote hors intervalle"
+
+
+def test_fusion_passe_si_defi_4_ou_defi_5_passe():
+    # Seulement Défi 5 (écart 7 % < 8 %, délai 20 h) ; seulement Défi 4 (Unibet, cote 6) ; aucune (Winamax 7 %).
+    assert refus("claude_fusion", ecart=0.07, **horloge(delai_min=1200, detecte=T0)) is None
+    assert refus("claude_fusion", bookmaker="Unibet", cote=6.0) is None
+    assert refus("claude_fusion", bookmaker="Winamax", ecart=0.07) is not None
+    assert refus("claude_fusion", reference="Smarkets") == "référence hors périmètre"
+    # Une seule mise par cote française, même si les deux règles la retiennent.
+    p = pari("f1", **TYPES["claude_fusion"])
+    q = pari("f2", **{**TYPES["claude_fusion"], "reference": "Consensus",
+                      **horloge(detecte=T0 + timedelta(minutes=5))})
+    assert SELECTEURS["claude_fusion"]([p, q]) == {id(p)}
 
 
 def test_une_mise_par_cote_francaise_premiere_detection_qui_passe():
@@ -128,7 +161,8 @@ def test_gel_au_lancement_et_famille_distincte():
     assert paris_claude_defi_1([p, q]) == {id(p)}
     assert selections_prudentes([p, q])["claude_defi_1"] == {id(p)}
     cles = [c["cle"] for c in CLAUDE_DEFIS]
-    assert cles == ["claude_defi_1", "claude_defi_2", "claude_defi_3"] and list(SELECTEURS) == cles
+    assert cles == ["claude_defi_1", "claude_defi_2", "claude_defi_3", "claude_defi_4", "claude_defi_5",
+                    "claude_fusion"] and list(SELECTEURS) == cles
     assert all(c in VARIANTES for c in CLAUDE_DEFIS)
     assert not {c["cle"] for c in GEMINI_DEFIS} & set(cles)
     assert len({v["cle"] for v in VARIANTES}) == len(VARIANTES)
@@ -137,7 +171,9 @@ def test_gel_au_lancement_et_famille_distincte():
 
 
 # N annoncés dans la réponse du 1er novembre (construction, validation), après les deux règles obligatoires.
-N_REJEU = {"claude_defi_1": (161, 63), "claude_defi_2": (90, 18), "claude_defi_3": (76, 32)}
+N_REJEU = {"claude_defi_1": (161, 63), "claude_defi_2": (90, 18), "claude_defi_3": (76, 32),
+           # deuxième salve : mêmes N que le rejeu sur paris.json pour les périodes P1 et P2
+           "claude_defi_4": (80, 43), "claude_defi_5": (99, 43), "claude_fusion": (143, 65)}
 
 
 def test_rejeu_sur_l_export_retrouve_les_n_annonces():
