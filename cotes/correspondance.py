@@ -92,7 +92,9 @@ def _premiere_explicite(nom: str | None) -> bool:
 
 
 @functools.lru_cache(maxsize=65536)
+@functools.lru_cache(maxsize=262144)
 def ressemblance(a: str | None, b: str | None) -> float:
+    """Pure et symétrique en pratique, mais appelée plusieurs fois par couple de noms (association, derbys) : mise en cache."""
     categorie = lambda n: normaliser(re.sub(r"\b(?:u|under)[ -]?(\d{2})\b", r"u\1", n or "", flags=re.I))
     (ma, fa, ja), (mb, fb, jb) = categorie(a), categorie(b)
     if not ma or not mb:
@@ -197,22 +199,32 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
     # ±3 h couvre le tennis (180 min). Une heure approximative (300 min) garde ±6 h.
     portee = 6 if any(r.get("approx") for r in matchs_ref.values()) else 3
     res = {}
+    derby_ref: dict[str, bool] = {}              # le caractère « derby » d'un match de référence ne dépend que de ses noms
     for mid, f in matchs_fr.items():
         if not f["debut"]:
             continue
         h = int(f["debut"].timestamp() // 3600)
+        derby_fr = ressemblance(f["domicile"], f["exterieur"]) >= 0.75
         meilleur = None
-        for dh in range(-portee, portee + 1):
+        # Tolérance la plus large possible pour ce match (voir plus bas) : deux instants à Δ minutes d'écart tombent dans
+        # des tranches horaires distantes d'au plus ⌈Δ/60⌉. Aller plus loin ne trouverait que des candidats rejetés.
+        dh_max = min(portee, -(-(300 if portee == 6 else 180 if f["sport"] == "tennis" else 90) // 60))
+        for dh in range(-dh_max, dh_max + 1):
             for r in index.get((f["sport"], h + dh), []):
                 ecart = abs((r["debut"] - f["debut"]).total_seconds()) / 60
-                if ecart > 300:
-                    continue
+                if ecart > (300 if r["approx"] else 180 if f["sport"] == "tennis" else 90):
+                    continue                  # au-delà de la plus large tolérance ci-dessous : inutile de comparer les noms
                 # les deux ordres sont toujours essayés : un bookmaker peut inverser domicile et extérieur
                 # (Islanders – Rangers chez NetBet, Rangers – Islanders chez Pinnacle) et deux équipes de la
                 # même ville se ressemblent assez (0,82) pour que l'ordre direct passe à tort
                 paires = [((ressemblance(f["domicile"], r["domicile"]), ressemblance(f["exterieur"], r["exterieur"])), False),
                           ((ressemblance(f["domicile"], r["exterieur"]), ressemblance(f["exterieur"], r["domicile"])), True)]
-                (s1, s2), inverse = max(paires, key=_ordre_derby if _derby(f, r) else _ordre)
+                derby = derby_fr
+                if not derby:
+                    derby = derby_ref.get(r["match_id"])
+                    if derby is None:
+                        derby = derby_ref[r["match_id"]] = ressemblance(r["domicile"], r["exterieur"]) >= 0.75
+                (s1, s2), inverse = max(paires, key=_ordre_derby if derby else _ordre)
                 score = min(s1, s2)
                 # tolérance sur l'heure : 20 min ; plus large si les deux noms sont très proches
                 # (heures approximatives : Kalshi, ordre de passage au tennis, erreurs d'horaire)
