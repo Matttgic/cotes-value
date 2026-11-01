@@ -251,6 +251,9 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 # limite de mise et marge de Pinnacle sur la même sélection
                 "trj_bookmaker": trj.get((l["source"], l["match_id"], l["marche"], l["periode"], l.get("ligne"))),
                 "limite_pinnacle": pin.get("mise_max"), "marge_pinnacle": pin.get("marge_pinnacle"),
+                # âge réel du prix Pinnacle (en-tête Age du cache, ou âge recalculé d'une ligne reprise ou du
+                # secours), distinct de lu_reference qui n'est que l'heure de notre lecture
+                "age_prix_pinnacle_s": pin.get("age_cache_s"),
                 "detecte": l["collecte"], "bookmaker": l["source"], "sport": l["sport"], "ligue": l.get("ligue"),
                 "collecte_debut": l.get("collecte_debut"), "collecte_recue": l.get("collecte_recue"),
                 "match_id": l["match_id"], "domicile": l["domicile"], "exterieur": l["exterieur"],

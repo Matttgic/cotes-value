@@ -96,6 +96,8 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
              "trj_bookmaker": o.get("trj_bookmaker"), "limite_pinnacle": o.get("limite_pinnacle"),
              "marge_pinnacle": o.get("marge_pinnacle"), "mouvement_pinnacle": o.get("mouvement_pinnacle"),
              "mouvement_s": o.get("mouvement_s"),
+             # âge réel du prix Pinnacle à la lecture (cache Cloudflare : jusqu'à ~15 min), absent des anciens paris
+             "age_prix_pinnacle_s": o.get("age_prix_pinnacle_s"),
              # âge de la cote française à la décision : ce qu'on peut vraiment jouer (les alertes exigent moins de 5 min)
              "age_cote_prise_s": _age_s(o.get("collecte_recue") or o.get("detecte"), decision),
              "statut": "en_cours", "gain": None, "cote_juste_cloture": o["cote_juste"], "clv": None,

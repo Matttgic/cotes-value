@@ -949,7 +949,8 @@ def main() -> int:
                          hors_consensus=hors) or []
     for o in opportunites:           # marqueur de cycle : sert à la persistance (Qwen) et au diagnostic
         o["cycle_id"] = journal["debut"]
-    # Mouvement de la cote juste de Pinnacle (dropping odds) : descriptif, inscrit dans le pari. Jamais bloquant.
+    # Mouvement de la cote juste de Pinnacle (dropping odds), inscrit dans le pari. Garde-fou : une cote Pinnacle de
+    # référence inchangée depuis 10 min ou plus (copie de cache figée) rend l'opportunité suspecte, avant le placement.
     from cotes import mouvement
     journal["mouvement"] = mouvement.annoter(
         opportunites, index,
