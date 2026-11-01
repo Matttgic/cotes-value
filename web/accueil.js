@@ -7,6 +7,7 @@ function ligneAccueilPari(p) {
 <div class="acc-pari-prix"><span class="acc-book">${e(p.bookmaker)}${heureEnvoi(p) ? ' · '+heureEnvoi(p) : ''}</span>
 <b class="acc-cote">${cote(p.cote)}</b><small class="acc-ref">${e(ref)}${cote(p.cote_juste)}</small><i class="acc-ecart">${pct(p.ecart)}</i>${boutonBookmaker(p,true)}</div></article>`;
 }
+function rangTexte(n) {return `${n}<sup>${n===1 ? 'er' : 'e'}</sup>`;}
 function rendreAccueil() {
   const cible=document.getElementById('acc-kpis');if(!cible) return;
   const heure=Number(new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',hourCycle:'h23'}).format(new Date()));
@@ -24,14 +25,15 @@ function rendreAccueil() {
   document.getElementById('acc-values-n').textContent=`${enCours.length} en cours`;
   document.getElementById('acc-values').innerHTML=enCours.length ? enCours.slice(0,5).map(ligneAccueilPari).join('')
     : '<p class="aide">Aucun pari en cours pour le moment.</p>';
-  // Top 5 : gain net depuis le lancement ; les pastilles désignent les meilleurs critères (50 paris réglés minimum).
-  const rows=lignesStrategies('futur');attribuerMedailles(rows);
-  const top=rows.filter(r=>r.stats.regles>0).sort((a,b)=>(b.stats.gain ?? -Infinity)-(a.stats.gain ?? -Infinity)).slice(0,5);
-  document.getElementById('acc-top5-mise').textContent=`gain net · ${mise}`;
+  // Top 5 valeur : rang moyen au ROI et à la CLV depuis le lancement (attribuerValeur) ; les pastilles désignent
+  // les meilleurs critères (50 paris réglés minimum).
+  const rows=lignesStrategies('futur');attribuerMedailles(rows);attribuerValeur(rows);
+  const top=classerParValeur(rows).slice(0,5);
+  document.getElementById('acc-top5-mise').textContent=`ROI + CLV · ${mise}`;
   document.getElementById('acc-top5').innerHTML=top.length ? top.map((r,i)=>`<div class="acc-rang"><span class="acc-num">${i+1}.</span>
-<span class="acc-rang-nom"><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}</span>
-<span class="acc-rang-gain ${signe(r.stats.gain)}">${eurC(r.stats.gain)}</span><small class="${signe(r.stats.roi)}">${pct(r.stats.roi==null ? null : r.stats.roi/100)}</small></div>`).join('')
-    : '<p class="aide">Pas encore de stratégie avec des paris réglés.</p>';
+<span class="acc-rang-nom"><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<small class="acc-rang-detail"><span class="${signe(r.stats.roi)}">ROI ${pct(r.stats.roi/100)}</span> (${rangTexte(r.rang_roi)}) · <span class="${signe(r.stats.clv)}">CLV ${pct(r.stats.clv/100)}</span> (${rangTexte(r.rang_clv)}) · ${r.stats.regles} réglés</small></span>
+<span class="acc-rang-gain ${signe(r.stats.gain)}">${eurC(r.stats.gain)}</span></div>`).join('')
+    : '<p class="aide">Pas encore de stratégie classée (30 paris réglés et 20 CLV mesurées au moins).</p>';
   // Gain cumulé des paris uniques (même courbe que le Bilan, tracée en marches).
   let total=0;
   const points=((D.courbes || {}).Uniques || []).map(p=>[p[0]*60,total=Math.round((total+p[1])*100)/100]);

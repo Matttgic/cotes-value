@@ -749,9 +749,11 @@ MODELE = r"""<!doctype html>
       <section class="acc-values"><h3 class="bu-titre">Values du moment <small id="acc-values-n"></small></h3>
         <div id="acc-values"></div>
         <p><button type="button" class="acc-lien" data-aller="paris">Voir tous les paris, filtres avancés et export CSV →</button></p></section>
-      <section class="acc-top5"><h3 class="bu-titre">Top 5 stratégies <small id="acc-top5-mise"></small></h3>
+      <section class="acc-top5"><h3 class="bu-titre">Top 5 valeur <small id="acc-top5-mise"></small></h3>
         <div id="acc-top5"></div>
-        <p class="aide acc-legende">Pastilles, 50 paris réglés minimum : étoile = meilleur ROI, cercle € = meilleur gain net, trèfle = meilleure réussite, cible = meilleure CLV.</p>
+        <p class="aide acc-legende">Classement par <b>valeur</b> : rang moyen au ROI et à la CLV depuis le lancement (30 paris réglés
+        et 20 CLV mesurées au moins). Le ROI dit ce qui a été gagné ; la CLV si les cotes prises battaient la clôture, ce qui
+        dépend moins de la chance. Pastilles, 50 paris réglés minimum : étoile = meilleur ROI, cercle € = meilleur gain net, trèfle = meilleure réussite, cible = meilleure CLV.</p>
         <p><button type="button" class="acc-lien" data-aller="strategies">Classement complet →</button></p></section>
       <section class="acc-courbe"><h3 class="bu-titre">Gain cumulé <small id="acc-courbe-mise"></small></h3><div id="acc-courbe"></div></section>
       <section class="acc-derniers"><h3 class="bu-titre">Derniers résultats <small>paris uniques réglés</small></h3><div id="acc-derniers"></div></section>
@@ -865,7 +867,7 @@ MODELE = r"""<!doctype html>
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option></select></div>
         <div class="champ"><label for="strategies-tri">Classer par</label>
-        <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
+        <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
       <p class="aide" id="strategies-total"></p>
       <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
@@ -2197,11 +2199,13 @@ function rendreStrategies() {
       .map(p => [Math.floor(Date.parse(p.regle_le)/1000), total = Math.round((total+p.gain)*100)/100]);
   })();
   attribuerMedailles(rows);       // ★ € ☘ ◎ : meilleur ROI, gain, réussite et CLV (50 paris réglés minimum)
+  attribuerValeur(rows);          // rang moyen ROI + CLV, calculé sur toutes les stratégies avant le filtre
   const ref = document.getElementById("strategies-ref").value;
   if (ref) rows = rows.filter(r => r.reference === ref);
   const tri = document.getElementById("strategies-tri").value;
   rows.sort((a,b) => {
     if (tri === "nom") return a.nom.localeCompare(b.nom,"fr") || a.id.localeCompare(b.id);
+    if (tri === "valeur") return (a.valeur ?? Infinity) - (b.valeur ?? Infinity) || (b.stats?.clv ?? -Infinity) - (a.stats?.clv ?? -Infinity) || a.id.localeCompare(b.id);
     const av = tri === "reussite" ? a.reussite : a.stats[tri], bv = tri === "reussite" ? b.reussite : b.stats[tri];
     return (bv ?? -Infinity) - (av ?? -Infinity) || a.id.localeCompare(b.id);
   });

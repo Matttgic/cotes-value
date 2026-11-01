@@ -36,6 +36,31 @@ function attribuerMedailles(rows) {
     if(meilleure) meilleure.medailles.push(m.cle);
   }
 }
+// Score « valeur » : réunit ROI et CLV. Rang moyen d'une stratégie au ROI et à la CLV (1 = meilleure), parmi celles
+// qui ont au moins VALEUR_MIN_REGLES paris réglés et VALEUR_MIN_CLV CLV mesurées. Le ROI dit ce qui a été gagné,
+// la CLV si les cotes prises battaient la clôture (moins sensible à la chance) : une stratégie n'est en tête que si
+// elle est bonne sur les deux. r.valeur = rang moyen (plus petit = meilleur), null si la stratégie n'est pas classée.
+const VALEUR_MIN_REGLES=30, VALEUR_MIN_CLV=20;
+function attribuerValeur(rows) {
+  for(const r of rows) r.valeur=null;
+  const ok=rows.filter(r=>r.stats && r.stats.regles>=VALEUR_MIN_REGLES && (r.stats.clv_n||0)>=VALEUR_MIN_CLV
+    && Number.isFinite(r.stats.roi) && Number.isFinite(r.stats.clv));
+  const rang=cle=>{
+    const tries=[...ok].sort((a,b)=>b.stats[cle]-a.stats[cle]);
+    const out=new Map();
+    tries.forEach((r,i)=>{                       // ex aequo : même rang
+      const precedent=i && tries[i-1].stats[cle]===r.stats[cle] ? out.get(tries[i-1]) : i+1;
+      out.set(r,precedent);
+    });
+    return out;
+  };
+  const roi=rang('roi'),clv=rang('clv');
+  for(const r of ok) {r.rang_roi=roi.get(r);r.rang_clv=clv.get(r);r.valeur=(r.rang_roi+r.rang_clv)/2;}
+  return ok;
+}
+function classerParValeur(rows) {
+  return rows.filter(r=>r.valeur!=null).sort((a,b)=>a.valeur-b.valeur || b.stats.clv-a.stats.clv || b.stats.roi-a.stats.roi);
+}
 function pastillesMedailles(cles) {
   const pastilles=MEDAILLES.filter(m=>(cles || []).includes(m.cle)).map(m=>{
     const titre=`${m.nom} (${MEDAILLES_MIN_PARIS} paris réglés minimum)`;
