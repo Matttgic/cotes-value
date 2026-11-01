@@ -856,3 +856,21 @@ def test_seuil_de_peremption_court_pour_les_matchs_proches(monkeypatch):
     assert P.age_max_loin_secondes() == P.age_max_secondes() == 600
     monkeypatch.setenv('PINNACLE_AGE_MAX_MIN', '16')                           # option « tout à 16 minutes »
     assert P.est_perimee(905, proche, maintenant) is False
+
+
+def test_rechauffeur_note_la_cause_et_attend_25_s_dans_le_budget(monkeypatch):
+    from cotes.delai import Echeance
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_URL','https://exemple.test/rechauffe')
+    monkeypatch.setenv('PINNACLE_RECHAUFFEUR_SECRET','secret-rechauffe')
+    vus={}
+    def post(url,**k):
+        vus.update(k); raise P.requests.Timeout()
+    monkeypatch.setattr(P.requests,'post',post)
+    P._demander_rechauffe({29:'football'}, echeance=Echeance(45))
+    assert vus['timeout']==25 and P.etat_rechauffeur=='indisponible' and P.cause_rechauffeur=='delai_depasse'
+    assert P.duree_rechauffeur_s is not None
+    monkeypatch.setattr(P.requests,'post',lambda url,**k: type('R',(),{'status_code':503})())
+    P._demander_rechauffe({29:'football'}, echeance=Echeance(45))
+    assert P.cause_rechauffeur=='http_503'
+    P._demander_rechauffe({29:'football'}, echeance=Echeance(0))
+    assert P.cause_rechauffeur=='budget_epuise'

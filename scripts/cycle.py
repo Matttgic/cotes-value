@@ -500,6 +500,8 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
             "lignes": lues,
             "lignes_perimees": perimees,
             "rechauffeur": pinnacle.etat_rechauffeur,
+            "rechauffeur_cause": pinnacle.cause_rechauffeur,
+            "rechauffeur_duree_s": pinnacle.duree_rechauffeur_s,
             "rechauffeur_detail": pinnacle.resume_rechauffeur(),
             "choix_prix": dict(pinnacle.choix_prix),
         }
