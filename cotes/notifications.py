@@ -69,6 +69,7 @@ def champs_valeur(o: dict) -> dict:
     lien, repli = lien_info(o)
     return {"ecart": _nombre(o.get("ecart")), "cote_juste": juste, "mise_kelly": mise_kelly(o) or None,
             "cote_pinnacle": _nombre(o.get("cote_reference")) if o.get("reference") == "Pinnacle" else None,
+            "pinnacle_ecart": _nombre(o.get("ecart_pinnacle")), "pinnacle_age_s": _nombre(o.get("age_prix_pinnacle_s")),
             "ligue": o.get("ligue"), "marche": o.get("marche"), "selection": o.get("pari", "")[:180],
             "sport": o.get("sport"), "domicile": o.get("domicile"), "exterieur": o.get("exterieur"),
             "match_id": o.get("match_id"), "lien": lien, "lien_repli": repli,

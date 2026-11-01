@@ -254,6 +254,10 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 # âge réel du prix Pinnacle (en-tête Age du cache, ou âge recalculé d'une ligne reprise ou du
                 # secours), distinct de lu_reference qui n'est que l'heure de notre lecture
                 "age_prix_pinnacle_s": pin.get("age_cache_s"),
+                # écart que donnerait Pinnacle sur la même cote française, quelle que soit la référence qui a décidé :
+                # une décision prise vite avec Polymarket ou Matchbook se confirme (ou se contredit) avec lui
+                "ecart_pinnacle": (round(l["cote"] * pin["proba_juste"] - 1, 4)
+                                   if isinstance(pin.get("proba_juste"), (int, float)) else None),
                 "detecte": l["collecte"], "bookmaker": l["source"], "sport": l["sport"], "ligue": l.get("ligue"),
                 "collecte_debut": l.get("collecte_debut"), "collecte_recue": l.get("collecte_recue"),
                 "match_id": l["match_id"], "domicile": l["domicile"], "exterieur": l["exterieur"],
