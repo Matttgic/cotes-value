@@ -76,3 +76,28 @@ def test_age_reel_du_prix_pinnacle_garde_dans_l_opportunite_et_le_pari():
     # Une autre référence n'a pas d'âge de prix Pinnacle.
     o, _ = _cycle(.5, T0, references=("Polymarket",))
     assert o[0]["age_prix_pinnacle_s"] is None
+
+
+def test_ecart_pinnacle_garde_sur_une_decision_prise_avec_polymarket(tmp_path):
+    from cotes.simulation import placer
+    o, _ = _cycle(.5, T0, references=("Pinnacle", "Polymarket"))
+    par_ref = {x["reference"]: x for x in o}
+    # cote 2,4 × proba Pinnacle 0,5 − 1 = +20 % : Pinnacle voit le même écart que la référence qui a décidé
+    assert par_ref["Polymarket"]["ecart_pinnacle"] == 0.2 and par_ref["Pinnacle"]["ecart_pinnacle"] == 0.2
+    assert par_ref["Polymarket"]["age_prix_pinnacle_s"] == 420
+    pari = placer([par_ref["Polymarket"]], [], maintenant=T0 + timedelta(seconds=30))[0]
+    assert pari["ecart_pinnacle"] == 0.2
+    o2, _ = _cycle(.5, T0, references=("Polymarket",))
+    assert o2[0]["ecart_pinnacle"] is None                       # aucun prix Pinnacle : rien d'inventé
+
+
+def test_alerte_dit_si_pinnacle_confirme_contredit_ou_manque():
+    from scripts.envoyer_notifications import message_ntfy
+    base = {"bookmaker": "Betclic", "sport": "football", "cote": 2.4, "pari": "x", "domicile": "A", "exterieur": "B",
+            "debut": "2030-01-01T20:00:00+00:00", "cote_min": 2.3}
+    corps = lambda **k: message_ntfy({**base, **k})[1]
+    assert "Pinnacle confirme : +5,5 % (prix de 4 min)" in corps(pinnacle_ecart=0.055, pinnacle_age_s=240)
+    assert "Pinnacle écart faible : +1,0 %" in corps(pinnacle_ecart=0.01, pinnacle_age_s=30)
+    assert "Pinnacle contredit : -3,0 %" in corps(pinnacle_ecart=-0.03, pinnacle_age_s=30)
+    assert "pas de prix récent" in corps(pinnacle_ecart=None, pinnacle_age_s=None)
+    assert "Pinnacle" not in corps()                              # ancienne alerte : texte inchangé

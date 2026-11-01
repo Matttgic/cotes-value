@@ -98,6 +98,19 @@ def _sport(s) -> str:
     return SPORTS.get(s.lower(), s.replace("_", " ").capitalize() or "—")
 
 
+def _ligne_pinnacle(a: dict) -> list[str]:
+    """Confirmation par Pinnacle : l'alerte part dès que la référence qui décide (Polymarket, Matchbook…) la valide,
+    Pinnacle dit si lui aussi voit l'écart. Rien d'écrit pour une alerte sans cette mesure (anciennes alertes)."""
+    if "pinnacle_ecart" not in a:
+        return []
+    e, age = a.get("pinnacle_ecart"), a.get("pinnacle_age_s")
+    if not isinstance(e, (int, float)) or isinstance(e, bool):
+        return ["Pinnacle : pas de prix récent pour confirmer"]
+    verdict = "confirme" if e >= 0.02 else "écart faible" if e >= 0 else "contredit"
+    ancien = f" (prix de {round(age / 60)} min)" if isinstance(age, (int, float)) and age >= 120 else ""
+    return [f"Pinnacle {verdict} : {'+' if e > 0 else ''}{_fr(100 * e, 1)} %{ancien}"]
+
+
 def message_ntfy(a: dict) -> tuple[str, str]:
     """(titre, corps) en texte brut ; l'heure du match est celle de Paris (« mar. 20/10 20h00 »)."""
     try:
@@ -112,6 +125,7 @@ def message_ntfy(a: dict) -> tuple[str, str]:
     age = a.get("age_prix_secondes")
     if isinstance(age, (int, float)) and age > 300:          # match lointain, lu à son rythme : on le dit
         lignes.append(f"Prix relevé il y a {round(age / 60)} min")
+    lignes += _ligne_pinnacle(a)
     kelly = a.get("mise_kelly")
     if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
         lignes.append(f"Mise Kelly ¼ : {_fr(kelly, 2)} €")
