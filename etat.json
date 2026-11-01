@@ -1,18 +1,22 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-01T08:57:42+00:00",
+  "debut": "2026-11-01T09:02:30+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.1,
-    "ok": true
+    "secondes": 0.8,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "HTTP 403"
+    ]
    },
    "olybet": {
-    "secondes": 7.6,
+    "secondes": 9.4,
     "ok": true
    },
    "polymarket": {
-    "secondes": 18.1,
+    "secondes": 17.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,20 +24,13 @@
     ]
    },
    "netbet": {
-    "secondes": 37.5,
+    "secondes": 37.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "HTTP 403",
      "budget"
     ]
-   },
-   "betclic_direct": {
-    "secondes": 39.6,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 43.7,
-    "ok": true
    },
    "pinnacle": {
     "secondes": 45.0,
@@ -42,25 +39,34 @@
     "degrade": true,
     "erreurs": [
      "sport 29 matchups : HTTP 503",
-     "sport 33 markets/straight : HTTP 503",
+     "sport 33 matchups : HTTP 503",
      "sport 4 matchups : HTTP 503",
      "sport 19 markets/straight : HTTP 503",
      "sport 18 matchups : HTTP 503",
-     "sport 27 matchups : HTTP 503",
+     "sport 34 markets/straight : HTTP 503",
      "budget",
-     "sport 15 matchups : HTTP 503",
-     "sport 3 matchups : HTTP 503",
-     "sport 22 matchups : HTTP 503"
-    ],
-    "reprise": 58
+     "sport 27 matchups : HTTP 503"
+    ]
+   },
+   "pmu_direct": {
+    "secondes": 46.6,
+    "ok": true
    },
    "winamax_direct": {
-    "secondes": 56.5,
+    "secondes": 58.6,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 59.5,
+    "secondes": 16.2,
     "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 77.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -68,15 +74,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 42.1,
+    "secondes": 26.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.6,
+    "secondes": 2.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.7,
     "ok": true
    }
   },
@@ -87,19 +93,21 @@
   "netbet_source": "direct",
   "matchbook": {
    "mode": "direct",
-   "ok": true,
-   "requetes": 3,
-   "erreurs": [],
-   "matchs": 381,
-   "lignes": 14266
+   "ok": false,
+   "requetes": 1,
+   "erreurs": [
+    "HTTP 403"
+   ],
+   "matchs": 0,
+   "lignes": 0
   },
   "pinnacle_secours": {
    "sports": [],
    "requetes": 0,
-   "lignes": 52784,
+   "lignes": 52670,
    "erreurs": [],
    "pause": true,
-   "cache_lignes": 52784,
+   "cache_lignes": 52670,
    "retard": []
   },
   "pinnacle_fraicheur": {
@@ -113,28 +121,20 @@
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
-     "matchups_200": 8,
-     "markets_200": 6,
-     "matchups_503": 14,
-     "markets_503": 2
+     "matchups_503": 21,
+     "matchups_200": 1,
+     "markets_503": 1
     },
     "sautes": 0,
     "extrait": "{\"type\": \"about:blank\", \"title\": \"MAINTENANCE\", \"detail\": \"API is currently undergoing maintenance, try again later\", \"status\": 503}"
    },
    "choix_prix": {
-    "head_503": 14,
-    "choisi_fixe": 4,
-    "head_200": 3,
-    "head_budget": 1
+    "head_503": 10,
+    "choisi_fixe": 2
    }
   },
   "reprise": {
-   "actif": true,
-   "Pinnacle": {
-    "snooker": 26,
-    "golf": 20,
-    "curling": 12
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -157,11 +157,14 @@
    ],
    "nouveaux_au_cycle_suivant": [],
    "plus_chez_les_references": [
-    "rugby_league"
+    "curling",
+    "golf",
+    "rugby_league",
+    "snooker"
    ]
   },
   "betclic_proches": {
-   "proches": 9,
+   "proches": 26,
    "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 0
@@ -169,86 +172,70 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Gzira United – Marsaxlokk",
+     "match": "Hapoël Tel-Aviv – Maccabi Haïfa",
      "source": "Pinnacle",
-     "cote_olybet": 4.3,
-     "cote_reference": 4.47,
-     "ecart_relatif": 0.038,
+     "cote_olybet": 1.97,
+     "cote_reference": 2.05,
+     "ecart_relatif": 0.039,
      "aberrant": false
     },
     {
-     "match": "Gzira United – Marsaxlokk",
-     "source": "PMU",
-     "cote_olybet": 4.3,
-     "cote_reference": 3.9,
-     "ecart_relatif": 0.1026,
-     "aberrant": false
-    },
-    {
-     "match": "Floriana – Valletta",
+     "match": "Maccabi Petakh Tikva – Hapoel Be'er Sheva",
      "source": "Pinnacle",
-     "cote_olybet": 3.03,
-     "cote_reference": 3.16,
-     "ecart_relatif": 0.0411,
+     "cote_olybet": 5.8,
+     "cote_reference": 6.52,
+     "ecart_relatif": 0.1104,
      "aberrant": false
     },
     {
-     "match": "Floriana – Valletta",
+     "match": "Maccabi Petakh Tikva – Hapoel Be'er Sheva",
      "source": "PMU",
-     "cote_olybet": 3.03,
-     "cote_reference": 2.8,
-     "ecart_relatif": 0.0821,
+     "cote_olybet": 5.8,
+     "cote_reference": 5.4,
+     "ecart_relatif": 0.0741,
      "aberrant": false
     },
     {
-     "match": "Groningue – Sparta Rotterdam",
+     "match": "Hapoel Ramat Gan Givatayim FC – Maccabi Tel-Aviv",
      "source": "Pinnacle",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.787,
-     "ecart_relatif": 0.0487,
+     "cote_olybet": 7.5,
+     "cote_reference": 8.29,
+     "ecart_relatif": 0.0953,
      "aberrant": false
     },
     {
-     "match": "Groningue – Sparta Rotterdam",
+     "match": "Sonderjyske – Copenhague",
+     "source": "Pinnacle",
+     "cote_olybet": 5.6,
+     "cote_reference": 6.23,
+     "ecart_relatif": 0.1011,
+     "aberrant": false
+    },
+    {
+     "match": "Sonderjyske – Copenhague",
      "source": "PMU",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.7,
+     "cote_olybet": 5.6,
+     "cote_reference": 6.25,
+     "ecart_relatif": 0.104,
+     "aberrant": false
+    },
+    {
+     "match": "Viborg – AC Horsens",
+     "source": "Pinnacle",
+     "cote_olybet": 1.5,
+     "cote_reference": 1.571,
+     "ecart_relatif": 0.0452,
+     "aberrant": false
+    },
+    {
+     "match": "Viborg – AC Horsens",
+     "source": "PMU",
+     "cote_olybet": 1.5,
+     "cote_reference": 1.5,
      "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Telstar – Utrecht",
-     "source": "Pinnacle",
-     "cote_olybet": 2.98,
-     "cote_reference": 3.21,
-     "ecart_relatif": 0.0717,
-     "aberrant": false
-    },
-    {
-     "match": "Telstar – Utrecht",
-     "source": "PMU",
-     "cote_olybet": 2.98,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0836,
-     "aberrant": false
-    },
-    {
-     "match": "Excelsior – Twente",
-     "source": "Pinnacle",
-     "cote_olybet": 5.5,
-     "cote_reference": 6.17,
-     "ecart_relatif": 0.1086,
-     "aberrant": false
-    },
-    {
-     "match": "Excelsior – Twente",
-     "source": "PMU",
-     "cote_olybet": 5.5,
-     "cote_reference": 5.75,
-     "ecart_relatif": 0.0435,
      "aberrant": false
     }
    ],
@@ -257,119 +244,103 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Newcastle – Everton",
+     "match": "Levadiakos – Aris Salonique",
      "source": "Pinnacle",
-     "cote_netbet": 2.25,
-     "cote_reference": 2.42,
-     "ecart_relatif": 0.0702,
+     "cote_netbet": 3.35,
+     "cote_reference": 3.81,
+     "ecart_relatif": 0.1207,
      "aberrant": false
     },
     {
-     "match": "Newcastle – Everton",
+     "match": "Levadiakos – Aris Salonique",
      "source": "PMU",
-     "cote_netbet": 2.25,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.009,
+     "cote_netbet": 3.35,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0635,
      "aberrant": false
     },
     {
-     "match": "Union Berlin – Cologne",
+     "match": "Panaitolikos – OFI Crete",
      "source": "Pinnacle",
-     "cote_netbet": 2.52,
-     "cote_reference": 2.72,
-     "ecart_relatif": 0.0735,
+     "cote_netbet": 2.82,
+     "cote_reference": 3.18,
+     "ecart_relatif": 0.1132,
      "aberrant": false
     },
     {
-     "match": "Union Berlin – Cologne",
-     "source": "PMU",
-     "cote_netbet": 2.52,
-     "cote_reference": 2.5,
-     "ecart_relatif": 0.008,
-     "aberrant": false
-    },
-    {
-     "match": "Eintracht Francfort – Hambourg SV",
+     "match": "PAOK – Asteras Tripolis",
      "source": "Pinnacle",
-     "cote_netbet": 1.48,
-     "cote_reference": 1.564,
-     "ecart_relatif": 0.0537,
+     "cote_netbet": 1.23,
+     "cote_reference": 1.319,
+     "ecart_relatif": 0.0675,
      "aberrant": false
     },
     {
-     "match": "Eintracht Francfort – Hambourg SV",
+     "match": "PAOK – Asteras Tripolis",
      "source": "PMU",
-     "cote_netbet": 1.48,
-     "cote_reference": 1.49,
-     "ecart_relatif": 0.0067,
+     "cote_netbet": 1.23,
+     "cote_reference": 1.22,
+     "ecart_relatif": 0.0082,
      "aberrant": false
     },
     {
-     "match": "Vancouver Whitecaps – Seattle Sounders",
+     "match": "Panathinaikos – AEK Athènes",
      "source": "Pinnacle",
-     "cote_netbet": 1.53,
-     "cote_reference": 1.689,
-     "ecart_relatif": 0.0941,
+     "cote_netbet": 2.07,
+     "cote_reference": 2.22,
+     "ecart_relatif": 0.0676,
      "aberrant": false
     },
     {
-     "match": "Vancouver Whitecaps – Seattle Sounders",
+     "match": "Panathinaikos – AEK Athènes",
      "source": "PMU",
-     "cote_netbet": 1.53,
-     "cote_reference": 1.49,
-     "ecart_relatif": 0.0268,
+     "cote_netbet": 2.07,
+     "cote_reference": 2.08,
+     "ecart_relatif": 0.0048,
      "aberrant": false
     },
     {
-     "match": "Atlanta United – Toronto FC",
+     "match": "Atromitos – Volos 2004",
      "source": "Pinnacle",
-     "cote_netbet": 2.0,
-     "cote_reference": 2.13,
-     "ecart_relatif": 0.061,
-     "aberrant": false
-    },
-    {
-     "match": "Atlanta United – Toronto FC",
-     "source": "PMU",
-     "cote_netbet": 2.0,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0476,
+     "cote_netbet": 1.77,
+     "cote_reference": 1.909,
+     "ecart_relatif": 0.0728,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-01T08:48:42+00:00",
+   "pinnacle_premiere_lecture": "2026-11-01T08:53:50+00:00",
    "pinnacle_derniere_lecture": "2026-11-01T08:53:54+00:00",
    "books_premiere_lecture": "2026-11-01T07:15:33+00:00",
-   "books_derniere_lecture": "2026-11-01T08:57:42+00:00",
+   "books_derniere_lecture": "2026-11-01T09:02:31+00:00",
    "ecart_enveloppe_secondes": 5901.0
   },
   "historique_cotes": {
-   "lignes": 3583
+   "lignes": 2558
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.7
+   "age_min": 9.5
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 647,
    "a_verifier": 12,
    "non_conforme": 10,
-   "mesures": 42650,
+   "mesures": 43100,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 51584,
-   "mesures": 37018,
-   "annotees": 8,
+   "ancres": 51197,
+   "mesures": 35034,
+   "annotees": 5,
    "figees": 1
   },
   "redecision": {
@@ -386,26 +357,20 @@
    "dernier_reglement": "2026-11-01T08:18:43+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-01T09:00:28+00:00",
+  "fin": "2026-11-01T09:04:27+00:00",
   "cotes": {
-   "francaises": 179841,
-   "pinnacle": 52842,
-   "polymarket": 29604,
+   "francaises": 180192,
+   "pinnacle": 52670,
+   "polymarket": 29701,
    "smarkets": 3976,
-   "matchbook": 14266
+   "matchbook": 0
   },
-  "matchs_francais": 2270,
-  "opportunites": 10,
+  "matchs_francais": 2264,
+  "opportunites": 9,
   "opportunites_suspectes": 2,
   "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-31T17:26:28+00:00",
-   "mode": "complet",
-   "opportunites": 19,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-10-31T17:31:08+00:00",
    "mode": "complet",
@@ -1604,6 +1569,12 @@
    "debut": "2026-11-01T08:57:42+00:00",
    "mode": "complet",
    "opportunites": 10,
+   "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-11-01T09:02:30+00:00",
+   "mode": "complet",
+   "opportunites": 9,
    "nouveaux_paris": 1
   }
  ],
