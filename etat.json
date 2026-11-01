@@ -1,18 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-01T17:50:56+00:00",
+  "debut": "2026-11-01T17:55:32+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 2.6,
+    "secondes": 2.5,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.8,
+    "secondes": 5.3,
     "ok": true
    },
    "polymarket": {
-    "secondes": 13.7,
+    "secondes": 13.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,19 +20,21 @@
     ]
    },
    "pinnacle": {
-    "secondes": 18.5,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 27 markets/straight : HTTP 403",
+     "sport 22 markets/straight : HTTP 403",
+     "sport 6 markets/straight : HTTP 403",
+     "sport 17 markets/straight : HTTP 403",
+     "sport 9 markets/straight : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
-   "betclic_direct": {
-    "secondes": 30.4,
-    "ok": true
+    ],
+    "reprise": 58
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -40,15 +42,19 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 41.0,
+    "secondes": 43.4,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 20.7,
+   "betclic_direct": {
+    "secondes": 46.9,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 51.1,
+    "secondes": 50.7,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 24.1,
     "ok": true
    },
    "smarkets": {
@@ -57,15 +63,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 3.9,
+    "secondes": 4.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.5,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.4,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -79,37 +85,49 @@
    "ok": true,
    "requetes": 2,
    "erreurs": [],
-   "matchs": 247,
-   "lignes": 8289
+   "matchs": 235,
+   "lignes": 8425
+  },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 0,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 658,
-   "age_min_s": 170,
-   "lignes": 95062,
-   "lignes_perimees": 6619,
-   "rechauffeur": "ok",
+   "age_max_s": 443,
+   "age_min_s": 11,
+   "lignes": 94809,
+   "lignes_perimees": 0,
+   "rechauffeur": "indisponible",
    "rechauffeur_detail": {
-    "statuts": {
-     "matchups_200": 22,
-     "markets_200": 22
-    },
+    "statuts": {},
     "sautes": 0,
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
-    "choisi_autre": 3,
-    "head_403": 2,
+    "head_200": 14,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_fixe": 9,
+    "choisi_autre": 4,
+    "choisi_fixe": 3,
+    "reprise_403": 5,
     "sport_vide": 7
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Pinnacle": {
+    "mma": 26,
+    "boxe": 4,
+    "rugby": 28
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -141,54 +159,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Atromitos – PAE Volos",
+     "match": "Rakow Czestochowa – Pogon Szczecin",
      "source": "Pinnacle",
-     "cote_olybet": 1.82,
-     "cote_reference": 1.926,
-     "ecart_relatif": 0.055,
+     "cote_olybet": 2.16,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0526,
      "aberrant": false
     },
     {
-     "match": "RS Berkane – Raja Casablanca",
-     "source": "Pinnacle",
-     "cote_olybet": 2.11,
-     "cote_reference": 2.17,
-     "ecart_relatif": 0.0276,
-     "aberrant": false
-    },
-    {
-     "match": "New England Revolution – Inter Miami CF",
-     "source": "Pinnacle",
-     "cote_olybet": 2.86,
-     "cote_reference": 3.13,
-     "ecart_relatif": 0.0863,
-     "aberrant": false
-    },
-    {
-     "match": "New England Revolution – Inter Miami CF",
+     "match": "Rakow Czestochowa – Pogon Szczecin",
      "source": "PMU",
-     "cote_olybet": 2.86,
-     "cote_reference": 2.7,
-     "ecart_relatif": 0.0593,
+     "cote_olybet": 2.16,
+     "cote_reference": 2.14,
+     "ecart_relatif": 0.0093,
      "aberrant": false
     },
     {
-     "match": "Vancouver Whitecaps FC – Seattle Sounders",
+     "match": "RKS Radomiak Radom – Slask Wroclaw",
      "source": "Pinnacle",
-     "cote_olybet": 1.64,
-     "cote_reference": 1.73,
-     "ecart_relatif": 0.052,
+     "cote_olybet": 2.07,
+     "cote_reference": 2.19,
+     "ecart_relatif": 0.0548,
      "aberrant": false
     },
     {
-     "match": "Vancouver Whitecaps FC – Seattle Sounders",
+     "match": "RKS Radomiak Radom – Slask Wroclaw",
      "source": "PMU",
-     "cote_olybet": 1.64,
-     "cote_reference": 1.56,
-     "ecart_relatif": 0.0513,
+     "cote_olybet": 2.07,
+     "cote_reference": 2.06,
+     "ecart_relatif": 0.0049,
+     "aberrant": false
+    },
+    {
+     "match": "Zaglebie Lubin – Korona Kielce",
+     "source": "Pinnacle",
+     "cote_olybet": 2.35,
+     "cote_reference": 2.51,
+     "ecart_relatif": 0.0637,
+     "aberrant": false
+    },
+    {
+     "match": "Zaglebie Lubin – Korona Kielce",
+     "source": "PMU",
+     "cote_olybet": 2.35,
+     "cote_reference": 2.55,
+     "ecart_relatif": 0.0784,
+     "aberrant": false
+    },
+    {
+     "match": "Radnicki Nis – Zeleznicar Pancevo",
+     "source": "Pinnacle",
+     "cote_olybet": 3.45,
+     "cote_reference": 3.48,
+     "ecart_relatif": 0.0086,
+     "aberrant": false
+    },
+    {
+     "match": "Mladost Lucani – Radnik Surdulica",
+     "source": "Pinnacle",
+     "cote_olybet": 2.5,
+     "cote_reference": 2.58,
+     "ecart_relatif": 0.031,
+     "aberrant": false
+    },
+    {
+     "match": "Mladost Lucani – Radnik Surdulica",
+     "source": "PMU",
+     "cote_olybet": 2.5,
+     "cote_reference": 2.55,
+     "ecart_relatif": 0.0196,
      "aberrant": false
     }
    ],
@@ -197,94 +239,110 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Kryvbas Kryvyi Rih – Dynamo Kiev",
-     "source": "PMU",
-     "cote_netbet": 6.2,
-     "cote_reference": 5.6,
-     "ecart_relatif": 0.1071,
-     "aberrant": false
-    },
-    {
-     "match": "FC Karpaty Lviv – Kudrivka",
+     "match": "FK Radnicki Nis – Zeleznicar Pancevo",
      "source": "Pinnacle",
-     "cote_netbet": 1.33,
-     "cote_reference": 1.415,
-     "ecart_relatif": 0.06,
+     "cote_netbet": 3.4,
+     "cote_reference": 3.48,
+     "ecart_relatif": 0.023,
      "aberrant": false
     },
     {
-     "match": "FC Karpaty Lviv – Kudrivka",
-     "source": "PMU",
-     "cote_netbet": 1.33,
-     "cote_reference": 1.29,
-     "ecart_relatif": 0.031,
-     "aberrant": false
-    },
-    {
-     "match": "Cherno More Varna – Botev Vratsa",
+     "match": "Mladost Lucani – FK Radnik Surdulica",
      "source": "Pinnacle",
-     "cote_netbet": 1.83,
-     "cote_reference": 1.971,
-     "ecart_relatif": 0.0715,
+     "cote_netbet": 2.45,
+     "cote_reference": 2.58,
+     "ecart_relatif": 0.0504,
      "aberrant": false
     },
     {
-     "match": "Cherno More Varna – Botev Vratsa",
+     "match": "Mladost Lucani – FK Radnik Surdulica",
      "source": "PMU",
-     "cote_netbet": 1.83,
-     "cote_reference": 1.85,
-     "ecart_relatif": 0.0108,
+     "cote_netbet": 2.45,
+     "cote_reference": 2.55,
+     "ecart_relatif": 0.0392,
      "aberrant": false
     },
     {
-     "match": "Arda Kardzhali – Septemvri Sofia",
+     "match": "Red Star – Nancy",
      "source": "Pinnacle",
-     "cote_netbet": 1.53,
-     "cote_reference": 1.671,
-     "ecart_relatif": 0.0844,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.37,
+     "ecart_relatif": 0.0717,
      "aberrant": false
     },
     {
-     "match": "Arda Kardzhali – Septemvri Sofia",
+     "match": "Red Star – Nancy",
      "source": "PMU",
-     "cote_netbet": 1.53,
-     "cote_reference": 1.5,
-     "ecart_relatif": 0.02,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0092,
+     "aberrant": false
+    },
+    {
+     "match": "Reims – Sochaux",
+     "source": "Pinnacle",
+     "cote_netbet": 1.65,
+     "cote_reference": 1.741,
+     "ecart_relatif": 0.0521,
+     "aberrant": false
+    },
+    {
+     "match": "Reims – Sochaux",
+     "source": "PMU",
+     "cote_netbet": 1.65,
+     "cote_reference": 1.64,
+     "ecart_relatif": 0.0061,
+     "aberrant": false
+    },
+    {
+     "match": "Boca Juniors – River Plate",
+     "source": "Pinnacle",
+     "cote_netbet": 2.05,
+     "cote_reference": 2.25,
+     "ecart_relatif": 0.0889,
+     "aberrant": false
+    },
+    {
+     "match": "Boca Juniors – River Plate",
+     "source": "PMU",
+     "cote_netbet": 2.05,
+     "cote_reference": 1.97,
+     "ecart_relatif": 0.0406,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-01T17:51:06+00:00",
-   "pinnacle_derniere_lecture": "2026-11-01T17:51:11+00:00",
-   "books_premiere_lecture": "2026-11-01T17:18:21+00:00",
-   "books_derniere_lecture": "2026-11-01T17:50:56+00:00",
-   "ecart_enveloppe_secondes": 1970.0
+   "pinnacle_premiere_lecture": "2026-11-01T17:51:09+00:00",
+   "pinnacle_derniere_lecture": "2026-11-01T17:55:51+00:00",
+   "books_premiere_lecture": "2026-11-01T17:27:38+00:00",
+   "books_derniere_lecture": "2026-11-01T17:55:33+00:00",
+   "ecart_enveloppe_secondes": 1693.0
   },
   "historique_cotes": {
-   "lignes": 1000
+   "lignes": 1648
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 14.0
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 648,
    "a_verifier": 12,
    "non_conforme": 10,
-   "mesures": 29557,
+   "mesures": 30335,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 82580,
-   "mesures": 10687,
+   "ancres": 93079,
+   "mesures": 7229,
    "annotees": 0,
    "figees": 0
   },
@@ -302,26 +360,20 @@
    "dernier_reglement": "2026-11-01T17:43:17+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-01T17:51:57+00:00",
+  "fin": "2026-11-01T17:56:54+00:00",
   "cotes": {
-   "francaises": 83787,
-   "pinnacle": 95062,
-   "polymarket": 16984,
+   "francaises": 83589,
+   "pinnacle": 94867,
+   "polymarket": 17017,
    "smarkets": 2195,
-   "matchbook": 8289
+   "matchbook": 8425
   },
-  "matchs_francais": 1039,
-  "opportunites": 8,
+  "matchs_francais": 1031,
+  "opportunites": 15,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-10-31T18:43:57+00:00",
-   "mode": "complet",
-   "opportunites": 22,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-31T18:48:42+00:00",
    "mode": "complet",
@@ -1521,6 +1573,12 @@
    "mode": "complet",
    "opportunites": 8,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-01T17:55:32+00:00",
+   "mode": "complet",
+   "opportunites": 15,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-11-01T17:43:17+00:00",
