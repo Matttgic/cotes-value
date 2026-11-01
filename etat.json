@@ -1,18 +1,28 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-01T05:33:07+00:00",
+  "debut": "2026-11-01T05:37:47+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.0,
+    "secondes": 4.1,
     "ok": true
    },
+   "winamax_direct": {
+    "secondes": 4.2,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau (CurlError 22)",
+     "connexion impossible (CurlError 22)",
+     "lecture vide"
+    ]
+   },
    "olybet": {
-    "secondes": 8.0,
+    "secondes": 9.6,
     "ok": true
    },
    "polymarket": {
-    "secondes": 20.1,
+    "secondes": 27.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,7 +30,7 @@
     ]
    },
    "pinnacle": {
-    "secondes": 23.9,
+    "secondes": 29.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -36,20 +46,20 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 44.9,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 57.5,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 69.1,
+    "secondes": 46.9,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 61.7,
+    "secondes": 17.3,
     "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 77.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -57,15 +67,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 28.2,
+    "secondes": 32.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.9,
+    "secondes": 3.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.2,
+    "secondes": 0.9,
     "ok": true
    }
   },
@@ -80,16 +90,28 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 357,
-   "lignes": 16493
+   "lignes": 16526
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 38978,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 783,
-   "age_min_s": 194,
-   "lignes": 138890,
-   "lignes_perimees": 1068,
+   "age_max_s": 803,
+   "age_min_s": 31,
+   "lignes": 138786,
+   "lignes_perimees": 2740,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -100,13 +122,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 38,
+    "head_200": 40,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 10,
-    "choisi_autre": 5,
+    "choisi_fixe": 4,
+    "choisi_autre": 11,
     "reprise_403": 1,
-    "sport_vide": 3
+    "sport_vide": 4
    }
   },
   "reprise": {
@@ -139,7 +161,7 @@
    ]
   },
   "betclic_proches": {
-   "proches": 8,
+   "proches": 7,
    "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 0
@@ -147,22 +169,86 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 2,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Union Berlin – 1.Cologne",
+     "match": "Machida Zelvia – Gamba Osaka",
      "source": "Pinnacle",
-     "cote_olybet": 2.64,
-     "cote_reference": 2.76,
-     "ecart_relatif": 0.0435,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.719,
+     "ecart_relatif": 0.052,
      "aberrant": false
     },
     {
-     "match": "Union Berlin – 1.Cologne",
+     "match": "Machida Zelvia – Gamba Osaka",
      "source": "PMU",
-     "cote_olybet": 2.64,
-     "cote_reference": 2.5,
-     "ecart_relatif": 0.056,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0187,
+     "aberrant": false
+    },
+    {
+     "match": "Maritimo – Santa Clara",
+     "source": "Pinnacle",
+     "cote_olybet": 3.45,
+     "cote_reference": 3.71,
+     "ecart_relatif": 0.0701,
+     "aberrant": false
+    },
+    {
+     "match": "Maritimo – Santa Clara",
+     "source": "PMU",
+     "cote_olybet": 3.45,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.1129,
+     "aberrant": false
+    },
+    {
+     "match": "Braga – Famalicao",
+     "source": "Pinnacle",
+     "cote_olybet": 1.63,
+     "cote_reference": 1.694,
+     "ecart_relatif": 0.038,
+     "aberrant": false
+    },
+    {
+     "match": "Braga – Famalicao",
+     "source": "PMU",
+     "cote_olybet": 1.63,
+     "cote_reference": 1.61,
+     "ecart_relatif": 0.0124,
+     "aberrant": false
+    },
+    {
+     "match": "Arouca – Nacional Madeira",
+     "source": "Pinnacle",
+     "cote_olybet": 1.68,
+     "cote_reference": 1.752,
+     "ecart_relatif": 0.041,
+     "aberrant": false
+    },
+    {
+     "match": "Arouca – Nacional Madeira",
+     "source": "PMU",
+     "cote_olybet": 1.68,
+     "cote_reference": 1.67,
+     "ecart_relatif": 0.006,
+     "aberrant": false
+    },
+    {
+     "match": "Academico Viseu – Rio Ave",
+     "source": "Pinnacle",
+     "cote_olybet": 1.81,
+     "cote_reference": 1.893,
+     "ecart_relatif": 0.0438,
+     "aberrant": false
+    },
+    {
+     "match": "Academico Viseu – Rio Ave",
+     "source": "PMU",
+     "cote_olybet": 1.81,
+     "cote_reference": 1.73,
+     "ecart_relatif": 0.0462,
      "aberrant": false
     }
    ],
@@ -171,96 +257,120 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Deportivo Cali – Boyacá Chicó",
+     "match": "Vancouver Whitecaps – Seattle Sounders",
      "source": "Pinnacle",
-     "cote_netbet": 1.22,
-     "cote_reference": 1.304,
-     "ecart_relatif": 0.0644,
+     "cote_netbet": 1.51,
+     "cote_reference": 1.645,
+     "ecart_relatif": 0.0822,
      "aberrant": false
     },
     {
-     "match": "Deportivo Cali – Boyacá Chicó",
+     "match": "Vancouver Whitecaps – Seattle Sounders",
      "source": "PMU",
-     "cote_netbet": 1.22,
-     "cote_reference": 1.18,
-     "ecart_relatif": 0.0339,
+     "cote_netbet": 1.51,
+     "cote_reference": 1.46,
+     "ecart_relatif": 0.0342,
      "aberrant": false
     },
     {
-     "match": "Independiente Medellín – Alianza FC Valledupar",
+     "match": "Atlanta United – Toronto FC",
      "source": "Pinnacle",
-     "cote_netbet": 1.41,
-     "cote_reference": 1.529,
-     "ecart_relatif": 0.0779,
+     "cote_netbet": 2.02,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0605,
      "aberrant": false
     },
     {
-     "match": "Independiente Medellín – Alianza FC Valledupar",
+     "match": "Atlanta United – Toronto FC",
      "source": "PMU",
-     "cote_netbet": 1.41,
-     "cote_reference": 1.33,
-     "ecart_relatif": 0.0602,
+     "cote_netbet": 2.02,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0381,
      "aberrant": false
     },
     {
-     "match": "LNZ Cherkasy – FC Kharkiv",
+     "match": "Nashville SC – New York Red Bulls",
      "source": "Pinnacle",
-     "cote_netbet": 2.92,
-     "cote_reference": 3.33,
-     "ecart_relatif": 0.1231,
+     "cote_netbet": 1.4,
+     "cote_reference": 1.521,
+     "ecart_relatif": 0.0794,
      "aberrant": false
     },
     {
-     "match": "LNZ Cherkasy – FC Kharkiv",
+     "match": "Nashville SC – New York Red Bulls",
      "source": "PMU",
-     "cote_netbet": 2.92,
-     "cote_reference": 2.9,
-     "ecart_relatif": 0.0069,
+     "cote_netbet": 1.4,
+     "cote_reference": 1.38,
+     "ecart_relatif": 0.0145,
      "aberrant": false
     },
     {
-     "match": "Kryvbas Kryvyi Rih – Dynamo Kiev",
+     "match": "New England Revolution – Inter Miami CF",
+     "source": "Pinnacle",
+     "cote_netbet": 2.57,
+     "cote_reference": 2.84,
+     "ecart_relatif": 0.0951,
+     "aberrant": false
+    },
+    {
+     "match": "New England Revolution – Inter Miami CF",
      "source": "PMU",
-     "cote_netbet": 6.2,
-     "cote_reference": 5.6,
-     "ecart_relatif": 0.1071,
+     "cote_netbet": 2.57,
+     "cote_reference": 2.5,
+     "ecart_relatif": 0.028,
+     "aberrant": false
+    },
+    {
+     "match": "Los Angeles FC – Minnesota United",
+     "source": "Pinnacle",
+     "cote_netbet": 1.58,
+     "cote_reference": 1.714,
+     "ecart_relatif": 0.0783,
+     "aberrant": false
+    },
+    {
+     "match": "Los Angeles FC – Minnesota United",
+     "source": "PMU",
+     "cote_netbet": 1.58,
+     "cote_reference": 1.57,
+     "ecart_relatif": 0.0064,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-01T05:33:18+00:00",
-   "pinnacle_derniere_lecture": "2026-11-01T05:33:24+00:00",
-   "books_premiere_lecture": "2026-11-01T05:14:27+00:00",
-   "books_derniere_lecture": "2026-11-01T05:33:08+00:00",
-   "ecart_enveloppe_secondes": 1137.0
+   "pinnacle_premiere_lecture": "2026-11-01T05:37:58+00:00",
+   "pinnacle_derniere_lecture": "2026-11-01T05:38:18+00:00",
+   "books_premiere_lecture": "2026-11-01T05:19:08+00:00",
+   "books_derniere_lecture": "2026-11-01T05:37:48+00:00",
+   "ecart_enveloppe_secondes": 1150.0
   },
   "historique_cotes": {
-   "lignes": 6256
+   "lignes": 1952
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.8
+   "age_min": 9.4
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 647,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 58626,
+   "mesures": 44941,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 167765,
-   "mesures": 130591,
-   "annotees": 23,
-   "figees": 6
+   "ancres": 136698,
+   "mesures": 106565,
+   "annotees": 16,
+   "figees": 4
   },
   "redecision": {
    "ajoutees": 0
@@ -275,27 +385,21 @@
    "saute": true,
    "dernier_reglement": "2026-11-01T05:30:58+00:00"
   },
-  "controle_publie": false,
-  "fin": "2026-11-01T05:35:19+00:00",
+  "controle_publie": true,
+  "fin": "2026-11-01T05:39:48+00:00",
   "cotes": {
-   "francaises": 169471,
-   "pinnacle": 138890,
-   "polymarket": 27856,
+   "francaises": 134790,
+   "pinnacle": 177764,
+   "polymarket": 27867,
    "smarkets": 3901,
-   "matchbook": 16493
+   "matchbook": 16526
   },
-  "matchs_francais": 2175,
-  "opportunites": 31,
-  "opportunites_suspectes": 6,
+  "matchs_francais": 1804,
+  "opportunites": 26,
+  "opportunites_suspectes": 4,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-31T13:49:17+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-10-31T13:54:00+00:00",
    "mode": "complet",
@@ -1494,6 +1598,12 @@
    "debut": "2026-11-01T05:33:07+00:00",
    "mode": "complet",
    "opportunites": 31,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-01T05:37:47+00:00",
+   "mode": "complet",
+   "opportunites": 26,
    "nouveaux_paris": 0
   }
  ],
