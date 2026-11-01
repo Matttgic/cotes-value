@@ -248,6 +248,8 @@ def test_cycle_branche_les_quatre_secrets_et_persiste_cache_et_diagnostic(tmp_pa
     original = O.collecter
     http = HTTP()
     monkeypatch.setattr(cycle.resultats_mod, "a_lire", lambda *a: {})
+    monkeypatch.setattr(cycle.livescore,"lire",lambda *a, **k:[])
+    monkeypatch.setattr(cycle.flashscore,"lire",lambda *a, **k:[])
     monkeypatch.delenv("API_SPORTS_KEY", raising=False)
     secrets = [f"secret-integration-{i}" for i in range(1, 5)]
     for i, secret in enumerate(secrets, 1):
