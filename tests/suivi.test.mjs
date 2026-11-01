@@ -95,3 +95,10 @@ test('les stratégies Pushover entrent dans « Mes stratégies » sans effacer c
   assert.notEqual(etat.qwen_persistence[0][1], null);
   assert.equal(etat.claude_prudent[0][1], null);
 });
+test('repartir de zéro et retirer une stratégie arrêtée',()=>{
+  const etat={a:[[1,5],[8,null]],b:[[2,6]],c:[[3,null]]};
+  eq(c.suiviRepartir(etat,100),{a:[[100,null]],c:[[100,null]]});
+  eq(Object.keys(c.suiviRetirer(etat,'b')),['a','c']);
+  eq(c.suiviRetirer(etat,'a'),etat);              // encore cochée : gardée
+  eq(etat.b,[[2,6]]);                                 // l'original n'est pas modifié
+});
