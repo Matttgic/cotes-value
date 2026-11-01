@@ -1,4 +1,4 @@
-"""Stratégies Claude Défi 1 à 5 et Claude Fusion : règles de Claude (recherches du 1er novembre 2026), suivies dès DEBUT.
+"""Stratégies Claude Défi 1 à 6 et Claude Fusion : règles de Claude (recherches du 1er novembre 2026), suivies dès DEBUT.
 
 Famille distincte des Grok, des Défi et des Gemini Défi : ce module a ses propres règles, son propre
 dédoublonnage et ses propres clés (« claude_defi_1 », « _2 », « _3 »). Il ne modifie aucune stratégie
@@ -72,6 +72,17 @@ CLAUDE_DEFI_5 = _regle(
     cote_min=1.30, cote_max=3.0, ecart_min_pct=6.0, ecart_max_pct=30.0, delai_max_minutes=1440,
     regles="Betclic et PMU seulement · cote 1,30–3 · écart 6–30 % · 0 < délai ≤ 1 440 min · " + _COMMUN_2)
 
+# Polymarket tôt (1er novembre 2026, soir) : sur tout l'historique, les paris pris sur Polymarket à 6 h ou plus du match
+# ont un ROI positif dans les trois périodes (235 paris, +29 %), alors que ceux de moins de 6 h perdent (91 paris, −12 %).
+CLAUDE_DEFI_6 = _regle(
+    cle="claude_defi_6", nom="Claude Défi 6 · Polymarket tôt", court="ClDéfi6 Polymarket tôt",
+    references=("Polymarket",),
+    cote_min=1.30, cote_max=10.0, ecart_min_pct=3.0, ecart_max_pct=100.0,
+    delai_min_minutes=360, delai_max_minutes=2160,
+    regles="Polymarket seulement · cote 1,30–10 · écart ≥ 3 % · 360 < délai ≤ 2 160 min (de 6 h à 36 h avant le match) · "
+           "référence lue depuis ≤ 180 s · équipes non inversées · une seule mise par cote française, la première "
+           "détection qui passe la règle · mise fictive 10 € · règles de Claude")
+
 # Fusion : une détection passe si elle passe Défi 4 OU Défi 5 ; toujours une seule mise par cote française.
 CLAUDE_FUSION = _regle(
     cle="claude_fusion", nom="Claude Fusion · Défi 4 + Défi 5", court="ClFusion 4+5",
@@ -80,7 +91,8 @@ CLAUDE_FUSION = _regle(
     regles="passe Claude Défi 4 ou Claude Défi 5 · une seule mise par cote française, la première détection "
            "qui passe l'une des deux règles · mise fictive 10 € · règles de Claude")
 
-CLAUDE_DEFIS = (CLAUDE_DEFI_1, CLAUDE_DEFI_2, CLAUDE_DEFI_3, CLAUDE_DEFI_4, CLAUDE_DEFI_5, CLAUDE_FUSION)
+CLAUDE_DEFIS = (CLAUDE_DEFI_1, CLAUDE_DEFI_2, CLAUDE_DEFI_3, CLAUDE_DEFI_4, CLAUDE_DEFI_5, CLAUDE_DEFI_6,
+                CLAUDE_FUSION)
 _PAR_CLE = {c["cle"]: c for c in CLAUDE_DEFIS}
 
 
@@ -156,7 +168,8 @@ paris_claude_defi_2 = _selecteur(CLAUDE_DEFI_2)
 paris_claude_defi_3 = _selecteur(CLAUDE_DEFI_3)
 paris_claude_defi_4 = _selecteur(CLAUDE_DEFI_4)
 paris_claude_defi_5 = _selecteur(CLAUDE_DEFI_5)
+paris_claude_defi_6 = _selecteur(CLAUDE_DEFI_6)
 paris_claude_fusion = _selecteur(CLAUDE_FUSION)
 SELECTEURS = {c["cle"]: f for c, f in zip(CLAUDE_DEFIS, (
     paris_claude_defi_1, paris_claude_defi_2, paris_claude_defi_3,
-    paris_claude_defi_4, paris_claude_defi_5, paris_claude_fusion))}
+    paris_claude_defi_4, paris_claude_defi_5, paris_claude_defi_6, paris_claude_fusion))}

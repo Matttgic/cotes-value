@@ -2,7 +2,7 @@
 
 Famille proposée par **Claude** le 1er novembre 2026, sur le modèle de la [famille Défi](strategie-defi.md) et des
 [Gemini Défi](strategie-gemini-defi.md). Elle est distincte des Grok, des Défi, des Gemini Défi et de la stratégie
-« Claude (rejeu) » : module `cotes/strategie_claude_defi.py`, clés `claude_defi_1` à `claude_defi_5` et
+« Claude (rejeu) » : module `cotes/strategie_claude_defi.py`, clés `claude_defi_1` à `claude_defi_6` et
 `claude_fusion`, libellés « Claude Défi » et « Claude Fusion » sur le site. Aucune stratégie figée existante n'est modifiée.
 
 Chaque stratégie :
@@ -137,3 +137,35 @@ Défi 4 80 / 43, Défi 5 99 / 43, Fusion 143 / 65 (`tests/test_strategie_claude_
 - **Plusieurs paris d'un même match** sont corrélés ; l'intervalle regroupé par match en tient compte, pas le gain.
 - **Cotes Pinnacle figées** : avant le 25/10, le mouvement n'était pas mesuré. Une partie des paris historiques
   aurait été écartée par le garde-fou ; la CLV de ces paris est elle-même mesurée sur le même flux.
+
+## Claude Défi 6 · Polymarket tôt
+
+Ajoutée le 1er novembre 2026 au soir, même lancement (**2/11/2026 01:00 UTC**) et mêmes protections que les autres.
+
+| Stratégie | Référence | Cote française | Écart | Délai (min) |
+|---|---|---|---|---|
+| **Claude Défi 6 · Polymarket tôt** | Polymarket seulement | 1,30 – 10 | ≥ 3 % | 360 < délai ≤ 2 160 (de 6 h à 36 h) |
+
+Tronc commun : référence lue depuis ≤ 180 s, équipes non inversées, une mise de 10 € par cote française, tous sports et
+marchés.
+
+**Pourquoi** : sur tout l'historique, les paris pris sur Polymarket à 6 h ou plus du match gagnent de l'argent, alors que
+ceux de moins de 6 h en perdent (91 paris, ROI −11,8 %, malgré une CLV de +6 %). Polymarket est lu en direct et ne souffre
+pas du cache de 15 minutes de Pinnacle ; ses écarts avec les books français durent plus longtemps loin du match.
+
+| Période | N | avec CLV | CLV [IC 95 %] | Gain | ROI [IC 95 %] | Réussite |
+|---|---|---|---|---|---|---|
+| P1 (jusqu'au 18/10) | 122 | 100 | +0,23 % [−2,88 ; +3,61] | +193,3 € | +15,8 % [−18 ; +57] | 39 % |
+| P2 (jusqu'au 26/10) | 52 | 33 | +1,06 % [−3,01 ; +5,52] | +321,8 € | +61,9 % [+23 ; +105] | 67 % |
+| P3 (26/10 → 1/11) | 61 | 52 | +4,13 % [−3,13 ; +10,18] | +176,3 € | +28,9 % [−13 ; +85] | 48 % |
+| **Total** | **235** | 185 | **+1,47 % [−1,19 ; +4,06]** | **+691,4 €** | **+29,4 % [+6 ; +57]** | 47 % |
+
+Sur l'export du défi, le sélecteur retrouve 122 paris en construction et 46 en validation.
+
+### Avertissements
+
+- **La CLV est faible** (+1,5 %, intervalle qui contient zéro) : un vrai avantage se voit normalement aussi dans la CLV.
+  Le gain peut venir en partie de la chance, ou d'un effet que la clôture ne mesure pas. À confirmer en direct.
+- **La règle a été trouvée en regardant l'historique** (le seuil de 6 h vient de la comparaison avec les paris de
+  moins de 6 h) : les trois périodes ne sont pas indépendantes de ce choix. Seul le suivi à partir du 2/11 compte.
+- Le ROI d'un groupe de 50 à 120 paris à cotes moyennes est très bruité ; plusieurs paris d'un même match sont corrélés.
