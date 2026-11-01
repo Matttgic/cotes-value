@@ -1,18 +1,30 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-01T01:10:55+00:00",
+  "debut": "2026-11-01T01:15:20+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.2,
+    "secondes": 3.7,
     "ok": true
    },
+   "pmu_direct": {
+    "secondes": 7.9,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "HTTP 410"
+    ]
+   },
    "olybet": {
-    "secondes": 9.1,
+    "secondes": 9.0,
+    "ok": true
+   },
+   "pinnacle": {
+    "secondes": 19.3,
     "ok": true
    },
    "polymarket": {
-    "secondes": 24.8,
+    "secondes": 21.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,44 +32,23 @@
     ]
    },
    "netbet": {
-    "secondes": 37.6,
+    "secondes": 37.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "pinnacle": {
-    "secondes": 37.9,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 29 matchups : HTTP 403",
-     "sport 9 matchups : HTTP 403",
-     "sport 9 markets/straight : HTTP 403",
-     "sport 45 matchups : HTTP 403"
-    ]
-   },
-   "pmu_direct": {
-    "secondes": 49.1,
-    "ok": true
-   },
    "winamax_direct": {
-    "secondes": 61.2,
+    "secondes": 55.4,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.4,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "réseau",
-     "réseau",
-     "budget"
-    ]
+    "secondes": 68.0,
+    "ok": true
    },
    "unibet_direct": {
-    "secondes": 54.4,
+    "secondes": 64.5,
     "ok": true
    },
    "smarkets": {
@@ -66,15 +57,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 82.1,
+    "secondes": 38.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.7,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.1,
+    "secondes": 1.0,
     "ok": true
    }
   },
@@ -88,27 +79,28 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 294,
-   "lignes": 13574
+   "matchs": 295,
+   "lignes": 13735
   },
   "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
+   "sports": [],
+   "requetes": 0,
    "lignes": 34429,
    "erreurs": [],
-   "cache_lignes": 0,
-   "retard": []
+   "pause": true,
+   "cache_lignes": 34429,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 901,
-   "age_min_s": 76,
-   "lignes": 126528,
-   "lignes_perimees": 614,
+   "age_max_s": 715,
+   "age_min_s": 79,
+   "lignes": 127148,
+   "lignes_perimees": 2093,
    "rechauffeur": "ok",
    "rechauffeur_detail": {
     "statuts": {
@@ -119,14 +111,11 @@
     "extrait": null
    },
    "choix_prix": {
-    "reprise_403": 5,
-    "matchups_sans_speciaux": 2,
-    "head_200": 38,
-    "head_403": 3,
+    "head_200": 36,
+    "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 4,
-    "choisi_fixe": 11,
-    "reprise_403_ok": 1,
+    "choisi_autre": 6,
+    "choisi_fixe": 9,
     "sport_vide": 4
    }
   },
@@ -154,13 +143,15 @@
     "tennis_de_table",
     "volley"
    ],
-   "nouveaux_au_cycle_suivant": [],
+   "nouveaux_au_cycle_suivant": [
+    "curling"
+   ],
    "plus_chez_les_references": []
   },
   "betclic_proches": {
    "proches": 4,
    "relances": 0,
-   "proches_non_lus": 4,
+   "proches_non_lus": 0,
    "proches_vides": 0
   },
   "olybet_controle": {
@@ -169,19 +160,19 @@
    "examines": 6,
    "comparaisons": [
     {
-     "match": "Groningue – Sparta Rotterdam",
+     "match": "Club Cerro Porteno – Club Olimpia",
      "source": "Pinnacle",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.775,
-     "ecart_relatif": 0.0424,
+     "cote_olybet": 2.71,
+     "cote_reference": 2.91,
+     "ecart_relatif": 0.0687,
      "aberrant": false
     },
     {
-     "match": "Groningue – Sparta Rotterdam",
+     "match": "Club Cerro Porteno – Club Olimpia",
      "source": "PMU",
-     "cote_olybet": 1.7,
-     "cote_reference": 1.7,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 2.71,
+     "cote_reference": 2.63,
+     "ecart_relatif": 0.0304,
      "aberrant": false
     },
     {
@@ -201,19 +192,19 @@
      "aberrant": false
     },
     {
-     "match": "Excelsior – Twente",
+     "match": "Groningue – Sparta Rotterdam",
      "source": "Pinnacle",
-     "cote_olybet": 5.0,
-     "cote_reference": 5.51,
-     "ecart_relatif": 0.0926,
+     "cote_olybet": 1.7,
+     "cote_reference": 1.775,
+     "ecart_relatif": 0.0424,
      "aberrant": false
     },
     {
-     "match": "Excelsior – Twente",
+     "match": "Groningue – Sparta Rotterdam",
      "source": "PMU",
-     "cote_olybet": 5.0,
-     "cote_reference": 4.7,
-     "ecart_relatif": 0.0638,
+     "cote_olybet": 1.7,
+     "cote_reference": 1.7,
+     "ecart_relatif": 0.0,
      "aberrant": false
     }
    ],
@@ -225,115 +216,115 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Djurgardens – Degerfors IF",
+     "match": "Boca Juniors – River Plate",
      "source": "Pinnacle",
-     "cote_netbet": 1.23,
-     "cote_reference": 1.28,
-     "ecart_relatif": 0.0391,
+     "cote_netbet": 2.15,
+     "cote_reference": 2.29,
+     "ecart_relatif": 0.0611,
      "aberrant": false
     },
     {
-     "match": "Djurgardens – Degerfors IF",
+     "match": "Boca Juniors – River Plate",
      "source": "PMU",
-     "cote_netbet": 1.23,
-     "cote_reference": 1.22,
-     "ecart_relatif": 0.0082,
+     "cote_netbet": 2.15,
+     "cote_reference": 2.08,
+     "ecart_relatif": 0.0337,
      "aberrant": false
     },
     {
-     "match": "Malmö – Hammarby IF",
+     "match": "Belgrano – Barracas Central",
      "source": "Pinnacle",
-     "cote_netbet": 4.1,
-     "cote_reference": 4.55,
-     "ecart_relatif": 0.0989,
+     "cote_netbet": 1.8,
+     "cote_reference": 1.98,
+     "ecart_relatif": 0.0911,
      "aberrant": false
     },
     {
-     "match": "Malmö – Hammarby IF",
+     "match": "Belgrano – Barracas Central",
      "source": "PMU",
-     "cote_netbet": 4.1,
-     "cote_reference": 4.1,
+     "cote_netbet": 1.8,
+     "cote_reference": 1.76,
+     "ecart_relatif": 0.0227,
+     "aberrant": false
+    },
+    {
+     "match": "Newell's Old Boys – Unión de Santa Fe",
+     "source": "Pinnacle",
+     "cote_netbet": 1.9,
+     "cote_reference": 2.01,
+     "ecart_relatif": 0.0547,
+     "aberrant": false
+    },
+    {
+     "match": "Newell's Old Boys – Unión de Santa Fe",
+     "source": "PMU",
+     "cote_netbet": 1.9,
+     "cote_reference": 1.95,
+     "ecart_relatif": 0.0256,
+     "aberrant": false
+    },
+    {
+     "match": "Lanús – Gimnasia Mendoza",
+     "source": "Pinnacle",
+     "cote_netbet": 1.48,
+     "cote_reference": 1.578,
+     "ecart_relatif": 0.0621,
+     "aberrant": false
+    },
+    {
+     "match": "Lanús – Gimnasia Mendoza",
+     "source": "PMU",
+     "cote_netbet": 1.48,
+     "cote_reference": 1.48,
      "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Elfsborg – Orgryte IS",
+     "match": "Greuther Fürth – Holstein Kiel",
      "source": "Pinnacle",
-     "cote_netbet": 1.3,
-     "cote_reference": 1.372,
-     "ecart_relatif": 0.0523,
+     "cote_netbet": 2.35,
+     "cote_reference": 2.57,
+     "ecart_relatif": 0.0856,
      "aberrant": false
     },
     {
-     "match": "Elfsborg – Orgryte IS",
+     "match": "Greuther Fürth – Holstein Kiel",
      "source": "PMU",
-     "cote_netbet": 1.3,
-     "cote_reference": 1.32,
-     "ecart_relatif": 0.0152,
-     "aberrant": false
-    },
-    {
-     "match": "Häcken – Göteborg",
-     "source": "Pinnacle",
-     "cote_netbet": 1.63,
-     "cote_reference": 1.719,
-     "ecart_relatif": 0.052,
-     "aberrant": false
-    },
-    {
-     "match": "Häcken – Göteborg",
-     "source": "PMU",
-     "cote_netbet": 1.63,
-     "cote_reference": 1.68,
-     "ecart_relatif": 0.0298,
-     "aberrant": false
-    },
-    {
-     "match": "Västerås SK FK – IF Brommapojkarna",
-     "source": "Pinnacle",
-     "cote_netbet": 1.8,
-     "cote_reference": 1.885,
-     "ecart_relatif": 0.0451,
-     "aberrant": false
-    },
-    {
-     "match": "Västerås SK FK – IF Brommapojkarna",
-     "source": "PMU",
-     "cote_netbet": 1.8,
-     "cote_reference": 1.85,
-     "ecart_relatif": 0.027,
+     "cote_netbet": 2.35,
+     "cote_reference": 2.43,
+     "ecart_relatif": 0.0329,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-01T01:11:09+00:00",
-   "pinnacle_derniere_lecture": "2026-11-01T01:11:35+00:00",
-   "books_premiere_lecture": "2026-11-01T00:52:08+00:00",
-   "books_derniere_lecture": "2026-11-01T01:10:55+00:00",
-   "ecart_enveloppe_secondes": 1167.0
+   "pinnacle_premiere_lecture": "2026-11-01T01:11:35+00:00",
+   "pinnacle_derniere_lecture": "2026-11-01T01:15:36+00:00",
+   "books_premiere_lecture": "2026-11-01T01:01:28+00:00",
+   "books_derniere_lecture": "2026-11-01T01:15:21+00:00",
+   "ecart_enveloppe_secondes": 848.0
   },
   "historique_cotes": {
-   "lignes": 1207
+   "lignes": 2985
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.8
+   "age_min": 9.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 646,
    "a_verifier": 11,
    "non_conforme": 10,
-   "mesures": 54308,
+   "mesures": 54700,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 160615,
-   "mesures": 138279,
+   "ancres": 159621,
+   "mesures": 134567,
    "annotees": 19
   },
   "redecision": {
@@ -350,26 +341,20 @@
    "dernier_reglement": "2026-11-01T00:50:13+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-01T01:14:09+00:00",
+  "fin": "2026-11-01T01:17:37+00:00",
   "cotes": {
-   "francaises": 156052,
-   "pinnacle": 160957,
-   "polymarket": 26066,
+   "francaises": 157507,
+   "pinnacle": 161577,
+   "polymarket": 26078,
    "smarkets": 3823,
-   "matchbook": 13574
+   "matchbook": 13735
   },
-  "matchs_francais": 2159,
+  "matchs_francais": 2132,
   "opportunites": 27,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-10-31T08:21:40+00:00",
-   "mode": "complet",
-   "opportunites": 23,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-10-31T08:28:08+00:00",
    "mode": "complet",
@@ -1566,6 +1551,12 @@
   },
   {
    "debut": "2026-11-01T01:10:55+00:00",
+   "mode": "complet",
+   "opportunites": 27,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-01T01:15:20+00:00",
    "mode": "complet",
    "opportunites": 27,
    "nouveaux_paris": 0
