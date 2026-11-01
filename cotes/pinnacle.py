@@ -59,6 +59,12 @@ origine_cle = "guest_historique"
 _ages: dict[str, int | None] = {}
 _statuts: dict[str, str] = {}
 etat_rechauffeur = "absent"      # absent | ok | indisponible | url_refusee
+# Pourquoi le réchauffeur a échoué (code HTTP, type d'erreur, budget épuisé) et combien de temps il a pris :
+# « indisponible » regroupait tout (47 % des cycles du 30/10 au 1/11), sans pouvoir corriger la bonne cause.
+cause_rechauffeur: str | None = None
+duree_rechauffeur_s: float | None = None
+# Le réchauffeur parcourt une vingtaine de sports deux par deux avec des pauses : 8 s ne suffisaient pas.
+RECHAUFFEUR_ATTENTE_S = 25
 # Prix : la même réponse existe sous plusieurs orthographes d'URL, chacune avec son propre âge dans le
 # cache Cloudflare (mesuré le 18/10/2026 : 45 s pour l'une, ~15 min pour l'URL fixe ; cache partagé
 # entre Paris et GitHub). Un HEAD par orthographe donne l'âge sans télécharger les ~32 Mo du football.
@@ -310,11 +316,12 @@ def resume_rechauffeur() -> dict:
 
 def _demander_rechauffe(sports: dict, echeance=None) -> None:
     """Demande à Paris de remplir le cache Cloudflare. Un échec laisse les URL habituelles."""
-    global _plans, etat_rechauffeur
+    global _plans, etat_rechauffeur, cause_rechauffeur, duree_rechauffeur_s
     if echeance is None:
         echeance = _echeance_active
     _plans = {}
     etat_rechauffeur = "absent"
+    cause_rechauffeur, duree_rechauffeur_s = None, None
     url = os.environ.get("PINNACLE_RECHAUFFEUR_URL", "").strip()
     secret = os.environ.get("PINNACLE_RECHAUFFEUR_SECRET", "").strip()
     if not url or not secret:
@@ -324,24 +331,30 @@ def _demander_rechauffe(sports: dict, echeance=None) -> None:
         etat_rechauffeur = "url_refusee"
         return
     if echeance is not None and not echeance.ok():
-        etat_rechauffeur = "indisponible"
+        etat_rechauffeur, cause_rechauffeur = "indisponible", "budget_epuise"
         return
-    attente = 120 if echeance is None else max(1, min(8, echeance.timeout(8)))
+    attente = 120 if echeance is None else max(1, min(RECHAUFFEUR_ATTENTE_S, echeance.timeout(RECHAUFFEUR_ATTENTE_S)))
+    debut = time.monotonic()
     try:
         r = requests.post(url, json={"sports": [int(s) for s in sports], "key": cle_du_cycle()},
                           headers={"x-region": "eu-west-3", "x-secret": secret,
                                    "Content-Type": "application/json"}, timeout=attente)
+        duree_rechauffeur_s = round(time.monotonic() - debut, 1)
         if getattr(r, "status_code", None) != 200:
-            logger.warning("Pinnacle : réchauffeur indisponible")
+            cause_rechauffeur = f"http_{getattr(r, 'status_code', None)}"
+            logger.warning("Pinnacle : réchauffeur indisponible (%s)", cause_rechauffeur)
             etat_rechauffeur = "indisponible"
             return
         payload = r.json()
-    except (requests.RequestException, ValueError, TypeError, AttributeError):
-        logger.warning("Pinnacle : réchauffeur indisponible")
+    except (requests.RequestException, ValueError, TypeError, AttributeError) as e:
+        duree_rechauffeur_s = round(time.monotonic() - debut, 1)
+        cause_rechauffeur = "delai_depasse" if isinstance(e, requests.Timeout) else type(e).__name__
+        logger.warning("Pinnacle : réchauffeur indisponible (%s)", cause_rechauffeur)
         etat_rechauffeur = "indisponible"
         return
     if not isinstance(payload, dict):
-        logger.warning("Pinnacle : réchauffeur indisponible")
+        cause_rechauffeur = "reponse_invalide"
+        logger.warning("Pinnacle : réchauffeur indisponible (%s)", cause_rechauffeur)
         etat_rechauffeur = "indisponible"
         return
     plans: dict[int, dict] = {}
