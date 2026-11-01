@@ -144,7 +144,10 @@ Voir [règles et limites](docs/strategie-m3.md) et
 Mesures prises à l'enregistrement du pari, **descriptives, jamais appliquées** : TRJ du marché chez le bookmaker
 français (`comparaison.taux_retour`), limite de mise de Pinnacle (liquidité du marché sharp) et mouvement de la cote
 juste de Pinnacle sur 10 à 60 minutes (`cotes/mouvement.py`, ancres gardées dans le cache Actions à côté de la
-reprise). Le Bilan compare le ROI et la CLV par tranche (`simulation.bilan_filtres`). Les anciens paris n'ont pas ces
+reprise). Le pari garde aussi l'âge réel du prix Pinnacle (`age_prix_pinnacle_s`, en-tête `Age` du cache Cloudflare) :
+`lu_reference` n'est que l'heure de notre lecture. Seul le mouvement sert aussi de **garde-fou** : une cote Pinnacle de
+référence strictement inchangée depuis 10 minutes ou plus (copie de cache figée) rend l'opportunité suspecte
+(« cote Pinnacle figée »), pour Pinnacle et pour le Consensus qui la contient. Le Bilan compare le ROI et la CLV par tranche (`simulation.bilan_filtres`). Les anciens paris n'ont pas ces
 mesures : les tranches se remplissent au fil des nouveaux paris. Le Bilan montre aussi une mise **Kelly ¼** (bankroll
 fictive 1 000 €, 2 % maximum) calculée sur les mêmes paris, à côté des 10 € fixes, ainsi que la part des paris qui
 battent la clôture et le profil horaire des détections par bookmaker.
