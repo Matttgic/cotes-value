@@ -725,7 +725,7 @@ MODELE = r"""<!doctype html>
 <a class="evitement" href="#contenu">Aller au contenu</a>
 <header class="haut">
   <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv<i>.</i></span><div><h1>Cotes Value</h1><label class="signature palette-label">Mode <select id="theme-site" aria-label="Mode jour ou nuit"><option value="auto">Auto</option><option value="nuit">Nuit</option><option value="jour">Jour</option></select></label></div></div>
-    <div class="mise-a-jour"><span class="maj" id="maj"></span><span id="fraicheur" class="fraicheur"></span></div></div>
+    <div class="mise-a-jour"><span class="maj" id="maj"></span><button type="button" id="fraicheur" class="fraicheur" data-aller="controle" title="Santé du système : sources, relevés, incidents"></button></div></div>
   <div class="mode-mise" role="group" aria-label="Mode de mise des bilans"><span>Mise des bilans</span>
     <button type="button" data-mise="fixe" aria-pressed="true">Fixe 10 €</button>
     <button type="button" data-mise="kelly" aria-pressed="false">Kelly ¼</button></div>
@@ -736,7 +736,6 @@ MODELE = r"""<!doctype html>
     <button data-o="paris"><span>Paris<span class="nb" id="nb-paris"></span></span></button>
     <button data-o="bilan"><span>Bilan</span></button>
     <button data-o="notifications"><span>Notifs</span></button>
-    <button data-o="controle"><span>Santé</span></button>
   </nav>
 </header>
 <main id="contenu" tabindex="-1">
