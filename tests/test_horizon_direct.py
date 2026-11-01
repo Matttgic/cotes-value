@@ -168,6 +168,8 @@ def test_cycle_enregistre_l_horizon(monkeypatch, tmp_path):
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.olybet_direct, "collecter",
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
+    monkeypatch.setattr(cycle.netbet_direct, "collecter",
+                        lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
     monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
