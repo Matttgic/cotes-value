@@ -27,6 +27,10 @@ AFFECTATION = re.compile(r'''(?ix)
     ["']?\s*[:=]\s*["'](?P<valeur>[^\s"']{24,2048})["']''')
 JWT = re.compile(r'\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b')
 MOTS = re.compile(r'(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{24,}(?![A-Za-z0-9_-])')
+# Pré-filtres : une sous-chaîne que le motif exige. Absente du texte, le motif ne peut rien trouver (même résultat,
+# sans parcourir des Mo de JSON avec une expression coûteuse).
+MOT_CLE_AFFECTATION = re.compile(r'(?i)api[_-]?key|private[_-]?key|secret|password|access[_-]?token')
+PREALABLES = {'cle_privee_pem': '-----BEGIN ', 'cle_supabase_secrete': 'sb_secret_'}
 
 
 def empreinte(s: str) -> str:
@@ -41,14 +45,16 @@ def detections(texte: str) -> list[dict]:
                 'empreinte': empreinte(valeur)}
         trouves[(item['ligne'], item['empreinte'])] = item
     for type_, pattern in FORMATS.items():
+        if PREALABLES.get(type_, '') not in texte:
+            continue
         for m in pattern.finditer(texte):
             noter(type_, m[0], m.start())
-    for m in AFFECTATION.finditer(texte):
+    for m in (AFFECTATION.finditer(texte) if MOT_CLE_AFFECTATION.search(texte) else ()):
         v = m['valeur']
         entropie = -sum((n/len(v))*log2(n/len(v)) for n in Counter(v).values())
         if entropie >= 3.5 and not any(x in v for x in ('${', '{{', 'process.env', 'os.environ')):
             noter('affectation_sensible_possible', v, m.start('valeur'))
-    for m in JWT.finditer(texte):
+    for m in (JWT.finditer(texte) if 'eyJ' in texte else ()):
         try:
             payload = m[0].split('.')[1]
             d = json.loads(base64.urlsafe_b64decode(payload + '='*(-len(payload)%4)))
@@ -56,19 +62,29 @@ def detections(texte: str) -> list[dict]:
                 noter('jwt_service_role', m[0], m.start())
         except (ValueError, UnicodeError):
             pass
+    ecartes = set()                                  # un mot répété (identifiants, liens) n'est haché qu'une fois
     for m in MOTS.finditer(texte):
-        if empreinte(m[0]) == GUEST_SHA256:
-            noter('guest_pinnacle_historique', m[0], m.start())
+        mot = m[0]
+        if mot in ecartes:
+            continue
+        if empreinte(mot) == GUEST_SHA256:
+            noter('guest_pinnacle_historique', mot, m.start())
+        else:
+            ecartes.add(mot)
     return sorted(trouves.values(), key=lambda x: (x['ligne'], x['type']))
 
 
 def verifier_public(data, env=None) -> None:
     """Refuse une donnée privée avant écriture d'un artefact public."""
+    vus = {}                                         # nom de clé -> privé ou non (les mêmes clés reviennent des milliers de fois)
+
     def parcourir(x):
         if isinstance(x, dict):
             for k, v in x.items():
-                nom = re.sub(r'[^a-z0-9]', '', str(k).lower())
-                if nom in CHAMPS_PRIVES:
+                prive = vus.get(k)
+                if prive is None:
+                    prive = vus[k] = re.sub(r'[^a-z0-9]', '', str(k).lower()) in CHAMPS_PRIVES
+                if prive:
                     raise ValueError('Publication bloquée : champ privé')
                 parcourir(v)
         elif isinstance(x, (list, tuple)):
