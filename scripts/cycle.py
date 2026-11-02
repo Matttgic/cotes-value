@@ -45,6 +45,7 @@ from cotes import echecs  # noqa: E402
 from cotes.ecriture import ajouter_gzip  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
+from cotes.temps import instant_utc  # noqa: E402
 
 HORIZON_H = 36
 # Budgets durs : une source au-delà est sautée, le cycle de 5 min continue.
@@ -139,13 +140,7 @@ def source_bornee(module, nom: str, journal: dict, budget: float, fonction, *arg
 
 
 def _instant(valeur):
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return None
-    if getattr(t, "tzinfo", None) is None:
-        return None
-    return t.astimezone(timezone.utc)
+    return instant_utc(valeur)
 
 
 def _cache_sm(donnees: Path) -> dict:

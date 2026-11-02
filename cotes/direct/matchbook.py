@@ -23,6 +23,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import requests
+from cotes.temps import instant_utc
 
 BASE = "https://api.matchbook.com/edge/rest"
 SPORTS = {15: "football", 9: "tennis"}
@@ -65,11 +66,7 @@ def hors_consensus() -> frozenset[str]:
 
 
 def _heure(v):
-    try:
-        t = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
-        return t.astimezone(timezone.utc) if t.tzinfo else None
-    except (TypeError, ValueError):
-        return None
+    return instant_utc(v)
 
 
 def _nombre(v):

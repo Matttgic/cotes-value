@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 from .connexion import Client
+from .temps import instant_utc
 
 BASE = "https://gamma-api.polymarket.com"
 TAG_MATCHS = 100639            # étiquette « games » : événements de match (pas les paris à long terme)
@@ -46,11 +47,7 @@ def _nombre(x) -> float | None:
 
 
 def _heure(s) -> datetime | None:
-    try:
-        t = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
-        return t.astimezone(timezone.utc) if t.tzinfo is not None else None
-    except (TypeError, ValueError):
-        return None
+    return instant_utc(s)
 
 # type de marché Polymarket -> (marché commun, période)
 TYPES = {

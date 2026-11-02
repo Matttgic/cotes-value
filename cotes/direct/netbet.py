@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 from cotes.correspondance import ressemblance
 from cotes.direct.horizon import fusionner
 from cotes.pulsescore import traduire
+from cotes.temps import instant_utc
 
 ACCUEIL = "https://www.netbet.fr"
 # chemin -> sport interne. Ski, biathlon, moto, voile, sport auto : hors liste.
@@ -367,13 +368,7 @@ def _cote(valeur) -> float | None:
 
 
 def _heure(valeur):
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return None
-    if t.tzinfo is None:
-        return None
-    return t.astimezone(timezone.utc)
+    return instant_utc(valeur)
 
 
 def _equipes(event: dict) -> tuple[str, str] | None:

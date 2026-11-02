@@ -29,6 +29,7 @@ import requests
 
 from cotes.direct.horizon import fusionner, tranche
 from cotes.pulsescore import traduire
+from cotes.temps import instant_utc
 
 BASE = "https://eu1.offering-api.kambicdn.com/offering/v2018/pmusportsfr"
 PARAMS = {"lang": "fr_FR", "market": "FR", "client_id": "2", "channel_id": "1"}
@@ -109,11 +110,7 @@ _MARGE_S = 3.0
 
 
 def _heure(valeur):
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-        return t.astimezone(timezone.utc) if t.tzinfo else None
-    except (TypeError, ValueError):
-        return None
+    return instant_utc(valeur)
 
 
 def _nombre(valeur) -> float | None:
