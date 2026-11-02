@@ -149,7 +149,7 @@
       <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
       <div class="filtres filtres-strategies">
         <div class="champ"><label for="strategies-ref">Afficher</label>
-        <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option></select></div>
+        <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
         <div class="champ"><label for="strategies-tri">Classer par</label>
         <select id="strategies-tri"><option value="note" selected>Note /100 (régularité, solidité)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
@@ -1482,6 +1482,11 @@ function lignesStrategies(periode) {
     rows.push({id, nom:nomComp, reference:"comparateurs", detail:detailComp,
       graphe:"Comparateur", stats:periode === "futur" ? L.comparateurs_futur?.[id] : per[periode]});
   }
+  // Bases du Bilan : chaque référence et les paris uniques, toutes tranches, sur le suivi prospectif.
+  if (periode === "futur") for (const [ref, s] of Object.entries(L.bases_futur || {}))
+    rows.push({id:"base:"+ref, nom:ref === "Uniques" ? "Base · paris uniques" : "Base · "+ref, reference:"bases",
+      detail:(ref === "Uniques" ? "Une mise par cote française, toutes références" : "Tous les paris repérés par "+ref)
+        +" · toutes tranches · depuis le 14/10 à 14 h", graphe:"Base du bilan", stats:s});
   return rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
 }
 // Note /100 (cotes/notation.py) : rentabilité prudente /30, valeur /25, régularité /25, solidité /20.
@@ -1611,7 +1616,7 @@ function rendreStrategies() {
     tr.tabIndex = 0;
     if (tr.tagName !== "BUTTON") tr.setAttribute("role", "link");
     tr.setAttribute("aria-label", "Voir les paris de " + ligne.nom + " : " + ligne.detail);
-    const aller = () => {
+    const aller = ligne.reference === "bases" ? () => voirReference(ligne.id === "base:Uniques" ? "" : ligne.id.slice(5)) : () => {
       strategieChoisie = {id:ligne.id, nom:ligne.nom + " · " + ligne.detail, periode:periodeStrategies};
       document.getElementById("paris-horaire").value="";
       document.getElementById("paris-tri").value="";

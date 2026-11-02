@@ -605,6 +605,14 @@ def _construire(donnees: Path, sortie: Path) -> Path:
                 for nom, ids in officiels.items()}
             # Méthodes de mise comparées sur les mêmes paris réglés du suivi (rien n'est appliqué).
             uniques_suivi = premiers_par_selection(paris)
+            # Bases du Bilan (chaque référence, et les paris uniques), toutes tranches, sur le même suivi que les
+            # stratégies : la note /100 les classe avec elles.
+            debut_suivi, fin_suivi = heure(DEBUT_SUIVI), heure(maintenant)
+            suivi = [p for p in paris if heure(p.get("detecte")) and debut_suivi <= heure(p["detecte"]) < fin_suivi]
+            bases = {ref: [p for p in suivi if p.get("reference") == ref] for ref in REFERENCES}
+            bases["Uniques"] = [p for p in suivi if id(p) in uniques_suivi]
+            laboratoire["bases_futur"] = {nom: resume(rows, maintenant, incertitude=False, depuis=DEBUT_SUIVI)
+                                          for nom, rows in bases.items() if rows}
             depart = heure(DEBUT_SUIVI)
             laboratoire["mises"] = {"methodes": {k: {"nom": m[0], "regle": m[1]} for k, m in METHODES_MISE.items()},
                                     "selections": {"Paris uniques": comparer_mises(
