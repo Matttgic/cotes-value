@@ -152,6 +152,13 @@ mesures : les tranches se remplissent au fil des nouveaux paris. Le Bilan montre
 fictive 1 000 €, 2 % maximum) calculée sur les mêmes paris, à côté des 10 € fixes, ainsi que la part des paris qui
 battent la clôture et le profil horaire des détections par bookmaker.
 
+### Claude Opus · Valeur solide
+
+Stratégie de Claude, suivie dès le **3/11/2026 à 00:00 UTC**, figée au lancement : références sharp lues depuis
+≤ 180 s, Betclic, Unibet, PMU ou NetBet, cote 1,60–3,50, écart 4–15 %, match dans les 12 h, ni score exact ni
+mi-temps/fin. Choisie sur la construction (7–22/10), validée une seule fois (23/10–2/11 : 136 paris, ROI +2,9 %,
+CLV +4,2 %). [Méthode, candidates et limites](docs/strategie-claude-opus.md).
+
 ### Note des stratégies sur 100
 
 **Stratégies → Classer par « Note /100 »** (tri par défaut) : rentabilité prudente /30, valeur (CLV) /25,
