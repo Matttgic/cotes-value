@@ -13,6 +13,7 @@ from math import isfinite
 from statistics import mean
 from zoneinfo import ZoneInfo
 
+from .memo import memoriser
 from .reglement import GAIN, gain
 from .temps import instant
 
@@ -119,6 +120,7 @@ def admissible(p: dict, r: Regle, depuis: str) -> bool:
             and (heure(p["debut"])-heure(p["detecte"])).total_seconds() <= r.avance_max_h*3600)
 
 
+@memoriser
 def selectionner(paris: list[dict], r: Regle, depuis: str = DEBUT_ETUDE) -> list[dict]:
     rows = [p for p in paris if admissible(p, r, depuis)]
     rows.sort(key=lambda p: (heure(p["detecte"]), -(nombre(p.get("ecart")) or 0),

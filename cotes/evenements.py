@@ -2,7 +2,10 @@
 from collections import defaultdict
 from statistics import mean
 
+from .memo import memoriser
 
+
+@memoriser
 def identites(paris):
     from .strategies_prudentes import _cles_match
     parents, par_ligne = {}, {}

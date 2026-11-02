@@ -6,6 +6,8 @@ signifie « ancienne prise reconstruite », jamais une décision réelle invent�
 from functools import wraps
 from inspect import signature
 
+from .memo import memoriser
+
 
 def appliquer(paris, selection, cle):
     return {id(p) for p in paris if (cle in p['selections_figees']
@@ -14,6 +16,7 @@ def appliquer(paris, selection, cle):
 
 def figer_selecteur(cle):
     def decorer(f):
+        @memoriser
         @wraps(f)
         def selectionner(paris, *args, **kwargs):
             selection = f(paris, *args, **kwargs)

@@ -506,6 +506,13 @@ def enrichir_evenements(paris: list[dict], laboratoire: dict, maintenant: str):
 
 
 def construire(donnees: Path, sortie: Path) -> Path:
+    """Site complet. Les sélections de la vue à mises fixes servent aussi à la vue Kelly (cotes/memo.py)."""
+    from cotes.memo import memoriser_selections
+    with memoriser_selections():
+        return _construire(donnees, sortie)
+
+
+def _construire(donnees: Path, sortie: Path) -> Path:
     paris = fusionner_paris(_lire(donnees / "paris.json", []), lire_archives(donnees))
     journal_alertes = _lire(donnees / "notifications_diagnostic.json", {"cycles": []})
     demandes = {a["id"]: c.get("envoi_demande_le") for c in journal_alertes.get("cycles", [])
