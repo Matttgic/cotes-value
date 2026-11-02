@@ -637,6 +637,9 @@ def _construire(donnees: Path, sortie: Path) -> Path:
     paris_k = paris_en_mise_kelly(paris)
     laboratoire_k = _laboratoire(paris_k)
     _alleger_navigation(laboratoire_k)
+    # Sous-blocs identiques dans les deux mises (navigation, méthodes de mise, étude figée… environ 0,7 Mo) :
+    # publiés une seule fois. Le navigateur reprend ceux de la vue fixe (appliquerMise).
+    laboratoire_k = {k: v for k, v in laboratoire_k.items() if laboratoire.get(k) != v}
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS,
@@ -1468,7 +1471,8 @@ try { if (localStorage.getItem("cv-mise") === "kelly" && D.kelly) miseMode = "ke
 function appliquerMise(mode) {
   const K = mode === "kelly" && D.kelly ? D.kelly : null;
   miseMode = K ? "kelly" : "fixe";
-  for (const k of CLES_MISE) D[k] = K ? K[k] : D_FIXE[k];
+  // Le laboratoire Kelly ne publie que ce qui change avec la mise : le reste vient de la vue fixe.
+  for (const k of CLES_MISE) D[k] = !K ? D_FIXE[k] : k === "laboratoire" ? {...D_FIXE.laboratoire, ...K.laboratoire} : K[k];
   for (const f of fiches) {
     if (K && f.mise_kelly && f.mise_fixe) {        // la mise change aussi pour un pari encore en cours
       f.mise = f.mise_kelly;
