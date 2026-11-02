@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 
 from .strategie_commune import (nombre_fini as _nombre, preuve_de, correspondance_prouvee,
                                edge_coherent, ligne_non_quart, issue_valide)
+from .temps import instant
 
 CHATGPT = {
     "nom": "ChatGPT", "version": "1", "debut": "2026-10-14T03:15:00+00:00",
@@ -30,11 +31,7 @@ PARIS = ZoneInfo("Europe/Paris")
 
 
 def _heure(value) -> datetime | None:
-    try:
-        t = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        return t if t.tzinfo is not None else None
-    except (TypeError, ValueError):
-        return None
+    return instant(value)
 
 
 def motif_refus(p: dict, depuis: str = CHATGPT["debut"]) -> str | None:

@@ -27,6 +27,7 @@ from .strategie_jules_v2 import JULES_V2, paris_jules_v2
 from .strategie_eden import EDEN, paris_eden
 from .strategie_qwen import QWEN, paris_qwen
 from .liens import lien_match
+from .temps import date_iso
 
 MISE = 10.0
 INF = float("inf")
@@ -163,10 +164,7 @@ CLOTURE_MAX_MIN = 30
 
 
 def _heure(s) -> datetime | None:
-    try:
-        return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return None
+    return date_iso(s)
 
 
 def _nombre_fini(x) -> bool:

@@ -60,11 +60,6 @@ BUDGETS = {
     "smarkets": 60,
     "matchbook": 25,
 }
-PRES_H = 6
-RYTHME_MIN = 20
-# Les lectures lointaines ne tombent pas le même cycle : PMU toutes les 20 min,
-# Unibet 27, Betclic 34. Le premier passage (aucun tampon) reste complet.
-RYTHME_SOURCE = {"pmu": 20, "unibet": 27, "betclic": 34}
 SMARKETS_FRAIS_MIN = 15
 _journal_lock = threading.Lock()
 # minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
@@ -149,19 +144,6 @@ def _instant(valeur):
     if getattr(t, "tzinfo", None) is None:
         return None
     return t.astimezone(timezone.utc)
-
-
-def heures_ombre(nom: str, mode: str, mode_collecte: str, maintenant: datetime,
-                 rythme: dict) -> tuple[float, bool]:
-    """En shadow, les matchs à plus de 6 h ne sont relus qu'au rythme de la source."""
-    plein = 12.0 if mode_collecte == "test" else float(HORIZON_H)
-    if mode != "shadow" or mode_collecte == "test":
-        return plein, False
-    dernier = _instant(rythme.get(nom)) if isinstance(rythme, dict) else None
-    delai = RYTHME_SOURCE.get(nom, RYTHME_MIN)
-    if dernier is None or maintenant - dernier >= timedelta(minutes=delai):
-        return plein, True
-    return float(PRES_H), False
 
 
 def _cache_sm(donnees: Path) -> dict:
@@ -287,6 +269,8 @@ def noter_lecture(journal: dict, nom: str, meta: dict) -> None:
     signaler(journal, nom, list(meta.get("erreurs") or []))
     if meta.get("ok") is False and nom in journal["etapes"]:
         journal["etapes"][nom]["ok"] = False
+    if meta.get("relances") and nom in journal["etapes"]:        # demandes ratées puis relues avec succès
+        journal["etapes"][nom]["relances"] = list(meta["relances"])[:10]
 
 
 def _radar_depuis(lignes) -> list[dict]:
@@ -412,10 +396,6 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
                                                for r in (min(refs), max(refs))), 1) if refs and books else None,
         }
 
-    rythme_path = donnees / "rythme_sources.json" if donnees else None
-    rythme = lire_json(rythme_path, {}) if rythme_path else {}
-    if not isinstance(rythme, dict):
-        rythme = {}
     # Mémoire de travail (gzip, cache Actions) : absente ou illisible = démarrage à froid, lecture complète.
     horizon = memoire.lire(donnees, "horizon_direct", {}) if donnees else {}
     if not isinstance(horizon, dict):
@@ -578,8 +558,6 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         except Exception as e:  # noqa: BLE001
             journal["netbet_controle"] = {"ok": False, "erreur": type(e).__name__}
     mesures_delta(pin, lignes)
-    if rythme_path is not None:
-        ecrire_json(rythme_path, {k: rythme[k] for k in ("pmu", "unibet", "betclic") if k in rythme})
     for nom, meta in (("pmu", metas["pmu_direct"]), ("unibet", metas["unibet_direct"]),
                       ("betclic", metas["betclic_direct"]), ("netbet", net_meta)):
         bloc = meta.get("reserve") if isinstance(meta, dict) else None
@@ -662,6 +640,26 @@ def conserver_journal_reglement(etat: dict, journal: dict, effectue: bool) -> No
 
 TEMOIN_ABANDONNE = "Pinnacle brut"
 
+# Fichiers de « donnees » que plus aucun code ne lit ni n'écrit : caches d'API-Sports (plus lu depuis le 15/10/2026)
+# et de PulseScore (arrêté le 18/10), rythme de l'ancien mode « shadow », rapports de bascule PulseScore -> lecture
+# directe. Retirés à chaque sauvegarde (rien s'ils sont déjà absents) ; l'historique de la branche les garde.
+FICHIERS_OBSOLETES = ("apisports.json", "rythme_sources.json", "pulsescore_attentes.json",
+                      "betclic_comparaison.json", "pmu_comparaison.json", "unibet_comparaison.json",
+                      "winamax_comparaison.json", "docs/live_papier.json")
+
+
+def retirer_obsoletes(donnees: Path, journal: dict) -> None:
+    """Supprime les fichiers de ``FICHIERS_OBSOLETES`` présents ; jamais bloquant."""
+    retires = []
+    for nom in FICHIERS_OBSOLETES:
+        try:
+            (donnees / nom).unlink()
+            retires.append(nom)
+        except OSError:          # absent (cas normal) ou non supprimable : rien à faire
+            pass
+    if retires:
+        journal["obsoletes_retires"] = retires
+
 
 def charger_paris(donnees: Path, journal: dict) -> list[dict]:
     """paris.json sans le témoin « Pinnacle brut », abandonné : il ne servait qu'à mesurer ce que change le retrait
@@ -675,7 +673,7 @@ def charger_paris(donnees: Path, journal: dict) -> list[dict]:
 
 def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dict, mode_reglement: str) -> bool:
     # Le règlement ne lit pas Smarkets : les cotes de l'échange ne servent pas à solder un pari.
-    # 4. règlement : ESPN, LiveScore, Flashscore, NHL, API-Sports et les secours, plus les résultats
+    # 4. règlement : ESPN, LiveScore, Flashscore, NHL et les secours, plus les résultats
     #    saisis à la main. Environ une fois par heure, depuis le cron ou la collecte : voir REGLEMENT_MINUTES.
     etat_avant = lire_json(donnees / "etat.json", {})
     dernier_reglement = etat_avant.get("dernier_reglement")
@@ -722,31 +720,6 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
                 r = resultats_mod.consensus(p, enregistrements, maintenant)
                 if r:
                     resultats[p["match_id"]] = r
-        # API-Sports, pour les paris que les autres sources n'ont pas réglés (quota gratuit : 100 requêtes par
-        # jour et par sport ; réponses gardées en cache dans donnees/apisports.json)
-        cle_ap = os.environ.get("API_SPORTS_KEY", "").strip()
-        if cle_ap:
-            cache_ap = resultats_mod.elaguer_cache_apisports(lire_json(donnees / "apisports.json", {}), maintenant)
-            quota_ap = {}
-            # matchs déjà validés ailleurs mais sans le détail des périodes dont un pari a besoin (mi-temps…)
-            besoin = {p["match_id"] for p in paris if p["statut"] in ("en_cours", "a_regler")
-                      and (p["periode"] != "MATCH" or p["marche"] == "HALF_TIME_FULL_TIME")}
-            complets = {m for m, r in resultats.items() if r.get("periodes") or m not in besoin}
-            for sport, jours in resultats_mod.jours_a_lire(paris, complets, maintenant).items():
-                n = len(resultats_mod.ERREURS_APISPORTS)
-                lu = etape(f"resultats_apisports_{sport}", journal, resultats_mod.lire_apisports,
-                           cle_ap, sport, jours, cache_ap, datetime.now(timezone.utc))
-                signaler(journal, f"resultats_apisports_{sport}", resultats_mod.ERREURS_APISPORTS[n:])
-                if lu:
-                    enregistrements += lu[0]
-                    quota_ap |= lu[1]
-            ecrire_json(donnees / "apisports.json", cache_ap)
-            for p in paris:
-                if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in complets:
-                    r = resultats_mod.consensus(p, enregistrements, maintenant)
-                    if r:
-                        resultats[p["match_id"]] = r
-            journal["apisports_quota_restant"] = quota_ap
         # TheSportsDB : secours gratuit (clé publique), match par match, pour ce qu'aucune source n'a validé.
         # Seul le score final : une source seule ne règle qu'après 24 h, jamais au hockey (cotes/resultats.py).
         restants_tsdb = [p for p in paris if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats]
@@ -885,6 +858,7 @@ def main() -> int:
         paris = stockage.archiver(donnees, paris, maintenant)
         liens.completer_liens(paris)
         ecrire_json(donnees / "paris.json", paris)
+        retirer_obsoletes(donnees, journal)
         etat = lire_json(donnees / "etat.json", {})
         journal["fin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         conserver_journal_reglement(etat, journal, regler)
@@ -986,6 +960,7 @@ def main() -> int:
     paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
     liens.completer_liens(paris)                              # lien direct vers le match chez le bookmaker
     ecrire_json(donnees / "paris.json", paris)
+    retirer_obsoletes(donnees, journal)
     journal["controle_publie"] = enregistrer_controle(donnees, etat_controle, maintenant)
     ecrire_json(donnees / "opportunites_actuelles.json", sorted(opportunites, key=lambda o: -o["ecart"]))
     if opportunites:
@@ -1002,7 +977,6 @@ def main() -> int:
         "opportunites": sum(not o.get("suspect") for o in opportunites),
         "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),
         "nouveaux_paris": len(nouveaux)})
-    etat.pop("requetes_par_mois", None)     # compteur de l'ancien abonnement PulseScore
     etat.update({"dernier_cycle": journal})
     echecs.fusionner(etat, journal.get("echecs", []), maintenant)
     conserver_journal_reglement(etat, journal, regler)

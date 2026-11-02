@@ -1,5 +1,5 @@
 """Tests de non-fuite temporelle et du moteur M3."""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from cotes.strategie_m3 import M3, motif_refus_m3, paris_m3
 

@@ -15,6 +15,7 @@ from collections import Counter
 from datetime import datetime
 from math import isfinite
 from zoneinfo import ZoneInfo
+from .temps import instant
 
 JULES = {
     "nom": "JULES EDGE",
@@ -44,11 +45,7 @@ DEBUT_REJEU = "2026-10-05T00:00:00+00:00"
 
 
 def _heure(value) -> datetime | None:
-    try:
-        t = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        return t if t.tzinfo is not None else None
-    except (TypeError, ValueError):
-        return None
+    return instant(value)
 
 
 def _nombre(value) -> float | None:

@@ -228,58 +228,6 @@ def test_match_reporte_regle_a_sa_nouvelle_date_et_wnba():
     assert R.retrouver(w, [r])[0]["score"] == (101, 98)
 
 
-def test_apisports_lecture_cache_et_reglement():
-    from datetime import timedelta
-    from cotes.reglement import scores_par_periode, regler
-    basket = {"date": "2026-10-06T02:00:00+00:00", "status": {"short": "AOT"},
-              "teams": {"home": {"name": "Charnay Bourgogne Sud W"}, "away": {"name": "Lyon W"}},
-              "scores": {"home": {"quarter_1": 17, "quarter_2": 19, "quarter_3": 18, "quarter_4": 9, "over_time": 11, "total": 74},
-                         "away": {"quarter_1": 8, "quarter_2": 11, "quarter_3": 22, "quarter_4": 22, "over_time": 6, "total": 69}}}
-    hockey = {"date": "2026-10-06T02:00:00+00:00", "status": {"short": "AP"},
-              "teams": {"home": {"name": "Koprivnice"}, "away": {"name": "Technika Brno"}},
-              "scores": {"home": 5, "away": 6}, "periods": {"first": "2-1", "second": "1-2", "third": "2-2",
-                                                             "overtime": "0-0", "penalties": "1-2"}}
-    pas_fini = {**hockey, "status": {"short": "P2"}}
-
-    class Rep:
-        headers = {"x-ratelimit-requests-remaining": "97"}
-        ok = True
-        status_code = 200
-
-        def __init__(self, d):
-            self.d = d
-
-        def json(self):
-            return self.d
-
-    appels = []
-
-    class Http:
-        @staticmethod
-        def get(url, params, headers, timeout):
-            appels.append(url)
-            return Rep({"errors": [], "response": [basket] if "basketball" in url else [hockey, pas_fini]})
-
-    cache, m = {}, T + timedelta(hours=8)
-    b, quota = R.lire_apisports("cle", "basket", ["2026-10-06"], cache, m, Http)
-    h, _ = R.lire_apisports("cle", "hockey", ["2026-10-06"], cache, m, Http)
-    assert quota == {"basket": "97"} and len(h) == 1                      # match en cours ignoré
-    R.lire_apisports("cle", "basket", ["2026-10-06"], cache, m + timedelta(minutes=10), Http)
-    assert len(appels) == 2                                               # relu depuis le cache
-    # basket après prolongation : MATCH 74-69, temps réglementaire 63-63
-    p = {"sport": "basket", "domicile": "Charnay Basket Bourgogne Sud (F)", "exterieur": "Lyon ASVEL (F)",
-         "debut": "2026-10-06T02:00:00Z", "match_reference": "Charnay - Lyon"}
-    r = R.consensus(p, b, m)                                              # source fiable seule, 8 h après
-    sc = scores_par_periode("basket", r["score"], r["periodes"], r["libelles"])
-    assert sc["MATCH"] == (74, 69) and sc["TEMPS_REG"] == (63, 63) and sc["MT1"] == (36, 19)
-    # hockey aux tirs au but : score final 5-6 gardé, temps réglementaire 5-5
-    ph = {"sport": "hockey", "domicile": "Koprivnice", "exterieur": "Technika Brno", "debut": "2026-10-06T02:00:00Z"}
-    rh = R.consensus(ph, h, m)
-    sh = scores_par_periode("hockey", rh["score"], rh["periodes"], rh["libelles"])
-    assert sh["MATCH"] == (5, 6) and sh["TEMPS_REG"] == (5, 5)
-    assert regler({**ph, "marche": "RESULTAT_1N2", "periode": "TEMPS_REG", "issue": "NUL", "ligne": None}, sh) == "gagne"
-
-
 def test_cas_reels_du_7_octobre():
     from cotes.correspondance import normaliser
     # « AEK B.C. » : club de basket, pas l'équipe B
@@ -299,14 +247,6 @@ def test_cas_reels_du_7_octobre():
     E = [enr("apisports", "Balkan", "Bahcesehir Kol.", (60, 101), periodes=[(16, 24), (5, 29), (20, 29), (19, 19)], sport="basket"),
          enr("interwetten-de", "Balkan Botevgrad", "Bahcesehir Koleji", (60, 101), periodes=[(21, 53), (39, 48)], sport="basket")]
     assert R.consensus(b, E)["periodes"][0] == (16, 24)
-
-
-def test_apisports_seulement_dans_la_fenetre_du_plan_gratuit():
-    maintenant = datetime(2026, 10, 11, 12, tzinfo=timezone.utc)
-    p = lambda m, debut: {"statut": "en_cours", "match_id": m, "sport": "football", "debut": debut}
-    paris = [p("a", "2026-10-08T18:00:00Z"), p("b", "2026-10-10T18:00:00Z"),
-             p("c", "2026-10-11T09:00:00Z"), p("d", "2026-10-11T11:00:00Z")]
-    assert R.jours_a_lire(paris, set(), maintenant) == {"football": ["2026-10-10", "2026-10-11"]}
 
 
 def test_source_quelconque_seule_apres_24_heures():

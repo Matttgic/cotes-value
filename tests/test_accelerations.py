@@ -3,7 +3,6 @@ une seule lecture de paris.json, connexions gardées, HEAD bornés par l'échéa
 import json
 import threading
 
-import pytest
 
 from cotes import comparaison, connexion, correspondance as C, pinnacle as P
 from cotes.delai import Echeance

@@ -18,7 +18,7 @@ from .strategies_prudentes import VARIANTES
 
 API = "https://tapotyftgyacbnjmeovn.supabase.co/functions/v1/cv-notifications"
 AGE_PRIX_MAX_MINUTES = 5
-# Matchs à plus de 6 h : PMU, Unibet et Betclic ne sont relus qu'à leur rythme (20, 27 et 34 min, scripts/cycle.py).
+# Matchs à plus de 6 h : PMU, Unibet et Betclic les relisent par tranches tournantes (cotes/direct/horizon.py).
 # Le prix de la dernière lecture reste le bon ; la limite de 5 min ferait taire l'alerte jusqu'à la lecture suivante.
 LOINTAIN_H = 6
 AGE_PRIX_LOINTAIN_MINUTES = {"PMU": 25, "Unibet": 32, "Betclic": 39}

@@ -10,6 +10,7 @@ from .decisions import figer_selecteur
 
 from datetime import datetime
 from math import isfinite
+from .temps import instant
 
 M3 = {
     "nom": "M3 · MultiSport Value",
@@ -30,11 +31,7 @@ M3 = {
 
 
 def _heure(s) -> datetime | None:
-    try:
-        d = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
-        return d if d.tzinfo is not None else None
-    except (ValueError, TypeError):
-        return None
+    return instant(s)
 
 
 def _nombre(v) -> float | None:

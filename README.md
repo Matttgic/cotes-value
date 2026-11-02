@@ -244,7 +244,7 @@ Un appel scores coûte 2 crédits et retourne les résultats des 3 derniers jour
 Les doublons de clés n'augmentent pas le quota et les comptes restent une seule source.
 [Couverture, règles et diagnostic](docs/theodds.md).
 
-Depuis le 15/10, les workflows n'utilisent plus les comptes API-Sports suspendus.
+Depuis le 15/10, les comptes API-Sports sont suspendus ; leur lecteur a été retiré du code le 2/11.
 Le secret optionnel **`PROPLINE_API_KEY`** active un secours supplémentaire :
 scores gratuits Prop-Line, uniquement pour les marchés et compétitions compatibles.
 Cache `propline.json`, une lecture par compétition au plus chaque heure,
@@ -315,15 +315,15 @@ Les scores viennent de plusieurs sources gratuites, rapprochées par noms d'équ
 | Sport | Sources | Contrôle |
 |---|---|---|
 | Football | LiveScore, ESPN, Flashscore (secours) | 99,8 % d'accord sur 2 041 matchs déjà réglés |
-| Basket | LiveScore, ESPN, API-Sports, Flashscore (secours) | ~97 % |
-| Hockey | LiveScore, NHL officiel, ESPN, API-Sports, Flashscore (secours) | 93,6 % (les écarts sont d'anciens scores du temps réglementaire) |
+| Basket | LiveScore, ESPN, Flashscore (secours) | ~97 % |
+| Hockey | LiveScore, NHL officiel, ESPN, Flashscore (secours) | 93,6 % (les écarts sont d'anciens scores du temps réglementaire) |
 | Tennis | LiveScore, ESPN, Flashscore (secours) | 96 % |
 | Baseball, football américain | ESPN, Flashscore (secours) | baseball 32/32 |
-| Handball | API-Sports, Flashscore | 56/58 |
+| Handball | Flashscore | 56/58 (mesuré avec API-Sports, retiré) |
 | Volley | Flashscore | 18/18 retrouvés (3 absents) |
 | Rugby | Flashscore | 11/13 |
 
-Une source seule ne règle qu'après 24 h (6 h pour LiveScore, ESPN, API-Sports, NHL). `donnees/resultats_a_saisir.json`
+Une source seule ne règle qu'après 24 h (6 h pour LiveScore, ESPN, NHL). `donnees/resultats_a_saisir.json`
 liste les matchs qu'aucune source ne règle (un match vu par plusieurs bookmakers n'y figure qu'une fois, avec toutes
 ses clés dans `match_ids`), avec le modèle de saisie de `resultats_manuels.json`. Le journal du
 cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non

@@ -542,6 +542,13 @@ def _retenir(lignes: list[dict]) -> list[dict]:
     return [gardes[cle] for cle in ordre]
 
 
+def _oublier_erreurs(client, route: str) -> None:
+    """La reprise a réussi : les erreurs de cette route ne décrivent plus une lecture perdue."""
+    erreurs = getattr(client, "erreurs", None)
+    if isinstance(erreurs, list):
+        erreurs[:] = [e for e in erreurs if not str(e).startswith(f"{route} :")]
+
+
 def _noter_budget(client) -> None:
     erreurs = getattr(client, "erreurs", None)
     if isinstance(erreurs, list) and "budget" not in erreurs:
@@ -585,18 +592,32 @@ def collecter(sports: set[str] | None = None, heures: float = 36, transport=None
         client.echeance = echeance
     moment = maintenant.isoformat(timespec="seconds")
     lignes: list[dict] = []
+    relances: list[str] = []
     matchs = 0
     try:
         demandes = sports_demandes(sports)
         if not demandes:
             return [], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}
-        for ident, sport in demandes:
+        file = list(demandes)
+        relus: set = set()
+        while file:
+            ident, sport = file.pop(0)
             if echeance is not None and not echeance.ok():
                 _noter_budget(client)
                 break
-            doc = client.demander(f"sport:{ident}")
+            route = f"sport:{ident}"
+            doc = client.demander(route)
             if not isinstance(doc, dict):
+                # Échec passager de la demande principale (« sport:1 : réseau (CurlError 22) », 134 cycles du 25/10 au
+                # 2/11) : sans seconde chance, tout le football Winamax manquait au cycle. Une seule reprise, en fin
+                # de file, si le socket n'est pas hors service ; le budget reste vérifié avant chaque demande.
+                if ident not in relus and not getattr(client, "hors_service", False):
+                    relus.add(ident)
+                    file.append((ident, sport))
                 continue
+            if ident in relus:
+                _oublier_erreurs(client, route)
+                relances.append(route)
             sac = {"bets": {}, "outcomes": {}, "odds": {}}
             _fusionner(sac, doc)
             for filtre in FILTRES.get(sport, ()):
@@ -621,8 +642,10 @@ def collecter(sports: set[str] | None = None, heures: float = 36, transport=None
             ok = False
         else:
             ok = True
-        return lignes, {"ok": ok, "erreurs": list(client.erreurs),
-                        "requetes": client.requetes, "matchs": matchs}
+        meta = {"ok": ok, "erreurs": list(client.erreurs), "requetes": client.requetes, "matchs": matchs}
+        if relances:
+            meta["relances"] = relances
+        return lignes, meta
     finally:
         if propre and hasattr(client, "fermer"):
             client.fermer()

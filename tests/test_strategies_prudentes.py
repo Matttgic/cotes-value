@@ -3,7 +3,7 @@ from copy import deepcopy
 from datetime import datetime,timezone
 import json,re
 
-from cotes.convergence import paris_convergence,selections
+from cotes.convergence import paris_convergence
 from cotes.strategies_prudentes import (CLAUDE_PRUDENT,CONVERGENCE_3,DEBUT_VARIANTES,
                                         selections_prudentes,selection_unique)
 from tests.test_strategie_jules_v2 import pari,ref

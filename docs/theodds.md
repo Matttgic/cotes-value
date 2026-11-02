@@ -3,9 +3,10 @@
 Secrets GitHub Actions : `THE_ODDS_API_KEY_1`, `THE_ODDS_API_KEY_2`,
 `THE_ODDS_API_KEY_3`, `THE_ODDS_API_KEY_4`. Ajouter seulement les comptes disponibles.
 Les valeurs ne doivent figurer ni dans le code, ni dans les fichiers de données.
-Le workflow `reglement.yml` les transmet au moteur ; la collecte des cotes ne les utilise pas.
+Le workflow `reglement.yml` et l'étape de règlement de `collecte.yml` les transmettent au moteur ;
+la lecture des cotes ne les reçoit pas.
 
-Le moteur interroge d'abord PulseScore, ESPN puis API-Sports. Il ne demande à
+Le moteur interroge d'abord ESPN, LiveScore, la NHL officielle, Flashscore et TheSportsDB. Il ne demande à
 The Odds API que les scores des matchs encore sans résultat accepté, commencés depuis
 au moins 6 heures. `/sports?all=true`, gratuit, vérifie chaque clé au premier usage et
 chaque nouveau mois. Une clé refusée est retestée au plus une fois par heure.

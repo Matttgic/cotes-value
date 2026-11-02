@@ -24,7 +24,7 @@ import gzip
 import hashlib
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 from .marches import cle

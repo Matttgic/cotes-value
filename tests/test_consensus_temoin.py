@@ -1,5 +1,4 @@
 """Consensus équipondéré en probabilités, et refus des opportunités non pariables."""
-from datetime import datetime,timezone
 import pytest
 from cotes.comparaison import comparer
 from cotes.marches import cle

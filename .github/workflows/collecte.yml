@@ -121,14 +121,7 @@ jobs:
           PINBOOK_LIMITE_JOUR: ${{ vars.PINBOOK_LIMITE_JOUR || '16' }}
           PINBOOK_PAUSE_MIN: ${{ vars.PINBOOK_PAUSE_MIN || '60' }}
           PINBOOK_SPORTS: ${{ vars.PINBOOK_SPORTS || 'football,tennis,basket' }}
-          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
-          THE_ODDS_API_KEY_1: ${{ secrets.THE_ODDS_API_KEY_1 }}
-          THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
-          THE_ODDS_API_KEY_3: ${{ secrets.THE_ODDS_API_KEY_3 }}
-          THE_ODDS_API_KEY_4: ${{ secrets.THE_ODDS_API_KEY_4 }}
-          # Le cron horaire peut être retardé de plusieurs heures : le cycle prend le relais
-          # si le dernier règlement date d'au moins 55 min. Même verrou « donnees ».
-          REGLEMENT: auto
+          # Pas de clé de scores ici (The Odds API, Prop-Line) : cette étape ne règle jamais (--reglement non).
           MODE_COLLECTE: ${{ inputs.mode || vars.MODE_COLLECTE || 'complet' }}
           # Smarkets (quota de 60 requêtes par minute, lecture en plusieurs passages) ; variable de dépôt SMARKETS_COLLECTE=non pour couper
           SMARKETS_COLLECTE: ${{ vars.SMARKETS_COLLECTE || 'oui' }}
@@ -174,6 +167,8 @@ jobs:
           path: envoyes
           key: envoyes-${{ github.run_id }}-${{ github.run_attempt }}
 
+      # Le cron horaire du règlement peut être retardé de plusieurs heures : cette étape prend le relais si le
+      # dernier règlement date d'au moins 55 min (--reglement auto). Même verrou « donnees ».
       - name: Règlement après les alertes et construction du site
         env:
           MEMOIRE_CHEMIN: memoire

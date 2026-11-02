@@ -1,5 +1,4 @@
 """Contradictions de l'audit : règles exactes, cache conservé et diagnostics visibles."""
-from copy import deepcopy
 from datetime import timedelta
 import pytest
 from cotes import resultats as R
@@ -77,51 +76,6 @@ def test_sources_sans_date_ignorees_et_journal_borne_sans_erreur_espn():
     R.reinitialiser_ignores()
 
 
-class Rep:
-    def __init__(self,d=None,code=200,invalide=False):
-        self.d,self.status_code,self.invalide=d,code,invalide
-        self.ok=200<=code<400;self.headers={};self.json_lu=False
-    def json(self):
-        self.json_lu=True
-        if self.invalide:
-            raise ValueError('JSON invalide')
-        return self.d
-
-
-class Http:
-    def __init__(self,rep):self.rep=rep
-    def get(self,*args,**kwargs):return self.rep
-
-
-def cache_valide():
-    r=enr('apisports','Honduras','Jamaica',(2,1))
-    return {'football|2026-10-06':{'lu':(T-timedelta(hours=7)).isoformat(),
-            'matchs':[{**r,'debut':r['debut'].isoformat()}]}}
-
-
-@pytest.mark.parametrize('rep',[
-    Rep({'response':[],'results':0},500),Rep({'response':[],'results':0},429),
-    Rep(invalide=True),Rep([]),Rep({}),Rep({'response':None}),
-    Rep({'errors':{'requests':'quota dépassé'},'response':[],'results':0}),
-    Rep({'response':[]}),Rep({'response':[{'fixture':{'status':{'short':'FT'}}}]}),
-    Rep({'response':[None]}),Rep({'response':[],'results':0})])
-def test_echec_ou_vide_contradictoire_preserve_cache_et_retourne_ancien_score(rep):
-    cache=cache_valide();avant=deepcopy(cache);n=len(R.ERREURS_APISPORTS)
-    out,_=R.lire_apisports('cle-factice','football',['2026-10-06'],cache,T+timedelta(hours=8),Http(rep))
-    assert cache==avant and out[0]['score']==(2,1)
-    assert len(R.ERREURS_APISPORTS)==n+1
-    if not rep.ok:
-        assert not rep.json_lu
-        assert f'HTTP {rep.status_code}' in R.ERREURS_APISPORTS[-1]
-
-
-def test_vide_explicitement_confirme_cache_si_aucune_donnee_precedente():
-    cache={}
-    out,_=R.lire_apisports('cle-factice','football',['2026-10-06'],cache,T,Http(Rep({'response':[],'results':0})))
-    assert out==[] and cache['football|2026-10-06']['matchs']==[]
-    assert cache['football|2026-10-06']['lu']==T.isoformat(timespec='seconds')
-
-
 @pytest.mark.parametrize('sport,score,attendu', [
     ('basket',(101,89),True),('basket',(12,9),False),('basket',(20,18),False),
     ('basket',(45,28),False),('volley',(3,1),True),('baseball',(3,3),False),
@@ -158,19 +112,3 @@ def test_score_json_normalise_sans_muter_la_source():
     assert R.consensus(PARI,[r],T+timedelta(days=2))['score']==(2,0)
     assert r['score']==[2,0]
 
-
-def fixture_football(date=True):
-    return {'fixture':{'status':{'short':'FT'},**({'date':T.isoformat()} if date else {})},
-            'teams':{'home':{'name':'Honduras'},'away':{'name':'Jamaica'}},
-            'goals':{'home':3,'away':1}}
-
-
-def test_cache_actualise_si_nouveau_final_valide_et_pas_si_son_heure_manque():
-    cache=cache_valide();avant=deepcopy(cache)
-    R.lire_apisports('cle-factice','football',['2026-10-06'],cache,T+timedelta(hours=8),
-                    Http(Rep({'response':[fixture_football(date=False)],'results':1})))
-    assert cache==avant
-    out,_=R.lire_apisports('cle-factice','football',['2026-10-06'],cache,T+timedelta(hours=8),
-                          Http(Rep({'response':[fixture_football()],'results':1})))
-    assert out[0]['score']==(3,1)
-    assert cache['football|2026-10-06']['lu']==(T+timedelta(hours=8)).isoformat(timespec='seconds')

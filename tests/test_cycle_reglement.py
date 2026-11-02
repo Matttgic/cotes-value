@@ -54,7 +54,9 @@ def test_collecte_et_cron_partagent_delai_verrou_et_cles():
     racine=Path(__file__).resolve().parents[1]
     collecte=(racine/'.github/workflows/collecte.yml').read_text()
     reglement=(racine/'.github/workflows/reglement.yml').read_text()
-    assert 'REGLEMENT: auto' in collecte and 'REGLEMENT: non' not in collecte
+    # La lecture des cotes ne règle jamais ; l'étape suivante de la collecte reprend le règlement en retard.
+    assert '--reglement non --sans-site' in collecte
+    assert '--seulement-reglement --reglement auto' in collecte
     assert '--seulement-reglement --reglement auto' in reglement
     for texte in (collecte,reglement):
         assert 'group: donnees' in texte

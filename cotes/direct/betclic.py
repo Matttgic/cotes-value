@@ -799,11 +799,11 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
     candidats = []
     vus: set = set()
     lectures = 0
-    for sport, slug in demandes:
+    for sport, chemin_sport in demandes:
         if not client._temps() or client._bloque:
             break
         avant = client.requetes
-        for match in _lire_pages(client, slug, maintenant, heures):
+        for match in _lire_pages(client, chemin_sport, maintenant, heures):
             cle = (sport, match.get("id"))
             if cle in vus:
                 continue
@@ -948,10 +948,10 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
     moment = maintenant.isoformat(timespec="seconds")
     candidats = []
     lectures = 0
-    for sport, slug in demandes:
+    for sport, chemin_sport in demandes:
         if not client._temps():
             break
-        trame = client.poster(LISTE, _charge_liste(slug, 0))
+        trame = client.poster(LISTE, _charge_liste(chemin_sport, 0))
         if trame:
             lectures += 1
         if client._bloque:

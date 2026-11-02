@@ -6,7 +6,7 @@ from cotes import comparaison, simulation
 from cotes.correspondance import ressemblance
 from cotes.decisions import figer_nouveaux
 from cotes.strategie_m3 import paris_m3
-from cotes.strategie_m3_structure import paris_m3_structure, M3_STRUCTURE
+from cotes.strategie_m3_structure import paris_m3_structure
 from tests.test_strategie_m3 import pari
 
 NOW = datetime(2026,10,17,2,tzinfo=timezone.utc)
