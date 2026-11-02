@@ -14,6 +14,7 @@ from statistics import mean
 from zoneinfo import ZoneInfo
 
 from .memo import memoriser
+from .notation import noter
 from .reglement import GAIN, gain
 from .temps import instant
 
@@ -210,7 +211,10 @@ def resume(rows: list[dict], connu_avant: str, incertitude: bool = True, depuis:
             "profit_journalier": {d: round(g, 2) for d, g in sorted(par_jour.items())},
             "jours_positifs": sum(g > 0 for g in par_jour.values()), "jours_actifs": len(par_jour),
             "mise_max_jour": max(exposition.values(), default=0),
-            "reglements_manuels": sum((p.get("preuve_reglement") or {}).get("origine") != "automatique" for p in regles)}
+            "reglements_manuels": sum((p.get("preuve_reglement") or {}).get("origine") != "automatique" for p in regles),
+            # note sur 100 (cotes/notation.py) : rentabilité prudente, valeur, régularité, solidité
+            "note": noter(gains, [mise_de(p) for p in regles], [p["cote"] for p in regles], cs,
+                          list(par_jour.values()), dd)}
 
 
 def evaluer(rows: list[dict], releve: str) -> dict:

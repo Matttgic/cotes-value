@@ -152,6 +152,12 @@ mesures : les tranches se remplissent au fil des nouveaux paris. Le Bilan montre
 fictive 1 000 €, 2 % maximum) calculée sur les mêmes paris, à côté des 10 € fixes, ainsi que la part des paris qui
 battent la clôture et le profil horaire des détections par bookmaker.
 
+### Note des stratégies sur 100
+
+**Stratégies → Classer par « Note /100 »** (tri par défaut) : rentabilité prudente /30, valeur (CLV) /25,
+régularité /25, solidité /20. Elle préfère une stratégie régulière et solide à un gros gain aléatoire.
+[Formule et lecture](docs/notation-strategies.md).
+
 ### Fiabilité des cotes justes selon la cote
 
 [Étude de calibration](docs/etude-longues-cotes.md) (2/11/2026, 3 689 paris uniques réglés) : jusqu'à une cote de 5,
