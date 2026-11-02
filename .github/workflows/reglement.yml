@@ -29,8 +29,8 @@ jobs:
       queue: max
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -76,8 +76,9 @@ jobs:
           done
           exit 1
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
+          include-hidden-files: true      # .nojekyll, comme la v3
           path: site
           name: github-pages-${{ github.run_attempt }}
 
@@ -103,7 +104,7 @@ jobs:
             echo "publier=false" >> "$GITHUB_OUTPUT"
             echo "Publication ignorée : un code plus récent est disponible. Les règlements sont conservés."
           fi
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v5
         if: steps.fraicheur.outputs.publier == 'true'
         with:
           artifact_name: ${{ needs.reglement.outputs.artefact }}

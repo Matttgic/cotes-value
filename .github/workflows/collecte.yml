@@ -48,8 +48,8 @@ jobs:
       - name: Heure de début
         id: debut
         run: echo "debut=$(date +%s)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -68,7 +68,7 @@ jobs:
       # Dernier bon état de Pinnacle et Polymarket (cotes/reprise.py) : quelques Mo en gzip, gardés dans le cache
       # Actions et non dans la branche « donnees ». Absent (premier cycle, cache évincé) : aucune reprise.
       - name: Restaurer le dernier bon état des références
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: reprise
           key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
@@ -79,7 +79,7 @@ jobs:
       # « donnees » (elle grossissait de 256 Mo par jour). Absente (premier cycle, cache évincé après 7 jours sans
       # accès ou au-delà de 10 Go) : démarrage à froid, le cycle relit tout et repart de controle.json (publication horaire).
       - name: Restaurer la mémoire de travail
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: memoire
           key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
@@ -89,7 +89,7 @@ jobs:
       # échoue, ces fichiers seraient perdus et les alertes renvoyées au cycle suivant : une copie est aussi gardée
       # dans le cache Actions (toujours sauvegardée), fusionnée ici avec la version de la branche (union des ids).
       - name: Restaurer les alertes déjà envoyées
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: envoyes
           key: envoyes-${{ github.run_id }}-${{ github.run_attempt }}
@@ -162,7 +162,7 @@ jobs:
       - name: Sauver les alertes déjà envoyées
         if: always() && hashFiles('envoyes/*.json') != ''
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: envoyes
           key: envoyes-${{ github.run_id }}-${{ github.run_attempt }}
@@ -209,7 +209,7 @@ jobs:
       - name: Sauver le dernier bon état des références
         if: always() && hashFiles('reprise/derniere_lecture.json.gz') != ''
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: reprise
           key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
@@ -222,13 +222,14 @@ jobs:
       - name: Sauver la mémoire de travail
         if: always() && steps.enregistrer.outcome == 'success' && hashFiles('memoire/*.json.gz') != ''
         continue-on-error: true
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: memoire
           key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
+          include-hidden-files: true      # .nojekyll, comme la v3
           path: site
           name: github-pages-${{ github.run_attempt }}
 
@@ -256,7 +257,7 @@ jobs:
           fi
       - name: Publier le site (GitHub Pages)
         if: steps.fraicheur.outputs.publier == 'true'
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
         with:
           artifact_name: ${{ needs.cycle.outputs.artefact }}
 
