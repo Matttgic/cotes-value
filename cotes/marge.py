@@ -8,12 +8,19 @@ from __future__ import annotations
 import math
 
 
-def proba_justes(cotes: list[float]) -> list[float] | None:
-    """Probabilités sans marge d'un marché complet (toutes ses issues). None si invalide."""
+def proba_justes(cotes: list[float], complet: bool = True) -> list[float] | None:
+    """Probabilités sans marge d'un marché (toutes ses issues si ``complet``). None si invalide.
+
+    ``complet=False`` : les issues lues peuvent n'être qu'une partie du marché (score exact, mi-temps/fin…).
+    Une somme des 1/cote inférieure à 1 y signale des issues absentes, pas une absence de marge : les prix
+    cotés sont gardés tels quels (marge comprise, donc prudents), sans renormalisation à la hausse. Au-dessus
+    de 1, la méthode « power » donne toujours p ≤ 1/cote : la cote juste ne descend jamais sous la cote lue."""
     if len(cotes) < 2 or any((c is None) or not math.isfinite(c) or c <= 1.0 for c in cotes):
         return None
     inv = [1.0 / c for c in cotes]
-    if sum(inv) < 1.0:            # marché sans marge (ou incomplet) : on normalise simplement
+    if sum(inv) < 1.0:            # marché sans marge : on normalise simplement ; incomplet : prix cotés
+        if not complet:
+            return inv
         s = sum(inv)
         return [x / s for x in inv]
     k = 1.0

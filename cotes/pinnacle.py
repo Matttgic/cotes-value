@@ -778,7 +778,13 @@ def _ajouter_proba_justes(lignes: list[dict]) -> None:
                          ("match_id", "marche", "periode", "ligne", "joueur")) for l in g)
         if not valides:
             _erreur("marché rejeté : cotes ou issues incohérentes")
-        p = proba_justes(cotes) if valides else None
+        # Issues connues et toutes présentes (1N2, vainqueur, handicap, totaux, spéciaux à 2 ou 3 issues), ou
+        # liste ouverte (score exact, mi-temps/fin…) qui peut n'être qu'une partie du marché. Pinnacle a toujours
+        # une marge : sur une liste ouverte, Σ 1/cote < 1 veut dire des issues absentes, et la renormaliser à la
+        # hausse inventait des écarts (Durban City – Amazulu, 12/10/2026 : 0-3 coté 28,63, « juste » 9,62).
+        complet = attendues is not None or marche.startswith("SPECIAL:3-Way Handicap") or marche in (
+            "SPECIAL:Draw No Bet", "SPECIAL:Both Teams To Score?")
+        p = proba_justes(cotes, complet=complet) if valides else None
         m = marge(cotes) if p else None
         for l, pi in zip(g, p or [None] * len(g)):
             l["proba_juste"] = round(pi, 6) if pi else None

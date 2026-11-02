@@ -874,3 +874,12 @@ def test_rechauffeur_note_la_cause_et_attend_25_s_dans_le_budget(monkeypatch):
     assert P.cause_rechauffeur=='http_503'
     P._demander_rechauffe({29:'football'}, echeance=Echeance(0))
     assert P.cause_rechauffeur=='budget_epuise'
+
+
+def test_score_exact_incomplet_garde_les_prix_cotes():
+    """Liste ouverte d'issues (score exact) avec Σ 1/cote < 1 : la cote juste ne descend pas sous la cote Pinnacle."""
+    rows = [{"cle_marche": "cs", "marche": "SPECIAL:Correct Score", "issue": i, "cote": c, "match_id": 1,
+             "periode": "MATCH", "ligne": None, "joueur": None}
+            for i, c in (("0-3", 28.63), ("3-2", 32.67), ("2-2", 16.61), ("4-0", 48.09))]
+    P._ajouter_proba_justes(rows)
+    assert [l["cote_juste"] for l in rows] == pytest.approx([28.63, 32.67, 16.61, 48.09], abs=1e-3)
