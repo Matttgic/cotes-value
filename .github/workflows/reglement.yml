@@ -18,10 +18,28 @@ permissions:
   id-token: write
 
 jobs:
+  # Serveur « en direct » actif (docs/serveur-direct.md) : il règle lui-même les paris ; GitHub ne doit pas écrire
+  # les mêmes paris en même temps.
+  garde:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      serveur: ${{ steps.serveur.outputs.actif }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: scripts/serveur_actif.py
+          sparse-checkout-cone-mode: false
+      - id: serveur
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "actif=$(python3 scripts/serveur_actif.py --depot "$GITHUB_REPOSITORY")" >> "$GITHUB_OUTPUT"
+
   reglement:
+    needs: garde
     outputs:
       artefact: github-pages-${{ github.run_attempt }}
-    if: github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui'
+    if: needs.garde.outputs.serveur != 'oui' && (github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     concurrency:

@@ -127,12 +127,12 @@ def test_fusion_ignore_les_fichiers_illisibles(tmp_path):
 
 def script_relance():
     steps = etapes("collecte.yml", "relancer")
-    run = steps[0]["run"]
+    run = next(s["run"] for s in steps if "run" in s)
     return (run.replace("${{ github.run_id }}", "42").replace("${{ github.ref_name }}", "branche")
                .replace("${{ vars.MODE_COLLECTE || 'complet' }}", "complet"))
 
 
-def relancer(tmp_path, etat="active", run_list="0", dispatch="ok"):
+def relancer(tmp_path, etat="active", run_list="0", dispatch="ok", battement=""):
     """Exécute le vrai script du job ``relancer`` avec un faux ``gh`` ; ``dispatch`` : ok, 422, 500 ou 404."""
     journal = tmp_path / "appels"
     gh = tmp_path / "gh"
@@ -149,6 +149,7 @@ case "$1 $2" in
   "api repos/test/repo/actions/workflows/collecte.yml") echo "{etat}";;
   "api repos/test/repo/actions/runs/42") echo "2026-10-30T00:00:00Z";;
   "run list") echo "{run_list}";;
+  "api repos/test/repo/contents/serveur_direct.json?ref=donnees") echo "{battement}";;
   "workflow run") {sorties[dispatch]};;
 esac
 """)
@@ -267,3 +268,16 @@ def test_clone_partiel_impossible_repli_sur_le_clone_complet(tmp_path):
     assert r.returncode == 0, r.stderr
     assert "Clone partiel impossible" in r.stdout
     assert (tmp_path / "donnees/cotes/2026-10-01.jsonl.gz").read_text() == "ancien"
+
+
+def test_pas_de_relance_quand_le_serveur_en_direct_tient_la_collecte(tmp_path):
+    import base64
+    from datetime import datetime, timezone
+    frais = json.dumps({"vu": datetime.now(timezone.utc).isoformat(), "actif": True})
+    r, appels = relancer(tmp_path, battement=base64.b64encode(frais.encode()).decode())
+    assert r.returncode == 0 and "Serveur en direct actif" in r.stdout
+    assert not any(a.startswith("workflow run") for a in appels)
+    arret = json.dumps({"vu": datetime.now(timezone.utc).isoformat(), "actif": False})
+    r, appels = relancer(tmp_path / "x" if (tmp_path / "x").mkdir() is None else tmp_path,
+                         battement=base64.b64encode(arret.encode()).decode())
+    assert "Cycle suivant lancé." in r.stdout                  # arrêt propre du serveur : GitHub reprend
