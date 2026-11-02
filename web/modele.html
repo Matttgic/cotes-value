@@ -755,7 +755,9 @@ function appliquerMise(mode) {
   const K = mode === "kelly" && D.kelly ? D.kelly : null;
   miseMode = K ? "kelly" : "fixe";
   // Le laboratoire Kelly ne publie que ce qui change avec la mise : le reste vient de la vue fixe.
-  for (const k of CLES_MISE) D[k] = !K ? D_FIXE[k] : k === "laboratoire" ? {...D_FIXE.laboratoire, ...K.laboratoire} : K[k];
+  for (const k of CLES_MISE) D[k] = !K ? D_FIXE[k] : k === "laboratoire" ? {...D_FIXE.laboratoire, ...K.laboratoire}
+    : k === "paris_segments" && !K.paris_segments ? (D_FIXE.paris_segments || []).map(r => r.length > 12 ? [...r.slice(0, 6), r[12], ...r.slice(7, 12)] : r)
+    : K[k];
   for (const f of fiches) {
     if (K && f.mise_kelly && f.mise_fixe) {        // la mise change aussi pour un pari encore en cours
       f.mise = f.mise_kelly;
