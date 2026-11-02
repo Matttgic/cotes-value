@@ -151,7 +151,7 @@
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
         <div class="champ"><label for="strategies-tri">Classer par</label>
-        <select id="strategies-tri"><option value="note" selected>Note /100 (régularité, solidité)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
+        <select id="strategies-tri"><option value="note" selected>Note /100 (régularité, solidité)</option><option value="progression">Progression de la note (7 jours)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
       <p class="aide" id="strategies-total"></p>
       <details class="mode-emploi"><summary>Comment la note /100 est calculée</summary><p class="aide">Elle préfère une stratégie
@@ -1490,12 +1490,27 @@ function lignesStrategies(periode) {
   return rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
 }
 // Note /100 (cotes/notation.py) : rentabilité prudente /30, valeur /25, régularité /25, solidité /20.
+// Évolution de la note depuis la veille et sur 7 jours (notes_historique.json, mise fixe, suivi prospectif).
+function evolutionNote(id, total) {
+  const R = periodeStrategies === "futur" && miseMode !== "kelly" ? (D.notes_reperes || {}) : {};
+  const jj = j => j ? j.slice(8, 10) + "/" + j.slice(5, 7) : "";
+  return [["veille", "depuis le "], ["semaine", "depuis le "]].map(([cle, libelle]) => {
+    const avant = R[cle]?.notes?.[id];
+    if (avant == null || total == null || (cle === "semaine" && R.veille?.jour === R.semaine?.jour)) return "";
+    const d = total - avant;
+    return `<small class="${d > 0 ? "pos" : d < 0 ? "neg" : ""}">${d > 0 ? "▲ +" + d : d < 0 ? "▼ −" + (-d) : "="} ${libelle}${jj(R[cle].jour)}</small>`;
+  }).join("");
+}
+const progressionNote = r => {
+  const R = D.notes_reperes || {}, ref = R.semaine || R.veille, avant = ref?.notes?.[r.id];
+  return avant == null || r.stats?.note?.total == null ? null : r.stats.note.total - avant;
+};
 const sousNotes = n => ["R", "V", "G", "S"].map((l, i) => l + " " + String([n.rentabilite, n.valeur, n.regularite, n.solidite][i]).replace(".", ",")).join(" · ");
-function celluleNote(n) {
+function celluleNote(n, id) {
   if (!n) return '<span class="doux">—</span><small>moins de 10 paris réglés</small>';
   const ton = n.total >= 70 ? "pos" : n.total < 40 ? "neg" : "";
   return `<b class="note-strategie ${ton}">${n.total}</b>${n.provisoire ? "<small>provisoire (&lt; 50 réglés)</small>" : ""}`
-    + `<small title="Rentabilité prudente /30 · Valeur /25 · Régularité /25 · Solidité /20">${sousNotes(n)}</small>`;
+    + `<small title="Rentabilité prudente /30 · Valeur /25 · Régularité /25 · Solidité /20">${sousNotes(n)}</small>` + evolutionNote(id, n.total);
 }
 function rendreStrategies() {
   const lignesOuvertes=new Set([...document.querySelectorAll("#strategies-mobile > details[open]")].map(d=>d.id));
@@ -1521,6 +1536,7 @@ function rendreStrategies() {
   rows.sort((a,b) => {
     if (tri === "nom") return a.nom.localeCompare(b.nom,"fr") || a.id.localeCompare(b.id);
     if (tri === "valeur") return (a.valeur ?? Infinity) - (b.valeur ?? Infinity) || (b.stats?.clv ?? -Infinity) - (a.stats?.clv ?? -Infinity) || a.id.localeCompare(b.id);
+    if (tri === "progression") return (progressionNote(b) ?? -1e9) - (progressionNote(a) ?? -1e9) || (b.stats?.note?.total ?? -1) - (a.stats?.note?.total ?? -1) || a.id.localeCompare(b.id);
     if (tri === "note") return (b.stats?.note?.total ?? -1) - (a.stats?.note?.total ?? -1) || (b.stats?.regles ?? 0) - (a.stats?.regles ?? 0) || a.id.localeCompare(b.id);
     const av = tri === "reussite" ? a.reussite : a.stats[tri], bv = tri === "reussite" ? b.reussite : b.stats[tri];
     return (bv ?? -Infinity) - (av ?? -Infinity) || a.id.localeCompare(b.id);
@@ -1598,7 +1614,7 @@ function rendreStrategies() {
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Note<small>/100</small></th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
     return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
-      <td>${celluleNote(s.note)}</td>
+      <td>${celluleNote(s.note, r.id)}</td>
       <td>${s.paris}<small>${s.regles} réglés (${s.evenements_regles ?? "—"} matchs) · ${s.attente} en attente</small></td><td>${s.gagnes}</td><td>${s.perdus}</td>
       <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}</td>
       <td class="${signe(s.clv)}">${pp(s.clv)}<small>${s.clv_n || 0}/${s.regles} tickets mesurés</small><small>Par match ${pp(s.clv_evenement)} · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"}</small></td>

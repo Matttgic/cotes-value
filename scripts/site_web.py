@@ -630,6 +630,11 @@ def _construire(donnees: Path, sortie: Path) -> Path:
         return laboratoire
 
     laboratoire = _laboratoire(paris)
+    # Classement vivant : notes du jour gardées dans « donnees », progression depuis la veille et sur 7 jours.
+    from cotes import historique_notes
+    instant_notes = datetime.now(timezone.utc)
+    notes_reperes = historique_notes.reperes(historique_notes.mettre_a_jour(
+        donnees, historique_notes.notes_du_laboratoire(laboratoire), instant_notes), instant_notes)
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     actuelles = valider_actuelles(actuelles, paris, retenus)
@@ -655,7 +660,7 @@ def _construire(donnees: Path, sortie: Path) -> Path:
         f[:6] == k[:6] and f[7:] == k[7:] for f, k in zip(segments_fixe, segments_k))
     if segments_fusionnes:
         segments_fixe = [f + [k[6]] for f, k in zip(segments_fixe, segments_k)]
-    data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
+    data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:], "notes_reperes": notes_reperes,
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS,
                               "details": notifications_mod.DETAILS,

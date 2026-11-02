@@ -30,6 +30,14 @@ linéaire bornée : 0 sous le seuil bas, le maximum au-dessus du seuil haut.
 - La cote moyenne pénalise les longues cotes : au-delà de 5, les cotes justes surestiment la probabilité
   d'environ moitié (docs/etude-longues-cotes.md).
 
+## Mise à jour et progression
+
+La note est recalculée à chaque cycle (environ toutes les 5 minutes), pour chaque période et chaque mise. Le
+dernier calcul de chaque jour (heure de Paris, mise fixe, suivi prospectif) est gardé 60 jours dans
+`notes_historique.json` (branche `donnees`, `cotes/historique_notes.py`). La page Stratégies montre l'évolution
+depuis la veille et sur 7 jours (▲ / ▼), et propose le tri « Progression de la note (7 jours) ». Les bases du
+Bilan (chaque référence, les paris uniques) sont notées et classées avec les stratégies.
+
 ## Lecture
 
 - 70 et plus : rentable avec une marge de sécurité, régulière, sur un échantillon sérieux.
