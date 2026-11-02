@@ -1,18 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-02T19:08:10+00:00",
+  "debut": "2026-11-02T19:12:51+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.2,
+    "secondes": 2.3,
     "ok": true
    },
    "olybet": {
-    "secondes": 4.0,
+    "secondes": 4.3,
     "ok": true
    },
    "polymarket": {
-    "secondes": 8.0,
+    "secondes": 9.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,15 +20,15 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 13.6,
+    "secondes": 20.5,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 21.4,
+    "secondes": 23.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
@@ -41,35 +41,32 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 40.9,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 57.9,
+    "secondes": 41.5,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 38.5,
+    "secondes": 12.8,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 53.2,
     "ok": true
    },
    "smarkets": {
-    "secondes": 26.5,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 3.9,
+    "secondes": 4.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.6,
+    "secondes": 1.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.6,
+    "secondes": 0.5,
     "ok": true
    }
   },
@@ -84,19 +81,31 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 258,
-   "lignes": 7646
+   "lignes": 7796
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 26174,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 401,
-   "age_min_s": 103,
+   "age_max_s": 683,
+   "age_min_s": 366,
    "lignes": 104601,
-   "lignes_perimees": 0,
+   "lignes_perimees": 4967,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.2,
+   "rechauffeur_duree_s": 8.3,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -106,14 +115,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 18,
+    "head_200": 44,
     "head_403": 1,
     "ortho_refusee": 1,
-    "choisi_autre": 5,
-    "choisi_fixe": 6,
-    "reprise_403": 1,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 8
+    "choisi_fixe": 9,
+    "choisi_autre": 2,
+    "sport_vide": 7,
+    "reprise_403": 1
    }
   },
   "reprise": {
@@ -146,70 +154,78 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Chapecoense – Mirassol FC",
+     "match": "Club Nacional – Sportivo San Lorenzo",
      "source": "Pinnacle",
-     "cote_olybet": 3.23,
-     "cote_reference": 3.52,
-     "ecart_relatif": 0.0824,
+     "cote_olybet": 1.24,
+     "cote_reference": 1.268,
+     "ecart_relatif": 0.0222,
      "aberrant": false
     },
     {
-     "match": "Chapecoense – Mirassol FC",
+     "match": "Club Nacional – Sportivo San Lorenzo",
      "source": "PMU",
-     "cote_olybet": 3.23,
+     "cote_olybet": 1.24,
+     "cote_reference": 1.25,
+     "ecart_relatif": 0.008,
+     "aberrant": false
+    },
+    {
+     "match": "Club 2 de Mayo – Sportivo Trinidense",
+     "source": "Pinnacle",
+     "cote_olybet": 3.18,
+     "cote_reference": 3.36,
+     "ecart_relatif": 0.0536,
+     "aberrant": false
+    },
+    {
+     "match": "Club 2 de Mayo – Sportivo Trinidense",
+     "source": "PMU",
+     "cote_olybet": 3.18,
      "cote_reference": 3.1,
-     "ecart_relatif": 0.0419,
+     "ecart_relatif": 0.0258,
      "aberrant": false
     },
     {
-     "match": "RB Bragantino – Santos",
+     "match": "Orense SC – Tecnico Universitario",
      "source": "Pinnacle",
-     "cote_olybet": 1.85,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0658,
+     "cote_olybet": 1.79,
+     "cote_reference": 1.885,
+     "ecart_relatif": 0.0504,
      "aberrant": false
     },
     {
-     "match": "RB Bragantino – Santos",
-     "source": "PMU",
-     "cote_olybet": 1.85,
-     "cote_reference": 1.91,
-     "ecart_relatif": 0.0314,
-     "aberrant": false
-    },
-    {
-     "match": "Internacional – Coritiba",
+     "match": "Mushuc Runa SC – Manta",
      "source": "Pinnacle",
-     "cote_olybet": 1.55,
-     "cote_reference": 1.625,
-     "ecart_relatif": 0.0462,
+     "cote_olybet": 1.49,
+     "cote_reference": 1.535,
+     "ecart_relatif": 0.0292,
      "aberrant": false
     },
     {
-     "match": "Internacional – Coritiba",
+     "match": "Mushuc Runa SC – Manta",
      "source": "PMU",
-     "cote_olybet": 1.55,
-     "cote_reference": 1.49,
-     "ecart_relatif": 0.0403,
+     "cote_olybet": 1.49,
+     "cote_reference": 1.52,
+     "ecart_relatif": 0.0197,
      "aberrant": false
     },
     {
-     "match": "Newcastle – Everton",
+     "match": "Gil Vicente – Vitoria Guimaraes",
      "source": "Pinnacle",
-     "cote_olybet": 2.06,
-     "cote_reference": 2.16,
-     "ecart_relatif": 0.0463,
+     "cote_olybet": 2.82,
+     "cote_reference": 2.98,
+     "ecart_relatif": 0.0537,
      "aberrant": false
     },
     {
-     "match": "Newcastle – Everton",
+     "match": "Gil Vicente – Vitoria Guimaraes",
      "source": "PMU",
-     "cote_olybet": 2.06,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0098,
+     "cote_olybet": 2.82,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0255,
      "aberrant": false
     }
    ],
@@ -218,32 +234,8 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 8,
    "comparaisons": [
-    {
-     "match": "Orense Sporting Club – Tecnico U.",
-     "source": "Pinnacle",
-     "cote_netbet": 1.78,
-     "cote_reference": 1.885,
-     "ecart_relatif": 0.0557,
-     "aberrant": false
-    },
-    {
-     "match": "Mushuc Runa – Manta FC",
-     "source": "Pinnacle",
-     "cote_netbet": 1.48,
-     "cote_reference": 1.535,
-     "ecart_relatif": 0.0357,
-     "aberrant": false
-    },
-    {
-     "match": "Mushuc Runa – Manta FC",
-     "source": "PMU",
-     "cote_netbet": 1.48,
-     "cote_reference": 1.52,
-     "ecart_relatif": 0.0263,
-     "aberrant": false
-    },
     {
      "match": "Blackburn Rovers – Stoke City",
      "source": "Pinnacle",
@@ -291,37 +283,54 @@
      "cote_reference": 3.2,
      "ecart_relatif": 0.0469,
      "aberrant": false
+    },
+    {
+     "match": "Portsmouth – Swansea City",
+     "source": "Pinnacle",
+     "cote_netbet": 2.42,
+     "cote_reference": 2.69,
+     "ecart_relatif": 0.1004,
+     "aberrant": false
+    },
+    {
+     "match": "Preston North End – Sheffield United",
+     "source": "Pinnacle",
+     "cote_netbet": 3.05,
+     "cote_reference": 3.27,
+     "ecart_relatif": 0.0673,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-02T19:08:20+00:00",
-   "pinnacle_derniere_lecture": "2026-11-02T19:08:27+00:00",
-   "books_premiere_lecture": "2026-11-02T18:49:36+00:00",
-   "books_derniere_lecture": "2026-11-02T19:08:10+00:00",
-   "ecart_enveloppe_secondes": 1131.0
+   "pinnacle_premiere_lecture": "2026-11-02T19:13:02+00:00",
+   "pinnacle_derniere_lecture": "2026-11-02T19:13:16+00:00",
+   "books_premiere_lecture": "2026-11-02T18:59:01+00:00",
+   "books_derniere_lecture": "2026-11-02T19:12:52+00:00",
+   "ecart_enveloppe_secondes": 855.0
   },
   "historique_cotes": {
-   "lignes": 866
+   "lignes": 2345
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.7
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 648,
    "a_verifier": 12,
    "non_conforme": 10,
-   "mesures": 25702,
+   "mesures": 24706,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 75625,
-   "mesures": 60345,
-   "annotees": 4,
+   "ancres": 67704,
+   "mesures": 62502,
+   "annotees": 1,
    "figees": 1
   },
   "redecision": {
@@ -338,26 +347,20 @@
    "dernier_reglement": "2026-11-02T19:04:57+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-02T19:09:55+00:00",
+  "fin": "2026-11-02T19:13:55+00:00",
   "cotes": {
-   "francaises": 68177,
-   "pinnacle": 104601,
-   "polymarket": 13981,
+   "francaises": 68852,
+   "pinnacle": 130775,
+   "polymarket": 14015,
    "smarkets": 2781,
-   "matchbook": 7646
+   "matchbook": 7796
   },
-  "matchs_francais": 919,
-  "opportunites": 9,
+  "matchs_francais": 920,
+  "opportunites": 1,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 7
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-02T03:31:21+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-02T03:35:59+00:00",
    "mode": "complet",
@@ -1557,6 +1560,12 @@
    "mode": "complet",
    "opportunites": 9,
    "nouveaux_paris": 7
+  },
+  {
+   "debut": "2026-11-02T19:12:51+00:00",
+   "mode": "complet",
+   "opportunites": 1,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-11-02T19:04:57+00:00",
