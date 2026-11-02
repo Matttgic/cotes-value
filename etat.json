@@ -1,10 +1,10 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-02T04:04:10+00:00",
+  "debut": "2026-11-02T04:08:47+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 2.5,
+    "secondes": 2.2,
     "ok": true
    },
    "olybet": {
@@ -12,7 +12,7 @@
     "ok": true
    },
    "polymarket": {
-    "secondes": 10.4,
+    "secondes": 11.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,27 +20,31 @@
     ]
    },
    "pinnacle": {
-    "secondes": 20.9,
-    "ok": true
+    "secondes": 20.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "unibet_direct": {
-    "secondes": 0.6,
+    "secondes": 1.8,
     "ok": false,
     "degrade": true,
     "erreurs": [
-     "jeton absent"
+     "accueil HTTP 403"
     ]
    },
-   "pmu_direct": {
-    "secondes": 27.7,
+   "betclic_direct": {
+    "secondes": 26.1,
     "ok": true
    },
-   "betclic_direct": {
-    "secondes": 34.4,
+   "pmu_direct": {
+    "secondes": 27.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 38.0,
+    "secondes": 37.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -48,16 +52,19 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 48.0,
+    "secondes": 47.5,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.6,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 2.8,
+    "secondes": 3.0,
     "ok": true
    },
    "comparaison": {
@@ -79,20 +86,20 @@
    "ok": true,
    "requetes": 2,
    "erreurs": [],
-   "matchs": 201,
-   "lignes": 6090
+   "matchs": 200,
+   "lignes": 6184
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 330,
-   "age_min_s": 19,
-   "lignes": 91518,
-   "lignes_perimees": 0,
+   "age_max_s": 605,
+   "age_min_s": 296,
+   "lignes": 91514,
+   "lignes_perimees": 120,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.0,
+   "rechauffeur_duree_s": 8.2,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -102,12 +109,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 33,
+    "head_200": 39,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 9,
-    "choisi_fixe": 4,
-    "sport_vide": 6
+    "choisi_autre": 5,
+    "choisi_fixe": 8,
+    "sport_vide": 6,
+    "reprise_403": 1
    }
   },
   "reprise": {
@@ -142,22 +150,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "FC Universitatea Cluj – FCSB",
+     "match": "Atromitos – PAE Volos",
      "source": "Pinnacle",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.54,
-     "ecart_relatif": 0.0669,
+     "cote_olybet": 1.8,
+     "cote_reference": 1.909,
+     "ecart_relatif": 0.0571,
      "aberrant": false
     },
     {
-     "match": "FC Universitatea Cluj – FCSB",
+     "match": "Deportes Limache – Audax Italiano",
+     "source": "Pinnacle",
+     "cote_olybet": 2.04,
+     "cote_reference": 2.17,
+     "ecart_relatif": 0.0599,
+     "aberrant": false
+    },
+    {
+     "match": "Deportes Limache – Audax Italiano",
      "source": "PMU",
-     "cote_olybet": 2.37,
-     "cote_reference": 2.35,
-     "ecart_relatif": 0.0085,
+     "cote_olybet": 2.04,
+     "cote_reference": 1.9,
+     "ecart_relatif": 0.0737,
+     "aberrant": false
+    },
+    {
+     "match": "Deportes Conception – Palestino",
+     "source": "Pinnacle",
+     "cote_olybet": 2.41,
+     "cote_reference": 2.59,
+     "ecart_relatif": 0.0695,
      "aberrant": false
     },
     {
@@ -177,27 +201,19 @@
      "aberrant": false
     },
     {
-     "match": "Kryvbass Kryvyï Rih – Dynamo Kiev",
-     "source": "PMU",
-     "cote_olybet": 6.0,
-     "cote_reference": 6.25,
-     "ecart_relatif": 0.04,
-     "aberrant": false
-    },
-    {
-     "match": "Zorya Louhansk – Epicentr Kamianets-Podilskyi",
+     "match": "FC Universitatea Cluj – FCSB",
      "source": "Pinnacle",
-     "cote_olybet": 1.92,
-     "cote_reference": 1.98,
-     "ecart_relatif": 0.0305,
+     "cote_olybet": 2.37,
+     "cote_reference": 2.54,
+     "ecart_relatif": 0.0669,
      "aberrant": false
     },
     {
-     "match": "Zorya Louhansk – Epicentr Kamianets-Podilskyi",
+     "match": "FC Universitatea Cluj – FCSB",
      "source": "PMU",
-     "cote_olybet": 1.92,
-     "cote_reference": 1.81,
-     "ecart_relatif": 0.0608,
+     "cote_olybet": 2.37,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0085,
      "aberrant": false
     }
    ],
@@ -209,117 +225,116 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Defensa y Justicia – Independiente",
+     "match": "Newcastle – Everton",
      "source": "Pinnacle",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.22,
-     "ecart_relatif": 0.0676,
-     "aberrant": false
-    },
-    {
-     "match": "Defensa y Justicia – Independiente",
-     "source": "PMU",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0143,
-     "aberrant": false
-    },
-    {
-     "match": "Platense – Central Córdoba",
-     "source": "Pinnacle",
-     "cote_netbet": 1.47,
-     "cote_reference": 1.544,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.31,
      "ecart_relatif": 0.0476,
      "aberrant": false
     },
     {
-     "match": "Platense – Central Córdoba",
+     "match": "Newcastle – Everton",
      "source": "PMU",
-     "cote_netbet": 1.47,
-     "cote_reference": 1.49,
-     "ecart_relatif": 0.0134,
+     "cote_netbet": 2.2,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0092,
      "aberrant": false
     },
     {
-     "match": "Atlético Tucumán – Argentinos Juniors",
-     "source": "Pinnacle",
-     "cote_netbet": 2.82,
-     "cote_reference": 3.02,
-     "ecart_relatif": 0.0662,
-     "aberrant": false
-    },
-    {
-     "match": "Atlético Tucumán – Argentinos Juniors",
-     "source": "PMU",
-     "cote_netbet": 2.82,
-     "cote_reference": 2.85,
-     "ecart_relatif": 0.0105,
-     "aberrant": false
-    },
-    {
-     "match": "Independiente Rivadavia – Banfield",
-     "source": "Pinnacle",
-     "cote_netbet": 1.48,
-     "cote_reference": 1.592,
-     "ecart_relatif": 0.0702,
-     "aberrant": false
-    },
-    {
-     "match": "Independiente Rivadavia – Banfield",
-     "source": "PMU",
-     "cote_netbet": 1.48,
-     "cote_reference": 1.49,
-     "ecart_relatif": 0.0067,
-     "aberrant": false
-    },
-    {
-     "match": "Radomiak Radom – Slask Wroclaw",
+     "match": "Bragantino – Santos",
      "source": "Pinnacle",
      "cote_netbet": 2.05,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0807,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0465,
      "aberrant": false
     },
     {
-     "match": "Radomiak Radom – Slask Wroclaw",
+     "match": "Bragantino – Santos",
      "source": "PMU",
      "cote_netbet": 2.05,
-     "cote_reference": 2.06,
-     "ecart_relatif": 0.0049,
+     "cote_reference": 2.02,
+     "ecart_relatif": 0.0149,
+     "aberrant": false
+    },
+    {
+     "match": "GAIS Goteborg – AIK Solna",
+     "source": "Pinnacle",
+     "cote_netbet": 1.71,
+     "cote_reference": 1.855,
+     "ecart_relatif": 0.078,
+     "aberrant": false
+    },
+    {
+     "match": "GAIS Goteborg – AIK Solna",
+     "source": "PMU",
+     "cote_netbet": 1.71,
+     "cote_reference": 1.71,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Mjallby AIF – Kalmar",
+     "source": "Pinnacle",
+     "cote_netbet": 2.32,
+     "cote_reference": 2.59,
+     "ecart_relatif": 0.1042,
+     "aberrant": false
+    },
+    {
+     "match": "Mjallby AIF – Kalmar",
+     "source": "PMU",
+     "cote_netbet": 2.32,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0175,
+     "aberrant": false
+    },
+    {
+     "match": "Deportes Limache – Audax Italiano",
+     "source": "Pinnacle",
+     "cote_netbet": 1.95,
+     "cote_reference": 2.17,
+     "ecart_relatif": 0.1014,
+     "aberrant": false
+    },
+    {
+     "match": "Deportes Limache – Audax Italiano",
+     "source": "PMU",
+     "cote_netbet": 1.95,
+     "cote_reference": 1.9,
+     "ecart_relatif": 0.0263,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-02T04:04:19+00:00",
-   "pinnacle_derniere_lecture": "2026-11-02T04:04:27+00:00",
+   "pinnacle_premiere_lecture": "2026-11-02T04:08:56+00:00",
+   "pinnacle_derniere_lecture": "2026-11-02T04:09:00+00:00",
    "books_premiere_lecture": "2026-11-02T02:31:01+00:00",
-   "books_derniere_lecture": "2026-11-02T04:04:10+00:00",
-   "ecart_enveloppe_secondes": 5606.0
+   "books_derniere_lecture": "2026-11-02T04:08:47+00:00",
+   "ecart_enveloppe_secondes": 5879.0
   },
   "historique_cotes": {
-   "lignes": 558
+   "lignes": 369
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.2
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 648,
    "a_verifier": 12,
    "non_conforme": 10,
-   "mesures": 18368,
+   "mesures": 18460,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
    "ancres": 61086,
-   "mesures": 53235,
-   "annotees": 5,
-   "figees": 2
+   "mesures": 51772,
+   "annotees": 3,
+   "figees": 1
   },
   "redecision": {
    "ajoutees": 0
@@ -335,26 +350,20 @@
    "dernier_reglement": "2026-11-02T04:00:09+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-02T04:05:05+00:00",
+  "fin": "2026-11-02T04:10:03+00:00",
   "cotes": {
-   "francaises": 56888,
-   "pinnacle": 91518,
-   "polymarket": 12709,
-   "smarkets": 3995,
-   "matchbook": 6090
+   "francaises": 56983,
+   "pinnacle": 91514,
+   "polymarket": 12823,
+   "smarkets": 4093,
+   "matchbook": 6184
   },
   "matchs_francais": 862,
-  "opportunites": 3,
-  "opportunites_suspectes": 2,
+  "opportunites": 4,
+  "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-01T05:05:15+00:00",
-   "mode": "complet",
-   "opportunites": 42,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-11-01T05:09:48+00:00",
    "mode": "complet",
@@ -1553,6 +1562,12 @@
    "debut": "2026-11-02T04:04:10+00:00",
    "mode": "complet",
    "opportunites": 3,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-02T04:08:47+00:00",
+   "mode": "complet",
+   "opportunites": 4,
    "nouveaux_paris": 0
   }
  ],
