@@ -41,7 +41,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"
-          git clone -q --depth 1 --branch donnees "$url" donnees
+          bash scripts/cloner_donnees.sh "$url" donnees        # sans les jours passés de cotes/ et opportunites/
 
       - name: Regler les paris sans scanner les cotes
         env:
@@ -66,7 +66,8 @@ jobs:
           done
           printf '%s\n' /horizon_direct.json /pinnacle_secours_cache.json /smarkets_cache.json '*.tmp' >> .git/info/exclude
           git rm -q --cached --ignore-unmatch horizon_direct.json pinnacle_secours_cache.json smarkets_cache.json
-          git add -A
+          # --sparse : clone partiel (scripts/cloner_donnees.sh) ; les jours non extraits restent intacts
+          git add -A --sparse
           git diff --cached --quiet || git commit -qm "Reglement $(date -u +%FT%TZ)"
           # un cycle de collecte ou un résultat saisi à la main entre-temps : on le reprend avant de pousser
           for i in 1 2 3; do

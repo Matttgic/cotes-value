@@ -60,7 +60,7 @@ jobs:
         run: |
           url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"
           if git ls-remote --exit-code --heads origin donnees >/dev/null; then
-            git clone -q --depth 1 --branch donnees "$url" donnees
+            bash scripts/cloner_donnees.sh "$url" donnees      # sans les jours passés de cotes/ et opportunites/
           else
             mkdir donnees && cd donnees && git init -q -b donnees && git remote add origin "$url"
           fi
@@ -194,7 +194,8 @@ jobs:
           done
           printf '%s\n' /horizon_direct.json /pinnacle_secours_cache.json /smarkets_cache.json '*.tmp' >> .git/info/exclude
           git rm -q --cached --ignore-unmatch horizon_direct.json pinnacle_secours_cache.json smarkets_cache.json
-          git add -A
+          # --sparse : clone partiel (scripts/cloner_donnees.sh) ; les jours non extraits restent intacts
+          git add -A --sparse
           git diff --cached --quiet || git commit -qm "Cycle $(date -u +%FT%TZ)"
           # un résultat saisi à la main pendant le cycle (autre fichier) : on le reprend avant de pousser
           for i in 1 2 3; do
