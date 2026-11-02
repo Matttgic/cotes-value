@@ -55,7 +55,9 @@ BUDGETS = {
     "winamax_direct": 80,       # 25 filtres depuis le 25/10 (handicaps, totaux par équipe, mi-temps) : ~70 s
     "unibet_direct": 80,        # coupé par le budget dans la moitié des cycles les 23-24/10 (médiane 72 s)
     "olybet": 40,
-    "netbet": 40,
+    # coupé par son budget à chaque cycle jusqu'au 2/11 (lecture tournante incomplète) ; lu en parallèle, et le cycle
+    # attend déjà Winamax (~60 s) et Unibet (~75 s après le départ) : 55 s ne rallongent pas la collecte
+    "netbet": 55,
     "betclic_direct": 80,
     "smarkets": 60,
     "matchbook": 25,

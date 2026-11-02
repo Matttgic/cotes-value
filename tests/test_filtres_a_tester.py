@@ -157,3 +157,32 @@ def test_bilan_par_type_de_marche_isole_les_longues_cotes():
     lignes = {l["tranche"]: l for l in f["tranches"]}
     assert lignes["Marchés classiques"]["roi"] == 1.0
     assert lignes["Score exact"]["roi"] == lignes["Mi-temps / fin de match"]["roi"] == -1.0
+
+
+def test_intervalle_de_confiance_du_roi_depuis_les_sommes_additives():
+    """Sommes publiées par le serveur, puis icRoi du site : à mises égales, ROI ± 1,96 × écart-type / √n."""
+    import json
+    import re
+    import shutil
+    import statistics
+    import subprocess
+    from pathlib import Path
+    base = {"mise": 10, "cote": 2.0, "reference": "Pinnacle", "bookmaker": "PMU", "sport": "football",
+            "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None, "joueur": None, "simulation": "A",
+            "detecte": "2026-10-20T10:00:00+00:00", "debut": "2026-10-20T18:00:00+00:00"}
+    gains = [10, -10, 10, 10, -10, -10, 10, 10]
+    paris = [{**base, "id": f"p{i}", "match_id": f"m{i}", "issue": "DOM",
+              "statut": "gagne" if g > 0 else "perdu", "gain": g} for i, g in enumerate(gains)]
+    b = bilan(paris)["A|Pinnacle"]
+    assert (b["g2"], b["gm"], b["m2"]) == (800.0, 200.0, 800.0)
+    node = shutil.which("node")
+    if not node:
+        return
+    src = (Path(__file__).resolve().parents[1] / "scripts/site_web.py").read_text(encoding="utf-8")
+    fonction = re.search(r"function icRoi\(b\) \{[\s\S]*?\n\}", src)[0]
+    sortie = subprocess.run([node, "-e", fonction + f"; console.log(JSON.stringify(icRoi({json.dumps(b)})))"],
+                            capture_output=True, text=True, check=True).stdout
+    bas, haut = json.loads(sortie)
+    r = [g / 10 for g in gains]
+    demi = 1.96 * statistics.stdev(r) / len(r) ** .5
+    assert bas == pytest.approx(statistics.mean(r) - demi) and haut == pytest.approx(statistics.mean(r) + demi)

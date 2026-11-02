@@ -1206,9 +1206,17 @@ const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
 let cumul = CUMULS.length - 1;
 const nomCumul = l => l.length === SIMS.length ? "Toutes" : l.join("+");
+// Intervalle de confiance à 95 % du ROI (estimateur de ratio, approximation normale), depuis les sommes additives
+// du serveur. Paris supposés indépendants : plusieurs paris sur un même match le rendent optimiste.
+function icRoi(b) {
+  if (!b || !(b.regles > 1) || !b.mises || b.g2 == null) return null;
+  const r = b.gains / b.mises, v = (b.g2 - 2 * r * b.gm + r * r * b.m2) * b.regles / (b.regles - 1) / (b.mises * b.mises);
+  return v > 0 ? [r - 1.96 * Math.sqrt(v), r + 1.96 * Math.sqrt(v)] : null;
+}
+const texteIc = b => { const ic = icRoi(b); return ic ? `<small class="ic">IC 95 % ${pctC(ic[0])} à ${pctC(ic[1])}</small>` : ""; };
 function additionner(sims, source = D.bilan, prefixe = "", ref = refBilan) {
   const t = {paris: 0, regles: 0, en_cours: 0, mises: 0, gains: 0, clv_somme: 0, clv_n: 0, clv_positifs: 0, gagnes: 0, mises_kelly: 0, gains_kelly: 0,
-    gains_avec_clv: 0, espere_clv: 0, gains_sans_clv: 0, regles_sans_clv: 0};
+    gains_avec_clv: 0, espere_clv: 0, gains_sans_clv: 0, regles_sans_clv: 0, g2: 0, gm: 0, m2: 0};
   let vu = false;
   const evenements=new Map();
   for (const s of sims) {
@@ -1251,7 +1259,7 @@ function rendreBilan() {
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
     : `<tr><td>${titre}</td><td>${b.regles}<small>${b.evenements_regles ?? "—"} matchs</small>${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""} · <b>${Math.round(100 * b.gagnes / b.regles)} %</b></small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
-<td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small></td>
+<td class="${signe(b.gains)}">${eurC(b.gains)}<small class="roi ${signe(b.roi)}">${b.roi==null ? "" : pctC(b.roi)}</small>${texteIc(b)}</td>
 <td class="${signe(b.clv_moyenne)}">${pctC(b.clv_moyenne)}${b.regles ? `<small>${b.clv_n}/${b.regles} tickets</small>${b.clv_n ? `<small>${Math.round(100 * (b.clv_positifs || 0) / b.clv_n)} % battent la clôture</small>` : ""}<small>Par match ${pctC(b.clv_evenement)} · ${b.clv_evenements_n ?? 0}/${b.evenements_regles ?? "—"}</small>` : ""}</td></tr>`;
   document.getElementById("liste-bilan").innerHTML = `<tr><th>Simul.</th><th>Paris</th><th>Gain<small>ROI</small></th><th>CLV</th></tr>` +
     Object.entries(D.simulations).filter(([s]) => !(["Stratégie", "ChatGPT", "Gemini Argon", "JULES EDGE", "JULES EDGE v2", "Eden", "Qwen", "M3", "Convergence ≥ 2"].includes(refBilan) && s === "X")).map(([s, nom]) => ligne(`<b>${s}</b> <small>${e(nom)}</small>`, D.bilan[s + "|" + refBilan])).join("") +

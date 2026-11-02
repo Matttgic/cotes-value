@@ -369,6 +369,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                                       # la CLV (mise × CLV) pour ceux qui en ont une
                                       "gains_avec_clv": 0.0, "espere_clv": 0.0, "gains_sans_clv": 0.0,
                                       "regles_sans_clv": 0, "mises_kelly": 0.0, "gains_kelly": 0.0,
+                                      # sommes additives de l'intervalle de confiance du ROI (calculé par la page)
+                                      "g2": 0.0, "gm": 0.0, "m2": 0.0,
                                       "evenements_detail": {}})
             b["paris"] += 1
             ev = b["evenements_detail"].setdefault(str(numeros[liens[id(p)]]), [0,0,0.0,0])
@@ -380,6 +382,9 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                 b["regles"] += 1
                 b["mises"] += p["mise"]
                 b["gains"] += p["gain"] or 0
+                b["g2"] += (p["gain"] or 0) ** 2
+                b["gm"] += (p["gain"] or 0) * p["mise"]
+                b["m2"] += p["mise"] ** 2
                 b["gagnes"] += p["statut"] in ("gagne", "demi_gagne")
                 k = mise_kelly(p)
                 b["mises_kelly"] += k
@@ -406,7 +411,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
         b["roi"] = round(b["gains"] / b["mises"], 4) if b["mises"] else None
         b["clv_moyenne"] = round(b["clv_somme"] / b["clv_n"], 4) if b["clv_n"] else None
         b["roi_kelly"] = round(b["gains_kelly"] / b["mises_kelly"], 4) if b["mises_kelly"] else None
-        for k in ("gains", "gains_avec_clv", "espere_clv", "gains_sans_clv", "mises_kelly", "gains_kelly"):
+        for k in ("gains", "gains_avec_clv", "espere_clv", "gains_sans_clv", "mises_kelly", "gains_kelly",
+                  "g2", "gm", "m2"):
             b[k] = round(b[k], 2)
     return out
 
