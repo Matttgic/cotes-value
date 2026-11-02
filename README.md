@@ -152,6 +152,12 @@ mesures : les tranches se remplissent au fil des nouveaux paris. Le Bilan montre
 fictive 1 000 €, 2 % maximum) calculée sur les mêmes paris, à côté des 10 € fixes, ainsi que la part des paris qui
 battent la clôture et le profil horaire des détections par bookmaker.
 
+### Fiabilité des cotes justes selon la cote
+
+[Étude de calibration](docs/etude-longues-cotes.md) (2/11/2026, 3 689 paris uniques réglés) : jusqu'à une cote de 5,
+les cotes justes sont exactes à quelques pour cent près ; au-delà, elles surestiment la probabilité de gain
+d'environ moitié (score exact, mi-temps/fin et cotes classiques de 5 à 10).
+
 ### Mise fixe ou mise Kelly (tous les bilans)
 
 Le sélecteur « Mise des bilans » (en haut du site) bascule **tous** les gains, ROI, CLV pondérés, courbes, segments et
