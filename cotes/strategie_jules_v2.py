@@ -8,6 +8,7 @@ from .decisions import figer_selecteur
 
 from collections import Counter
 from datetime import timezone
+from functools import lru_cache
 
 from .correspondance import avec_marqueurs_ligue, normaliser
 from .strategie_jules import PARIS, _heure
@@ -69,20 +70,36 @@ def motif_refus_jules_v2(p, depuis=JULES_V2["debut"]):
 
 
 def _cles(p):
-    sport = p.get("sport")
+    """Clés d'identité du match d'une prise (référence, bookmaker, équipes et heure).
+
+    Fonction pure des champs lus : la construction du site la rappelle plus d'un demi-million de fois pour
+    quelques milliers de prises (chaque stratégie réapprend les alias), d'où le cache. Une valeur non hachable
+    ou un bookmaker absent reprennent le calcul direct, avec les mêmes erreurs qu'avant."""
     reference = preuve_de(p).get("match_id_reference")
-    cles = [("reference", sport, p.get("reference"), str(reference))] if reference else []
-    if p.get("match_id"):
-        cles.append(("bookmaker", sport, p["bookmaker"], str(p["match_id"])))
-    ligue = p.get("ligue") if isinstance(p.get("ligue"), str) else None
-    noms = [avec_marqueurs_ligue(p.get(k) if isinstance(p.get(k), str) else None, ligue) or ""
-            for k in ("domicile", "exterieur")]
-    debut = _heure(p.get("debut"))
+    match_id = p.get("match_id")
+    if match_id and "bookmaker" not in p:
+        raise KeyError("bookmaker")
+    champs = (p.get("sport"), p.get("reference"), str(reference) if reference else None,
+              p["bookmaker"] if match_id else None, str(match_id) if match_id else None,
+              *(p.get(k) if isinstance(p.get(k), str) else None for k in ("ligue", "domicile", "exterieur")),
+              p.get("debut"), p.get("match_reference") if isinstance(p.get("match_reference"), str) else "")
+    try:
+        return list(_cles_memo(*champs))
+    except TypeError:                    # champ non hachable (bookmaker, début…) : calcul sans cache
+        return list(_cles_memo.__wrapped__(*champs))
+
+
+@lru_cache(maxsize=1 << 17)
+def _cles_memo(sport, nom_reference, reference, bookmaker, match_id, ligue, domicile, exterieur, debut, ref):
+    cles = [("reference", sport, nom_reference, reference)] if reference else []
+    if match_id:
+        cles.append(("bookmaker", sport, bookmaker, match_id))
+    noms = [avec_marqueurs_ligue(n, ligue) or "" for n in (domicile, exterieur)]
+    debut = _heure(debut)
     normes = [normaliser(n) for n in noms]
     feminin = any(n[1] for n in normes)
     jeunes = set().union(*(n[2] for n in normes))
     paires = [noms]
-    ref = p.get("match_reference") if isinstance(p.get("match_reference"), str) else ""
     if ref.count(" - ") == 1:
         paires.append(ref.split(" - "))
     for paire in paires:
@@ -92,7 +109,7 @@ def _cles(p):
             normalises.append((mots, fem or feminin, tuple(sorted(categorie or jeunes))))
         if debut and all(n[0] for n in normalises):
             cles.append(("equipes", sport, debut.astimezone(timezone.utc), tuple(sorted(normalises))))
-    return cles
+    return tuple(cles)
 
 
 def analyser_jules_v2(paris, depuis=JULES_V2["debut"]):

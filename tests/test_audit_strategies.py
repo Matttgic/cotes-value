@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from cotes.strategie_chatgpt import CHATGPT, motif_refus, paris_chatgpt
+from cotes.strategie_chatgpt import motif_refus, paris_chatgpt
 from cotes.strategie_eden import motif_refus_eden, paris_eden
 from cotes.strategie_jules_v2 import (JULES_V2, _cles, analyser_jules_v2,
     diagnostic_jules_v2, motif_refus_jules_v2, paris_jules_v2)

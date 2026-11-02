@@ -14,6 +14,7 @@ from statistics import mean
 from zoneinfo import ZoneInfo
 
 from .reglement import GAIN, gain
+from .temps import instant
 
 PARIS = ZoneInfo("Europe/Paris")
 SEED = 20261014
@@ -30,11 +31,7 @@ MARCHES = {"RESULTAT_1N2", "VAINQUEUR", "DOUBLE_CHANCE", "DRAW_NO_BET", "TOTAL",
 
 
 def heure(value) -> datetime | None:
-    try:
-        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        return dt if dt.tzinfo is not None else None
-    except (ValueError, TypeError):
-        return None
+    return instant(value)
 
 
 def nombre(value) -> float | None:

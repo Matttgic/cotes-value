@@ -123,7 +123,6 @@ def test_alerte_porte_la_mise_kelly_dans_le_texte_pushover_et_l_ordre():
 
 
 def test_alerte_ecartee_pour_cote_trop_ancienne_est_journalisee_sans_changer_le_flux():
-    from datetime import datetime, timezone
     from cotes.notifications import flux
     from tests.test_notifications import selection
     from tests.test_theodds import NOW

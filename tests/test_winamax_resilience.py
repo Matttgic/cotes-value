@@ -139,3 +139,50 @@ def test_fixture_toujours_lue_par_le_vrai_assemblage(monkeypatch):
                                      maintenant=MAINTENANT)
     assert meta["ok"] and lignes
     ws.close()
+
+
+class Capricieux:
+    """Transport simulé : la demande principale du football échoue ``echecs`` fois (erreur réseau notée)."""
+
+    def __init__(self, echecs, hors_service_apres=False):
+        self.echecs, self.hors_apres = echecs, hors_service_apres
+        self.demandes, self.erreurs, self.requetes, self.hors_service = [], [], 0, False
+
+    def _noter(self, message):
+        if message not in self.erreurs:
+            self.erreurs.append(message)
+
+    def demander(self, route, filtre=None):
+        self.demandes.append(route)
+        self.requetes += 1
+        if route == "sport:1" and self.echecs > 0:
+            self.echecs -= 1
+            self._noter("sport:1 : réseau (CurlError 22)")
+            self.hors_service = self.hors_apres
+            return None
+        return _sport_avec_marches() if route == "sport:1" else {"matches": {}}
+
+
+def test_demande_principale_ratee_reprise_une_fois_en_fin_de_file(monkeypatch):
+    """Constat du 25/10 au 2/11 : 134 cycles sans football Winamax après une seule erreur réseau sur sport:1."""
+    monkeypatch.setattr(winamax, "FILTRES", {})
+    client = Capricieux(echecs=1)
+    lignes, meta = winamax.collecter({"football", "tennis"}, 36, transport=client, maintenant=MAINTENANT)
+    assert client.demandes == ["sport:1", "sport:5", "sport:1"]
+    assert lignes and meta["ok"] is True
+    assert meta["erreurs"] == [] and meta["relances"] == ["sport:1"]      # rien de perdu : pas d'erreur restante
+
+
+def test_reprise_unique_l_erreur_reste_si_elle_echoue_encore(monkeypatch):
+    monkeypatch.setattr(winamax, "FILTRES", {})
+    client = Capricieux(echecs=5)
+    _, meta = winamax.collecter({"football", "tennis"}, 36, transport=client, maintenant=MAINTENANT)
+    assert client.demandes == ["sport:1", "sport:5", "sport:1"]           # une seule reprise, pas de boucle
+    assert "sport:1 : réseau (CurlError 22)" in meta["erreurs"] and "relances" not in meta
+
+
+def test_pas_de_reprise_quand_le_socket_est_hors_service(monkeypatch):
+    monkeypatch.setattr(winamax, "FILTRES", {})
+    client = Capricieux(echecs=1, hors_service_apres=True)
+    winamax.collecter({"football"}, 36, transport=client, maintenant=MAINTENANT)
+    assert client.demandes == ["sport:1"]

@@ -17,7 +17,7 @@ date. Aucun rejeu historique n'existe (la persistance ne se déduit pas d'une pr
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from .decisions import appliquer

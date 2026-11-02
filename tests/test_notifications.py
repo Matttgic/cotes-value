@@ -2,7 +2,7 @@ import io
 import json
 from datetime import timedelta
 
-from cotes.notifications import PIN2, flux
+from cotes.notifications import flux
 from scripts.envoyer_notifications import transmettre
 from tests.test_theodds import NOW, pari
 

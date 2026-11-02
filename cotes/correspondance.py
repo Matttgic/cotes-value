@@ -11,7 +11,7 @@ import difflib
 import functools
 import re
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import datetime
 
 PAYS = {
     "allemagne": "germany", "angleterre": "england", "ecosse": "scotland", "pays de galles": "wales",
@@ -91,7 +91,6 @@ def _premiere_explicite(nom: str | None) -> bool:
     return bool(re.search(r"\b(?:equipe premiere|first team|1st team|seniors?)\b|\((?:i|1)\)", s))
 
 
-@functools.lru_cache(maxsize=65536)
 @functools.lru_cache(maxsize=262144)
 def ressemblance(a: str | None, b: str | None) -> float:
     """Pure et symétrique en pratique, mais appelée plusieurs fois par couple de noms (association, derbys) : mise en cache."""
@@ -169,11 +168,6 @@ def matchs_de(lignes: list[dict]) -> dict[str, dict]:
                                        "approx": bool(l.get("debut_approximatif")),
                                        "ordre_incertain": bool(l.get("ordre_incertain")) or l["source"] == "polymarket"})
     return out
-
-
-def _derby(f: dict, r: dict) -> bool:
-    """Deux équipes d'un même match aux noms proches (même ville : « Sydney FC » / « West. Sydney »)."""
-    return max(ressemblance(f["domicile"], f["exterieur"]), ressemblance(r["domicile"], r["exterieur"])) >= 0.75
 
 
 def _ordre(paire: tuple) -> tuple:

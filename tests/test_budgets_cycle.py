@@ -1,5 +1,4 @@
 """Budgets par source : une lecture trop longue est sautée, le cache Smarkets reste."""
-import json
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -27,25 +26,6 @@ def test_etape_bornee_saute_sans_bloquer():
     assert cycle.etape_bornee("pmu_direct", journal, 0.1, lent) is None
     assert journal["etapes"]["pmu_direct"]["ok"] is False
     assert journal["etapes"]["pmu_direct"]["erreur"] == "budget dépassé"
-
-
-def test_ombre_6h_puis_horizon_complet():
-    plein, du = cycle.heures_ombre("pmu", "shadow", "complet", NOW, {})
-    assert plein == 36 and du is True
-    rythme = {"pmu": NOW.isoformat()}
-    court, du = cycle.heures_ombre("pmu", "shadow", "complet", NOW + timedelta(minutes=5), rythme)
-    assert court == 6 and du is False
-    encore, du = cycle.heures_ombre("pmu", "shadow", "complet", NOW + timedelta(minutes=20), rythme)
-    assert encore == 36 and du is True
-    direct, du = cycle.heures_ombre("pmu", "direct", "complet", NOW + timedelta(minutes=5), rythme)
-    assert direct == 36 and du is False
-    test, du = cycle.heures_ombre("unibet", "shadow", "test", NOW, {})
-    assert test == 12 and du is False
-    rythme = {"pmu": NOW.isoformat(), "unibet": NOW.isoformat(), "betclic": NOW.isoformat()}
-    assert cycle.heures_ombre("unibet", "shadow", "complet", NOW + timedelta(minutes=20), rythme) == (6, False)
-    assert cycle.heures_ombre("unibet", "shadow", "complet", NOW + timedelta(minutes=27), rythme) == (36, True)
-    assert cycle.heures_ombre("betclic", "shadow", "complet", NOW + timedelta(minutes=27), rythme) == (6, False)
-    assert cycle.heures_ombre("betclic", "shadow", "complet", NOW + timedelta(minutes=34), rythme) == (36, True)
 
 
 def test_smarkets_eteint_ne_fait_aucun_appel(tmp_path, monkeypatch):

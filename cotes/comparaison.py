@@ -25,7 +25,6 @@ from datetime import datetime
 from . import controle as CT
 from . import correspondance as C
 from .marches import cle, deriver_double_chance, inverser
-from .marge import proba_justes
 
 FENETRE_MIN = CT.FENETRE_MIN
 MARGE_MAX_PINNACLE = 0.12
