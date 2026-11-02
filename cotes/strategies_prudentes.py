@@ -11,6 +11,7 @@ from math import isfinite
 from zoneinfo import ZoneInfo
 
 from .decisions import appliquer
+from .memo import memoriser
 from .strategie_m3_structure import M3_STRUCTURE, paris_m3_structure
 from .strategie_qwen import QWEN, paris_qwen
 from .strategie_coeur import COEUR, paris_coeur
@@ -134,6 +135,7 @@ def _selection_par_selection(paris: list[dict], eligibles: set[int], depuis: str
     return {"selection": retenus, "fusions_tardives": fusions, "par_jour": dict(jours)}
 
 
+@memoriser
 def selection_unique(paris: list[dict], eligibles: set[int], depuis: str,
                      maximum_jour: int | None = None, *, portee: str = "match") -> dict:
     """Première prise par événement ; edge départage seulement les prises simultanées.
@@ -202,6 +204,7 @@ def selection_unique(paris: list[dict], eligibles: set[int], depuis: str,
     return {"selection": retenus, "fusions_tardives": fusions, "par_jour": dict(jours)}
 
 
+@memoriser
 def selections_prudentes(paris: list[dict], depuis: str | None = None,
                          bases: dict[str, set[int]] | None = None) -> dict[str, set[int]]:
     depart = depuis or DEBUT_VARIANTES

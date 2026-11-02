@@ -198,3 +198,72 @@ def test_autre_4xx_echec_immediat(tmp_path):
     r, appels = relancer(tmp_path, dispatch="404")
     assert r.returncode == 1 and "::error::" in r.stdout
     assert sum(a.startswith("workflow run") for a in appels) == 1 and "sleep" not in appels
+
+
+def _git(*args, cwd=None):
+    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout
+
+
+def test_clone_partiel_puis_enregistrement_garde_les_jours_passes(tmp_path):
+    """Scripts réels : cloner_donnees.sh (sans les anciens jours) puis l'enregistrement de reglement.yml.
+    Les jours non extraits restent dans la branche ; ajouts, nouveaux fichiers et suppressions sont poussés."""
+    from datetime import datetime, timezone
+    auj = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    nu = tmp_path / "nu.git"
+    _git("init", "-q", "--bare", "-b", "donnees", str(nu))
+    _git("-C", str(nu), "config", "uploadpack.allowFilter", "true")
+    source = tmp_path / "source"
+    _git("init", "-q", "-b", "donnees", str(source))
+    for nom in ("paris.json", "apisports.json", "cotes/2026-10-01.jsonl.gz", f"cotes/{auj}.jsonl.gz",
+                "opportunites/2026-10-01.jsonl.gz", "archives/paris-2026-10.json.gz"):
+        (source / nom).parent.mkdir(parents=True, exist_ok=True)
+        (source / nom).write_text(nom)
+    _git("add", "-A", cwd=source)
+    _git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "depart", cwd=source)
+    _git("push", "-q", str(nu), "donnees", cwd=source)
+
+    r = subprocess.run(["bash", str(RACINE / "scripts/cloner_donnees.sh"), f"file://{nu}", "donnees"],
+                       cwd=tmp_path, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    d = tmp_path / "donnees"
+    assert "Clone partiel" in r.stdout
+    assert not (d / "cotes/2026-10-01.jsonl.gz").exists() and not (d / "opportunites/2026-10-01.jsonl.gz").exists()
+    assert (d / f"cotes/{auj}.jsonl.gz").exists() and (d / "archives/paris-2026-10.json.gz").exists()
+
+    (d / f"cotes/{auj}.jsonl.gz").write_text("ajout")
+    (d / "opportunites").mkdir(exist_ok=True)              # comme le cycle : aucun fichier extrait dans ce dossier
+    (d / f"opportunites/{auj}.jsonl.gz").write_text("nouveau")
+    (d / "apisports.json").unlink()
+    steps = etapes("reglement.yml", "reglement")
+    script = steps[index_nom(steps, "Enregistrer les paris")]["run"]
+    r = subprocess.run(["bash", "-e", "-c", script], cwd=tmp_path, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    suivis = _git("--git-dir", str(nu), "ls-tree", "-r", "--name-only", "donnees").split()
+    assert suivis == sorted(["paris.json", "archives/paris-2026-10.json.gz", "cotes/2026-10-01.jsonl.gz",
+                             f"cotes/{auj}.jsonl.gz", "opportunites/2026-10-01.jsonl.gz", f"opportunites/{auj}.jsonl.gz"])
+    assert _git("--git-dir", str(nu), "show", f"donnees:cotes/{auj}.jsonl.gz") == "ajout"
+    assert _git("--git-dir", str(nu), "show", "donnees:cotes/2026-10-01.jsonl.gz") == "cotes/2026-10-01.jsonl.gz"
+
+
+def test_clone_partiel_impossible_repli_sur_le_clone_complet(tmp_path):
+    """« sparse-checkout » refusé (git trop ancien, par exemple) : clone complet, avertissement dans le journal."""
+    nu = tmp_path / "nu.git"
+    _git("init", "-q", "--bare", "-b", "donnees", str(nu))
+    source = tmp_path / "source"
+    _git("init", "-q", "-b", "donnees", str(source))
+    (source / "cotes").mkdir()
+    (source / "cotes/2026-10-01.jsonl.gz").write_text("ancien")
+    _git("add", "-A", cwd=source)
+    _git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "depart", cwd=source)
+    _git("push", "-q", str(nu), "donnees", cwd=source)
+    faux = tmp_path / "bin"
+    faux.mkdir()
+    vrai = subprocess.run(["bash", "-c", "command -v git"], capture_output=True, text=True).stdout.strip()
+    (faux / "git").write_text(f'#!/bin/bash\nfor a in "$@"; do [ "$a" = sparse-checkout ] && exit 1; done\nexec {vrai} "$@"\n')
+    (faux / "git").chmod(0o755)
+    env = {**os.environ, "PATH": f"{faux}:{os.environ['PATH']}"}
+    r = subprocess.run(["bash", str(RACINE / "scripts/cloner_donnees.sh"), f"file://{nu}", "donnees"],
+                       cwd=tmp_path, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, r.stderr
+    assert "Clone partiel impossible" in r.stdout
+    assert (tmp_path / "donnees/cotes/2026-10-01.jsonl.gz").read_text() == "ancien"

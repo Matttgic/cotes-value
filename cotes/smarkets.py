@@ -27,6 +27,7 @@ import requests
 from cotes.comparaison import reference_echange
 from cotes.correspondance import ressemblance
 from cotes.direct.horizon import fusionner
+from .temps import instant_utc
 
 BASE = "https://api.smarkets.com/v3"
 _OUI = {"1", "oui", "on", "true", "yes"}
@@ -107,11 +108,7 @@ def hors_consensus() -> frozenset[str]:
 
 
 def _heure(valeur):
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-        return t.astimezone(timezone.utc) if t.tzinfo else None
-    except (TypeError, ValueError):
-        return None
+    return instant_utc(valeur)
 
 
 def _nombre(valeur) -> float | None:

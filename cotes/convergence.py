@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from math import isfinite
 from .decisions import figer_selecteur
+from .memo import memoriser
 
 from cotes.laboratoire import heure
 from cotes.simulation import paris_strategie, REFERENCES
@@ -36,6 +37,7 @@ def cle_selection(p: dict) -> tuple:
                  ("bookmaker", "match_id", "marche", "periode", "ligne", "issue", "joueur"))
 
 
+@memoriser
 def selections(paris: list[dict], depuis: str | None = None) -> dict[str, set[int]]:
     return {cle: (selecteur(paris, depuis=depuis) if depuis is not None else selecteur(paris))
             for cle, _, _, _, selecteur in STRATEGIES}

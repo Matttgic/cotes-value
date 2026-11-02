@@ -6,7 +6,7 @@ suffit ; les ``datetime`` sont immuables, le résultat se partage sans risque.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import lru_cache
 
 
@@ -27,3 +27,9 @@ def instant(valeur) -> datetime | None:
     """Date avec fuseau ; ``None`` si elle est absente, illisible ou sans fuseau."""
     t = _analyser(valeur if type(valeur) is str else str(valeur))
     return t if t is not None and t.tzinfo is not None else None
+
+
+def instant_utc(valeur) -> datetime | None:
+    """Comme ``instant``, ramenée en UTC."""
+    t = instant(valeur)
+    return t.astimezone(timezone.utc) if t is not None else None

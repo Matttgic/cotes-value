@@ -6,20 +6,15 @@ la tranche du cycle.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from cotes.temps import instant_utc
 
 PRES_H = 6
 AGE_MAX_H = 3
 
 
 def _heure(valeur):
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return None
-    if getattr(t, "tzinfo", None) is None:
-        return None
-    return t.astimezone(timezone.utc)
+    return instant_utc(valeur)
 
 
 def fusionner(anciennes, nouvelles, maintenant: datetime, heures: float = 36,

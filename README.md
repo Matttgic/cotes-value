@@ -72,7 +72,7 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    « Règlement » plus bas), selon le
    règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
-7. **Site** (`scripts/site_web.py`) publié sur GitHub Pages, en quatre onglets : Paris, Bilan, Notifications, Santé.
+7. **Site** (`scripts/site_web.py`, gabarit `web/modele.html`) publié sur GitHub Pages, en quatre onglets : Paris, Bilan, Notifications, Santé.
    L'habillage suit la direction artistique de `maquettes/` (polices OFL en WOFF2 dans `web/polices/`). La vitrine
    publique (`web/vitrine.html`, deux chiffres Kelly ¼ recalculés à chaque publication) est publiée à part, en
    `vitrine.html`, sans lien depuis l'interface ni bouton de connexion : l'interface reste la page d'accueil.

@@ -9,12 +9,13 @@ from __future__ import annotations
 import hashlib
 import re
 import unicodedata
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import requests
 
 from . import resultats
 from .correspondance import avec_marqueurs_ligue, normaliser, ressemblance
+from .temps import instant_utc
 
 BASE = "https://api.the-odds-api.com/v4/sports"
 COUT = 2
@@ -93,11 +94,7 @@ FEMININES = {"basketball_wnba", "basketball_wncaab"}
 
 
 def _heure(s) -> datetime | None:
-    try:
-        d = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
-        return d.astimezone(timezone.utc) if d.tzinfo else None
-    except (TypeError, ValueError):
-        return None
+    return instant_utc(s)
 
 
 def competition(p: dict) -> str | None:

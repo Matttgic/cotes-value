@@ -27,6 +27,7 @@ from cotes.delai import Reduite
 from cotes.direct.horizon import fusionner_marches, tranche
 from cotes.liens import slug
 from cotes.pulsescore import traduire
+from cotes.temps import instant_utc
 
 ACCUEIL = "https://www.unibet.fr/"
 BASE = "https://www.unibet.fr/lvs-api"
@@ -129,11 +130,7 @@ def _debut(valeur):
 
 
 def _heure(valeur):
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-        return t.astimezone(timezone.utc) if t.tzinfo else None
-    except (TypeError, ValueError):
-        return None
+    return instant_utc(valeur)
 
 
 def _page_chrome():

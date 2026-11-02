@@ -308,7 +308,7 @@ def test_strategies_sans_matchbook_selections_inchangees():
 
 def test_filtre_reference_et_liste_des_bilans():
     assert REFERENCES == ["Pinnacle", "Betfair", "Polymarket", "Matchbook", "Smarkets", "Kalshi", "Consensus"]
-    texte = Path("scripts/site_web.py").read_text()
+    texte = Path("web/modele.html").read_text()
     assert 'Matchbook:"Mb "' in texte
     assert 'champ === "reference" ? [...(D.references || []), ...depuisFiches]' in texte
     assert 'k === "reference") return p.unique_bilan === true && p.reference === v' in texte

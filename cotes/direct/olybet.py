@@ -20,6 +20,7 @@ from urllib.parse import quote
 
 from cotes.correspondance import ressemblance
 from cotes.pulsescore import traduire
+from cotes.temps import instant_utc
 
 SWARM = "wss://eu-swarm-reverse.betconstruct.com/"
 ORIGINE = "https://sports.olybet.fr"
@@ -77,11 +78,7 @@ def _heure_unix(valeur):
 
 
 def _heure_iso(valeur):
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-        return t.astimezone(timezone.utc) if t.tzinfo else None
-    except (TypeError, ValueError):
-        return None
+    return instant_utc(valeur)
 
 
 def _nombre(valeur) -> float | None:

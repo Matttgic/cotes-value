@@ -141,3 +141,48 @@ def test_pari_enregistre_l_age_de_la_cote_a_la_decision():
     d = datetime(2026, 10, 25, 17, 39, 52, tzinfo=timezone.utc)
     assert _age_s("2026-10-25T17:27:59+00:00", d) == 713
     assert _age_s(None, d) is None and _age_s("n'importe quoi", d) is None
+
+
+def test_bilan_par_type_de_marche_isole_les_longues_cotes():
+    """Score exact et mi-temps/fin à part des marchés classiques ; aucune mesure « estimée »."""
+    base = {"statut": "perdu", "mise": 10, "gain": -10, "cote": 20.0, "ecart": .1, "reference": "Pinnacle",
+            "bookmaker": "Betclic", "sport": "football", "periode": "MATCH", "ligne": None, "joueur": None,
+            "detecte": "2026-10-20T10:00:00+00:00", "debut": "2026-10-20T18:00:00+00:00"}
+    paris = [{**base, "id": "a", "match_id": "m1", "marche": "CORRECT_SCORE", "issue": "2-1"},
+             {**base, "id": "b", "match_id": "m2", "marche": "HALF_TIME_FULL_TIME", "issue": "DOM/DOM"},
+             {**base, "id": "c", "match_id": "m3", "marche": "RESULTAT_1N2", "issue": "DOM", "cote": 2.0,
+              "statut": "gagne", "gain": 10}]
+    f = bilan_filtres(paris)["famille"]
+    assert f["n_mesures"] == 3 and f["n_estimees"] == 0
+    lignes = {l["tranche"]: l for l in f["tranches"]}
+    assert lignes["Marchés classiques"]["roi"] == 1.0
+    assert lignes["Score exact"]["roi"] == lignes["Mi-temps / fin de match"]["roi"] == -1.0
+
+
+def test_intervalle_de_confiance_du_roi_depuis_les_sommes_additives():
+    """Sommes publiées par le serveur, puis icRoi du site : à mises égales, ROI ± 1,96 × écart-type / √n."""
+    import json
+    import re
+    import shutil
+    import statistics
+    import subprocess
+    from pathlib import Path
+    base = {"mise": 10, "cote": 2.0, "reference": "Pinnacle", "bookmaker": "PMU", "sport": "football",
+            "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None, "joueur": None, "simulation": "A",
+            "detecte": "2026-10-20T10:00:00+00:00", "debut": "2026-10-20T18:00:00+00:00"}
+    gains = [10, -10, 10, 10, -10, -10, 10, 10]
+    paris = [{**base, "id": f"p{i}", "match_id": f"m{i}", "issue": "DOM",
+              "statut": "gagne" if g > 0 else "perdu", "gain": g} for i, g in enumerate(gains)]
+    b = bilan(paris)["A|Pinnacle"]
+    assert (b["g2"], b["gm"], b["m2"]) == (800.0, 200.0, 800.0)
+    node = shutil.which("node")
+    if not node:
+        return
+    src = (Path(__file__).resolve().parents[1] / "web/modele.html").read_text(encoding="utf-8")
+    fonction = re.search(r"function icRoi\(b\) \{[\s\S]*?\n\}", src)[0]
+    sortie = subprocess.run([node, "-e", fonction + f"; console.log(JSON.stringify(icRoi({json.dumps(b)})))"],
+                            capture_output=True, text=True, check=True).stdout
+    bas, haut = json.loads(sortie)
+    r = [g / 10 for g in gains]
+    demi = 1.96 * statistics.stdev(r) / len(r) ** .5
+    assert bas == pytest.approx(statistics.mean(r) - demi) and haut == pytest.approx(statistics.mean(r) + demi)
