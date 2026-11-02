@@ -639,10 +639,12 @@ TEMOIN_ABANDONNE = "Pinnacle brut"
 
 # Fichiers de « donnees » que plus aucun code ne lit ni n'écrit : caches d'API-Sports (plus lu depuis le 15/10/2026)
 # et de PulseScore (arrêté le 18/10), rythme de l'ancien mode « shadow », rapports de bascule PulseScore -> lecture
-# directe. Retirés à chaque sauvegarde (rien s'ils sont déjà absents) ; l'historique de la branche les garde.
+# directe, et trois instantanés de paris des 5-6/10 (essais abandonnés, 5 Mo, absents des bilans). Retirés à chaque
+# sauvegarde (rien s'ils sont déjà absents) ; l'historique de la branche les garde.
 FICHIERS_OBSOLETES = ("apisports.json", "rythme_sources.json", "pulsescore_attentes.json",
                       "betclic_comparaison.json", "pmu_comparaison.json", "unibet_comparaison.json",
-                      "winamax_comparaison.json", "docs/live_papier.json")
+                      "winamax_comparaison.json", "docs/live_papier.json", "paris_avant_controle.json",
+                      "paris_netbet_international.json", "paris_seuils_cumules.json")
 
 
 def retirer_obsoletes(donnees: Path, journal: dict) -> None:

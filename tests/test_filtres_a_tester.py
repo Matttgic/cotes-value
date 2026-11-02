@@ -178,7 +178,7 @@ def test_intervalle_de_confiance_du_roi_depuis_les_sommes_additives():
     node = shutil.which("node")
     if not node:
         return
-    src = (Path(__file__).resolve().parents[1] / "scripts/site_web.py").read_text(encoding="utf-8")
+    src = (Path(__file__).resolve().parents[1] / "web/modele.html").read_text(encoding="utf-8")
     fonction = re.search(r"function icRoi\(b\) \{[\s\S]*?\n\}", src)[0]
     sortie = subprocess.run([node, "-e", fonction + f"; console.log(JSON.stringify(icRoi({json.dumps(b)})))"],
                             capture_output=True, text=True, check=True).stdout
