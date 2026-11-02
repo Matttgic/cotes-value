@@ -1,28 +1,22 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-02T07:01:22+00:00",
+  "debut": "2026-11-02T07:06:04+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 2.2,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 4.2,
+    "secondes": 0.4,
     "ok": false,
     "degrade": true,
     "erreurs": [
-     "sport:1 : réseau (CurlError 22)",
-     "connexion impossible (CurlError 22)",
-     "lecture vide"
+     "HTTP 403"
     ]
    },
    "olybet": {
-    "secondes": 4.8,
+    "secondes": 5.3,
     "ok": true
    },
    "polymarket": {
-    "secondes": 8.4,
+    "secondes": 10.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -30,32 +24,32 @@
     ]
    },
    "pinnacle": {
-    "secondes": 27.7,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 18 markets/straight : HTTP 403",
-     "sport 45 matchups : HTTP 403"
-    ]
+    "secondes": 23.0,
+    "ok": true
    },
    "pmu_direct": {
-    "secondes": 28.5,
+    "secondes": 30.2,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 35.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 37.1,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "HTTP 403",
      "budget"
     ]
    },
-   "betclic_direct": {
-    "secondes": 47.0,
+   "winamax_direct": {
+    "secondes": 50.0,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 24.8,
+    "secondes": 49.5,
     "ok": true
    },
    "smarkets": {
@@ -64,15 +58,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 4.8,
+    "secondes": 4.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.2,
+    "secondes": 1.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -83,36 +77,25 @@
   "netbet_source": "direct",
   "matchbook": {
    "mode": "direct",
-   "ok": true,
-   "requetes": 2,
-   "erreurs": [],
-   "matchs": 237,
-   "lignes": 8801
-  },
-  "pinnacle_secours": {
-   "sports": [
-    "handball",
-    "football"
+   "ok": false,
+   "requetes": 1,
+   "erreurs": [
+    "HTTP 403"
    ],
-   "requetes": 2,
-   "lignes": 26332,
-   "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
+   "matchs": 0,
+   "lignes": 0
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 864,
-   "age_min_s": 50,
-   "lignes": 94748,
-   "lignes_perimees": 1092,
+   "age_max_s": 290,
+   "age_min_s": 0,
+   "lignes": 94815,
+   "lignes_perimees": 0,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.3,
+   "rechauffeur_duree_s": 8.1,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -122,13 +105,9 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 9,
-    "head_403": 2,
-    "ortho_refusee": 1,
-    "choisi_autre": 3,
-    "choisi_fixe": 2,
-    "reprise_403": 2,
-    "sport_vide": 5
+    "head_200": 37,
+    "choisi_autre": 11,
+    "choisi_fixe": 1
    }
   },
   "reprise": {
@@ -160,86 +139,30 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 3,
    "comparaisons": [
     {
-     "match": "Rakow Czestochowa – Pogon Szczecin",
+     "match": "Orense SC – Tecnico Universitario",
      "source": "Pinnacle",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.13,
-     "ecart_relatif": 0.0563,
+     "cote_olybet": 1.73,
+     "cote_reference": 1.806,
+     "ecart_relatif": 0.0423,
      "aberrant": false
     },
     {
-     "match": "Rakow Czestochowa – Pogon Szczecin",
-     "source": "PMU",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0607,
-     "aberrant": false
-    },
-    {
-     "match": "RKS Radomiak Radom – Slask Wroclaw",
+     "match": "Galatasaray – Stuttgart",
      "source": "Pinnacle",
-     "cote_olybet": 1.97,
-     "cote_reference": 2.11,
-     "ecart_relatif": 0.0664,
+     "cote_olybet": 2.1,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0455,
      "aberrant": false
     },
     {
-     "match": "RKS Radomiak Radom – Slask Wroclaw",
+     "match": "Galatasaray – Stuttgart",
      "source": "PMU",
-     "cote_olybet": 1.97,
-     "cote_reference": 2.06,
-     "ecart_relatif": 0.0437,
-     "aberrant": false
-    },
-    {
-     "match": "Zaglebie Lubin – Korona Kielce",
-     "source": "Pinnacle",
-     "cote_olybet": 2.38,
-     "cote_reference": 2.56,
-     "ecart_relatif": 0.0703,
-     "aberrant": false
-    },
-    {
-     "match": "Zaglebie Lubin – Korona Kielce",
-     "source": "PMU",
-     "cote_olybet": 2.38,
-     "cote_reference": 2.55,
-     "ecart_relatif": 0.0667,
-     "aberrant": false
-    },
-    {
-     "match": "Penafiel – Feirense",
-     "source": "Pinnacle",
-     "cote_olybet": 1.79,
-     "cote_reference": 1.877,
-     "ecart_relatif": 0.0465,
-     "aberrant": false
-    },
-    {
-     "match": "Penafiel – Feirense",
-     "source": "PMU",
-     "cote_olybet": 1.79,
-     "cote_reference": 1.81,
-     "ecart_relatif": 0.011,
-     "aberrant": false
-    },
-    {
-     "match": "Gil Vicente – Vitoria Guimaraes",
-     "source": "Pinnacle",
-     "cote_olybet": 2.8,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.0572,
-     "aberrant": false
-    },
-    {
-     "match": "Gil Vicente – Vitoria Guimaraes",
-     "source": "PMU",
-     "cote_olybet": 2.8,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0182,
+     "cote_olybet": 2.1,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0294,
      "aberrant": false
     }
    ],
@@ -318,32 +241,32 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-02T07:01:32+00:00",
-   "pinnacle_derniere_lecture": "2026-11-02T07:01:52+00:00",
+   "pinnacle_premiere_lecture": "2026-11-02T07:06:14+00:00",
+   "pinnacle_derniere_lecture": "2026-11-02T07:06:24+00:00",
    "books_premiere_lecture": "2026-11-02T06:52:04+00:00",
-   "books_derniere_lecture": "2026-11-02T07:01:22+00:00",
-   "ecart_enveloppe_secondes": 588.0
+   "books_derniere_lecture": "2026-11-02T07:06:05+00:00",
+   "ecart_enveloppe_secondes": 860.0
   },
   "historique_cotes": {
-   "lignes": 1136
+   "lignes": 584
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.7
+   "age_min": 9.4
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 648,
    "a_verifier": 12,
    "non_conforme": 10,
-   "mesures": 19536,
+   "mesures": 26194,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 54746,
-   "mesures": 46724,
+   "ancres": 67977,
+   "mesures": 45869,
    "annotees": 0,
    "figees": 0
   },
@@ -361,26 +284,20 @@
    "dernier_reglement": "2026-11-02T06:48:22+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-02T07:02:30+00:00",
+  "fin": "2026-11-02T07:07:30+00:00",
   "cotes": {
-   "francaises": 47648,
-   "pinnacle": 121080,
-   "polymarket": 13908,
+   "francaises": 63271,
+   "pinnacle": 94815,
+   "polymarket": 13906,
    "smarkets": 4046,
-   "matchbook": 8801
+   "matchbook": 0
   },
-  "matchs_francais": 746,
+  "matchs_francais": 906,
   "opportunites": 1,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-01T08:02:06+00:00",
-   "mode": "complet",
-   "opportunites": 20,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-01T08:06:42+00:00",
    "mode": "complet",
@@ -1577,6 +1494,12 @@
   },
   {
    "debut": "2026-11-02T07:01:22+00:00",
+   "mode": "complet",
+   "opportunites": 1,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-02T07:06:04+00:00",
    "mode": "complet",
    "opportunites": 1,
    "nouveaux_paris": 0
