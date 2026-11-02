@@ -1319,7 +1319,7 @@ function rendreCombos() {
 <td class="${signe(r.gain)}">${eurC(r.gain)}<small class="roi ${signe(r.gain)}">${pct1(r.roi)}</small></td><td>${eurC(-r.baisse)}</td><td>${r.baisse > 0 ? (r.gain / r.baisse).toFixed(2).replace(".", ",") : "—"}</td></tr>`).join("")
     || `<tr><td>Aucune combinaison avec 50 paris réglés pour le moment.</td></tr>`);
 }
-const TITRES_FILTRES = {marge: "Marge de Pinnacle (liquidité, ancien et nouveau)", trj: "TRJ du bookmaker", limite: "Limite de mise Pinnacle (liquidité)", mouvement: "Mouvement de la cote Pinnacle"};
+const TITRES_FILTRES = {famille: "Type de marché (longues cotes à part)", marge: "Marge de Pinnacle (liquidité, ancien et nouveau)", trj: "TRJ du bookmaker", limite: "Limite de mise Pinnacle (liquidité)", mouvement: "Mouvement de la cote Pinnacle"};
 function rendreFiltres() {
   const cible = document.getElementById("bilan-filtres"), f = D.filtres || {};
   cible.innerHTML = Object.keys(TITRES_FILTRES).map(nom => {

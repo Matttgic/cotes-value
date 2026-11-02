@@ -493,7 +493,15 @@ def marge_pinnacle_estimee(p: dict) -> float | None:
     return round(po + (1 - pj) ** (1 / k) - 1, 4)
 
 
+# Marchés à longues cotes : sur les paris réglés jusqu'au 2/11/2026, ils font presque toute la perte des paris
+# Pinnacle (score exact et mi-temps/fin : 521 paris, −3 500 €, ROI −67 % malgré une CLV de +7 %), alors que les
+# autres marchés à cote ≤ 5 sont à +1,3 %. Tableau descriptif : aucune règle de stratégie n'en dépend.
+FAMILLES_MARCHE = {"CORRECT_SCORE": 1, "HALF_TIME_FULL_TIME": 2}
+
+
 def _valeur_filtre(champ: str, p: dict) -> float | None:
+    if champ == "famille_marche":
+        return FAMILLES_MARCHE.get(p.get("marche"), 0) if p.get("marche") else None
     v = p.get(champ)
     if _nombre_fini(v):
         return v
@@ -501,6 +509,7 @@ def _valeur_filtre(champ: str, p: dict) -> float | None:
 
 
 FILTRES = {
+    "famille": ("famille_marche", (("Marchés classiques", 0, 1), ("Score exact", 1, 2), ("Mi-temps / fin de match", 2, 3))),
     "trj": ("trj_bookmaker", (("< 92 %", 0, .92), ("92 – 94 %", .92, .94), ("94 – 96 %", .94, .96), ("96 % et plus", .96, 9))),
     "limite": ("limite_pinnacle", (("< 300 €", 0, 300), ("300 – 999 €", 300, 1000),
                                    ("1 000 – 2 999 €", 1000, 3000), ("3 000 € et plus", 3000, 1e12))),
@@ -527,7 +536,7 @@ def bilan_filtres(paris: list[dict]) -> dict:
             if id(p) not in uniques or v is None:
                 continue
             mesures += 1
-            estimee += not _nombre_fini(p.get(champ))
+            estimee += champ == "marge_pinnacle" and not _nombre_fini(p.get(champ))
             for l, (_, bas, haut) in zip(lignes, tranches):
                 if bas <= v < haut:
                     l["n"] += 1

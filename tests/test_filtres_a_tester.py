@@ -141,3 +141,19 @@ def test_pari_enregistre_l_age_de_la_cote_a_la_decision():
     d = datetime(2026, 10, 25, 17, 39, 52, tzinfo=timezone.utc)
     assert _age_s("2026-10-25T17:27:59+00:00", d) == 713
     assert _age_s(None, d) is None and _age_s("n'importe quoi", d) is None
+
+
+def test_bilan_par_type_de_marche_isole_les_longues_cotes():
+    """Score exact et mi-temps/fin à part des marchés classiques ; aucune mesure « estimée »."""
+    base = {"statut": "perdu", "mise": 10, "gain": -10, "cote": 20.0, "ecart": .1, "reference": "Pinnacle",
+            "bookmaker": "Betclic", "sport": "football", "periode": "MATCH", "ligne": None, "joueur": None,
+            "detecte": "2026-10-20T10:00:00+00:00", "debut": "2026-10-20T18:00:00+00:00"}
+    paris = [{**base, "id": "a", "match_id": "m1", "marche": "CORRECT_SCORE", "issue": "2-1"},
+             {**base, "id": "b", "match_id": "m2", "marche": "HALF_TIME_FULL_TIME", "issue": "DOM/DOM"},
+             {**base, "id": "c", "match_id": "m3", "marche": "RESULTAT_1N2", "issue": "DOM", "cote": 2.0,
+              "statut": "gagne", "gain": 10}]
+    f = bilan_filtres(paris)["famille"]
+    assert f["n_mesures"] == 3 and f["n_estimees"] == 0
+    lignes = {l["tranche"]: l for l in f["tranches"]}
+    assert lignes["Marchés classiques"]["roi"] == 1.0
+    assert lignes["Score exact"]["roi"] == lignes["Mi-temps / fin de match"]["roi"] == -1.0
