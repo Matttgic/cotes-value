@@ -640,6 +640,13 @@ def _construire(donnees: Path, sortie: Path) -> Path:
     # Sous-blocs identiques dans les deux mises (navigation, méthodes de mise, étude figée… environ 0,7 Mo) :
     # publiés une seule fois. Le navigateur reprend ceux de la vue fixe (appliquerMise).
     laboratoire_k = {k: v for k, v in laboratoire_k.items() if laboratoire.get(k) != v}
+    # Paris des segments : seule la colonne du gain (6) dépend de la mise. Le gain Kelly est ajouté en colonne 12 des
+    # lignes fixes au lieu de republier toute la liste (environ 0,6 Mo) ; la page le remet en colonne 6 (appliquerMise).
+    segments_fixe, segments_k = paris_des_segments(paris), paris_des_segments(paris_k)
+    segments_fusionnes = len(segments_fixe) == len(segments_k) and all(
+        f[:6] == k[:6] and f[7:] == k[7:] for f, k in zip(segments_fixe, segments_k))
+    if segments_fusionnes:
+        segments_fixe = [f + [k[6]] for f, k in zip(segments_fixe, segments_k)]
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:],
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS,
@@ -655,11 +662,11 @@ def _construire(donnees: Path, sortie: Path) -> Path:
             "kelly": {"bilan": bilan(paris_k), "courbes": courbes(paris_k), "segments": segments(paris_k),
                       "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"}
                                          for k, b in bilan_tranches(paris_k).items()},
-                      "paris_segments": paris_des_segments(paris_k), "filtres": bilan_filtres(paris_k),
+                      **({} if segments_fusionnes else {"paris_segments": segments_k}), "filtres": bilan_filtres(paris_k),
                       "laboratoire": laboratoire_k},
             "ecarts_references": moyennes_ecarts(paris),
             "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "profil_horaire": profil_horaire(paris), "filtres": bilan_filtres(paris), "segments": segments(paris),
-            "paris_segments": paris_des_segments(paris), "paris_a_venir_segments": paris_a_venir_des_segments(paris),
+            "paris_segments": segments_fixe, "paris_a_venir_segments": paris_a_venir_des_segments(paris),
             "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},

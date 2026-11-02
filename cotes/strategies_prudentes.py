@@ -21,6 +21,7 @@ from .strategie_conseil import CONSEILS, paris_conseil
 from .strategie_defi import DEFIS, paris_defi
 from .strategie_gemini_defi import GEMINI_DEFIS, SELECTEURS as SELECTEURS_GEMINI_DEFI
 from .strategie_claude_defi import CLAUDE_DEFIS, SELECTEURS as SELECTEURS_CLAUDE_DEFI
+from .strategie_claude_opus import CLAUDE_OPUS, SELECTEURS as SELECTEURS_CLAUDE_OPUS
 from .convergence import STRATEGIES, selections, votes
 from .laboratoire import heure
 from .simulation import REFERENCES, paris_strategie
@@ -38,7 +39,7 @@ CONVERGENCE_3 = {
     "regles": "≥3 familles parmi Claude, ChatGPT, Gemini, Jules · 1 pari/match · mise fictive 10 €",
 }
 VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN, COEUR, LIQUIDITE,
-             *GROKS, *GROKS_V2, *GROKS_V3, *CONSEILS, *DEFIS, *GEMINI_DEFIS, *CLAUDE_DEFIS)
+             *GROKS, *GROKS_V2, *GROKS_V3, *CONSEILS, *DEFIS, *GEMINI_DEFIS, *CLAUDE_DEFIS, *CLAUDE_OPUS)
 PARIS = ZoneInfo("Europe/Paris")
 
 
@@ -251,6 +252,9 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
     # Claude Défi : même principe, sélecteurs figés au lancement, sans rejeu.
     for c in CLAUDE_DEFIS:
         resultat[c["cle"]] = SELECTEURS_CLAUDE_DEFI[c["cle"]](paris) if depuis is None else set()
+    # Claude Opus · Valeur solide : figée au lancement (3/11/2026), sans rejeu.
+    for c in CLAUDE_OPUS:
+        resultat[c["cle"]] = SELECTEURS_CLAUDE_OPUS[c["cle"]](paris) if depuis is None else set()
     return resultat
 
 

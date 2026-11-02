@@ -151,9 +151,16 @@
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option></select></div>
         <div class="champ"><label for="strategies-tri">Classer par</label>
-        <select id="strategies-tri"><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
+        <select id="strategies-tri"><option value="note" selected>Note /100 (régularité, solidité)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
       <p class="aide" id="strategies-total"></p>
+      <details class="mode-emploi"><summary>Comment la note /100 est calculée</summary><p class="aide">Elle préfère une stratégie
+      régulière et solide à un gros gain très aléatoire. <b>Rentabilité prudente /30</b> : borne basse de l'intervalle de confiance
+      à 80 % du ROI (de −10 % à +5 %), pas le ROI lui-même. <b>Valeur /25</b> : CLV moyenne et part des paris qui battent la
+      clôture, ramenées vers 0 et 50 % quand elles reposent sur peu de paris. <b>Régularité /25</b> : part de jours gagnants et plus
+      forte baisse comparée à ce que le hasard produirait. <b>Solidité /20</b> : nombre de paris réglés, durée d'observation et cote
+      moyenne (au-delà de 5, les cotes justes sont moins fiables). Note à partir de 10 paris réglés, provisoire sous 50. Elle suit la
+      période et la mise choisies. Descriptive : elle ne garantit aucun gain futur.</p></details>
       <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
         <button data-vue-strategies="liste" aria-pressed="true">Comparaison</button>
         <button data-vue-strategies="graphiques" aria-pressed="false">Graphiques</button>
@@ -755,7 +762,9 @@ function appliquerMise(mode) {
   const K = mode === "kelly" && D.kelly ? D.kelly : null;
   miseMode = K ? "kelly" : "fixe";
   // Le laboratoire Kelly ne publie que ce qui change avec la mise : le reste vient de la vue fixe.
-  for (const k of CLES_MISE) D[k] = !K ? D_FIXE[k] : k === "laboratoire" ? {...D_FIXE.laboratoire, ...K.laboratoire} : K[k];
+  for (const k of CLES_MISE) D[k] = !K ? D_FIXE[k] : k === "laboratoire" ? {...D_FIXE.laboratoire, ...K.laboratoire}
+    : k === "paris_segments" && !K.paris_segments ? (D_FIXE.paris_segments || []).map(r => r.length > 12 ? [...r.slice(0, 6), r[12], ...r.slice(7, 12)] : r)
+    : K[k];
   for (const f of fiches) {
     if (K && f.mise_kelly && f.mise_fixe) {        // la mise change aussi pour un pari encore en cours
       f.mise = f.mise_kelly;
@@ -1475,6 +1484,14 @@ function lignesStrategies(periode) {
   }
   return rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
 }
+// Note /100 (cotes/notation.py) : rentabilité prudente /30, valeur /25, régularité /25, solidité /20.
+const sousNotes = n => ["R", "V", "G", "S"].map((l, i) => l + " " + String([n.rentabilite, n.valeur, n.regularite, n.solidite][i]).replace(".", ",")).join(" · ");
+function celluleNote(n) {
+  if (!n) return '<span class="doux">—</span><small>moins de 10 paris réglés</small>';
+  const ton = n.total >= 70 ? "pos" : n.total < 40 ? "neg" : "";
+  return `<b class="note-strategie ${ton}">${n.total}</b>${n.provisoire ? "<small>provisoire (&lt; 50 réglés)</small>" : ""}`
+    + `<small title="Rentabilité prudente /30 · Valeur /25 · Régularité /25 · Solidité /20">${sousNotes(n)}</small>`;
+}
 function rendreStrategies() {
   const lignesOuvertes=new Set([...document.querySelectorAll("#strategies-mobile > details[open]")].map(d=>d.id));
   const L = D.laboratoire;
@@ -1499,6 +1516,7 @@ function rendreStrategies() {
   rows.sort((a,b) => {
     if (tri === "nom") return a.nom.localeCompare(b.nom,"fr") || a.id.localeCompare(b.id);
     if (tri === "valeur") return (a.valeur ?? Infinity) - (b.valeur ?? Infinity) || (b.stats?.clv ?? -Infinity) - (a.stats?.clv ?? -Infinity) || a.id.localeCompare(b.id);
+    if (tri === "note") return (b.stats?.note?.total ?? -1) - (a.stats?.note?.total ?? -1) || (b.stats?.regles ?? 0) - (a.stats?.regles ?? 0) || a.id.localeCompare(b.id);
     const av = tri === "reussite" ? a.reussite : a.stats[tri], bv = tri === "reussite" ? b.reussite : b.stats[tri];
     return (bv ?? -Infinity) - (av ?? -Infinity) || a.id.localeCompare(b.id);
   });
@@ -1572,9 +1590,10 @@ function rendreStrategies() {
   document.getElementById("strategies-quoi").textContent = descriptions[periodeStrategies] +
     (periodeStrategies === "futur" && !active.length ? " Aucune nouvelle sélection enregistrée : la dernière collecte disponible précède ce lancement. Le bouton Historique affiche la comparaison existante." : "") +
     ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, Eden, M3, convergence ≥ 2 et trois variantes encadrées) ; aucune rentabilité future démontrée.`;
-  document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
+  document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Note<small>/100</small></th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
     return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
+      <td>${celluleNote(s.note)}</td>
       <td>${s.paris}<small>${s.regles} réglés (${s.evenements_regles ?? "—"} matchs) · ${s.attente} en attente</small></td><td>${s.gagnes}</td><td>${s.perdus}</td>
       <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}</td>
       <td class="${signe(s.clv)}">${pp(s.clv)}<small>${s.clv_n || 0}/${s.regles} tickets mesurés</small><small>Par match ${pp(s.clv_evenement)} · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"}</small></td>
