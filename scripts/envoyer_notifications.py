@@ -288,13 +288,46 @@ def alertes_pushover(flux: dict, paris: list[dict], envoyes: dict, choisies: set
     return out
 
 
+BANKROLL_REFERENCE = 1000.0      # bankroll fictive de mise_kelly (cotes/simulation.py)
+
+
+def _bankroll(env) -> float:
+    """``PUSHOVER_BANKROLL`` en euros (défaut 1 000, la bankroll des bilans) ; valeur absurde : défaut."""
+    try:
+        b = float(str(env.get("PUSHOVER_BANKROLL", "") or BANKROLL_REFERENCE).replace(",", "."))
+    except ValueError:
+        return BANKROLL_REFERENCE
+    return b if 10 <= b <= 1_000_000 else BANKROLL_REFERENCE
+
+
+def ligne_macro(a: dict, mise: float | None) -> str:
+    """Ligne lue par MacroDroid (docs/pari-rapide-android.md) : « STAKE:7.5|MIN:1.85|URL:https://… ».
+    Mise arrondie à 0,50 € (au moins 0,50), point décimal, sans zéro inutile ; vide sans mise ou sans lien direct."""
+    lien = a.get("lien")
+    if (not isinstance(mise, (int, float)) or isinstance(mise, bool) or mise <= 0 or a.get("lien_repli")
+            or not isinstance(lien, str) or not lien.startswith("https://") or len(lien) > 500):
+        return ""
+    stake = max(0.5, round(mise * 2) / 2)
+    champs = [f"STAKE:{stake:g}"]
+    if isinstance(a.get("cote_min"), (int, float)) and not isinstance(a.get("cote_min"), bool):
+        champs.append(f"MIN:{a['cote_min']:.2f}")
+    return "|".join(champs + [f"URL:{lien}"])
+
+
 def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> dict:
-    """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable)."""
+    """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable). Mise Kelly ¼ ramenée à
+    ``PUSHOVER_BANKROLL`` ; ligne MacroDroid (STAKE|MIN|URL) avant les stratégies, sauf ``PUSHOVER_LIGNE_MACRO=non``."""
     env = os.environ if env is None else env
     maintenant = maintenant or datetime.now(timezone.utc)
+    kelly = a.get("mise_kelly")
+    if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
+        a = {**a, "mise_kelly": round(kelly * _bankroll(env) / BANKROLL_REFERENCE, 2)}
     titre, corps = message_ntfy(a)
     noms = [str(x) for x in (a.get("labels") or [])]
     ligne = f"\n{len(noms)} stratégie{'s' if len(noms) > 1 else ''} : {', '.join(noms)}" if noms else ""
+    macro = ligne_macro(a, a.get("mise_kelly")) if str(env.get("PUSHOVER_LIGNE_MACRO", "oui")).lower() != "non" else ""
+    if macro:
+        ligne = "\n" + macro + ligne
     champs = {"title": titre[:250], "message": (corps[:1000 - len(ligne)] + ligne)[:1000]}
     lien = a.get("lien")
     if isinstance(lien, str) and lien.startswith("https://") and len(lien) <= 500:

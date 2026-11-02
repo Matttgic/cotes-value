@@ -230,3 +230,8 @@ quand le téléphone l'associe à son site.
 - Quota gratuit de Pushover : 10 000 messages par mois et par application ; un 429 arrête l'envoi du passage.
 - Le bilan est dans `notifications_diagnostic.json` (champ `pushover` : actif, source des stratégies, nombre de stratégies, envois, échecs, clés
   inconnues), jamais le jeton ni la clé.
+
+## Pari rapide sur Android
+
+Ligne `STAKE|MIN|URL` dans les alertes Pushover, mise ramenée à ta bankroll (`PUSHOVER_BANKROLL`) et
+recette MacroDroid : [pari rapide](pari-rapide-android.md).

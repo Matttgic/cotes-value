@@ -1,4 +1,4 @@
-# Claude Opus · Valeur solide
+# Claude Opus : Valeur solide et déclinaisons
 
 Stratégie conçue le 2/11/2026 par Claude (Opus 5.5). Suivie à partir du **3/11/2026 à 00:00 UTC** (01:00 à Paris),
 figée au lancement, sans rejeu : seules les nouvelles détections comptent. Code : `cotes/strategie_claude_opus.py`,
@@ -49,6 +49,33 @@ les deux périodes.
 - Sur la même période, l'univers de base perd (CLV −0,48 %). Les filtres de C1 gardent donc leur effet.
 - Sur tout l'historique (7/10–2/11) : 355 paris, ROI +15,5 %, CLV +5,8 %, note 92. **Chiffre optimiste** : il
   inclut la période qui a servi à choisir les règles.
+
+## Déclinaisons (deuxième salve du 2/11)
+
+Six autres idées, testées avec le même protocole. Les seuils de choix ont été fixés **avant** de regarder la
+validation : note de construction ≥ 75, et en validation CLV ≥ +1 % et ROI ≥ −5 %.
+
+| Idée | Construction : paris · ROI · CLV · note | Validation : paris · ROI · CLV · note | Décision |
+|---|---|---|---|
+| Proche : ≤ 3 h, écart 3–15 %, cote 1,5–3,5, référence ≤ 120 s | 76 · −41,8 % · +3,32 % · 34 | 99 · −11,7 % · +3,41 % · 35 | écartée |
+| Consensus seul, cote 1,5–4, écart ≥ 3 %, ≤ 24 h | 60 · +16,2 % · +7,03 % · 57 | 26 · +14,8 % · +4,81 % · 41 | écartée (trop peu de paris), à surveiller |
+| **Handicaps : lignes, books lents, cote 1,6–2,6, écart 4–15 %** | 87 · +43,3 % · +9,10 % · 88 | 29 · −1,5 % · +5,47 % · 36 | **retenue** |
+| Polymarket seul, hors Winamax, cote 1,6–3,5, écart 4–15 %, ≤ 24 h | 46 · −8,1 % · +6,74 % · 42 | 31 · +18,1 % · +4,54 % · 47 | écartée |
+| **Hors football : Valeur solide sans le football** | 161 · +30,4 % · +6,91 % · 87 | 107 · +3,5 % · +4,49 % · 54 | **retenue** |
+| **Favoris réguliers : cote 1,6–2,2, écart 4–12 %** | 141 · +20,8 % · +5,38 % · 89 | 84 · +0,8 % · +3,89 % · 48 | **retenue** |
+
+Retenues, lancées en même temps que Valeur solide (3/11/2026 00:00 UTC), mêmes règles communes :
+
+| Stratégie (clé) | Différence avec Valeur solide | Tout l'historique : paris · ROI · CLV · note |
+|---|---|---|
+| Claude Opus · Favoris réguliers (`claude_opus_favoris`) | cote 1,60–2,20, écart 4–12 % : moins de variance par pari | 225 · +13,3 % · +4,75 % · 89 |
+| Claude Opus · Hors football (`claude_opus_hors_foot`) | sans le football, le marché le plus efficient | 268 · +19,6 % · +5,85 % · 89 |
+| Claude Opus · Handicaps (`claude_opus_handicaps`) | lignes seulement (asiatique, à 3 issues, jeux, sets), cote 1,60–2,60 | 116 · +32,1 % · +8,15 % · 87 |
+
+Les chiffres sur tout l'historique sont optimistes : ils incluent la période qui a servi à choisir. Ce sont
+des **sous-ensembles de Valeur solide**, donc fortement corrélés avec elle : quand elle a une mauvaise semaine,
+elles en auront une aussi. Les suivre ensemble montre lequel des trois angles (cotes courtes, hors football,
+lignes) tient le mieux dans la durée. Ce n'est pas une diversification.
 
 ## Ce qu'il faut en attendre
 

@@ -147,6 +147,9 @@ jobs:
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
           PUSHOVER_STRATEGIES: ${{ vars.PUSHOVER_STRATEGIES }}
           PUSHOVER_PRIORITY: ${{ vars.PUSHOVER_PRIORITY || '0' }}
+          # Pari rapide (docs/pari-rapide-android.md) : mise Kelly ¼ ramenée à ta bankroll, ligne STAKE|MIN|URL pour MacroDroid
+          PUSHOVER_BANKROLL: ${{ vars.PUSHOVER_BANKROLL || '1000' }}
+          PUSHOVER_LIGNE_MACRO: ${{ vars.PUSHOVER_LIGNE_MACRO || 'oui' }}
         run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
 
       - name: Signaler un échec des alertes Chrome
