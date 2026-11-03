@@ -6,6 +6,10 @@ from cotes.notifications import flux
 from scripts.envoyer_notifications import transmettre
 from tests.test_theodds import NOW, pari
 
+from pathlib import Path
+
+RACINE_SUPABASE = Path(__file__).resolve().parent.parent / "supabase/functions/cv-notifications"
+
 
 def selection(**kw):
     return pari(detecte=(NOW-timedelta(minutes=3)).isoformat(), debut=(NOW+timedelta(hours=2)).isoformat(),
@@ -376,3 +380,48 @@ def test_match_proche_prix_de_7_min_accepte_chez_les_bookmakers_lents_seulement(
     assert len(alerte("Unibet", 7)) == 1 and len(alerte("PMU", 9)) == 1 and len(alerte("Betclic", 7)) == 1
     assert not alerte("Winamax", 7)                      # lu à chaque cycle : 5 min suffisent
     assert not alerte("Unibet", 11)                      # au-delà de 10 min : écarté
+
+
+# --- Bases du Bilan cochables en notification -----------------------------------------------------------------------
+
+def test_bases_du_bilan_ont_un_nom_un_detail_et_une_cle_acceptee_par_le_service():
+    import re
+    from cotes import notifications as N
+    from cotes.simulation import REFERENCES
+    regex = (RACINE_SUPABASE / "core.mjs").read_text(encoding="utf-8").split("CLE_STRATEGIE = /", 1)[1].split("/;", 1)[0]
+    assert set(N.BASES) == {"base_uniques", *("base_" + r.lower() for r in REFERENCES)}
+    for cle in N.BASES:
+        assert re.fullmatch(regex, cle), cle                # aucun redéploiement de la fonction nécessaire
+        assert N.NOMS[cle].startswith("Base · ") and N.DETAILS[cle].endswith("toutes tranches")
+    assert N.NOMS["base_pinnacle"] == "Base · Pinnacle" and N.NOMS["base_uniques"] == "Base · paris uniques"
+
+
+def test_selections_bases_suivent_la_reference_et_les_paris_uniques_depuis_le_suivi():
+    from cotes.laboratoire import DEBUT_SUIVI, heure
+    from cotes.notifications import selections_bases
+    apres = (heure(DEBUT_SUIVI) + timedelta(days=1)).isoformat()
+    p = pari(id="a", reference="Pinnacle", detecte=apres, bookmaker="Winamax")
+    q = pari(id="b", reference="Polymarket", detecte=(heure(DEBUT_SUIVI) + timedelta(days=1, minutes=5)).isoformat(),
+             bookmaker="Winamax")                           # même cote française, vue plus tard : pas « unique »
+    r = pari(id="c", reference="Consensus", match_id="winamax|2", detecte=(heure(DEBUT_SUIVI) - timedelta(hours=1)).isoformat())
+    s = selections_bases([p, q, r])
+    assert s["base_pinnacle"] == {id(p)} and s["base_polymarket"] == {id(q)}
+    assert s["base_uniques"] == {id(p)}
+    assert s["base_consensus"] == set()                     # avant le début du suivi, comme le classement
+
+
+def test_alerte_d_une_base_sans_effet_sur_la_convergence():
+    p = selection()
+    a = flux([dict(p)], [p], {"base_pinnacle": {id(p)}, "base_uniques": {id(p)}}, NOW)["alertes"][0]
+    assert a["strategies"] == ["base_pinnacle", "base_uniques"]
+    assert a["labels"] == ["Base · Pinnacle", "Base · paris uniques"]
+    assert "convergence" not in a["strategies"]
+
+
+def test_preparer_ajoute_les_bases_aux_alertes(tmp_path):
+    from scripts.envoyer_notifications import preparer
+    p = selection(bookmaker="Winamax", id="x1")
+    (tmp_path / "paris.json").write_text(json.dumps([p]))
+    (tmp_path / "opportunites_actuelles.json").write_text(json.dumps([{**p, "collecte_recue": p["detecte"]}]))
+    alertes = preparer(tmp_path, NOW)["alertes"]
+    assert alertes and {"base_pinnacle", "base_uniques"} <= set(alertes[0]["strategies"])

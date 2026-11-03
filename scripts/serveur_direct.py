@@ -5,7 +5,8 @@ Boucle continue, à la place de la chaîne GitHub Actions (5 minutes, parfois re
 - au démarrage : battement « actif » poussé dans « donnees » (GitHub cesse de relancer sa chaîne), attente de la fin
   d'un cycle ou d'un règlement GitHub en cours, puis reprise de leurs données ;
 - chaque cycle (au plus un par ``PERIODE_S``, 60 s par défaut) : collecte, comparaison, paris, puis alertes
-  Pushover et Chrome tout de suite (scripts/cycle.py, scripts/envoyer_notifications.py) ;
+  Pushover tout de suite (scripts/cycle.py, scripts/envoyer_notifications.py ; stratégies du bloc « Alertes
+  Pushover » du site). Les alertes Chrome restent réservées à GitHub Actions (le service exige son identité) ;
 - toutes les ``PUBLICATION_S`` (300 s) : règlement (effectif une fois par heure), battement, un commit et un push
   de « donnees », puis publication du site par le workflow site.yml ;
 - toutes les heures : mise à jour du code (``git pull --ff-only``) ; si le code a changé, le programme s'arrête et
@@ -177,6 +178,8 @@ def environnement(donnees: Path) -> dict:
     return {**os.environ, "MEMOIRE_CHEMIN": str(RACINE / "memoire"),
             "REPRISE_CHEMIN": str(RACINE / "reprise" / "derniere_lecture.json.gz"),
             "MODE_COLLECTE": os.environ.get("MODE_COLLECTE", "complet"),
+            # Sans identité GitHub Actions : choix Pushover lu sur le site (lecture publique), envoi Chrome laissé à GitHub
+            "SERVEUR_DIRECT": "oui",
             # seuils de la page Santé à la même durée qu'avec les cycles de 5 minutes de GitHub
             "CYCLE_MINUTES": os.environ.get("CYCLE_MINUTES", f"{max(1.0, PERIODE_S / 60):g}")}
 

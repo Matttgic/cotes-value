@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
 from .convergence import STRATEGIES, cle_selection, paris_convergence
 from .laboratoire import DEBUT_SUIVI, REGLES, heure, selectionner
 from .liens import lien_info
+from .simulation import REFERENCES, premiers_par_selection
 from .strategie_qwen import QWEN
 from .strategies_prudentes import VARIANTES
 
@@ -46,15 +47,37 @@ def _bornes(x: float) -> str:
     return f"{x:.2f}".replace(".", ",")
 
 
+# Bases du Bilan (classement de la page Stratégies) : tous les paris d'une référence, ou les paris uniques (une mise par
+# cote française), toutes tranches. Clés en minuscules, acceptées telles quelles par le service de notifications.
+BASES = {"base_uniques": "Uniques", **{"base_" + ref.lower(): ref for ref in REFERENCES}}
+NOMS_BASES = {k: "Base · paris uniques" if ref == "Uniques" else "Base · " + ref for k, ref in BASES.items()}
 NOMS = {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
-        **{v["cle"]: v["court"] for v in VARIANTES}, "convergence": "Convergence ≥ 2", **_noms_labo()}
-DETAILS = {"labo:" + r.id: f"Cotes {_bornes(r.cote_min)}–{_bornes(r.cote_max)} · edge ≥ {100*r.edge_min:g} % · "
-                           f"≤ {r.avance_max_h} h avant le match" for r in REGLES}
+        **{v["cle"]: v["court"] for v in VARIANTES}, "convergence": "Convergence ≥ 2", **_noms_labo(), **NOMS_BASES}
+DETAILS = {**{"labo:" + r.id: f"Cotes {_bornes(r.cote_min)}–{_bornes(r.cote_max)} · edge ≥ {100*r.edge_min:g} % · "
+                              f"≤ {r.avance_max_h} h avant le match" for r in REGLES},
+           **{k: ("Une mise par cote française, toutes références" if ref == "Uniques"
+                  else f"Tous les paris repérés par {ref}") + " · toutes tranches" for k, ref in BASES.items()}}
 
 
 def selections_labo(paris: list[dict]) -> dict[str, set[int]]:
     """Prises de chaque règle du laboratoire depuis le début du suivi, comme sur la page Stratégies."""
     return {"labo:" + r.id: {id(p) for p in selectionner(paris, r, DEBUT_SUIVI)} for r in REGLES}
+
+
+def selections_bases(paris: list[dict]) -> dict[str, set[int]]:
+    """Prises de chaque base du Bilan depuis le début du suivi, comme dans le classement de la page Stratégies."""
+    debut, uniques = heure(DEBUT_SUIVI), premiers_par_selection(paris)
+    out = {k: set() for k in BASES}
+    for p in paris:
+        t = heure(p.get("detecte"))
+        if not t or t < debut:
+            continue
+        cle = "base_" + str(p.get("reference") or "").lower()
+        if cle in out and cle != "base_uniques":
+            out[cle].add(id(p))
+        if id(p) in uniques:
+            out["base_uniques"].add(id(p))
+    return out
 
 
 PIN2 = "labo:PIN-1.3-2-e2-h36"       # Pinnacle 2 : alerte webhook

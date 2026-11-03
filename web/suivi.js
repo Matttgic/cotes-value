@@ -37,6 +37,9 @@ function suiviRetirer(etat, cle) {
 // La prise détectée à `t` compte pour la stratégie si elle l'était alors.
 const suiviCompte = (intervalles, t) => (intervalles || []).some(([a, b]) => t >= a && (b == null || t < b));
 const suiviNombre = x => typeof x === 'number' && Number.isFinite(x) ? x : null;
+// Bases du Bilan cochées dans Notifications (cotes/notifications.py, selections_bases) : déduites de la référence et du
+// drapeau « pari unique » de chaque prise, sans colonne de plus dans le catalogue.
+const suiviBases = p => [...(p.reference ? ['base_' + String(p.reference).toLowerCase()] : []), ...(p.unique_bilan ? ['base_uniques'] : [])];
 
 function suiviObjets(catalogue) {
   const champs = catalogue?.champs || [];
@@ -51,7 +54,7 @@ function suiviPrises(prises, {depuis, jusqua, etat, unique} = {}) {
     if (!Number.isFinite(t) || (depuis != null && t < depuis) || (jusqua != null && t >= jusqua)) continue;
     if (unique && !p.unique_bilan) continue;
     if (etat) {
-      const cles = [...(p.strategies || []), ...(p.regles || []), ...(p.convergence ? ['convergence'] : [])].filter(k => suiviCompte(etat[k], t));
+      const cles = [...(p.strategies || []), ...(p.regles || []), ...suiviBases(p), ...(p.convergence ? ['convergence'] : [])].filter(k => suiviCompte(etat[k], t));
       if (!cles.length) continue;
       out.push({...p, suivies: cles});
     } else out.push(p);
