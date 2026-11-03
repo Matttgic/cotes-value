@@ -169,12 +169,12 @@ table{font-size:13px}th,td{padding:14px 12px}th{background:var(--fond);font-size
 .strategies-mobile{display:none}
 .periode-badge{background:var(--accent-f);color:var(--accent);font-size:11px;font-weight:650;padding:7px 10px;white-space:nowrap}.periode-badge.historique{background:var(--jaune-f);color:var(--jaune)}
 #strategies-periodes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:650px}
-#strategies-periodes button{text-align:center;min-height:46px;font-size:13px}#strategies-periodes .periodes-detail{grid-column:1/-1;color:var(--doux);font-size:12px}#strategies-periodes .periodes-detail summary{font-weight:500;padding:8px 0}#strategies-periodes .periodes-detail div{display:flex;gap:8px;flex-wrap:wrap;margin-top:5px}
+#strategies-periodes button{text-align:center;min-height:46px;font-size:13px}
 #strategies-legende{gap:6px;margin-bottom:12px}#strategies-legende button{padding:7px 9px;min-height:40px;font-size:11px}#strategies-legende button:not(.actif){opacity:.65}#strategies-tout{border-style:dashed}
 #strategies-courbes{display:block;min-height:200px}.strat-bar-row{grid-template-columns:180px minmax(50px,1fr) 90px;padding:6px 0;gap:12px}.strat-bar-label{font-size:13px}.strat-bar-label small{font-size:10px}.strat-axe{margin-left:192px;margin-right:102px}
 .infos div{padding:14px;font-size:11px}.infos b{font-size:22px;margin-top:3px}.trace{padding-top:5px}.trace summary{min-height:32px}
 details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte[open]>summary{margin-bottom:14px}details.carte p{margin-top:10px}
-#laboratoire{margin-top:24px}.notif-choix{padding:9px 0;border-bottom:1px solid var(--ligne);min-height:56px}.notif-choix:last-child{border-bottom:0}#notif-strategies,#pushover-strategies{padding:8px 18px 14px}#notif-strategies legend,#pushover-strategies legend{font-size:13px}#notif-message{min-height:1.5em}
+.notif-choix{padding:9px 0;border-bottom:1px solid var(--ligne);min-height:56px}.notif-choix:last-child{border-bottom:0}#notif-strategies,#pushover-strategies{padding:8px 18px 14px}#notif-strategies legend,#pushover-strategies legend{font-size:13px}#notif-message{min-height:1.5em}
 .message-reseau{border:1px solid var(--jaune);background:var(--jaune-f);color:var(--jaune);padding:12px 16px;margin-bottom:20px;font-size:12px}
 @media(min-width:1000px){#liste-paris,#liste-regler{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}:is(#liste-paris,#mes-liste) .carte,#liste-regler .carte{margin:0}.groupe-paris{grid-column:1/-1}.grille-filtres{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:1000px){.strategies-table{font-size:11px}.strategies-table th,.strategies-table td{padding:12px 5px}nav button{padding:12px 10px;font-size:12px}}
@@ -230,7 +230,7 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 @media(max-width:760px){
   main{padding-top:17px}.signature{display:none}.titre{padding-top:11px;padding-bottom:11px}.maj{font-size:10px}.fraicheur{font-size:11px}.page-tete{gap:10px;margin-bottom:16px}.page-tete .surtitre{display:none}
   .tete-strategies{flex-direction:row;align-items:center;gap:8px;margin-bottom:13px}.tete-strategies h2{font-size:25px;margin-bottom:4px}.tete-strategies .sous-texte{font-size:11px}.tete-strategies .periode-badge{font-size:10px;white-space:normal;text-align:center;max-width:105px}
-  #strategies-periodes{gap:6px;margin-bottom:6px}#strategies-periodes button{min-height:42px;font-size:12px}#strategies-periodes .periodes-detail summary{padding:5px 0;min-height:28px}
+  #strategies-periodes{gap:6px;margin-bottom:6px}#strategies-periodes button{min-height:42px;font-size:12px}
   .filtres-strategies{grid-template-columns:minmax(0,1fr) 120px;margin:8px 0 12px;gap:10px}.filtres-strategies label{font-size:11px}.filtres-strategies select{font-size:12px;padding-right:22px;padding-left:8px;min-height:42px}
   #strategies-total{font-size:11px;margin-bottom:7px}.vue-strategies-toggle{max-width:none;margin:7px 0 14px}.vue-strategies-toggle button{min-height:38px;font-size:12px}
   .strategie-visuelle .strat-chiffres{grid-template-columns:repeat(3,minmax(0,1fr))}.strategie-visuelle .strat-chiffres dd{font-size:18px}.strategie-visuelle .strategie-entete h3{font-size:14px}.strategie-identite{gap:8px}.strategie-visuelle .strategie-entete .btn{font-size:10px;padding:8px 7px}.strategie-apercu strong{font-size:26px}
@@ -549,7 +549,6 @@ tr:last-child td{border-bottom:1px solid var(--ligne)}tr.total td{background:var
 /* Courbe d'une stratégie dépliée : trait fin, taille bornée sur grand écran. */
 .grande-courbe{max-width:720px}.grande-courbe path{vector-effect:non-scaling-stroke;stroke-width:1.5px}
 .strategie-visuelle .strategie-entete h3,.ligne-corps .strategie-entete h3{font-size:24px;line-height:1.1}
-#laboratoire{border-top:1px solid var(--texte)}
 
 /* Commandes : puces jointes (filtre actif à l'encre), boutons encre, sous-vues soulignées comme les onglets. */
 .puces,.paris-puces,.bu-periodes{gap:0;padding:0 1px 1px 0}
@@ -698,3 +697,7 @@ button.fraicheur{background:none;border:0;padding:0;font:inherit;color:inherit;c
 .temoin{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;font-size:11.5px;color:var(--texte);margin:6px 0 0;line-height:1.35;text-align:left}
 .temoin i{display:inline-block;width:14px;height:0;vertical-align:middle;margin-right:5px;border-top:2px solid var(--serie)}
 .temoin i.temoin-attendu{border-top:2px dashed var(--attendu)}.temoin small{color:var(--doux)}.temoin-mot{font-weight:600}
+/* Nouvelle publication : bandeau discret, la page ne se recharge que sur « Actualiser » (actualisation.js) */
+.actualisation{position:fixed;right:16px;bottom:24px;z-index:30;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 14px;background:var(--carte);color:var(--texte);border:1px solid var(--texte);font-size:12px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.actualisation[hidden]{display:none}.actualisation button{border:1px solid var(--texte);background:var(--texte);color:var(--carte);padding:6px 12px;font-size:12px;min-height:34px;cursor:pointer}
+@media(max-width:760px){.actualisation{left:12px;right:12px;justify-content:space-between;bottom:calc(76px + env(safe-area-inset-bottom))}}

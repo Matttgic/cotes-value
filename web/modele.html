@@ -144,6 +144,7 @@
       <div class="raccourci-analyses"><a href="#analyses">Analyses et graphiques <span aria-hidden="true">↗</span></a></div>
       <div class="page-tete tete-strategies"><div><h2>Stratégies</h2><p class="sous-texte">Suivi simulé · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
       <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
+      <div id="strategies-dates"></div>
       <div class="filtres filtres-strategies">
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
@@ -186,7 +187,6 @@
       <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
       </div>
       <details class="mode-emploi"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
-      <div class="carte" id="laboratoire"></div>
     </div>
   </section>
   <section class="onglet" id="o-segments">
@@ -878,13 +878,9 @@ function rendreParis() {
     `<button type="button" data-puce="${v}" aria-pressed="${v===puceStatut}">${t}</button>`).join("");
   const f = Object.fromEntries(Object.entries(FILTRES).map(([id,[champ]]) => [champ, document.getElementById("f-"+id).value]));
   const navigation = D.laboratoire?.navigation;
-  const ids = strategieChoisie ? (navigation?.selections?.[strategieChoisie.id]?.[strategieChoisie.periode] || []) : null;
-  const source = ids ? ids.map(id => navigation.paris[id]).filter(Boolean).map(p => {
-    if (strategieChoisie.periode === "futur") return p;
-    const badges = p.strategies_historiques || [];
-    return {...p, ...Object.fromEntries(Object.keys(D.strategies_badges || {}).map(cle => [cle,badges.includes(cle)])),
-      strategies:badges, convergence:p.convergence_historique || false};
-  }) : fiches;
+  const ids = strategieChoisie ? (navigation?.selections?.[strategieChoisie.id]?.futur || []) : null;
+  const bornesChoisies = strategieChoisie?.dates ? suiviBornes(strategieChoisie.dates.depuis, strategieChoisie.dates.jusqua) : {};
+  const source = ids ? ids.map(id => navigation.paris[id]).filter(p => p && dansDatesStrat(p, bornesChoisies)) : fiches;
   const q = normaliserRecherche(document.getElementById("f-q").value).trim();
   const maintenant=Date.now(),triHoraire=document.getElementById('paris-tri').value;
   const L = trierHoraires(source.filter(p => accepteHoraire(p,document.getElementById('paris-horaire').value,maintenant) && accepteePuce(p) &&
@@ -897,7 +893,7 @@ function rendreParis() {
   const plus = document.getElementById("plus");
   banner.hidden = !strategieChoisie;
   if (strategieChoisie) {
-    banner.innerHTML = `<div><b>${e(strategieChoisie.nom)}</b><div class="aide">${e(STRAT_PERIODES[strategieChoisie.periode])}
+    banner.innerHTML = `<div><b>${e(strategieChoisie.nom)}</b><div class="aide">${e(libelleDatesStrat(strategieChoisie.dates || {}))}
       · ${L.length} pari(s) · cotes simulées à la détection. Les statistiques historiques restent figées au relevé.</div></div>
       <button class="btn" id="paris-tout">Tous les paris</button>`;
     document.getElementById("paris-tout").onclick = () => {
@@ -1289,8 +1285,48 @@ rendreSante();
 
 // Famille publiée une fois : aucun nouveau classement choisi selon le test final.
 // Comparaison complète : même ligne de données pour le tableau et le graphique.
-const STRAT_PERIODES = {futur:"Depuis le lancement", ensemble:"Historique 7–13 oct.",
-  construction:"7–10 oct.", validation:"11–12 oct.", test:"13 oct."};
+// Période : tout le suivi depuis le lancement de chaque stratégie (chiffres du serveur, note /100 comprise), ou des dates
+// de détection choisies (Du / Au, jour de Paris) : chiffres et courbes recalculés ici à partir des paris de chaque stratégie.
+const CLE_DATES_STRAT = "cv-dates-strategies-v1";
+let datesStrat = (() => { try { const d = JSON.parse(lire(CLE_DATES_STRAT) || "{}"); return d && typeof d === "object" ? d : {}; } catch { return {}; } })();
+const bornesStrat = () => suiviBornes(datesStrat.depuis, datesStrat.jusqua);
+const datesStratActives = () => { const b = bornesStrat(); return b.depuis != null || b.jusqua != null; };
+const libelleDatesStrat = (d = datesStrat) => {
+  const j = s => s ? s.slice(8, 10) + "/" + s.slice(5, 7) : "";
+  return !d.depuis && !d.jusqua ? "Depuis le lancement" : d.depuis && d.jusqua ? (d.depuis === d.jusqua ? "Le " + j(d.depuis) : `Du ${j(d.depuis)} au ${j(d.jusqua)}`)
+    : d.depuis ? "Depuis le " + j(d.depuis) : "Jusqu’au " + j(d.jusqua);
+};
+const dansDatesStrat = (p, b = bornesStrat()) => {
+  const t = Date.parse(p.detecte);
+  return Number.isFinite(t) && (b.depuis == null || t >= b.depuis) && (b.jusqua == null || t < b.jusqua);
+};
+// Paris d'une ligne du classement (suivi prospectif) : sélections figées des règles et comparateurs, ou base du Bilan.
+function parisDeStrategie(r) {
+  const L = D.laboratoire || {};
+  if (r.reference === "bases") {
+    const ref = r.id.slice(5), debut = Date.parse(L.debut_suivi);
+    return fiches.filter(p => Date.parse(p.detecte) >= debut && (ref === "Uniques" ? p.unique_bilan : p.reference === ref));
+  }
+  const nav = L.navigation || {};
+  return (nav.selections?.[r.id]?.futur || []).map(id => nav.paris?.[id]).filter(Boolean);
+}
+// Mêmes chiffres que le serveur (cotes/laboratoire.py, resume) sur une liste de paris ; la note /100 n'est pas recalculée.
+const STATUTS_REGLES = new Set(["gagne", "perdu", "rembourse", "demi_gagne", "demi_perdu"]);
+function statsStrategie(paris) {
+  const regles = paris.filter(p => STATUTS_REGLES.has(p.statut) && Number.isFinite(p.gain));
+  const somme = l => l.reduce((a, b) => a + b, 0), arrondi = x => Math.round(100 * x) / 100;
+  const gains = regles.map(p => p.gain), mise = somme(regles.map(p => Number.isFinite(p.mise) && p.mise > 0 ? p.mise : 10));
+  const clvs = regles.map(p => p.clv).filter(Number.isFinite), gain = arrondi(somme(gains));
+  return {paris: paris.length, regles: regles.length, attente: paris.length - regles.length,
+    gagnes: regles.filter(p => p.statut === "gagne" || p.statut === "demi_gagne").length,
+    perdus: regles.filter(p => p.statut === "perdu" || p.statut === "demi_perdu").length,
+    gain, mise, roi: regles.length && mise ? arrondi(100 * gain / mise) : null,
+    gains_bruts: arrondi(somme(gains.filter(g => g > 0))), pertes_brutes: arrondi(-somme(gains.filter(g => g < 0))),
+    clv: clvs.length ? arrondi(100 * somme(clvs) / clvs.length) : null, clv_n: clvs.length,
+    evenements_regles: new Set(regles.map(p => p.match_id).filter(Boolean)).size};
+}
+// Courbe d'une ligne : celle du serveur sur tout le suivi, sinon recalculée sur les paris des dates choisies.
+const courbeStrategie = r => r.parisDates ? pointsDepuisParis(r.parisDates) : (D.laboratoire?.courbes?.[r.id]?.futur || []);
 const courbesMasquees = new Set();
 const COULEURS_COMPARATEURS = {"Claude (rejeu)":"var(--courbe-claude,#2675ce)", "ChatGPT v1 (rejeu)":"var(--courbe-chatgpt,#d15b13)",
   "Gemini Argon v1 (rejeu)":"var(--courbe-gemini,#16884c)", "JULES EDGE v1 (rejeu)":"var(--courbe-jules1,#b04baf)",
@@ -1302,7 +1338,7 @@ const ATTENDUS_MAX = 8;          // au-delà, les lignes attendues brouilleraien
 function rendreCourbesStrategies(rows) {
   const legend = document.getElementById("strategies-legende"), svg = document.getElementById("strategies-courbes");
   const toutes = rows.map((r, i) => ({...r, couleur:COULEURS_COMPARATEURS[r.id] || PALETTE_COURBES[i % PALETTE_COURBES.length],
-    points:D.laboratoire.courbes?.[r.id]?.[periodeStrategies] || []}));
+    points:courbeStrategie(r)}));
   const nomsCourts = {"M3 (rejeu)":"M3", "Convergence ≥ 2":"Conv. ≥ 2",
     "JULES EDGE v1 (rejeu)":"Jules v1", "JULES EDGE v2 (rejeu)":"Jules v2",
     "ChatGPT v1 (rejeu)":"ChatGPT v1", "Gemini Argon v1 (rejeu)":"Gemini v1", "Eden (rejeu)":"Eden"};
@@ -1347,7 +1383,7 @@ function rendreCourbesStrategies(rows) {
   const niveaux=Array.from({length:Math.round((hi-lo)/st)+1},(_,i) => lo+i*st);
   const graduations=niveaux.map(g => `<line x1="${left}" y1="${y(g)}" x2="${W-right}" y2="${y(g)}" stroke="var(--ligne)"/><text x="${left-8}" y="${y(g)+6}" text-anchor="end" fill="var(--doux)" font-size="12">${e(eurC(g))}</text>`).join("");
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-  svg.innerHTML = `<title>Gains cumulés — ${e(STRAT_PERIODES[periodeStrategies])}, 10 € fictifs par pari</title>${graduations}`+
+  svg.innerHTML = `<title>Gains cumulés — ${e(libelleDatesStrat())}</title>${graduations}`+
     [debut,(debut+fin)/2,fin].map(t => `<text x="${x(t)}" y="${H-9}" text-anchor="${t===debut ? "start" : t===fin ? "end" : "middle"}" fill="var(--doux)" font-size="12">${date(t)}</text>`).join("")+
     series.filter(r => r.points.length).map((r,i) => {
       let path=`M ${x(debut)} ${y(0)}`;
@@ -1359,9 +1395,8 @@ function rendreCourbesStrategies(rows) {
       return attendu+`<path data-serie="${e(r.id)}" d="${path}" fill="none" stroke="${couleur}" stroke-width="2.5" vector-effect="non-scaling-stroke" ${r.id.includes("v2") ? 'stroke-dasharray="7 4"' : D.variantes?.[r.id] ? 'stroke-dasharray="3 3"' : ""}><title>${e(r.nom)} : ${e(eur(dernier))} · ${r.points.length} réglés</title></path>`;
     }).join("");
 }
-let periodeStrategies = "futur";
-// Lignes de la comparaison des stratégies pour une période : onglet Stratégies et Accueil.
-function lignesStrategies(periode) {
+// Lignes de la comparaison des stratégies, suivi depuis le lancement : onglet Stratégies et Accueil.
+function lignesStrategies() {
   const L = D.laboratoire || {};
   const bornes = n => String(n).replace(".",",");
   const futur = new Map((L.futur || []).map(r => [r.id,r]));
@@ -1371,10 +1406,9 @@ function lignesStrategies(periode) {
     nom:`${r.regle.reference} ${numeros[r.regle.reference] = (numeros[r.regle.reference] || 0) + 1}`, reference:r.regle.reference,
     detail:`Cotes ${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · edge ≥ ${r.regle.edge_min*100} % · ≤ ${r.regle.avance_max_h} h`,
     graphe:`${bornes(r.regle.cote_min)}–${bornes(r.regle.cote_max)} · ≥ ${r.regle.edge_min*100} % · ${r.regle.avance_max_h} h`,
-    stats:periode === "futur" ? futur.get(r.regle.id) : r[periode]}));
-  for (const [id,per] of Object.entries(L.comparateurs || {})) {
+    stats:futur.get(r.regle.id)}));
+  for (const id of Object.keys(L.comparateurs || {})) {
     const variante = D.variantes?.[id];
-    if(variante?.prospectif_seulement && periode!=="futur") continue;
     const nomComp = variante ? variante.nom : id.startsWith("Convergence") ? "Convergence ≥ 2 stratégies"
     : id.startsWith("JULES EDGE v2") ? "JULES EDGE V2"
     : id.startsWith("JULES") ? "JULES EDGE V1"
@@ -1383,28 +1417,19 @@ function lignesStrategies(periode) {
       : id.startsWith("Gemini") ? "Gemini Argon V1"
       : id.startsWith("Eden") ? "Eden"
       : "ChatGPT V1";
-    const detailComp = variante ? (periode === "futur"
-      ? `Depuis le ${quand(variante.debut)} · ${variante.regles}`
-      : `Rejeu exploratoire après audit · ${variante.regles}`) : periode === "futur"
-      ? (id.startsWith("Convergence") ? "Depuis le 15/10 à 01 h · 2 familles minimum · M3 incluse · Eden à partir du 19/10"
-         : id.startsWith("JULES EDGE v2") ? "Depuis le 15/10 à 00 h 30 · multi-réf. · max 8/j"
-         : id.startsWith("JULES") ? "Depuis le 14/10 à 23 h 04 · 1 pari/match · max 6/j"
-         : id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection"
-         : id.startsWith("Gemini") ? "Multi-réf. adaptative · 1 pari/match · max 8/j"
-         : id.startsWith("Eden") ? "Depuis le 19/10 à 20 h · Pinnacle et Polymarket · 1,30–2,00"
-         : "Nouvelles prises officielles depuis le 14/10 à 14 h")
-      : (id.startsWith("Convergence") ? "Rejeu exploratoire · même prise, prix et instant · 2 familles minimum"
-         : id.startsWith("JULES EDGE v2") ? "Rejeu a posteriori · multi-réf. · 1,30–2,80 · edge 2,5–12 % · max 8/j"
-         : id.startsWith("JULES") ? "Rejeu a posteriori · Pinnacle · 1,30–2,50 · edge 3–12 % · max 6/j"
-         : id.startsWith("M3") ? "Optimisation a posteriori · 3 sports · 1,30–3,00 · 2–12 % d’edge"
-         : id.startsWith("Gemini") ? "Rejeu hypothétique · Pin ≤ 2,15 / Bet+Poly ≤ 2,60 · edge ≥ 2,5 %"
-         : id.startsWith("Eden") ? "Rejeu descriptif · Pinnacle et Polymarket · 1,30–2,00 · edge 2–12 % · 30 min–24 h"
-         : "Rejeu hypothétique · mêmes dates que la famille");
+    const detailComp = variante ? `Depuis le ${quand(variante.debut)} · ${variante.regles}`
+      : id.startsWith("Convergence") ? "Depuis le 15/10 à 01 h · 2 familles minimum · M3 incluse · Eden à partir du 19/10"
+      : id.startsWith("JULES EDGE v2") ? "Depuis le 15/10 à 00 h 30 · multi-réf. · max 8/j"
+      : id.startsWith("JULES") ? "Depuis le 14/10 à 23 h 04 · 1 pari/match · max 6/j"
+      : id.startsWith("M3") ? "Depuis le 15/10 · simulation, 10 € / sélection"
+      : id.startsWith("Gemini") ? "Multi-réf. adaptative · 1 pari/match · max 8/j"
+      : id.startsWith("Eden") ? "Depuis le 19/10 à 20 h · Pinnacle et Polymarket · 1,30–2,00"
+      : "Nouvelles prises officielles depuis le 14/10 à 14 h";
     rows.push({id, nom:nomComp, reference:"comparateurs", detail:detailComp,
-      graphe:"Comparateur", stats:periode === "futur" ? L.comparateurs_futur?.[id] : per[periode]});
+      graphe:"Comparateur", stats:L.comparateurs_futur?.[id]});
   }
   // Bases du Bilan : chaque référence et les paris uniques, toutes tranches, sur le suivi prospectif.
-  if (periode === "futur") for (const [ref, s] of Object.entries(L.bases_futur || {}))
+  for (const [ref, s] of Object.entries(L.bases_futur || {}))
     rows.push({id:"base:"+ref, nom:ref === "Uniques" ? "Base · paris uniques" : "Base · "+ref, reference:"bases",
       detail:(ref === "Uniques" ? "Une mise par cote française, toutes références" : "Tous les paris repérés par "+ref)
         +" · toutes tranches · depuis le 14/10 à 14 h", graphe:"Base du bilan", stats:s});
@@ -1413,7 +1438,7 @@ function lignesStrategies(periode) {
 // Note /100 (cotes/notation.py) : rentabilité prudente /30, valeur /25, régularité /25, solidité /20.
 // Évolution de la note depuis la veille et sur 7 jours (notes_historique.json, mise fixe, suivi prospectif).
 function evolutionNote(id, total) {
-  const R = periodeStrategies === "futur" && miseMode !== "kelly" ? (D.notes_reperes || {}) : {};
+  const R = !datesStratActives() && miseMode !== "kelly" ? (D.notes_reperes || {}) : {};
   const jj = j => j ? j.slice(8, 10) + "/" + j.slice(5, 7) : "";
   return [["veille", "depuis le "], ["semaine", "depuis le "]].map(([cle, libelle]) => {
     const avant = R[cle]?.notes?.[id];
@@ -1433,6 +1458,25 @@ function celluleNote(n, id) {
   return `<b class="note-strategie ${ton}">${n.total}</b>${n.provisoire ? "<small>provisoire (&lt; 50 réglés)</small>" : ""}`
     + `<small title="Rentabilité prudente /30 · Valeur /25 · Régularité /25 · Solidité /20">${sousNotes(n)}</small>` + evolutionNote(id, n.total);
 }
+// Raccourcis de période et dates (Du / Au) de l'onglet Stratégies ; le choix reste sur cet appareil.
+function rendreDatesStrategies() {
+  const auj = suiviJourParis(), il = n => suiviJourParis(Date.now() - n * 86400000);
+  const rapides = [["tout", "Depuis le lancement", {}], ["30", "30 jours", {depuis:il(29), jusqua:auj}],        // aujourd'hui compris
+    ["7", "7 jours", {depuis:il(6), jusqua:auj}], ["jour", "Aujourd’hui", {depuis:auj, jusqua:auj}]];
+  const egal = d => (d.depuis || "") === (datesStrat.depuis || "") && (d.jusqua || "") === (datesStrat.jusqua || "");
+  const choisir = d => { datesStrat = d; ecrire(CLE_DATES_STRAT, JSON.stringify(d)); rendreStrategies(); };
+  const puces = document.getElementById("strategies-periodes");
+  puces.innerHTML = rapides.map(([k, t, d]) => `<button type="button" data-rapide="${k}" class="${egal(d) ? "actif" : ""}" aria-pressed="${egal(d)}">${t}</button>`).join("");
+  for (const b of puces.querySelectorAll("button")) b.onclick = () => choisir(rapides.find(([k]) => k === b.dataset.rapide)[2]);
+  const zone = document.getElementById("strategies-dates");
+  zone.innerHTML = `<div class="filtres periode-bilan"><div class="champ"><label for="strat-depuis">Du</label><input type="date" id="strat-depuis" value="${e(datesStrat.depuis || "")}" max="${auj}"></div>
+    <div class="champ"><label for="strat-jusqua">Au</label><input type="date" id="strat-jusqua" value="${e(datesStrat.jusqua || "")}" max="${auj}"></div></div>
+    <p class="aide">Dates de détection des paris (heure de Paris). Sans dates : tout le suivi, avec la note /100.</p>`;
+  for (const [id, cle] of [["strat-depuis", "depuis"], ["strat-jusqua", "jusqua"]])
+    document.getElementById(id).onchange = ev => choisir({...datesStrat, [cle]: ev.target.value || ""});
+  const contexte = document.getElementById("strategies-contexte");
+  contexte.textContent = datesStratActives() ? libelleDatesStrat() : "Suivi prospectif";
+}
 function rendreStrategies() {
   const lignesOuvertes=new Set([...document.querySelectorAll("#strategies-mobile > details[open]")].map(d=>d.id));
   const L = D.laboratoire;
@@ -1441,15 +1485,25 @@ function rendreStrategies() {
     return;
   }
   const pp = n => n == null ? "—" : pct(n/100);
-  let rows = lignesStrategies(periodeStrategies);
-  // Courbe de chaque stratégie (règles, comparateurs, bases du Bilan), calculée au relevé avec la même mise et la même
-  // coupure que son bilan : [instant, réel, attendu, écart type] (ligne témoin et marge du hasard).
-  const courbeDe = r => L.courbes?.[r.id]?.[periodeStrategies] || [];
+  let rows = lignesStrategies();
+  // Dates choisies : chiffres et courbe de chaque stratégie recalculés sur ses paris détectés dans ces dates (sans note
+  // /100, qui porte sur tout le suivi) ; les stratégies sans pari dans ces dates sont masquées.
+  if (datesStratActives()) {
+    const b = bornesStrat();
+    rows = rows.map(r => {
+      const parisDates = parisDeStrategie(r).filter(p => dansDatesStrat(p, b)), stats = statsStrategie(parisDates);
+      return {...r, parisDates, stats, reussite:stats.regles ? 100*stats.gagnes/stats.regles : null};
+    }).filter(r => r.stats.paris);
+  }
+  // Courbe de chaque stratégie (règles, comparateurs, bases du Bilan) : [instant, réel, attendu, écart type].
+  const courbeDe = courbeStrategie;
   attribuerMedailles(rows);       // ★ € ☘ ◎ : meilleur ROI, gain, réussite et CLV (50 paris réglés minimum)
   attribuerValeur(rows);          // rang moyen ROI + CLV, calculé sur toutes les stratégies avant le filtre
   const ref = document.getElementById("strategies-ref").value;
   if (ref) rows = rows.filter(r => r.reference === ref);
-  const tri = document.getElementById("strategies-tri").value;
+  // Avec des dates, la note /100 (sur tout le suivi) n'est pas recalculée : son classement devient le gain net.
+  const triChoisi = document.getElementById("strategies-tri").value;
+  const tri = datesStratActives() && ["note", "progression"].includes(triChoisi) ? "gain" : triChoisi;
   rows.sort((a,b) => {
     if (tri === "nom") return a.nom.localeCompare(b.nom,"fr") || a.id.localeCompare(b.id);
     if (tri === "valeur") return (a.valeur ?? Infinity) - (b.valeur ?? Infinity) || (b.stats?.clv ?? -Infinity) - (a.stats?.clv ?? -Infinity) || a.id.localeCompare(b.id);
@@ -1458,25 +1512,11 @@ function rendreStrategies() {
     const av = tri === "reussite" ? a.reussite : a.stats[tri], bv = tri === "reussite" ? b.reussite : b.stats[tri];
     return (bv ?? -Infinity) - (av ?? -Infinity) || a.id.localeCompare(b.id);
   });
-  const boutonPeriode = ([id,nom]) => `<button data-p="${id}" class="${periodeStrategies===id ? "actif" : ""}" aria-pressed="${periodeStrategies===id}">${id==="futur" ? "Suivi prospectif" : nom}</button>`;
-  document.getElementById("strategies-periodes").innerHTML = Object.entries(STRAT_PERIODES).slice(0,2).map(boutonPeriode).join("") +
-    `<details class="periodes-detail"${!["futur","ensemble"].includes(periodeStrategies)?" open":""}><summary>Découper l’historique</summary><div>${Object.entries(STRAT_PERIODES).slice(2).map(boutonPeriode).join("")}</div></details>`;
-  const contexte=document.getElementById("strategies-contexte");
-  contexte.textContent=periodeStrategies==="futur" ? "Suivi prospectif" : "Rejeu historique";
-  contexte.classList.toggle("historique",periodeStrategies!=="futur");
-  for (const b of document.querySelectorAll("#strategies-periodes button")) b.onclick = () => { periodeStrategies=b.dataset.p; rendreStrategies(); };
+  rendreDatesStrategies();
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
   document.getElementById("strategies-total").textContent = `${rows.length} stratégies · ${reglees.length} avec des règlements · résultats non cumulables.`;
-  const descriptions = {
-    futur:"Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h, Eden le 19/10 à 20 h (Paris). Les décisions sont figées à partir de la mise en service du registre ; les prises antérieures restent des reconstructions. Les paris en attente ne sont pas comptés comme perdus. Aucun résultat ancien n’est ajouté à ce suivi.",
-    ensemble:"Historique figé : matchs du 7 au 13 octobre, règlements disponibles au relevé du 14/10 à 12 h 09 (Paris), y compris les règlements tardifs. Rejeu rétrospectif, distinct du suivi depuis lancement.",
-    construction:"Construction : matchs du 7 au 10 octobre ; seuls les règlements connus avant le 11 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
-    validation:"Validation : matchs des 11 et 12 octobre ; seuls les règlements connus avant le 13 octobre à 0 h (Paris) sont inclus. Les autres restent en attente.",
-    test:"Test final : matchs du 13 octobre ; règlements disponibles au relevé du 14/10 à 12 h 09 (Paris). Les paris non réglés restent en attente."
-  };
-  document.getElementById("strategies-quoi").textContent = descriptions[periodeStrategies] +
-    (periodeStrategies === "futur" && !active.length ? " Aucune nouvelle sélection enregistrée : la dernière collecte disponible précède ce lancement. Le bouton Historique affiche la comparaison existante." : "") +
-    ` ${(L.resultats || []).length} règles et ${Object.keys(L.comparateurs || {}).length} comparateurs (Claude, ChatGPT V1, Gemini Argon V1, Jules v1/v2, Eden, M3, convergence ≥ 2 et trois variantes encadrées) ; aucune rentabilité future démontrée.`;
+  document.getElementById("strategies-quoi").textContent = "Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h, Eden le 19/10 à 20 h (Paris), puis chaque nouvelle stratégie à son lancement. Les décisions sont figées ; les paris en attente ne sont pas comptés comme perdus. Avec des dates : seuls les paris détectés ces jours-là comptent, et la note /100 n'est pas recalculée." +
+    ` ${(L.resultats || []).length} règles, ${Object.keys(L.comparateurs || {}).length} comparateurs et ${Object.keys(L.bases_futur || {}).length} bases du Bilan ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Note<small>/100</small></th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
     return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
@@ -1499,7 +1539,7 @@ function rendreStrategies() {
     if (tr.tagName !== "BUTTON") tr.setAttribute("role", "link");
     tr.setAttribute("aria-label", "Voir les paris de " + ligne.nom + " : " + ligne.detail);
     const aller = ligne.reference === "bases" ? () => voirReference(ligne.id === "base:Uniques" ? "" : ligne.id.slice(5)) : () => {
-      strategieChoisie = {id:ligne.id, nom:ligne.nom + " · " + ligne.detail, periode:periodeStrategies};
+      strategieChoisie = {id:ligne.id, nom:ligne.nom + " · " + ligne.detail, periode:"futur", dates:{...datesStrat}};
       document.getElementById("paris-horaire").value="";
       document.getElementById("paris-tri").value="";
       document.getElementById("f-q").value = "";
@@ -1534,67 +1574,6 @@ document.getElementById("strategies-ref").onchange = rendreStrategies;
 document.getElementById("strategies-tri").onchange = rendreStrategies;
 rendreStrategies();
 
-function rendreLaboratoire() {
-  const L = D.laboratoire;
-  const box = document.getElementById("laboratoire");
-  if (!L || (!L.resultats?.length && !Object.keys(L.comparateurs || {}).length)) { box.hidden = true; return; }
-  const pp = n => n == null ? "—" : pct(n / 100);
-  const metrique = s => `<b class="${signe(s.roi)}">${pp(s.roi)}</b><small>${s.regles} réglés (${s.evenements_regles ?? "—"} matchs) · ${s.attente} en attente</small>`;
-  const deja = new Date() >= new Date(L.debut_suivi);
-  const source = `https://github.com/Matttgic/cotes-value/tree/${encodeURIComponent(L.source.commit)}`;
-  const rapport = "https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/comparaison-strategies.md";
-  box.innerHTML = `<h2 style="font-size:16px;margin:0 0 6px">Règles et contrôle du laboratoire</h2>
-    <p style="margin:0 0 8px"><b>${L.decision.candidate ? "Candidate expérimentale : " + e(L.decision.candidate) : "Aucune stratégie retenue par le protocole"}.</b>
-    Rentabilité future non estimable avec cet historique.</p>
-    <details><summary>Examiner une règle en détail</summary>
-    <p class="aide" style="margin-top:10px">Trois références, trois plages de cotes, deux seuils d’edge et deux délais.
-    10 € fictifs par sélection, un pari par match dans chaque règle. Les règles se recoupent : ne pas additionner leurs mises ou leurs gains.</p>
-    <p class="aide">Historique figé : matchs du 7 au 13 octobre 2026, heure de Paris.
-    Il a déjà été consulté ; ce n’est pas une validation indépendante. Les seuils restent inchangés malgré les résultats.
-    <a href="${rapport}" target="_blank" rel="noopener">Méthode et résultats</a> · <a href="${source}" target="_blank" rel="noopener">Données du relevé</a>.</p>
-    <label for="labo-regle">Règle à examiner</label><br>
-    <select id="labo-regle" style="max-width:100%;margin:6px 0 10px">${L.resultats.map(r => `<option value="${e(r.regle.id)}">${e(r.regle.nom)}</option>`).join("")}</select>
-    <div id="labo-detail"></div>
-    <details style="margin-top:12px"><summary>Les 36 résultats historiques</summary>
-    <p class="aide">Chaque cellule affiche le ROI sur mises réglées, puis les effectifs. Ordre fixe, sans tri selon la période de test.</p>
-    <div class="tableau"><table><tr><th>Règle</th><th>7–10 oct.</th><th>11–12 oct.</th><th>13 oct.</th></tr>
-    ${L.resultats.map(r => `<tr><td>${e(r.regle.id)}</td>${["construction","validation","test"].map(p => `<td>${metrique(r[p])}</td>`).join("")}</tr>`).join("")}</table></div></details>
-    <details style="margin-top:12px"><summary>Comparateurs : Claude, ChatGPT V1, Gemini Argon V1, JULES EDGE V1/V2, Eden et M3</summary>
-    <p class="aide">Rejeux hypothétiques avant leurs lancements, distincts des bilans officiels ci-dessous.
-    Claude et M3 peuvent sélectionner plusieurs paris par match ; l’exposition diffère. Aucun comparateur ne participe au classement.</p>
-    <div class="tableau"><table><tr><th>Rejeu</th><th>7–10 oct.</th><th>11–12 oct.</th><th>13 oct.</th></tr>
-    ${Object.entries(L.comparateurs).map(([nom,r]) => `<tr><td>${e(nom)}</td>${["construction","validation","test"].map(p => `<td>${metrique(r[p])}</td>`).join("")}</tr>`).join("")}</table></div></details>
-    <details style="margin-top:12px"><summary>Suivi futur des 36 règles</summary>
-    <p class="aide">${deja ? "Depuis le" : "Début le"} ${e(new Date(L.debut_suivi).toLocaleString("fr-FR", {timeZone:"Europe/Paris"}))} (Paris).
-    Actualisé à chaque collecte. Un gain positif provisoire ne déclenche aucun changement automatique.</p>
-    <div class="tableau"><table><tr><th>Règle</th><th>ROI / effectif</th><th>Gain net</th><th>CLV</th></tr>
-    ${L.futur.map(s => `<tr><td>${e(s.id)}</td><td>${metrique(s)}</td><td>${s.regles ? eur(s.gain) : "—"}</td><td>${pp(s.clv)}<small>${s.clv_n} mesures</small></td></tr>`).join("")}</table></div></details>
-    </details>`;
-  function detail() {
-    const id = document.getElementById("labo-regle").value;
-    const r = L.resultats.find(r => r.regle.id === id), f = L.futur.find(r => r.id === id);
-    const intervalle = s => s.ic95 ? `${pp(s.ic95[0])} à ${pp(s.ic95[1])}` : "Non estimable";
-    const fail = [];
-    if (r.construction.regles < 20) fail.push("moins de 20 paris réglés en construction");
-    if (!(r.construction.roi > 0)) fail.push("ROI de construction non positif");
-    if (!(r.construction.clv > 0)) fail.push("CLV de construction non positive ou absente");
-    if (!(r.construction.couverture_clv >= 50)) fail.push("couverture de CLV inférieure à 50 %");
-    document.getElementById("labo-detail").innerHTML = `<p class="aide">${fail.length ? "Non retenue : " + fail.join(" ; ") + "." : "Seuils de construction satisfaits ; voir le protocole pour le classement et la validation."}</p>
-      <div class="tableau"><table><tr><th>Période</th><th>ROI / effectif</th><th>Gain net</th><th>CLV</th></tr>
-      ${[["Construction",r.construction],["Validation",r.validation],["Test final",r.test],["Suivi futur",f]].map(([nom,s]) => `<tr><td>${nom}</td><td>${metrique(s)}</td><td>${s.regles ? eur(s.gain) : "—"}</td><td>${pp(s.clv)}<small>${s.clv_n}/${s.regles} mesurés</small></td></tr>`).join("")}</table></div>
-      <p class="aide" style="margin-top:8px">Seuil d’edge ${pp(r.regle.edge_min*100)}, plafond 12 %. Cotes de référence âgées de 15 min au maximum.
-      Suivi futur ${deja ? "depuis le" : "à partir du"} 14 octobre à 14 h (Paris), uniquement sur les nouvelles détections.</p>
-      <details><summary>Incertitude et résistance aux pertes</summary>
-      <div class="tableau"><table><tr><th>Période</th><th>IC 95 % du ROI</th><th>Gain sans<br>meilleur pari</th><th>ROI si cotes<br>−1 %</th><th>Baisse max.</th></tr>
-      ${[["Construction",r.construction],["Validation",r.validation],["Test final",r.test]].map(([nom,s]) => `<tr><td>${nom}</td><td>${intervalle(s)}</td><td>${s.regles ? eur(s.gain_sans_meilleur) : "—"}</td><td>${pp(s.roi_cote_moins_1pct)}</td><td>${s.regles ? cote(s.drawdown)+" €" : "—"}</td></tr>`).join("")}</table></div>
-      <p class="aide">Bootstrap par match, conditionnel à chaque règle ; aucune correction des 36 essais ni des corrélations entre matchs.
-      Avec très peu de paris ou des résultats identiques, l’intervalle peut être trompeusement étroit. Il ne prédit pas la rentabilité future.
-      Les cotes simulées ne prouvent pas une prise réelle disponible.</p></details>`;
-  }
-  document.getElementById("labo-regle").onchange = detail;
-  detail();
-}
-rendreLaboratoire();
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon Paris (« #jouer » reste un ancien raccourci vers Paris)
 // « #paris?ref=Smarkets » : la page est avant le ?, la référence est appliquée au filtre des paris uniques.
@@ -1621,7 +1600,6 @@ __ANALYSES_JS__
 __ACCUEIL_JS__
 function rendreTout() {
   rendreAccueil(); rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSegments(); rendreStrategies(); rendreAnalyses();
-  document.getElementById("labo-regle")?.onchange?.();
   adapterTableaux();
 }
 function choisirMise(mode) {
@@ -1638,14 +1616,12 @@ if (miseMode === "kelly") rendreTout();     // mode mémorisé : les premiers re
 initialiserAnalyses();
 initialiserInterface();
 __ACTUALISATION_JS__
-const champsVue = ["f-q", "paris-horaire", "paris-tri", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "labo-regle", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
+const champsVue = ["f-q", "paris-horaire", "paris-tri", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
 const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +
   (d.querySelector("summary")?.textContent || "").replace(/\d+/g,"#").trim();
 installerActualisation({
   version:"__VERSION_SITE__",
-  // Les choix de notification restent sous le contrôle de leur formulaire.
-  protegee:() => document.getElementById("o-notifications").classList.contains("actif"),
-  capturer:() => ({presentation:"lignes-v1", refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue, periodeStrategies,
+  capturer:() => ({presentation:"lignes-v1", refBilan, cumul, limite, strategieChoisie, triSeg, ctlVue,
     courbes:[...courbesMasquees], champs:Object.fromEntries(champsVue.map(id => [id,document.getElementById(id)?.value])),
     details:[...document.querySelectorAll("details[open]")].map(cleDetail), y:window.scrollY,
     defilements:[...document.querySelectorAll("[id]")].filter(x => x.scrollLeft > 0).map(x => [x.id,x.scrollLeft])}),
@@ -1661,11 +1637,9 @@ installerActualisation({
     strategieChoisie = s.strategieChoisie || null;
     triSeg = s.triSeg in TRIS ? s.triSeg : "roi";
     ctlVue = typeof s.ctlVue === "string" ? s.ctlVue : ctlVue;
-    periodeStrategies = s.periodeStrategies in STRAT_PERIODES ? s.periodeStrategies : "futur";
     courbesMasquees.clear();
     for (const id of s.courbes || []) courbesMasquees.add(id);
     rendreAccueil(); rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSante(); rendreSegments(); rendreControle(); rendreStrategies(); rendreAnalyses();
-    document.getElementById("labo-regle")?.onchange?.();
     adapterTableaux();
     for (const d of document.querySelectorAll("details")) d.open = (s.details || []).includes(cleDetail(d));
     requestAnimationFrame(() => {
