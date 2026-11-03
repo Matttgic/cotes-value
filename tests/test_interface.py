@@ -36,7 +36,7 @@ def test_document_autonome_navigation_unique_et_apercu(tmp_path):
     assert "__INTERFACE_" not in html
     assert "function installerActualisation" in html
     assert "function adapterTableaux" in html
-    assert (tmp_path / "site/verification-responsive.html").exists()
+    assert not (tmp_path / "site/verification-responsive.html").exists()     # page de développement retirée
 
 
 def test_lignes_compactes_et_toutes_les_references_par_defaut():

@@ -33,7 +33,7 @@ def test_construire_bilan_sur_tous_les_paris(tmp_path):
     import re
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
     d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
-    assert d["fiches_total"] == 5 and d["bilan"]["A|Toutes"]["en_cours"] == 5
+    assert "fiches_total" not in d and d["bilan"]["A|Toutes"]["en_cours"] == 5
 
 
 def test_courbes_du_gain_cumule():

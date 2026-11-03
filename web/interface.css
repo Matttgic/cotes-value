@@ -1,6 +1,6 @@
-/* Direction artistique (maquettes/interface/da.css) : papier et encre, filets fins, ni arrondi, ni ombre, ni dégradé, ni icône.
+/* Direction artistique : papier et encre, filets fins, ni arrondi, ni ombre, ni dégradé, ni icône.
    L'orange (--signal) est réservé à l'écart de value ; une perte est en rouge brique, un gain à l'encre.
-   Polices sous licence OFL (maquettes/polices), servies en WOFF2 depuis polices/ : titres, texte, chiffres. */
+   Polices sous licence OFL, servies en WOFF2 depuis polices/ : titres, texte, chiffres. */
 @font-face{font-family:"Instrument Serif";font-display:swap;src:url("polices/InstrumentSerif-Regular.woff2") format("woff2")}
 @font-face{font-family:"Familjen Grotesk";font-weight:400 700;font-display:swap;src:url("polices/FamiljenGrotesk-VariableFont_wght.woff2") format("woff2")}
 @font-face{font-family:"Geist Mono";font-weight:100 900;font-display:swap;src:url("polices/GeistMono-VariableFont_wght.woff2") format("woff2")}
@@ -138,24 +138,16 @@ h1{font-size:21px;letter-spacing:-.7px;font-weight:750}.signature{font-size:11px
 nav{max-width:1240px;overflow:visible;padding:0 20px;gap:2px}
 nav button{display:flex;align-items:center;justify-content:center;gap:7px;border:0;background:transparent;font-size:13px;padding:12px 13px;color:var(--doux);border-bottom:3px solid transparent;min-height:52px}
 nav button.actif{background:transparent;color:var(--accent);border-color:var(--accent);font-weight:700}
-nav button:hover{background:var(--accent-f)}.icone{width:19px;height:19px;flex:none}nav .nb{margin-left:5px;font-size:10px;opacity:1;background:var(--fond);padding:2px 5px}
+nav button:hover{background:var(--accent-f)}nav .nb{margin-left:5px;font-size:10px;opacity:1;background:var(--fond);padding:2px 5px}
 main{max-width:1240px;padding:30px 28px 70px;min-height:80vh}
 .page-tete{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:0 0 24px}
 .surtitre{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--accent);margin:0 0 7px}
 .page-tete h2{font-size:30px;line-height:1.15;letter-spacing:-1px;font-weight:750;margin:0 0 8px}
 .sous-texte{margin:0;font-size:13px;color:var(--doux)}
-.compteurs{display:flex;gap:24px;font-size:11px;color:var(--doux)}.compteurs b{display:block;font-size:26px;line-height:1.3;font-weight:650;color:var(--texte);font-variant-numeric:tabular-nums}
 .aide{font-size:12px;line-height:1.6}.mode-emploi{font-size:12px;color:var(--doux);margin:12px 0 18px;max-width:100%}.mode-emploi summary{font-weight:500;min-height:32px;padding:5px 0}.mode-emploi p{margin:10px 0}
 .puces{flex-wrap:wrap;overflow:visible;gap:7px;margin-bottom:16px}.puces button{padding:9px 12px;font-size:12px;white-space:normal;text-align:left;line-height:1.35}
 .puces button.actif{background:var(--accent-f);border-color:var(--accent);color:var(--accent)}
 .carte{padding:18px;border-color:var(--ligne);margin-bottom:12px}
-.opportunite{margin:0;padding:20px}.op-meta{display:flex;justify-content:space-between;gap:12px;color:var(--doux);font-size:11px;margin-bottom:12px}.op-meta span{text-transform:capitalize;overflow-wrap:anywhere}.op-meta time{flex:none;text-align:right}
-.op-match{font-size:16px;line-height:1.4;font-weight:550;margin:0 0 7px;overflow-wrap:anywhere}.op-pari{font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:1.35;margin:0 0 18px;overflow-wrap:anywhere}
-.op-offre{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne)}
-.op-prix{display:flex;align-items:center;gap:14px}.op-prix b{font-size:29px;line-height:1;font-weight:700;letter-spacing:-1px;font-variant-numeric:tabular-nums}.op-prix span{display:flex;flex-direction:column;font-size:13px;font-weight:600}.op-prix small{font-size:10px;color:var(--doux);font-weight:400}
-.op-edge{text-align:right;font-size:16px;font-weight:700;color:var(--vert)}.op-edge small{display:block;color:var(--doux);font-weight:400;font-size:10px}
-.op-reference{font-size:11px;color:var(--doux);margin-top:12px;line-height:1.7}.op-reference b{color:var(--texte);font-weight:550}
-.op-reference summary{font-weight:500}.op-reference p{margin:6px 0}.op-validation{font-size:11px;color:var(--doux);margin-top:10px}
 .l1{align-items:flex-start}.l1 .match{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}.l1 .quand{font-size:11px;max-width:105px;text-align:right}
 .l2{font-size:16px;font-weight:600;margin:8px 0 10px;overflow-wrap:anywhere}.l3{gap:7px 14px}.l4{gap:6px;margin-top:10px}.badge{padding:3px 8px;font-size:10px;font-weight:600;line-height:1.45}
 .vide{background:var(--carte);border:1px dashed var(--ligne);padding:40px 20px;font-size:13px;text-align:center;grid-column:1/-1}
@@ -185,16 +177,15 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 #laboratoire{margin-top:24px}.notif-choix{padding:9px 0;border-bottom:1px solid var(--ligne);min-height:56px}.notif-choix:last-child{border-bottom:0}#notif-strategies,#pushover-strategies{padding:8px 18px 14px}#notif-strategies legend,#pushover-strategies legend{font-size:13px}#notif-message{min-height:1.5em}
 .message-reseau{border:1px solid var(--jaune);background:var(--jaune-f);color:var(--jaune);padding:12px 16px;margin-bottom:20px;font-size:12px}
 @media(min-width:1000px){#liste-paris,#liste-regler{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}:is(#liste-paris,#mes-liste) .carte,#liste-regler .carte{margin:0}.groupe-paris{grid-column:1/-1}.grille-filtres{grid-template-columns:repeat(6,minmax(0,1fr))}}
-@media(max-width:1000px){.strategies-table{font-size:11px}.strategies-table th,.strategies-table td{padding:12px 5px}nav button{padding:12px 10px;font-size:12px}nav .icone{width:17px}}
+@media(max-width:1000px){.strategies-table{font-size:11px}.strategies-table th,.strategies-table td{padding:12px 5px}nav button{padding:12px 10px;font-size:12px}}
 @media(max-width:760px){
   .haut{z-index:10}.titre{padding:13px 18px}.monogramme{width:34px;height:34px;font-size:22px}.marque{gap:9px}h1{font-size:19px}.signature{font-size:9px}.maj{font-size:9px}.fraicheur{font-size:10px}
   nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--carte);border-top:1px solid var(--ligne);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;padding:4px 6px calc(5px + env(safe-area-inset-bottom))}
   nav button{flex-direction:column;gap:4px;min-height:58px;font-size:10px;font-weight:550;padding:6px 0;border:0;line-height:1.2;background:transparent!important;min-width:0}
-  nav button>span{position:relative;white-space:nowrap}nav .icone{width:21px;height:21px}nav .nb{font-size:8px;position:absolute;top:-30px;left:calc(50% + 5px);margin:0;padding:1px 3px;line-height:1.3;min-width:14px;border:1px solid var(--carte);background:var(--fond);color:var(--doux)}
+  nav button>span{position:relative;white-space:nowrap}nav .nb{font-size:8px;position:absolute;top:-30px;left:calc(50% + 5px);margin:0;padding:1px 3px;line-height:1.3;min-width:14px;border:1px solid var(--carte);background:var(--fond);color:var(--doux)}
   nav button.actif{color:var(--accent);background:var(--accent-f)!important}
   main{padding:24px 18px calc(100px + env(safe-area-inset-bottom))}.page-tete{align-items:start;flex-direction:column;gap:16px;margin-bottom:20px}.page-tete h2{font-size:27px}.surtitre{font-size:9px}.sous-texte{font-size:12px}
-  .compteurs{width:100%;gap:0;padding-top:14px;border-top:1px solid var(--ligne);justify-content:space-between}.compteurs span{flex:1}.compteurs span+span{border-left:1px solid var(--ligne);padding-left:18px}.compteurs b{font-size:22px}.compteurs{font-size:10px}
-  .opportunite{padding:18px}.op-pari{font-size:19px}.op-match{font-size:14px}.op-prix b{font-size:28px}.carte{padding:16px}.puces button{font-size:11px;padding:9px 10px;min-height:42px}
+  .carte{padding:16px}.puces button{font-size:11px;padding:9px 10px;min-height:42px}
   .l1{font-size:12px}.l3{font-size:13px}.l4{font-size:11px}.l2{font-size:15px}.mode-emploi{font-size:11px;margin:10px 0 18px}.aide{font-size:11px}
   .comparaison-bureau{display:none}.strategies-mobile{display:block}.strategie-ligne{padding:18px 0;border-bottom:1px solid var(--ligne)}.strategie-ligne:first-child{padding-top:4px}.strategie-ligne:last-child{border:0}
   .strategie-entete{display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:14px}.strategie-entete h3{font-size:16px;letter-spacing:-.3px;margin:0;line-height:1.4}.strategie-entete .btn{flex:none;font-size:10px;min-height:36px;padding:8px 10px}
@@ -220,20 +211,13 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 
 /* Seconde passe : moins de vide, plus de repères fondés sur les données. */
 .fraicheur::before{content:"";display:inline-block;width:6px;height:6px;background:currentColor;margin-right:6px;vertical-align:1px}
-.page-tete.tete-compacte{margin-bottom:12px}.tete-compacte h2{margin:0}.tete-strategies{margin-bottom:16px}
-.compteurs{padding:0;border:0}.resume-cotes{display:flex;align-items:center;gap:12px}.resume-cotes svg{width:62px;height:62px;flex:none}.resume-cotes text{font:700 23px var(--sans);fill:var(--texte)}
-.resume-cotes>div{display:flex;flex-direction:column;gap:3px}.resume-cotes b{font-size:14px;line-height:1.3}.resume-cotes>div>span{border:0;padding:0;font-size:12px;color:var(--doux)}
-.releve-ligne{margin-bottom:12px}.sports-puces{gap:7px;margin-bottom:12px}.sport-puce{display:flex;align-items:center;gap:7px}.sport-puce b{font-size:11px;font-weight:550;opacity:.8}.sport-icone{width:20px;height:20px;flex:none}
-.sport-identite{display:flex;align-items:center;gap:6px}.sport-identite .sport-icone{width:18px;height:18px;color:var(--accent)}
-.opportunite{padding:17px}.op-validee{border-left:3px solid var(--accent)}.op-meta{margin-bottom:9px;font-size:11px}.op-match{margin-bottom:5px}.op-pari{margin-bottom:12px}.op-offre{padding:11px 0}.op-prix{gap:9px}.op-prix b{margin-left:8px;font-size:26px}.op-prix span{font-size:12px}.op-prix small{font-size:11px}
-.op-prix .book-monogramme{display:grid;place-items:center;width:30px;height:32px;font-size:16px;font-weight:800;color:#fff;flex:none}
-.op-edge{font-size:15px;padding:5px 8px;background:var(--accent-f);color:var(--accent)}.op-edge small{font-size:9px}.op-reference{margin-top:9px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 6px}.op-reference details{flex:1 1 100%}.op-reference details summary{font-size:11px;min-height:28px;padding-top:4px}.signal-brut{font-size:11px}.op-validation{margin-top:5px}
+.tete-strategies{margin-bottom:16px}
 .vue-strategies-toggle{display:flex;gap:5px;border:1px solid var(--ligne);background:var(--carte);padding:4px;max-width:360px;margin:12px 0 18px}
 .vue-strategies-toggle button{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;font:600 12px var(--sans);min-height:40px;border:0;background:transparent;color:var(--doux);cursor:pointer}
 .vue-strategies-toggle button[aria-pressed=true]{background:var(--accent-f);color:var(--accent)}.vue-strategies-toggle svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #strategies-vue-graphiques>.sous-titre:first-child{margin-top:0}.mini-courbe-table{display:block;width:105px;height:28px;margin-top:4px}.mini-courbe-table .mini-courbe{width:100%;height:100%}.courbe-absente{font-size:10px;color:var(--doux)}
 .strategie-visuelle{border:1px solid var(--ligne)!important;background:var(--carte);margin-bottom:12px;padding:16px!important}
-.strategie-identite{display:flex;align-items:center;gap:10px;min-width:0}.strategie-avatar{display:grid;place-items:center;width:32px;height:32px;flex:none;font-size:11px;font-weight:750;border:1px solid var(--identite);color:var(--identite)}
+.strategie-identite{display:flex;align-items:center;gap:10px;min-width:0}
 .strategie-visuelle .strategie-entete{align-items:center;margin-bottom:12px}.strategie-visuelle .strategie-entete h3{font-size:15px}.strategie-visuelle .strategie-entete .btn{min-height:40px;font-size:11px;white-space:nowrap;padding:8px}
 .strategie-apercu{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--ligne);padding-bottom:12px;margin-bottom:12px}.strategie-apercu>div:first-child{min-width:0}.libelle-gain{display:block;font-size:11px;color:var(--doux);margin-bottom:2px}.strategie-apercu strong{display:block;font-size:28px;font-weight:700;letter-spacing:-1px;white-space:nowrap;line-height:1.3}
 .strategie-trajectoire{width:45%;min-width:90px;text-align:right}.mini-courbe{display:block;width:100%;height:52px}.strategie-trajectoire>span{display:block;font-size:9px;color:var(--doux);line-height:1.3}
@@ -245,13 +229,11 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 @media(max-width:1000px) and (min-width:761px){.comparaison-bureau{overflow:auto}}
 @media(max-width:760px){
   main{padding-top:17px}.signature{display:none}.titre{padding-top:11px;padding-bottom:11px}.maj{font-size:10px}.fraicheur{font-size:11px}.page-tete{gap:10px;margin-bottom:16px}.page-tete .surtitre{display:none}
-  .tete-compacte{display:block}.tete-compacte h2{font-size:24px;margin-bottom:10px}.tete-compacte .compteurs{width:100%;padding:0;border:0}.resume-cotes{gap:10px}.resume-cotes svg{width:48px;height:48px}.resume-cotes b{font-size:13px}.resume-cotes>div>span{font-size:11px;padding:0;border:0}.compteurs .resume-cotes>div{padding:0;border:0}
-  .sports-puces{gap:6px;margin-bottom:10px}.sports-puces button{font-size:11px;padding:7px 9px;min-height:38px}.sport-puce .sport-icone{width:17px;height:17px}
   .tete-strategies{flex-direction:row;align-items:center;gap:8px;margin-bottom:13px}.tete-strategies h2{font-size:25px;margin-bottom:4px}.tete-strategies .sous-texte{font-size:11px}.tete-strategies .periode-badge{font-size:10px;white-space:normal;text-align:center;max-width:105px}
   #strategies-periodes{gap:6px;margin-bottom:6px}#strategies-periodes button{min-height:42px;font-size:12px}#strategies-periodes .periodes-detail summary{padding:5px 0;min-height:28px}
   .filtres-strategies{grid-template-columns:minmax(0,1fr) 120px;margin:8px 0 12px;gap:10px}.filtres-strategies label{font-size:11px}.filtres-strategies select{font-size:12px;padding-right:22px;padding-left:8px;min-height:42px}
   #strategies-total{font-size:11px;margin-bottom:7px}.vue-strategies-toggle{max-width:none;margin:7px 0 14px}.vue-strategies-toggle button{min-height:38px;font-size:12px}
-  .strategie-visuelle .strat-chiffres{grid-template-columns:repeat(3,minmax(0,1fr))}.strategie-visuelle .strat-chiffres dd{font-size:18px}.strategie-visuelle .strategie-entete h3{font-size:14px}.strategie-identite{gap:8px}.strategie-avatar{width:29px;height:29px;font-size:10px}.strategie-visuelle .strategie-entete .btn{font-size:10px;padding:8px 7px}.strategie-apercu strong{font-size:26px}
+  .strategie-visuelle .strat-chiffres{grid-template-columns:repeat(3,minmax(0,1fr))}.strategie-visuelle .strat-chiffres dd{font-size:18px}.strategie-visuelle .strategie-entete h3{font-size:14px}.strategie-identite{gap:8px}.strategie-visuelle .strategie-entete .btn{font-size:10px;padding:8px 7px}.strategie-apercu strong{font-size:26px}
   .mode-emploi summary{font-size:11px}.strategie-visuelle details{font-size:11px}.infos div{font-size:11px}
 }
 
@@ -267,16 +249,13 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .ligne-detail>summary:hover{background:var(--accent-f)}
 .ligne-detail>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .ligne-nom{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600}
-.ligne-selection{font-weight:400;color:var(--doux)}
 .ligne-volume{width:28px;flex:none;text-align:right;color:var(--doux);font-variant-numeric:tabular-nums}
 .ligne-roi{width:53px;flex:none;text-align:right;font-variant-numeric:tabular-nums}
 .ligne-valeur{width:68px;flex:none;text-align:right;font-size:11px;font-variant-numeric:tabular-nums}
 .ligne-cote{width:36px;flex:none;text-align:right;font-variant-numeric:tabular-nums}
-.ligne-book{width:16px;flex:none;text-align:center;color:var(--doux);font-weight:700;text-transform:uppercase}
-.ligne-book .book-monogramme{display:block;font-size:11px;background:none;color:inherit}
 .ligne-corps{padding:8px 10px 14px;background:var(--carte);border-left:2px solid var(--accent);white-space:normal}
 .ligne-corps>.carte,.ligne-corps>.strategie-visuelle{margin:0;border:0!important;padding:8px!important;background:transparent}
-.ligne-corps .match{white-space:normal;overflow:visible}.ligne-corps .op-match{overflow-wrap:anywhere}
+.ligne-corps .match{white-space:normal;overflow:visible}
 .ligne-colonnes{display:flex;gap:8px;padding:7px 2px 7px 20px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--doux);border-bottom:1px solid var(--ligne)}
 .ligne-colonnes>span:first-child{flex:1}.ligne-colonnes>span:nth-child(2){width:28px;text-align:right}.ligne-colonnes>span:nth-child(3){width:53px;text-align:right}.ligne-colonnes>span:last-child{width:68px;text-align:right}
 .ligne-mesure{flex:none;max-width:29%;overflow:hidden;text-overflow:ellipsis;text-align:right;font-size:10px;color:var(--doux);font-variant-numeric:tabular-nums}
@@ -290,13 +269,12 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .page-tete{margin-bottom:10px;gap:8px}.page-tete h2{font-size:24px}.sous-texte{margin:3px 0}.sous-titre{margin:18px 0 6px;font-size:16px}
 .mode-emploi{margin:6px 0 10px}.mode-emploi>summary{min-height:36px;display:flex;align-items:center;font-size:11px}.mode-emploi[open]>summary{margin-bottom:8px}
 .vue-strategies-toggle{margin:6px 0 8px;padding:2px}.vue-strategies-toggle button{min-height:36px}
-.resume-cotes{gap:6px}.resume-cotes svg{width:36px;height:36px}.resume-cotes b{font-size:12px}.resume-cotes>div>span{font-size:10px}
 .puces{gap:5px;margin-bottom:8px}.puces button{min-height:36px;font-size:11px;padding:6px 8px}
 .filtres-strategies{margin-bottom:6px}.filtres-strategies select{min-height:40px}.filtres-strategies .champ label{font-size:10px}
 .notif-choix{min-height:44px;padding:6px 0;font-size:12px}
 .infos{display:flex;gap:12px;flex-wrap:wrap}.infos div{display:flex;gap:6px;align-items:baseline;padding:4px 0;border:0;background:transparent;font-size:10px}.infos b{font-size:15px;margin:0}
 @media(min-width:761px){.ligne-detail>summary{font-size:13px;min-height:44px}.ligne-valeur{width:100px;font-size:13px}.ligne-roi{width:80px}.ligne-volume{width:50px}.ligne-colonnes>span:nth-child(2){width:50px}.ligne-colonnes>span:nth-child(3){width:80px}.ligne-colonnes>span:last-child{width:100px}.ligne-mesure{max-width:25%;font-size:12px}.bilan-champs{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:760px){main{padding-top:16px;padding-left:12px;padding-right:12px}.page-tete.tete-strategies{flex-direction:row;align-items:center;margin-bottom:10px}.page-tete.tete-compacte{flex-direction:row;align-items:center}.tete-compacte .compteurs{width:auto}.resume-cotes svg{display:none}.resume-cotes>div>span{font-size:9px}.resume-cotes b{font-size:11px}.page-tete h2{font-size:23px}.grille-filtres{gap:8px;margin-top:8px}.outils-paris{margin-bottom:8px}#strategies-periodes{gap:5px}#strategies-periodes button{min-height:40px;font-size:11px}#strategies-total{font-size:10px}.tete-strategies .sous-texte{font-size:10px}.periode-badge{font-size:9px;padding:5px}.ligne-corps .strategie-entete h3{font-size:14px}}
+@media(max-width:760px){main{padding-top:16px;padding-left:12px;padding-right:12px}.page-tete.tete-strategies{flex-direction:row;align-items:center;margin-bottom:10px}.page-tete h2{font-size:23px}.grille-filtres{gap:8px;margin-top:8px}.outils-paris{margin-bottom:8px}#strategies-periodes{gap:5px}#strategies-periodes button{min-height:40px;font-size:11px}#strategies-total{font-size:10px}.tete-strategies .sous-texte{font-size:10px}.periode-badge{font-size:9px;padding:5px}.ligne-corps .strategie-entete h3{font-size:14px}}
 #o-strategies>details.carte{padding:0;border:0;border-bottom:1px solid var(--ligne);background:transparent;margin:0}
 #o-strategies>details.carte>summary{min-height:44px;padding:12px 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-size:12px}
 #o-strategies>details.carte[open]{padding-bottom:12px}#o-strategies>details.carte[open]>summary{white-space:normal}
@@ -306,7 +284,6 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 /* Chevrons dessinés en CSS : aucun caractère parasite pour le lecteur d’écran. */
 .ligne-detail>summary::before,.filtres-depliables>summary::before{content:'';display:block;box-sizing:border-box;width:6px;height:6px;border:solid var(--doux);border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);margin:0 3px 0 0;flex:none}
 .ligne-detail[open]>summary::before,.filtres-depliables[open]>summary::before{transform:rotate(45deg)}
-.ligne-validee>summary::before{border-color:var(--accent)}
 
 /* Le pari reste entièrement lisible dans le résumé, même si son intitulé est long. */
 .ligne-pari>summary{display:grid;grid-template-columns:10px minmax(0,1fr) 68px;column-gap:8px;row-gap:3px;padding:10px 2px;white-space:normal}
@@ -316,7 +293,6 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .ligne-pari>summary>.pari-bookmaker{grid-column:2;grid-row:3;font-size:10px;color:var(--doux)}
 .ligne-pari>summary>.ligne-cote{grid-column:3;grid-row:1;justify-self:end;align-self:start;font-size:14px;color:var(--texte)}
 .ligne-pari>summary>.ligne-valeur{grid-column:3;grid-row:2;justify-self:end;align-self:start;padding-top:2px}
-.ligne-pari>summary>.ligne-book{display:none}
 .secondaire-pari>summary{display:grid;grid-template-columns:10px minmax(0,1fr) 68px;white-space:normal;row-gap:4px}
 .secondaire-pari>summary::before{grid-row:1}.secondaire-pari .ligne-nom{grid-column:2;grid-row:1;white-space:normal;overflow:visible;font-size:12px;color:var(--doux)}
 .secondaire-pari>summary>.ligne-valeur{grid-column:3;grid-row:1}.secondaire-pari .pari-selection{grid-column:2/-1;grid-row:2;font-size:13px;overflow-wrap:anywhere}
@@ -338,7 +314,6 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .analyse-survol{display:block;font-size:11px;color:var(--doux);min-height:18px;overflow-wrap:anywhere;margin-top:5px}.analyse-absence{color:var(--doux);font-size:12px;min-height:100px;display:grid;place-items:center;text-align:center}
 .analyse-marque:focus-visible,.analyse-barre:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.analyse-valeurs{font-size:11px;color:var(--doux);margin:8px 0}.analyse-valeurs summary{min-height:30px;font-weight:500}.analyse-valeurs ul{list-style:none;padding:0;margin:0}.analyse-valeurs li{display:grid;grid-template-columns:1fr auto;gap:3px;padding:7px 0;border-bottom:1px solid var(--ligne)}.analyse-valeurs small{grid-column:1/-1}
 @media(max-width:760px){.analyse-filtres{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.analyse-filtres select{font-size:12px}.analyse-kpis{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:16px}.analyse-kpis>div{padding:12px;border-right:0!important;border-bottom:1px solid var(--ligne)!important}.analyse-kpis>div:nth-child(odd){border-right:1px solid var(--ligne)!important}.analyse-kpis>div:nth-last-child(-n+2){border-bottom:0!important}.analyse-kpis strong{font-size:23px}.analyse-kpis small{font-size:9px}.analyse-grille{grid-template-columns:minmax(0,1fr);gap:12px}.analyse-figure h3{font-size:16px}.analyse-anneau{grid-template-columns:130px minmax(0,1fr);gap:12px}.analyse-anneau svg{width:130px}.analyse-courbe{max-height:none}.analyse-large{grid-column:1}.analyse-figure figcaption p{font-size:11px}.palette-label{font-size:9px}.palette-label select{font-size:10px;min-height:25px}.titre{align-items:center}.analyse-graph-valeur{font-size:23px}}
-
 .analyse-affiner{margin:-4px 0 8px}.analyse-affiner .analyse-filtres{margin:8px 0}
 @media(max-width:760px){
   #o-analyses>.page-tete{flex-direction:row;align-items:center;margin-bottom:4px}#o-analyses .sous-texte{font-size:11px}
@@ -358,29 +333,17 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .pari-horaire.lointain,.pari-horaire.passe,.pari-horaire.inconnu{color:var(--doux)}
 .ligne-pari>summary>.pari-horaire{grid-column:2/-1;grid-row:4;justify-self:start}
 .secondaire-pari>summary>.pari-horaire{grid-column:2/-1;grid-row:3;justify-self:start}
-.groupe-match{margin:16px 0 24px;border-top:2px solid var(--ligne);min-width:0}
-.groupe-match>header{padding:10px 0 8px}.groupe-match h3{font-size:15px;line-height:1.4;margin:3px 0;overflow-wrap:anywhere}
-.groupe-sport{display:flex;align-items:center;gap:5px;color:var(--doux);font-size:10px;overflow-wrap:anywhere}
-.groupe-sport .icone{width:13px;height:13px;flex:none}.groupe-horaire{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;justify-content:space-between}
-.groupe-horaire>span{color:var(--doux);font-size:10px}
-.groupe-match .ligne-pari>summary>.pari-match,.groupe-match .ligne-pari>summary>.pari-horaire{display:none}
-.groupe-match .ligne-pari>summary>.pari-selection{grid-row:1}.groupe-match .ligne-pari>summary>.pari-bookmaker{grid-row:2}
-.meilleur-libelle{display:block;font-size:9px;color:var(--accent);padding:5px 0 0 20px}
 #liste-regler>details.carte>summary{white-space:normal;overflow:visible;line-height:1.5}
 #liste-regler>details.carte>summary>.pari-horaire{display:block;margin-top:4px}
-@media(min-width:761px){.outils-horaires{max-width:520px}.groupe-match h3{font-size:17px}.pari-horaire{font-size:12px}}
+@media(min-width:761px){.outils-horaires{max-width:520px}.pari-horaire{font-size:12px}}
 /* Le bookmaker et l'horaire partagent la troisième rangée quand la largeur le permet. */
 .ligne-pari>summary>.pari-bookmaker{grid-column:2/-1;padding-right:54px}
 .ligne-pari>summary>.pari-horaire{grid-column:2/-1;grid-row:3;justify-self:start;margin-left:54px}
-.groupe-match .ligne-pari>summary>.pari-bookmaker{padding-right:0}
 @media(max-width:370px){.ligne-pari>summary>.pari-horaire{grid-row:4;margin-left:0}}
-
 .pari-collecte{display:block;font-size:10px;line-height:1.5;font-weight:400;color:var(--doux);white-space:normal;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .ligne-pari>summary>.pari-collecte{grid-column:2/-1;grid-row:5;min-width:0}
 .secondaire-pari>summary>.pari-collecte{grid-column:2/-1;grid-row:4;min-width:0}
 .collecte-ancienne>.collecte-date{color:var(--attente,#a36c15)}.prix-revu{display:block;font-weight:600}
-.groupe-match .ligne-pari>summary>.pari-collecte{grid-row:3}
-
 .ligne-strategie .ligne-volume{width:48px;line-height:1.15}.ligne-volume>small{display:block;font-size:9px;white-space:nowrap;font-weight:400;margin-top:3px}
 .bilan-exposition{display:block;font-size:9px;font-weight:400;color:var(--doux);margin-top:3px}
 
@@ -450,7 +413,6 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .grande-courbe{display:block;width:100%;height:auto}.grande-courbe text{font:10px var(--sans);fill:var(--doux)}
 #o-strategies .tete-strategies h2,#o-strategies .tete-strategies .sous-texte{display:none}
 #o-strategies .tete-strategies{justify-content:flex-end;margin-bottom:6px}
-
 :root[data-theme=light]{color-scheme:light}
 
 /* Notifications : appareil, rapidité réelle, interrupteurs par stratégie, dernières alertes. */
@@ -482,15 +444,12 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .sante-mot{flex:none;font-size:12px;font-weight:700;padding:4px 10px}
 .sante-mot-ok{background:var(--gagne-f);color:var(--gagne)}.sante-mot-alerte{background:var(--regler-f);color:var(--regler)}.sante-mot-panne{background:var(--perdu-f);color:var(--perdu)}
 .sante-vide{padding:10px 12px;margin:0}.sante-controle{margin-top:18px}
-
 .bandeau-alerte{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;padding:12px 14px;border:1px solid var(--ligne);border-left:4px solid var(--accent,#1a7f4b);background:var(--carte,#fff)}
 .bandeau-alerte small{color:var(--texte-doux,#666)}
 .bandeau-alerte .btn{align-self:flex-start;min-height:44px;display:inline-flex;align-items:center}
-
 .periode-bilan{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}.periode-bilan input[type=date]{font:inherit;padding:6px 8px;border:1px solid var(--ligne);background:var(--carte);color:inherit}.resume-suivi{margin:10px 0}
 #pushover-code{width:100%;max-width:340px;min-height:44px;font:inherit;padding:8px 10px;border:1px solid var(--ligne);background:var(--carte);color:inherit}
 #pushover-strategies .notif-bilan{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px;font-weight:400;color:var(--doux);margin-top:4px}#pushover-strategies .notif-bilan>span{white-space:nowrap}#pushover-strategies .notif-bilan b{font-weight:700;color:inherit}#pushover-strategies .notif-bilan b.pos{color:var(--vert)}#pushover-strategies .notif-bilan b.neg{color:var(--rouge)}
-
 .mode-mise{display:flex;align-items:center;gap:6px;margin:8px 0 4px;font-size:12px;flex-wrap:wrap}
 .mode-mise span{color:var(--discret,#667085)}
 .mode-mise button{font:inherit;font-size:12px;padding:6px 12px;border:1px solid var(--ligne);background:transparent;color:inherit;cursor:pointer}
@@ -512,17 +471,17 @@ body.mise-kelly .mode-mise{outline:1px solid var(--accent);outline-offset:3px;pa
 .voyant-texte small{display:block;margin-top:2px;font-size:11px;color:var(--doux)}
 @media(max-width:760px){.voyant{padding-bottom:calc(88px + env(safe-area-inset-bottom))}}
 
-/* ===== Direction artistique (maquettes/interface) : habillage seul, mêmes onglets, mêmes sections. ===== */
+/* ===== Direction artistique : habillage seul, mêmes onglets, mêmes sections. ===== */
 /* Typographie : titres en Instrument Serif, texte en Familjen Grotesk, chiffres et étiquettes en Geist Mono. */
-.page-tete h2,.bu-titre,.sous-titre,.analyse-figure h3,.strategie-entete h3,.groupe-match h3{font-family:var(--serif);font-weight:400;letter-spacing:-.015em}
+.page-tete h2,.bu-titre,.sous-titre,.analyse-figure h3,.strategie-entete h3{font-family:var(--serif);font-weight:400;letter-spacing:-.015em}
 .page-tete h2{font-size:46px;line-height:1;letter-spacing:-.02em;margin:0}
 .bu-titre,.sous-titre{font-size:28px;line-height:1.05;margin:34px 0 12px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.bu-titre small,.surtitre,.paris-colonnes,.ligne-colonnes,.bu-entete,th,.mode-mise>span,.puce-sport,.pari-ligue,.groupe-sport,
+.bu-titre small,.surtitre,.paris-colonnes,.ligne-colonnes,.bu-entete,th,.mode-mise>span,.puce-sport,.pari-ligue,
 .bu-kpis span,.analyse-kpis span,.champ label,.grille-filtres label,.outils-horaires label,.analyse-filtres label,.strat-chiffres dt,.libelle-gain,
 .periode-badge,.badge,.sante-mot,.maj,.palette-label{font-family:var(--mono);font-weight:400;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--doux)}
 .surtitre{margin:0 0 8px}
 select,input{font-family:var(--sans);text-transform:none;letter-spacing:0}
-td:not(:first-child),.bu-ligne>:not(:first-child),.ligne-cote,.ligne-valeur,.ligne-roi,.ligne-volume,.ligne-mesure,.pari-ref,.op-prix b,.op-edge,.ecart,
+td:not(:first-child),.bu-ligne>:not(:first-child),.ligne-cote,.ligne-valeur,.ligne-roi,.ligne-volume,.ligne-mesure,.pari-ref,.ecart,
 .strat-bar-value,.strat-chiffres dd,.notif-mesure b,.notif-alerte>span:last-child b,.infos b,.courbe text,.analyse-courbe text,.grande-courbe text,
 .analyse-barre-tete b,.analyse-legende b,.pari-horaire,.mode-mise button,.vue-strategies-toggle button,nav .nb{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .bu-kpis b,.analyse-kpis strong,.strategie-apercu strong,.analyse-graph-valeur,.anneau-total{font-family:var(--serif);font-weight:400;letter-spacing:-.03em}
@@ -555,7 +514,6 @@ body.mise-kelly .mode-mise{outline:0;padding:0}
 .fraicheur{font-size:13.5px;font-weight:600;color:var(--texte);white-space:nowrap}.fraicheur.ancien{color:var(--rouge)}
 .fraicheur::before{width:7px;height:7px;margin-right:8px}
 .mode-mise-note{grid-column:1/-1;grid-row:2;margin:0 0 10px}
-.icone,.sport-icone,.strategie-avatar{display:none}
 main{max-width:1440px;padding:26px 48px 56px}
 
 /* Surfaces : pas de cartes, des filets. Un filet d'encre ouvre un bloc, un filet gris sépare ses lignes. */
@@ -582,8 +540,6 @@ tr:last-child td{border-bottom:1px solid var(--ligne)}tr.total td{background:var
 .bandeau-alerte{border:0;border-top:1px solid var(--texte);border-bottom:1px solid var(--ligne);padding:12px 0}
 .message-reseau{border:1px solid var(--texte)}
 .ligne-corps{border-left:1px solid var(--texte)}
-.op-validee{border-left:1px solid var(--texte)}
-.groupe-match{border-top:1px solid var(--texte)}
 .analyse-figure{border-top:1px solid var(--texte)}.analyse-figure h3{font-size:24px;margin-bottom:4px}
 .analyse-kpis{border:0;border-top:1px solid var(--texte);border-bottom:1px solid var(--ligne)}
 .analyse-kpis strong{font-size:34px;line-height:1;margin:8px 0 4px}.analyse-graph-valeur{font-size:30px;color:var(--texte)}
@@ -628,8 +584,7 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
 :is(#liste-paris,#mes-liste) .pari-ligne .pari-selection{font-size:14px;color:var(--texte)}
 .pari-ligne .ligne-cote{font-size:16px;font-weight:600}.pari-ref{font-size:11.5px;color:var(--doux)}
 .pari-ligne .ligne-valeur{font-size:14px;font-weight:600}
-.ecart,.op-edge{color:var(--signal);font-weight:600}.op-edge{background:transparent;padding:0}
-.op-prix .book-monogramme{background:transparent;color:var(--texte);border:1px solid var(--texte);font:600 13px var(--mono)}
+.ecart{color:var(--signal);font-weight:600}
 .ligne-colonnes{border-bottom:1px solid var(--ligne);border-top:1px solid var(--texte)}
 .ligne-nom{font-weight:600}.ligne-volume>small{font-family:var(--sans)}
 .sante-ligne,.notif-mesure,.notif-alerte,.notif-vide,.sante-vide{padding-left:0;padding-right:0}
@@ -641,7 +596,6 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
 .sante-mot{padding:3px 8px;border:1px solid currentColor}
 .pari-horaire.imminent{padding:1px 5px}
 .strategie-apercu strong{font-size:36px;line-height:1.1}
-
 @media(max-width:760px){
   /* Mobile : marque et fraîcheur, puis la mise ; les quatre onglets restent en bas, au pouce, en texte seul. */
   .haut{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto;column-gap:10px;padding:0 16px}
@@ -679,7 +633,7 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
   .voyant{padding-left:16px;padding-right:16px}
 }
 
-/* ===== Accueil (maquettes/interface/accueil.html) : chiffres, values du moment, Top 5, gain cumulé, derniers résultats. ===== */
+/* ===== Accueil : chiffres, values du moment, Top 5, gain cumulé, derniers résultats. ===== */
 .acc-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:20px 0 30px;border-top:1px solid var(--texte);border-bottom:1px solid var(--ligne)}
 .acc-kpi{padding:14px 20px 16px;border-left:1px solid var(--ligne);min-width:0}.acc-kpi:first-child{border-left:0;padding-left:0}
 .acc-kpi p{margin:0;font:400 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--doux)}

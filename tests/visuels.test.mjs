@@ -33,11 +33,8 @@ test('couverture CLV : aucune moyenne ni couverture inventée',()=>{
   assert.ok(html.includes('2 prises · 2 en attente') && html.includes('&lt;test>'));
   assert.ok(!html.includes('NaN') && !html.includes('0 €'));
 });
-test('les visuels des sports et bookmakers restent locaux et échappés',()=>{
-  assert.ok(fn('iconeSport')('football').includes('<svg'));
-  assert.ok(fn('iconeSport')('inconnu').includes('<svg'));
-  assert.ok(fn('monogrammeBookmaker')('<script>').includes('&lt;'));
-  assert.ok(!fn('monogrammeBookmaker')('<script>').includes('<script>'));
+test('les icônes inutilisées par la direction artistique ont disparu',()=>{
+  assert.equal(typeof contexte.iconeSport,'undefined'); assert.equal(typeof contexte.monogrammeBookmaker,'undefined');
 });
 test('les deux vues graphiques / comparaison se remplacent et le choix est mémorisé',()=>{
   const etats=new Map(),boutons=['liste','graphiques'].map(vue=>({dataset:{vueStrategies:vue},setAttribute:(k,v)=>etats.set(vue+':'+k,v)}));
