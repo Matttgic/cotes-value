@@ -56,6 +56,8 @@
       <div class="bu-kpis" id="bu-kpis"></div>
       <p class="aide" id="bu-note"></p>
       <p class="aide" id="bu-note-cotes"></p>
+      <h3 class="bu-titre">Gain cumulé <small>sur la période · pointillés : attendu · zone grisée : marge du hasard</small></h3>
+      <div class="bu-courbe" id="bu-courbe"></div>
       <h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div>
       <p class="aide">★ meilleur ROI parmi les lignes de 50 paris ou plus.</p>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
@@ -174,8 +176,11 @@
         Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p></details>
       </div>
       <div id="strategies-vue-graphiques" hidden>
-      <h2 class="sous-titre">Évolution des gains des comparateurs</h2>
+      <h2 class="sous-titre">Évolution des gains</h2>
       <p class="aide">Gain cumulé en euros, par date de règlement. Touche une légende pour masquer ou afficher une courbe.
+      Ligne fine en pointillés de la même couleur : le gain <b>attendu</b> de la stratégie si les cotes justes sont exactes
+      (visible avec 8 courbes au plus) ; la courbe au-dessus a fait mieux que prévu, en dessous moins bien. Le filtre
+      « Afficher » choisit les stratégies tracées.
       Jules v1/v2 représentent une seule famille. Convergence ≥ 2 inclut M3, et Eden à partir du 19/10 ; elle reste exploratoire. Convergence ≥ 3 hors M3 ne compte ni M3 ni Eden. Un accord ne prouve pas la rentabilité.</p>
       <div class="carte"><div class="puces" id="strategies-legende"></div>
         <div id="strategies-courbes-vide" class="aide"></div>
@@ -666,18 +671,25 @@ function rendreCourbe() {
   const svg = document.getElementById("courbe-svg"), bulle = document.getElementById("bulle");
   document.getElementById("courbe-quoi").textContent = "· " + (NOMS_REF[refBilan] || refBilan) +
     (sims.length === SIMS.length ? "" : " · " + nomCumul(sims));
-  const cum = [0], att = [0];
-  for (const p of pts) { cum.push(cum[cum.length - 1] + p[1]); att.push(att[att.length - 1] + (p[3] || 0)); }
+  const cum = [0], att = [0], vari = [0];
+  for (const p of pts) {
+    cum.push(cum[cum.length - 1] + p[1]); att.push(att[att.length - 1] + (p[3] || 0));
+    vari.push(vari[vari.length - 1] + (Number.isFinite(p[4]) ? p[4] : 0));
+  }
   const avecAttendu = pts.some(p => p[3] != null);
+  const avecMarge = avecAttendu && pts.some(p => Number.isFinite(p[4]));
+  const marge = i => avecMarge ? Z_TEMOIN * Math.sqrt(vari[i]) : 0;
   const total = cum[cum.length - 1];
-  document.getElementById("legende").innerHTML = pts.length < 2 ? "" :
-    `<span><i style="background:var(--serie)"></i>Réel <b class="${signe(total)}">${eurC(total)}</b></span>` +
-    (avecAttendu ? `<span><i style="background:var(--attendu)"></i>Attendu <b class="${signe(att[att.length - 1])}">${eurC(att[att.length - 1])}</b></span>` : "");
+  // Légende et verdict : même lecture que les courbes des stratégies (visuels.js, verdictTemoin).
+  document.getElementById("legende").innerHTML = pts.length < 2 ? "" : avecAttendu
+    ? verdictTemoin([[0, total, att[att.length - 1], avecMarge ? Math.sqrt(vari[vari.length - 1]) : null]])
+    : `<span><i style="background:var(--serie)"></i>Réel <b class="${signe(total)}">${eurC(total)}</b></span>`;
   if (pts.length < 2) { svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle">Pas encore assez de paris réglés.</text>`; return; }
-  const W = svg.clientWidth || 340, H = 170, g = 46, d = 8, h = 8, b = 20;
-  const tous = avecAttendu ? cum.concat(att) : cum;
+  const tous = avecAttendu ? cum.concat(att, att.map((v, i) => v + marge(i)), att.map((v, i) => v - marge(i))) : cum;
   let lo = Math.min(0, ...tous), hi = Math.max(0, ...tous);
   const st = pas(hi - lo || 10); lo = Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st;
+  // marge gauche à la taille des graduations (« -4 000 € » n'est plus coupé)
+  const W = svg.clientWidth || 340, H = 170, g = Math.max(46, Math.ceil(10 + 6.6 * Math.max(eurC(lo).length, eurC(hi).length))), d = 8, h = 8, b = 20;
   const X = i => g + (W - g - d) * i / (cum.length - 1), Y = v => h + (H - h - b) * (hi - v) / (hi - lo || 1);
   let grille = "";
   for (let v = lo; v <= hi + 1e-9; v += st)
@@ -687,8 +699,11 @@ function rendreCourbe() {
   const axe = `<text x="${g}" y="${H - 4}">${jour(pts[0][0])}</text><text x="${W - d}" y="${H - 4}" text-anchor="end">${jour(pts[pts.length - 1][0])}</text>
 <text x="${(g + W - d) / 2}" y="${H - 4}" text-anchor="middle">${pts.length} paris réglés</text>`;
   const trace = serie => serie.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  const chemin = (serie, coul) => `<path d="${trace(serie)}" fill="none" stroke="var(${coul})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-  svg.innerHTML = grille + axe + (avecAttendu ? chemin(att, "--attendu") : "") + chemin(cum, "--serie") + `
+  const chemin = (serie, coul, tirets = "") => `<path d="${trace(serie)}" fill="none" stroke="var(${coul})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"${tirets ? ` stroke-dasharray="${tirets}"` : ""}/>`;
+  // Marge du hasard (8 fois sur 10) autour de la ligne attendue : zone grisée.
+  const bande = avecMarge ? `<path d="${trace(att.map((v, i) => v + marge(i)))}${att.map((v, i) => [i, v - marge(i)]).reverse()
+    .map(([i, v]) => `L${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("")}Z" fill="var(--attendu)" fill-opacity=".16" stroke="none"/>` : "";
+  svg.innerHTML = grille + axe + bande + (avecAttendu ? chemin(att, "--attendu", "6 4") : "") + chemin(cum, "--serie") + `
 <line id="viseur" y1="${h}" y2="${H - b}" stroke="var(--doux)" stroke-width="1" visibility="hidden"/>
 <circle id="point" r="4.5" fill="var(--serie)" stroke="var(--carte)" stroke-width="2" visibility="hidden"/>
 <rect x="${g}" y="0" width="${W - g - d}" height="${H}" fill="transparent" id="zone"/>`;
@@ -700,7 +715,7 @@ function rendreCourbe() {
     viseur.setAttribute("x1", x); viseur.setAttribute("x2", x); viseur.setAttribute("visibility", "visible");
     point.setAttribute("cx", x); point.setAttribute("cy", y); point.setAttribute("visibility", "visible");
     bulle.innerHTML = `Pari ${i} · réglé le ${quand(new Date(p[0] * 60000).toISOString())} · ce pari ${eur(p[1])}<br>Réel <b>${eurC(cum[i])}</b>` +
-      (avecAttendu ? ` · attendu <b>${eurC(att[i])}</b>` : "");
+      (avecAttendu ? ` · attendu <b>${eurC(att[i])}</b>${avecMarge ? ` ± ${Math.round(marge(i))} €` : ""}` : "");
     bulle.style.display = "block";
     // à droite du point, ou à gauche s'il n'y a pas la place ; positions relatives à la carte
     const gauche = x + 12 + bulle.offsetWidth > W ? x - 12 - bulle.offsetWidth : x + 12;
@@ -1047,6 +1062,8 @@ function rendreBilanUniques(maintenant=Date.now()) {
   const resume = (t, x) => x.n ? `${t} : ${x.n} paris, ${eur(x.net)}, ROI ${pct(x.roi)}` : "";
   document.getElementById("bu-note-cotes").textContent = grosses.n
     ? [resume("Cote de 10 au plus", petites), resume("Cote supérieure à 10", grosses)].filter(Boolean).join(" · ") : "";
+  const zoneCourbe = document.getElementById("bu-courbe");      // courbe et ligne témoin (visuels.js)
+  if (zoneCourbe && typeof grandeCourbe === "function") zoneCourbe.innerHTML = grandeCourbe(pointsDepuisParis(L));
   document.getElementById("bu-ecart").innerHTML = tableBU(Object.entries(NOMS_ECART).map(([k,nom]) => [nom, L.filter(p => p.simulation===k)]));
   document.getElementById("bu-cote").innerHTML = tableBU((D.tranches || []).map(t => [t, L.filter(p => p.tranche===t)]));
   const parSport = new Map();
@@ -1384,15 +1401,20 @@ const courbesMasquees = new Set();
 const COULEURS_COMPARATEURS = {"Claude (rejeu)":"var(--courbe-claude,#2675ce)", "ChatGPT v1 (rejeu)":"var(--courbe-chatgpt,#d15b13)",
   "Gemini Argon v1 (rejeu)":"var(--courbe-gemini,#16884c)", "JULES EDGE v1 (rejeu)":"var(--courbe-jules1,#b04baf)",
   "JULES EDGE v2 (rejeu)":"var(--courbe-jules2,#865fe0)", "Eden (rejeu)":"var(--courbe-eden,#1a7a6d)", "M3 (rejeu)":"var(--courbe-m3,#16838b)", "Convergence ≥ 2":"var(--courbe-convergence2,#c44862)", "Claude 1/match · max 10/j":"var(--courbe-claudeprudent,#b47b00)", "Convergence ≥ 3 hors M3":"var(--courbe-convergence3,#d13f8c)", "M3 · Max 3/match":"var(--courbe-m3structure,#7f9225)", "Qwen":"var(--courbe-qwen,#9b5de5)"};
+// Couleur d'une courbe : celle du comparateur, sinon une couleur de la palette selon son rang (règles, bases…).
+const PALETTE_COURBES = ["#2675ce","#d15b13","#16884c","#b04baf","#865fe0","#1a7a6d","#c44862","#b47b00","#d13f8c","#7f9225",
+  "#9b5de5","#5b7083","#a0522d","#2e8b57","#cc5500","#16838b"];
+const ATTENDUS_MAX = 8;          // au-delà, les lignes attendues brouilleraient le graphique
 function rendreCourbesStrategies(rows) {
   const legend = document.getElementById("strategies-legende"), svg = document.getElementById("strategies-courbes");
-  const toutes = rows.map(r => ({...r, points:D.laboratoire.navigation?.courbes?.[r.id]?.[periodeStrategies] || []}));
+  const toutes = rows.map((r, i) => ({...r, couleur:COULEURS_COMPARATEURS[r.id] || PALETTE_COURBES[i % PALETTE_COURBES.length],
+    points:D.laboratoire.courbes?.[r.id]?.[periodeStrategies] || []}));
   const nomsCourts = {"M3 (rejeu)":"M3", "Convergence ≥ 2":"Conv. ≥ 2",
     "JULES EDGE v1 (rejeu)":"Jules v1", "JULES EDGE v2 (rejeu)":"Jules v2",
     "ChatGPT v1 (rejeu)":"ChatGPT v1", "Gemini Argon v1 (rejeu)":"Gemini v1", "Eden (rejeu)":"Eden"};
   legend.innerHTML = toutes.map(r => {
     const gain = r.points.length ? r.points.at(-1)[1] : (r.stats?.regles ? r.stats.gain : null);
-    return `<button data-courbe="${e(r.id)}" aria-label="${e(r.nom)} : ${e(eurC(gain))}" aria-pressed="${!courbesMasquees.has(r.id)}" class="${courbesMasquees.has(r.id) ? "" : "actif"}"><span style="color:${COULEURS_COMPARATEURS[r.id] || "var(--texte)"}">●</span> ${e(D.variantes?.[r.id]?.court || nomsCourts[r.id] || r.nom)} ${e(eurC(gain))}</button>`;
+    return `<button data-courbe="${e(r.id)}" aria-label="${e(r.nom)} : ${e(eurC(gain))}" aria-pressed="${!courbesMasquees.has(r.id)}" class="${courbesMasquees.has(r.id) ? "" : "actif"}"><span style="color:${r.couleur}">●</span> ${e(D.variantes?.[r.id]?.court || nomsCourts[r.id] || r.nom)} ${e(eurC(gain))}</button>`;
   }).join("");
   const masquerTout = rows.some(r => !courbesMasquees.has(r.id));
   if (rows.length) legend.innerHTML += `<button id="strategies-tout">${masquerTout ? "Tout masquer" : "Tout afficher"}</button>`;
@@ -1407,14 +1429,17 @@ function rendreCourbesStrategies(rows) {
   const series = toutes.filter(r => !courbesMasquees.has(r.id));
   const points = series.flatMap(r => r.points);
   const vide = document.getElementById("strategies-courbes-vide");
-  vide.textContent = !rows.length ? "Choisis toutes les références ou les comparateurs pour afficher leurs courbes."
+  const avecAttendus = series.filter(r => r.points.length).length <= ATTENDUS_MAX;
+  vide.textContent = !rows.length ? "Aucune stratégie avec ce filtre."
     : !series.length ? "Toutes les courbes sont masquées. Touche une légende pour en afficher une."
-    : !points.length ? "Aucun pari réglé sur cette période pour les courbes affichées." : "";
+    : !points.length ? "Aucun pari réglé sur cette période pour les courbes affichées."
+    : !avecAttendus ? `Lignes attendues masquées : garde ${ATTENDUS_MAX} courbes au plus (touche les légendes) pour les voir.` : "";
   svg.style.display = points.length ? "" : "none";
   if (!points.length) { svg.innerHTML=""; return; }
   const W=Math.max(320,Math.min(1100,svg.getBoundingClientRect?.().width || 640)),H=W<500?260:300,left=65,right=16,top=22,bottom=40;
   const debut=Math.min(...points.map(p => p[0]))-60, fin=Math.max(...points.map(p => p[0]))+60;
-  const min=Math.min(0,...points.map(p => p[1])), max=Math.max(0,...points.map(p => p[1]));
+  const valeurs=points.flatMap(p => avecAttendus && Number.isFinite(p[2]) ? [p[1],p[2]] : [p[1]]);
+  const min=Math.min(0,...valeurs), max=Math.max(0,...valeurs);
   const st=Math.max(1,Math.ceil(pas(max-min || 10)));
   const lo=Math.floor(min/st)*st, hi=Math.max(lo+st,Math.ceil(max/st)*st);
   const x=t => left+(t-debut)/(fin-debut)*(W-left-right), y=g => top+(hi-g)/(hi-lo)*(H-top-bottom);
@@ -1434,8 +1459,10 @@ function rendreCourbesStrategies(rows) {
       let path=`M ${x(debut)} ${y(0)}`;
       for (const [t,g] of r.points) path+=` H ${x(t)} V ${y(g)}`;
       path+=` H ${x(fin)}`;
-      const dernier=r.points.at(-1)[1];
-      return `<path data-serie="${e(r.id)}" d="${path}" fill="none" stroke="${COULEURS_COMPARATEURS[r.id] || "var(--texte)"}" stroke-width="2.5" vector-effect="non-scaling-stroke" ${r.id.includes("v2") ? 'stroke-dasharray="7 4"' : D.variantes?.[r.id] ? 'stroke-dasharray="3 3"' : ""}><title>${e(r.nom)} : ${e(eur(dernier))} · ${r.points.length} réglés</title></path>`;
+      const dernier=r.points.at(-1)[1], couleur=r.couleur;
+      // Ligne témoin : le gain attendu de la même stratégie, fin et en pointillés, de la même couleur.
+      const attendu=avecAttendus && r.points.every(p => Number.isFinite(p[2])) ? `<path data-attendu="${e(r.id)}" d="M ${x(debut)} ${y(0)} ${r.points.map(p => `L ${x(p[0])} ${y(p[2])}`).join(" ")}" fill="none" stroke="${couleur}" stroke-opacity=".55" stroke-width="1.4" stroke-dasharray="2 4" vector-effect="non-scaling-stroke"><title>${e(r.nom)} · attendu ${e(eur(r.points.at(-1)[2]))}</title></path>` : "";
+      return attendu+`<path data-serie="${e(r.id)}" d="${path}" fill="none" stroke="${couleur}" stroke-width="2.5" vector-effect="non-scaling-stroke" ${r.id.includes("v2") ? 'stroke-dasharray="7 4"' : D.variantes?.[r.id] ? 'stroke-dasharray="3 3"' : ""}><title>${e(r.nom)} : ${e(eur(dernier))} · ${r.points.length} réglés</title></path>`;
     }).join("");
 }
 let periodeStrategies = "futur";
@@ -1521,13 +1548,9 @@ function rendreStrategies() {
   }
   const pp = n => n == null ? "—" : pct(n/100);
   let rows = lignesStrategies(periodeStrategies);
-  // Courbe d'une règle reconstituée depuis ses paris réglés (les comparateurs ont la leur, calculée au relevé).
-  const courbeDe = r => L.navigation?.courbes?.[r.id]?.[periodeStrategies] || (() => {
-    let total = 0;
-    return (L.navigation?.selections?.[r.id]?.[periodeStrategies] || []).map(id => L.navigation.paris[id])
-      .filter(p => p && p.gain != null && p.regle_le).sort((a,b) => Date.parse(a.regle_le)-Date.parse(b.regle_le))
-      .map(p => [Math.floor(Date.parse(p.regle_le)/1000), total = Math.round((total+p.gain)*100)/100]);
-  })();
+  // Courbe de chaque stratégie (règles, comparateurs, bases du Bilan), calculée au relevé avec la même mise et la même
+  // coupure que son bilan : [instant, réel, attendu, écart type] (ligne témoin et marge du hasard).
+  const courbeDe = r => L.courbes?.[r.id]?.[periodeStrategies] || [];
   attribuerMedailles(rows);       // ★ € ☘ ◎ : meilleur ROI, gain, réussite et CLV (50 paris réglés minimum)
   attribuerValeur(rows);          // rang moyen ROI + CLV, calculé sur toutes les stratégies avant le filtre
   const ref = document.getElementById("strategies-ref").value;
@@ -1649,7 +1672,7 @@ function rendreStrategies() {
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); aller(); }
     };
   });
-  rendreCourbesStrategies(rows.filter(r => r.reference === "comparateurs"));
+  rendreCourbesStrategies(rows);      // toutes les stratégies du filtre « Afficher » : règles, comparateurs, bases
   const graph = document.getElementById("strategies-graph");
   if (!reglees.length) {
     graph.innerHTML = `<p class="aide">Le graphique apparaîtra après les premiers règlements de cette période. Choisis « Historique 7–13 oct. » pour voir les gains déjà observés.</p>`;

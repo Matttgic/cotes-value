@@ -47,9 +47,11 @@ function rendreAccueil() {
 <span class="acc-rang-nom"><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<small class="acc-rang-detail"><span class="${signe(r.stats.roi)}">ROI ${pct(r.stats.roi/100)}</span> (${rangTexte(r.rang_roi)}) · <span class="${signe(r.stats.clv)}">CLV ${pct(r.stats.clv/100)}</span> (${rangTexte(r.rang_clv)}) · ${r.stats.regles} réglés</small></span>
 <span class="acc-rang-gain ${signe(r.stats.gain)}">${eurC(r.stats.gain)}</span></div>`).join('')
     : '<p class="aide">Pas encore de stratégie classée (30 paris réglés et 20 CLV mesurées au moins).</p>';
-  // Gain cumulé des paris uniques (même courbe que le Bilan, tracée en marches).
-  let total=0;
-  const points=((D.courbes || {}).Uniques || []).map(p=>[p[0]*60,total=Math.round((total+p[1])*100)/100]);
+  // Gain cumulé des paris uniques (même courbe que le Bilan, tracée en marches), avec la ligne témoin : gain attendu
+  // cumulé et marge du hasard (variance cumulée de chaque pari, 5e colonne).
+  let total=0,attendu=0,variance=0;
+  const points=((D.courbes || {}).Uniques || []).map(p=>[p[0]*60,total=Math.round((total+p[1])*100)/100,
+    attendu=Math.round((attendu+(p[3] || 0))*100)/100,Math.sqrt(variance+=Number.isFinite(p[4])?p[4]:0)]);
   document.getElementById('acc-courbe').innerHTML=grandeCourbe(points);
   document.getElementById('acc-courbe-mise').textContent=`paris uniques · ${mise}`;
   // Derniers résultats : les cinq derniers paris uniques réglés.

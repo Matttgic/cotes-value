@@ -113,3 +113,23 @@ test('valeur : rang moyen ROI + CLV, seulement avec assez de paris et de CLV',()
   const eg=[r('x',5,2),r('y',5,1)];fn('attribuerValeur')(eg);
   assert.equal(eg[0].rang_roi,1);assert.equal(eg[1].rang_roi,1);
 });
+test('ligne témoin : attendu en pointillés, marge du hasard et verdict lisible',()=>{
+  const svg=fn('grandeCourbe')([[0,10,5,20],[86400,40,8,25]]);
+  assert.ok(svg.includes('temoin-bande') && svg.includes('stroke-dasharray="5 4"'));
+  assert.ok(svg.includes('Conforme à l’attendu') && svg.includes('± 32 € de hasard') && svg.includes('Attendu <b>+8 €</b>'));
+  assert.ok(fn('grandeCourbe')([[0,10,5,2],[86400,60,8,4]]).includes('Au-dessus de l’attendu'));
+  assert.ok(fn('grandeCourbe')([[0,-10,5,2],[86400,-60,8,4]]).includes('En dessous de l’attendu'));
+  const ancien=fn('grandeCourbe')([[0,10],[86400,20]]);                 // points sans témoin : courbe seule
+  assert.ok(!ancien.includes('temoin') && ancien.includes('<path'));
+  assert.ok(fn('miniCourbe')([[1,5,2,1],[2,10,4,2]]).includes('stroke-dasharray="4 3"'));
+  assert.ok(!/NaN|Infinity/.test(svg));
+});
+test('points depuis les paris : même calcul que le serveur, poids et paris non réglés ignorés',()=>{
+  const pts=fn('pointsDepuisParis')([
+    {gain:-10,mise:10,cote:3,cote_juste:2.5,regle_le:'2026-10-15T15:10:00Z'},
+    {gain:12,mise:10,cote:2.2,cote_juste:2,regle_le:'2026-10-15T15:00:00Z'},
+    {gain:null,mise:10,cote:2,cote_juste:1.9,regle_le:null}]);
+  assert.equal(JSON.stringify(pts.map(p=>p.slice(1))),JSON.stringify([[12,1,11],[2,3,Math.round(Math.sqrt(337)*100)/100]]));   // autre contexte vm : comparaison par valeur
+  const doubles=fn('pointsDepuisParis')([{gain:12,mise:10,cote:2.2,cote_juste:2,regle_le:'2026-10-15T15:00:00Z'}],()=>2);
+  assert.equal(JSON.stringify(doubles[0].slice(1)),'[24,2,22]');
+});

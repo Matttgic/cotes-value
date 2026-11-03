@@ -190,6 +190,8 @@ function rendreMesStrategies() {
   const puce = (k, nom, n) => `<button type="button" data-suivi="${e(k)}" class="${suiviFiltre === k ? 'actif' : ''}">${e(nom)} <small>${n}</small></button>`;
   sortie.innerHTML = `<div class="puces" aria-label="Filtrer par stratégie">${puce('', 'Toutes', toutes.length)}${cles.map(k => puce(k, nomStrategie(k), nb[k])).join('')}</div>`
     + resumeHtml(suiviBilan(vues, suiviFiltre ? () => 1 : p => p.suivies.length))
+    // Gain cumulé des paris suivis, avec la ligne témoin (attendu) et la marge du hasard (visuels.js).
+    + (typeof grandeCourbe === 'function' ? `<div class="carte mes-courbe">${grandeCourbe(pointsDepuisParis(vues, suiviFiltre ? () => 1 : p => p.suivies.length))}</div>` : '')
     + `<div id="mes-liste">${vues.slice(0, suiviLimite).map(p => carteSuivi(p, suiviFiltre ? 1 : p.suivies.length)).join('') || '<p class="vide">Aucun pari sur cette période.</p>'}</div>`
     + (vues.length > suiviLimite ? '<p><button type="button" class="btn secondaire" id="mes-plus">Voir plus</button></p>' : '')
     + `<details class="mode-emploi"><summary>Stratégies suivies</summary><div class="carte">${lignesSuivi}</div>

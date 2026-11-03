@@ -3,7 +3,7 @@ import json
 import re
 
 from cotes.convergence import selections
-from cotes.laboratoire import resume
+from cotes.laboratoire import courbe, resume
 from cotes.simulation import segments
 from scripts import site_web
 from tests.test_strategie_jules_v2 import pari
@@ -41,9 +41,16 @@ def test_ancien_json_sans_nouveaux_comparateurs(tmp_path, monkeypatch):
     assert "Claude Fusion · Défi 4 + Défi 5" in labo["comparateurs"]
     for nom, comp in labo["comparateurs"].items():
         for periode, stats in comp.items():
-            pts=nav["courbes"][nom][periode]
-            assert len(pts) == stats["regles"]
+            pts=labo["courbes"][nom][periode]
+            assert len(pts) == min(stats["regles"], 90)
             assert (pts[-1][1] if pts else 0) == stats["gain"]
+    assert "courbes" not in nav                    # navigation identique dans les deux mises, courbes à part
+    for r in labo["futur"]:                        # règles du laboratoire : leur courbe aussi, même gain
+        pts=labo["courbes"][r["id"]]["futur"]
+        assert (pts[-1][1] if pts else 0) == r["gain"]
+    for ref, stats in labo["bases_futur"].items():  # bases du Bilan
+        pts=labo["courbes"]["base:"+ref]["futur"]
+        assert (pts[-1][1] if pts else 0) == stats["gain"]
     assert labo["comparateurs"]["Convergence ≥ 2"]["ensemble"]["paris"] == 2
     assert len(labo["mises"]["methodes"]) == 18 and "Paris uniques" in labo["mises"]["selections"]   # comparaison des mises
     assert labo["comparateurs"]["Convergence ≥ 2"]["construction"]["attente"] == 1
@@ -87,7 +94,7 @@ def test_courbe_meme_calcul_que_resume_demi_gagnes_rembourses():
     rows=[pari(str(i),statut=statut,regle_le=f"2026-10-15T15:0{i}:00Z",gain=999)
           for i,statut in enumerate(("gagne","demi_gagne","perdu","demi_perdu","rembourse"))]
     cutoff="2026-10-15T16:00:00Z"
-    points=site_web.courbe_comparateur(rows,cutoff)
+    points=courbe(rows,cutoff)
     assert len(points)==5 and points[-1][1]==resume(rows,cutoff,incertitude=False)["gain"]
 
 
@@ -110,3 +117,18 @@ def test_analyses_reutilise_les_uniques_du_bilan_et_les_mises_enregistrees():
     rows=[dict(zip(data['champs'],r)) for r in data['lignes']]
     assert [p['id'] for p in rows if p['unique_bilan']] == ['premier']
     assert next(p['mise'] for p in rows if p['id']=='premier') == 20
+
+
+def test_courbe_porte_la_ligne_temoin_attendu_et_marge_du_hasard():
+    from cotes.laboratoire import alleger_courbe
+    rows=[pari("a",statut="gagne",cote=2.2,cote_juste=2.0,regle_le="2026-10-15T15:00:00Z"),
+          pari("b",statut="perdu",cote=3.0,cote_juste=2.5,regle_le="2026-10-15T15:10:00Z"),
+          pari("c",statut="perdu",cote=2.0,cote_juste=None,regle_le="2026-10-15T15:20:00Z")]
+    pts=courbe(rows,"2026-10-16T00:00:00Z")
+    # réel : +12, -10, -10 ; attendu : 10 × (2,2/2 − 1) = 1, puis 10 × (3/2,5 − 1) = 2, rien sans cote juste
+    # écart type : √(22² × ¼) = 11, puis √(121 + 30² × 0,4 × 0,6) = √337, puis + 20² × ¼ (probabilité 1/cote)
+    assert [p[1] for p in pts]==[12,2,-8] and [p[2] for p in pts]==[1,3,3]
+    assert pts[0][3]==11 and pts[1][3]==round(337**.5,1) and pts[2][3]==round(437**.5,1)
+    longue=[[i,i,0,0] for i in range(1000)]
+    allegee=alleger_courbe(longue)
+    assert len(allegee)==90 and allegee[0]==longue[0] and allegee[-1]==longue[-1]
