@@ -15,7 +15,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bila
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes, suivis_prudents  # noqa: E402
-from cotes.reglement import gain as gain_reglement, GAIN  # noqa: E402
+from cotes.reglement import GAIN  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
@@ -24,8 +24,8 @@ from cotes.strategie_jules_v2 import JULES_V2, paris_jules_v2  # noqa: E402
 from cotes.strategie_eden import EDEN, paris_eden  # noqa: E402
 from cotes.strategie_qwen import QWEN, paris_qwen  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
-from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,
-                              evaluer, heure, resume, selectionner, suivi_futur)  # noqa: E402
+from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,  # noqa: E402
+                              attendu_et_variance, courbe, evaluer, heure, resume, selectionner, suivi_futur)
 from cotes.mises import METHODES as METHODES_MISE, comparer as comparer_mises  # noqa: E402
 from cotes.securite import json_public
 from cotes import notifications as notifications_mod  # noqa: E402
@@ -224,9 +224,9 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
 
 def courbes(paris: list[dict]) -> dict[str, list]:
     """Pour le graphique du gain cumulé : par vue du bilan (Uniques, chaque référence, Toutes), les paris
-    réglés dans l'ordre du règlement, chacun en [minute du règlement, gain, simulation, gain attendu] (la
+    réglés dans l'ordre du règlement, chacun en [minute du règlement, gain, simulation, gain attendu, variance] (la
     page fait le cumul selon les simulations choisies). Gain attendu = mise × (cote / cote juste − 1) : ce que
-    le pari rapporte en moyenne si la cote juste est exacte."""
+    le pari rapporte en moyenne si la cote juste est exacte ; la variance donne la marge du hasard autour."""
     uniques, strategie = premiers_par_selection(paris), paris_strategie(paris)
     chatgpt = paris_chatgpt(paris)
     gemini = paris_gemini(paris)
@@ -244,7 +244,9 @@ def courbes(paris: list[dict]) -> dict[str, list]:
             continue
         attendu = (round(p["mise"] * (p["cote"] / p["cote_juste"] - 1), 2)
                    if p.get("cote_juste") else None)
-        point = [t, round(p.get("gain") or 0, 2), p.get("simulation"), attendu]
+        variance = attendu_et_variance(p, p["mise"])[1]
+        point = [t, round(p.get("gain") or 0, 2), p.get("simulation"), attendu,
+                 round(variance) if variance >= 10 else round(variance, 2)]
         vues = ([p["reference"], "Toutes"]
                 + (["Uniques"] if id(p) in uniques else [])
                 + ([STRATEGIE["nom"]] if id(p) in strategie else [])
@@ -311,18 +313,6 @@ def enrichir_comparateurs(paris: list[dict], laboratoire: dict, maintenant: str)
             partie = [p for p in rows if heure(debut) <= heure(p["debut"]) < heure(fin)]
             stats[periode] = resume(partie, fin if periode != "test" else releve, incertitude=False)
         comparateurs[nom] = {**stats, "ensemble": resume(commun, releve, incertitude=False)}
-
-
-def courbe_comparateur(rows: list[dict], cutoff: str) -> list[list]:
-    """Même mise de 10 € et même coupure de règlement que resume()."""
-    connus = [p for p in rows if p.get("statut") in GAIN and heure(p.get("detecte"))
-              and heure(p.get("regle_le")) and heure(p["detecte"]) <= heure(p["regle_le"]) < heure(cutoff)]
-    total = 0.0
-    points = []
-    for p in sorted(connus, key=lambda p: (heure(p["regle_le"]), p["id"])):
-        total += gain_reglement(p["statut"], 10, p["cote"])
-        points.append([int(heure(p["regle_le"]).timestamp()), round(total, 2)])
-    return points
 
 
 def paris_en_mise_kelly(paris: list[dict]) -> list[dict]:
@@ -438,17 +428,18 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
             enregistrer(nom, [p for p in passe if id(p) in historique_ids],
                         [p for p in futur if id(p) in officiels[nom]])
 
-    courbes_comparateurs = {}
-    for nom in laboratoire.get("comparateurs", {}):
-        repartition = selection.get(nom, {})
-        courbes_comparateurs[nom] = {}
+    # Courbes de toutes les stratégies (règles et comparateurs), même coupure et même mise que leurs bilans, avec la
+    # ligne attendue (témoin) et sa marge du hasard : laboratoire["courbes"], propre à chaque mise (fixe ou Kelly).
+    courbes_strategies = {}
+    for nom, repartition in selection.items():
+        courbes_strategies[nom] = {}
         for periode, pids in repartition.items():
             cutoff = maintenant if periode == "futur" else (
                 next((fin for n, _, fin in PERIODES if n == periode and n != "test"), None) or releve.isoformat())
-            courbes_comparateurs[nom][periode] = courbe_comparateur([index[pid] for pid in pids], cutoff)
+            courbes_strategies[nom][periode] = courbe([index[pid] for pid in pids], cutoff)
     return {
         "selections": selection,
-        "courbes": courbes_comparateurs,
+        "courbes": courbes_strategies,
         "paris": {pid: {**fiche(index[pid]), "simulation": index[pid].get("simulation"),
                         "sims": [index[pid].get("simulation")],
                         "tranche": tranche(index[pid]["cote"]) if index[pid].get("cote") else None,
@@ -566,9 +557,19 @@ def _construire(donnees: Path, sortie: Path) -> Path:
                     **evaluer(lignes_v2, releve_str), "ensemble": resume(commun_v2, releve_str, incertitude=False)}
             enrichir_comparateurs(paris, laboratoire, maintenant)
             laboratoire["navigation"] = navigation_strategies(paris, laboratoire, maintenant)
+            # Hors de la navigation (identique dans les deux mises, publiée une fois) : les courbes suivent la mise.
+            laboratoire["courbes"] = laboratoire["navigation"].pop("courbes")
             laboratoire["resultats"] = [{k: v for k, v in r.items() if k != "ids_selections"}
                                         for r in laboratoire.get("resultats", [])]
             laboratoire.update(debut_suivi=DEBUT_SUIVI, futur=suivi_futur(paris, DEBUT_SUIVI, maintenant))
+            # Règle absente de l'étude figée (donc de la navigation) : sa courbe prospective quand même.
+            manquantes = [r for r in REGLES_LABO if "futur" not in laboratoire["courbes"].get(r.id, {})]
+            if manquantes:
+                suivies = [p for p in paris if heure(p.get("detecte"))
+                           and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)]
+                for r in manquantes:
+                    laboratoire["courbes"].setdefault(r.id, {})["futur"] = courbe(
+                        selectionner(suivies, r, DEBUT_SUIVI), maintenant)
             gemini_ids = paris_gemini(paris)
             jules_ids = paris_jules(paris)
             jules_v2_ids = paris_jules_v2(paris)
@@ -613,6 +614,8 @@ def _construire(donnees: Path, sortie: Path) -> Path:
             bases["Uniques"] = [p for p in suivi if id(p) in uniques_suivi]
             laboratoire["bases_futur"] = {nom: resume(rows, maintenant, incertitude=False, depuis=DEBUT_SUIVI)
                                           for nom, rows in bases.items() if rows}
+            laboratoire["courbes"].update({"base:" + nom: {"futur": courbe(rows, maintenant)}
+                                           for nom, rows in bases.items() if rows})
             depart = heure(DEBUT_SUIVI)
             laboratoire["mises"] = {"methodes": {k: {"nom": m[0], "regle": m[1]} for k, m in METHODES_MISE.items()},
                                     "selections": {"Paris uniques": comparer_mises(

@@ -233,7 +233,7 @@ def test_js_courbes_legend_masquage_et_periode_vide():
     outils += MODELE[MODELE.index("function pas("):MODELE.index("function rendreCourbe()")]
     section=MODELE[MODELE.index("const courbesMasquees ="):MODELE.index('let periodeStrategies = "futur";')]
     executer(DOM+outils+'''
-const D={laboratoire:{navigation:{courbes:{"Claude (rejeu)":{ensemble:[[1,10],[2,-5]]}}}}};
+const D={laboratoire:{courbes:{"Claude (rejeu)":{ensemble:[[1,10],[2,-5]]}}}};
 let periodeStrategies="ensemble";
 '''+section+'''
 const rows=[{id:"Claude (rejeu)",nom:"Claude"}];
@@ -248,7 +248,7 @@ assert.ok(document.getElementById("strategies-courbes-vide").textContent.include
 assert.ok(document.getElementById("strategies-legende").innerHTML.includes("Tout afficher"));
 document.getElementById("strategies-tout").onclick();
 assert.ok(document.getElementById("strategies-courbes").innerHTML.includes('data-serie="Claude (rejeu)"'));
-D.laboratoire.navigation.courbes["Claude (rejeu)"].ensemble=[[1,-96.46],[4*86400,340.86]];
+D.laboratoire.courbes["Claude (rejeu)"].ensemble=[[1,-96.46],[4*86400,340.86]];
 rendreCourbesStrategies(rows);
 const axes=document.getElementById("strategies-courbes").innerHTML.match(/<text[^>]*>[^<]*<\\/text>/g).join(" ").replace(/<[^>]+>/g,"");
 assert.ok(axes.includes("+400 €") && axes.includes("-200 €") && axes.includes("0 €"));

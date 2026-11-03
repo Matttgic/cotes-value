@@ -9,7 +9,7 @@ import random
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from math import isfinite
+from math import isfinite, sqrt
 from statistics import mean
 from zoneinfo import ZoneInfo
 
@@ -165,12 +165,55 @@ def mise_de(p: dict) -> float:
     return m if m is not None and m > 0 else MISE
 
 
+COURBE_POINTS_MAX = 90         # au-delà, la courbe garde 90 points répartis (le dernier toujours) : page légère
+
+
+def regles_avant(rows: list[dict], cutoff: datetime) -> list[dict]:
+    """Paris réglés connus avant ``cutoff`` (réglés après leur détection), comme dans ``resume``."""
+    return [p for p in rows if p.get("statut") in GAIN and heure(p.get("regle_le"))
+            and heure(p["detecte"]) <= heure(p["regle_le"]) < cutoff]
+
+
+def attendu_et_variance(p: dict, mise: float) -> tuple[float, float]:
+    """Gain attendu du pari si la cote juste est exacte (mise × (cote / cote juste − 1)) et variance de son résultat
+    (pari simple, probabilité 1 / cote juste ; à défaut 1 / cote). Sans cote juste : rien d'attendu."""
+    cote, juste = nombre(p.get("cote")), nombre(p.get("cote_juste"))
+    if not cote or cote <= 1:
+        return 0.0, 0.0
+    ok = juste is not None and juste > 1
+    q = 1 / juste if ok else 1 / cote
+    return (mise * (cote / juste - 1) if ok else 0.0), (mise * cote) ** 2 * q * (1 - q)
+
+
+def alleger_courbe(points: list, n: int = COURBE_POINTS_MAX) -> list:
+    """``n`` points au plus, répartis régulièrement, le dernier toujours gardé (les valeurs sont des cumuls)."""
+    if len(points) <= n:
+        return points
+    return [points[round(i * (len(points) - 1) / (n - 1))] for i in range(n)]
+
+
+def courbe(rows: list[dict], connu_avant: str) -> list[list]:
+    """Gain cumulé d'une stratégie par date de règlement, mêmes paris, mises et coupure que ``resume`` :
+    ``[instant (s), réel, attendu, écart type]``. La ligne attendue sert de témoin : un réel au-dessus ou en dessous
+    s'apprécie avec l'écart type (marge du hasard)."""
+    cutoff = heure(connu_avant)
+    total = attendu = variance = 0.0
+    points = []
+    for p in sorted(regles_avant(rows, cutoff), key=lambda p: (heure(p["regle_le"]), p["id"])):
+        m = mise_de(p)
+        total += gain(p["statut"], m, p["cote"])
+        a, v = attendu_et_variance(p, m)
+        attendu, variance = attendu + a, variance + v
+        points.append([int(heure(p["regle_le"]).timestamp()), round(total, 2), round(attendu, 1),
+                       round(sqrt(variance), 1)])
+    return alleger_courbe(points)
+
+
 def resume(rows: list[dict], connu_avant: str, incertitude: bool = True, depuis: str | None = None) -> dict:
     """``depuis`` (lancement du suivi) ajoute ``jours`` : durée observée, pour les moyennes par jour et par mois."""
     cutoff = heure(connu_avant)
     assert cutoff is not None
-    regles = [p for p in rows if p.get("statut") in GAIN and heure(p.get("regle_le"))
-              and heure(p["detecte"]) <= heure(p["regle_le"]) < cutoff]
+    regles = regles_avant(rows, cutoff)
     gains = [gain(p["statut"], mise_de(p), p["cote"]) for p in regles]
     cs = [clv(p) for p in regles if clv(p) is not None]
     ids = {p["id"] for p in regles}

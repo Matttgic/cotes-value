@@ -72,39 +72,81 @@ function monogrammeBookmaker(nom) {
   const codes={Winamax:'w',Betclic:'b',Unibet:'u',PMU:'p',OlyBet:'o'};
   return `<span class="book-monogramme book-${codes[nom] || 'autre'}" aria-hidden="true">${e(String(nom || '?').slice(0,1))}</span>`;
 }
+// Ligne témoin des courbes : le gain attendu si les cotes justes sont exactes (mise × (cote / cote juste − 1), cumulé),
+// et autour, la marge du hasard (80 % des cas : ± 1,28 écart type). Points : [instant (s), réel, attendu, écart type].
+const Z_TEMOIN=1.2816;
+const avecTemoin=pts=>pts.length>0 && pts.every(p=>Number.isFinite(p[2]));
+const margeTemoin=p=>Number.isFinite(p[3])?Z_TEMOIN*p[3]:0;
+// Points d'une liste de paris réglés (fiches du site) : même calcul que le serveur (cotes/laboratoire.py, courbe).
+// `poids(p)` : nombre de mises du pari (1 par défaut).
+function pointsDepuisParis(liste, poids=()=>1) {
+  const regles=(liste || []).filter(p=>Number.isFinite(p.gain) && p.regle_le && Number.isFinite(Date.parse(p.regle_le)))
+    .sort((a,b)=>Date.parse(a.regle_le)-Date.parse(b.regle_le));
+  let reel=0,attendu=0,variance=0;
+  return regles.map(p=>{
+    const w=poids(p),mise=Number.isFinite(p.mise)&&p.mise>0?p.mise:10,c=p.cote,j=p.cote_juste;
+    reel+=w*p.gain;
+    if(Number.isFinite(c) && c>1) {
+      const ok=Number.isFinite(j) && j>1,q=ok?1/j:1/c;
+      if(ok) attendu+=w*mise*(c/j-1);
+      variance+=w*w*(mise*c)**2*q*(1-q);
+    }
+    return [Math.floor(Date.parse(p.regle_le)/1000),Math.round(reel*100)/100,Math.round(attendu*100)/100,Math.round(Math.sqrt(variance)*100)/100];
+  });
+}
+// Verdict lisible sous un graphique : réel, attendu et sa marge, puis conforme / au-dessus / en dessous.
+function verdictTemoin(points) {
+  const pts=(points || []).filter(p=>Number.isFinite(p[1]));
+  if(!avecTemoin(pts)) return '';
+  const d=pts.at(-1),ecart=d[1]-d[2],marge=margeTemoin(d);
+  const euros=v=>(v>0?'+':'')+Math.round(v)+' €',classe=v=>v>0?'pos':v<0?'neg':'';
+  const [mot,c]=Math.abs(ecart)<=marge?['Conforme à l’attendu','']:ecart>0?['Au-dessus de l’attendu','pos']:['En dessous de l’attendu','neg'];
+  return `<p class="temoin"><span><i class="temoin-reel"></i>Réel <b class="${classe(d[1])}">${euros(d[1])}</b></span>`+
+    `<span><i class="temoin-attendu"></i>Attendu <b>${euros(d[2])}</b> <small>± ${Math.round(marge)} € de hasard</small></span>`+
+    `<b class="temoin-mot ${c}">${mot}</b></p>`;
+}
 function miniCourbe(points, couleur='var(--accent)') {
   const pts=(points || []).filter(p=>Number.isFinite(p[0]) && Number.isFinite(p[1]));
   if (!pts.length) return '<span class="courbe-absente">Courbe indisponible</span>';
-  const W=150,H=52,m=4;
+  const W=150,H=52,m=4,temoin=avecTemoin(pts);
   const t0=pts[0][0],t1=pts.at(-1)[0],x=t=>m+(t-t0)/(t1-t0 || 1)*(W-2*m);
-  const lo=Math.min(0,...pts.map(p=>p[1])),hi=Math.max(0,...pts.map(p=>p[1]));
+  const vals=pts.flatMap(p=>temoin?[p[1],p[2]]:[p[1]]);
+  const lo=Math.min(0,...vals),hi=Math.max(0,...vals);
   const y=g=>H-m-(g-lo)/(hi-lo || 1)*(H-2*m);
   let path=`M ${m} ${y(0)}`;
   for(const [t,g] of pts) path+=` H ${x(t)} V ${y(g)}`;
-  return `<svg class="mini-courbe" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gain cumulé : ${pts.length} règlements, échelle propre à la stratégie">
-    <line x1="${m}" x2="${W-m}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ligne)" stroke-dasharray="3 3"/>
+  const attendu=temoin?`<path d="M ${m} ${y(0)} ${pts.map(p=>`L ${x(p[0])} ${y(p[2])}`).join(' ')}" fill="none" stroke="var(--attendu)" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`:'';
+  return `<svg class="mini-courbe" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gain cumulé : ${pts.length} règlements, échelle propre à la stratégie${temoin?', pointillés : attendu':''}">
+    <line x1="${m}" x2="${W-m}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ligne)" stroke-dasharray="3 3"/>${attendu}
     <path d="${path}" fill="none" stroke="${e(couleur)}" stroke-width="2" vector-effect="non-scaling-stroke"/>
     <circle cx="${x(pts.at(-1)[0])}" cy="${y(pts.at(-1)[1])}" r="2.5" fill="${e(couleur)}"/>
-    <title>Gain cumulé observé · échelle propre · ${pts.length} règlements</title></svg>`;
+    <title>Gain cumulé observé · échelle propre · ${pts.length} règlements${temoin?' · pointillés : gain attendu':''}</title></svg>`;
 }
-// Courbe lisible d'une stratégie : gain cumulé en euros, avec zéro, extrêmes et dates.
+// Courbe lisible d'une stratégie : gain cumulé en euros, avec zéro, extrêmes et dates ; ligne témoin (attendu, en
+// pointillés) et marge du hasard (zone grisée) quand les points les portent, puis le verdict.
 function grandeCourbe(points, couleur='var(--accent)') {
   const pts=(points || []).filter(p=>Number.isFinite(p[0]) && Number.isFinite(p[1]));
   if (pts.length<2) return '<span class="courbe-absente">Courbe disponible après deux règlements</span>';
-  const W=320,H=150,g=44,d=8,h=10,b=20;
+  const temoin=avecTemoin(pts);
+  const vals=pts.flatMap(p=>temoin?[p[1],p[2]+margeTemoin(p),p[2]-margeTemoin(p)]:[p[1]]);
+  const lo=Math.min(0,...vals),hi=Math.max(0,...vals);
+  const euros=v=>(v>0?'+':'')+Math.round(v)+' €';
+  // Marge gauche à la taille des montants (« +4949 € » n'est plus coupé).
+  const W=320,H=150,g=Math.max(44,Math.ceil(8+6.2*Math.max(...[hi,lo].map(v=>euros(v).length)))),d=8,h=10,b=20;
   const t0=pts[0][0],t1=pts.at(-1)[0],x=t=>g+(t-t0)/(t1-t0 || 1)*(W-g-d);
-  const lo=Math.min(0,...pts.map(p=>p[1])),hi=Math.max(0,...pts.map(p=>p[1]));
   const y=v=>H-b-(v-lo)/(hi-lo || 1)*(H-b-h);
   let path=`M ${g} ${y(0)}`;
   for(const [t,v] of pts) path+=` H ${x(t).toFixed(1)} V ${y(v).toFixed(1)}`;
   const jour=t=>new Date(t*1000).toLocaleDateString('fr-FR',{timeZone:'Europe/Paris',day:'numeric',month:'short'});
-  const euros=v=>(v>0?'+':'')+Math.round(v)+' €';
   const graduations=[...new Set([hi,0,lo])].map(v=>`<line x1="${g}" x2="${W-d}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ligne)"${v?'':' stroke-dasharray="3 3"'}/>
     <text x="${g-4}" y="${y(v)+3}" text-anchor="end">${euros(v)}</text>`).join('');
-  return `<svg class="grande-courbe" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gain cumulé : ${euros(pts.at(-1)[1])} après ${pts.length} règlements">
-    ${graduations}<path d="${path}" fill="none" stroke="${e(couleur)}" stroke-width="2"/>
+  const ligne=f=>pts.map(p=>`L ${x(p[0]).toFixed(1)} ${y(f(p)).toFixed(1)}`).join(' ');
+  const bande=temoin?`<path class="temoin-bande" d="M ${g} ${y(0)} ${ligne(p=>p[2]+margeTemoin(p))} ${[...pts].reverse().map(p=>`L ${x(p[0]).toFixed(1)} ${y(p[2]-margeTemoin(p)).toFixed(1)}`).join(' ')} Z" fill="var(--attendu)" fill-opacity=".16" stroke="none"/>`:'';
+  const attendu=temoin?`<path d="M ${g} ${y(0)} ${ligne(p=>p[2])}" fill="none" stroke="var(--attendu)" stroke-width="1.6" stroke-dasharray="5 4"/>`:'';
+  return `<svg class="grande-courbe" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gain cumulé : ${euros(pts.at(-1)[1])} après ${pts.length} règlements${temoin?`, attendu ${euros(pts.at(-1)[2])}`:''}">
+    ${graduations}${bande}${attendu}<path d="${path}" fill="none" stroke="${e(couleur)}" stroke-width="2"/>
     <circle cx="${x(pts.at(-1)[0])}" cy="${y(pts.at(-1)[1])}" r="3.5" fill="${e(couleur)}"/>
-    <text x="${g}" y="${H-4}">${jour(t0)}</text><text x="${W-d}" y="${H-4}" text-anchor="end">${jour(t1)}</text></svg>`;
+    <text x="${g}" y="${H-4}">${jour(t0)}</text><text x="${W-d}" y="${H-4}" text-anchor="end">${jour(t1)}</text></svg>${verdictTemoin(pts)}`;
 }
 function repartitionResultats(s) {
   const n=s.regles || 0;
@@ -136,7 +178,7 @@ function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
     <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button></div>
     <p class="strategie-regle">${e(r.detail)}</p>
     <div class="strategie-apercu"><div><span class="libelle-gain">Gain net simulé</span><strong class="${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</strong></div>${s.note?`<div><span class="libelle-gain">Note</span><strong class="${s.note.total>=70?'pos':s.note.total<40?'neg':''}">${s.note.total}/100</strong><small>${s.note.provisoire?'provisoire · ':''}${['R','V','G','S'].map((l,i)=>l+' '+String([s.note.rentabilite,s.note.valeur,s.note.regularite,s.note.solidite][i]).replace('.',',')).join(' · ')}</small>${typeof evolutionNote==='function'?evolutionNote(r.id,s.note.total):''}</div>`:''}</div>
-    <div class="strategie-trajectoire">${grandeCourbe(points,couleur)}<span>Gain cumulé par date de règlement</span></div>
+    <div class="strategie-trajectoire">${grandeCourbe(points,couleur)}<span>Gain cumulé par date de règlement · pointillés : gain attendu si les cotes justes sont exactes · zone grisée : marge du hasard (8 fois sur 10)</span></div>
     <dl class="strat-chiffres">
       <div><dt>ROI</dt><dd class="${signe(s.roi)}">${pp(s.roi)}</dd><small>${r.reussite==null?'—':r.reussite.toFixed(1).replace('.',',')+' %'} de réussite</small></div>
       <div><dt>CLV moyenne</dt><dd class="${signe(s.clv)}">${pp(s.clv)}</dd>${couvertureCLV(s)}<small>Par match <b class="${signe(s.clv_evenement)}">${pp(s.clv_evenement)}</b> · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"} mesurés</small></div>

@@ -122,7 +122,7 @@ def test_site_tableau_courbe_navigation_badges_prix_et_export_coherents(tmp_path
         nom=v['nom'];cle=v['cle']
         assert labo['comparateurs_futur'][nom]['gain']==11
         assert nav['selections'][nom]['futur']==['alpha']
-        assert nav['courbes'][nom]['futur'][-1][1]==11
+        assert labo['courbes'][nom]['futur'][-1][1]==11
         assert cle in nav['paris']['alpha']['strategies']
         row=dict(zip(d['catalogue']['champs'],d['catalogue']['lignes'][0]))
         assert cle in row['strategies'] and row['cote']==2.1
