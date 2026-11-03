@@ -113,3 +113,13 @@ test('les bases du Bilan suivies dans « Mes stratégies » : référence et par
   const out = c.suiviPrises(prises, {etat});
   eq(out.map(p => [p.id, p.suivies]), [['a', ['base_pinnacle', 'base_uniques']], ['c', ['base_pinnacle']]]);
 });
+
+test('repartir de zéro pour une seule stratégie laisse les autres intactes',()=>{
+  const etat={a:[[100,null]],b:[[50,80],[90,null]],c:[[10,20]]};
+  const un=c.suiviRepartir(etat,500,'a');
+  eq(un.a,[[500,null]]);eq(un.b,etat.b);eq(un.c,etat.c);           // b et c gardent leur historique, c arrêtée aussi
+  eq(c.suiviRepartir(etat,500,'c').c,etat.c);                      // une stratégie arrêtée ne redémarre pas
+  const tout=c.suiviRepartir(etat,500);                            // sans clé : comportement d'avant
+  eq(tout,{a:[[500,null]],b:[[500,null]]});
+  assert.notEqual(un.b,etat.b);                                    // copie, pas la même liste
+});
