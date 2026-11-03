@@ -20,6 +20,10 @@ jobs:
       group: surveillance-collecte
       cancel-in-progress: false
     steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: scripts/serveur_actif.py
+          sparse-checkout-cone-mode: false
       - name: Redemarrer uniquement si la collecte est arretee
         env:
           GH_TOKEN: ${{ github.token }}
@@ -29,6 +33,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Serveur « en direct » actif (docs/serveur-direct.md) : c'est lui qui collecte, rien à redémarrer.
+          if [ "$(python3 scripts/serveur_actif.py --depot "$DEPOT")" = oui ]; then
+            echo "Serveur en direct actif : aucune relance."
+            exit 0
+          fi
           executions=$(gh run list --repo "$DEPOT" --workflow collecte.yml \
             --limit 30 --json createdAt,status,conclusion)
           actives=$(jq '[.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length' <<<"$executions")

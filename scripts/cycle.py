@@ -863,8 +863,9 @@ def main() -> int:
         conserver_journal_reglement(etat, journal, regler)
         echecs.fusionner(etat, journal.get("echecs", []), maintenant)
         ecrire_json(donnees / "etat.json", etat)
-        from site_web import construire
-        construire(donnees, Path(args.site))
+        if not args.sans_site:          # serveur en direct : le site est construit par site.yml
+            from site_web import construire
+            construire(donnees, Path(args.site))
         print(json.dumps({"mode": "reglement", "resultats": journal.get("resultats"), "theodds": journal.get("theodds"),
                           "etapes": journal.get("etapes", {})}, ensure_ascii=False))
         return 0

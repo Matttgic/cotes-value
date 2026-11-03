@@ -272,6 +272,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: scripts/serveur_actif.py
+          sparse-checkout-cone-mode: false
       - name: Relancer le cycle suivant (5 minutes après le début de celui-ci)
         env:
           GH_TOKEN: ${{ github.token }}
@@ -281,6 +285,10 @@ jobs:
           debut=${DEBUT:-$(date +%s)}
           reste=$(( debut + 300 - $(date +%s) - 30 ))
           if [ "$reste" -gt 0 ]; then sleep "$reste"; fi
+          # Serveur « en direct » actif (docs/serveur-direct.md) : il tient la collecte, la chaîne GitHub s'arrête ici.
+          if [ "$(python3 scripts/serveur_actif.py --depot "$DEPOT")" = oui ]; then
+            echo "Serveur en direct actif : pas de relance."; exit 0
+          fi
           # une seule chaîne : c'est le lancement le plus récent qui relance le suivant.
           # L'API GitHub renvoie parfois une erreur passagère (HTTP 500 le 7/10/2026 à 16:59, chaîne
           # arrêtée 2 h) : jusqu'à 6 essais espacés, en revérifiant à chaque fois qu'aucun lancement plus
