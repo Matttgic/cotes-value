@@ -1,0 +1,19 @@
+[Unit]
+Description=Cotes Value en direct (collecte continue, alertes immédiates)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=cotes
+WorkingDirectory=/opt/cotes-value
+EnvironmentFile=/etc/cotes-value.env
+ExecStart=/opt/cotes-value/.venv/bin/python scripts/serveur_direct.py
+# Relancé après une erreur, et après une mise à jour du code (le programme s'arrête de lui-même).
+Restart=always
+RestartSec=30
+# Le temps d'enregistrer les données et de rendre la main à GitHub à l'arrêt.
+TimeoutStopSec=300
+Nice=5
+
+[Install]
+WantedBy=multi-user.target

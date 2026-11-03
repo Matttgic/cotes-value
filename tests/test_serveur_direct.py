@@ -113,3 +113,46 @@ def test_api_github_cycles_en_cours_et_publication_du_site():
     def refuse(requete, timeout=None):
         raise HTTPError(requete.full_url, 403, "interdit", {}, None)
     assert SD.github_ecrit_encore("j", refuse) is False and SD.declencher_site("j", "main", refuse) is False
+
+
+def test_seuils_sante_a_la_meme_duree_avec_des_cycles_d_une_minute():
+    import importlib
+    import os
+    from cotes import surveillance
+    ancien = os.environ.get("CYCLE_MINUTES")
+    try:
+        os.environ["CYCLE_MINUTES"] = "1"
+        importlib.reload(surveillance)
+        assert (surveillance.SEUIL_CYCLES, surveillance.SEUIL_REFUS) == (10, 15)
+        os.environ["CYCLE_MINUTES"] = "abc"
+        importlib.reload(surveillance)
+        assert (surveillance.SEUIL_CYCLES, surveillance.SEUIL_REFUS) == (2, 3)
+    finally:
+        if ancien is None:
+            os.environ.pop("CYCLE_MINUTES", None)
+        else:
+            os.environ["CYCLE_MINUTES"] = ancien
+        importlib.reload(surveillance)
+    assert (surveillance.SEUIL_CYCLES, surveillance.SEUIL_REFUS) == (2, 3)
+    assert SD.environnement(SD.RACINE / "donnees")["CYCLE_MINUTES"] == "1"
+
+
+def test_installation_service_et_configuration_coherents():
+    import re
+    import yaml
+    racine = SD.RACINE
+    service = (racine / "serveur/cotes-value-direct.service").read_text(encoding="utf-8")
+    assert "ExecStart=/opt/cotes-value/.venv/bin/python scripts/serveur_direct.py" in service
+    assert "EnvironmentFile=/etc/cotes-value.env" in service and "Restart=always" in service
+    modele = (racine / "serveur/env.exemple").read_text(encoding="utf-8")
+    cles = {ligne.split("=", 1)[0] for ligne in modele.splitlines() if re.match(r"^[A-Z_0-9]+=", ligne)}
+    assert all(ligne.split("=", 1)[1] == "" for ligne in modele.splitlines()
+               if re.match(r"^[A-Z_0-9]*(TOKEN|KEY|SECRET|URL)=", ligne))          # aucun secret rempli
+    # toutes les variables que GitHub passe au cycle et aux alertes existent aussi sur le serveur
+    collecte = yaml.safe_load((racine / ".github/workflows/collecte.yml").read_text(encoding="utf-8"))
+    etapes = collecte["jobs"]["cycle"]["steps"]
+    for nom in ("Cycle (collecte, comparaison, paris, site)", "Envoyer les nouvelles alertes Chrome"):
+        env = next(s for s in etapes if s.get("name") == nom)["env"]
+        manquantes = {k for k in env if k not in cles and k not in ("REPRISE_CHEMIN", "MEMOIRE_CHEMIN")}
+        assert not manquantes, manquantes
+    assert "GITHUB_TOKEN" in cles

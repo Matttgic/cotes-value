@@ -195,6 +195,12 @@ Les simulations se recoupent et leurs mises ne s'additionnent pas.
 [Protocole figé](docs/protocole-comparaison.md) ·
 [Notebook exécuté](notebooks/comparaison-strategies.ipynb).
 
+## Serveur en direct (option)
+
+Un petit serveur (environ 6 €/mois) fait tourner la collecte en continu : cycle toutes les minutes environ,
+alertes en 1 à 2 minutes. GitHub reste la roue de secours et reprend tout seul si le serveur s'arrête.
+[Commander, installer, vérifier](docs/serveur-direct.md).
+
 ## Mise en route
 
 Pinnacle cherche sa clé guest dans cet ordre, sans jamais l'écrire dans les diagnostics :

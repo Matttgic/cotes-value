@@ -6,6 +6,8 @@ Ne lève jamais : la surveillance ne doit pas arrêter la collecte.
 """
 from __future__ import annotations
 
+import os
+
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -16,8 +18,18 @@ HISTORIQUE = "sante_historique.json"  # archive sans limite de durée : un incid
 GARDE_INCIDENTS = timedelta(hours=24)
 MAX_HISTORIQUE = 5000
 MAX_TERMINES = 60
-SEUIL_REFUS = 3                     # cycles de suite avant qu'un refus 403/429 devienne un incident (sinon bruit)
-SEUIL_CYCLES = 2                    # cycles de suite avant d'alerter (toutes les ~5 min)
+def _facteur_cadence() -> float:
+    """Seuils pensés pour un cycle toutes les ~5 minutes (GitHub). Le serveur en direct (CYCLE_MINUTES=1) tourne plus
+    vite : les seuils sont multipliés d'autant pour garder les mêmes durées (alerte après ~10 min, refus après ~15)."""
+    try:
+        minutes = float(os.environ.get("CYCLE_MINUTES", "5") or 5)
+    except ValueError:
+        return 1.0
+    return max(1.0, 5.0 / minutes) if minutes > 0 else 1.0
+
+
+SEUIL_REFUS = round(3 * _facteur_cadence())      # cycles de suite avant qu'un refus 403/429 devienne un incident
+SEUIL_CYCLES = round(2 * _facteur_cadence())     # cycles de suite avant d'alerter
 RAPPEL = timedelta(hours=3)         # une panne qui dure est rappelée
 SURVEILLEES_DEGRADE = {"pinnacle", "winamax_direct", "betclic_direct", "unibet_direct", "pmu_direct", "olybet"}
 BENINS = ("budget", "HTTP 403", "HTTP 429")   # lecture partielle prévue, refus avec reprise ou quota : pas une alerte

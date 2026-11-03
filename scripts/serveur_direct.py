@@ -176,7 +176,9 @@ def code_a_change() -> bool:
 def environnement(donnees: Path) -> dict:
     return {**os.environ, "MEMOIRE_CHEMIN": str(RACINE / "memoire"),
             "REPRISE_CHEMIN": str(RACINE / "reprise" / "derniere_lecture.json.gz"),
-            "MODE_COLLECTE": os.environ.get("MODE_COLLECTE", "complet")}
+            "MODE_COLLECTE": os.environ.get("MODE_COLLECTE", "complet"),
+            # seuils de la page Santé à la même durée qu'avec les cycles de 5 minutes de GitHub
+            "CYCLE_MINUTES": os.environ.get("CYCLE_MINUTES", f"{max(1.0, PERIODE_S / 60):g}")}
 
 
 def un_cycle(donnees: Path, env: dict) -> None:
