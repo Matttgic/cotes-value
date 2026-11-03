@@ -51,8 +51,10 @@ def _bornes(x: float) -> str:
 # cote française), toutes tranches. Clés en minuscules, acceptées telles quelles par le service de notifications.
 BASES = {"base_uniques": "Uniques", **{"base_" + ref.lower(): ref for ref in REFERENCES}}
 NOMS_BASES = {k: "Base · paris uniques" if ref == "Uniques" else "Base · " + ref for k, ref in BASES.items()}
-NOMS = {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
-        **{v["cle"]: v["court"] for v in VARIANTES}, "convergence": "Convergence ≥ 2", **_noms_labo(), **NOMS_BASES}
+# Ordre des cases : les sept stratégies de base, la convergence juste après (elle était la 42e et dernière du groupe,
+# introuvable), puis les variantes, les règles et les bases.
+NOMS = {**{cle: nom for cle, _, nom, _, _ in STRATEGIES}, "convergence": "Convergence ≥ 2",
+        **{v["cle"]: v["court"] for v in VARIANTES}, **_noms_labo(), **NOMS_BASES}
 DETAILS = {**{"labo:" + r.id: f"Cotes {_bornes(r.cote_min)}–{_bornes(r.cote_max)} · edge ≥ {100*r.edge_min:g} % · "
                               f"≤ {r.avance_max_h} h avant le match" for r in REGLES},
            **{k: ("Une mise par cote française, toutes références" if ref == "Uniques"
