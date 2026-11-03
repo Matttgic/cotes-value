@@ -78,7 +78,7 @@ les chiffres. Le script exclut les détections et règlements après le lancemen
 ## Suivi et limites
 
 - **Bilan → ChatGPT** : gains nets, ROI, CLV avec son nombre de mesures, courbe,
-  répartitions par bookmaker et cote. **Voir les paris ChatGPT** ouvre ses fiches.
+  répartitions par bookmaker et cote. **Les paris** de sa fiche (Bilan › Stratégies) ouvre ses paris.
 - Les mises restent celles de la simulation existante ; aucune mise réelle n'est
   effectuée. Aucun nouvel appel API n'est nécessaire.
 - Le moteur enregistre une première détection par référence et sélection. Un pari

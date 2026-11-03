@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 const source=readFileSync(new URL('../web/horaires.js',import.meta.url),'utf8');
-const c=vm.createContext({Intl,Date,e:s=>String(s??'').replaceAll('<','&lt;'),iconeSport:()=>'',nomsSports:{football:'Football'}});
+const c=vm.createContext({Intl,Date,e:s=>String(s??'').replaceAll('<','&lt;'),nomsSports:{football:'Football'}});
 vm.runInContext(source,c);
 const at=s=>Date.parse(s);
 

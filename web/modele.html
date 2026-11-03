@@ -97,11 +97,6 @@
       <details class="mode-emploi bilan-avance"><summary>Bilan détaillé : références, CLV et courbe</summary>
       <div class="puces" id="puces-ref"></div>
       <details class="mode-emploi"><summary>Comprendre cette sélection</summary><p class="aide" id="bilan-quoi"></p></details>
-      <button id="voir-chatgpt" hidden>Voir les paris ChatGPT</button>
-      <button id="voir-gemini" hidden>Voir les paris Gemini Argon</button>
-      <button id="voir-jules" hidden>Voir les paris JULES EDGE</button>
-      <button id="voir-jules-v2" hidden>Voir les paris JULES EDGE v2</button>
-      <button id="voir-eden" hidden>Voir les paris Eden</button>
       <details id="bilan-evolution" class="mode-emploi"><summary>Évolution du bilan</summary><div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
       </div><div class="legende" id="legende"></div>
       <svg id="courbe-svg" role="img" aria-label="Gain cumulé réel et attendu au fil des paris réglés"></svg>
@@ -191,52 +186,6 @@
       <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
       </div>
       <details class="mode-emploi"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
-      <details class="carte">
-        <summary><b>Variantes à exposition encadrée · suivis séparés</b></summary>
-        <p class="aide"><b>Claude 1/match · max 10/j</b> : critères Claude, première prise par événement, dix prises maximum par jour.</p>
-        <p class="aide"><b>Convergence ≥3 hors M3</b> : accord d'au moins trois familles parmi Claude, ChatGPT, Gemini et Jules, puis un seul pari par match. Jules v1/v2 donnent un seul vote.</p>
-        <p class="aide"><b>M3 Max 3/match</b> : à partir du 17/10 à 03 h (Paris), un vainqueur, un handicap et un total maximum par événement relié, sans rejeu historique.</p>
-        <p class="aide">Mises fictives uniformes de 10 €. Le rejeu est exploratoire et ne valide pas leur rentabilité.
-        Déplie leur ligne, puis touche « Les paris » pour voir les prises de la période choisie.
-        <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/variantes-prudentes.md" target="_blank" rel="noopener">Règles figées</a>.</p>
-        <div id="prudentes-picks"></div>
-        <details><summary>Reconstitution exploratoire depuis le 14/10 à 14 h</summary>
-          <p class="aide">Ces règles ont été figées le 15/10. Cette reconstitution n'est pas un suivi prospectif et ne modifie aucun bilan officiel.</p>
-          <div id="prudentes-reconstitution"></div>
-        </details>
-      </details>
-      <details class="carte" id="eden-picks">
-        <summary><b>Eden</b> — voir les paris depuis le lancement</summary>
-        <p class="aide">Pinnacle et Polymarket · cotes 1,30–2,00 · edge 2–12 % · 30 min à 24 h · une mise par bookmaker et par match · 10 € fictifs.
-        Suivi depuis le 19/10 à 20 h (Paris). Le rejeu est positif sur la validation et le test ; cela ne promet pas un gain futur.
-        <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-eden.md" target="_blank" rel="noopener">Règles et limites</a>.</p>
-        <div id="eden-picks-list"></div>
-      </details>
-      <details class="carte" id="gemini-picks">
-        <summary><b>Gemini Argon v1</b> — voir les paris depuis le lancement <small>(règle v2 depuis le 18/10/2026 : un pari par bookmaker et par match)</small></summary>
-        <p class="aide">Pinnacle (1,30–2,15), Betfair & Polymarket (1,30–2,60) · edge 2,5–12 % · 30 min à 24 h · 1 pari/match · max 8/jour · mise fictive 10 €.</p>
-        <div id="gemini-picks-list"></div>
-      </details>
-      <details class="carte" id="jules-picks">
-        <summary><b>JULES EDGE v1</b> — voir les paris depuis le lancement</summary>
-        <p class="aide">Pinnacle · cotes 1,30–2,50 · edge 3–12 % · 15 min à 12 h · 1 pari/match · max 6/jour · 10 € fictifs.
-        Suivi depuis le 14/10 à 23 h 04 (Paris). Rejeu historique séparé, rentabilité future non démontrée.
-        <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-jules.md" target="_blank" rel="noopener">Règles et audit reproductible</a>.</p>
-        <div id="jules-picks-list"></div>
-      </details>
-      <details class="carte" id="jules-v2-picks">
-        <summary><b>JULES EDGE v2 reconstruite</b> — voir les paris depuis le lancement</summary>
-        <p class="aide">Pinnacle, Betfair et Polymarket · cotes 1,30–2,80 · edge 2,5–12 % · 15 min à 18 h · max 8/jour · 10 € fictifs.
-        Une mise par événement identifiable, sources reliées sans consulter les résultats. Suivi à partir du 15/10 à 00 h 30 (Paris).
-        <a href="https://github.com/Matttgic/cotes-value/blob/ccr-148b8ccc-phitmr/docs/strategie-jules-v2.md" target="_blank" rel="noopener">Audit et limites</a>.</p>
-        <div id="jules-v2-picks-list"></div>
-      </details>
-      <details class="carte" id="m3-picks">
-        <summary><b>M3 · MultiSport Value</b> — voir les paris depuis le lancement</summary>
-        <p class="aide">Basket, baseball, handball · cotes 1,30–3,00 · edge 2–12 % · mise fictive 10 €.
-        Optimisée sur le passé : aucune rentabilité future démontrée. Les sélections d'un même match peuvent être corrélées.</p>
-        <div id="m3-picks-list"></div>
-      </details>
       <div class="carte" id="laboratoire"></div>
     </div>
   </section>
@@ -538,11 +487,6 @@ function rendreBilan() {
   document.getElementById("puces-ref").innerHTML = refs.map(r =>
     `<button data-r="${r}" class="${r===refBilan?"actif":""}">${NOMS_REF[r] || r}</button>`).join("");
   document.getElementById("bilan-quoi").textContent = QUOI[refBilan] || `Paris repérés par ${refBilan}.`;
-  document.getElementById("voir-chatgpt").hidden = refBilan !== "ChatGPT";
-  document.getElementById("voir-gemini").hidden = refBilan !== "Gemini Argon";
-  document.getElementById("voir-jules").hidden = refBilan !== "JULES EDGE";
-  document.getElementById("voir-jules-v2").hidden = refBilan !== "JULES EDGE v2";
-  document.getElementById("voir-eden").hidden = refBilan !== "Eden";
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
     : `<tr><td>${titre}</td><td>${b.regles}<small>${b.evenements_regles ?? "—"} matchs</small>${b.regles ? `<small>${b.gagnes} gagné${b.gagnes > 1 ? "s" : ""} · <b>${Math.round(100 * b.gagnes / b.regles)} %</b></small>` : ""}${b.en_cours ? `<small>${b.en_cours} en cours</small>` : ""}</td>
@@ -1111,56 +1055,6 @@ document.getElementById("bu-reference").onclick = ev => {
   voirReference(a.dataset.ref);
 };
 rendreBilanUniques();
-document.getElementById("voir-chatgpt").onclick = () => {
-  strategieChoisie = null;
-  document.getElementById("f-q").value = "";
-  for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
-  hashParis = null;
-  document.getElementById("f-sim").value = "ChatGPT";
-  limite = 50;
-  rendreParis();
-  ouvrir("paris");
-};
-document.getElementById("voir-gemini").onclick = () => {
-  strategieChoisie = null;
-  document.getElementById("f-q").value = "";
-  for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
-  hashParis = null;
-  document.getElementById("f-sim").value = "Gemini Argon";
-  limite = 50;
-  rendreParis();
-  ouvrir("paris");
-};
-document.getElementById("voir-jules").onclick = () => {
-  strategieChoisie = null;
-  document.getElementById("f-q").value = "";
-  for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
-  hashParis = null;
-  document.getElementById("f-sim").value = "JULES EDGE";
-  limite = 50;
-  rendreParis();
-  ouvrir("paris");
-};
-document.getElementById("voir-eden").onclick = () => {
-  strategieChoisie = null;
-  document.getElementById("f-q").value = "";
-  for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
-  hashParis = null;
-  document.getElementById("f-sim").value = "Eden";
-  limite = 50;
-  rendreParis();
-  ouvrir("paris");
-};
-document.getElementById("voir-jules-v2").onclick = () => {
-  strategieChoisie = null;
-  document.getElementById("f-q").value = "";
-  for (const id of Object.keys(FILTRES)) document.getElementById("f-" + id).value = "";
-  hashParis = null;
-  document.getElementById("f-sim").value = "JULES EDGE v2";
-  limite = 50;
-  rendreParis();
-  ouvrir("paris");
-};
 
 // --- Segments : les groupes de paris qui marchent, avec ce qui relève de la chance
 let triSeg = "roi";
@@ -1571,57 +1465,6 @@ function rendreStrategies() {
   contexte.textContent=periodeStrategies==="futur" ? "Suivi prospectif" : "Rejeu historique";
   contexte.classList.toggle("historique",periodeStrategies!=="futur");
   for (const b of document.querySelectorAll("#strategies-periodes button")) b.onclick = () => { periodeStrategies=b.dataset.p; rendreStrategies(); };
-  const edenPicks = L.eden_paris || [];
-  document.getElementById("eden-picks-list").innerHTML = edenPicks.length
-    ? edenPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
-       <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
-       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
-       </article>`).join("")
-    : '<p class="aide">Aucune nouvelle sélection Eden depuis le 19/10 à 20 h (Paris).</p>';
-  const gemPicks = L.gemini_paris || [];
-  const suivis = L.suivis_prudents || {};
-  const navPrudent = L.navigation?.paris || {};
-  document.getElementById("prudentes-picks").innerHTML = Object.values(suivis.officiel || {}).map(v => {
-    const picks = (v.ids || []).map(id => navPrudent[id]).filter(Boolean).slice(-20).reverse();
-    return `<details><summary>${e(v.nom)} · ${v.stats.paris} prises · ${v.stats.regles} réglées</summary>` +
-      (picks.length ? picks.map(p => `<article class="carte"><b>${e(p.domicile)} – ${e(p.exterieur)}</b>
-       <div>${e(p.pari)} · ${e(p.bookmaker)} · ${cote(p.cote)}</div>${boutonBookmaker(p)}${horairePari(p)}${collectePari(p)}<small>Prise ${quand(p.detecte)} · ${e(p.statut)}</small></article>`).join("")
-       : '<p class="aide">Aucune prise depuis le lancement de cette variante.</p>') + '</details>';
-  }).join("");
-  document.getElementById("prudentes-reconstitution").innerHTML = Object.values(suivis.reconstitution_exploratoire || {}).map(v =>
-    `<p><b>${e(v.nom)}</b> : ${v.stats.paris} prises, ${v.stats.regles} réglées, ${eur(v.stats.gain)} · ROI ${pct(v.stats.roi == null ? null : v.stats.roi/100)}</p>`).join("");
-  document.getElementById("gemini-picks-list").innerHTML = gemPicks.length
-    ? gemPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
-       <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
-       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
-       </article>`).join("")
-    : '<p class="aide">Aucune nouvelle sélection Gemini Argon depuis son démarrage prospectif.</p>';
-  const julesPicks = L.jules_paris || [];
-  document.getElementById("jules-picks-list").innerHTML = julesPicks.length
-    ? julesPicks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
-       <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
-       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
-       </article>`).join("")
-    : '<p class="aide">Aucune nouvelle sélection JULES EDGE depuis sa publication du 14/10 à 23 h 04.</p>';
-  const v2Picks = L.jules_v2_paris || [];
-  document.getElementById("jules-v2-picks-list").innerHTML = v2Picks.length
-    ? v2Picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
-       <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)} (${e(p.reference)})</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
-       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
-       </article>`).join("")
-    : '<p class="aide">Aucune nouvelle sélection JULES EDGE v2 depuis le lancement du 15/10 à 00 h 30.</p>';
-  const picks = L.m3_paris || [];
-  document.getElementById("m3-picks-list").innerHTML = picks.length
-    ? picks.map(p => `<article style="padding:8px 0;border-top:1px solid var(--ligne)">
-       <b>${e(p.domicile)} – ${e(p.exterieur)}</b> <small>${e(p.sport)} · ${e(p.bookmaker)}</small>
-       <div>${e(p.pari)} · cote ${cote(p.cote)} · edge ${pct(p.ecart)}</div>${boutonBookmaker(p)}
-       ${collectePari(p)}<small>${horairePari(p)} · ${e(p.statut)}${p.gain==null ? "" : " · "+eur(p.gain)}</small>
-       </article>`).join("")
-    : '<p class="aide">Aucune nouvelle sélection M3 depuis son démarrage prospectif du 15 octobre.</p>';
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
   document.getElementById("strategies-total").textContent = `${rows.length} stratégies · ${reglees.length} avec des règlements · résultats non cumulables.`;
   const descriptions = {
@@ -1746,15 +1589,7 @@ function rendreLaboratoire() {
       ${[["Construction",r.construction],["Validation",r.validation],["Test final",r.test]].map(([nom,s]) => `<tr><td>${nom}</td><td>${intervalle(s)}</td><td>${s.regles ? eur(s.gain_sans_meilleur) : "—"}</td><td>${pp(s.roi_cote_moins_1pct)}</td><td>${s.regles ? cote(s.drawdown)+" €" : "—"}</td></tr>`).join("")}</table></div>
       <p class="aide">Bootstrap par match, conditionnel à chaque règle ; aucune correction des 36 essais ni des corrélations entre matchs.
       Avec très peu de paris ou des résultats identiques, l’intervalle peut être trompeusement étroit. Il ne prédit pas la rentabilité future.
-      Les cotes simulées ne prouvent pas une prise réelle disponible.</p></details>
-      <details style="margin-top:8px"><summary>Paris sélectionnés depuis le lancement (${f.paris})</summary>
-      <p class="aide">Les 30 dernières sélections de cette règle. Statistiques ci-dessus sur toutes ses sélections.</p>
-      ${!f.paris ? '<p class="aide">Aucune sélection depuis le début du suivi.</p>' : f.ids_recents.slice().reverse().map(id => {
-        const p = L.paris_recents.find(p => p.id === id);
-        if (!p) return "";
-        return `<div class="carte"><b>${e(p.domicile)} — ${e(p.exterieur)}</b><div>${e(p.pari)} · ${e(p.bookmaker)} ·${cote(p.cote)}</div>${boutonBookmaker(p)}
-        ${horairePari(p)}${collectePari(p)}<small>Détecté ${e(quand(p.detecte))} · edge ${pct(p.ecart)}<br>${e(STATUTS[p.statut] || p.statut)}${p.gain == null ? "" : " · " + eur(p.gain)}</small></div>`;
-      }).join("")}</details>`;
+      Les cotes simulées ne prouvent pas une prise réelle disponible.</p></details>`;
   }
   document.getElementById("labo-regle").onchange = detail;
   detail();

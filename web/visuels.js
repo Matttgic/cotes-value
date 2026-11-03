@@ -1,18 +1,4 @@
-// Petits SVG locaux : uniquement les valeurs observées, jamais une projection.
-function iconeSport(sport) {
-  const chemins={
-    football:'<circle cx="12" cy="12" r="9"/><path d="m12 7 5 4-2 6H9l-2-6 5-4Zm0-4v4M3 10l4 1m10 0 4-1M7 20l2-3m6 0 2 3"/>',
-    basket:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M6 5c8 5 8 9 12 14M18 5C10 10 10 14 6 19"/>',
-    tennis:'<ellipse cx="14" cy="9" rx="6" ry="8" transform="rotate(40 14 9)"/><path d="m9 15-6 7m8-15 7 6m-8-2 7-7"/>',
-    hockey:'<path d="m5 3 9 16h6v3h-8L3 5M15 6l-5 8"/><ellipse cx="19" cy="16" rx="3" ry="1.5"/>',
-    volley:'<circle cx="12" cy="12" r="9"/><path d="m12 12 1-9m-1 9 8 4m-8-4-7 6M13 6l7 7M7 5l-1 9m4 6 8-3"/>',
-    handball:'<circle cx="12" cy="12" r="9"/><path d="m12 7 5 4-2 6H9l-2-6 5-4ZM12 3v4M3 10l4 1m10 0 4-1"/>',
-    rugby:'<ellipse cx="12" cy="12" rx="7" ry="11" transform="rotate(40 12 12)"/><path d="m8 16 8-8M9 11l4 4m-1-7 4 4"/>',
-    football_americain:'<ellipse cx="12" cy="12" rx="7" ry="11" transform="rotate(40 12 12)"/><path d="m8 16 8-8M9 11l4 4m-1-7 4 4"/>',
-    baseball:'<circle cx="12" cy="12" r="9"/><path d="M6 5c7 3 7 11 0 14M18 5c-7 3-7 11 0 14M7 8l3-1m-3 5h3m-3 4 3 1m7-9-3-1m3 5h-3m3 4-3 1"/>'
-  };
-  return `<svg class="sport-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${chemins[sport] || '<circle cx="12" cy="12" r="8"/><path d="M8 12h8m-4-4v8"/>'}</svg>`;
-}
+// Petits visuels locaux : uniquement les valeurs observées, jamais une projection.
 const nomsSports={football:'Football',basket:'Basket',tennis:'Tennis',hockey:'Hockey',volley:'Volley',handball:'Handball',rugby:'Rugby',football_americain:'Foot US',baseball:'Baseball'};
 // Pastilles « meilleur » d'une stratégie : ROI (étoile), gain net (euro), réussite (trèfle), CLV (cible).
 // Une seule gagnante par critère, parmi les stratégies d'au moins 50 paris réglés sur la période affichée.
@@ -67,10 +53,6 @@ function pastillesMedailles(cles) {
     return `<span class="medaille" role="img" aria-label="${titre}" title="${titre}"><svg viewBox="0 0 16 16" aria-hidden="true">${m.dessin}</svg></span>`;
   });
   return pastilles.length ? `<span class="medailles">${pastilles.join('')}</span>` : '';
-}
-function monogrammeBookmaker(nom) {
-  const codes={Winamax:'w',Betclic:'b',Unibet:'u',PMU:'p',OlyBet:'o'};
-  return `<span class="book-monogramme book-${codes[nom] || 'autre'}" aria-hidden="true">${e(String(nom || '?').slice(0,1))}</span>`;
 }
 // Ligne témoin des courbes : le gain attendu si les cotes justes sont exactes (mise × (cote / cote juste − 1), cumulé),
 // et autour, la marge du hasard (80 % des cas : ± 1,28 écart type). Points : [instant (s), réel, attendu, écart type].
@@ -169,12 +151,11 @@ function miseMoyenne(s) {
 }
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
-  const code=r.nom.startsWith('Convergence')?'CV':r.nom.startsWith('Claude')?'CL':r.nom.startsWith('Eden')?'ED':r.nom.startsWith('Gemini')?'GA':r.nom.startsWith('JULES')?'JL':r.nom.startsWith('M3')?'M3':r.nom.startsWith('ChatGPT')?'GP':'RF';
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
     <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}</span>${pastillesMedailles(r.medailles)}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
-    <div class="strategie-entete"><div class="strategie-identite"><span class="strategie-avatar" aria-hidden="true">${code}</span><h3>${e(r.nom)}</h3></div>
+    <div class="strategie-entete"><div class="strategie-identite"><h3>${e(r.nom)}</h3></div>
     <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button></div>
     <p class="strategie-regle">${e(r.detail)}</p>
     <div class="strategie-apercu"><div><span class="libelle-gain">Gain net simulé</span><strong class="${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</strong></div>${s.note?`<div><span class="libelle-gain">Note</span><strong class="${s.note.total>=70?'pos':s.note.total<40?'neg':''}">${s.note.total}/100</strong><small>${s.note.provisoire?'provisoire · ':''}${['R','V','G','S'].map((l,i)=>l+' '+String([s.note.rentabilite,s.note.valeur,s.note.regularite,s.note.solidite][i]).replace('.',',')).join(' · ')}</small>${typeof evolutionNote==='function'?evolutionNote(r.id,s.note.total):''}</div>`:''}</div>

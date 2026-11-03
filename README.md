@@ -73,7 +73,7 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
 7. **Site** (`scripts/site_web.py`, gabarit `web/modele.html`) publié sur GitHub Pages, en quatre onglets : Paris, Bilan, Notifications, Santé.
-   L'habillage suit la direction artistique de `maquettes/` (polices OFL en WOFF2 dans `web/polices/`). La vitrine
+   Polices OFL en WOFF2 dans `web/polices/`. La vitrine
    publique (`web/vitrine.html`, deux chiffres Kelly ¼ recalculés à chaque publication) est publiée à part, en
    `vitrine.html`, sans lien depuis l'interface ni bouton de connexion : l'interface reste la page d'accueil.
    La page Santé garde un journal des incidents des dernières 24 heures (`sante_incidents.json`, écrit à chaque cycle par `cotes/surveillance.py`) : pannes, lectures dégradées et refus 403/429 qui durent au moins 3 cycles, avec début, durée et nombre de cycles. Le dépassement de budget n'en fait pas partie.
@@ -84,7 +84,7 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
 **Bilan → ChatGPT** suit une stratégie expérimentale indépendante à compter du
 14/10/2026 à 05:15 (Paris) : Pinnacle sans marge, cotes 1,50–3,00, edge 3–12 %,
 première détection entre 15 min et 6 h du match, une mise fictive de 10 € par match,
-cinq nouvelles mises maximum par jour. Le bouton « Voir les paris ChatGPT » donne
+cinq nouvelles mises maximum par jour. « Les paris » de sa fiche (Bilan › Stratégies) donne
 ses sélections. Aucun appel API supplémentaire.
 
 [Règles, audit historique défavorable et limites](docs/strategie-chatgpt.md).

@@ -163,7 +163,8 @@ def test_site_strategies_et_comparateurs_meme_date(tmp_path, monkeypatch):
     # M3 démarre le 15/10 : aucun pari du 14/10 ne doit être rétroactivement inclus.
     m3 = data["laboratoire"]["comparateurs_futur"]["M3 (rejeu)"]
     assert m3["paris"] == m3["regles"] == 0
-    assert data["laboratoire"]["m3_paris"] == []
+    assert "m3_paris" not in data["laboratoire"] and "paris_recents" not in data["laboratoire"]
+    assert all("ids_recents" not in r for r in data["laboratoire"]["futur"])
 
 
 def test_reference_lue_apres_la_detection_francaise_reste_acceptee_dans_la_fenetre():

@@ -14,7 +14,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bila
                               mise_kelly, premiers_par_selection, profil_horaire, REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
-from cotes.strategies_prudentes import VARIANTES, selections_prudentes, suivis_prudents  # noqa: E402
+from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
 from cotes.reglement import GAIN  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
@@ -89,19 +89,6 @@ CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", 
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
                 "ligue", "regle_le", "reporte_au", "id", "joueur", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le", "decide_le", "registre_version",
                 "ecart_polymarket", "ecart_smarkets", "lien", "lien_repli")
-
-
-CHAMPS_PRISE = ("id", "domicile", "exterieur", "sport", "bookmaker", "pari", "cote", "reference", "ecart", "detecte",
-                "debut", "statut", "gain", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le",
-                "alerte_demande_le", "lien", "lien_repli")
-
-
-def prise_strategie(p: dict) -> dict:
-    """Une prise des listes de stratégies (Eden, Gemini, JULES, M3) ; lien du match tant qu'il est en cours."""
-    f = {k: p.get(k) for k in CHAMPS_PRISE}
-    if p.get("statut") != "en_cours":
-        f["lien"] = f["lien_repli"] = None
-    return f
 
 
 def fiche(p: dict) -> dict:
@@ -531,7 +518,7 @@ def _construire(donnees: Path, sortie: Path) -> Path:
                if (g.get("maj") or "") >= recent]
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
-    liste, fiches_total, valeurs = selection_paris(paris)
+    liste, _, valeurs = selection_paris(paris)
     def _laboratoire(paris):
         """Laboratoire des stratégies pour un jeu de paris (mises fixes ou mises Kelly)."""
         laboratoire = _lire(Path(__file__).resolve().parent.parent / "docs/comparaison-strategies.json", {})
@@ -583,20 +570,9 @@ def _construire(donnees: Path, sortie: Path) -> Path:
                 "Eden (rejeu)": eden_ids,
                 "M3 (rejeu)": m3_ids,
             }
-            laboratoire["m3_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in m3_ids),
-                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-            laboratoire["gemini_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in gemini_ids),
-                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-            laboratoire["jules_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in jules_ids),
-                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-            laboratoire["jules_v2_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in jules_v2_ids),
-                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
-            laboratoire["eden_paris"] = [prise_strategie(p) for p in sorted((p for p in paris if id(p) in eden_ids),
-                                key=lambda p: p.get("detecte") or "", reverse=True)[:60]]
             officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
             prudentes = selections_prudentes(paris, bases={cle: officiels[nom] for cle, _, _, nom, _ in STRATEGIES})
             officiels.update({v["nom"]: prudentes[v["cle"]] for v in VARIANTES})
-            laboratoire["suivis_prudents"] = suivis_prudents(paris, maintenant)
             # Les variantes lancées après le 14/10 comptent leurs jours depuis leur propre lancement.
             lancements = {v["nom"]: max(v["debut"], DEBUT_SUIVI, key=heure) for v in VARIANTES}
             laboratoire["comparateurs_futur"] = {
@@ -626,10 +602,9 @@ def _construire(donnees: Path, sortie: Path) -> Path:
                 laboratoire["mises"]["selections"][nom] = comparer_mises(
                     [p for p in paris if id(p) in ids and heure(p.get("detecte")) and debut_nom <= heure(p["detecte"])])
             enrichir_evenements(paris, laboratoire, maintenant)
-            ids_labo = {i for r in laboratoire["futur"] for i in r["ids_recents"]}
-            laboratoire["paris_recents"] = [{k: p.get(k) for k in (
-                "id", "domicile", "exterieur", "bookmaker", "pari", "cote", "ecart",
-                "detecte", "debut", "statut", "gain")} for p in paris if p["id"] in ids_labo]
+            # Les 30 dernières prises de chaque règle ne sont pas publiées : « Les paris » de la règle les montre toutes.
+            for r in laboratoire["futur"]:
+                r.pop("ids_recents", None)
         return laboratoire
 
     laboratoire = _laboratoire(paris)
@@ -674,7 +649,7 @@ def _construire(donnees: Path, sortie: Path) -> Path:
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
-            "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "fiches_total": fiches_total, "valeurs_filtres": valeurs, "etat": etat, "incidents": _lire(donnees / "sante_incidents.json", {}), "bilan": bilan(paris),
+            "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "valeurs_filtres": valeurs, "etat": etat, "incidents": _lire(donnees / "sante_incidents.json", {}), "bilan": bilan(paris),
             "kelly": {"bilan": bilan(paris_k), "courbes": courbes(paris_k), "segments": segments(paris_k),
                       "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"}
                                          for k, b in bilan_tranches(paris_k).items()},
@@ -730,7 +705,6 @@ def _construire(donnees: Path, sortie: Path) -> Path:
     for police in (web / "polices").glob("*.woff2"):
         (sortie / "polices" / police.name).write_bytes(police.read_bytes())
     (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
-    (sortie / "verification-responsive.html").write_text((web / "verification-responsive.html").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
     (sortie / "ordres.json").write_text(ordres_json, encoding="utf-8")

@@ -116,13 +116,14 @@ def test_bilan_courbe_fiches_et_navigation(tmp_path, monkeypatch):
     assert all(p["eden"] for p in site_web.selection_paris(rows)[0])
     (tmp_path / "paris.json").write_text(json.dumps(rows))
     html = site_web.construire(tmp_path, tmp_path / "site").read_text()
-    assert 'id="eden-picks"' in html and 'id="voir-eden"' in html
+    assert 'id="eden-picks"' not in html and 'id="voir-eden"' not in html    # listes en double retirées
     data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
     assert data["eden"]["debut"] == EDEN["debut"]
     assert data["bilan"]["C|Eden"]["gains"] == -2
     assert data["laboratoire"]["comparateurs_futur"]["Eden (rejeu)"]["regles"] == 2
     assert data["laboratoire"]["navigation"]["selections"]["Eden (rejeu)"]["futur"] == ["alpha", "bravo"]
-    assert data["laboratoire"]["eden_paris"]
+    assert "eden_paris" not in data["laboratoire"]          # « Les paris » de la fiche Eden les montre
+    assert data["laboratoire"]["courbes"]["Eden (rejeu)"]["futur"][-1][1] == -2
     assert rows == avant
 
 
