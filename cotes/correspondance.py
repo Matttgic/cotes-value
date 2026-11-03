@@ -71,13 +71,16 @@ def _normaliser(nom: str) -> tuple[tuple[str, ...], bool, frozenset]:
     s = re.sub(r"\bb\.\s?c\.?", "bc", s)                 # « AEK B.C. » (club de basket) -> bc, pas l'équipe B
     s = re.sub(r"\bv\.\s?b\.?(?=\s|$)", "vb", s)       # « Toulouse V.B. » (volley-ball) -> vb, pas l'équipe B
     s = re.sub(r"\((\d{2})\)", r" u\1", s)                 # « Italie(21) » -> italie u21
+    # « Woollaston B. » (snooker, tennis) : initiale du prénom, pas l'équipe B ; seulement un nom court, avec le point
+    if re.fullmatch(r"[a-z' -]+ b\.", s) and len(s.split()) <= 2:
+        s = s[:-2] + "bini"
     fem = bool(FEMININ.search(s))
     s = FEMININ.sub(" ", s)
     s = s.replace("&", " and ").replace("'", " ")
     s = re.sub(r"[^a-z0-9 ]+", " ", s)
     mots = s.split()
     jeunes = frozenset(m for m in mots if JEUNES.match(m))
-    mots = [m for m in mots if not JEUNES.match(m)]
+    mots = ["b" if m == "bini" else m for m in mots if not JEUNES.match(m)]
     s = " ".join(mots)
     sans_vides = " ".join(m for m in mots if m not in VIDES)
     s = PAYS.get(s) or PAYS.get(sans_vides) or s        # « italie un » (Betclic) -> italy
@@ -107,6 +110,19 @@ def ressemblance(a: str | None, b: str | None) -> float:
     return penalite * _ressemblance_mots(ma, mb)
 
 
+def _abrege(m: str, x: str) -> bool:
+    """`m` est une abréviation de `x` : même première lettre, lettres dans l'ordre, au moins deux lettres de moins."""
+    if len(m) < 2 or m[0] != x[0] or len(x) < len(m) + 2:
+        return False
+    it = iter(x)
+    return all(c in it for c in m)
+
+
+def _abrege_tous(petit: set, grand: set) -> bool:
+    """Chaque mot de `petit` est dans `grand` ou en est l'abréviation."""
+    return all(m in grand or any(_abrege(m, x) for x in grand) for m in petit)
+
+
 def _ressemblance_mots(ma: tuple[str, ...], mb: tuple[str, ...]) -> float:
     if ma == mb:
         return 1.0
@@ -126,6 +142,9 @@ def _ressemblance_mots(ma: tuple[str, ...], mb: tuple[str, ...]) -> float:
                    for m in petit)
     if _couvert(sa, sb) or _couvert(sb, sa):
         return 0.88
+    # abréviations (« Nilufer Bld. » / « Nilufer Belediyespor ») : au moins un mot identique, les autres abrégés
+    if (sa & sb) and any(len(m) >= 4 for m in sa & sb) and (_abrege_tous(sa, sb) or _abrege_tous(sb, sa)):
+        return 0.86
     jac = len(sa & sb) / len(sa | sb)
     rat = difflib.SequenceMatcher(None, " ".join(ma), " ".join(mb)).ratio()
     return max(jac, rat)

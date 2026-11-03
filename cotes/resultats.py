@@ -46,6 +46,11 @@ SOURCES_FIABLES = {"espn", "orbitxch", "draftkings", "apisports", "nhl_officiel"
 TENNIS_EXCLUES = {"orbitxch", "pmu"}
 TENNIS_FIABLES = {"espn", "livescore"}                         # seule source unique acceptée (Betfair : score figé)
 DELAI_SOURCE_UNIQUE_H = 6
+# Forfait annoncé (match annulé, tous les paris remboursés) : Flashscore seul suffit 2 h après l'heure prévue. Le match peut
+# avoir été avancé ou reculé d'un jour ou deux (forfait de dernière minute, ordre de jeu modifié) : jusqu'à 36 h d'écart.
+DELAI_ANNULE_H = 2
+ECART_ANNULE_H = 36
+RESSEMBLANCE_ANNULE = 0.85
 # n'importe quel validateur seul (PulseScore ne liste que les matchs marqués terminés), 24 h après le début :
 # un score figé en cours de match aurait été corrigé depuis. Vérifié sur les résultats cherchés à la main
 # des 8-10/10 : PMU 28/28, Unibet UK 20/20, API-Sports 24/24 justes ; jamais au tennis (scores figés de
@@ -291,12 +296,14 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
         # heure annoncée différente d'une source à l'autre (LiveScore 1 h plus tard que le bookmaker) : jusqu'à
         # 2 h d'écart si les noms sont presque identiques (pas au baseball : double confrontation le même jour)
         tennis_large = tennis_large or (p["sport"] not in ("tennis", "baseball") and ecart <= ECART_LARGE_H * 3600)
-        if ecart is None or (ecart > ECART_HEURE_MIN * 60 and not tennis_large):
+        annule_large = bool(r.get("annule")) and ecart <= ECART_ANNULE_H * 3600
+        if ecart is None or (ecart > ECART_HEURE_MIN * 60 and not (tennis_large or annule_large)):
             continue
         direct = min(proche(dom, r["domicile"]), proche(ext, r["exterieur"]))
         inverse = min(proche(dom, r["exterieur"]), proche(ext, r["domicile"]))
         score = max(direct, inverse)
-        if score < (RESSEMBLANCE_TENNIS_LOIN if ecart > ECART_HEURE_MIN * 60 else RESSEMBLANCE_MIN):
+        loin = RESSEMBLANCE_ANNULE if r.get("annule") else RESSEMBLANCE_TENNIS_LOIN
+        if score < (loin if ecart > ECART_HEURE_MIN * 60 else RESSEMBLANCE_MIN):
             # Secours : une équipe au nom quasi identique et le même coup d'envoi (± 15 min) suffisent, l'autre
             # s'écrit parfois très différemment (« EC-KAC » / « Klagenfurt »). Une équipe ne joue pas deux
             # matchs en même temps ; si plusieurs matchs d'une source collent, aucun n'est retenu (ambigu).
@@ -364,15 +371,15 @@ def _retenus(p: dict, enregistrements: list[dict]) -> list[dict]:
                     and all(_score_valide(q) for q in r["periodes"])
                     and _periodes_coherentes("basket", r)):
                 bas_corrobores.add(sc)
-    trouves = [r for r in identifies if r.get("abandon") or plausible(p["sport"], r["score"])
+    trouves = [r for r in identifies if r.get("abandon") or r.get("annule") or plausible(p["sport"], r["score"])
                or r["score"] in bas_corrobores]
     fiables = [r["score"] for r in trouves if r["source"] in SOURCES_FIABLES]
     nb = Counter(r["score"] for r in trouves)          # un score donné par deux sources n'est pas un accident
-    trouves = [r for r in trouves if nb[r["score"]] > 1 or not any(
+    trouves = [r for r in trouves if nb[r["score"]] > 1 or r.get("annule") or not any(
         r["score"] != f and r["score"][0] <= f[0] and r["score"][1] <= f[1] for f in fiables)]
     if p["sport"] == "tennis":
         trouves = [r for r in trouves if r["source"] not in TENNIS_EXCLUES
-                   and (r.get("abandon") or (max(r["score"]) in (2, 3) and min(r["score"]) < max(r["score"])))]
+                   and (r.get("abandon") or r.get("annule") or (max(r["score"]) in (2, 3) and min(r["score"]) < max(r["score"])))]
     return trouves
 
 
@@ -467,10 +474,12 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
         seule_fiable = trouves[0]["source"] in fiables and depuis >= timedelta(hours=DELAI_SOURCE_UNIQUE_H)
         # Flashscore ne garde que les matchs finis dans le temps réglementaire : au hockey, son score est final
         sport_ok = p["sport"] not in SEULES_SPORTS_EXCLUS or (p["sport"] == "hockey" and trouves[0]["source"] == "flashscore")
+        # forfait annoncé (aucun jeu) : pas de score à fiabiliser, un délai court suffit
+        seule_annulee = bool(trouves[0].get("annule")) and depuis >= timedelta(hours=DELAI_ANNULE_H)
         seule_ancienne = sport_ok \
             and trouves[0]["source"] not in SEULES_SOURCES_EXCLUES \
             and depuis >= timedelta(hours=DELAI_SOURCE_QUELCONQUE_H) and plausible(p["sport"], trouves[0]["score"])
-        if not (seule_fiable or seule_ancienne):
+        if not (seule_fiable or seule_ancienne or seule_annulee):
             return None
     score = trouves[0]["score"]
     avec_periodes = sorted((r for r in trouves if _periodes_coherentes(p["sport"], r)),
@@ -482,6 +491,8 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
     corners = [r["corners"] for r in trouves if r["corners"] is not None and r["corners"] != (0, 0)]
     base = avec_periodes[0] if avec_periodes else None
     return {"sport": p["sport"], "score": score, "final": True,
+            **({"annule": True} if any(r.get("annule") for r in trouves) else {}),
+            **({"abandon": True} if any(r.get("abandon") for r in trouves) else {}),
             "periodes": base["periodes"] if base else [], "libelles": base["libelles"] if base else [],
             "corners": corners[0] if len(corners) >= SOURCES_MIN and len(set(corners)) == 1 else None,
             "sources": sorted(r["source"] for r in trouves),
