@@ -6,6 +6,7 @@ Un petit serveur fait tourner Cotes Value en continu, à la place de la chaîne 
 |---|---|---|
 | Fréquence des cycles | toutes les 5 min, parfois retardés ou sautés | dès qu'un cycle finit (environ 1 à 1,5 min) |
 | Délai cote → alerte | jusqu'à 5 min + 1 min 40 | environ 1 à 2 min |
+| Alertes | Pushover et Chrome | Pushover seulement (voir Limites) |
 | Clone des données | à chaque cycle | une fois, puis mises à jour |
 | Site | à chaque cycle | toutes les 5 min (workflow site.yml) |
 
@@ -57,6 +58,8 @@ nano /etc/cotes-value.env
 - Les autres lignes : les mêmes valeurs que les secrets GitHub du même nom. GitHub ne permet pas de relire un
   secret : reprends-les à la source (tableau de bord Pushover, comptes des API).
 - `PUSHOVER_BANKROLL` : ta bankroll, pour la ligne MacroDroid (docs/pari-rapide-android.md).
+- `PUSHOVER_STRATEGIES` : laisse vide. Le serveur suit les cases du bloc « Alertes Pushover » du site (page
+  Notifications) ; enregistre-les là une fois avec ton code personnel.
 
 Enregistrer : Ctrl+O, Entrée, Ctrl+X.
 
@@ -98,6 +101,9 @@ GitHub reprend à sa prochaine surveillance (30 minutes au plus). Pour reprendre
 ## Limites
 
 - Le serveur ne règle pas les paris plus souvent : le règlement reste horaire.
+- Les notifications Chrome ne partent pas du serveur : le service qui les envoie n'accepte que GitHub Actions.
+  Les alertes arrivent par Pushover (stratégies du bloc « Alertes Pushover »). Elles reviennent dès que
+  GitHub reprend la main.
 - Lancer « Collecte et comparaison » à la main pendant que le serveur tourne ferait écrire deux moteurs en même
   temps. À éviter ; la surveillance et le règlement automatiques, eux, s'effacent d'eux-mêmes.
 - Si le serveur reste joignable mais ne pousse plus (jeton expiré, par exemple), GitHub reprend 15 minutes après

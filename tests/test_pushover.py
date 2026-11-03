@@ -2,7 +2,7 @@
 import io
 import json
 from datetime import datetime, timedelta, timezone
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs
 
 from scripts import envoyer_notifications as E
@@ -144,6 +144,27 @@ def test_service_injoignable_ou_pas_encore_deploye_donne_none():
     assert E.strategies_du_site(GITHUB, faux_service([], echec_service=erreur)) is None
     assert E.strategies_du_site({}, faux_service(["eden"])) is None                       # pas d'identité GitHub
     assert E.strategies_du_site(GITHUB, lambda req, timeout: Rep({"strategies": "x"})) is None
+
+
+def test_serveur_sans_identite_github_lit_le_choix_pushover_public():
+    vus = []
+    def ouvrir(req, timeout):
+        vus.append((req.full_url, dict(req.header_items()), req.data))
+        return Rep({"defini": True, "strategies": ["base_pinnacle", "eden", 3]})
+    serveur = {"SERVEUR_DIRECT": "oui"}
+    assert E.strategies_du_site(serveur, ouvrir) == ["base_pinnacle", "eden"]
+    url, entetes, corps = vus[0]
+    assert url == E.API + "/pushover-lire" and corps == b"{}" and "Authorization" not in entetes
+    assert entetes["Origin"] == "https://matttgic.github.io"          # lecture libre, réservée à l'origine du site
+    assert E.choix_pushover({**serveur, "PUSHOVER_STRATEGIES": ""}, ouvrir) == ({"base_pinnacle", "eden"}, [], "site")
+    # aucun choix enregistré, réponse inattendue ou service muet : rien d'inventé
+    assert E.strategies_du_site(serveur, lambda req, timeout: Rep({"defini": False, "strategies": []})) is None
+    assert E.strategies_du_site(serveur, lambda req, timeout: Rep({"defini": True, "strategies": "x"})) is None
+    def muet(req, timeout):
+        raise URLError("hors ligne")
+    assert E.strategies_du_site(serveur, muet) is None
+    # ni GitHub ni serveur (tests, poste local) : aucun appel
+    assert E.strategies_du_site({}, lambda *a, **k: 1 / 0) is None
 
 
 def test_variable_remplie_prime_sinon_les_cases_du_site():

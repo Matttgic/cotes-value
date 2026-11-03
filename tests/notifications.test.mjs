@@ -120,6 +120,13 @@ test('Eden et les règles du laboratoire (Pinnacle 2…) sont acceptées sans li
   assert.equal((await handler(req('subscribe',{id,token,strategies:['labo:../x'],subscription:sub()}))).status,400);
 });
 
+test('les bases du Bilan (base_pinnacle, base_uniques…) sont des clés acceptées',()=>{
+  const a={...alert,strategies:['base_pinnacle','base_uniques'],labels:['Base · Pinnacle','Base · paris uniques'],
+    validations:{base_pinnacle:iso(now-30000),base_uniques:iso(now-30000)}};
+  assert.ok(validAlert(a,now));
+  assert.equal(alertsFor({...device,strategies:['base_uniques']},[a],now).length,1);
+  assert.equal(alertsFor({...device,strategies:['base_polymarket']},[a],now).length,0);
+});
 test('le corps est limité en octets avant lecture complète, même avec une taille mensongère',async()=>{
   for(const contentLength of [undefined,'0']) {
     let pulls=0,cancelled=false,calls=0;

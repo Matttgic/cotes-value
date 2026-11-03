@@ -156,3 +156,23 @@ def test_installation_service_et_configuration_coherents():
         manquantes = {k for k in env if k not in cles and k not in ("REPRISE_CHEMIN", "MEMOIRE_CHEMIN")}
         assert not manquantes, manquantes
     assert "GITHUB_TOKEN" in cles
+
+
+def test_alertes_depuis_le_serveur_pushover_sans_echec_chrome(tmp_path, monkeypatch):
+    """Sur le serveur (sans identité GitHub Actions) : pas de tentative Chrome notée en échec à chaque minute."""
+    import os
+    import sys
+    monkeypatch.setenv("MODE_COLLECTE", "complet")
+    assert SD.environnement(tmp_path)["SERVEUR_DIRECT"] == "oui"
+    donnees = tmp_path / "donnees"
+    donnees.mkdir()
+    for nom, contenu in (("paris.json", "[]"), ("opportunites_actuelles.json", "[]"),
+                         ("etat.json", json.dumps({"dernier_cycle": {}}))):
+        (donnees / nom).write_text(contenu, encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("ACTIONS_ID_TOKEN", "PUSHOVER", "ALERTE_WEBHOOK"))}
+    r = subprocess.run([sys.executable, "scripts/envoyer_notifications.py", "--donnees", str(donnees),
+                        "--flux", str(tmp_path / "flux.json")], cwd=SD.RACINE, env={**env, "SERVEUR_DIRECT": "oui"},
+                       capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, r.stderr
+    assert "::warning" not in r.stdout and json.loads(r.stdout.strip().splitlines()[-1])["ok"] is True
+    assert "echecs_recents" not in json.loads((donnees / "etat.json").read_text(encoding="utf-8"))

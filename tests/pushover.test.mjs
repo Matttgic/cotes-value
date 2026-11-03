@@ -110,3 +110,25 @@ test('les comparateurs affichent aussi leur bilan',async()=>{
   assert.ok(html.includes('<b>2,2</b> paris/jour') && html.includes('<b class="pos">+108 €</b>/mois'));
   assert.ok(!html.includes('undefined'));
 });
+
+test('les bases du Bilan se cochent dans leur propre groupe, avec leur bilan ; une base sans pari n\'est pas proposée',async()=>{
+  const p=page({serveur:(action)=>action==='pushover-lire'?[200,{defini:true,strategies:['base_kalshi']}]:[200,{ok:true}]});
+  p.ctx.D.laboratoire={futur:[],bases_futur:{Pinnacle:{paris:700,regles:600,gagnes:300,gain:-12,roi:-0.2,attente:100,jours:7},
+    Uniques:{paris:1000,regles:900,gagnes:450,gain:80,roi:0.9,attente:100,jours:7}}};
+  p.ctx.D.notifications.strategies={eden:'Eden',base_uniques:'Base · paris uniques',base_pinnacle:'Base · Pinnacle',
+    base_betfair:'Base · Betfair',base_kalshi:'Base · Kalshi'};
+  p.ctx.D.notifications.details={base_pinnacle:'Tous les paris repérés par Pinnacle · toutes tranches'};
+  await p.demarrer();
+  const html=p.elements['pushover-strategies'].innerHTML;
+  const groupes=html.split('<details').slice(1);
+  const bases=groupes.find(g=>g.includes('Bases du bilan'));
+  assert.ok(bases && !groupes.find(g=>g.includes('Comparateurs')).includes('base_'));
+  assert.ok(bases.includes('value="base_pinnacle"') && bases.includes('value="base_uniques"'));
+  assert.ok(bases.includes('<b>100,0</b> paris/jour') && bases.includes('Réussite <b>50 %</b> (300/600)'));
+  assert.ok(!bases.includes('base_betfair'));                          // aucune donnée : pas proposée
+  assert.ok(bases.includes('value="base_kalshi" checked'));             // déjà cochée : reste visible pour la décocher
+  p.cocher('base_pinnacle');
+  p.elements['pushover-code'].value='code-personnel';
+  await p.elements['pushover-sauver'].onclick();
+  assert.deepEqual(p.appels.at(-1)[1].strategies,['base_pinnacle']);
+});

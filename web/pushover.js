@@ -13,6 +13,8 @@
     const r=D.laboratoire?.comparateurs_futur?.[nom];
     if(r) futur.set(k,r);
   }
+  // Bases du Bilan (« base_pinnacle », « base_uniques »…) : même bilan que le classement de la page Stratégies.
+  for(const [ref,r] of Object.entries(D.laboratoire?.bases_futur||{})) futur.set('base_'+ref.toLowerCase(),r);
   const fr=(x,d)=>x.toFixed(d).replace('.',',');
   const signe=(x,d)=>(x>0?'+':'')+fr(x,d);
   const classe=x=>x>0?'pos':x<0?'neg':'';
@@ -41,8 +43,11 @@
   let choisies=new Set(), defini=false;
   function dessiner() {
     const ligne=([k,v])=>`<label class="notif-choix"><span>${e(v)}${details[k]?`<small>${e(details[k])}</small>`:''}${bilan(k)}</span><input type="checkbox" role="switch" class="interrupteur" value="${e(k)}" ${choisies.has(k)?'checked':''}></label>`;
-    const groupes=[['Comparateurs',k=>!k.startsWith('labo:')],['Règles Pinnacle',k=>k.startsWith('labo:PIN-')],['Règles Polymarket',k=>k.startsWith('labo:POL-')]]
-      .map(([titre,f])=>[titre,Object.entries(noms).filter(([k])=>f(k))]).filter(([,l])=>l.length);
+    // Une base sans aucun pari depuis le 14/10 n'est pas proposée, sauf si elle est déjà cochée.
+    const proposee=k=>!k.startsWith('base_') || futur.has(k) || choisies.has(k);
+    const groupes=[['Comparateurs',k=>!k.startsWith('labo:') && !k.startsWith('base_')],['Règles Pinnacle',k=>k.startsWith('labo:PIN-')],
+      ['Règles Polymarket',k=>k.startsWith('labo:POL-')],['Bases du bilan',k=>k.startsWith('base_')]]
+      .map(([titre,f])=>[titre,Object.entries(noms).filter(([k])=>f(k) && proposee(k))]).filter(([,l])=>l.length);
     zone.innerHTML='<legend>Stratégies envoyées sur Pushover</legend>'+groupes.map(([titre,l],i)=>{
       const n=l.filter(([k])=>choisies.has(k)).length;
       return `<details class="notif-groupe"${i===0||n?' open':''}><summary>${e(titre)} <small>${n?n+' suivie'+(n>1?'s':''):l.length+' au choix'}</small></summary>${l.map(ligne).join('')}</details>`;

@@ -102,3 +102,14 @@ test('repartir de zéro et retirer une stratégie arrêtée',()=>{
   eq(c.suiviRetirer(etat,'a'),etat);              // encore cochée : gardée
   eq(etat.b,[[2,6]]);                                 // l'original n'est pas modifié
 });
+
+test('les bases du Bilan suivies dans « Mes stratégies » : référence et paris uniques, sans colonne de plus', () => {
+  const etat = {base_pinnacle: [[at('2026-11-01T00:00:00Z'), null]], base_uniques: [[at('2026-11-01T00:00:00Z'), null]]};
+  const prises = [
+    {id: 'a', detecte: '2026-11-02T10:00:00Z', reference: 'Pinnacle', unique_bilan: true, strategies: [], regles: []},
+    {id: 'b', detecte: '2026-11-02T10:05:00Z', reference: 'Polymarket', unique_bilan: false, strategies: [], regles: []},
+    {id: 'c', detecte: '2026-11-02T10:06:00Z', reference: 'Pinnacle', unique_bilan: false},
+    {id: 'd', detecte: '2026-10-30T10:00:00Z', reference: 'Pinnacle', unique_bilan: true}];
+  const out = c.suiviPrises(prises, {etat});
+  eq(out.map(p => [p.id, p.suivies]), [['a', ['base_pinnacle', 'base_uniques']], ['c', ['base_pinnacle']]]);
+});

@@ -198,7 +198,8 @@ Les simulations se recoupent et leurs mises ne s'additionnent pas.
 ## Serveur en direct (option)
 
 Un petit serveur (environ 6 €/mois) fait tourner la collecte en continu : cycle toutes les minutes environ,
-alertes en 1 à 2 minutes. GitHub reste la roue de secours et reprend tout seul si le serveur s'arrête.
+alertes Pushover en 1 à 2 minutes (les notifications Chrome restent réservées à GitHub Actions). GitHub reste
+la roue de secours et reprend tout seul si le serveur s'arrête.
 [Commander, installer, vérifier](docs/serveur-direct.md).
 
 ## Mise en route

@@ -46,13 +46,14 @@ def preparer(donnees: Path, maintenant: datetime | None = None, retenues: list |
     from cotes import stockage
     from cotes.convergence import selections
     from cotes.strategies_prudentes import selections_prudentes
-    from cotes.notifications import flux, selections_labo
+    from cotes.notifications import flux, selections_bases, selections_labo
     paris = stockage.fusionner_paris(lire_paris(donnees) if paris_bruts is None else paris_bruts,
                                      stockage.lire_archives(donnees))
     actuelles = json.loads((donnees / "opportunites_actuelles.json").read_text())
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     retenus.update(selections_labo(paris))
+    retenus.update(selections_bases(paris))         # bases du Bilan : sans effet sur les votes de convergence
     return flux(actuelles, paris, retenus, maintenant, retenues=retenues)
 
 
@@ -229,13 +230,31 @@ def strategies_pushover(env=None) -> tuple[set[str], list[str]]:
     return {x for x in voulues if x in NOMS}, sorted({x for x in voulues if x not in NOMS})
 
 
+ORIGINE_SITE = "https://matttgic.github.io"
+
+
+def choix_pushover_public(ouvrir=urlopen) -> list[str] | None:
+    """Choix du bloc « Alertes Pushover », par la lecture publique du site (de simples clés de stratégie, sans jeton).
+    Pour le serveur en direct, qui n'a pas l'identité GitHub Actions. ``None`` sans choix enregistré ou injoignable."""
+    try:
+        with ouvrir(Request(API + "/pushover-lire", data=b"{}", method="POST",
+                            headers={"Content-Type": "application/json", "Origin": ORIGINE_SITE}), timeout=10) as r:
+            d = json.load(r)
+        cles = d.get("strategies") if d.get("defini") is True else None
+        return [c for c in cles if isinstance(c, str)] if isinstance(cles, list) else None
+    except (HTTPError, URLError, OSError, ValueError, TypeError, AttributeError):
+        return None
+
+
 def strategies_du_site(env=None, ouvrir=urlopen) -> list[str] | None:
     """Stratégies cochées sur le site (appareils actifs), lues auprès du service de notifications avec l'identité GitHub
-    Actions. ``None`` si le service est injoignable ou n'a pas encore l'action (fonction non redéployée)."""
+    Actions. ``None`` si le service est injoignable ou n'a pas encore l'action (fonction non redéployée).
+    Serveur en direct (``SERVEUR_DIRECT=oui``, sans cette identité) : le choix Pushover enregistré sur le site, par sa
+    lecture publique."""
     env = os.environ if env is None else env
     url, credential = env.get("ACTIONS_ID_TOKEN_REQUEST_URL", ""), env.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN", "")
     if not url.startswith("https://") or not credential:
-        return None
+        return choix_pushover_public(ouvrir) if env.get("SERVEUR_DIRECT") == "oui" else None
     try:
         sep = "&" if "?" in url else "?"
         with ouvrir(Request(url + sep + urlencode({"audience": "cotes-value-notifications"}),
@@ -429,7 +448,11 @@ def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
     push = pushover(donnees, flux, paris=paris)     # d'abord : c'est le canal le plus rapide
     webhook = webhook_pinnacle2(donnees, flux, paris=paris)
     debut = datetime.now(timezone.utc)
-    bilan = transmettre(flux)
+    if os.environ.get("SERVEUR_DIRECT") == "oui":
+        # Serveur en direct : le service n'accepte l'envoi Chrome que de GitHub Actions. Pushover part, rien n'échoue.
+        bilan = {"ok": True, "chrome": "non transmises ici (serveur en direct)"}
+    else:
+        bilan = transmettre(flux)
     fin = datetime.now(timezone.utc)
     # Données publiques de diagnostic uniquement, jamais d'abonnement ni de jeton.
     journal = {"prepare_le": flux["generated_at"], "envoi_demande_le": debut.isoformat(),
