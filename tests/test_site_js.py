@@ -28,17 +28,17 @@ const document={getElementById:id=>elements.get(id),querySelectorAll:()=>[]};
 const window={scrollY:320,scrollTo:(x,y)=>assert.equal(y,320)};
 const requestAnimationFrame=fn=>fn();
 const adapterTableaux=()=>{};
-const FILTRES={book:[]}, CUMULS=[[]], TRIS={roi:''}, STRAT_PERIODES={ensemble:''};
+const FILTRES={book:[]}, CUMULS=[[]], TRIS={roi:''};
 let refBilan='Stratégie',cumul=0,limite=150,
-    strategieChoisie={id:'Claude (rejeu)',nom:'Claude',periode:'ensemble'},triSeg='roi',ctlVue='conforme',periodeStrategies='ensemble';
+    strategieChoisie={id:'Claude (rejeu)',nom:'Claude',periode:'futur',dates:{depuis:'2026-11-01',jusqua:''}},triSeg='roi',ctlVue='conforme';
 const courbesMasquees=new Set(['M3']);
 const rendus=[];
 const rendreBilan=()=>rendus.push(refBilan),
  rendreParis=()=>rendus.push(document.getElementById('f-q').value),rendreSegments=()=>{},rendreControle=()=>{},rendreBilanUniques=()=>{},rendreSante=()=>{},
- rendreStrategies=()=>rendus.push(periodeStrategies),rendreAnalyses=()=>{},rendreMesStrategies=()=>{},rendreAccueil=()=>{};
+ rendreStrategies=()=>rendus.push(strategieChoisie?.dates?.depuis),rendreAnalyses=()=>{},rendreMesStrategies=()=>{},rendreAccueil=()=>{};
 function installerActualisation(config) {
   const etat=config.capturer();
-  refBilan='Uniques';limite=50;strategieChoisie=null;periodeStrategies='futur';
+  refBilan='Uniques';limite=50;strategieChoisie=null;
   courbesMasquees.clear();elements.get('f-q').value='';elements.get('f-book').value='';
   config.restaurer(JSON.parse(JSON.stringify(etat)));
   assert.equal(elements.get('f-book').value,'Winamax');
@@ -46,7 +46,8 @@ function installerActualisation(config) {
   assert.equal(elements.get('analyse-periode').value,'ensemble');
   assert.equal(strategieChoisie.id,'Claude (rejeu)');assert.equal(limite,150);
   assert.deepEqual([...courbesMasquees],['M3']);
-  assert.deepEqual(rendus,['Stratégie','Équipe Lyon','ensemble']);
+  assert.deepEqual(rendus,['Stratégie','Équipe Lyon','2026-11-01']);
+  assert.equal(etat.periodeStrategies,undefined);                 // plus de période historique
   assert.equal(etat.presentation,'lignes-v1');
   // Un ancien instantané ne réintroduit pas le filtre qui masquait les règles.
   elements.get('strategies-ref').value='';delete etat.presentation;
@@ -231,10 +232,9 @@ assert.equal(hashParis, "paris?ref=Smarkets");
 def test_js_courbes_legend_masquage_et_periode_vide():
     outils = MODELE[MODELE.index("const eurC ="):MODELE.index("\n", MODELE.index("const eurC ="))] + "\n"
     outils += MODELE[MODELE.index("function pas("):MODELE.index("function rendreCourbe()")]
-    section=MODELE[MODELE.index("const courbesMasquees ="):MODELE.index('let periodeStrategies = "futur";')]
+    section=MODELE[MODELE.index("const CLE_DATES_STRAT ="):MODELE.index("// Lignes de la comparaison des stratégies")]
     executer(DOM+outils+'''
-const D={laboratoire:{courbes:{"Claude (rejeu)":{ensemble:[[1,10],[2,-5]]}}}};
-let periodeStrategies="ensemble";
+const D={laboratoire:{courbes:{"Claude (rejeu)":{futur:[[1,10],[2,-5]]}}}};
 '''+section+'''
 const rows=[{id:"Claude (rejeu)",nom:"Claude"}];
 rendreCourbesStrategies(rows);
@@ -248,12 +248,12 @@ assert.ok(document.getElementById("strategies-courbes-vide").textContent.include
 assert.ok(document.getElementById("strategies-legende").innerHTML.includes("Tout afficher"));
 document.getElementById("strategies-tout").onclick();
 assert.ok(document.getElementById("strategies-courbes").innerHTML.includes('data-serie="Claude (rejeu)"'));
-D.laboratoire.courbes["Claude (rejeu)"].ensemble=[[1,-96.46],[4*86400,340.86]];
+D.laboratoire.courbes["Claude (rejeu)"].futur=[[1,-96.46],[4*86400,340.86]];
 rendreCourbesStrategies(rows);
 const axes=document.getElementById("strategies-courbes").innerHTML.match(/<text[^>]*>[^<]*<\\/text>/g).join(" ").replace(/<[^>]+>/g,"");
 assert.ok(axes.includes("+400 €") && axes.includes("-200 €") && axes.includes("0 €"));
 assert.ok(!axes.includes("h") && !axes.includes(","));
-periodeStrategies="futur"; rendreCourbesStrategies(rows);
+D.laboratoire.courbes["Claude (rejeu)"].futur=[]; rendreCourbesStrategies(rows);
 assert.ok(document.getElementById("strategies-courbes-vide").textContent.includes("Aucun pari réglé"));
 ''')
 
@@ -380,4 +380,35 @@ def test_js_bilan_separe_les_cotes_de_plus_de_10():
 const note=document.getElementById("bu-note-cotes").textContent;
 assert.ok(note.includes("Cote de 10 au plus : 2 paris") && note.includes("Cote supérieure à 10 : 2 paris"), note);
 assert.ok(note.includes("−20") || note.includes("-20"), note);
+''')
+
+
+def test_js_strategies_filtre_de_dates_chiffres_recalcules():
+    section=MODELE[MODELE.index("const CLE_DATES_STRAT ="):MODELE.index("const courbesMasquees =")]
+    executer(DOM+'''
+const p=(id,detecte,statut,gain,extra={})=>({id,detecte,statut,gain,mise:10,cote:2,match_id:"m"+id,...extra});
+const fiches=[p("a","2026-11-01T10:00:00Z","gagne",10,{reference:"Pinnacle",unique_bilan:true,clv:.05}),
+  p("b","2026-11-02T10:00:00Z","perdu",-10,{reference:"Pinnacle",clv:-.01}),
+  p("c","2026-11-03T10:00:00Z","en_cours",null,{reference:"Polymarket",unique_bilan:true}),
+  p("d","2026-10-10T10:00:00Z","gagne",10,{reference:"Pinnacle"})];
+const D={laboratoire:{debut_suivi:"2026-10-14T12:00:00Z",navigation:{selections:{R1:{futur:["a","c"]}},
+  paris:Object.fromEntries(fiches.map(f=>[f.id,f]))}}};
+'''+section+'''
+assert.equal(libelleDatesStrat({}),"Depuis le lancement");
+assert.equal(libelleDatesStrat({depuis:"2026-11-01",jusqua:"2026-11-03"}),"Du 01/11 au 03/11");
+assert.equal(libelleDatesStrat({depuis:"2026-11-03",jusqua:"2026-11-03"}),"Le 03/11");
+assert.equal(datesStratActives(),false);
+datesStrat={depuis:"2026-11-02",jusqua:"2026-11-03"};
+assert.equal(datesStratActives(),true);
+const b=bornesStrat();
+assert.deepEqual(fiches.filter(f=>dansDatesStrat(f,b)).map(f=>f.id),["b","c"]);   // jour de Paris, « Au » inclus
+// Base Pinnacle depuis le lancement du suivi (le pari du 10/10 n'en fait pas partie) ; règle : ses sélections figées.
+const base=parisDeStrategie({id:"base:Pinnacle",reference:"bases"}).map(f=>f.id);
+assert.deepEqual(base,["a","b"]);
+assert.deepEqual(parisDeStrategie({id:"R1",reference:"Pinnacle"}).map(f=>f.id),["a","c"]);
+assert.deepEqual(parisDeStrategie({id:"base:Uniques",reference:"bases"}).map(f=>f.id),["a","c"]);
+const s=statsStrategie(fiches.slice(0,3));
+assert.equal(s.paris,3);assert.equal(s.regles,2);assert.equal(s.attente,1);assert.equal(s.gagnes,1);assert.equal(s.perdus,1);
+assert.equal(s.gain,0);assert.equal(s.roi,0);assert.equal(s.clv,2);assert.equal(s.clv_n,2);assert.equal(s.evenements_regles,2);
+assert.equal(statsStrategie([]).roi,null);
 ''')
