@@ -305,8 +305,15 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
                 preuve = {"origine": "résultat saisi à la main", "source": m.get("source"), "scores": sc}
                 if ajoutes:
                     preuve["sources_detail"] = r.get("sources")
+            elif r and r.get("final") and r.get("annule") and (
+                    "id_paris_autorises" not in r or p["id"] in r["id_paris_autorises"]):
+                # forfait avant le match : aucun jeu, tous les paris remboursés (docs/reglements.md)
+                statut = "rembourse"
+                preuve = {"origine": "automatique", "sources": r.get("sources"), "annule": True}
             elif r and r.get("final") and ("id_paris_autorises" not in r or p["id"] in r["id_paris_autorises"]):
                 sc = scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"])
+                if r.get("abandon") and p["sport"] == "tennis":
+                    sc["ABANDON"] = True               # même quand le détail des sets est incohérent avec le score
                 if r.get("corners"):
                     sc["CORNERS"] = tuple(r["corners"])
                 statut = regler(p, sc)

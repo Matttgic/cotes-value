@@ -99,6 +99,15 @@ Dans le code (`_regler_abandon`) :
 - nombre total de sets : réglé sur « sets terminés + 1 » quand c'est certain, sauf chez NetBet, où il est
   remboursé.
 
+### Forfait avant le match
+
+Un joueur qui déclare forfait avant le premier point : le match n'a pas eu lieu, tous les paris sont remboursés
+(Winamax, Unibet, NetBet, PMU). Flashscore l'indique (code 5 ou 9, aucun score, « X - forfait. »). Dans le code, un
+enregistrement « annulé » (`cotes/flashscore.py`) rembourse tous les paris du match (`cotes/reglement.py`), deux
+heures après l'heure prévue, avec Flashscore seul. Le match peut avoir été avancé ou reculé : jusqu'à 36 h d'écart,
+si les deux noms se ressemblent à 0,85 au moins. Un abandon en cours de match (code 8) suit les règles d'abandon
+ci-dessus, même quand le détail des sets contredit le score.
+
 ## Vérifications faites dans les applis
 
 Betclic, PMU, Unibet (hockey et basket), NetBet (basket), sports US (tous) et Winamax (totaux et handicaps au hockey) : vérifiés par l'utilisateur,

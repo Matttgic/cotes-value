@@ -8,7 +8,12 @@ officielle, qui peut changer sans préavis ; elle ne vaut qu'en accord avec une 
 
 Seuls les matchs terminés normalement (statut détaillé 3) sont gardés : prolongation, tirs au but, forfait,
 match donné gagnant sur tapis vert, abandon et report ne donnent pas un score de jeu fiable.
-Volley : sets gagnés, points de chaque set. Handball et rugby : score final, mi-temps.
+Volley : sets gagnés, points de chaque set. Handball et rugby : score final, mi-temps. Football : le flux ne donne que
+la 2e mi-temps (BC, BD) ; la 1re s'en déduit (score final moins 2e mi-temps, vérifié sur 142 matchs contre LiveScore).
+
+Sports individuels (tennis, snooker, badminton, fléchettes), deux cas de plus : le forfait avant le match (code 5 ou 9, aucun
+score, « X - forfait. ») donne un match annulé (``annule`` : tous les paris remboursés) ; l'abandon en cours de match
+(code 8, score partiel) donne un abandon (``abandon`` : règles d'abandon de chaque bookmaker, cotes/reglement.py).
 """
 from __future__ import annotations
 
@@ -22,6 +27,7 @@ ENTETES = {"x-fsign": "SW9D1eZo", "x-requested-with": "XMLHttpRequest", "referer
 SPORTS = {"football": 1, "tennis": 2, "basket": 3, "hockey": 4, "football_americain": 5, "baseball": 6,
           "handball": 7, "rugby": 8, "volley": 12, "flechettes": 14, "snooker": 15, "badminton": 21}
 HISTORIQUE_J = 7
+INDIVIDUELS = {"tennis", "snooker", "badminton", "flechettes"}
 ERREURS: list[str] = []
 
 
@@ -40,12 +46,38 @@ def lignes(texte: str):
             yield dict(kv.split("÷", 1) for kv in bloc.split("¬") if "÷" in kv)
 
 
-def match(sport: str, d: dict) -> dict | None:
-    if d.get("AB") != "3" or d.get("AC") != "3":
+def _individuel(sport: str, d: dict, debut: datetime) -> dict | None:
+    """Forfait avant le match ou abandon en cours de match, pour les sports individuels (sinon None)."""
+    dom, ext = d.get("AE"), d.get("AF")
+    if d.get("AB") != "3" or not dom or not ext:
         return None
+    base = {"source": "flashscore", "id_source": d.get("AA"), "sport": sport, "domicile": dom, "exterieur": ext,
+            "debut": debut, "corners": None}
+    score = (_entier(d.get("AG")), _entier(d.get("AH")))
+    if d.get("AC") in ("5", "9") and None in score and ("forfait" in str(d.get("AM") or "").lower() or d.get("AC") == "9"):
+        return {**base, "score": (0, 0), "periodes": [], "libelles": [], "abandon": False, "annule": True}
+    if d.get("AC") == "8" and None not in score and sport == "tennis":
+        jeux = []
+        for a, b in (("BA", "BB"), ("BC", "BD"), ("BE", "BF"), ("BG", "BH"), ("BI", "BJ")):
+            x, y = _entier(d.get(a)), _entier(d.get(b))
+            if x is None or y is None:
+                break
+            jeux.append((x, y))
+        while jeux and jeux[-1] == (0, 0):          # set non commencé (« 0-0 »), comme ESPN ne le liste pas
+            jeux.pop()
+        return {**base, "score": score, "periodes": jeux, "libelles": [str(i + 1) for i in range(len(jeux))],
+                "abandon": True}
+    return None
+
+
+def match(sport: str, d: dict) -> dict | None:
     try:
         debut = datetime.fromtimestamp(int(d["AD"]), timezone.utc)
     except (KeyError, ValueError, OSError):
+        return None
+    if sport in INDIVIDUELS and d.get("AC") != "3":
+        return _individuel(sport, d, debut)
+    if d.get("AB") != "3" or d.get("AC") != "3":
         return None
     score = (_entier(d.get("AG")), _entier(d.get("AH")))
     dom, ext = d.get("AE"), d.get("AF")
@@ -57,6 +89,11 @@ def match(sport: str, d: dict) -> dict | None:
         if x is None or y is None:
             break
         periodes.append((x, y))
+    if sport == "football" and not periodes:
+        # 1re mi-temps absente du flux : la 2e (BC, BD) est là, la 1re est le score final moins elle
+        x, y = _entier(d.get("BC")), _entier(d.get("BD"))
+        if x is not None and y is not None and x <= score[0] and y <= score[1]:
+            periodes = [(score[0] - x, score[1] - y), (x, y)]
     if sport == "volley":
         # sets gagnés : doivent se déduire des points de chaque set, sinon le détail est inutilisable
         if periodes and (sum(a > b for a, b in periodes), sum(b > a for a, b in periodes)) != score:
