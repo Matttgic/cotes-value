@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-04T00:19:41+00:00",
+  "debut": "2026-11-04T00:24:20+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
@@ -8,11 +8,11 @@
     "ok": true
    },
    "olybet": {
-    "secondes": 4.2,
+    "secondes": 5.1,
     "ok": true
    },
    "polymarket": {
-    "secondes": 6.5,
+    "secondes": 10.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,12 +20,24 @@
     ]
    },
    "pinnacle": {
-    "secondes": 18.0,
+    "secondes": 28.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 28 markets/straight : HTTP 403",
+     "sport 17 matchups : HTTP 403",
+     "sport 9 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
-    ]
+    ],
+    "reprise": 16
+   },
+   "betclic_direct": {
+    "secondes": 28.6,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 31.3,
+    "ok": true
    },
    "unibet_direct": {
     "secondes": 1.8,
@@ -35,16 +47,8 @@
      "accueil HTTP 403"
     ]
    },
-   "betclic_direct": {
-    "secondes": 23.1,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 29.5,
-    "ok": true
-   },
    "netbet": {
-    "secondes": 52.3,
+    "secondes": 52.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -52,20 +56,23 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 60.1,
+    "secondes": 57.4,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.6,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 2.4,
+    "secondes": 1.4,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.8,
+    "secondes": 0.5,
     "ok": true
    },
    "cotes_cloture": {
@@ -83,17 +90,17 @@
    "ok": true,
    "requetes": 2,
    "erreurs": [],
-   "matchs": 127,
-   "lignes": 3011
+   "matchs": 126,
+   "lignes": 3027
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 803,
-   "age_min_s": 24,
-   "lignes": 98654,
-   "lignes_perimees": 0,
+   "age_max_s": 598,
+   "age_min_s": 288,
+   "lignes": 98927,
+   "lignes_perimees": 148,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": 8.0,
@@ -106,16 +113,21 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 22,
-    "choisi_fixe": 12,
-    "head_403": 2,
+    "head_200": 32,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 2,
+    "choisi_autre": 7,
+    "choisi_fixe": 5,
+    "reprise_403": 3,
+    "matchups_sans_speciaux": 2,
     "sport_vide": 4
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Pinnacle": {
+    "snooker": 16
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -148,8 +160,24 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
+    {
+     "match": "MC Alger – MC Oran",
+     "source": "Pinnacle",
+     "cote_olybet": 1.47,
+     "cote_reference": 1.532,
+     "ecart_relatif": 0.0404,
+     "aberrant": false
+    },
+    {
+     "match": "Courtrai – FC Malines",
+     "source": "PMU",
+     "cote_olybet": 2.48,
+     "cote_reference": 2.43,
+     "ecart_relatif": 0.0206,
+     "aberrant": false
+    },
     {
      "match": "Sportivo Ameliano – Club Guarani",
      "source": "Pinnacle",
@@ -197,50 +225,9 @@
      "cote_reference": 1.21,
      "ecart_relatif": 0.0661,
      "aberrant": false
-    },
-    {
-     "match": "AEK Athènes – Real Madrid",
-     "source": "Pinnacle",
-     "cote_olybet": 9.8,
-     "cote_reference": 11.66,
-     "ecart_relatif": 0.1595,
-     "aberrant": true
-    },
-    {
-     "match": "AEK Athènes – Real Madrid",
-     "source": "PMU",
-     "cote_olybet": 9.8,
-     "cote_reference": 10.5,
-     "ecart_relatif": 0.0667,
-     "aberrant": false
-    },
-    {
-     "match": "FC Porto – Naples",
-     "source": "Pinnacle",
-     "cote_olybet": 1.9,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.05,
-     "aberrant": false
-    },
-    {
-     "match": "FC Porto – Naples",
-     "source": "PMU",
-     "cote_olybet": 1.9,
-     "cote_reference": 1.84,
-     "ecart_relatif": 0.0326,
-     "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "AEK Athènes – Real Madrid",
-     "source": "Pinnacle",
-     "cote_olybet": 9.8,
-     "cote_reference": 11.66,
-     "ecart_relatif": 0.1595,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -323,32 +310,31 @@
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-04T00:19:50+00:00",
-   "pinnacle_derniere_lecture": "2026-11-04T00:19:56+00:00",
+   "pinnacle_premiere_lecture": "2026-11-04T00:19:55+00:00",
+   "pinnacle_derniere_lecture": "2026-11-04T00:24:46+00:00",
    "books_premiere_lecture": "2026-11-03T07:35:44+00:00",
-   "books_derniere_lecture": "2026-11-04T00:19:41+00:00",
-   "ecart_enveloppe_secondes": 60252.0
+   "books_derniere_lecture": "2026-11-04T00:24:20+00:00",
+   "ecart_enveloppe_secondes": 60542.0
   },
   "historique_cotes": {
-   "lignes": 248
+   "lignes": 306
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 649,
    "a_verifier": 12,
    "non_conforme": 12,
-   "mesures": 13484,
+   "mesures": 13638,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 42968,
-   "mesures": 34152,
+   "ancres": 43714,
+   "mesures": 35120,
    "annotees": 2,
    "figees": 1
   },
@@ -363,29 +349,23 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-11-03T23:25:00+00:00"
+   "dernier_reglement": "2026-11-04T00:20:54+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-04T00:20:48+00:00",
+  "fin": "2026-11-04T00:25:45+00:00",
   "cotes": {
-   "francaises": 48996,
-   "pinnacle": 98654,
+   "francaises": 49466,
+   "pinnacle": 98943,
    "polymarket": 9628,
-   "smarkets": 3724,
-   "matchbook": 3011
+   "smarkets": 3797,
+   "matchbook": 3027
   },
-  "matchs_francais": 850,
-  "opportunites": 2,
+  "matchs_francais": 880,
+  "opportunites": 6,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 4
  },
  "historique": [
-  {
-   "debut": "2026-11-03T08:51:18+00:00",
-   "mode": "complet",
-   "opportunites": 0,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-03T08:55:54+00:00",
    "mode": "complet",
@@ -1585,6 +1565,12 @@
    "mode": "complet",
    "opportunites": 2,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-04T00:24:20+00:00",
+   "mode": "complet",
+   "opportunites": 6,
+   "nouveaux_paris": 4
   }
  ],
  "dernier_reglement": "2026-11-04T00:20:54+00:00",
