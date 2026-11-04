@@ -1,18 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-04T06:48:56+00:00",
+  "debut": "2026-11-04T06:53:36+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 1.7,
+    "secondes": 2.2,
     "ok": true
    },
    "olybet": {
-    "secondes": 4.8,
+    "secondes": 6.3,
     "ok": true
    },
    "polymarket": {
-    "secondes": 6.2,
+    "secondes": 10.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,7 +20,7 @@
     ]
    },
    "pinnacle": {
-    "secondes": 17.1,
+    "secondes": 17.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -28,7 +28,7 @@
     ]
    },
    "unibet_direct": {
-    "secondes": 1.9,
+    "secondes": 1.8,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -36,15 +36,15 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 33.4,
+    "secondes": 32.4,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 35.2,
+    "secondes": 40.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.1,
+    "secondes": 52.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -52,24 +52,27 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 60.6,
+    "secondes": 59.5,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 22.2,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 4.2,
+    "secondes": 2.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.4,
+    "secondes": 0.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.3,
+    "secondes": 0.2,
     "ok": true
    }
   },
@@ -84,19 +87,30 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 166,
-   "lignes": 6121
+   "lignes": 6125
+  },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 27045,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 27045,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 882,
-   "age_min_s": 22,
-   "lignes": 106721,
-   "lignes_perimees": 1662,
+   "age_max_s": 853,
+   "age_min_s": 93,
+   "lignes": 106743,
+   "lignes_perimees": 339,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 7.8,
+   "rechauffeur_duree_s": 8.4,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -106,12 +120,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 37,
+    "head_200": 32,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 10,
-    "choisi_autre": 4,
-    "sport_vide": 4
+    "choisi_fixe": 7,
+    "choisi_autre": 7,
+    "sport_vide": 5
    }
   },
   "reprise": {
@@ -148,7 +162,7 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 9,
    "comparaisons": [
     {
      "match": "MC Alger – MC Oran",
@@ -159,59 +173,67 @@
      "aberrant": false
     },
     {
-     "match": "Millonarios – América de Cali",
+     "match": "CA Aldosivi – River Plate",
+     "source": "Pinnacle",
+     "cote_olybet": 6.5,
+     "cote_reference": 7.25,
+     "ecart_relatif": 0.1034,
+     "aberrant": false
+    },
+    {
+     "match": "CA Aldosivi – River Plate",
+     "source": "PMU",
+     "cote_olybet": 6.5,
+     "cote_reference": 7.0,
+     "ecart_relatif": 0.0714,
+     "aberrant": false
+    },
+    {
+     "match": "FAR Rabat – Raja Casablanca",
      "source": "Pinnacle",
      "cote_olybet": 1.78,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0479,
+     "cote_reference": 1.84,
+     "ecart_relatif": 0.0328,
      "aberrant": false
     },
     {
-     "match": "Millonarios – América de Cali",
+     "match": "FAR Rabat – Raja Casablanca",
      "source": "PMU",
      "cote_olybet": 1.78,
-     "cote_reference": 1.77,
-     "ecart_relatif": 0.0056,
+     "cote_reference": 1.7,
+     "ecart_relatif": 0.0471,
      "aberrant": false
     },
     {
-     "match": "Cúcuta Deportivo – Santa Fe",
+     "match": "FC Porto – Naples",
      "source": "Pinnacle",
-     "cote_olybet": 2.82,
-     "cote_reference": 3.01,
-     "ecart_relatif": 0.0631,
+     "cote_olybet": 1.82,
+     "cote_reference": 1.917,
+     "ecart_relatif": 0.0508,
      "aberrant": false
     },
     {
-     "match": "Cúcuta Deportivo – Santa Fe",
+     "match": "FC Porto – Naples",
      "source": "PMU",
-     "cote_olybet": 2.82,
-     "cote_reference": 2.85,
-     "ecart_relatif": 0.0105,
+     "cote_olybet": 1.82,
+     "cote_reference": 1.78,
+     "ecart_relatif": 0.0225,
      "aberrant": false
     },
     {
-     "match": "Bristol City – Wolverhampton",
+     "match": "Fenerbahçe – Liverpool",
      "source": "Pinnacle",
-     "cote_olybet": 3.2,
-     "cote_reference": 3.51,
-     "ecart_relatif": 0.0883,
+     "cote_olybet": 6.0,
+     "cote_reference": 6.64,
+     "ecart_relatif": 0.0964,
      "aberrant": false
     },
     {
-     "match": "Wrexham – Middlesbrough",
-     "source": "Pinnacle",
-     "cote_olybet": 3.89,
-     "cote_reference": 4.4,
-     "ecart_relatif": 0.1159,
-     "aberrant": false
-    },
-    {
-     "match": "Wrexham – Middlesbrough",
+     "match": "Fenerbahçe – Liverpool",
      "source": "PMU",
-     "cote_olybet": 3.89,
-     "cote_reference": 3.85,
-     "ecart_relatif": 0.0104,
+     "cote_olybet": 6.0,
+     "cote_reference": 5.6,
+     "ecart_relatif": 0.0714,
      "aberrant": false
     }
    ],
@@ -222,22 +244,6 @@
    "seuil_relatif": 0.15,
    "examines": 8,
    "comparaisons": [
-    {
-     "match": "Aldosivi – River Plate",
-     "source": "Pinnacle",
-     "cote_netbet": 7.25,
-     "cote_reference": 7.25,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Aldosivi – River Plate",
-     "source": "PMU",
-     "cote_netbet": 7.25,
-     "cote_reference": 7.0,
-     "ecart_relatif": 0.0357,
-     "aberrant": false
-    },
     {
      "match": "Cúcuta Deportivo – Independiente Santa Fe",
      "source": "Pinnacle",
@@ -271,51 +277,66 @@
      "aberrant": false
     },
     {
-     "match": "Crystal Palace – Hoffenheim",
+     "match": "Aarhus AGF – Braga",
      "source": "Pinnacle",
-     "cote_netbet": 1.78,
-     "cote_reference": 1.952,
-     "ecart_relatif": 0.0883,
+     "cote_netbet": 3.65,
+     "cote_reference": 3.94,
+     "ecart_relatif": 0.0736,
      "aberrant": false
     },
     {
-     "match": "Crystal Palace – Hoffenheim",
+     "match": "Aarhus AGF – Braga",
      "source": "PMU",
-     "cote_netbet": 1.78,
-     "cote_reference": 1.76,
-     "ecart_relatif": 0.0114,
+     "cote_netbet": 3.65,
+     "cote_reference": 3.85,
+     "ecart_relatif": 0.0519,
+     "aberrant": false
+    },
+    {
+     "match": "Atalanta Bergame – Kairat Almaty",
+     "source": "Pinnacle",
+     "cote_netbet": 1.1,
+     "cote_reference": 1.152,
+     "ecart_relatif": 0.0455,
+     "aberrant": false
+    },
+    {
+     "match": "Atalanta Bergame – Kairat Almaty",
+     "source": "PMU",
+     "cote_netbet": 1.1,
+     "cote_reference": 1.12,
+     "ecart_relatif": 0.0179,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-04T06:49:05+00:00",
-   "pinnacle_derniere_lecture": "2026-11-04T06:49:09+00:00",
+   "pinnacle_premiere_lecture": "2026-11-04T06:26:10+00:00",
+   "pinnacle_derniere_lecture": "2026-11-04T06:53:51+00:00",
    "books_premiere_lecture": "2026-11-03T07:35:44+00:00",
-   "books_derniere_lecture": "2026-11-04T06:48:56+00:00",
-   "ecart_enveloppe_secondes": 83605.0
+   "books_derniere_lecture": "2026-11-04T06:53:37+00:00",
+   "ecart_enveloppe_secondes": 83887.0
   },
   "historique_cotes": {
-   "lignes": 543
+   "lignes": 202
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 649,
    "a_verifier": 12,
    "non_conforme": 12,
-   "mesures": 19270,
+   "mesures": 19511,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 64767,
-   "mesures": 58647,
+   "ancres": 65339,
+   "mesures": 60260,
    "annotees": 2,
    "figees": 2
   },
@@ -333,26 +354,20 @@
    "dernier_reglement": "2026-11-04T05:56:17+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-04T06:50:06+00:00",
+  "fin": "2026-11-04T06:55:03+00:00",
   "cotes": {
-   "francaises": 65833,
-   "pinnacle": 106721,
-   "polymarket": 12133,
-   "smarkets": 3805,
-   "matchbook": 6121
+   "francaises": 65950,
+   "pinnacle": 133788,
+   "polymarket": 12139,
+   "smarkets": 3741,
+   "matchbook": 6125
   },
-  "matchs_francais": 1156,
+  "matchs_francais": 1157,
   "opportunites": 0,
   "opportunites_suspectes": 2,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-03T15:22:15+00:00",
-   "mode": "complet",
-   "opportunites": 7,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-03T15:26:52+00:00",
    "mode": "complet",
@@ -1552,23 +1567,29 @@
    "mode": "complet",
    "opportunites": 0,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-04T06:53:36+00:00",
+   "mode": "complet",
+   "opportunites": 0,
+   "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-11-04T05:56:17+00:00",
+ "dernier_reglement": "2026-11-04T06:55:09+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-11-04T05:56:17+00:00",
+  "debut": "2026-11-04T06:55:09+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_tennis": {
-    "secondes": 1.5,
+    "secondes": 1.0,
     "ok": true
    },
    "resultats_espn_basket": {
-    "secondes": 0.8,
+    "secondes": 0.6,
     "ok": true
    },
    "resultats_espn_baseball": {
-    "secondes": 0.2,
+    "secondes": 0.1,
     "ok": true
    },
    "resultats_espn_snooker": {
@@ -1580,7 +1601,7 @@
     "ok": true
    },
    "resultats_livescore_basket": {
-    "secondes": 1.0,
+    "secondes": 0.9,
     "ok": true
    },
    "resultats_nhl_officiel": {
@@ -1588,28 +1609,32 @@
     "ok": true
    },
    "resultats_flashscore_baseball": {
-    "secondes": 2.2,
+    "secondes": 2.3,
     "ok": true
    },
    "resultats_flashscore_snooker": {
-    "secondes": 1.3,
+    "secondes": 1.2,
     "ok": true
    },
    "resultats_flashscore_basket": {
-    "secondes": 3.8,
+    "secondes": 1.9,
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 1.3,
+    "secondes": 0.7,
     "ok": true
    },
    "resultats_thesportsdb": {
-    "secondes": 7.2,
+    "secondes": 7.3,
     "ok": true
    },
    "resultats_theodds": {
-    "secondes": 0.0,
-    "ok": true
+    "secondes": 0.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "compte 1 : HTTP 401"
+    ]
    },
    "resultats_propline": {
     "secondes": 0.0,
@@ -1630,12 +1655,14 @@
    "matchs_valides": 0,
    "paris_compatibles": 0,
    "conflits": 0,
-   "erreurs": [],
+   "erreurs": [
+    "compte 1 : HTTP 401"
+   ],
    "couverture": {
-    "marche_non_couvert": 1,
-    "competition_non_couverte": 5,
-    "deja_valide": 0,
-    "trop_recent": 0,
+    "marche_non_couvert": 3,
+    "competition_non_couverte": 4,
+    "deja_valide": 1,
+    "trop_recent": 8,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1680,10 +1707,10 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "deja_valide": 0,
-    "marche_non_couvert": 1,
-    "competition_non_couverte": 5,
-    "trop_recent": 0,
+    "deja_valide": 1,
+    "marche_non_couvert": 3,
+    "competition_non_couverte": 4,
+    "trop_recent": 8,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1691,8 +1718,8 @@
    "requetes_jour": 0
   },
   "resultats": {
-   "enregistrements": 1764,
-   "matchs_valides": 0,
+   "enregistrements": 1768,
+   "matchs_valides": 1,
    "reportes": 2,
    "non_regles": [
     {
@@ -1764,26 +1791,6 @@
      ],
      "raison": "source unique : délai de validation automatique",
      "validation_apres": "2026-11-04T09:30:00+00:00"
-    },
-    {
-     "match_id": "pmu|1029723132",
-     "match": "Aaron Hill – Zhao Xintong",
-     "sport": "snooker",
-     "debut": "2026-11-03T06:00:00Z",
-     "sources": {
-      "flashscore": {
-       "score": [
-        3,
-        6
-       ],
-       "periodes": []
-      }
-     },
-     "retenues": [
-      "flashscore"
-     ],
-     "raison": "source unique : délai de validation automatique",
-     "validation_apres": "2026-11-04T06:00:00+00:00"
     },
     {
      "match_id": "pmu|1029448864",
@@ -1864,6 +1871,16 @@
      "validation_apres": "2026-11-04T16:00:00+00:00"
     },
     {
+     "match_id": "pmu|1028412697",
+     "match": "Maccabi Xt Haifa (F) – CV Haris Tenerife (F)",
+     "sport": "volley",
+     "debut": "2026-11-03T18:00:00Z",
+     "sources": {},
+     "retenues": [],
+     "raison": "aucune source",
+     "validation_apres": null
+    },
+    {
      "match_id": "pmu|1029542227",
      "match": "Ziraat Bankasi Ankara – Sungurlu Bld",
      "sport": "volley",
@@ -1898,14 +1915,16 @@
     }
    ],
    "paris_en_attente": 10,
-   "paris_regles": 0,
+   "paris_regles": 1,
    "selections_en_attente": 10,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
-   "sources_reglement": {}
+   "sources_reglement": {
+    "flashscore": 1
+   }
   },
-  "fin": "2026-11-04T05:56:37+00:00"
+  "fin": "2026-11-04T06:55:26+00:00"
  },
  "echecs_recents": {
   "total": 0,
