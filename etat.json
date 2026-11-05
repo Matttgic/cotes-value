@@ -1,18 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-05T04:18:33+00:00",
+  "debut": "2026-11-05T04:23:06+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 2.1,
+    "secondes": 1.8,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.9,
+    "secondes": 3.2,
     "ok": true
    },
    "polymarket": {
-    "secondes": 9.8,
+    "secondes": 6.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,16 +20,22 @@
      "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
+   "betclic_direct": {
+    "secondes": 10.5,
+    "ok": true
+   },
    "pinnacle": {
-    "secondes": 20.3,
+    "secondes": 27.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 27 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.7,
+    "secondes": 1.6,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -40,12 +46,8 @@
     "secondes": 35.8,
     "ok": true
    },
-   "betclic_direct": {
-    "secondes": 48.8,
-    "ok": true
-   },
    "netbet": {
-    "secondes": 52.0,
+    "secondes": 52.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -53,27 +55,24 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 64.9,
+    "secondes": 63.6,
     "ok": true
    },
    "smarkets": {
-    "secondes": 21.9,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 2.7,
+    "secondes": 3.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.1,
+    "secondes": 1.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -88,19 +87,31 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 132,
-   "lignes": 5048
+   "lignes": 5032
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 27444,
+   "erreurs": [],
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 867,
-   "age_min_s": 125,
+   "age_max_s": 841,
+   "age_min_s": 46,
    "lignes": 113149,
-   "lignes_perimees": 88,
+   "lignes_perimees": 1998,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.2,
+   "rechauffeur_duree_s": 7.7,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -110,12 +121,15 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 36,
+    "head_200": 39,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 8,
-    "choisi_autre": 6,
-    "sport_vide": 4
+    "choisi_fixe": 10,
+    "choisi_autre": 4,
+    "reprise_403": 3,
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 4,
+    "reprise_403_ok": 1
    }
   },
   "reprise": {
@@ -152,48 +166,8 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 10,
    "comparaisons": [
-    {
-     "match": "Maccabi Tel-Aviv – Maccabi Petakh Tikva",
-     "source": "Pinnacle",
-     "cote_olybet": 1.21,
-     "cote_reference": 1.235,
-     "ecart_relatif": 0.0205,
-     "aberrant": false
-    },
-    {
-     "match": "CA Aldosivi – River Plate",
-     "source": "Pinnacle",
-     "cote_olybet": 6.8,
-     "cote_reference": 7.61,
-     "ecart_relatif": 0.1064,
-     "aberrant": false
-    },
-    {
-     "match": "CA Aldosivi – River Plate",
-     "source": "PMU",
-     "cote_olybet": 6.8,
-     "cote_reference": 7.0,
-     "ecart_relatif": 0.0286,
-     "aberrant": false
-    },
-    {
-     "match": "Gimnasia y Esgrima La Plata – Belgrano Cordoba",
-     "source": "Pinnacle",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.27,
-     "ecart_relatif": 0.0529,
-     "aberrant": false
-    },
-    {
-     "match": "Gimnasia y Esgrima La Plata – Belgrano Cordoba",
-     "source": "PMU",
-     "cote_olybet": 2.15,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0138,
-     "aberrant": false
-    },
     {
      "match": "Club Rubio Nu – Sportivo Luqueno",
      "source": "Pinnacle",
@@ -225,6 +199,54 @@
      "cote_reference": 1.44,
      "ecart_relatif": 0.0278,
      "aberrant": false
+    },
+    {
+     "match": "Septemvri Sofia – Lokomotiv Sofia",
+     "source": "Pinnacle",
+     "cote_olybet": 2.95,
+     "cote_reference": 3.13,
+     "ecart_relatif": 0.0575,
+     "aberrant": false
+    },
+    {
+     "match": "Septemvri Sofia – Lokomotiv Sofia",
+     "source": "PMU",
+     "cote_olybet": 2.95,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0727,
+     "aberrant": false
+    },
+    {
+     "match": "Palmeiras – Remo PA",
+     "source": "Pinnacle",
+     "cote_olybet": 1.18,
+     "cote_reference": 1.222,
+     "ecart_relatif": 0.0341,
+     "aberrant": false
+    },
+    {
+     "match": "Palmeiras – Remo PA",
+     "source": "PMU",
+     "cote_olybet": 1.18,
+     "cote_reference": 1.16,
+     "ecart_relatif": 0.0172,
+     "aberrant": false
+    },
+    {
+     "match": "Cruzeiro – Bahia",
+     "source": "Pinnacle",
+     "cote_olybet": 1.6,
+     "cote_reference": 1.685,
+     "ecart_relatif": 0.0504,
+     "aberrant": false
+    },
+    {
+     "match": "Cruzeiro – Bahia",
+     "source": "PMU",
+     "cote_olybet": 1.6,
+     "cote_reference": 1.58,
+     "ecart_relatif": 0.0127,
+     "aberrant": false
     }
    ],
    "aberrants": []
@@ -232,48 +254,8 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 10,
    "comparaisons": [
-    {
-     "match": "Sydney FC – Central Coast Mariners",
-     "source": "Pinnacle",
-     "cote_netbet": 1.39,
-     "cote_reference": 1.481,
-     "ecart_relatif": 0.0613,
-     "aberrant": false
-    },
-    {
-     "match": "Sydney FC – Central Coast Mariners",
-     "source": "PMU",
-     "cote_netbet": 1.39,
-     "cote_reference": 1.44,
-     "ecart_relatif": 0.0347,
-     "aberrant": false
-    },
-    {
-     "match": "Palmeiras – Club Do Remo",
-     "source": "Pinnacle",
-     "cote_netbet": 1.16,
-     "cote_reference": 1.222,
-     "ecart_relatif": 0.0505,
-     "aberrant": false
-    },
-    {
-     "match": "Cruzeiro – Bahia",
-     "source": "Pinnacle",
-     "cote_netbet": 1.58,
-     "cote_reference": 1.685,
-     "ecart_relatif": 0.0623,
-     "aberrant": false
-    },
-    {
-     "match": "Cruzeiro – Bahia",
-     "source": "PMU",
-     "cote_netbet": 1.58,
-     "cote_reference": 1.58,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
     {
      "match": "Aldosivi – River Plate",
      "source": "Pinnacle",
@@ -305,36 +287,85 @@
      "cote_reference": 2.18,
      "ecart_relatif": 0.0367,
      "aberrant": false
+    },
+    {
+     "match": "Rubio Ñú – Sportivo Luqueño",
+     "source": "Pinnacle",
+     "cote_netbet": 1.95,
+     "cote_reference": 2.19,
+     "ecart_relatif": 0.1096,
+     "aberrant": false
+    },
+    {
+     "match": "Rubio Ñú – Sportivo Luqueño",
+     "source": "PMU",
+     "cote_netbet": 1.95,
+     "cote_reference": 1.97,
+     "ecart_relatif": 0.0102,
+     "aberrant": false
+    },
+    {
+     "match": "Midtjylland – Ajax Amsterdam",
+     "source": "Pinnacle",
+     "cote_netbet": 2.45,
+     "cote_reference": 2.63,
+     "ecart_relatif": 0.0684,
+     "aberrant": false
+    },
+    {
+     "match": "Midtjylland – Ajax Amsterdam",
+     "source": "PMU",
+     "cote_netbet": 2.45,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0208,
+     "aberrant": false
+    },
+    {
+     "match": "Mjallby AIF – Borac Banja Luka",
+     "source": "Pinnacle",
+     "cote_netbet": 2.07,
+     "cote_reference": 2.25,
+     "ecart_relatif": 0.08,
+     "aberrant": false
+    },
+    {
+     "match": "Mjallby AIF – Borac Banja Luka",
+     "source": "PMU",
+     "cote_netbet": 2.07,
+     "cote_reference": 2.1,
+     "ecart_relatif": 0.0143,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-05T04:18:43+00:00",
-   "pinnacle_derniere_lecture": "2026-11-05T04:18:49+00:00",
+   "pinnacle_premiere_lecture": "2026-11-05T04:23:15+00:00",
+   "pinnacle_derniere_lecture": "2026-11-05T04:23:35+00:00",
    "books_premiere_lecture": "2026-11-04T19:41:34+00:00",
-   "books_derniere_lecture": "2026-11-05T04:18:33+00:00",
-   "ecart_enveloppe_secondes": 31035.0
+   "books_derniere_lecture": "2026-11-05T04:23:06+00:00",
+   "ecart_enveloppe_secondes": 31321.0
   },
   "historique_cotes": {
-   "lignes": 410
+   "lignes": 102
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 647,
    "a_verifier": 9,
    "non_conforme": 10,
-   "mesures": 16466,
+   "mesures": 16245,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 58191,
-   "mesures": 46774,
+   "ancres": 56747,
+   "mesures": 47075,
    "annotees": 1,
    "figees": 0
   },
@@ -351,14 +382,14 @@
    "saute": true,
    "dernier_reglement": "2026-11-05T03:37:59+00:00"
   },
-  "controle_publie": false,
-  "fin": "2026-11-05T04:20:07+00:00",
+  "controle_publie": true,
+  "fin": "2026-11-05T04:24:17+00:00",
   "cotes": {
-   "francaises": 46201,
-   "pinnacle": 113149,
-   "polymarket": 10560,
+   "francaises": 46208,
+   "pinnacle": 140593,
+   "polymarket": 10556,
    "smarkets": 4026,
-   "matchbook": 5048
+   "matchbook": 5032
   },
   "matchs_francais": 776,
   "opportunites": 0,
@@ -366,12 +397,6 @@
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-04T12:49:10+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-11-04T12:53:57+00:00",
    "mode": "complet",
@@ -1568,6 +1593,12 @@
   },
   {
    "debut": "2026-11-05T04:18:33+00:00",
+   "mode": "complet",
+   "opportunites": 0,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-05T04:23:06+00:00",
    "mode": "complet",
    "opportunites": 0,
    "nouveaux_paris": 0
