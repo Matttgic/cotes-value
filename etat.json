@@ -1542,29 +1542,37 @@
    "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-11-05T01:43:23+00:00",
+ "dernier_reglement": "2026-11-05T02:38:33+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-11-05T01:43:23+00:00",
+  "debut": "2026-11-05T02:38:33+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_basket": {
-    "secondes": 1.5,
+    "secondes": 1.6,
     "ok": true
    },
    "resultats_espn_volley": {
     "secondes": 0.0,
     "ok": true
    },
-   "resultats_espn_football": {
+   "resultats_espn_hockey": {
     "secondes": 0.3,
+    "ok": true
+   },
+   "resultats_espn_football": {
+    "secondes": 0.5,
     "ok": true
    },
    "resultats_espn_handball": {
     "secondes": 0.0,
     "ok": true
    },
+   "resultats_livescore_hockey": {
+    "secondes": 0.6,
+    "ok": true
+   },
    "resultats_livescore_basket": {
-    "secondes": 1.0,
+    "secondes": 0.9,
     "ok": true
    },
    "resultats_livescore_football": {
@@ -1576,32 +1584,43 @@
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 3.0,
+    "secondes": 2.2,
+    "ok": true
+   },
+   "resultats_flashscore_hockey": {
+    "secondes": 1.6,
     "ok": true
    },
    "resultats_flashscore_basket": {
-    "secondes": 2.1,
+    "secondes": 2.9,
     "ok": true
    },
    "resultats_flashscore_football": {
-    "secondes": 1.3,
+    "secondes": 1.4,
     "ok": true
    },
    "resultats_flashscore_handball": {
-    "secondes": 0.9,
+    "secondes": 1.3,
     "ok": true
    },
    "resultats_thesportsdb": {
-    "secondes": 16.3,
-    "ok": true
-   },
-   "resultats_theodds": {
-    "secondes": 0.1,
+    "secondes": 42.8,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "compte 1 : HTTP 401"
+     "hockey Laval_Rocket_vs_Lehigh_Valley_Phantoms : ValueError('HTTP 429')",
+     "hockey Lehigh_Valley_Phantoms_vs_Laval_Rocket : ValueError('HTTP 429')",
+     "basket Elitzur_Ramla_F._vs_TTT_Riga_F. : ValueError('HTTP 429')",
+     "basket Elitzur_Ramla_Women_vs_TTT_Riga_Women : ValueError('HTTP 429')",
+     "handball Autriche_vs_Turquie : ValueError('HTTP 429')",
+     "handball Austria_vs_Turkiye : ValueError('HTTP 429')",
+     "handball Slovénie_vs_Bosnie-Herzégovine : ValueError('HTTP 429')",
+     "handball Slovenia_vs_Bosnia_&_Herzegovina : ValueError('HTTP 429')"
     ]
+   },
+   "resultats_theodds": {
+    "secondes": 0.0,
+    "ok": true
    },
    "resultats_propline": {
     "secondes": 0.0,
@@ -1610,7 +1629,7 @@
   },
   "reglement": true,
   "thesportsdb": {
-   "appels": 8,
+   "appels": 20,
    "trouves": 0,
    "cle_publique": true
   },
@@ -1622,14 +1641,12 @@
    "matchs_valides": 0,
    "paris_compatibles": 0,
    "conflits": 0,
-   "erreurs": [
-    "compte 1 : HTTP 401"
-   ],
+   "erreurs": [],
    "couverture": {
-    "marche_non_couvert": 21,
+    "marche_non_couvert": 18,
     "competition_non_couverte": 25,
-    "deja_valide": 2,
-    "trop_recent": 8,
+    "deja_valide": 5,
+    "trop_recent": 7,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1674,10 +1691,10 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "deja_valide": 2,
-    "marche_non_couvert": 21,
+    "deja_valide": 5,
+    "marche_non_couvert": 18,
     "competition_non_couverte": 25,
-    "trop_recent": 8,
+    "trop_recent": 7,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1685,8 +1702,8 @@
    "requetes_jour": 0
   },
   "resultats": {
-   "enregistrements": 2643,
-   "matchs_valides": 1,
+   "enregistrements": 2841,
+   "matchs_valides": 2,
    "reportes": 2,
    "non_regles": [
     {
@@ -1698,19 +1715,61 @@
      "retenues": [],
      "raison": "aucune source",
      "validation_apres": null
+    },
+    {
+     "match_id": "pmu|1029528060",
+     "match": "Goztepe (F) – Zeren Spor (W)",
+     "sport": "volley",
+     "debut": "2026-11-04T14:00:00Z",
+     "sources": {
+      "flashscore": {
+       "score": [
+        3,
+        2
+       ],
+       "periodes": [
+        [
+         16,
+         25
+        ],
+        [
+         25,
+         20
+        ],
+        [
+         25,
+         20
+        ],
+        [
+         19,
+         25
+        ],
+        [
+         15,
+         12
+        ]
+       ]
+      }
+     },
+     "retenues": [
+      "flashscore"
+     ],
+     "raison": "source unique : délai de validation automatique",
+     "validation_apres": "2026-11-05T14:00:00+00:00"
     }
    ],
-   "paris_en_attente": 1,
-   "paris_regles": 2,
-   "selections_en_attente": 1,
+   "paris_en_attente": 2,
+   "paris_regles": 5,
+   "selections_en_attente": 2,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
    "sources_reglement": {
-    "livescore": 2
+    "espn": 5,
+    "livescore": 5
    }
   },
-  "fin": "2026-11-05T01:43:52+00:00"
+  "fin": "2026-11-05T02:39:32+00:00"
  },
  "echecs_recents": {
   "total": 0,
