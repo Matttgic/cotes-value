@@ -1,18 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-05T09:11:43+00:00",
+  "debut": "2026-11-05T09:16:26+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 1.9,
+    "secondes": 2.3,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.5,
+    "secondes": 6.5,
     "ok": true
    },
    "polymarket": {
-    "secondes": 8.7,
+    "secondes": 13.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -21,32 +21,33 @@
     ]
    },
    "pinnacle": {
-    "secondes": 20.0,
+    "secondes": 28.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "sport 9 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.8,
+    "secondes": 1.7,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
-   "pmu_direct": {
-    "secondes": 35.1,
+   "betclic_direct": {
+    "secondes": 39.3,
     "ok": true
    },
-   "betclic_direct": {
-    "secondes": 47.5,
+   "pmu_direct": {
+    "secondes": 40.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.1,
+    "secondes": 53.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,20 +55,23 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 62.0,
+    "secondes": 66.6,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.7,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 2.8,
+    "secondes": 3.3,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.9,
+    "secondes": 1.2,
     "ok": true
    },
    "cotes_cloture": {
@@ -86,32 +90,19 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 160,
-   "lignes": 7945
-  },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 34037,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
+   "lignes": 7973
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 888,
-   "age_min_s": 128,
-   "lignes": 129513,
-   "lignes_perimees": 3840,
+   "age_max_s": 862,
+   "age_min_s": 23,
+   "lignes": 129956,
+   "lignes_perimees": 348,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.4,
+   "rechauffeur_duree_s": 8.2,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -121,12 +112,12 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 44,
+    "head_200": 39,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "choisi_fixe": 8,
-    "reprise_403": 1,
+    "choisi_autre": 9,
+    "choisi_fixe": 6,
+    "reprise_403": 2,
     "matchups_sans_speciaux": 1,
     "sport_vide": 4
    }
@@ -167,78 +158,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Rapid Vienne – Wolfsberger AC",
+     "match": "LKP Motor Lublin – Wisla Plock",
      "source": "Pinnacle",
-     "cote_olybet": 1.22,
-     "cote_reference": 1.252,
-     "ecart_relatif": 0.0255,
+     "cote_olybet": 1.84,
+     "cote_reference": 1.926,
+     "ecart_relatif": 0.0446,
      "aberrant": false
     },
     {
-     "match": "Septemvri Sofia – Lokomotiv Sofia",
-     "source": "Pinnacle",
-     "cote_olybet": 2.95,
-     "cote_reference": 3.13,
-     "ecart_relatif": 0.0575,
-     "aberrant": false
-    },
-    {
-     "match": "Septemvri Sofia – Lokomotiv Sofia",
+     "match": "LKP Motor Lublin – Wisla Plock",
      "source": "PMU",
-     "cote_olybet": 2.95,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0727,
+     "cote_olybet": 1.84,
+     "cote_reference": 1.81,
+     "ecart_relatif": 0.0166,
      "aberrant": false
     },
     {
-     "match": "Botev Plovdiv – Dunav Ruse",
+     "match": "Famalicao – Arouca",
      "source": "Pinnacle",
-     "cote_olybet": 1.37,
-     "cote_reference": 1.41,
-     "ecart_relatif": 0.0282,
+     "cote_olybet": 2.01,
+     "cote_reference": 2.11,
+     "ecart_relatif": 0.0474,
      "aberrant": false
     },
     {
-     "match": "Botev Plovdiv – Dunav Ruse",
+     "match": "Famalicao – Arouca",
      "source": "PMU",
-     "cote_olybet": 1.37,
-     "cote_reference": 1.32,
-     "ecart_relatif": 0.0379,
+     "cote_olybet": 2.01,
+     "cote_reference": 1.91,
+     "ecart_relatif": 0.0524,
      "aberrant": false
     },
     {
-     "match": "Gaziantep FK – Kasimpasa",
+     "match": "AVS Vila das Aves – Vizela",
      "source": "Pinnacle",
-     "cote_olybet": 2.41,
-     "cote_reference": 2.57,
-     "ecart_relatif": 0.0623,
-     "aberrant": false
-    },
-    {
-     "match": "Gaziantep FK – Kasimpasa",
-     "source": "PMU",
-     "cote_olybet": 2.41,
-     "cote_reference": 2.45,
-     "ecart_relatif": 0.0163,
-     "aberrant": false
-    },
-    {
-     "match": "Argesul Pitesti – Dinamo Bucarest",
-     "source": "Pinnacle",
-     "cote_olybet": 3.97,
-     "cote_reference": 4.23,
-     "ecart_relatif": 0.0615,
-     "aberrant": false
-    },
-    {
-     "match": "Argesul Pitesti – Dinamo Bucarest",
-     "source": "PMU",
-     "cote_olybet": 3.97,
-     "cote_reference": 4.1,
-     "ecart_relatif": 0.0317,
+     "cote_olybet": 3.05,
+     "cote_reference": 3.24,
+     "ecart_relatif": 0.0586,
      "aberrant": false
     }
    ],
@@ -250,23 +209,39 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Midtjylland – Ajax Amsterdam",
+     "match": "Aldosivi – River Plate",
      "source": "Pinnacle",
-     "cote_netbet": 2.55,
-     "cote_reference": 2.76,
-     "ecart_relatif": 0.0761,
+     "cote_netbet": 7.0,
+     "cote_reference": 7.27,
+     "ecart_relatif": 0.0371,
      "aberrant": false
     },
     {
-     "match": "Midtjylland – Ajax Amsterdam",
+     "match": "Aldosivi – River Plate",
      "source": "PMU",
-     "cote_netbet": 2.55,
-     "cote_reference": 2.48,
-     "ecart_relatif": 0.0282,
+     "cote_netbet": 7.0,
+     "cote_reference": 7.0,
+     "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Mjallby AIF – Borac Banja Luka",
+     "match": "Gimnasia de La Plata – Belgrano",
+     "source": "Pinnacle",
+     "cote_netbet": 2.15,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0851,
+     "aberrant": false
+    },
+    {
+     "match": "Gimnasia de La Plata – Belgrano",
+     "source": "PMU",
+     "cote_netbet": 2.15,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0138,
+     "aberrant": false
+    },
+    {
+     "match": "Barracas Central – Racing Club",
      "source": "Pinnacle",
      "cote_netbet": 2.1,
      "cote_reference": 2.26,
@@ -274,91 +249,74 @@
      "aberrant": false
     },
     {
-     "match": "Mjallby AIF – Borac Banja Luka",
+     "match": "Barracas Central – Racing Club",
      "source": "PMU",
      "cote_netbet": 2.1,
-     "cote_reference": 2.1,
-     "ecart_relatif": 0.0,
+     "cote_reference": 2.12,
+     "ecart_relatif": 0.0094,
      "aberrant": false
     },
     {
-     "match": "Trabzonspor – Fribourg",
+     "match": "Castellón – Eibar",
      "source": "Pinnacle",
-     "cote_netbet": 2.25,
-     "cote_reference": 2.41,
-     "ecart_relatif": 0.0664,
+     "cote_netbet": 1.5,
+     "cote_reference": 1.61,
+     "ecart_relatif": 0.0682,
      "aberrant": false
     },
     {
-     "match": "Trabzonspor – Fribourg",
+     "match": "Castellón – Eibar",
      "source": "PMU",
-     "cote_netbet": 2.25,
-     "cote_reference": 2.32,
-     "ecart_relatif": 0.0302,
+     "cote_netbet": 1.5,
+     "cote_reference": 1.54,
+     "ecart_relatif": 0.026,
      "aberrant": false
     },
     {
-     "match": "CS U Craiova – Egnatia Rrogozhine",
+     "match": "Ascoli – Palermo FC",
      "source": "Pinnacle",
-     "cote_netbet": 1.31,
-     "cote_reference": 1.42,
-     "ecart_relatif": 0.0776,
+     "cote_netbet": 2.85,
+     "cote_reference": 3.19,
+     "ecart_relatif": 0.1066,
      "aberrant": false
     },
     {
-     "match": "CS U Craiova – Egnatia Rrogozhine",
+     "match": "Ascoli – Palermo FC",
      "source": "PMU",
-     "cote_netbet": 1.31,
-     "cote_reference": 1.32,
-     "ecart_relatif": 0.0076,
-     "aberrant": false
-    },
-    {
-     "match": "FC Copenhague – Iberia",
-     "source": "Pinnacle",
-     "cote_netbet": 1.09,
-     "cote_reference": 1.165,
-     "ecart_relatif": 0.0644,
-     "aberrant": false
-    },
-    {
-     "match": "FC Copenhague – Iberia",
-     "source": "PMU",
-     "cote_netbet": 1.09,
-     "cote_reference": 1.1,
-     "ecart_relatif": 0.0091,
+     "cote_netbet": 2.85,
+     "cote_reference": 2.7,
+     "ecart_relatif": 0.0556,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-05T09:11:53+00:00",
-   "pinnacle_derniere_lecture": "2026-11-05T09:12:06+00:00",
+   "pinnacle_premiere_lecture": "2026-11-05T09:16:36+00:00",
+   "pinnacle_derniere_lecture": "2026-11-05T09:16:46+00:00",
    "books_premiere_lecture": "2026-11-04T19:41:34+00:00",
-   "books_derniere_lecture": "2026-11-05T09:11:44+00:00",
-   "ecart_enveloppe_secondes": 48632.0
+   "books_derniere_lecture": "2026-11-05T09:16:26+00:00",
+   "ecart_enveloppe_secondes": 48912.0
   },
   "historique_cotes": {
-   "lignes": 498
+   "lignes": 343
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 654,
    "a_verifier": 9,
    "non_conforme": 8,
-   "mesures": 25483,
+   "mesures": 26230,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 79331,
-   "mesures": 65689,
+   "ancres": 82101,
+   "mesures": 73408,
    "annotees": 1,
    "figees": 1
   },
@@ -373,16 +331,16 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-11-05T08:17:10+00:00"
+   "dernier_reglement": "2026-11-05T09:12:57+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-05T09:12:52+00:00",
+  "fin": "2026-11-05T09:18:03+00:00",
   "cotes": {
-   "francaises": 72651,
-   "pinnacle": 163550,
-   "polymarket": 14974,
-   "smarkets": 4171,
-   "matchbook": 7945
+   "francaises": 72697,
+   "pinnacle": 129956,
+   "polymarket": 14982,
+   "smarkets": 4129,
+   "matchbook": 7973
   },
   "matchs_francais": 1134,
   "opportunites": 0,
@@ -390,12 +348,6 @@
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-04T17:43:24+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-04T17:48:05+00:00",
    "mode": "complet",
@@ -1592,6 +1544,12 @@
   },
   {
    "debut": "2026-11-05T09:11:43+00:00",
+   "mode": "complet",
+   "opportunites": 0,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-05T09:16:26+00:00",
    "mode": "complet",
    "opportunites": 0,
    "nouveaux_paris": 0
