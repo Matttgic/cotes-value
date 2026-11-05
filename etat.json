@@ -1,18 +1,14 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-05T16:11:33+00:00",
+  "debut": "2026-11-05T16:16:11+00:00",
   "mode": "complet",
   "etapes": {
-   "matchbook": {
-    "secondes": 2.2,
-    "ok": true
-   },
    "olybet": {
-    "secondes": 7.0,
+    "secondes": 4.9,
     "ok": true
    },
    "polymarket": {
-    "secondes": 12.2,
+    "secondes": 7.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,18 +16,26 @@
      "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
+   "matchbook": {
+    "secondes": 8.2,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 22.1,
+    "ok": true
+   },
    "pinnacle": {
-    "secondes": 32.4,
+    "secondes": 34.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 29 matchups : HTTP 403",
      "sport 27 matchups : HTTP 403",
-     "sport 9 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.8,
+    "secondes": 1.7,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -39,11 +43,11 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 41.3,
+    "secondes": 42.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.6,
+    "secondes": 52.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -51,11 +55,7 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 67.3,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 77.1,
+    "secondes": 76.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -63,23 +63,20 @@
     ]
    },
    "smarkets": {
-    "secondes": 30.9,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 2.7,
+    "secondes": 4.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.0,
+    "secondes": 1.6,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.5,
+    "secondes": 0.6,
     "ok": true
    }
   },
@@ -93,32 +90,29 @@
    "ok": true,
    "requetes": 2,
    "erreurs": [],
-   "matchs": 147,
-   "lignes": 7487
+   "matchs": 148,
+   "lignes": 7509
   },
   "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 35969,
+   "sports": [],
+   "requetes": 0,
+   "lignes": 35921,
    "erreurs": [],
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
+   "pause": true,
+   "cache_lignes": 35921,
+   "retard": []
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 898,
-   "age_min_s": 142,
-   "lignes": 139579,
-   "lignes_perimees": 4379,
+   "age_max_s": 863,
+   "age_min_s": 110,
+   "lignes": 140112,
+   "lignes_perimees": 3522,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.3,
+   "rechauffeur_duree_s": 11.9,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -128,13 +122,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 43,
-    "head_403": 3,
-    "ortho_refusee": 3,
-    "choisi_autre": 9,
-    "choisi_fixe": 6,
     "reprise_403": 3,
     "matchups_sans_speciaux": 2,
+    "head_200": 49,
+    "choisi_fixe": 8,
+    "head_403": 2,
+    "ortho_refusee": 2,
+    "choisi_autre": 7,
     "sport_vide": 3
    }
   },
@@ -174,120 +168,89 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Hammarby – Elfsborg",
+     "match": "Argesul Pitesti – Dinamo Bucarest",
      "source": "Pinnacle",
-     "cote_olybet": 1.35,
-     "cote_reference": 1.394,
-     "ecart_relatif": 0.0314,
+     "cote_olybet": 3.97,
+     "cote_reference": 4.23,
+     "ecart_relatif": 0.0615,
      "aberrant": false
     },
     {
-     "match": "Hammarby – Elfsborg",
+     "match": "Argesul Pitesti – Dinamo Bucarest",
      "source": "PMU",
-     "cote_olybet": 1.35,
-     "cote_reference": 1.33,
-     "ecart_relatif": 0.015,
+     "cote_olybet": 3.97,
+     "cote_reference": 4.1,
+     "ecart_relatif": 0.0317,
      "aberrant": false
     },
     {
-     "match": "FC Séville – Alaves",
+     "match": "NK Nafta Lendava – Olimpija Ljubljana",
      "source": "Pinnacle",
-     "cote_olybet": 1.87,
-     "cote_reference": 1.952,
-     "ecart_relatif": 0.0422,
+     "cote_olybet": 4.1,
+     "cote_reference": 4.18,
+     "ecart_relatif": 0.0191,
      "aberrant": false
     },
     {
-     "match": "FC Séville – Alaves",
+     "match": "NK Nafta Lendava – Olimpija Ljubljana",
      "source": "PMU",
-     "cote_olybet": 1.87,
-     "cote_reference": 1.88,
-     "ecart_relatif": 0.0053,
-     "aberrant": false
+     "cote_olybet": 4.1,
+     "cote_reference": 3.55,
+     "ecart_relatif": 0.1549,
+     "aberrant": true
     },
     {
-     "match": "Castellon – Eibar",
+     "match": "Lokomotiva Zagreb – NK Rudeš",
      "source": "Pinnacle",
-     "cote_olybet": 1.54,
-     "cote_reference": 1.61,
-     "ecart_relatif": 0.0434,
+     "cote_olybet": 1.97,
+     "cote_reference": 2.06,
+     "ecart_relatif": 0.0437,
      "aberrant": false
     },
     {
-     "match": "Castellon – Eibar",
+     "match": "Lokomotiva Zagreb – NK Rudeš",
      "source": "PMU",
-     "cote_olybet": 1.54,
-     "cote_reference": 1.54,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 1.97,
+     "cote_reference": 1.77,
+     "ecart_relatif": 0.113,
      "aberrant": false
     },
     {
-     "match": "Toulouse – Strasbourg",
+     "match": "Leverkusen – Marseille",
      "source": "Pinnacle",
-     "cote_olybet": 1.99,
-     "cote_reference": 2.09,
-     "ecart_relatif": 0.0478,
+     "cote_olybet": 1.26,
+     "cote_reference": 1.305,
+     "ecart_relatif": 0.0344,
      "aberrant": false
     },
     {
-     "match": "Toulouse – Strasbourg",
+     "match": "Leverkusen – Marseille",
      "source": "PMU",
-     "cote_olybet": 1.99,
-     "cote_reference": 1.93,
-     "ecart_relatif": 0.0311,
-     "aberrant": false
-    },
-    {
-     "match": "Dijon – Red Star FC",
-     "source": "Pinnacle",
-     "cote_olybet": 2.47,
-     "cote_reference": 2.57,
-     "ecart_relatif": 0.0389,
-     "aberrant": false
-    },
-    {
-     "match": "Dijon – Red Star FC",
-     "source": "PMU",
-     "cote_olybet": 2.47,
-     "cote_reference": 2.45,
-     "ecart_relatif": 0.0082,
+     "cote_olybet": 1.26,
+     "cote_reference": 1.21,
+     "ecart_relatif": 0.0413,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "NK Nafta Lendava – Olimpija Ljubljana",
+     "source": "PMU",
+     "cote_olybet": 4.1,
+     "cote_reference": 3.55,
+     "ecart_relatif": 0.1549,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 10,
    "comparaisons": [
-    {
-     "match": "Lokomotiv Moscou – Rubin Kazan",
-     "source": "Pinnacle",
-     "cote_netbet": 1.91,
-     "cote_reference": 2.16,
-     "ecart_relatif": 0.1157,
-     "aberrant": false
-    },
-    {
-     "match": "Nafta – Olimpija Ljubljana",
-     "source": "Pinnacle",
-     "cote_netbet": 3.75,
-     "cote_reference": 4.18,
-     "ecart_relatif": 0.1029,
-     "aberrant": false
-    },
-    {
-     "match": "Nafta – Olimpija Ljubljana",
-     "source": "PMU",
-     "cote_netbet": 3.75,
-     "cote_reference": 3.55,
-     "ecart_relatif": 0.0563,
-     "aberrant": false
-    },
     {
      "match": "Standard de Liege – Beveren",
      "source": "Pinnacle",
@@ -335,37 +298,70 @@
      "cote_reference": 2.12,
      "ecart_relatif": 0.0613,
      "aberrant": false
+    },
+    {
+     "match": "Atlante – Santos Laguna",
+     "source": "Pinnacle",
+     "cote_netbet": 2.02,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.0942,
+     "aberrant": false
+    },
+    {
+     "match": "Atlante – Santos Laguna",
+     "source": "PMU",
+     "cote_netbet": 2.02,
+     "cote_reference": 1.88,
+     "ecart_relatif": 0.0745,
+     "aberrant": false
+    },
+    {
+     "match": "Willem II – PEC Zwolle",
+     "source": "Pinnacle",
+     "cote_netbet": 2.67,
+     "cote_reference": 2.84,
+     "ecart_relatif": 0.0599,
+     "aberrant": false
+    },
+    {
+     "match": "Willem II – PEC Zwolle",
+     "source": "PMU",
+     "cote_netbet": 2.67,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.0075,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-05T16:11:43+00:00",
-   "pinnacle_derniere_lecture": "2026-11-05T16:12:07+00:00",
+   "pinnacle_premiere_lecture": "2026-11-05T16:12:07+00:00",
+   "pinnacle_derniere_lecture": "2026-11-05T16:16:38+00:00",
    "books_premiere_lecture": "2026-11-04T19:41:34+00:00",
-   "books_derniere_lecture": "2026-11-05T16:11:33+00:00",
-   "ecart_enveloppe_secondes": 73833.0
+   "books_derniere_lecture": "2026-11-05T16:16:11+00:00",
+   "ecart_enveloppe_secondes": 74104.0
   },
   "historique_cotes": {
-   "lignes": 1470
+   "lignes": 934
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 568,
    "a_verifier": 9,
    "non_conforme": 8,
-   "mesures": 28321,
+   "mesures": 29337,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 73256,
-   "mesures": 68669,
-   "annotees": 3,
+   "ancres": 82660,
+   "mesures": 50084,
+   "annotees": 4,
    "figees": 2
   },
   "redecision": {
@@ -382,26 +378,20 @@
    "dernier_reglement": "2026-11-05T15:48:58+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-05T16:13:28+00:00",
+  "fin": "2026-11-05T16:17:42+00:00",
   "cotes": {
-   "francaises": 84965,
-   "pinnacle": 175548,
-   "polymarket": 15718,
+   "francaises": 85230,
+   "pinnacle": 176033,
+   "polymarket": 15769,
    "smarkets": 3054,
-   "matchbook": 7487
+   "matchbook": 7509
   },
-  "matchs_francais": 1164,
-  "opportunites": 2,
+  "matchs_francais": 1158,
+  "opportunites": 3,
   "opportunites_suspectes": 2,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-11-05T00:32:45+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-05T00:37:14+00:00",
    "mode": "complet",
@@ -1601,6 +1591,12 @@
    "mode": "complet",
    "opportunites": 2,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-05T16:16:11+00:00",
+   "mode": "complet",
+   "opportunites": 3,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-11-05T15:48:58+00:00",
