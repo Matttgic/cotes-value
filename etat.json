@@ -1,18 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-06T02:07:47+00:00",
+  "debut": "2026-11-06T02:12:35+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 2.1,
+    "secondes": 2.7,
     "ok": true
    },
    "olybet": {
-    "secondes": 6.7,
+    "secondes": 8.2,
     "ok": true
    },
    "polymarket": {
-    "secondes": 8.3,
+    "secondes": 17.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -21,20 +21,15 @@
     ]
    },
    "pinnacle": {
-    "secondes": 26.3,
+    "secondes": 26.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 9 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403"
+     "sport 9 matchups : HTTP 403"
     ]
    },
-   "betclic_direct": {
-    "secondes": 26.3,
-    "ok": true
-   },
    "unibet_direct": {
-    "secondes": 1.7,
+    "secondes": 1.9,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -42,11 +37,11 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 36.2,
+    "secondes": 35.2,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.5,
+    "secondes": 52.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -54,24 +49,31 @@
     ]
    },
    "winamax_direct": {
-    "secondes": 67.3,
+    "secondes": 72.6,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 75.0,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.3,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 4.9,
+    "secondes": 9.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.1,
+    "secondes": 2.0,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.4,
+    "secondes": 0.5,
     "ok": true
    }
   },
@@ -86,7 +88,7 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 138,
-   "lignes": 6383
+   "lignes": 6447
   },
   "pinnacle_secours": {
    "sports": [],
@@ -103,10 +105,10 @@
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 779,
-   "age_min_s": 12,
-   "lignes": 147909,
-   "lignes_perimees": 1880,
+   "age_max_s": 899,
+   "age_min_s": 69,
+   "lignes": 148099,
+   "lignes_perimees": 454,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": 8.4,
@@ -122,11 +124,11 @@
     "head_200": 36,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 8,
-    "choisi_fixe": 7,
-    "reprise_403": 2,
+    "choisi_autre": 7,
+    "choisi_fixe": 8,
+    "reprise_403": 1,
     "matchups_sans_speciaux": 1,
-    "sport_vide": 3
+    "sport_vide": 4
    }
   },
   "reprise": {
@@ -168,70 +170,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Slask Wroclaw – Piast Gliwice",
+     "match": "Neftchi Bakou – Kapaz",
      "source": "Pinnacle",
-     "cote_olybet": 2.46,
-     "cote_reference": 2.63,
-     "ecart_relatif": 0.0646,
+     "cote_olybet": 1.35,
+     "cote_reference": 1.375,
+     "ecart_relatif": 0.0178,
      "aberrant": false
     },
     {
-     "match": "Slask Wroclaw – Piast Gliwice",
-     "source": "PMU",
-     "cote_olybet": 2.46,
-     "cote_reference": 2.38,
-     "ecart_relatif": 0.0336,
-     "aberrant": false
-    },
-    {
-     "match": "LKP Motor Lublin – Wisla Plock",
+     "match": "Qarabag – Turan Tovuz IK",
      "source": "Pinnacle",
-     "cote_olybet": 1.83,
-     "cote_reference": 1.926,
-     "ecart_relatif": 0.0498,
+     "cote_olybet": 1.5,
+     "cote_reference": 1.524,
+     "ecart_relatif": 0.0155,
      "aberrant": false
     },
     {
-     "match": "LKP Motor Lublin – Wisla Plock",
+     "match": "Qarabag – Turan Tovuz IK",
      "source": "PMU",
-     "cote_olybet": 1.83,
+     "cote_olybet": 1.5,
+     "cote_reference": 1.5,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Braunschweig – Energie Cottbus",
+     "source": "Pinnacle",
+     "cote_olybet": 1.86,
+     "cote_reference": 1.99,
+     "ecart_relatif": 0.0654,
+     "aberrant": false
+    },
+    {
+     "match": "Braunschweig – Energie Cottbus",
+     "source": "PMU",
+     "cote_olybet": 1.86,
      "cote_reference": 1.81,
-     "ecart_relatif": 0.011,
-     "aberrant": false
-    },
-    {
-     "match": "Korona Kielce – RKS Radomiak Radom",
-     "source": "Pinnacle",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.667,
-     "ecart_relatif": 0.04,
-     "aberrant": false
-    },
-    {
-     "match": "Korona Kielce – RKS Radomiak Radom",
-     "source": "PMU",
-     "cote_olybet": 1.6,
-     "cote_reference": 1.64,
-     "ecart_relatif": 0.0244,
-     "aberrant": false
-    },
-    {
-     "match": "Hammarby – Elfsborg",
-     "source": "Pinnacle",
-     "cote_olybet": 1.36,
-     "cote_reference": 1.41,
-     "ecart_relatif": 0.0353,
-     "aberrant": false
-    },
-    {
-     "match": "Hammarby – Elfsborg",
-     "source": "PMU",
-     "cote_olybet": 1.36,
-     "cote_reference": 1.33,
-     "ecart_relatif": 0.0226,
+     "ecart_relatif": 0.0276,
      "aberrant": false
     }
    ],
@@ -240,118 +218,110 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Shimizu S-Pulse – Tokyo Verdy",
+     "match": "Kuressaare – Nomme Utd",
      "source": "Pinnacle",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.37,
-     "ecart_relatif": 0.0928,
+     "cote_netbet": 2.85,
+     "cote_reference": 3.14,
+     "ecart_relatif": 0.0924,
      "aberrant": false
     },
     {
-     "match": "Shimizu S-Pulse – Tokyo Verdy",
+     "match": "Kuressaare – Nomme Utd",
      "source": "PMU",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0539,
+     "cote_netbet": 2.85,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0364,
      "aberrant": false
     },
     {
-     "match": "Nagoya Grampus – Kyoto Sanga FC",
+     "match": "Levadia Tallinn – Nomme Kalju",
      "source": "Pinnacle",
-     "cote_netbet": 1.73,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0747,
+     "cote_netbet": 1.61,
+     "cote_reference": 1.725,
+     "ecart_relatif": 0.0665,
      "aberrant": false
     },
     {
-     "match": "Nagoya Grampus – Kyoto Sanga FC",
+     "match": "Levadia Tallinn – Nomme Kalju",
      "source": "PMU",
-     "cote_netbet": 1.73,
-     "cote_reference": 1.78,
-     "ecart_relatif": 0.0281,
+     "cote_netbet": 1.61,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0063,
      "aberrant": false
     },
     {
-     "match": "Yokohama F.Marinos – Fagiano Okayama",
+     "match": "Paide Linnameeskond – Flora Tallin",
      "source": "Pinnacle",
-     "cote_netbet": 2.35,
-     "cote_reference": 2.5,
-     "ecart_relatif": 0.06,
+     "cote_netbet": 2.42,
+     "cote_reference": 2.63,
+     "ecart_relatif": 0.0798,
      "aberrant": false
     },
     {
-     "match": "Yokohama F.Marinos – Fagiano Okayama",
+     "match": "Paide Linnameeskond – Flora Tallin",
      "source": "PMU",
-     "cote_netbet": 2.35,
-     "cote_reference": 2.4,
-     "ecart_relatif": 0.0208,
+     "cote_netbet": 2.42,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.0122,
      "aberrant": false
     },
     {
-     "match": "Avispa Fukuoka – V-Varen Nagasaki",
+     "match": "Zemun – IMT Novi Beograd",
      "source": "Pinnacle",
-     "cote_netbet": 1.88,
-     "cote_reference": 2.12,
-     "ecart_relatif": 0.1132,
+     "cote_netbet": 4.9,
+     "cote_reference": 5.41,
+     "ecart_relatif": 0.0943,
      "aberrant": false
     },
     {
-     "match": "Avispa Fukuoka – V-Varen Nagasaki",
+     "match": "Zemun – IMT Novi Beograd",
      "source": "PMU",
-     "cote_netbet": 1.88,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.033,
-     "aberrant": false
-    },
-    {
-     "match": "FC Tokyo – Kashima Antlers",
-     "source": "Pinnacle",
-     "cote_netbet": 1.88,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.06,
-     "aberrant": false
-    },
-    {
-     "match": "FC Tokyo – Kashima Antlers",
-     "source": "PMU",
-     "cote_netbet": 1.88,
-     "cote_reference": 1.94,
-     "ecart_relatif": 0.0309,
-     "aberrant": false
+     "cote_netbet": 4.9,
+     "cote_reference": 4.1,
+     "ecart_relatif": 0.1951,
+     "aberrant": true
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Zemun – IMT Novi Beograd",
+     "source": "PMU",
+     "cote_netbet": 4.9,
+     "cote_reference": 4.1,
+     "ecart_relatif": 0.1951,
+     "aberrant": true
+    }
+   ]
   },
   "fraicheur_prematch": {
    "pinnacle_premiere_lecture": "2026-11-06T01:59:21+00:00",
-   "pinnacle_derniere_lecture": "2026-11-06T02:08:06+00:00",
+   "pinnacle_derniere_lecture": "2026-11-06T02:12:56+00:00",
    "books_premiere_lecture": "2026-11-06T00:53:29+00:00",
-   "books_derniere_lecture": "2026-11-06T02:07:47+00:00",
-   "ecart_enveloppe_secondes": 4477.0
+   "books_derniere_lecture": "2026-11-06T02:12:35+00:00",
+   "ecart_enveloppe_secondes": 4767.0
   },
   "historique_cotes": {
-   "lignes": 166
+   "lignes": 677
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 566,
    "a_verifier": 9,
    "non_conforme": 8,
-   "mesures": 27944,
+   "mesures": 28133,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 92824,
-   "mesures": 24957,
+   "ancres": 94474,
+   "mesures": 22068,
    "annotees": 0,
    "figees": 0
   },
@@ -369,26 +339,20 @@
    "dernier_reglement": "2026-11-06T02:04:46+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-06T02:09:04+00:00",
+  "fin": "2026-11-06T02:14:29+00:00",
   "cotes": {
-   "francaises": 102149,
-   "pinnacle": 184197,
-   "polymarket": 18254,
-   "smarkets": 2917,
-   "matchbook": 6383
+   "francaises": 102261,
+   "pinnacle": 184387,
+   "polymarket": 18261,
+   "smarkets": 2899,
+   "matchbook": 6447
   },
-  "matchs_francais": 1339,
+  "matchs_francais": 1342,
   "opportunites": 6,
-  "opportunites_suspectes": 1,
+  "opportunites_suspectes": 2,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-05T10:26:40+00:00",
-   "mode": "complet",
-   "opportunites": 0,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-05T10:31:19+00:00",
    "mode": "complet",
@@ -1585,6 +1549,12 @@
   },
   {
    "debut": "2026-11-06T02:07:47+00:00",
+   "mode": "complet",
+   "opportunites": 6,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-06T02:12:35+00:00",
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 0
