@@ -32,6 +32,9 @@ def _depot(tmp_path):
     subprocess.run(["bash", str(SD.RACINE / "scripts/cloner_donnees.sh"), f"file://{nu}", str(d)], check=True,
                    capture_output=True)
     assert SD.preparer(d, "jeton-inutile")
+    # Le clone applique par défaut la fenêtre de la date réelle. Repositionne l'extraction sur la date
+    # déterministe du test avant d'écrire les fichiers de cette journée.
+    SD.rafraichir_extraction(d, T, None)
     return nu, d
 
 
