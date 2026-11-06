@@ -88,8 +88,11 @@ const observationInterface=new MutationObserver(() => {
 observationInterface.observe(document.querySelector('main'),{childList:true,subtree:true});
 
 function actualiserFraicheur() {
-  const debut=D.etat?.dernier_cycle?.debut, age=minutes(debut);
+  const cycle=D.etat?.dernier_cycle;
+  const instant=cycle?.fin || cycle?.debut;
+  const age=minutes(instant);
   const info=document.getElementById('fraicheur');
+  if(!info) return;
   info.textContent=age==null ? 'En attente d’un relevé' : age<1 ? 'Relevé à l’instant' : `Relevé il y a ${age} min`;
   info.classList.toggle('ancien',age!=null && age>15);
 }
@@ -131,8 +134,8 @@ async function bandeauAlerte() {
   try {
     const o=((await (await fetch('ordres.json',{cache:'no-store'})).json()).ordres||[]).find(x=>x.id===id);
     if(o) {
-      const lien=o.lien?`<a class="btn" href="${e(o.lien)}" target="_blank" rel="noopener noreferrer">${o.lien_repli?'Page du sport chez '+e(o.bookmaker)+' › (match à chercher)':'Ouvrir le match chez '+e(o.bookmaker)+' ›'}</a>`:`<small>Pas de lien : chercher « ${e(o.recherche)} »</small>`;
-      html=`<b>${e(o.domicile)} – ${e(o.exterieur)}</b><span>${e(o.pari)} · cote ${cote(o.cote_relevee)} chez ${e(o.bookmaker)}</span><small>Jouer seulement si la cote reste ≥ ${cote(o.cote_min)} · mise ${e(typeof miseMode!=='undefined' && miseMode==='kelly' && o.mise_kelly ? o.mise_kelly : o.mise)} € · avant ${hm(o.expire_le)}</small>${lien}`;
+      const lien=o.lien?`<a class="btn" href="${e(o.lien)}" target="_blank" rel="noopener noreferrer">${o.lien_repli?'Page du sport chez '+e(o.bookmaker)+' › (match à chercher)':'Ouvrir le match chez '+e(o.bookmaker)+' ›'}</a>`:'';
+      html=`<b>${e(o.domicile)} – ${e(o.exterieur)}</b><span>${e(o.pari)} · cote ${cote(o.cote_relevee)} chez ${e(o.bookmaker)}</span><small>Jouer seulement si la cote reste ≥ ${cote(o.cote_min)} · ${hm(o.envoi_le)} · ${e(o.bookmaker)}.</small>${lien}`;
     }
   } catch {html='<b>Alerte indisponible</b><small>Réessayez dans un instant.</small>';}
   const div=document.createElement('div');div.className='bandeau-alerte';div.innerHTML=html;place.prepend(div);
@@ -144,8 +147,8 @@ function initialiserInterface() {
   const r=D.rapidite || {}, min=x=>x==null?'—':x<10?x.toFixed(1).replace('.',',')+' min':Math.round(x)+' min';
   document.getElementById('notif-rapidite').innerHTML=[
     ['Envoi après lecture du prix',r.envoi_median_s==null?'—':r.envoi_median_s<90?'≈ '+Math.round(r.envoi_median_s)+' s':min(r.envoi_median_s/60),r.envoi_median_s==null?'':'pos'],
-    ['Écart habituel entre deux relevés',min(r.ecart_median_min),''],
-    ['Relevés espacés de plus de 8 min',r.releves?`${r.ecarts_plus_8_min} sur ${r.releves}`:'—',r.ecarts_plus_8_min?'neg':''],
+    ['Écart habituel entre deux relevés',min(r.ecart_median_min),'' ],
+    ['Relevés espacés de plus de 8 min',r.releves?`${r.ecarts_plus_8_min} sur ${r.releves}`:'—',r.ecarts_plus_8_min?'neg':'' ],
     ['Plus long trou',min(r.plus_long_trou_min),r.plus_long_trou_min>15?'neg':'']
   ].map(([t,v,c])=>`<div class="notif-mesure"><span>${t}</span><b class="${c}">${e(v)}</b></div>`).join('');
   document.getElementById('notif-dernieres').innerHTML=(r.dernieres || []).length?r.dernieres.map(a=>
@@ -153,7 +156,8 @@ function initialiserInterface() {
     :'<p class="aide notif-vide">Aucune alerte envoyée récemment.</p>';
   const diagnostics=D.diagnostic_alertes || [];
   document.getElementById('notif-diagnostic').innerHTML=diagnostics.length?diagnostics.slice().reverse().map(c=>
-    `<p>Demande ${quand(c.envoi_demande_le)} · ${(c.alertes || []).length} signal(s) préparé(s) · ${c.resultat?.sent || 0} notification(s) acceptée(s) par le service Push${c.resultat?.ok===false?' · envoi en erreur':''}.</p>`).join(''):'<p>Aucun diagnostic d’envoi disponible pour les anciennes alertes.</p>';
+    `<p>Demande ${quand(c.envoi_demande_le)} · ${(c.alertes || []).length} signal(s) préparé(s) · ${c.resultat?.sent || 0} notification(s) acceptée(s) par le service Push${c.resultat?.ok===false?' · en erreur':''}</p>`).join('')
+    :'<p class="aide">Aucune alerte enregistrée.</p>';
   setInterval(()=>{
     actualiserHoraires();
     if(document.querySelector('.onglet.actif')?.id!=='o-paris' || !document.getElementById('paris-horaire').value) return;
