@@ -1,28 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-07T16:18:49+00:00",
+  "debut": "2026-11-07T16:23:27+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.7,
+    "secondes": 3.0,
     "ok": true
    },
-   "winamax_direct": {
-    "secondes": 4.1,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau (CurlError 22)",
-     "connexion impossible (CurlError 22)",
-     "lecture vide"
-    ]
-   },
    "olybet": {
-    "secondes": 7.1,
+    "secondes": 8.4,
     "ok": true
    },
    "polymarket": {
-    "secondes": 19.2,
+    "secondes": 19.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -32,25 +22,27 @@
     ]
    },
    "pinnacle": {
-    "secondes": 30.2,
+    "secondes": 21.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 matchups : HTTP 403",
-     "sport 26 matchups : HTTP 403",
-     "sport 9 matchups : HTTP 403"
+     "sport 26 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.7,
+    "secondes": 1.9,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
+   "betclic_direct": {
+    "secondes": 48.1,
+    "ok": true
+   },
    "pmu_direct": {
-    "secondes": 51.1,
+    "secondes": 49.7,
     "ok": true
    },
    "netbet": {
@@ -61,28 +53,25 @@
      "budget"
     ]
    },
-   "betclic_direct": {
-    "secondes": 60.2,
+   "winamax_direct": {
+    "secondes": 64.3,
     "ok": true
    },
    "smarkets": {
-    "secondes": 29.6,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 24.0,
+    "secondes": 22.5,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.6,
+    "secondes": 3.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.1,
+    "secondes": 1.2,
     "ok": true
    }
   },
@@ -96,20 +85,31 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 389,
-   "lignes": 14947
+   "matchs": 383,
+   "lignes": 14989
+  },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 35564,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 35564,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 885,
-   "age_min_s": 54,
-   "lignes": 154165,
-   "lignes_perimees": 4540,
+   "age_max_s": 894,
+   "age_min_s": 132,
+   "lignes": 154089,
+   "lignes_perimees": 27892,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.0,
+   "rechauffeur_duree_s": 8.1,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -122,11 +122,11 @@
     "head_200": 39,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 11,
-    "choisi_fixe": 3,
-    "reprise_403": 3,
-    "matchups_sans_speciaux": 3,
-    "sport_vide": 6
+    "choisi_autre": 5,
+    "choisi_fixe": 9,
+    "reprise_403": 1,
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 4
    }
   },
   "reprise": {
@@ -165,54 +165,46 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Vissel Kobe – Urawa  Red Diamonds",
-     "source": "Pinnacle",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0673,
-     "aberrant": false
-    },
-    {
-     "match": "Vissel Kobe – Urawa  Red Diamonds",
+     "match": "TSV Hartberg – Rheindorf Altach",
      "source": "PMU",
-     "cote_olybet": 2.08,
-     "cote_reference": 1.94,
-     "ecart_relatif": 0.0722,
+     "cote_olybet": 2.25,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0426,
      "aberrant": false
     },
     {
-     "match": "Machida Zelvia – Sanfrecce Hiroshima",
+     "match": "Ried – LASK Linz",
      "source": "Pinnacle",
-     "cote_olybet": 2.71,
-     "cote_reference": 2.96,
-     "ecart_relatif": 0.0845,
+     "cote_olybet": 5.3,
+     "cote_reference": 6.21,
+     "ecart_relatif": 0.1465,
      "aberrant": false
     },
     {
-     "match": "Machida Zelvia – Sanfrecce Hiroshima",
+     "match": "Ried – LASK Linz",
      "source": "PMU",
-     "cote_olybet": 2.71,
-     "cote_reference": 2.5,
-     "ecart_relatif": 0.084,
+     "cote_olybet": 5.3,
+     "cote_reference": 5.6,
+     "ecart_relatif": 0.0536,
      "aberrant": false
     },
     {
-     "match": "Gamba Osaka – Cerezo Osaka",
+     "match": "WSG Tirol – Austria Vienne",
      "source": "Pinnacle",
-     "cote_olybet": 2.17,
-     "cote_reference": 2.31,
-     "ecart_relatif": 0.0606,
+     "cote_olybet": 2.55,
+     "cote_reference": 2.75,
+     "ecart_relatif": 0.0727,
      "aberrant": false
     },
     {
-     "match": "Gamba Osaka – Cerezo Osaka",
-     "source": "PMU",
-     "cote_olybet": 2.17,
-     "cote_reference": 2.25,
-     "ecart_relatif": 0.0356,
+     "match": "Sabah FK – Shamakhi FK",
+     "source": "Pinnacle",
+     "cote_olybet": 1.22,
+     "cote_reference": 1.243,
+     "ecart_relatif": 0.0183,
      "aberrant": false
     }
    ],
@@ -224,116 +216,117 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Brighton – Brentford",
+     "match": "Atlas – Pachuca",
      "source": "Pinnacle",
-     "cote_netbet": 1.83,
-     "cote_reference": 1.909,
-     "ecart_relatif": 0.0414,
+     "cote_netbet": 2.27,
+     "cote_reference": 2.52,
+     "ecart_relatif": 0.0992,
      "aberrant": false
     },
     {
-     "match": "Brighton – Brentford",
+     "match": "Atlas – Pachuca",
      "source": "PMU",
-     "cote_netbet": 1.83,
-     "cote_reference": 1.8,
-     "ecart_relatif": 0.0167,
+     "cote_netbet": 2.27,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0558,
      "aberrant": false
     },
     {
-     "match": "Crystal Palace – Liverpool",
+     "match": "Deportivo Toluca – Monterrey",
      "source": "Pinnacle",
-     "cote_netbet": 5.3,
-     "cote_reference": 5.83,
-     "ecart_relatif": 0.0909,
+     "cote_netbet": 1.52,
+     "cote_reference": 1.694,
+     "ecart_relatif": 0.1029,
      "aberrant": false
     },
     {
-     "match": "Crystal Palace – Liverpool",
+     "match": "Deportivo Toluca – Monterrey",
      "source": "PMU",
-     "cote_netbet": 5.3,
-     "cote_reference": 5.2,
-     "ecart_relatif": 0.0192,
+     "cote_netbet": 1.52,
+     "cote_reference": 1.45,
+     "ecart_relatif": 0.0483,
      "aberrant": false
     },
     {
-     "match": "Ipswich Town – Bournemouth",
+     "match": "Tigres UANL – Cruz Azul",
      "source": "Pinnacle",
-     "cote_netbet": 3.5,
-     "cote_reference": 4.09,
-     "ecart_relatif": 0.1443,
+     "cote_netbet": 3.2,
+     "cote_reference": 3.48,
+     "ecart_relatif": 0.0805,
      "aberrant": false
     },
     {
-     "match": "Ipswich Town – Bournemouth",
+     "match": "Tigres UANL – Cruz Azul",
      "source": "PMU",
-     "cote_netbet": 3.5,
-     "cote_reference": 3.7,
-     "ecart_relatif": 0.0541,
+     "cote_netbet": 3.2,
+     "cote_reference": 3.1,
+     "ecart_relatif": 0.0323,
      "aberrant": false
     },
     {
-     "match": "Sunderland – Chelsea",
+     "match": "Pumas UNAM – Club América",
      "source": "Pinnacle",
-     "cote_netbet": 3.55,
-     "cote_reference": 3.81,
-     "ecart_relatif": 0.0682,
+     "cote_netbet": 2.97,
+     "cote_reference": 3.27,
+     "ecart_relatif": 0.0917,
      "aberrant": false
     },
     {
-     "match": "Sunderland – Chelsea",
+     "match": "Pumas UNAM – Club América",
      "source": "PMU",
-     "cote_netbet": 3.55,
-     "cote_reference": 3.5,
-     "ecart_relatif": 0.0143,
+     "cote_netbet": 2.97,
+     "cote_reference": 2.88,
+     "ecart_relatif": 0.0312,
      "aberrant": false
     },
     {
-     "match": "Manchester United – Aston Villa",
+     "match": "Querétaro – Puebla",
      "source": "Pinnacle",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0327,
+     "cote_netbet": 1.67,
+     "cote_reference": 1.813,
+     "ecart_relatif": 0.0789,
      "aberrant": false
     },
     {
-     "match": "Manchester United – Aston Villa",
+     "match": "Querétaro – Puebla",
      "source": "PMU",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.0,
+     "cote_netbet": 1.67,
+     "cote_reference": 1.62,
+     "ecart_relatif": 0.0309,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-07T16:19:00+00:00",
-   "pinnacle_derniere_lecture": "2026-11-07T16:19:16+00:00",
+   "pinnacle_premiere_lecture": "2026-11-07T16:10:07+00:00",
+   "pinnacle_derniere_lecture": "2026-11-07T16:23:45+00:00",
    "books_premiere_lecture": "2026-11-06T16:48:58+00:00",
-   "books_derniere_lecture": "2026-11-07T16:18:50+00:00",
-   "ecart_enveloppe_secondes": 84618.0
+   "books_derniere_lecture": "2026-11-07T16:23:28+00:00",
+   "ecart_enveloppe_secondes": 84887.0
   },
   "historique_cotes": {
-   "lignes": 1661
+   "lignes": 1309
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 563,
    "a_verifier": 9,
    "non_conforme": 8,
-   "mesures": 46855,
+   "mesures": 62088,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 183677,
-   "mesures": 84656,
-   "annotees": 21,
-   "figees": 6
+   "ancres": 198754,
+   "mesures": 79689,
+   "annotees": 18,
+   "figees": 3
   },
   "redecision": {
    "ajoutees": 0
@@ -346,29 +339,23 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-11-07T15:25:58+00:00"
+   "dernier_reglement": "2026-11-07T16:20:59+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-07T16:20:54+00:00",
+  "fin": "2026-11-07T16:25:09+00:00",
   "cotes": {
-   "francaises": 155594,
-   "pinnacle": 154165,
-   "polymarket": 33369,
+   "francaises": 207280,
+   "pinnacle": 189653,
+   "polymarket": 33368,
    "smarkets": 3524,
-   "matchbook": 14947
+   "matchbook": 14989
   },
-  "matchs_francais": 2353,
-  "opportunites": 25,
-  "opportunites_suspectes": 40,
-  "nouveaux_paris": 0
+  "matchs_francais": 2863,
+  "opportunites": 22,
+  "opportunites_suspectes": 33,
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-11-07T00:51:48+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-07T00:56:32+00:00",
    "mode": "complet",
@@ -1568,6 +1555,12 @@
    "mode": "complet",
    "opportunites": 25,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-07T16:23:27+00:00",
+   "mode": "complet",
+   "opportunites": 22,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-11-07T16:20:59+00:00",
