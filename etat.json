@@ -1,33 +1,35 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-07T20:32:07+00:00",
+  "debut": "2026-11-07T20:36:42+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 4.0,
+    "secondes": 3.7,
     "ok": true
    },
    "olybet": {
-    "secondes": 11.3,
+    "secondes": 10.7,
     "ok": true
    },
-   "pinnacle": {
-    "secondes": 23.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 9 matchups : HTTP 403",
-     "marché rejeté : cotes ou issues incohérentes"
-    ]
-   },
    "polymarket": {
-    "secondes": 28.3,
+    "secondes": 25.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
      "prix bid/ask invalides"
     ]
+   },
+   "pinnacle": {
+    "secondes": 26.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 26 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "marché rejeté : cotes ou issues incohérentes"
+    ],
+    "reprise": 14
    },
    "unibet_direct": {
     "secondes": 1.9,
@@ -37,24 +39,24 @@
      "accueil HTTP 403"
     ]
    },
-   "pmu_direct": {
-    "secondes": 48.1,
-    "ok": true
-   },
    "netbet": {
-    "secondes": 52.2,
+    "secondes": 52.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "pmu_direct": {
+    "secondes": 54.3,
+    "ok": true
+   },
    "winamax_direct": {
-    "secondes": 64.9,
+    "secondes": 58.6,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 77.6,
+    "secondes": 77.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -62,16 +64,19 @@
     ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 21.8,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 16.7,
+    "secondes": 16.1,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.5,
+    "secondes": 3.4,
     "ok": true
    },
    "cotes_cloture": {
@@ -89,17 +94,17 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 263,
-   "lignes": 13794
+   "matchs": 265,
+   "lignes": 13882
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 823,
-   "age_min_s": 21,
-   "lignes": 117389,
-   "lignes_perimees": 66,
+   "age_max_s": 843,
+   "age_min_s": 125,
+   "lignes": 117375,
+   "lignes_perimees": 2472,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": 8.2,
@@ -112,18 +117,20 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
-    "choisi_fixe": 7,
-    "head_403": 2,
+    "head_200": 29,
+    "choisi_fixe": 9,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "reprise_403": 1,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 5
+    "choisi_autre": 3,
+    "reprise_403": 2,
+    "sport_vide": 4
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Pinnacle": {
+    "rugby_league": 14
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -159,54 +166,22 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Daejeon Citizen FC – Incheon United",
+     "match": "FK Transinvest – FK Kauno Zalgiris",
      "source": "Pinnacle",
-     "cote_olybet": 1.98,
-     "cote_reference": 2.09,
-     "ecart_relatif": 0.0526,
+     "cote_olybet": 2.1,
+     "cote_reference": 2.21,
+     "ecart_relatif": 0.0498,
      "aberrant": false
     },
     {
-     "match": "Daejeon Citizen FC – Incheon United",
+     "match": "FK Transinvest – FK Kauno Zalgiris",
      "source": "PMU",
-     "cote_olybet": 1.98,
-     "cote_reference": 2.02,
-     "ecart_relatif": 0.0198,
-     "aberrant": false
-    },
-    {
-     "match": "Gangwon FC – Jeonbuk Motors",
-     "source": "Pinnacle",
-     "cote_olybet": 2.26,
-     "cote_reference": 2.4,
+     "cote_olybet": 2.1,
+     "cote_reference": 2.23,
      "ecart_relatif": 0.0583,
-     "aberrant": false
-    },
-    {
-     "match": "Gangwon FC – Jeonbuk Motors",
-     "source": "PMU",
-     "cote_olybet": 2.26,
-     "cote_reference": 2.3,
-     "ecart_relatif": 0.0174,
-     "aberrant": false
-    },
-    {
-     "match": "Bucheon 1995 – Pohang Steelers",
-     "source": "Pinnacle",
-     "cote_olybet": 2.89,
-     "cote_reference": 3.12,
-     "ecart_relatif": 0.0737,
-     "aberrant": false
-    },
-    {
-     "match": "Bucheon 1995 – Pohang Steelers",
-     "source": "PMU",
-     "cote_olybet": 2.89,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.0367,
      "aberrant": false
     },
     {
@@ -240,6 +215,22 @@
      "cote_reference": 4.0,
      "ecart_relatif": 0.1875,
      "aberrant": true
+    },
+    {
+     "match": "Dila Gori – Dinamo Tbilissi",
+     "source": "PMU",
+     "cote_olybet": 2.5,
+     "cote_reference": 2.43,
+     "ecart_relatif": 0.0288,
+     "aberrant": false
+    },
+    {
+     "match": "Nacional Madeira – Academico Viseu",
+     "source": "Pinnacle",
+     "cote_olybet": 2.77,
+     "cote_reference": 3.0,
+     "ecart_relatif": 0.0767,
+     "aberrant": false
     }
    ],
    "aberrants": [
@@ -259,101 +250,109 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "Hapoel Be'er Sheva – Hapoel Tel Aviv",
+     "match": "NK Brinje Grosuplje – NK Aluminij",
      "source": "Pinnacle",
-     "cote_netbet": 2.15,
-     "cote_reference": 2.31,
-     "ecart_relatif": 0.0693,
+     "cote_netbet": 2.25,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.0816,
      "aberrant": false
     },
     {
-     "match": "Renaissance Zmamra – Widad Temara",
-     "source": "Pinnacle",
-     "cote_netbet": 2.17,
-     "cote_reference": 2.32,
-     "ecart_relatif": 0.0647,
-     "aberrant": false
-    },
-    {
-     "match": "FAR de Rabat – Difaâ d'El Jadida",
-     "source": "Pinnacle",
-     "cote_netbet": 1.32,
-     "cote_reference": 1.372,
-     "ecart_relatif": 0.0377,
-     "aberrant": false
-    },
-    {
-     "match": "FAR de Rabat – Difaâ d'El Jadida",
+     "match": "NK Brinje Grosuplje – NK Aluminij",
      "source": "PMU",
-     "cote_netbet": 1.32,
-     "cote_reference": 1.32,
+     "cote_netbet": 2.25,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0227,
+     "aberrant": false
+    },
+    {
+     "match": "Radomlje – NK CM Celje",
+     "source": "Pinnacle",
+     "cote_netbet": 4.4,
+     "cote_reference": 4.85,
+     "ecart_relatif": 0.0928,
+     "aberrant": false
+    },
+    {
+     "match": "Radomlje – NK CM Celje",
+     "source": "PMU",
+     "cote_netbet": 4.4,
+     "cote_reference": 4.4,
      "ecart_relatif": 0.0,
      "aberrant": false
     },
     {
-     "match": "Raja de Casablanca – Ittihad de Tanger",
+     "match": "Carrarese – Sampdoria",
      "source": "Pinnacle",
-     "cote_netbet": 1.62,
-     "cote_reference": 1.714,
-     "ecart_relatif": 0.055,
+     "cote_netbet": 2.3,
+     "cote_reference": 2.52,
+     "ecart_relatif": 0.0873,
      "aberrant": false
     },
     {
-     "match": "Raja de Casablanca – Ittihad de Tanger",
+     "match": "Carrarese – Sampdoria",
      "source": "PMU",
-     "cote_netbet": 1.62,
-     "cote_reference": 1.68,
-     "ecart_relatif": 0.0357,
+     "cote_netbet": 2.3,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0213,
      "aberrant": false
     },
     {
-     "match": "Bochum – Karlsruher",
+     "match": "Vicenza – Cremonese",
      "source": "Pinnacle",
-     "cote_netbet": 1.67,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.0823,
-     "aberrant": false
+     "cote_netbet": 2.7,
+     "cote_reference": 3.21,
+     "ecart_relatif": 0.1589,
+     "aberrant": true
     },
     {
-     "match": "Bochum – Karlsruher",
+     "match": "Vicenza – Cremonese",
      "source": "PMU",
-     "cote_netbet": 1.67,
-     "cote_reference": 1.75,
-     "ecart_relatif": 0.0457,
+     "cote_netbet": 2.7,
+     "cote_reference": 2.45,
+     "ecart_relatif": 0.102,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Vicenza – Cremonese",
+     "source": "Pinnacle",
+     "cote_netbet": 2.7,
+     "cote_reference": 3.21,
+     "ecart_relatif": 0.1589,
+     "aberrant": true
+    }
+   ]
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-07T20:32:18+00:00",
-   "pinnacle_derniere_lecture": "2026-11-07T20:32:26+00:00",
+   "pinnacle_premiere_lecture": "2026-11-07T20:32:22+00:00",
+   "pinnacle_derniere_lecture": "2026-11-07T20:37:01+00:00",
    "books_premiere_lecture": "2026-11-06T16:48:58+00:00",
-   "books_derniere_lecture": "2026-11-07T20:32:08+00:00",
-   "ecart_enveloppe_secondes": 99808.0
+   "books_derniere_lecture": "2026-11-07T20:36:43+00:00",
+   "ecart_enveloppe_secondes": 100083.0
   },
   "historique_cotes": {
-   "lignes": 1314
+   "lignes": 1006
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 567,
    "a_verifier": 12,
    "non_conforme": 8,
-   "mesures": 53734,
+   "mesures": 53527,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 168901,
-   "mesures": 104741,
-   "annotees": 22,
-   "figees": 7
+   "ancres": 167929,
+   "mesures": 135192,
+   "annotees": 28,
+   "figees": 8
   },
   "redecision": {
    "ajoutees": 0
@@ -369,26 +368,20 @@
    "dernier_reglement": "2026-11-07T20:05:56+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-07T20:33:54+00:00",
+  "fin": "2026-11-07T20:38:50+00:00",
   "cotes": {
-   "francaises": 160155,
+   "francaises": 159866,
    "pinnacle": 117389,
-   "polymarket": 33065,
-   "smarkets": 3337,
-   "matchbook": 13794
+   "polymarket": 33117,
+   "smarkets": 3512,
+   "matchbook": 13882
   },
-  "matchs_francais": 2191,
-  "opportunites": 30,
+  "matchs_francais": 2189,
+  "opportunites": 29,
   "opportunites_suspectes": 26,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-07T05:07:34+00:00",
-   "mode": "complet",
-   "opportunites": 11,
-   "nouveaux_paris": 1
-  },
   {
    "debut": "2026-11-07T05:12:21+00:00",
    "mode": "complet",
@@ -1587,6 +1580,12 @@
    "debut": "2026-11-07T20:32:07+00:00",
    "mode": "complet",
    "opportunites": 30,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-07T20:36:42+00:00",
+   "mode": "complet",
+   "opportunites": 29,
    "nouveaux_paris": 0
   }
  ],
