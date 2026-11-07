@@ -1,77 +1,89 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-07T09:44:49+00:00",
+  "debut": "2026-11-07T09:49:30+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 5.4,
+    "secondes": 5.7,
     "ok": true
    },
    "olybet": {
-    "secondes": 13.5,
+    "secondes": 14.6,
     "ok": true
    },
-   "pinnacle": {
-    "secondes": 24.6,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "sport 9 matchups : HTTP 403"
-    ]
-   },
    "polymarket": {
-    "secondes": 28.4,
-    "ok": true,
+    "secondes": 30.0,
+    "ok": false,
+    "erreur": "budget dépassé",
     "degrade": true,
     "erreurs": [
      "liste d'événements tronquée (plafond de pagination)",
      "prix bid/ask invalides",
+     "prix lu après le coup d'envoi : rejet pré-match",
      "1N2 incomplet ou issues dupliquées : référence rejetée"
+    ],
+    "reprise": 37775
+   },
+   "pinnacle": {
+    "secondes": 36.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 27 matchups : HTTP 403",
+     "sport 26 matchups : HTTP 403",
+     "sport 9 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 2.0,
+    "secondes": 1.8,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
-   "pmu_direct": {
-    "secondes": 48.4,
-    "ok": true
-   },
    "netbet": {
-    "secondes": 52.2,
+    "secondes": 52.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
+   "pmu_direct": {
+    "secondes": 58.6,
+    "ok": true
+   },
    "betclic_direct": {
-    "secondes": 57.6,
+    "secondes": 63.9,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 75.4,
-    "ok": true
+    "secondes": 76.5,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.4,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 28.6,
+    "secondes": 60.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 2.4,
+    "secondes": 4.5,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.3,
+    "secondes": 1.5,
     "ok": true
    }
   },
@@ -86,19 +98,19 @@
    "requetes": 4,
    "erreurs": [],
    "matchs": 463,
-   "lignes": 21367
+   "lignes": 21271
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 868,
-   "age_min_s": 80,
-   "lignes": 194030,
-   "lignes_perimees": 706,
+   "age_max_s": 826,
+   "age_min_s": 51,
+   "lignes": 193980,
+   "lignes_perimees": 402,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.6,
+   "rechauffeur_duree_s": 9.5,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -108,18 +120,32 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 39,
-    "choisi_fixe": 11,
+    "head_200": 41,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 4,
-    "reprise_403": 1,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 4
+    "choisi_autre": 7,
+    "choisi_fixe": 8,
+    "reprise_403": 3,
+    "matchups_sans_speciaux": 3,
+    "sport_vide": 5
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Polymarket": {
+    "hockey": 366,
+    "football": 30240,
+    "football_americain": 4740,
+    "basket": 1496,
+    "cricket": 32,
+    "tennis_de_table": 570,
+    "tennis": 142,
+    "autre": 16,
+    "baseball": 2,
+    "rugby": 19,
+    "mma": 96,
+    "volley": 56
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -146,7 +172,7 @@
    "plus_chez_les_references": []
   },
   "betclic_proches": {
-   "proches": 23,
+   "proches": 24,
    "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 0
@@ -157,83 +183,83 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Rosenborg – IK Start",
+     "match": "Eyupspor – Kocaelispor",
      "source": "Pinnacle",
-     "cote_olybet": 1.2,
-     "cote_reference": 1.248,
-     "ecart_relatif": 0.0385,
+     "cote_olybet": 3.94,
+     "cote_reference": 4.43,
+     "ecart_relatif": 0.1106,
      "aberrant": false
     },
     {
-     "match": "Rosenborg – IK Start",
+     "match": "Eyupspor – Kocaelispor",
      "source": "PMU",
-     "cote_olybet": 1.2,
-     "cote_reference": 1.21,
-     "ecart_relatif": 0.0083,
+     "cote_olybet": 3.94,
+     "cote_reference": 3.65,
+     "ecart_relatif": 0.0795,
      "aberrant": false
     },
     {
-     "match": "Tromso – FK Bodo/Glimt",
+     "match": "Corum FK – Fenerbahçe",
      "source": "Pinnacle",
-     "cote_olybet": 6.8,
-     "cote_reference": 7.88,
-     "ecart_relatif": 0.1371,
+     "cote_olybet": 4.2,
+     "cote_reference": 4.56,
+     "ecart_relatif": 0.0789,
      "aberrant": false
     },
     {
-     "match": "Tromso – FK Bodo/Glimt",
+     "match": "Corum FK – Fenerbahçe",
      "source": "PMU",
-     "cote_olybet": 6.8,
-     "cote_reference": 6.1,
-     "ecart_relatif": 0.1148,
+     "cote_olybet": 4.2,
+     "cote_reference": 4.0,
+     "ecart_relatif": 0.05,
      "aberrant": false
     },
     {
-     "match": "HamKam – Sarpsborg 08",
+     "match": "Caykur Rizespor – Erzurumspor FK",
      "source": "Pinnacle",
-     "cote_olybet": 2.78,
-     "cote_reference": 2.99,
-     "ecart_relatif": 0.0702,
+     "cote_olybet": 1.84,
+     "cote_reference": 1.935,
+     "ecart_relatif": 0.0489,
      "aberrant": false
     },
     {
-     "match": "HamKam – Sarpsborg 08",
+     "match": "Caykur Rizespor – Erzurumspor FK",
      "source": "PMU",
-     "cote_olybet": 2.78,
-     "cote_reference": 2.9,
-     "ecart_relatif": 0.0414,
+     "cote_olybet": 1.84,
+     "cote_reference": 1.88,
+     "ecart_relatif": 0.0213,
      "aberrant": false
     },
     {
-     "match": "Viking – KFUM Oslo",
+     "match": "Alanyaspor – Trabzonspor",
      "source": "Pinnacle",
-     "cote_olybet": 1.19,
-     "cote_reference": 1.22,
-     "ecart_relatif": 0.0244,
+     "cote_olybet": 4.6,
+     "cote_reference": 5.06,
+     "ecart_relatif": 0.0909,
      "aberrant": false
     },
     {
-     "match": "Viking – KFUM Oslo",
+     "match": "Alanyaspor – Trabzonspor",
      "source": "PMU",
-     "cote_olybet": 1.19,
-     "cote_reference": 1.18,
-     "ecart_relatif": 0.0085,
+     "cote_olybet": 4.6,
+     "cote_reference": 4.35,
+     "ecart_relatif": 0.0575,
      "aberrant": false
     },
     {
-     "match": "Lillestrom – Aalesunds",
+     "match": "Besiktas – Genclerbirligi",
      "source": "Pinnacle",
-     "cote_olybet": 1.74,
-     "cote_reference": 1.82,
-     "ecart_relatif": 0.0438,
+     "cote_olybet": 1.17,
+     "cote_reference": 1.194,
+     "ecart_relatif": 0.0203,
      "aberrant": false
     },
     {
-     "match": "Lillestrom – Aalesunds",
+     "match": "Besiktas – Genclerbirligi",
      "source": "PMU",
-     "cote_olybet": 1.74,
-     "cote_reference": 1.73,
-     "ecart_relatif": 0.0058,
+     "cote_olybet": 1.17,
+     "cote_reference": 1.17,
+     "ecart_relatif": 0.0,
      "aberrant": false
     }
    ],
@@ -245,101 +271,100 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "Cesena – Catanzaro",
+     "match": "Malaga – Racing Santander",
      "source": "Pinnacle",
-     "cote_netbet": 1.9,
-     "cote_reference": 2.09,
-     "ecart_relatif": 0.0909,
+     "cote_netbet": 2.25,
+     "cote_reference": 2.46,
+     "ecart_relatif": 0.0854,
      "aberrant": false
     },
     {
-     "match": "Cesena – Catanzaro",
+     "match": "Malaga – Racing Santander",
      "source": "PMU",
-     "cote_netbet": 1.9,
-     "cote_reference": 1.9,
-     "ecart_relatif": 0.0,
+     "cote_netbet": 2.25,
+     "cote_reference": 2.28,
+     "ecart_relatif": 0.0132,
      "aberrant": false
     },
     {
-     "match": "Juve Stabia – Arezzo",
+     "match": "Osasuna – Athletic Bilbao",
      "source": "Pinnacle",
-     "cote_netbet": 1.65,
-     "cote_reference": 1.833,
-     "ecart_relatif": 0.1,
+     "cote_netbet": 3.45,
+     "cote_reference": 3.91,
+     "ecart_relatif": 0.1176,
      "aberrant": false
     },
     {
-     "match": "Juve Stabia – Arezzo",
+     "match": "Osasuna – Athletic Bilbao",
      "source": "PMU",
-     "cote_netbet": 1.65,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0312,
+     "cote_netbet": 3.45,
+     "cote_reference": 3.35,
+     "ecart_relatif": 0.0299,
      "aberrant": false
     },
     {
-     "match": "Padova – Empoli",
+     "match": "Elche – Betis",
      "source": "Pinnacle",
-     "cote_netbet": 2.0,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0826,
+     "cote_netbet": 3.2,
+     "cote_reference": 3.46,
+     "ecart_relatif": 0.0751,
      "aberrant": false
     },
     {
-     "match": "Padova – Empoli",
+     "match": "Elche – Betis",
      "source": "PMU",
-     "cote_netbet": 2.0,
-     "cote_reference": 1.93,
-     "ecart_relatif": 0.0363,
+     "cote_netbet": 3.2,
+     "cote_reference": 3.05,
+     "ecart_relatif": 0.0492,
      "aberrant": false
     },
     {
-     "match": "Mantova – Hellas Vérone",
+     "match": "Real Sociedad – Rayo Vallecano",
      "source": "Pinnacle",
-     "cote_netbet": 2.4,
-     "cote_reference": 2.73,
-     "ecart_relatif": 0.1209,
+     "cote_netbet": 1.61,
+     "cote_reference": 1.725,
+     "ecart_relatif": 0.0665,
      "aberrant": false
     },
     {
-     "match": "Mantova – Hellas Vérone",
+     "match": "Real Sociedad – Rayo Vallecano",
      "source": "PMU",
-     "cote_netbet": 2.4,
-     "cote_reference": 2.33,
-     "ecart_relatif": 0.03,
+     "cote_netbet": 1.61,
+     "cote_reference": 1.65,
+     "ecart_relatif": 0.0242,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-07T09:44:59+00:00",
-   "pinnacle_derniere_lecture": "2026-11-07T09:45:09+00:00",
+   "pinnacle_premiere_lecture": "2026-11-07T09:49:43+00:00",
+   "pinnacle_derniere_lecture": "2026-11-07T09:49:59+00:00",
    "books_premiere_lecture": "2026-11-06T16:48:58+00:00",
-   "books_derniere_lecture": "2026-11-07T09:44:49+00:00",
-   "ecart_enveloppe_secondes": 60971.0
+   "books_derniere_lecture": "2026-11-07T09:49:31+00:00",
+   "ecart_enveloppe_secondes": 61261.0
   },
   "historique_cotes": {
-   "lignes": 749
+   "lignes": 2008
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 563,
    "a_verifier": 9,
    "non_conforme": 8,
-   "mesures": 68007,
+   "mesures": 68455,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 253715,
-   "mesures": 184556,
-   "annotees": 40,
-   "figees": 17
+   "ancres": 248776,
+   "mesures": 170987,
+   "annotees": 39,
+   "figees": 15
   },
   "redecision": {
    "ajoutees": 0
@@ -354,27 +379,21 @@
    "saute": true,
    "dernier_reglement": "2026-11-07T08:56:34+00:00"
   },
-  "controle_publie": true,
-  "fin": "2026-11-07T09:46:44+00:00",
+  "controle_publie": false,
+  "fin": "2026-11-07T09:52:23+00:00",
   "cotes": {
-   "francaises": 221635,
-   "pinnacle": 194030,
+   "francaises": 220730,
+   "pinnacle": 193980,
    "polymarket": 37775,
-   "smarkets": 4116,
-   "matchbook": 21367
+   "smarkets": 4128,
+   "matchbook": 21271
   },
-  "matchs_francais": 3124,
-  "opportunites": 22,
-  "opportunites_suspectes": 50,
-  "nouveaux_paris": 5
+  "matchs_francais": 3003,
+  "opportunites": 25,
+  "opportunites_suspectes": 48,
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-06T18:17:25+00:00",
-   "mode": "complet",
-   "opportunites": 5,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-06T18:22:04+00:00",
    "mode": "complet",
@@ -1574,11 +1593,17 @@
    "mode": "complet",
    "opportunites": 22,
    "nouveaux_paris": 5
+  },
+  {
+   "debut": "2026-11-07T09:49:30+00:00",
+   "mode": "complet",
+   "opportunites": 25,
+   "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-11-07T08:56:34+00:00",
+ "dernier_reglement": "2026-11-07T09:52:30+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-11-07T08:56:34+00:00",
+  "debut": "2026-11-07T09:52:30+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_volley": {
@@ -1586,7 +1611,7 @@
     "ok": true
    },
    "resultats_espn_basket": {
-    "secondes": 1.0,
+    "secondes": 0.6,
     "ok": true
    },
    "resultats_espn_baseball": {
@@ -1601,8 +1626,16 @@
     "secondes": 0.0,
     "ok": true
    },
+   "resultats_espn_football": {
+    "secondes": 0.2,
+    "ok": true
+   },
    "resultats_livescore_basket": {
     "secondes": 1.3,
+    "ok": true
+   },
+   "resultats_livescore_football": {
+    "secondes": 0.7,
     "ok": true
    },
    "resultats_nhl_officiel": {
@@ -1610,32 +1643,40 @@
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 3.9,
+    "secondes": 3.3,
     "ok": true
    },
    "resultats_flashscore_basket": {
-    "secondes": 4.0,
+    "secondes": 3.7,
     "ok": true
    },
    "resultats_flashscore_baseball": {
-    "secondes": 1.5,
+    "secondes": 3.0,
     "ok": true
    },
    "resultats_flashscore_rugby": {
-    "secondes": 1.6,
+    "secondes": 0.5,
     "ok": true
    },
    "resultats_flashscore_handball": {
     "secondes": 1.1,
     "ok": true
    },
+   "resultats_flashscore_football": {
+    "secondes": 6.8,
+    "ok": true
+   },
    "resultats_thesportsdb": {
-    "secondes": 2.4,
+    "secondes": 16.3,
     "ok": true
    },
    "resultats_theodds": {
-    "secondes": 0.0,
-    "ok": true
+    "secondes": 0.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "compte 1 : HTTP 401"
+    ]
    },
    "resultats_propline": {
     "secondes": 0.0,
@@ -1644,7 +1685,7 @@
   },
   "reglement": true,
   "thesportsdb": {
-   "appels": 2,
+   "appels": 8,
    "trouves": 1,
    "cle_publique": true
   },
@@ -1656,12 +1697,14 @@
    "matchs_valides": 0,
    "paris_compatibles": 0,
    "conflits": 0,
-   "erreurs": [],
+   "erreurs": [
+    "compte 1 : HTTP 401"
+   ],
    "couverture": {
     "marche_non_couvert": 4,
-    "competition_non_couverte": 17,
-    "deja_valide": 0,
-    "trop_recent": 3,
+    "competition_non_couverte": 15,
+    "deja_valide": 4,
+    "trop_recent": 1,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1706,10 +1749,10 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "deja_valide": 0,
+    "deja_valide": 4,
     "marche_non_couvert": 4,
-    "competition_non_couverte": 17,
-    "trop_recent": 3,
+    "competition_non_couverte": 15,
+    "trop_recent": 1,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1717,8 +1760,8 @@
    "requetes_jour": 0
   },
   "resultats": {
-   "enregistrements": 2232,
-   "matchs_valides": 0,
+   "enregistrements": 3878,
+   "matchs_valides": 3,
    "reportes": 0,
    "non_regles": [
     {
@@ -1740,26 +1783,6 @@
      "retenues": [],
      "raison": "aucune source",
      "validation_apres": null
-    },
-    {
-     "match_id": "pmu|1029707107",
-     "match": "Samsung Lions – KT Wiz Suwon",
-     "sport": "baseball",
-     "debut": "2026-11-06T09:30:00Z",
-     "sources": {
-      "flashscore": {
-       "score": [
-        5,
-        1
-       ],
-       "periodes": []
-      }
-     },
-     "retenues": [
-      "flashscore"
-     ],
-     "raison": "source unique : délai de validation automatique",
-     "validation_apres": "2026-11-07T09:30:00+00:00"
     },
     {
      "match_id": "pmu|1028412684",
@@ -1926,15 +1949,19 @@
      "validation_apres": "2026-11-07T20:00:00+00:00"
     }
    ],
-   "paris_en_attente": 21,
-   "paris_regles": 0,
-   "selections_en_attente": 21,
+   "paris_en_attente": 19,
+   "paris_regles": 4,
+   "selections_en_attente": 19,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
-   "sources_reglement": {}
+   "sources_reglement": {
+    "flashscore": 3,
+    "espn": 1,
+    "livescore": 2
+   }
   },
-  "fin": "2026-11-07T08:56:52+00:00"
+  "fin": "2026-11-07T09:53:15+00:00"
  },
  "echecs_recents": {
   "total": 0,
