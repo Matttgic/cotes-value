@@ -29,6 +29,7 @@ from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REG
                               attendu_et_variance, courbe, evaluer, heure, resume, selectionner, suivi_futur)
 from cotes.mises import METHODES as METHODES_MISE, comparer as comparer_mises  # noqa: E402
 from cotes.securite import json_public
+from cotes.protection import calculer, proteger_strategies  # noqa: E402
 from cotes import notifications as notifications_mod  # noqa: E402
 from cotes import ordres as ordres_mod  # noqa: E402
 
@@ -377,12 +378,12 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         assert resultat["regle"]["id"] == regle.id
         historique = [index[x] for x in resultat.get("ids_selections", []) if x in index
                       and id(index[x]) in passe_ids]
-        enregistrer(regle.id, historique, selectionner(futur, regle, DEBUT_SUIVI))
+        enregistrer(regle.id, historique, calculer(regle.id, lambda: selectionner(futur, regle, DEBUT_SUIVI), list))
 
     # Une sélection calculée une fois, pas une fois par fiche. Les paris observés
     # hors période gardent leur place dans les plafonds journaliers des rejeux.
     historiques = {
-        "Claude (rejeu)": {id(p) for p in claude_rejouee(observes)},
+        "Claude (rejeu)": calculer("Claude (rejeu)", lambda: {id(p) for p in claude_rejouee(observes)}),
         "ChatGPT v1 (rejeu)": paris_chatgpt(observes, depuis=DEBUT_ETUDE),
         "Gemini Argon v1 (rejeu)": paris_gemini(observes, depuis=DEBUT_ETUDE),
         "JULES EDGE v1 (rejeu)": paris_jules(observes, depuis=DEBUT_ETUDE),
@@ -520,10 +521,11 @@ def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees
 
 
 def construire(donnees: Path, sortie: Path) -> Path:
-    """Site complet. Les sélections de la vue à mises fixes servent aussi à la vue Kelly (cotes/memo.py)."""
+    """Site complet. Les sélections de la vue à mises fixes servent aussi à la vue Kelly (cotes/memo.py).
+    Chaque stratégie est isolée (cotes/protection.py) : une erreur la vide sans arrêter le site."""
     from cotes.memo import memoriser_selections
-    with memoriser_selections():
-        return _construire(donnees, sortie)
+    with memoriser_selections(), proteger_strategies() as echecs_strategies:
+        return _construire(donnees, sortie, echecs_strategies)
 
 
 def retirer_places_libres(labo: dict) -> None:
@@ -536,7 +538,7 @@ def retirer_places_libres(labo: dict) -> None:
                 bloc.pop(nom, None)
 
 
-def _construire(donnees: Path, sortie: Path) -> Path:
+def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = None) -> Path:
     charger_fusions(donnees)          # fusions automatiques déjà créées (recommandees.json)
     paris = fusionner_paris(_lire(donnees / "paris.json", []), lire_archives(donnees))
     journal_alertes = _lire(donnees / "notifications_diagnostic.json", {"cycles": []})
@@ -603,7 +605,7 @@ def _construire(donnees: Path, sortie: Path) -> Path:
                            and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)]
                 for r in manquantes:
                     laboratoire["courbes"].setdefault(r.id, {})["futur"] = courbe(
-                        selectionner(suivies, r, DEBUT_SUIVI), maintenant)
+                        calculer(r.id, lambda: selectionner(suivies, r, DEBUT_SUIVI), list), maintenant)
             gemini_ids = paris_gemini(paris)
             jules_ids = paris_jules(paris)
             jules_v2_ids = paris_jules_v2(paris)
@@ -746,6 +748,9 @@ def _construire(donnees: Path, sortie: Path) -> Path:
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
+    if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
+        from cotes import echecs
+        echecs.fusionner(etat, list(echecs_strategies.values()), datetime.now(timezone.utc))
     donnees_json = json_public(data)
     flux_alertes = notifications_mod.flux(actuelles, paris, retenus)
     alertes_json = json_public(flux_alertes)
