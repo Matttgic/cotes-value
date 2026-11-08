@@ -36,6 +36,7 @@ from cotes.direct import pmu as pmu_direct  # noqa: E402
 from cotes.direct import unibet as unibet_direct  # noqa: E402
 from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes.direct import matchbook as matchbook_direct  # noqa: E402
+from cotes.direct import betfair as betfair_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
@@ -63,6 +64,7 @@ BUDGETS = {
     "betclic_direct": 80,
     "smarkets": 60,
     "matchbook": 25,
+    "betfair": 45,          # catalogue relu toutes les 10 min (~50 appels) ; sinon prix seuls, 30 appels au plus
 }
 SMARKETS_FRAIS_MIN = 15
 _journal_lock = threading.Lock()
@@ -220,21 +222,30 @@ def appliquer_matchbook(sports: set, heures: float, maintenant: datetime, journa
     ou une exception coupent ce lecteur seulement. Le résumé va dans le journal,
     donc dans ``etat.json`` ; aucun corps de réponse n'y est copié.
     """
-    actif = matchbook_direct.mode()
+    return _appliquer_bourse(matchbook_direct, "matchbook", sports, heures, maintenant, journal)
+
+
+def appliquer_betfair(sports: set, heures: float, maintenant: datetime, journal: dict):
+    """Betfair Exchange (``SOURCE_BETFAIR`` ; ``off`` par défaut hors serveur, l'IP de GitHub est refusée).
+    Mêmes règles que Matchbook : ``shadow`` ne renvoie rien, un refus ou un budget ne coupent que ce lecteur."""
+    return _appliquer_bourse(betfair_direct, "betfair", sports, heures, maintenant, journal)
+
+
+def _appliquer_bourse(module, cle: str, sports: set, heures: float, maintenant: datetime, journal: dict):
+    actif = module.mode()
     if actif == "off":
-        journal["etapes"]["matchbook"] = {"secondes": 0.0, "ok": True, "desactive": True}
-        journal["matchbook"] = {"mode": "off", "ok": True, "requetes": 0, "erreurs": [],
-                                "matchs": 0, "lignes": 0, "desactive": True}
+        journal["etapes"][cle] = {"secondes": 0.0, "ok": True, "desactive": True}
+        journal[cle] = {"mode": "off", "ok": True, "requetes": 0, "erreurs": [],
+                        "matchs": 0, "lignes": 0, "desactive": True}
         return []
-    recu = source_bornee(matchbook_direct, "matchbook", journal, BUDGETS["matchbook"],
-                         matchbook_direct.collecter, sports, heures, maintenant=maintenant)
+    recu = source_bornee(module, cle, journal, BUDGETS[cle], module.collecter, sports, heures, maintenant=maintenant)
     if not isinstance(recu, tuple) or len(recu) != 2:
         info = {"mode": actif, "ok": False, "requetes": 0, "erreurs": ["lecture interrompue"],
                 "matchs": 0, "lignes": 0}
-        journal["matchbook"] = info
-        signaler(journal, "matchbook", info["erreurs"])
-        if "matchbook" in journal["etapes"]:
-            journal["etapes"]["matchbook"]["ok"] = False
+        journal[cle] = info
+        signaler(journal, cle, info["erreurs"])
+        if cle in journal["etapes"]:
+            journal["etapes"][cle]["ok"] = False
         return []
     lignes, info = recu
     if not isinstance(lignes, list):
@@ -242,15 +253,15 @@ def appliquer_matchbook(sports: set, heures: float, maintenant: datetime, journa
     resume = {"mode": info.get("mode", actif), "ok": bool(info.get("ok")),
               "requetes": info.get("requetes") or 0, "erreurs": list(info.get("erreurs") or [])[:10],
               "matchs": info.get("matchs") or 0, "lignes": len(lignes)}
-    journal["matchbook"] = resume
+    journal[cle] = resume
     # Résumé pour la page Santé : n'altère pas les lignes, ni cote_perimee, ni les sélecteurs.
-    journal["matchbook_fraicheur"] = resume_lignes(lignes)
-    signaler(journal, "matchbook", resume["erreurs"])
-    if not resume["ok"] and "matchbook" in journal["etapes"]:
-        journal["etapes"]["matchbook"]["ok"] = False
+    journal[f"{cle}_fraicheur"] = resume_lignes(lignes)
+    signaler(journal, cle, resume["erreurs"])
+    if not resume["ok"] and cle in journal["etapes"]:
+        journal["etapes"][cle]["ok"] = False
     if actif != "direct":
-        if "matchbook" in journal["etapes"]:
-            journal["etapes"]["matchbook"]["shadow"] = True
+        if cle in journal["etapes"]:
+            journal["etapes"][cle]["shadow"] = True
         return []
     return lignes
 
@@ -876,8 +887,11 @@ def main() -> int:
     # Matchbook ne dépend d'aucune autre source (sports fixes) : lu dès le départ, en parallèle de la collecte,
     # au lieu d'attendre Pinnacle, les bookmakers français puis Smarkets. Son résultat n'est lu qu'au même endroit.
     sports_mb = {"football"} if args.mode == "test" else {"football", "tennis"}
-    pool_mb = ThreadPoolExecutor(max_workers=1, thread_name_prefix="matchbook")
+    pool_mb = ThreadPoolExecutor(max_workers=2, thread_name_prefix="bourses")
     futur_mb = pool_mb.submit(appliquer_matchbook, sports_mb, 12 if args.mode == "test" else HORIZON_H,
+                              maintenant, journal)
+    # Betfair, même logique (sports fixes, aucune dépendance) ; éteint hors serveur
+    futur_bf = pool_mb.submit(appliquer_betfair, sports_mb, 12 if args.mode == "test" else HORIZON_H,
                               maintenant, journal)
     pool_mb.shutdown(wait=False)
     pin, poly, francais = collecter_prematch(args.mode, maintenant, journal, donnees,
@@ -903,6 +917,16 @@ def main() -> int:
         mb_lignes = []
     if mb_lignes:
         references["Matchbook"] = mb_lignes
+    try:
+        bf_lignes = futur_bf.result()
+    except Exception as e:  # noqa: BLE001 - appliquer_betfair ne lève pas ; garde-fou
+        journal["betfair"] = {"mode": betfair_direct.mode(), "ok": False, "requetes": 0,
+                              "erreurs": [type(e).__name__], "matchs": 0, "lignes": 0}
+        bf_lignes = []
+    if bf_lignes:
+        # Référence sharp attendue par les stratégies (Pinnacle, Betfair, Polymarket) et le Consensus, comme
+        # avant la fin du flux Orbit. Hors du contrôle de conformité des intitulés, comme les autres bourses.
+        references["Betfair"] = bf_lignes
     # Matchbook a sa table de paris (mêmes seuils que Pinnacle). Il reste hors
     # de la moyenne : le Consensus et le désaccord des tables déjà en place
     # ne changent pas, donc les stratégies figées non plus.
@@ -913,7 +937,7 @@ def main() -> int:
     #    Le contrôle reste celui des références déjà en place : Smarkets a sa table,
     #    pas une nouvelle mesure de conformité.
     index = etape("association", journal, comparaison.indexer, francais, references) or {}
-    index_controle = {n: v for n, v in index.items() if n not in ("Smarkets", "Matchbook")}
+    index_controle = {n: v for n, v in index.items() if n not in ("Smarkets", "Matchbook", "Betfair")}
     mesures = controle.mesurer(francais, index_controle)
     etat_controle = controle.mettre_a_jour(lire_controle(donnees), mesures, journal["debut"])
     suspects = controle.matchs_suspects(mesures)
@@ -979,7 +1003,8 @@ def main() -> int:
     journal.update({
         "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "cotes": {"francaises": len(francais), "pinnacle": len(pin), "polymarket": len(poly),
-                  "smarkets": len(sm_lignes), "matchbook": len(mb_lignes)},
+                  "smarkets": len(sm_lignes), "matchbook": len(mb_lignes),
+                  "betfair": len(bf_lignes)},
         "matchs_francais": len({l["match_id"] for l in francais}),
         "opportunites": sum(not o.get("suspect") for o in opportunites),
         "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),

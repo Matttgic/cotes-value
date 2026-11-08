@@ -169,3 +169,36 @@ def test_evenements_trouves_secours():
     assert bf.evenements_trouves({"results": [{"values": [{"key": {"eventId": 36241102}},
                                                           {"key": {"eventId": "36267103"}}]}]}) == ["36241102", "36267103"]
     assert bf.evenements_trouves(None) == []
+
+
+def test_cycle_betfair_eteint_hors_serveur(monkeypatch):
+    from scripts import cycle
+    monkeypatch.delenv("SOURCE_BETFAIR", raising=False)
+    monkeypatch.delenv("SERVEUR_DIRECT", raising=False)
+    journal = {"etapes": {}}
+    assert cycle.appliquer_betfair({"football"}, 36, AVANT, journal) == []
+    assert journal["etapes"]["betfair"]["desactive"] is True and journal["betfair"]["mode"] == "off"
+
+
+def test_cycle_betfair_direct_et_shadow(monkeypatch):
+    from scripts import cycle
+    lu = [{"marche": "RESULTAT_1N2", "issue": "DOM", "proba_juste": 0.2}]
+    monkeypatch.setattr(bf, "collecter", lambda *a, **k: (lu, {"ok": True, "requetes": 1, "erreurs": [],
+                                                              "matchs": 1, "mode": bf.mode()}))
+    monkeypatch.setenv("SOURCE_BETFAIR", "direct")
+    journal = {"etapes": {}}
+    assert cycle.appliquer_betfair({"football"}, 36, AVANT, journal) == lu
+    assert journal["betfair"]["lignes"] == 1 and journal["betfair"]["ok"] is True
+    monkeypatch.setenv("SOURCE_BETFAIR", "shadow")
+    journal = {"etapes": {}}
+    assert cycle.appliquer_betfair({"football"}, 36, AVANT, journal) == []
+    assert journal["etapes"]["betfair"]["shadow"] is True
+
+
+def test_cycle_betfair_lance_au_depart_et_hors_controle():
+    import inspect
+    from scripts import cycle
+    src = inspect.getsource(cycle.main)
+    assert src.index("futur_bf = pool_mb.submit(appliquer_betfair") < src.index("collecter_prematch(args.mode")
+    assert src.index('references["Betfair"] = bf_lignes') < src.index("comparaison.indexer")
+    assert '"Matchbook", "Betfair")' in src                 # pas dans le contrôle de conformité
