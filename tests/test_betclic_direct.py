@@ -428,6 +428,8 @@ def test_match_proche_lecture_ratee_est_relancee_dans_le_meme_passage():
     lignes, meta, n = _passe_proche(m1["reserve"], 5, (b"", 500), (_top(TOTAL), 200), (MI_TEMPS, 200))
     assert meta["proches"]["relances"] == 1 and meta["proches"]["proches_non_lus"] == 0
     assert all(l["collecte"].startswith("2026-10-18T12:05") for l in lignes if not l.get("onglet"))   # cotes neuves
+    cles = [(l.get("match_id"), l.get("cle_marche"), l.get("issue"), l.get("periode"), l.get("ligne")) for l in lignes]
+    assert len(cles) == len(set(cles))                                              # la relance remplace, elle n'ajoute pas
 
 
 def test_match_proche_sans_reponse_garde_les_anciennes_cotes_avec_leur_age_reel():

@@ -339,6 +339,7 @@ assert.ok(h("sante-cotes").includes("Refus (403) sur 2 requêtes") && h("sante-c
 assert.ok(h("sante-cotes").includes("Lu normalement") && !h("sante-cotes").includes("PulseScore"));
 assert.ok(h("sante-cotes").includes("Pinnacle · secours (pinnodds, PinBook)") && h("sante-cotes").includes("Pinnacle en retard (football) · 120 cotes · 2 sports"));
 assert.ok(h("sante-cotes").includes("Pinnacle · fraîcheur") && h("sante-cotes").includes("En retard : cotes de 11 à 15 min, toutes écartées (limite 10 min)"));
+assert.ok(h("sante-cotes").includes("âge du cache HTTP, pas l'heure du dernier prix"));
 assert.equal(ligneFraicheurPinnacle({seuil_min:10,lignes:10,lignes_perimees:0,age_min_s:30,age_max_s:240}).includes("Cotes de 1 à 4 min (limite 10 min)"), true);
 assert.ok(ligneFraicheurPinnacle({seuil_min:10,lignes:200,lignes_perimees:50,age_max_s:700}).includes("25 % des cotes écartées"));
 assert.ok(ligneFraicheurPinnacle({seuil_min:10,seuil_loin_min:16,proche_h:2,lignes:200,lignes_perimees:2,age_max_s:700})
@@ -365,6 +366,21 @@ assert.ok(!le.includes("ancien"));
 const vieux=ligneEchecs({total:4,liste:[ech.liste[0]]}, t0);
 assert.ok(vieux.includes("sante-mot-ok") && vieux.includes("4 depuis le début du suivi"), vieux);
 assert.ok(ligneEchecs(undefined, t0).includes("sante-mot-ok"));
+D.etat.dernier_cycle.etapes.matchbook = {ok:true, desactive:true};
+rendreSante(t0);
+assert.ok(!h("sante-cotes").includes("Matchbook"));
+D.etat.dernier_cycle.etapes.matchbook = {ok:true};
+D.etat.dernier_cycle.matchbook_fraicheur = {lignes:4, source_connue:0, source_inconnue:4, source_invalide:0};
+rendreSante(t0);
+assert.ok(h("sante-cotes").includes("Heure du dernier prix inconnue (4 cotes)"));
+assert.ok(h("sante-cotes").includes("n'est pas un âge de cotation"));
+D.etat.dernier_cycle.matchbook_fraicheur = {lignes:4, source_connue:3, source_inconnue:1, source_invalide:0, mouvement_min_s:0, mouvement_max_s:7200};
+rendreSante(t0);
+assert.ok(h("sante-cotes").includes("Dernier mouvement de prix : 0 à 120 min"));
+assert.ok(h("sante-cotes").includes("Une cote inchangée n'est pas périmée"));
+D.etat.dernier_cycle.etapes.matchbook = {ok:true, shadow:true};
+rendreSante(t0);
+assert.ok(h("sante-cotes").includes("Lecture seule, hors comparaison"));
 ''')
 
 

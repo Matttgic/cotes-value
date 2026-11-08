@@ -51,7 +51,7 @@ Le secours ne lit que toutes les 30 minutes (offre gratuite). Entre deux lecture
 
 ## Second secours : PinBook (offre gratuite)
 
-`PINBOOK_API_KEY` (secret GitHub, clé de l'offre gratuite « PinBook Odds » sur RapidAPI : 550 requêtes par mois) ajoute PinBook **derrière** pinnodds. Il ne sert que pour les sports restés sans ligne fraîche (ni lecture, ni cache de moins de 10 minutes), parmi `PINBOOK_SPORTS` (football, tennis, basket par défaut), au plus `PINBOOK_LIMITE_JOUR` requêtes par jour (16) et `PINBOOK_PAUSE_MIN` minutes entre deux lectures (60). La fraîcheur vient de `last_call` : une réponse plus vieille que ce même seuil donne des lignes marquées périmées. Les lignes portent `origine: pinbook`.
+`PINBOOK_API_KEY` (secret GitHub, clé de l'offre gratuite « PinBook Odds » sur RapidAPI : 550 requêtes par mois) ajoute PinBook **derrière** pinnodds. Il ne sert que pour les sports restés sans ligne fraîche (ni lecture, ni cache de moins de 10 minutes), parmi `PINBOOK_SPORTS` (football, tennis, basket par défaut), au plus `PINBOOK_LIMITE_JOUR` requêtes par jour (16) et `PINBOOK_PAUSE_MIN` minutes entre deux lectures (60). La fraîcheur vient de `last_call` (secondes Unix, horloge du cycle) : une réponse plus vieille que le seuil, ou un `last_call` futur ou illisible, donne des lignes marquées périmées, jamais un âge zéro. Un `X-Data-Age-Ms` négatif est inconnu, pas zéro. Les lignes portent `origine: pinbook`.
 
 Mesures du 19/10/2026 pendant la maintenance de l'API invitée de Pinnacle : football 360 matchs à moins de 36 h, tennis 156, basket 79, données vieilles de quelques secondes.
 

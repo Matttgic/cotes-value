@@ -45,6 +45,7 @@ from cotes import echecs  # noqa: E402
 from cotes.ecriture import ajouter_gzip  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
+from cotes.fraicheur import resume_lignes  # noqa: E402
 from cotes.temps import instant_utc  # noqa: E402
 
 HORIZON_H = 36
@@ -242,6 +243,8 @@ def appliquer_matchbook(sports: set, heures: float, maintenant: datetime, journa
               "requetes": info.get("requetes") or 0, "erreurs": list(info.get("erreurs") or [])[:10],
               "matchs": info.get("matchs") or 0, "lignes": len(lignes)}
     journal["matchbook"] = resume
+    # Résumé pour la page Santé : n'altère pas les lignes, ni cote_perimee, ni les sélecteurs.
+    journal["matchbook_fraicheur"] = resume_lignes(lignes)
     signaler(journal, "matchbook", resume["erreurs"])
     if not resume["ok"] and "matchbook" in journal["etapes"]:
         journal["etapes"]["matchbook"]["ok"] = False

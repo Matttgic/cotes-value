@@ -143,13 +143,64 @@ def test_direct_par_defaut_lit_les_deux_sports():
     assert s.appels[0][1]["sport-ids"] == 15 and s.appels[1][1]["sport-ids"] == 9
 
 
+def _dom(justes):
+    return [l for l in justes if l["marche"] == "RESULTAT_1N2" and l["periode"] == "MATCH" and l["issue"] == "DOM"]
+
+
 def test_pagination():
     page = {"total": 250, "events": [LILLE]}
     s = Session([Rep(200, page), Rep(200, page), Rep(200, {"total": 0, "events": []})])
-    _, info = mb.collecter(session=s, maintenant=AVANT_LILLE,
-                           environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
+    justes, info = mb.collecter(session=s, maintenant=AVANT_LILLE,
+                                environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
     assert [a[1]["offset"] for a in s.appels] == [0, 200, 0]
     assert info["erreurs"] == []
+    assert len(_dom(justes)) == 1
+
+
+def test_pagination_identique_garde_la_proba_et_le_prix_suivant_remplace():
+    une, _ = mb.collecter(sports={"football"}, session=Session([Rep(200, {"total": 1, "events": [LILLE]})]),
+                          maintenant=AVANT_LILLE, environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
+    page = {"total": 250, "events": [LILLE]}
+    deux, _ = mb.collecter(sports={"football"}, session=Session([Rep(200, page), Rep(200, page)]),
+                           maintenant=AVANT_LILLE, environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
+    assert len(_dom(une)) == len(_dom(deux)) == 1
+    assert _dom(une)[0]["proba_juste"] == _dom(deux)[0]["proba_juste"]
+    ev = copy.deepcopy(LILLE)
+    for p in [m for m in ev["markets"] if m["name"] == "Match Odds"][0]["runners"][0]["prices"]:
+        if p["side"] == "back":
+            p["odds"] = 2.4                                          # reste sous le lay 2,58 : carnet encore valide
+    remplace, _ = mb.collecter(sports={"football"}, session=Session([
+        Rep(200, {"total": 250, "events": [LILLE]}), Rep(200, {"total": 250, "events": [ev]})]),
+        maintenant=AVANT_LILLE, environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
+    assert len(_dom(remplace)) == 1 and _dom(remplace)[0]["achat"][0]["price"] == 2.4
+    # Une lecture plus tard, avec un autre prix, est une observation à part : rien n'est retenu d'un appel à l'autre.
+    seul, _ = mb.collecter(sports={"football"}, session=Session([Rep(200, {"total": 1, "events": [ev]})]),
+                           maintenant=AVANT_LILLE, environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
+    assert _dom(seul)[0]["achat"][0]["price"] == 2.4
+    assert _dom(une)[0]["achat"][0]["price"] == 2.52
+
+
+def test_500_puis_200_ne_double_pas_le_marche():
+    s = Session([Rep(500), Rep(200, {"total": 1, "events": [LILLE]})])
+    justes, info = mb.collecter(sports={"football"}, session=s, maintenant=AVANT_LILLE,
+                                environ={"SOURCE_MATCHBOOK": "direct"}, pause=(0, 0))
+    assert info["requetes"] == 2 and info["erreurs"] == [] and len(_dom(justes)) == 1
+
+
+def test_maj_source_distincte_de_la_reception_et_absente_si_illisible():
+    ev = copy.deepcopy(LILLE)
+    coureurs = [m for m in ev["markets"] if m["name"] == "Match Odds"][0]["runners"]
+    coureurs[0]["last-price-update-time"] = "2026-10-30T09:00:00+01:00"   # 08:00 UTC = réception
+    coureurs[1]["last-price-update-time"] = "2026-10-30T07:00:00"          # sans fuseau
+    coureurs[2]["last-price-update-time"] = 1_761_800_000                   # epoch : unité non établie
+    lignes = mb.lignes_brutes([ev], "football", AVANT_LILLE)
+    par = _par(lignes, "RESULTAT_1N2")
+    assert par["DOM"]["collecte"].startswith("2026-10-30T08:00:00")
+    assert par["DOM"]["maj_bookmaker"] == "2026-10-30T09:00:00+01:00"
+    assert par["DOM"]["maj_source"] == "2026-10-30T08:00:00+00:00"
+    assert par["NUL"]["maj_bookmaker"] == "2026-10-30T07:00:00" and "maj_source" not in par["NUL"]
+    assert par["EXT"]["maj_bookmaker"] == 1_761_800_000 and "maj_source" not in par["EXT"]
+    assert "maj_source" not in _par(mb.lignes_brutes([LILLE], "football", AVANT_LILLE), "RESULTAT_1N2")["DOM"]
 
 
 def test_403_429_401_arretent_sans_corps():
@@ -321,6 +372,7 @@ def test_cycle_off_shadow_403_et_exception(monkeypatch):
     assert cycle.appliquer_matchbook({"football"}, 36, AVANT_LILLE, journal) == []
     assert journal["etapes"]["matchbook"]["desactive"] is True
     assert journal["matchbook"]["mode"] == "off"
+    assert "matchbook_fraicheur" not in journal
 
     monkeypatch.setenv("SOURCE_MATCHBOOK", "shadow")
 
@@ -343,6 +395,9 @@ def test_cycle_off_shadow_403_et_exception(monkeypatch):
     lignes = cycle.appliquer_matchbook({"football"}, 12, AVANT_LILLE, journal)
     assert lignes == [{"cote_juste": 2.5}]
     assert journal["matchbook"]["ok"] is True and journal["matchbook"]["erreurs"] == []
+    assert journal["matchbook_fraicheur"]["lignes"] == 1
+    assert journal["matchbook_fraicheur"]["source_connue"] == 0
+    assert journal["matchbook_fraicheur"]["mouvement_min_s"] is None
 
     def refuse(*_a, **_k):
         return [], {"ok": False, "erreurs": ["HTTP 403"], "requetes": 1, "matchs": 0, "mode": "direct"}
