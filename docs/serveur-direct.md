@@ -60,6 +60,8 @@ nano /etc/cotes-value.env
 - `PUSHOVER_BANKROLL` : ta bankroll, pour la ligne MacroDroid (docs/pari-rapide-android.md).
 - `PUSHOVER_STRATEGIES` : laisse vide. Le serveur suit les cases du bloc « Alertes Pushover » du site (page
   Notifications) ; enregistre-les là une fois avec ton code personnel.
+- `HC_PING_URL` (facultatif) : l'adresse de ping d'un check Healthchecks, la même que le secret GitHub
+  `HC_PING_URL`. Voir « Alerte si plus rien ne collecte » ci-dessous.
 
 Enregistrer : Ctrl+O, Entrée, Ctrl+X.
 
@@ -97,6 +99,21 @@ GitHub reprend à sa prochaine surveillance (30 minutes au plus). Pour reprendre
   changements sont repris ; sur un même fichier, la version du serveur l'emporte.
 - **Page Santé** : les seuils d'alerte sont ajustés aux cycles d'une minute : même durée qu'avant avant une
   alerte, environ 10 minutes.
+
+## Alerte si plus rien ne collecte (Healthchecks)
+
+La page Santé et la relance GitHub tournent sur GitHub ou sur le serveur. Si les deux s'arrêtent, ou si la boucle
+reste bloquée, personne ne prévient. Healthchecks reçoit un signal de vie et alerte quand il cesse.
+
+1. Créer un compte sur healthchecks.io (offre gratuite) ou utiliser une instance auto-hébergée.
+2. Créer un check : période 5 minutes, délai de grâce 30 minutes (les cycles GitHub sont parfois retardés).
+3. Intégrations : ajouter Pushover (ou un autre canal).
+4. Copier l'adresse de ping du check dans le secret GitHub `HC_PING_URL` et, si le serveur tourne, dans
+   `/etc/cotes-value.env` (même valeur), puis `sudo systemctl restart cotes-value-direct`.
+
+Le signal part seulement après un cycle réussi suivi d'un enregistrement poussé : par la chaîne GitHub
+(étape « Signal de vie ») ou par le serveur (toutes les 5 minutes). Sans `HC_PING_URL`, rien n'est envoyé.
+Un arrêt volontaire de plus de 30 minutes donne une alerte : mettre le check en pause sur Healthchecks.
 
 ## Limites
 
