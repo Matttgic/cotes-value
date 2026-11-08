@@ -58,7 +58,7 @@ def _cycle(reserve, n, minutes=0, pages=None, codes=None):
 def test_premier_passage_pages_de_sport_puis_competitions_tour_a_tour():
     urls, _, meta = _cycle({}, 5)
     assert urls == ["/football", "/tennis", "/football/c1", "/tennis/t1", "/football/c2"]
-    assert meta["pages"] == {"lues": 5, "a_lire": 6} and "budget" in meta["erreurs"]
+    assert meta["pages"] == {"lues": 5, "a_lire": 6} and meta["erreurs"] == [] and meta["arret_budget"]
 
 
 def test_le_passage_suivant_lit_d_abord_ce_qui_ne_l_a_jamais_ete_puis_le_plus_ancien():
@@ -110,3 +110,8 @@ def test_reserve_abimee_ne_casse_pas_la_lecture():
     for abime in ({"pages": "x", "liens": [1], "lignes": "y"}, {"pages": {"/football": 3}, "liens": {"football": "z"}}):
         urls, lignes, meta = _cycle(abime, 2)
         assert urls == ["/football", "/tennis"] and lignes
+
+
+def test_budget_epuise_sans_aucune_page_lue_reste_une_erreur():
+    urls, _, meta = _cycle({}, 0)
+    assert urls == [] and "budget" in meta["erreurs"]

@@ -787,9 +787,13 @@ def _collecter_rotation(client: Client, voulu: list[str], heures: float, mainten
     memoire = [l for l in reserve.get("lignes") or [] if isinstance(l, dict) and l.get("sport") in ordre_sport]
     fusion = fusionner(memoire, lignes, maintenant, heures, age_max_h=AGE_RESERVE_MIN / 60)
     connues = set(PAGES.values()) | {u for urls in liens.values() for u in urls}
+    # La rotation s'arrête au budget par construction : ce n'est une erreur que si aucune page n'a été lue
+    # (sinon l'étape restait « dégradée » à chaque cycle, 8/11/2026).
+    erreurs = [e for e in client.erreurs if e != "budget" or not lues]
     return fusion, {
-        "ok": not client.erreurs or bool(fusion),
-        "erreurs": list(client.erreurs),
+        "ok": not erreurs or bool(fusion),
+        "erreurs": erreurs,
+        "arret_budget": "budget" in client.erreurs,
         "requetes": client.requetes,
         "matchs": len({l.get("match_id") for l in fusion}),
         "pages": {"lues": lues, "a_lire": len(candidats)},
