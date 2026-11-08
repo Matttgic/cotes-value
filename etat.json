@@ -1,28 +1,18 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-07T23:54:07+00:00",
+  "debut": "2026-11-07T23:58:51+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.0,
+    "secondes": 4.3,
     "ok": true
    },
-   "winamax_direct": {
-    "secondes": 4.1,
-    "ok": false,
-    "degrade": true,
-    "erreurs": [
-     "sport:1 : réseau (CurlError 22)",
-     "connexion impossible (CurlError 22)",
-     "lecture vide"
-    ]
-   },
    "olybet": {
-    "secondes": 7.9,
+    "secondes": 8.9,
     "ok": true
    },
    "polymarket": {
-    "secondes": 19.3,
+    "secondes": 23.3,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -30,18 +20,17 @@
     ]
    },
    "pinnacle": {
-    "secondes": 31.5,
+    "secondes": 26.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 matchups : HTTP 403",
+     "sport 17 matchups : HTTP 403",
      "sport 9 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.8,
+    "secondes": 2.5,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -49,36 +38,47 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 44.4,
+    "secondes": 50.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.4,
+    "secondes": 53.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "betclic_direct": {
-    "secondes": 66.5,
+   "winamax_direct": {
+    "secondes": 56.8,
     "ok": true
    },
-   "smarkets": {
-    "secondes": 0.0,
+   "betclic_direct": {
+    "secondes": 77.3,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
+   },
+   "smarkets": {
+    "secondes": 21.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 6.9,
+    "secondes": 14.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.3,
+    "secondes": 2.7,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.8,
+    "secondes": 1.0,
     "ok": true
    }
   },
@@ -93,19 +93,19 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 283,
-   "lignes": 15228
+   "lignes": 15272
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 888,
-   "age_min_s": 12,
-   "lignes": 114870,
-   "lignes_perimees": 3255,
+   "age_max_s": 830,
+   "age_min_s": 69,
+   "lignes": 114850,
+   "lignes_perimees": 2640,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.1,
+   "rechauffeur_duree_s": 7.9,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -115,14 +115,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
-    "choisi_fixe": 7,
+    "head_200": 35,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "reprise_403": 4,
+    "choisi_fixe": 10,
+    "choisi_autre": 4,
+    "reprise_403": 2,
     "matchups_sans_speciaux": 2,
-    "reprise_403_ok": 1,
     "sport_vide": 4
    }
   },
@@ -155,45 +154,93 @@
   },
   "betclic_proches": {
    "proches": 29,
-   "relances": 1,
+   "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 1
   },
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 10,
    "comparaisons": [
     {
-     "match": "Feirense – Lusitania FC Lourosa",
+     "match": "Le Havre – Lorient",
      "source": "Pinnacle",
-     "cote_olybet": 2.67,
-     "cote_reference": 2.87,
-     "ecart_relatif": 0.0697,
+     "cote_olybet": 2.96,
+     "cote_reference": 3.12,
+     "ecart_relatif": 0.0513,
      "aberrant": false
     },
     {
-     "match": "Feirense – Lusitania FC Lourosa",
+     "match": "Le Havre – Lorient",
      "source": "PMU",
-     "cote_olybet": 2.67,
-     "cote_reference": 2.45,
-     "ecart_relatif": 0.0898,
+     "cote_olybet": 2.96,
+     "cote_reference": 2.7,
+     "ecart_relatif": 0.0963,
      "aberrant": false
     },
     {
-     "match": "Sporting B – Tondela",
-     "source": "PMU",
-     "cote_olybet": 2.78,
-     "cote_reference": 2.75,
-     "ecart_relatif": 0.0109,
+     "match": "Brest – Lyon",
+     "source": "Pinnacle",
+     "cote_olybet": 2.66,
+     "cote_reference": 2.8,
+     "ecart_relatif": 0.05,
      "aberrant": false
     },
     {
-     "match": "Farense – Benfica B",
+     "match": "Brest – Lyon",
      "source": "PMU",
-     "cote_olybet": 1.67,
-     "cote_reference": 1.78,
-     "ecart_relatif": 0.0618,
+     "cote_olybet": 2.66,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.0038,
+     "aberrant": false
+    },
+    {
+     "match": "Angers – OGC Nice",
+     "source": "Pinnacle",
+     "cote_olybet": 3.4,
+     "cote_reference": 3.66,
+     "ecart_relatif": 0.071,
+     "aberrant": false
+    },
+    {
+     "match": "Angers – OGC Nice",
+     "source": "PMU",
+     "cote_olybet": 3.4,
+     "cote_reference": 3.2,
+     "ecart_relatif": 0.0625,
+     "aberrant": false
+    },
+    {
+     "match": "Lens – Marseille",
+     "source": "Pinnacle",
+     "cote_olybet": 2.24,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0468,
+     "aberrant": false
+    },
+    {
+     "match": "Lens – Marseille",
+     "source": "PMU",
+     "cote_olybet": 2.24,
+     "cote_reference": 2.12,
+     "ecart_relatif": 0.0566,
+     "aberrant": false
+    },
+    {
+     "match": "Rennes – Lille",
+     "source": "Pinnacle",
+     "cote_olybet": 2.12,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.0493,
+     "aberrant": false
+    },
+    {
+     "match": "Rennes – Lille",
+     "source": "PMU",
+     "cote_olybet": 2.12,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0392,
      "aberrant": false
     }
    ],
@@ -205,101 +252,100 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "Le Havre – Lorient",
+     "match": "Cologne – Bayer Leverkusen",
      "source": "Pinnacle",
-     "cote_netbet": 2.77,
-     "cote_reference": 3.12,
-     "ecart_relatif": 0.1122,
+     "cote_netbet": 3.65,
+     "cote_reference": 3.92,
+     "ecart_relatif": 0.0689,
      "aberrant": false
     },
     {
-     "match": "Le Havre – Lorient",
+     "match": "Cologne – Bayer Leverkusen",
      "source": "PMU",
-     "cote_netbet": 2.77,
-     "cote_reference": 2.7,
-     "ecart_relatif": 0.0259,
+     "cote_netbet": 3.65,
+     "cote_reference": 3.6,
+     "ecart_relatif": 0.0139,
      "aberrant": false
     },
     {
-     "match": "Manchester United – Aston Villa",
+     "match": "Fribourg – Union Berlin",
      "source": "Pinnacle",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.19,
-     "ecart_relatif": 0.0548,
+     "cote_netbet": 1.42,
+     "cote_reference": 1.502,
+     "ecart_relatif": 0.0549,
      "aberrant": false
     },
     {
-     "match": "Manchester United – Aston Villa",
+     "match": "Fribourg – Union Berlin",
      "source": "PMU",
-     "cote_netbet": 2.07,
-     "cote_reference": 2.07,
-     "ecart_relatif": 0.0,
+     "cote_netbet": 1.42,
+     "cote_reference": 1.45,
+     "ecart_relatif": 0.0207,
      "aberrant": false
     },
     {
-     "match": "Genoa – Milan AC",
+     "match": "Hoffenheim – Schalke 04",
      "source": "Pinnacle",
-     "cote_netbet": 4.3,
-     "cote_reference": 4.74,
-     "ecart_relatif": 0.0928,
+     "cote_netbet": 1.53,
+     "cote_reference": 1.633,
+     "ecart_relatif": 0.063,
      "aberrant": false
     },
     {
-     "match": "Genoa – Milan AC",
+     "match": "Hoffenheim – Schalke 04",
      "source": "PMU",
-     "cote_netbet": 4.3,
-     "cote_reference": 4.2,
+     "cote_netbet": 1.53,
+     "cote_reference": 1.6,
+     "ecart_relatif": 0.0438,
+     "aberrant": false
+    },
+    {
+     "match": "Dalian Yingbo – Tianjin Jinmen Tiger",
+     "source": "Pinnacle",
+     "cote_netbet": 1.29,
+     "cote_reference": 1.362,
+     "ecart_relatif": 0.0531,
+     "aberrant": false
+    },
+    {
+     "match": "Dalian Yingbo – Tianjin Jinmen Tiger",
+     "source": "PMU",
+     "cote_netbet": 1.29,
+     "cote_reference": 1.26,
      "ecart_relatif": 0.0238,
-     "aberrant": false
-    },
-    {
-     "match": "Monza – Atalanta Bergame",
-     "source": "Pinnacle",
-     "cote_netbet": 3.15,
-     "cote_reference": 3.33,
-     "ecart_relatif": 0.0541,
-     "aberrant": false
-    },
-    {
-     "match": "Monza – Atalanta Bergame",
-     "source": "PMU",
-     "cote_netbet": 3.15,
-     "cote_reference": 3.2,
-     "ecart_relatif": 0.0156,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-07T23:54:17+00:00",
-   "pinnacle_derniere_lecture": "2026-11-07T23:54:33+00:00",
+   "pinnacle_premiere_lecture": "2026-11-07T23:59:01+00:00",
+   "pinnacle_derniere_lecture": "2026-11-07T23:59:15+00:00",
    "books_premiere_lecture": "2026-11-06T16:48:58+00:00",
-   "books_derniere_lecture": "2026-11-07T23:54:08+00:00",
-   "ecart_enveloppe_secondes": 111935.0
+   "books_derniere_lecture": "2026-11-07T23:58:52+00:00",
+   "ecart_enveloppe_secondes": 112217.0
   },
   "historique_cotes": {
-   "lignes": 1000
+   "lignes": 643
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 13.9
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 567,
    "a_verifier": 12,
    "non_conforme": 8,
-   "mesures": 35204,
+   "mesures": 49698,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 122167,
-   "mesures": 110725,
-   "annotees": 16,
-   "figees": 8
+   "ancres": 154448,
+   "mesures": 49954,
+   "annotees": 11,
+   "figees": 6
   },
   "redecision": {
    "ajoutees": 0
@@ -315,26 +361,20 @@
    "dernier_reglement": "2026-11-07T23:51:25+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-07T23:55:29+00:00",
+  "fin": "2026-11-08T00:00:58+00:00",
   "cotes": {
-   "francaises": 118966,
-   "pinnacle": 114870,
-   "polymarket": 32471,
-   "smarkets": 4064,
-   "matchbook": 15228
+   "francaises": 152552,
+   "pinnacle": 114850,
+   "polymarket": 32296,
+   "smarkets": 3982,
+   "matchbook": 15272
   },
-  "matchs_francais": 1790,
-  "opportunites": 21,
-  "opportunites_suspectes": 21,
+  "matchs_francais": 2159,
+  "opportunites": 32,
+  "opportunites_suspectes": 23,
   "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-11-07T08:30:35+00:00",
-   "mode": "complet",
-   "opportunites": 20,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-07T08:35:16+00:00",
    "mode": "complet",
@@ -1533,6 +1573,12 @@
    "debut": "2026-11-07T23:54:07+00:00",
    "mode": "complet",
    "opportunites": 21,
+   "nouveaux_paris": 1
+  },
+  {
+   "debut": "2026-11-07T23:58:51+00:00",
+   "mode": "complet",
+   "opportunites": 32,
    "nouveaux_paris": 1
   }
  ],
