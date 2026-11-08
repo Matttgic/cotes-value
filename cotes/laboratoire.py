@@ -234,8 +234,12 @@ def resume(rows: list[dict], connu_avant: str, incertitude: bool = True, depuis:
     best = max([0]+gains)
     g_degrade = sum(gain(p["statut"], mise_de(p), max(1.01, p["cote"]*.99)) for p in regles)
     full_stakes = sum(mise_de(p) for p in rows)
-    from .evenements import mesures
+    from .evenements import identites, mesures
     evenements = mesures(rows, regles, clv)
+    # Match de chaque pari (mêmes liens que « mesures ») : la note compte les matchs, pas les paris.
+    index_matchs = identites(rows)
+    match_de = lambda p: index_matchs.get(id(p), ("ligne", p.get("id") or id(p)))  # noqa: E731
+    avec_clv = [p for p in regles if clv(p) is not None]
     jours = {"jours": round(max((cutoff - heure(depuis)).total_seconds() / 86400, 1.0), 2)} if depuis else {}
     return {**evenements, **jours, "paris": len(rows), "regles": n, "attente": len(attente),
             "gagnes": sum(p["statut"] in ("gagne", "demi_gagne") for p in regles),
@@ -255,9 +259,11 @@ def resume(rows: list[dict], connu_avant: str, incertitude: bool = True, depuis:
             "jours_positifs": sum(g > 0 for g in par_jour.values()), "jours_actifs": len(par_jour),
             "mise_max_jour": max(exposition.values(), default=0),
             "reglements_manuels": sum((p.get("preuve_reglement") or {}).get("origine") != "automatique" for p in regles),
-            # note sur 100 (cotes/notation.py) : rentabilité prudente, valeur, régularité, solidité
+            # note sur 100 (cotes/notation.py), calculée par match : rentabilité prudente, robustesse, valeur,
+            # régularité, solidité
             "note": noter(gains, [mise_de(p) for p in regles], [p["cote"] for p in regles], cs,
-                          list(par_jour.values()), dd)}
+                          list(par_jour.values()), dd, matchs=[match_de(p) for p in regles],
+                          matchs_clv=[match_de(p) for p in avec_clv])}
 
 
 def evaluer(rows: list[dict], releve: str) -> dict:

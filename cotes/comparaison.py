@@ -12,6 +12,10 @@ Une référence n'est utilisée que si elle est fiable à cet instant :
   pas plus vieux que `PINNACLE_AGE_MAX_MIN` (``cote_perimee`` faux) ;
 - Polymarket et Smarkets : écart achat/vente ≤ 5 points et ≤ 25 % du prix, et un minimum d'argent
   engagé.
+- Polymarket, carnet plus large (jusqu'à `ECART_PRUDENT_MAX`) sur un marché à deux issues : la cote juste est lue
+  au **prix d'achat** (le bas de la fourchette), pas au milieu. L'écart calculé est alors un minimum : si la cote
+  française bat même ce prix, l'erreur de cote est réelle quelle que soit la vraie probabilité dans la fourchette.
+  Ces lignes (``prix_prudent``) ne rejoignent pas le consensus.
 Corners, cartons et paris pair/impair ne sont pas comparés : l'ANJ ne les autorise pas chez les
 bookmakers français.
 « Consensus » = moyenne des probabilités des références disponibles (au moins deux).
@@ -99,6 +103,33 @@ def reference_echange(lignes: list[dict], source: str) -> list[dict]:
     return deriver_double_chance(out)
 
 
+ECART_PRUDENT_MAX = 0.10       # Polymarket : au-delà, même le prix d'achat est trop incertain
+MARCHES_DEUX_ISSUES = ("VAINQUEUR", "HANDICAP", "TOTAL", "TOTAL_DOM", "TOTAL_EXT", "BOTH_TEAMS_TO_SCORE",
+                       "JEUX_TOTAL", "SETS_TOTAL", "SETS_HANDICAP", "MAPS_HANDICAP", "JEUX_HANDICAP")
+
+
+def prix_prudent(nom: str, l: dict) -> dict | None:
+    """Ligne Polymarket au carnet trop large pour le milieu, relue au prix d'achat (borne basse de la probabilité).
+    None si la ligne ne s'y prête pas (autre référence, marché à plus de deux issues, carnet trop large ou trop
+    peu d'argent engagé)."""
+    if nom != "Polymarket" or l.get("marche") not in MARCHES_DEUX_ISSUES:
+        return None
+    achat, ecart = l.get("achat"), l.get("ecart_achat_vente")
+    if not isinstance(achat, (int, float)) or not isinstance(ecart, (int, float)) or not 0.05 <= achat < 1:
+        return None
+    if not 0 <= ecart <= ECART_PRUDENT_MAX or float(l.get("liquidite") or 0) < LIQUIDITE_MIN[nom]:
+        return None
+    return {**l, "proba_milieu": l.get("proba_juste"), "proba_juste": achat, "cote_juste": round(1 / achat, 4),
+            "prix_prudent": True}
+
+
+def _lisible(nom: str, l: dict) -> dict | None:
+    """La ligne telle que la comparaison l'utilise : fiable au milieu, sinon au prix prudent, sinon None."""
+    if _fiable(nom, l):
+        return l
+    return prix_prudent(nom, l) if l.get("proba_juste") and 0 < l["proba_juste"] < 1 else None
+
+
 def _fiable(nom: str, l: dict) -> bool:
     if not l.get("proba_juste") or not (0 < l["proba_juste"] < 1):
         return False
@@ -148,7 +179,7 @@ def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str
     matchs_fr = C.matchs_de(francais)
     index: dict[str, dict] = {}
     for nom, lignes in references.items():
-        lignes = [l for l in lignes if _fiable(nom, l)]
+        lignes = [x for x in (_lisible(nom, l) for l in lignes) if x is not None]
         par_match: dict[str, list[dict]] = {}
         for l in lignes:
             par_match.setdefault(l["match_id"], []).append(l)
@@ -218,7 +249,7 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
         desaccord = False
         # Une référence hors consensus garde sa table de paris. Elle ne change
         # ni la moyenne partagée, ni le désaccord des tables déjà en place.
-        membres = {n: r for n, r in trouvees.items() if n not in (hors_consensus or ())}
+        membres = {n: r for n, r in trouvees.items() if n not in (hors_consensus or ()) and not r.get("prix_prudent")}
         if len(membres) >= 2:
             justes = [1 / r["proba_juste"] for r in membres.values()]
             desaccord = max(justes) / min(justes) > DESACCORD_MAX
@@ -273,6 +304,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "controle": _controle_du_groupe(l, controle),
                 "lien": l.get("lien"), "suspect": suspect,
                 "pariable": not bool(suspect)}
+            if r.get("prix_prudent"):         # cote juste lue au prix d'achat (carnet large) : écart minimal
+                o.update(prix_prudent=True, proba_milieu=r.get("proba_milieu"))
             # Référence reprise d'un cycle précédent (cotes/reprise.py) : notée seulement quand c'est le cas.
             if r.get("reprise") or (nom == "Consensus" and any(m.get("reprise") for m in membres.values())):
                 o["reference_reprise"] = True
@@ -294,6 +327,7 @@ def cotes_justes_depuis(index: dict, hors_consensus: set[str] | None = None) -> 
     Évite de relancer l'association (environ une minute) à la clôture.
     """
     out: dict[tuple, dict[str, tuple]] = {}
+    prudents: set[tuple] = set()      # lignes au prix prudent : hors consensus, comme dans ``comparer``
     for nom, par_match in (index or {}).items():
         if not isinstance(par_match, dict):
             continue
@@ -304,9 +338,11 @@ def cotes_justes_depuis(index: dict, hors_consensus: set[str] | None = None) -> 
                 if not isinstance(ligne, dict) or "proba_juste" not in ligne:
                     continue
                 out.setdefault((mid_fr, k), {})[nom] = (ligne["proba_juste"], ligne.get("collecte"))
+                if ligne.get("prix_prudent"):
+                    prudents.add((mid_fr, k, nom))
     hors = hors_consensus or ()
-    for v in out.values():
-        membres = {n: x for n, x in v.items() if n not in hors}
+    for cle_v, v in out.items():
+        membres = {n: x for n, x in v.items() if n not in hors and (*cle_v, n) not in prudents}
         if len(membres) >= 2:            # lu à l'heure de la plus ancienne des références qui le composent
             heures = [_t(t) for _, t in membres.values()]
             v["Consensus"] = (sum(p for p, _ in membres.values()) / len(membres),

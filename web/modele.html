@@ -143,22 +143,25 @@
     <div id="o-strategies" role="tabpanel" aria-labelledby="bt-strategies" hidden>
       <div class="raccourci-analyses"><a href="#analyses">Analyses et graphiques <span aria-hidden="true">↗</span></a></div>
       <div class="page-tete tete-strategies"><div><h2>Stratégies</h2><p class="sous-texte">Suivi simulé · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
+      <section id="strategies-recommandees" class="recommandees" aria-label="Stratégies recommandées"></section>
       <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
       <div id="strategies-dates"></div>
       <div class="filtres filtres-strategies">
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
         <div class="champ"><label for="strategies-tri">Classer par</label>
-        <select id="strategies-tri"><option value="note" selected>Note /100 (régularité, solidité)</option><option value="progression">Progression de la note (7 jours)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
+        <select id="strategies-tri"><option value="note" selected>Note /100 (par match, robustesse)</option><option value="progression">Progression de la note (7 jours)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
       <p class="aide" id="strategies-total"></p>
-      <details class="mode-emploi"><summary>Comment la note /100 est calculée</summary><p class="aide">Elle préfère une stratégie
-      régulière et solide à un gros gain très aléatoire. <b>Rentabilité prudente /30</b> : borne basse de l'intervalle de confiance
-      à 80 % du ROI (de −10 % à +5 %), pas le ROI lui-même. <b>Valeur /25</b> : CLV moyenne et part des paris qui battent la
-      clôture, ramenées vers 0 et 50 % quand elles reposent sur peu de paris. <b>Régularité /25</b> : part de jours gagnants et plus
-      forte baisse comparée à ce que le hasard produirait. <b>Solidité /20</b> : nombre de paris réglés, durée d'observation et cote
-      moyenne (au-delà de 5, les cotes justes sont moins fiables). Note à partir de 10 paris réglés, provisoire sous 50. Elle suit la
-      période et la mise choisies. Descriptive : elle ne garantit aucun gain futur.</p></details>
+      <details class="mode-emploi"><summary>Comment la note /100 est calculée</summary><p class="aide">Elle compte les
+      <b>matchs</b>, pas les paris : plusieurs paris sur un même match gagnent ou perdent ensemble, ils sont réunis avant
+      tout calcul. <b>Rentabilité prudente /25</b> : borne basse de l'intervalle de confiance à 80 % du ROI, calculée par
+      match (de −10 % à +5 %). <b>Robustesse /20</b> : ROI une fois retirés les meilleurs matchs (5 %, au moins un ; de
+      −5 % à +3 %) et part du gain apportée par le meilleur match (30 % : 0 point, 5 % : tous). <b>Valeur /25</b> : CLV
+      moyenne par match et part des matchs qui battent la clôture, ramenées vers 0 et 50 % sur peu de matchs.
+      <b>Régularité /15</b> : part de jours gagnants et plus forte baisse comparée au hasard. <b>Solidité /15</b> : nombre de
+      matchs réglés, durée d'observation et cote moyenne. Note à partir de 10 matchs réglés, provisoire sous 50. Elle suit
+      la période et la mise choisies. Descriptive : elle ne garantit aucun gain futur.</p></details>
       <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
         <button data-vue-strategies="liste" aria-pressed="true">Comparaison</button>
         <button data-vue-strategies="graphiques" aria-pressed="false">Graphiques</button>
@@ -1435,7 +1438,8 @@ function lignesStrategies() {
         +" · toutes tranches · depuis le 14/10 à 14 h", graphe:"Base du bilan", stats:s});
   return rows.filter(r => r.stats).map(r => ({...r, reussite:r.stats.regles ? 100*r.stats.gagnes/r.stats.regles : null}));
 }
-// Note /100 (cotes/notation.py) : rentabilité prudente /30, valeur /25, régularité /25, solidité /20.
+// Note /100 (cotes/notation.py, version 2, par match) : rentabilité prudente /25, robustesse /20, valeur /25,
+// régularité /15, solidité /15.
 // Évolution de la note depuis la veille et sur 7 jours (notes_historique.json, mise fixe, suivi prospectif).
 function evolutionNote(id, total) {
   const R = !datesStratActives() && miseMode !== "kelly" ? (D.notes_reperes || {}) : {};
@@ -1451,12 +1455,49 @@ const progressionNote = r => {
   const R = D.notes_reperes || {}, ref = R.semaine || R.veille, avant = ref?.notes?.[r.id];
   return avant == null || r.stats?.note?.total == null ? null : r.stats.note.total - avant;
 };
-const sousNotes = n => ["R", "V", "G", "S"].map((l, i) => l + " " + String([n.rentabilite, n.valeur, n.regularite, n.solidite][i]).replace(".", ",")).join(" · ");
+const sousNotes = n => [["R", n.rentabilite], ["Rb", n.robustesse], ["V", n.valeur], ["G", n.regularite], ["S", n.solidite]]
+  .filter(([, v]) => v != null).map(([l, v]) => l + " " + String(v).replace(".", ",")).join(" · ");
 function celluleNote(n, id) {
-  if (!n) return '<span class="doux">—</span><small>moins de 10 paris réglés</small>';
+  if (!n) return '<span class="doux">—</span><small>moins de 10 matchs réglés</small>';
   const ton = n.total >= 70 ? "pos" : n.total < 40 ? "neg" : "";
-  return `<b class="note-strategie ${ton}">${n.total}</b>${n.provisoire ? "<small>provisoire (&lt; 50 réglés)</small>" : ""}`
-    + `<small title="Rentabilité prudente /30 · Valeur /25 · Régularité /25 · Solidité /20">${sousNotes(n)}</small>` + evolutionNote(id, n.total);
+  return `<b class="note-strategie ${ton}">${n.total}</b>${n.provisoire ? "<small>provisoire (&lt; 50 matchs)</small>" : ""}`
+    + `<small title="Rentabilité prudente /25 · Robustesse /20 · Valeur /25 · Régularité /15 · Solidité /15">${sousNotes(n)}</small>` + evolutionNote(id, n.total);
+}
+// Stratégies recommandées (cotes/recommandations.py) : choisies sur la vue à mises fixes, chiffres de la mise affichée.
+// La fusion (cotes/strategie_recommandee.py) a ses membres figés ; son rejeu depuis le 14/10 est indicatif.
+function rendreRecommandees(rows) {
+  const R = D.recommandees, zone = document.getElementById("strategies-recommandees");
+  if (!zone) return;
+  if (!R) { zone.innerHTML = ""; return; }
+  const parId = new Map(rows.map(r => [r.id, r]));
+  const p1 = x => x == null ? "—" : (x > 0 ? "+" : "") + Number(x).toFixed(1).replace(".", ",") + " %";
+  const nomDe = id => { const r = parId.get(id); return r ? r.nom + " · " + r.detail : id; };
+  const carte = (titre, r, corps) => `<article class="reco-carte"><div class="reco-tete"><span class="reco-rang">${e(titre)}</span>
+    ${r ? `<button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button>` : ""}</div>${corps}</article>`;
+  const cartes = (R.liste || []).map(x => {
+    const r = parId.get(x.id), s = r?.stats || {}, n = s.note || {}, m = n.mesures || x.mesures || {};
+    return carte("Recommandée " + x.rang, r, `<h3>${e(r ? r.nom : x.id)}</h3><p class="reco-detail">${e(r ? r.detail : "")}</p>
+      <p class="reco-chiffres"><b class="${(n.total ?? x.note) >= 70 ? "pos" : ""}">${n.total ?? x.note}/100</b> · ${n.matchs ?? x.matchs} matchs ·
+      ROI <span class="${signe(m.roi)}">${p1(m.roi)}</span> · gain <span class="${signe(s.gain)}">${s.regles ? eur(s.gain) : "—"}</span></p>
+      <p class="reco-preuves">Sans ses ${m.meilleurs_retires ?? "?"} meilleurs matchs : ROI ${p1(m.roi_sans_meilleurs)} · borne basse ${p1(m.roi_borne_basse_80)}
+      · meilleur match ${p1(m.part_meilleur_match).replace("+", "")} du gain · CLV par match ${p1(m.clv_ajustee)}</p>`);
+  });
+  const F = R.fusion;
+  if (F) {
+    const r = parId.get(F.nom), s = r?.stats || {}, rejeu = (miseMode === "kelly" ? F.rejeu_kelly : F.rejeu)?.stats;
+    const membres = (F.membres || []).map(nomDe).join(" ; ");
+    cartes.push(carte("Recommandée " + ((R.liste || []).length + 1) + " · Fusion", r, `<h3>${e(F.nom)}</h3>
+      <p class="reco-detail">${e(F.regles)}. Membres : ${e(membres)}.</p>
+      <p class="reco-chiffres">Suivi depuis le ${e(quand(F.debut))} : ${s.regles ? `${s.regles} réglés · ROI <span class="${signe(s.roi)}">${p1(s.roi)}</span> · gain <span class="${signe(s.gain)}">${eur(s.gain)}</span>` : `${s.paris || 0} prise${(s.paris || 0) > 1 ? "s" : ""}, aucun pari réglé pour l'instant`}</p>
+      ${rejeu ? `<p class="reco-preuves">Rejeu indicatif depuis le 14/10 (optimiste : membres choisis après coup) : ${rejeu.regles} matchs · ROI ${p1(rejeu.roi)} · gain ${eur(rejeu.gain)}${rejeu.note ? ` · note ${rejeu.note.total}/100` : ""}</p>` : ""}`));
+  }
+  const ecartees = (R.ecartees || []).filter(x => x.proche).map(x => `${e(parId.get(x.id)?.nom || x.id)} (${e(x.raison.replace(x.proche, parId.get(x.proche)?.nom || x.proche))})`);
+  zone.innerHTML = `<h2 class="sous-titre">Recommandées</h2>
+    <p class="aide">Les mieux notées dont le résultat tient : au moins ${R.criteres?.min_matchs ?? 50} matchs réglés, borne basse du ROI positive,
+    ROI positif sans les meilleurs matchs, meilleur match ≤ ${R.criteres?.part_meilleur_max ?? 25} % du gain, CLV par match positive, et pas plus de
+    ${Math.round(100 * (R.criteres?.recouvrement_max ?? .6))} % de paris communs avec une recommandée mieux notée. Recalculé à chaque mise à jour ; aucun gain futur garanti.</p>
+    ${cartes.length ? `<div class="reco-grille">${cartes.join("")}</div>` : '<div class="vide">Aucune stratégie ne remplit encore les critères.</div>'}
+    ${ecartees.length ? `<p class="aide">Écartées comme doublons : ${ecartees.join(" ; ")}.</p>` : ""}`;
 }
 // Raccourcis de période et dates (Du / Au) de l'onglet Stratégies ; le choix reste sur cet appareil.
 function rendreDatesStrategies() {
@@ -1531,9 +1572,11 @@ function rendreStrategies() {
     carteStrategieVisuelle(r,courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")).join("")
     : '<div class="vide">Aucune stratégie pour ces filtres. Choisis une autre référence.</div>';
   for(const d of document.querySelectorAll("#strategies-mobile > details")) d.open=lignesOuvertes.has(d.id);
+  rendreRecommandees(lignesStrategies());
   // Le résumé déplie la ligne ; seul le bouton explicite ouvre la liste des paris.
-  document.querySelectorAll("#strategies-table tbody tr, #strategies-mobile button[data-strategie]").forEach(tr => {
-    const ligne = rows.find(r => r.id === tr.dataset.strategie);
+  const toutes = lignesStrategies();
+  document.querySelectorAll("#strategies-table tbody tr, #strategies-mobile button[data-strategie], #strategies-recommandees button[data-strategie]").forEach(tr => {
+    const ligne = rows.find(r => r.id === tr.dataset.strategie) || toutes.find(r => r.id === tr.dataset.strategie);
     if (!ligne) return;
     tr.tabIndex = 0;
     if (tr.tagName !== "BUTTON") tr.setAttribute("role", "link");

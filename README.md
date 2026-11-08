@@ -36,6 +36,13 @@ OlyBet et NetBet peuvent être coupés (`SOURCE_OLYBET` ou `SOURCE_NETBET` = `of
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
 compte restent en période `MATCH?` et ne sont pas comparés.
 
+Polymarket : la cote juste est le milieu achat/vente quand le carnet est serré (écart ≤ 5 points). Depuis le
+8/11/2026, un carnet plus large (jusqu'à 10 points) d'un marché à deux issues est lu au **prix d'achat** : l'écart
+obtenu est un minimum, la ligne reste hors du consensus (`prix_prudent` dans la trace). Sont aussi lus depuis cette
+date : handicaps de 1re mi-temps et des quarts-temps 1 à 3, totaux par équipe (NFL, NBA…), total de jeux, total de
+sets, handicap de sets et vainqueur du 1er set au tennis. Mesure du 8/11 à 3 h (PMU et Winamax) : 15 450 cotes
+françaises ont une cote juste Polymarket, contre 14 307 avec l'ancienne lecture (+8 %).
+
 Smarkets est lu sur son API publique, sans compte. La cote juste est le milieu
 achat/vente : le spread est dans le milieu, aucune commission
 n'est retirée en plus. Le bilan a une table Smarkets, comme Polymarket :
@@ -162,9 +169,17 @@ CLV +4,2 %). Déclinaisons plus ciblées : Favoris réguliers (cote 1,60–2,20)
 
 ### Note des stratégies sur 100
 
-**Stratégies → Classer par « Note /100 »** (tri par défaut) : rentabilité prudente /30, valeur (CLV) /25,
-régularité /25, solidité /20. Elle préfère une stratégie régulière et solide à un gros gain aléatoire.
+**Stratégies → Classer par « Note /100 »** (tri par défaut). Version 2 (8/11/2026) : calculée **par match**
+(plusieurs paris sur un même match comptent pour un seul match) : rentabilité prudente /25, robustesse /20 (ROI sans
+les meilleurs matchs, part du meilleur match), valeur (CLV par match) /25, régularité /15, solidité /15.
 [Formule et lecture](docs/notation-strategies.md).
+
+### Stratégies recommandées
+
+En haut de **Stratégies** : **Recommandée 1, 2, 3** (les mieux notées dont le résultat tient : ≥ 50 matchs, borne
+basse du ROI positive, ROI positif sans les meilleurs matchs, aucun match ne pèse plus de 25 % du gain, CLV par match
+positive, pas de doublon) et **Recommandée 4 · Fusion** (les trois recommandées du 8/11/2026 réunies, un pari par
+match, suivie depuis le 8/11/2026 à 9 h). [Critères, choix et limites](docs/recommandees.md).
 
 ### Fiabilité des cotes justes selon la cote
 

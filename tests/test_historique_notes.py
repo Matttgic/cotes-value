@@ -26,4 +26,13 @@ def test_jour_remplace_garde_soixante_jours_et_reperes(tmp_path):
 def test_fichier_illisible_repart_de_zero(tmp_path):
     (tmp_path / H.FICHIER).write_text("{pas du json")
     doc = H.mettre_a_jour(tmp_path, {"a": 1}, datetime(2026, 11, 3, tzinfo=timezone.utc))
-    assert doc == {"jours": {"2026-11-03": {"a": 1}}} and H.reperes(doc, datetime(2026, 11, 3, tzinfo=timezone.utc)) == {}
+    assert doc == {"version": H.VERSION, "jours": {"2026-11-03": {"a": 1}}}
+    assert H.reperes(doc, datetime(2026, 11, 3, tzinfo=timezone.utc)) == {}
+
+
+def test_notes_d_une_ancienne_formule_oubliees(tmp_path):
+    """Les notes v1 (par pari) ne sont pas comparables aux notes v2 (par match) : pas de fausse progression."""
+    import json
+    (tmp_path / H.FICHIER).write_text(json.dumps({"jours": {"2026-11-01": {"a": 80}}}))
+    doc = H.mettre_a_jour(tmp_path, {"a": 40}, datetime(2026, 11, 8, tzinfo=timezone.utc))
+    assert doc["jours"] == {"2026-11-08": {"a": 40}}

@@ -15,6 +15,8 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bila
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
+from cotes.strategie_recommandee import RECOMMANDEE_FUSION, paris_fusion  # noqa: E402
+from cotes.recommandations import recommander  # noqa: E402
 from cotes.reglement import GAIN  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
@@ -483,6 +485,20 @@ def enrichir_evenements(paris: list[dict], laboratoire: dict, maintenant: str):
                          clv_evenements_n=len(cs))
 
 
+def recommandations_du_laboratoire(laboratoire: dict) -> dict:
+    """Recommandées (cotes/recommandations.py) parmi les règles et les comparateurs, sur la vue à mises fixes.
+    Retire du laboratoire les blocs de travail (« _ensembles », « _fusion_rejeu ») qui ne sont pas publiés tels quels."""
+    ensembles = laboratoire.pop("_ensembles", {}) or {}
+    rejeu = laboratoire.pop("_fusion_rejeu", None)
+    lignes = [{"id": s["id"], "stats": s, "ensemble": ensembles.get(s["id"], set())}
+              for s in laboratoire.get("futur") or []]
+    lignes += [{"id": nom, "stats": s, "ensemble": ensembles.get(nom, set())}
+               for nom, s in (laboratoire.get("comparateurs_futur") or {}).items()]
+    lignes += [{"id": "base:" + nom, "stats": s, "ensemble": ensembles.get("base:" + nom, set()), "base": True}
+               for nom, s in (laboratoire.get("bases_futur") or {}).items()]
+    return {**recommander(lignes), "fusion_rejeu": rejeu}
+
+
 def construire(donnees: Path, sortie: Path) -> Path:
     """Site complet. Les sélections de la vue à mises fixes servent aussi à la vue Kelly (cotes/memo.py)."""
     from cotes.memo import memoriser_selections
@@ -592,6 +608,20 @@ def _construire(donnees: Path, sortie: Path) -> Path:
                                           for nom, rows in bases.items() if rows}
             laboratoire["courbes"].update({"base:" + nom: {"futur": courbe(rows, maintenant)}
                                            for nom, rows in bases.items() if rows})
+            # Paris de chaque ligne du classement (identifiants stables) : recouvrements des recommandées.
+            suivies = [p for p in paris if heure(p.get("detecte"))
+                       and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)]
+            ensembles = {r.id: {p["id"] for p in selectionner(suivies, r, DEBUT_SUIVI)} for r in REGLES_LABO}
+            ensembles.update({nom: {p["id"] for p in paris if id(p) in ids and heure(p.get("detecte"))
+                                    and heure(DEBUT_SUIVI) <= heure(p["detecte"]) < heure(maintenant)}
+                              for nom, ids in officiels.items()})
+            ensembles.update({"base:" + nom: {p["id"] for p in rows} for nom, rows in bases.items()})
+            laboratoire["_ensembles"] = ensembles
+            # Rejeu de la fusion depuis le 14/10 : indicatif et optimiste (membres choisis après coup).
+            ids_rejeu = paris_fusion(paris, depuis=DEBUT_SUIVI)
+            rejeu = [p for p in suivies if id(p) in ids_rejeu]
+            laboratoire["_fusion_rejeu"] = {"stats": resume(rejeu, maintenant, incertitude=False, depuis=DEBUT_SUIVI),
+                                            "courbe": courbe(rejeu, maintenant)}
             depart = heure(DEBUT_SUIVI)
             laboratoire["mises"] = {"methodes": {k: {"nom": m[0], "regle": m[1]} for k, m in METHODES_MISE.items()},
                                     "selections": {"Paris uniques": comparer_mises(
@@ -608,6 +638,8 @@ def _construire(donnees: Path, sortie: Path) -> Path:
         return laboratoire
 
     laboratoire = _laboratoire(paris)
+    recommandees = recommandations_du_laboratoire(laboratoire)
+    fusion_rejeu = recommandees.pop("fusion_rejeu", None)
     # Classement vivant : notes du jour gardées dans « donnees », progression depuis la veille et sur 7 jours.
     from cotes import historique_notes
     instant_notes = datetime.now(timezone.utc)
@@ -627,6 +659,8 @@ def _construire(donnees: Path, sortie: Path) -> Path:
     # Même historique rejoué en mise Kelly : le navigateur échange ces blocs quand on choisit « Kelly ».
     paris_k = paris_en_mise_kelly(paris)
     laboratoire_k = _laboratoire(paris_k)
+    fusion_rejeu_k = laboratoire_k.pop("_fusion_rejeu", None)
+    laboratoire_k.pop("_ensembles", None)
     _alleger_navigation(laboratoire_k)
     # Sous-blocs identiques dans les deux mises (navigation, méthodes de mise, étude figée… environ 0,7 Mo) :
     # publiés une seule fois. Le navigateur reprend ceux de la vue fixe (appliquerMise).
@@ -649,6 +683,10 @@ def _construire(donnees: Path, sortie: Path) -> Path:
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
+            "recommandees": {**recommandees, "fusion": {**{k: RECOMMANDEE_FUSION[k] for k in
+                                                            ("cle", "nom", "debut", "membres", "regles")},
+                                                         "rejeu": fusion_rejeu,
+                                                         "rejeu_kelly": fusion_rejeu_k}},
             "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "valeurs_filtres": valeurs, "etat": etat, "incidents": _lire(donnees / "sante_incidents.json", {}), "bilan": bilan(paris),
             "kelly": {"bilan": bilan(paris_k), "courbes": courbes(paris_k), "segments": segments(paris_k),
                       "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"}
