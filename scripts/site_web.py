@@ -16,7 +16,6 @@ from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_conver
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
 from cotes.strategie_recommandee import RECOMMANDEE_FUSION, paris_fusion  # noqa: E402
-from cotes.recommandations import recommander  # noqa: E402
 from cotes.reglement import GAIN  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
@@ -485,9 +484,11 @@ def enrichir_evenements(paris: list[dict], laboratoire: dict, maintenant: str):
                          clv_evenements_n=len(cs))
 
 
-def recommandations_du_laboratoire(laboratoire: dict) -> dict:
-    """Recommandées (cotes/recommandations.py) parmi les règles et les comparateurs, sur la vue à mises fixes.
+def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees: Path) -> dict:
+    """Liste stable des recommandées (cotes/recommandations.py, état ``recommandees.json``), sur la vue à mises fixes,
+    avec le résultat de chaque stratégie depuis son entrée dans la liste (et jusqu'à sa sortie pour les anciennes).
     Retire du laboratoire les blocs de travail (« _ensembles », « _fusion_rejeu ») qui ne sont pas publiés tels quels."""
+    from cotes import recommandations as reco
     ensembles = laboratoire.pop("_ensembles", {}) or {}
     rejeu = laboratoire.pop("_fusion_rejeu", None)
     lignes = [{"id": s["id"], "stats": s, "ensemble": ensembles.get(s["id"], set())}
@@ -496,7 +497,26 @@ def recommandations_du_laboratoire(laboratoire: dict) -> dict:
                for nom, s in (laboratoire.get("comparateurs_futur") or {}).items()]
     lignes += [{"id": "base:" + nom, "stats": s, "ensemble": ensembles.get("base:" + nom, set()), "base": True}
                for nom, s in (laboratoire.get("bases_futur") or {}).items()]
-    return {**recommander(lignes), "fusion_rejeu": rejeu}
+    maintenant = datetime.now(timezone.utc)
+    etat = reco.mettre_a_jour(donnees, lignes, maintenant)
+    par_id = {l["id"]: l for l in lignes}
+
+    def depuis_entree(x):
+        """Résultat des paris détectés entre l'entrée (jour, Paris) et la sortie (exclue) de la liste."""
+        ids = par_id.get(x["id"], {}).get("ensemble") or set()
+        debut = datetime.fromisoformat(x["depuis"]).replace(tzinfo=reco.PARIS)
+        fin = datetime.fromisoformat(x["jusqua"]).replace(tzinfo=reco.PARIS) if x.get("jusqua") else maintenant
+        rows = [p for p in paris if p.get("id") in ids and heure(p.get("detecte")) and debut <= heure(p["detecte"]) < fin]
+        s = resume(rows, maintenant.isoformat(), incertitude=False)
+        return {k: s.get(k) for k in ("paris", "regles", "attente", "gain", "roi", "clv", "evenements_regles")}
+
+    return {"actuelles": [{**x, "depuis_entree": depuis_entree(x)} for x in etat["actuelles"]],
+            "anciennes": [{**x, "pendant": depuis_entree(x)} for x in etat["anciennes"]][::-1],
+            "derniere_revision": etat["derniere_revision"], "prochaine_revision": etat["prochaine_revision"],
+            "criteres": {"min_matchs": reco.MIN_MATCHS, "part_meilleur_max": reco.PART_MEILLEUR_MAX,
+                         "recouvrement_max": reco.RECOUVREMENT_MAX, "maximum": reco.MAXIMUM,
+                         "revision_jours": reco.REVISION_JOURS, "ecart_remplacement": reco.ECART_REMPLACEMENT},
+            "fusion_rejeu": rejeu}
 
 
 def construire(donnees: Path, sortie: Path) -> Path:
@@ -638,7 +658,7 @@ def _construire(donnees: Path, sortie: Path) -> Path:
         return laboratoire
 
     laboratoire = _laboratoire(paris)
-    recommandees = recommandations_du_laboratoire(laboratoire)
+    recommandees = recommandations_du_laboratoire(laboratoire, paris, donnees)
     fusion_rejeu = recommandees.pop("fusion_rejeu", None)
     # Classement vivant : notes du jour gardées dans « donnees », progression depuis la veille et sur 7 jours.
     from cotes import historique_notes
@@ -684,7 +704,7 @@ def _construire(donnees: Path, sortie: Path) -> Path:
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
             "variantes": {v["nom"]: v for v in VARIANTES},
             "recommandees": {**recommandees, "fusion": {**{k: RECOMMANDEE_FUSION[k] for k in
-                                                            ("cle", "nom", "debut", "membres", "regles")},
+                                                            ("cle", "nom", "court", "debut", "membres", "regles")},
                                                          "rejeu": fusion_rejeu,
                                                          "rejeu_kelly": fusion_rejeu_k}},
             "convergence": CONVERGENCE, "paris": [p if p["a_regler"] else {"id":p["id"], "trace":p["trace"]} for p in liste], "valeurs_filtres": valeurs, "etat": etat, "incidents": _lire(donnees / "sante_incidents.json", {}), "bilan": bilan(paris),

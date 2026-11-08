@@ -257,7 +257,7 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
     # Claude Opus · Valeur solide : figée au lancement (3/11/2026), sans rejeu.
     for c in CLAUDE_OPUS:
         resultat[c["cle"]] = SELECTEURS_CLAUDE_OPUS[c["cle"]](paris) if depuis is None else set()
-    # Recommandée · Fusion : membres figés le 8/11/2026, un pari par match, sans rejeu.
+    # Fusion 1 : membres figés le 8/11/2026, un pari par match, sans rejeu.
     resultat[RECOMMANDEE_FUSION["cle"]] = paris_fusion(paris) if depuis is None else set()
     return resultat
 
