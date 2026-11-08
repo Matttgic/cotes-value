@@ -66,6 +66,13 @@ TYPES = {
     "soccer_team_total_corners": ("CORNERS_TOTAL_EQUIPE", "MATCH"),
     "table_tennis_match_totals": ("JEUX_TOTAL", "MATCH"), "table_tennis_game_handicap": ("JEUX_HANDICAP", "MATCH"),
     "map_handicap": ("MAPS_HANDICAP", "MATCH"),
+    # Ajoutés le 8/11/2026 (marchés proposés par les bookmakers français). La 2e mi-temps et le 4e quart-temps
+    # ne sont pas repris : la prolongation y compte chez Polymarket, pas toujours chez les bookmakers français.
+    "first_half_spreads": ("HANDICAP", "MT1"), "q1_spreads": ("HANDICAP", "QT1"),
+    "q2_spreads": ("HANDICAP", "QT2"), "q3_spreads": ("HANDICAP", "QT3"),
+    "team_totals": ("TOTAL_EQUIPE", "MATCH"), "first_half_team_totals": ("TOTAL_EQUIPE", "MT1"),
+    "tennis_match_totals": ("JEUX_TOTAL", "MATCH"), "tennis_set_totals": ("SETS_TOTAL", "MATCH"),
+    "tennis_set_handicap": ("SETS_HANDICAP", "MATCH"), "tennis_first_set_winner": ("VAINQUEUR", "SET1"),
 }
 
 
@@ -242,6 +249,21 @@ def _issue_equipe(nom: str | None, dom: str, ext: str) -> str | None:
     return None
 
 
+def _equipe_du_total(mk: dict, dom: str, ext: str) -> str | None:
+    """Équipe d'un total par équipe : « Bengals Team Total: O/U 10.5 » (équipe avant les deux-points),
+    « A vs. B: A O/U 1.5 » (après). Le titre court du marché (« Bengals O/U 10.5 ») est lu en premier ;
+    une seule des deux équipes doit y figurer."""
+    question = mk.get("question") if isinstance(mk.get("question"), str) else ""
+    for texte in (mk.get("groupItemTitle"), question.split(":")[-1], question.split(":")[0]):
+        if not isinstance(texte, str) or not texte:
+            continue
+        t = texte.lower()
+        trouvees = [c for c, nom in (("DOM", dom), ("EXT", ext)) if nom.lower() in t]
+        if len(trouvees) == 1:
+            return trouvees[0]
+    return None
+
+
 def _lignes(marches, base, dom, ext, sport) -> list[dict]:
     out = []
     for mk in marches:
@@ -266,6 +288,8 @@ def _lignes(marches, base, dom, ext, sport) -> list[dict]:
         if len(issues) != 2 or any(not isinstance(x, str) or not x for x in issues) or issues[0] == issues[1]:
             _erreur("issues de marché invalides")
             continue
+        if [x.split(" ")[0] for x in issues] == ["Over", "Under"]:
+            issues = ["Over", "Under"]           # « Over 2.5 » / « Under 2.5 » (total de sets au tennis)
         marche, periode = cible
         ligne = mk.get("line")
         liquidite = _nombre(mk.get("liquidityNum"))
@@ -316,11 +340,7 @@ def _lignes(marches, base, dom, ext, sport) -> list[dict]:
                 _erreur("ligne de total invalide")
                 continue
             if marche in ("TOTAL_EQUIPE", "CORNERS_TOTAL_EQUIPE"):
-                question = mk.get("question")
-                if not isinstance(question, str):
-                    continue
-                q = question.split(":")[-1]
-                cote = "DOM" if dom.lower() in q.lower() else ("EXT" if ext.lower() in q.lower() else None)
+                cote = _equipe_du_total(mk, dom, ext)
                 if cote is None:
                     continue
                 marche = marche.replace("EQUIPE", cote)

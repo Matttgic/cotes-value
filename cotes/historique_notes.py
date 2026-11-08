@@ -12,6 +12,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from .notation import VERSION
+
 FICHIER = "notes_historique.json"
 GARDE_JOURS = 60
 PARIS = ZoneInfo("Europe/Paris")
@@ -41,6 +43,9 @@ def _lire(chemin: Path) -> dict:
     except (OSError, ValueError):
         return {}
     jours = doc.get("jours") if isinstance(doc, dict) else None
+    # Notes d'une autre version de la formule (v1 : par pari) : pas comparables, l'historique repart de zéro.
+    if not isinstance(doc, dict) or doc.get("version", 1) != VERSION:
+        return {}
     return {"jours": {j: n for j, n in jours.items() if isinstance(n, dict)}} if isinstance(jours, dict) else {}
 
 
@@ -54,7 +59,7 @@ def mettre_a_jour(donnees: Path, notes: dict[str, int], maintenant: datetime) ->
     if notes:
         jours[aujourd_hui.isoformat()] = dict(sorted(notes.items()))
     limite = (aujourd_hui - timedelta(days=GARDE_JOURS)).isoformat()
-    doc = {"jours": {j: jours[j] for j in sorted(jours) if j > limite}}
+    doc = {"version": VERSION, "jours": {j: jours[j] for j in sorted(jours) if j > limite}}
     try:
         tmp = chemin.with_name(chemin.name + ".tmp")
         tmp.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

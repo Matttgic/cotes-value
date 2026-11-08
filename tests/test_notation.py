@@ -28,7 +28,7 @@ def test_pas_de_note_sous_dix_paris_et_provisoire_sous_cinquante():
 def test_bornes_et_total_coherent():
     n = _serie([10, -10, 10, -10, 10] * 40)
     assert 0 <= n["total"] <= 100
-    assert abs(n["total"] - (n["rentabilite"] + n["valeur"] + n["regularite"] + n["solidite"])) <= 1
+    assert abs(n["total"] - (n["rentabilite"] + n["robustesse"] + n["valeur"] + n["regularite"] + n["solidite"])) <= 1
 
 
 def test_meme_gain_total_la_serie_reguliere_est_mieux_notee():
@@ -54,3 +54,41 @@ def test_longues_cotes_penalisees_en_solidite():
     gains = [10, -10, 10] * 40
     courte, longue = _serie(gains, cote=2.0), _serie(gains, cote=9.0)
     assert courte["solidite"] > longue["solidite"]
+
+
+def _par_match(liste):
+    """Liste de (match, gain) en paris de 10 € à cote 2 : arguments de noter avec les clés de match."""
+    gains = [g for _, g in liste]
+    matchs = [m for m, _ in liste]
+    n = len(gains)
+    return noter(gains, [10.0] * n, [2.0] * n, [0.01] * n, [sum(gains[i::10]) for i in range(10)], _baisse(gains),
+                 matchs=matchs, matchs_clv=matchs)
+
+
+def test_plusieurs_paris_sur_un_match_comptent_pour_un_match():
+    """Le cas qui gonflait la note : un match gagné avec beaucoup de paris porte tout le résultat."""
+    hasard = random.Random(3)
+    base = [(f"m{i}", 10.0 if hasard.random() < .5 else -10.0) for i in range(40)]
+    gros = [("gros", 10.0)] * 15                                     # 15 paris gagnants sur le même match
+    independants = [(f"x{i}", 10.0) for i in range(15)]              # mêmes gains, 15 matchs différents
+    concentre, reparti = _par_match(base + gros), _par_match(base + independants)
+    assert concentre["matchs"] == 41 and reparti["matchs"] == 55
+    assert concentre["mesures"]["paris_par_match"] > 1.3
+    assert concentre["mesures"]["part_meilleur_match"] > 3 * reparti["mesures"]["part_meilleur_match"]
+    assert concentre["robustesse"] < reparti["robustesse"]
+    assert concentre["mesures"]["roi_borne_basse_80"] < reparti["mesures"]["roi_borne_basse_80"]
+    assert concentre["total"] < reparti["total"]
+
+
+def test_resultat_porte_par_un_seul_match_perd_la_robustesse():
+    perdants = [(f"m{i}", -10.0) for i in range(30)] + [(f"g{i}", 10.0) for i in range(28)]
+    coup = _par_match(perdants + [("coup", 10.0)] * 10)
+    assert coup["mesures"]["roi"] > 0 > coup["mesures"]["roi_sans_meilleurs"]
+    assert coup["robustesse"] < 5
+
+
+def test_sans_cles_de_match_chaque_pari_est_un_match():
+    gains = [10, -10, 10] * 20
+    n = len(gains)
+    a = noter(gains, [10.0] * n, [2.0] * n, [0.01] * n, [sum(gains[i::20]) for i in range(20)], _baisse(gains))
+    assert a["matchs"] == n and a["mesures"]["paris_par_match"] == 1.0
