@@ -15,7 +15,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bila
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
-from cotes.strategie_recommandee import RECOMMANDEE_FUSION, paris_fusion  # noqa: E402
+from cotes.strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, charger_fusions, paris_fusion  # noqa: E402
 from cotes.reglement import GAIN  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
@@ -526,7 +526,18 @@ def construire(donnees: Path, sortie: Path) -> Path:
         return _construire(donnees, sortie)
 
 
+def retirer_places_libres(labo: dict) -> None:
+    """Les places de fusion automatique pas encore créées (Fusion 2, 3…) ne sont ni affichées ni publiées."""
+    libres = {f["nom"] for f in FUSIONS_AUTO if not f["actif"]}
+    for bloc in (labo.get("comparateurs"), labo.get("comparateurs_futur"), labo.get("courbes"),
+                 (labo.get("mises") or {}).get("selections"), (labo.get("navigation") or {}).get("selections")):
+        if isinstance(bloc, dict):
+            for nom in libres:
+                bloc.pop(nom, None)
+
+
 def _construire(donnees: Path, sortie: Path) -> Path:
+    charger_fusions(donnees)          # fusions automatiques déjà créées (recommandees.json)
     paris = fusionner_paris(_lire(donnees / "paris.json", []), lire_archives(donnees))
     journal_alertes = _lire(donnees / "notifications_diagnostic.json", {"cycles": []})
     demandes = {a["id"]: c.get("envoi_demande_le") for c in journal_alertes.get("cycles", [])
@@ -658,6 +669,7 @@ def _construire(donnees: Path, sortie: Path) -> Path:
         return laboratoire
 
     laboratoire = _laboratoire(paris)
+    retirer_places_libres(laboratoire)
     recommandees = recommandations_du_laboratoire(laboratoire, paris, donnees)
     fusion_rejeu = recommandees.pop("fusion_rejeu", None)
     # Classement vivant : notes du jour gardées dans « donnees », progression depuis la veille et sur 7 jours.
@@ -679,6 +691,7 @@ def _construire(donnees: Path, sortie: Path) -> Path:
     # Même historique rejoué en mise Kelly : le navigateur échange ces blocs quand on choisit « Kelly ».
     paris_k = paris_en_mise_kelly(paris)
     laboratoire_k = _laboratoire(paris_k)
+    retirer_places_libres(laboratoire_k)
     fusion_rejeu_k = laboratoire_k.pop("_fusion_rejeu", None)
     laboratoire_k.pop("_ensembles", None)
     _alleger_navigation(laboratoire_k)
@@ -692,9 +705,11 @@ def _construire(donnees: Path, sortie: Path) -> Path:
         f[:6] == k[:6] and f[7:] == k[7:] for f, k in zip(segments_fixe, segments_k))
     if segments_fusionnes:
         segments_fixe = [f + [k[6]] for f, k in zip(segments_fixe, segments_k)]
+    libres = {f["cle"] for f in FUSIONS_AUTO if not f["actif"]}
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:], "notes_reperes": notes_reperes,
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
-            "notifications": {"api": notifications_mod.API, "strategies": notifications_mod.NOMS,
+            "notifications": {"api": notifications_mod.API, "strategies": {k: v for k, v in notifications_mod.NOMS.items()
+                                                                           if k not in libres},
                               "details": notifications_mod.DETAILS,
                               "comparateurs": {**{cle: nom for cle, _, _, nom, _ in STRATEGIES},
                                                **{v["cle"]: v["nom"] for v in VARIANTES},
@@ -702,8 +717,11 @@ def _construire(donnees: Path, sortie: Path) -> Path:
             "catalogue": catalogue_paris(paris, retenus, notifications_mod.selections_labo(paris)),
             "strategies_badges": {**{cle: nom for cle, _, nom, _, _ in STRATEGIES},
                                    **{v["cle"]: v["court"] for v in VARIANTES}},
-            "variantes": {v["nom"]: v for v in VARIANTES},
-            "recommandees": {**recommandees, "fusion": {**{k: RECOMMANDEE_FUSION[k] for k in
+            "variantes": {v["nom"]: v for v in VARIANTES if v.get("actif", True)},
+            "recommandees": {**recommandees,
+                             "fusions": [{k: f.get(k) for k in ("n", "nom", "court", "debut", "date", "membres", "regles")}
+                                         for f in FUSIONS_AUTO if f["actif"]],
+                             "fusion": {**{k: RECOMMANDEE_FUSION[k] for k in
                                                             ("cle", "nom", "court", "debut", "membres", "regles")},
                                                          "rejeu": fusion_rejeu,
                                                          "rejeu_kelly": fusion_rejeu_k}},

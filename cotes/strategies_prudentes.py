@@ -22,7 +22,7 @@ from .strategie_defi import DEFIS, paris_defi
 from .strategie_gemini_defi import GEMINI_DEFIS, SELECTEURS as SELECTEURS_GEMINI_DEFI
 from .strategie_claude_defi import CLAUDE_DEFIS, SELECTEURS as SELECTEURS_CLAUDE_DEFI
 from .strategie_claude_opus import CLAUDE_OPUS, SELECTEURS as SELECTEURS_CLAUDE_OPUS
-from .strategie_recommandee import RECOMMANDEE_FUSION, paris_fusion
+from .strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, paris_fusion, selection_fusion_auto
 from .convergence import STRATEGIES, selections, votes
 from .laboratoire import heure
 from .simulation import REFERENCES, paris_strategie
@@ -41,7 +41,7 @@ CONVERGENCE_3 = {
 }
 VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN, COEUR, LIQUIDITE,
              *GROKS, *GROKS_V2, *GROKS_V3, *CONSEILS, *DEFIS, *GEMINI_DEFIS, *CLAUDE_DEFIS, *CLAUDE_OPUS,
-             RECOMMANDEE_FUSION)
+             RECOMMANDEE_FUSION, *FUSIONS_AUTO)
 PARIS = ZoneInfo("Europe/Paris")
 
 
@@ -259,7 +259,35 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
         resultat[c["cle"]] = SELECTEURS_CLAUDE_OPUS[c["cle"]](paris) if depuis is None else set()
     # Fusion 1 : membres figés le 8/11/2026, un pari par match, sans rejeu.
     resultat[RECOMMANDEE_FUSION["cle"]] = paris_fusion(paris) if depuis is None else set()
+    # Fusions automatiques (Fusion 2, 3…) : places activées par recommandees.json (charger_fusions), sans rejeu.
+    actives = [f for f in FUSIONS_AUTO if f["actif"]] if depuis is None else []
+    membres = _ids_membres(paris, bases, resultat, {m for f in actives for m in f["membres"]})
+    for f in FUSIONS_AUTO:
+        resultat[f["cle"]] = selection_fusion_auto(paris, f, membres) if f in actives else set()
     return resultat
+
+
+def _ids_membres(paris, bases, resultat, noms) -> dict[str, set[int]]:
+    """Prises de chaque membre nommé comme sur la page Stratégies : règle du laboratoire (« PIN-… »), variante,
+    stratégie de base (« Claude (rejeu) »…) ou convergence."""
+    if not noms:
+        return {}
+    from .convergence import CONVERGENCE, paris_convergence
+    from .laboratoire import DEBUT_SUIVI, REGLES, selectionner
+    regles = {r.id: r for r in REGLES}
+    variantes = {v["nom"]: v["cle"] for v in VARIANTES}
+    base = {nom: cle for cle, _, _, nom, _ in STRATEGIES}
+    out = {}
+    for nom in noms:
+        if nom in regles:
+            out[nom] = {id(p) for p in selectionner(paris, regles[nom], DEBUT_SUIVI)}
+        elif nom in variantes and variantes[nom] in resultat:
+            out[nom] = resultat[variantes[nom]]
+        elif nom in base and base[nom] in bases:
+            out[nom] = bases[base[nom]]
+        elif nom == CONVERGENCE["nom"]:
+            out[nom] = paris_convergence(paris, bases)
+    return out
 
 
 def suivis_prudents(paris: list[dict], maintenant: str) -> dict:

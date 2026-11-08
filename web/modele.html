@@ -1488,24 +1488,27 @@ function rendreRecommandees(rows) {
       ${p1(m.roi_sans_meilleurs)} sans ses ${m.meilleurs_retires ?? "?"} meilleurs matchs, CLV par match ${p1(m.clv_ajustee)}</p></article>`;
   });
   const anciennes = (R.anciennes || []).map(x => `<li><b>${e(nom(x.id))}</b> : recommandée du ${jour(x.depuis)} au ${jour(x.jusqua)}, sortie car ${e(x.raison)}. Pendant ce temps : ${resultat(x.pendant)}.</li>`);
-  // Fusion 1 : stratégie à part, membres figés. Chaque membre dit s'il est encore recommandé.
-  const F = R.fusion, actuelles = new Set((R.actuelles || []).map(x => x.id));
-  let fusion = "";
-  if (F) {
-    const r = parId.get(F.nom), s = r?.stats || {}, rejeu = (miseMode === "kelly" ? F.rejeu_kelly : F.rejeu)?.stats;
-    const statut = id => {
-      if (actuelles.has(id)) return "encore recommandée";
-      const sortie = (R.anciennes || []).find(x => x.id === id);
-      return sortie ? `plus recommandée depuis le ${jour(sortie.jusqua)}` : "pas dans la liste actuelle";
-    };
-    fusion = `<h2 class="sous-titre">${e(F.court || "Fusion")} · membres figés</h2>
-      <p class="aide">Une stratégie à part : elle réunit les recommandées du ${jour(F.debut.slice(0, 10))} et ne change jamais de membres, même quand la liste des recommandées change. Une autre combinaison serait une nouvelle fusion (Fusion 2), suivie à part.</p>
-      <article class="reco-carte reco-fusion"><div class="reco-tete"><span class="reco-rang">Suivie depuis le ${e(quand(F.debut))}</span>${bouton(r)}</div>
-      <h3>${e(F.nom)}</h3><p class="reco-detail">${e(F.regles)}.</p>
+  // Fusions : stratégies à part, membres figés (Fusion 1 le 8/11, puis une nouvelle à chaque révision qui change la
+  // liste). Chaque membre dit s'il est encore recommandé.
+  const actuelles = new Set((R.actuelles || []).map(x => x.id));
+  const statut = id => {
+    if (actuelles.has(id)) return "encore recommandée";
+    const sortie = [...(R.anciennes || [])].reverse().find(x => x.id === id);
+    return sortie ? `plus recommandée depuis le ${jour(sortie.jusqua)}` : "pas dans la liste actuelle";
+  };
+  const fusions = [R.fusion && {...R.fusion, n: 1}, ...(R.fusions || [])].filter(Boolean).sort((x, y) => y.n - x.n);
+  const carteFusion = F => {
+    const r = parId.get(F.nom), s = r?.stats, rejeu = F.n === 1 ? (miseMode === "kelly" ? F.rejeu_kelly : F.rejeu)?.stats : null;
+    return `<article class="reco-carte reco-fusion"><div class="reco-tete"><span class="reco-rang">Suivie depuis le ${e(quand(F.debut))}</span>${bouton(r)}</div>
+      <h3>${e(F.n === 1 ? F.nom : `${F.nom} · recommandées du ${jour(F.date || F.debut.slice(0, 10))}`)}</h3><p class="reco-detail">${e(F.regles)}.</p>
       <ul class="reco-membres">${(F.membres || []).map(id => `<li>${e(nomComplet(id))} <small>(${statut(id)})</small></li>`).join("")}</ul>
-      <p class="reco-chiffres">Depuis son lancement : ${resultat(s.paris != null ? s : null)}</p>
+      <p class="reco-chiffres">Depuis son lancement : ${resultat(s || null)}</p>
       ${rejeu ? `<p class="reco-preuves">Rejeu indicatif depuis le 14/10 (optimiste : membres choisis après coup) : ${rejeu.regles} matchs · ROI ${p1(rejeu.roi)} · gain ${eur(rejeu.gain)}${rejeu.note ? ` · note ${rejeu.note.total}/100` : ""}</p>` : ""}</article>`;
-  }
+  };
+  const fusion = fusions.length ? `<h2 class="sous-titre">Fusions · membres figés</h2>
+      <p class="aide">Chaque fusion réunit les recommandées d'un jour, un seul pari par match, et ne change jamais de membres. Quand une révision change la liste des recommandées,
+      une nouvelle fusion est créée automatiquement (Fusion 2, 3…), suivie à partir de sa création ; les anciennes continuent leur suivi.</p>
+      <div class="reco-grille">${fusions.map(carteFusion).join("")}</div>` : "";
   zone.innerHTML = `<h2 class="sous-titre">Recommandées</h2>
     <p class="aide">Liste revue tous les ${C.revision_jours ?? 7} jours (dernière révision le ${jour(R.derniere_revision)}, prochaine le ${jour(R.prochaine_revision)}) ; entre deux révisions, elle ne bouge pas.
     Une stratégie entre si elle a au moins ${C.min_matchs ?? 50} matchs réglés, un ROI prudent positif, un ROI positif sans ses meilleurs matchs, aucun match au-delà de ${C.part_meilleur_max ?? 25} % du gain,

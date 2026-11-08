@@ -944,6 +944,8 @@ def main() -> int:
     paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
     nouveaux = simulation.placer(opportunites, paris)
     from cotes.decisions import figer_nouveaux, redecider_ouverts
+    from cotes.strategie_recommandee import charger_fusions
+    charger_fusions(donnees)          # fusions automatiques actives : leurs prises sont notées avec les autres
     registre = stockage.fusionner_paris(paris, stockage.lire_archives(donnees))
     figer_nouveaux(registre, nouveaux)
     redecider(registre, maintenant, journal, redecider_ouverts)

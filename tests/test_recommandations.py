@@ -71,3 +71,27 @@ def test_etat_ecrit_dans_donnees(tmp_path):
     e = mettre_a_jour(tmp_path, lignes, datetime(2026, 11, 8, 10, tzinfo=timezone.utc))
     assert e["prochaine_revision"] == "2026-11-15" and (tmp_path / FICHIER).exists()
     assert mettre_a_jour(tmp_path, [], datetime(2026, 11, 10, tzinfo=timezone.utc))["actuelles"][0]["id"] == "A"
+
+
+def test_nouvelle_fusion_quand_la_liste_change_et_places_activees():
+    from datetime import date
+    from cotes.recommandations import reviser
+    from cotes.strategie_recommandee import FUSIONS_AUTO, MEMBRES, charger_fusions, selection_fusion_auto
+    ens = lambda i: set(range(1000 * i, 1000 * i + 100))  # noqa: E731
+    lignes = [{"id": m, "stats": _stats(90 - i), "ensemble": ens(i)} for i, m in enumerate(MEMBRES)]
+    e1 = reviser(None, lignes, date(2026, 11, 8))
+    assert e1["fusions"] == []                                   # même liste que Fusion 1 : pas de doublon
+    lignes.append({"id": "Grok 8 · Polymarket hors foot", "stats": _stats(95), "ensemble": ens(7)})
+    lignes.append({"id": "Fusion 1 · recommandées du 8/11", "stats": _stats(99), "ensemble": ens(8)})
+    e2 = reviser(e1, lignes, date(2026, 11, 15), instant="2026-11-15T09:00:00+01:00")
+    assert "Fusion 1 · recommandées du 8/11" not in {a["id"] for a in e2["actuelles"]}   # une fusion n'est pas candidate
+    f = e2["fusions"][-1]
+    assert f["n"] == 2 and f["debut"] == "2026-11-15T09:00:00+01:00" and "Grok 8 · Polymarket hors foot" in f["membres"]
+    assert reviser(e2, lignes, date(2026, 11, 22))["fusions"] == e2["fusions"]          # liste inchangée : rien
+    actives = charger_fusions(e2)
+    try:
+        assert [p["cle"] for p in actives] == ["fusion_2"] and actives[0]["membres"] == tuple(f["membres"])
+        assert selection_fusion_auto([], FUSIONS_AUTO[1], {}) == set()                   # place libre : aucun pari
+    finally:
+        charger_fusions({})
+    assert not any(p["actif"] for p in FUSIONS_AUTO)
