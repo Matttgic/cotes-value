@@ -100,6 +100,7 @@ jobs:
         run: python scripts/envoyes_secours.py fusionner --donnees donnees --secours envoyes
 
       - name: Cycle (collecte, comparaison, paris, site)
+        id: cycle_collecte
         env:
           REPRISE_CHEMIN: reprise/derniere_lecture.json.gz
           MEMOIRE_CHEMIN: memoire
@@ -206,6 +207,17 @@ jobs:
             git pull -q --rebase origin donnees
           done
           exit 1
+
+      # Signal de vie Healthchecks (secret HC_PING_URL, facultatif) : seulement si le cycle et le push ont réussi.
+      # Le même check reçoit le signal du serveur en direct ; il alerte quand plus personne ne collecte.
+      - name: Signal de vie (Healthchecks)
+        if: always() && steps.cycle_collecte.outcome == 'success' && steps.enregistrer.outcome == 'success'
+        continue-on-error: true
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+        run: |
+          [ -n "$HC_PING_URL" ] || exit 0
+          curl -fsS -m 10 --retry 3 -A cotes-value -o /dev/null "$HC_PING_URL" || echo "::warning::signal Healthchecks en échec"
 
       # Le dernier bon état des références ne dépend pas de « donnees » (lectures Pinnacle et Polymarket) :
       # gardé même si une étape ou le push a échoué.

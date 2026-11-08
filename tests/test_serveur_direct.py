@@ -179,3 +179,53 @@ def test_alertes_depuis_le_serveur_pushover_sans_echec_chrome(tmp_path, monkeypa
     assert r.returncode == 0, r.stderr
     assert "::warning" not in r.stdout and json.loads(r.stdout.strip().splitlines()[-1])["ok"] is True
     assert "echecs_recents" not in json.loads((donnees / "etat.json").read_text(encoding="utf-8"))
+
+
+def test_signal_healthchecks_facultatif_et_sans_exception(monkeypatch):
+    appels = []
+
+    class Reponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    def ouvrir(requete, timeout):
+        appels.append((requete.full_url, timeout))
+        return Reponse()
+
+    monkeypatch.delenv("HC_PING_URL", raising=False)
+    assert SD.signaler_vie(ouvrir) is False and appels == []           # sans adresse : aucun appel
+    monkeypatch.setenv("HC_PING_URL", "https://hc-ping.com/exemple")
+    assert SD.signaler_vie(ouvrir) is True and appels == [("https://hc-ping.com/exemple", 10)]
+
+    def panne(requete, timeout):
+        raise OSError("réseau")
+    assert SD.signaler_vie(panne) is False                               # une panne ne fait pas tomber la boucle
+
+
+def test_signal_healthchecks_apres_un_push_reussi_seulement(tmp_path, monkeypatch):
+    signaux = []
+    monkeypatch.setattr(SD, "executer", lambda *a, **k: True)
+    monkeypatch.setattr(SD, "ecrire_battement", lambda *a, **k: None)
+    monkeypatch.setattr(SD, "declencher_site", lambda *a, **k: True)
+    monkeypatch.setattr(SD, "signaler_vie", lambda: signaux.append(1) or True)
+    monkeypatch.setattr(SD, "enregistrer", lambda *a, **k: False)
+    assert SD.publier(tmp_path, {}, "j", "main", 1, vivant=True) is False and signaux == []
+    monkeypatch.setattr(SD, "enregistrer", lambda *a, **k: True)
+    assert SD.publier(tmp_path, {}, "j", "main", 1, vivant=False) is True and signaux == []
+    assert SD.publier(tmp_path, {}, "j", "main", 1, vivant=True) is True and signaux == [1]
+
+
+def test_signal_healthchecks_dans_la_chaine_github():
+    import yaml
+    collecte = yaml.safe_load((SD.RACINE / ".github/workflows/collecte.yml").read_text(encoding="utf-8"))
+    etapes = collecte["jobs"]["cycle"]["steps"]
+    noms = [s.get("name") for s in etapes]
+    signal = etapes[noms.index("Signal de vie (Healthchecks)")]
+    assert noms.index("Enregistrer les données") < noms.index("Signal de vie (Healthchecks)")
+    assert "steps.cycle_collecte.outcome == 'success'" in signal["if"]
+    assert "steps.enregistrer.outcome == 'success'" in signal["if"] and signal["continue-on-error"] is True
+    assert any(s.get("id") == "cycle_collecte" and s.get("name") == "Cycle (collecte, comparaison, paris, site)"
+               for s in etapes)

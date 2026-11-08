@@ -11,6 +11,8 @@ Boucle continue, à la place de la chaîne GitHub Actions (5 minutes, parfois re
   de « donnees », puis publication du site par le workflow site.yml ;
 - toutes les heures : mise à jour du code (``git pull --ff-only``) ; si le code a changé, le programme s'arrête et
   systemd le relance sur le nouveau code ;
+- après chaque enregistrement réussi qui suit au moins un cycle réussi : signal de vie vers Healthchecks
+  (``HC_PING_URL``, facultatif), qui alerte si ce signal cesse (serveur et GitHub arrêtés, boucle bloquée) ;
 - arrêt (SIGTERM, ``systemctl stop``) : battement « inactif » poussé, GitHub reprend la main à sa prochaine
   surveillance.
 
@@ -184,15 +186,31 @@ def environnement(donnees: Path) -> dict:
             "CYCLE_MINUTES": os.environ.get("CYCLE_MINUTES", f"{max(1.0, PERIODE_S / 60):g}")}
 
 
-def un_cycle(donnees: Path, env: dict) -> None:
+def signaler_vie(ouvrir=urllib.request.urlopen) -> bool:
+    """Signal de vie Healthchecks (``HC_PING_URL``). Sans adresse : rien. Jamais d'exception, l'adresse n'est pas journalisée."""
+    url = os.environ.get("HC_PING_URL", "").strip()
+    if not url:
+        return False
+    try:
+        with ouvrir(urllib.request.Request(url, headers={"User-Agent": "cotes-value"}), timeout=10):
+            return True
+    except (OSError, ValueError):
+        journal("signal Healthchecks en échec")
+        return False
+
+
+def un_cycle(donnees: Path, env: dict) -> bool:
+    """True si le cycle de collecte a réussi (les alertes Pushover n'en décident pas)."""
     py = sys.executable
-    executer([py, "scripts/cycle.py", "--reglement", "non", "--sans-site", "--donnees", str(donnees),
+    reussi = executer([py, "scripts/cycle.py", "--reglement", "non", "--sans-site", "--donnees", str(donnees),
               "--site", str(RACINE / "site"), "--reprise", env["REPRISE_CHEMIN"]], timeout=420, env=env)
     executer([py, "scripts/envoyer_notifications.py", "--donnees", str(donnees),
               "--flux", "notifications-rapides.json"], timeout=120, env=env)
+    return reussi
 
 
-def publier(donnees: Path, env: dict, jeton: str, branche: str, cycles: int) -> bool:
+def publier(donnees: Path, env: dict, jeton: str, branche: str, cycles: int, vivant: bool = False) -> bool:
+    """``vivant`` : au moins un cycle réussi depuis le dernier enregistrement ; le signal de vie part alors après le push."""
     py = sys.executable
     executer([py, "scripts/cycle.py", "--seulement-reglement", "--reglement", "auto", "--sans-site",
               "--donnees", str(donnees), "--site", str(RACINE / "site")], timeout=1500, env=env)
@@ -200,6 +218,8 @@ def publier(donnees: Path, env: dict, jeton: str, branche: str, cycles: int) -> 
     if not enregistrer(donnees, f"Serveur {datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%SZ}"):
         journal("push de « donnees » en échec : nouvel essai au prochain enregistrement")
         return False
+    if vivant:
+        signaler_vie()
     declencher_site(jeton, branche)
     return True
 
@@ -233,15 +253,16 @@ def main() -> int:
         time.sleep(20)
     tirer(donnees)
     journal(f"démarrage : cycle toutes les {PERIODE_S:g} s, enregistrement toutes les {PUBLICATION_S:g} s")
-    cycles, derniere_publication, derniere_maj = 0, time.monotonic(), time.monotonic()
+    cycles, reussis, derniere_publication, derniere_maj = 0, 0, time.monotonic(), time.monotonic()
     while not _arret:
         t0 = time.monotonic()
         try:
             jour = rafraichir_extraction(donnees, datetime.now(timezone.utc), jour)
-            un_cycle(donnees, env)
+            reussis += un_cycle(donnees, env)
             cycles += 1
             if time.monotonic() - derniere_publication >= PUBLICATION_S:
-                publier(donnees, env, jeton, branche, cycles)
+                if publier(donnees, env, jeton, branche, cycles, vivant=reussis > 0):
+                    reussis = 0
                 derniere_publication = time.monotonic()
             if time.monotonic() - derniere_maj >= MAJ_CODE_S:
                 derniere_maj = time.monotonic()
