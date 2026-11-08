@@ -98,6 +98,29 @@ def recommander(lignes: list[dict], maximum: int = MAXIMUM) -> dict:
                          "recouvrement_max": RECOUVREMENT_MAX, "maximum": maximum}}
 
 
+DOUBLON_MIN = 0.80
+DOUBLON_MIN_PARIS = 30
+DOUBLONS_MAX = 40
+
+
+def doublons(lignes: list[dict]) -> list[dict]:
+    """Paires de stratégies qui partagent au moins ``DOUBLON_MIN`` de leurs paris (part de la plus petite). Les bases
+    et les fusions (qui réunissent leurs membres) sont exclues. Triées par part puis nombre de paris communs."""
+    sel = sorted((l for l in lignes if not l.get("base") and not est_fusion(l["id"])
+                  and len(l.get("ensemble") or ()) >= DOUBLON_MIN_PARIS), key=lambda l: str(l["id"]))
+    out = []
+    for i, a in enumerate(sel):
+        for b in sel[i + 1:]:
+            part = recouvrement(a["ensemble"], b["ensemble"])
+            if part >= DOUBLON_MIN:
+                out.append({"a": a["id"], "b": b["id"], "part": round(100 * part, 1),
+                            "communs": len(a["ensemble"] & b["ensemble"]),
+                            "paris_a": len(a["ensemble"]), "paris_b": len(b["ensemble"]),
+                            "note_a": _note(a), "note_b": _note(b)})
+    out.sort(key=lambda d: (-d["part"], -d["communs"], str(d["a"]), str(d["b"])))
+    return out[:DOUBLONS_MAX]
+
+
 def _note(l: dict | None) -> int:
     return ((l or {}).get("stats") or {}).get("note", {}).get("total", -1) if l else -1
 

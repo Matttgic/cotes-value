@@ -946,6 +946,8 @@ def main() -> int:
     from cotes.decisions import figer_nouveaux, redecider_ouverts
     from cotes.strategie_recommandee import charger_fusions
     charger_fusions(donnees)          # fusions automatiques actives : leurs prises sont notées avec les autres
+    from cotes import pauses
+    pauses.charger(donnees)           # stratégies en pause (pauses.json) : plus de nouveaux paris
     registre = stockage.fusionner_paris(paris, stockage.lire_archives(donnees))
     figer_nouveaux(registre, nouveaux)
     redecider(registre, maintenant, journal, redecider_ouverts)

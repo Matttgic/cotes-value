@@ -304,6 +304,7 @@
     <div class="page-tete"><div><h2>Santé</h2></div></div>
     <div class="carte sante-global" id="sante-global" role="status"></div>
     <h3 class="bu-titre">Automatismes</h3><div class="bu-table" id="sante-auto"></div>
+    <h3 class="bu-titre">Stratégies</h3><div class="bu-table" id="sante-strategies"></div>
     <h3 class="bu-titre">Sources de cotes</h3><div class="bu-table" id="sante-cotes"></div>
     <h3 class="bu-titre">Incidents des dernières 24 heures</h3><div class="bu-table" id="sante-incidents"></div>
     <h3 class="bu-titre">Sources de résultats</h3><div class="bu-table" id="sante-resultats"></div>
@@ -1247,6 +1248,20 @@ function ligneEchecs(bloc, maintenant=Date.now()) {
   const der = liste[liste.length-1];
   return ligneSante("Erreurs non bloquantes", `${liste.length} ces dernières 24 heures · dernière ${quand(der.quand)} · ${der.etape} : ${der.message}`, "alerte");
 }
+// Stratégies (cotes/pannes.py, cotes/protection.py) : pannes qui durent (alerte Pushover au seuil), temps de calcul.
+function lignesStrategiesSante() {
+  const P = D.pannes_strategies || {}, liste = Object.entries(P.strategies || {}), T = D.durees_strategies || {};
+  const s1 = x => String(x).replace(".", ",");
+  const pannes = liste.length ? liste.sort((a, b) => b[1].consecutifs - a[1].consecutifs).map(([nom, x]) =>
+      ligneSante("En panne : " + nom, `${x.consecutifs} construction${x.consecutifs > 1 ? "s" : ""} de suite depuis ${quand(x.depuis)}`
+        + (x.alerte_le ? " · alerte Pushover envoyée" : ` · alerte Pushover à ${P.seuil ?? 6} de suite`) + " · " + x.message,
+        x.consecutifs >= (P.seuil ?? 6) ? "panne" : "alerte")).join("")
+    : ligneSante("Pannes de stratégies", "Aucune stratégie en erreur à la dernière construction", "ok");
+  const lentes = (T.plus_lentes || []).slice(0, 8).map(x => `${x.nom} ${s1(x.secondes.toFixed(1))} s`).join(" · ");
+  return pannes + (T.strategies ? ligneSante("Temps de calcul des stratégies",
+    `${s1(T.total)} s pour ${T.strategies} stratégies à la dernière construction (deux mises)${lentes ? " · plus lentes : " + lentes : ""}`,
+    T.total > 240 ? "alerte" : "ok") : "");
+}
 function rendreSante(maintenant=Date.now()) {
   const {dc, niveau, texte, mineures, age} = diagnosticSante(maintenant);
   const etapes = dc.etapes || {}, jr = (D.etat||{}).dernier_cycle_reglement || {};
@@ -1269,6 +1284,7 @@ function rendreSante(maintenant=Date.now()) {
       + (k === "pinnacle" ? ligneFraicheurPinnacle(dc.pinnacle_fraicheur) + (secours ? ligneSecoursPinnacle(secours) : "") : "")).join("")
     || '<p class="aide sante-vide">Aucune lecture enregistrée.</p>';
   document.getElementById("sante-incidents").innerHTML = incidentsSante(D.incidents, maintenant);
+  document.getElementById("sante-strategies").innerHTML = lignesStrategiesSante();
   const parSource = new Map();
   for (const [k,v] of Object.entries(jr.etapes || {})) {
     const m = /^resultats_([^_]+(?:-[^_]+)*)(?:_|$)/.exec(k);
@@ -1463,6 +1479,25 @@ function celluleNote(n, id) {
   return `<b class="note-strategie ${ton}">${n.total}</b>${n.provisoire ? "<small>provisoire (&lt; 50 matchs)</small>" : ""}`
     + `<small title="Rentabilité prudente /25 · Robustesse /20 · Valeur /25 · Régularité /15 · Solidité /15">${sousNotes(n)}</small>` + evolutionNote(id, n.total);
 }
+// Fiabilité du résultat (note /100, mesures par match) : intervalle à 80 % du ROI, symétrique autour du ROI.
+function fiabilite(n) {
+  const m = n?.mesures || {}, roi = m.roi, bb = m.roi_borne_basse_80;
+  if (!n || n.matchs < 50 || roi == null || bb == null)
+    return {ton: "doux", texte: "Trop tôt pour juger", detail: `${n?.matchs ?? "moins de 10"} matchs réglés, il en faut 50`};
+  const h = roi - bb;
+  if (bb > 0) return {ton: "pos", texte: "Gain fiable", detail: "ROI positif même dans le cas prudent (8 fois sur 10)"};
+  if (roi + h < 0) return {ton: "neg", texte: "Perte fiable", detail: "ROI négatif même dans le cas favorable (8 fois sur 10)"};
+  const besoin = Math.abs(roi) >= 0.5 ? Math.ceil(n.matchs * (h / Math.abs(roi)) ** 2) - n.matchs : null;
+  return {ton: "", texte: "Pas concluant", detail: "peut encore venir de la chance" + (besoin > 0 ? ` · environ ${besoin} matchs de plus pour trancher` : "")};
+}
+// Pause automatique (cotes/pauses.py) et fiabilité, sous le nom de chaque stratégie.
+function etiquettesStrategie(r) {
+  const p = (D.pauses?.liste || {})[r.id], j = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "";
+  const pause = p ? `<small class="badge-pause neg" title="CLV par pari ${p.clv} % (au mieux ${p.clv_haute} %) · par match ${p.clv_match} %">⏸ En pause depuis le ${j(p.depuis)} : perd contre la clôture</small>` : "";
+  if (datesStratActives() || !r.stats?.regles) return pause;
+  const f = fiabilite(r.stats.note);
+  return pause + `<small class="fiabilite ${f.ton}">${e(f.texte)} · ${e(f.detail)}</small>`;
+}
 // Stratégies recommandées (cotes/recommandations.py) : liste stable, revue tous les 7 jours (recommandees.json).
 // Chaque carte porte le nom de la stratégie et sa date d'entrée ; aucun numéro qui changerait de contenu.
 // Fusion 1 (cotes/strategie_recommandee.py) est une stratégie à part, aux membres figés : elle ne suit pas la liste.
@@ -1516,7 +1551,25 @@ function rendreRecommandees(rows) {
     ou si une candidate la dépasse d'au moins ${C.ecart_remplacement ?? 5} points de note. Aucun gain futur garanti.</p>
     ${cartes.length ? `<div class="reco-grille">${cartes.join("")}</div>` : '<div class="vide">Aucune stratégie ne remplit encore les critères.</div>'}
     ${anciennes.length ? `<details class="mode-emploi"><summary>Anciennes recommandées (${anciennes.length})</summary><ul class="reco-anciennes">${anciennes.join("")}</ul></details>` : ""}
-    ${fusion}`;
+    ${fusion}${pausesEtDoublons(nom)}`;
+}
+// Stratégies en pause (cotes/pauses.py) et doublons (cotes/recommandations.py › doublons) sous les recommandées.
+function pausesEtDoublons(nom) {
+  const P = D.pauses || {}, C = P.criteres || {}, liste = Object.entries(P.liste || {}), dbl = D.doublons || [];
+  const j = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "";
+  const pauses = `<details class="mode-emploi"><summary>En pause (${liste.length})</summary>
+    <p class="aide">Une stratégie est mise en pause toute seule quand elle a au moins ${C.min_regles ?? 200} paris réglés et perd clairement contre la cote de clôture :
+    CLV moyenne négative même au mieux (borne haute à 95 %), et négative aussi par match. En pause, elle ne prend plus de nouveaux paris et n'envoie plus d'alerte ;
+    son historique reste affiché. Jamais en pause : les stratégies de base, la convergence et les membres d'une fusion.</p>
+    ${liste.length ? `<ul class="reco-anciennes">${liste.map(([id, p]) => `<li><b>${e(nom(id))}</b> : en pause depuis le ${j(p.depuis)} · ${p.regles} réglés · CLV par pari ${e(String(p.clv).replace(".", ","))} % (au mieux ${e(String(p.clv_haute).replace(".", ","))} %) · par match ${e(String(p.clv_match).replace(".", ","))} %</li>`).join("")}</ul>` : '<p class="aide">Aucune stratégie en pause.</p>'}</details>`;
+  const doublons = `<details class="mode-emploi"><summary>Doublons possibles (${dbl.length})</summary>
+    <p class="aide">Paires de stratégies dont au moins 80 % des paris (de la plus petite) sont communs : l'une des deux n'apporte presque rien.
+    La moins bien notée est indiquée en premier candidat à la pause.</p>
+    ${dbl.length ? `<ul class="reco-anciennes">${dbl.map(d => {
+      const [faible, forte] = d.note_a <= d.note_b ? [d.a, d.b] : [d.b, d.a];
+      return `<li><b>${e(String(d.part).replace(".", ","))} %</b> en commun (${d.communs} paris) : <b>${e(nom(faible))}</b> et ${e(nom(forte))}</li>`;
+    }).join("")}</ul>` : '<p class="aide">Aucune paire à 80 % ou plus.</p>'}</details>`;
+  return pauses + doublons;
 }
 // Raccourcis de période et dates (Du / Au) de l'onglet Stratégies ; le choix reste sur cet appareil.
 function rendreDatesStrategies() {
@@ -1579,7 +1632,7 @@ function rendreStrategies() {
     ` ${(L.resultats || []).length} règles, ${Object.keys(L.comparateurs || {}).length} comparateurs et ${Object.keys(L.bases_futur || {}).length} bases du Bilan ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Note<small>/100</small></th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
     const s=r.stats;
-    return `<tr data-strategie="${e(r.id)}"><td><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
+    return `<tr data-strategie="${e(r.id)}"${(D.pauses?.liste || {})[r.id] ? ' class="en-pause"' : ""}><td><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}${etiquettesStrategie(r)}<span class="mini-courbe-table">${miniCourbe(courbeDe(r),COULEURS_COMPARATEURS[r.id] || "var(--accent)")}</span><small>${e(r.detail)}</small></td>
       <td>${celluleNote(s.note, r.id)}</td>
       <td>${s.paris}<small>${s.regles} réglés (${s.evenements_regles ?? "—"} matchs) · ${s.attente} en attente</small></td><td>${s.gagnes}</td><td>${s.perdus}</td>
       <td>${r.reussite == null ? "—" : r.reussite.toFixed(1).replace(".",",")+" %"}</td><td class="${signe(s.roi)}">${pp(s.roi)}</td>

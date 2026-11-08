@@ -7,12 +7,14 @@ from functools import wraps
 from inspect import signature
 
 from .memo import memoriser
+from .pauses import filtrer
 from .protection import calculer
 
 
 def appliquer(paris, selection, cle):
-    return {id(p) for p in paris if (cle in p['selections_figees']
-            if isinstance(p.get('selections_figees'), dict) else id(p) in selection)}
+    # Stratégie en pause (cotes/pauses.py) : plus aucun pari détecté depuis le début de la pause.
+    return filtrer(paris, {id(p) for p in paris if (cle in p['selections_figees']
+                   if isinstance(p.get('selections_figees'), dict) else id(p) in selection)}, cle)
 
 
 def figer_selecteur(cle):

@@ -181,6 +181,9 @@ jobs:
           THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
           THE_ODDS_API_KEY_3: ${{ secrets.THE_ODDS_API_KEY_3 }}
           THE_ODDS_API_KEY_4: ${{ secrets.THE_ODDS_API_KEY_4 }}
+          # Alerte Pushover si une stratégie échoue plusieurs constructions du site de suite (cotes/pannes.py).
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
         run: python scripts/cycle.py --seulement-reglement --reglement auto --donnees donnees --site site
 
       # Un seul commit et un seul push par cycle (collecte, alertes, règlement), même si une étape a échoué.

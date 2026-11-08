@@ -501,6 +501,7 @@ def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees
     maintenant = datetime.now(timezone.utc)
     etat = reco.mettre_a_jour(donnees, lignes, maintenant)
     par_id = {l["id"]: l for l in lignes}
+    pauses_etat = evaluer_pauses(donnees, lignes, paris, maintenant, etat)
 
     def depuis_entree(x):
         """Résultat des paris détectés entre l'entrée (jour, Paris) et la sortie (exclue) de la liste."""
@@ -517,7 +518,26 @@ def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees
             "criteres": {"min_matchs": reco.MIN_MATCHS, "part_meilleur_max": reco.PART_MEILLEUR_MAX,
                          "recouvrement_max": reco.RECOUVREMENT_MAX, "maximum": reco.MAXIMUM,
                          "revision_jours": reco.REVISION_JOURS, "ecart_remplacement": reco.ECART_REMPLACEMENT},
-            "fusion_rejeu": rejeu}
+            "fusion_rejeu": rejeu, "doublons": reco.doublons(lignes), "pauses": pauses_etat}
+
+
+def evaluer_pauses(donnees: Path, lignes: list[dict], paris: list[dict], maintenant: datetime, etat_reco: dict) -> dict:
+    """Pauses automatiques (cotes/pauses.py) : nouvelles pauses écrites dans ``pauses.json``, actives à la prochaine
+    construction. Exemptées : bases, stratégies de base, convergence et membres des fusions actives."""
+    from cotes import pauses
+    from cotes.laboratoire import clv, regles_avant
+    cle_de = {r.id: "labo:" + r.id for r in REGLES_LABO}
+    cle_de.update({v["nom"]: v["cle"] for v in VARIANTES})
+    base = {nom for _, _, _, nom, _ in STRATEGIES} | {CONVERGENCE["nom"]}
+    membres = {m for f in [RECOMMANDEE_FUSION, *FUSIONS_AUTO] if f.get("actif", True) for m in f.get("membres") or ()}
+    membres |= {m for f in etat_reco.get("fusions") or [] for m in f.get("membres") or ()}
+    exemptes = base | membres | {l["id"] for l in lignes if l.get("base")}
+    par_id = {p["id"]: p for p in paris if p.get("id")}
+
+    def clvs_de(ident):
+        rows = [par_id[i] for i in next((l["ensemble"] for l in lignes if l["id"] == ident), ()) if i in par_id]
+        return [c for c in (clv(p) for p in regles_avant(rows, maintenant)) if c is not None]
+    return pauses.mettre_a_jour(donnees, lignes, cle_de, clvs_de, exemptes, maintenant)
 
 
 def construire(donnees: Path, sortie: Path) -> Path:
@@ -540,6 +560,8 @@ def retirer_places_libres(labo: dict) -> None:
 
 def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = None) -> Path:
     charger_fusions(donnees)          # fusions automatiques déjà créées (recommandees.json)
+    from cotes import pauses
+    pauses.charger(donnees)           # stratégies en pause (pauses.json) : plus de nouveaux paris
     paris = fusionner_paris(_lire(donnees / "paris.json", []), lire_archives(donnees))
     journal_alertes = _lire(donnees / "notifications_diagnostic.json", {"cycles": []})
     demandes = {a["id"]: c.get("envoi_demande_le") for c in journal_alertes.get("cycles", [])
@@ -674,6 +696,8 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     retirer_places_libres(laboratoire)
     recommandees = recommandations_du_laboratoire(laboratoire, paris, donnees)
     fusion_rejeu = recommandees.pop("fusion_rejeu", None)
+    doublons = recommandees.pop("doublons", [])
+    pauses_publiees = recommandees.pop("pauses", {})
     # Classement vivant : notes du jour gardées dans « donnees », progression depuis la veille et sur 7 jours.
     from cotes import historique_notes
     instant_notes = datetime.now(timezone.utc)
@@ -709,6 +733,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
         segments_fixe = [f + [k[6]] for f, k in zip(segments_fixe, segments_k)]
     libres = {f["cle"] for f in FUSIONS_AUTO if not f["actif"]}
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:], "notes_reperes": notes_reperes,
+            "doublons": doublons, "pauses": pauses_publiees,
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": {k: v for k, v in notifications_mod.NOMS.items()
                                                                            if k not in libres},
@@ -748,6 +773,10 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
+    # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/pannes.py).
+    from cotes import pannes, protection
+    data["durees_strategies"] = protection.durees()
+    data["pannes_strategies"] = pannes.mettre_a_jour(donnees, echecs_strategies or {}, datetime.now(timezone.utc))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
         echecs.fusionner(etat, list(echecs_strategies.values()), datetime.now(timezone.utc))

@@ -152,12 +152,12 @@ function miseMoyenne(s) {
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}</span>${pastillesMedailles(r.medailles)}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}</span>${pastillesMedailles(r.medailles)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="badge-pause neg">⏸</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><h3>${e(r.nom)}</h3></div>
     <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button></div>
-    <p class="strategie-regle">${e(r.detail)}</p>
+    <p class="strategie-regle">${e(r.detail)}</p>${typeof etiquettesStrategie==='function'?etiquettesStrategie(r):''}
     <div class="strategie-apercu"><div><span class="libelle-gain">Gain net simulé</span><strong class="${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</strong></div>${s.note?`<div><span class="libelle-gain">Note</span><strong class="${s.note.total>=70?'pos':s.note.total<40?'neg':''}">${s.note.total}/100</strong><small>${s.note.provisoire?'provisoire · ':''}${typeof sousNotes==='function'?sousNotes(s.note):''}</small>${typeof evolutionNote==='function'?evolutionNote(r.id,s.note.total):''}</div>`:''}</div>
     <div class="strategie-trajectoire">${grandeCourbe(points,couleur)}<span>Gain cumulé par date de règlement · pointillés : gain attendu si les cotes justes sont exactes · zone grisée : marge du hasard (8 fois sur 10)</span></div>
     <dl class="strat-chiffres">
