@@ -7,6 +7,7 @@ from functools import wraps
 from inspect import signature
 
 from .memo import memoriser
+from .protection import calculer
 
 
 def appliquer(paris, selection, cle):
@@ -19,7 +20,8 @@ def figer_selecteur(cle):
         @memoriser
         @wraps(f)
         def selectionner(paris, *args, **kwargs):
-            selection = f(paris, *args, **kwargs)
+            # Construction du site : une erreur rend une sélection vide, les décisions figées restent.
+            selection = calculer(cle, lambda: f(paris, *args, **kwargs))
             # Un début explicite demande un rejeu ; jamais substituer le registre.
             if signature(f).bind_partial(paris, *args, **kwargs).arguments.get('depuis') is not None:
                 return selection

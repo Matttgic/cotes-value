@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from .decisions import appliquer
 from .memo import memoriser
+from .protection import calculer
 from .strategie_m3_structure import M3_STRUCTURE, paris_m3_structure
 from .strategie_qwen import QWEN, paris_qwen
 from .strategie_coeur import COEUR, paris_coeur
@@ -217,37 +218,48 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
     claude = bases.get("strategie") if depuis is not None and bases is not None else None
     if claude is None:
         claude = paris_strategie(paris, depuis=depart)
-    prudent = selection_unique(paris, claude, depart, CLAUDE_PRUDENT["maximum_jour"])["selection"]
+    prudent = calculer("claude_prudent", lambda: selection_unique(paris, claude, depart,
+                                                            CLAUDE_PRUDENT["maximum_jour"])["selection"])
     bases = bases if bases is not None else selections(paris, depuis=depuis)
     # Eden ne rejoint pas cette variante : le texte figé ne nomme que Claude,
     # ChatGPT, Gemini et Jules. L'y ajouter changerait une règle déjà lancée.
     familles = {cle for cle, famille, *_ in STRATEGIES if famille not in ("m3", "eden")}
     retenus = {cle: ids for cle, ids in bases.items() if cle in familles}
     ordre = {ref: i for i, ref in enumerate(REFERENCES)}
-    candidats = set()
-    for (_, t, _), groupe in votes(paris, retenus).items():
-        if t < heure(depart) or len(groupe["familles"]) < 3:
-            continue
-        p = min(groupe["paris"], key=lambda p: (ordre.get(p.get("reference"), 99), str(p.get("id") or "")))
-        candidats.add(id(p))
-    convergence = selection_unique(paris, candidats, depart)["selection"]
+
+    def convergence_3():
+        candidats = set()
+        for (_, t, _), groupe in votes(paris, retenus).items():
+            if t < heure(depart) or len(groupe["familles"]) < 3:
+                continue
+            p = min(groupe["paris"], key=lambda p: (ordre.get(p.get("reference"), 99), str(p.get("id") or "")))
+            candidats.add(id(p))
+        return selection_unique(paris, candidats, depart)["selection"]
+    convergence = calculer("convergence_3", convergence_3)
     resultat = {"claude_prudent": prudent, "convergence_3": convergence}
     if depuis is None:
         resultat = {cle: appliquer(paris, ids, cle) for cle, ids in resultat.items()}
-    resultat["m3_structure"] = paris_m3_structure(paris) if depuis is None else set()
-    resultat["qwen_persistence"] = paris_qwen(paris, depuis)
-    resultat["coeur_value"] = appliquer(paris, paris_coeur(paris, depuis), "coeur_value") if depuis is None else set()
-    resultat["liquidite_sure"] = appliquer(paris, paris_liquidite(paris, depuis), "liquidite_sure") if depuis is None else set()
+    resultat["m3_structure"] = calculer("m3_structure", lambda: paris_m3_structure(paris)) if depuis is None else set()
+    resultat["qwen_persistence"] = calculer("qwen_persistence", lambda: paris_qwen(paris, depuis))
+    resultat["coeur_value"] = (appliquer(paris, calculer("coeur_value", lambda: paris_coeur(paris, depuis)), "coeur_value")
+                               if depuis is None else set())
+    resultat["liquidite_sure"] = (appliquer(paris, calculer("liquidite_sure", lambda: paris_liquidite(paris, depuis)),
+                                            "liquidite_sure") if depuis is None else set())
     for g in GROKS:
-        resultat[g["cle"]] = appliquer(paris, paris_grok(paris, g), g["cle"]) if depuis is None else set()
+        resultat[g["cle"]] = (appliquer(paris, calculer(g["cle"], lambda: paris_grok(paris, g)), g["cle"])
+                              if depuis is None else set())
     for g in GROKS_V2:
-        resultat[g["cle"]] = appliquer(paris, paris_grok(paris, g), g["cle"]) if depuis is None else set()
+        resultat[g["cle"]] = (appliquer(paris, calculer(g["cle"], lambda: paris_grok(paris, g)), g["cle"])
+                              if depuis is None else set())
     for g in GROKS_V3:
-        resultat[g["cle"]] = appliquer(paris, paris_grok(paris, g), g["cle"]) if depuis is None else set()
+        resultat[g["cle"]] = (appliquer(paris, calculer(g["cle"], lambda: paris_grok(paris, g)), g["cle"])
+                              if depuis is None else set())
     for c in CONSEILS:
-        resultat[c["cle"]] = appliquer(paris, paris_conseil(paris, c), c["cle"]) if depuis is None else set()
+        resultat[c["cle"]] = (appliquer(paris, calculer(c["cle"], lambda: paris_conseil(paris, c)), c["cle"])
+                              if depuis is None else set())
     for d in DEFIS:
-        resultat[d["cle"]] = appliquer(paris, paris_defi(paris, d), d["cle"]) if depuis is None else set()
+        resultat[d["cle"]] = (appliquer(paris, calculer(d["cle"], lambda: paris_defi(paris, d)), d["cle"])
+                              if depuis is None else set())
     # Gemini Défi : sélecteurs déjà figés par @figer_selecteur, sans rejeu.
     for g in GEMINI_DEFIS:
         resultat[g["cle"]] = SELECTEURS_GEMINI_DEFI[g["cle"]](paris) if depuis is None else set()
@@ -258,12 +270,15 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
     for c in CLAUDE_OPUS:
         resultat[c["cle"]] = SELECTEURS_CLAUDE_OPUS[c["cle"]](paris) if depuis is None else set()
     # Fusion 1 : membres figés le 8/11/2026, un pari par match, sans rejeu.
-    resultat[RECOMMANDEE_FUSION["cle"]] = paris_fusion(paris) if depuis is None else set()
+    resultat[RECOMMANDEE_FUSION["cle"]] = (calculer(RECOMMANDEE_FUSION["cle"], lambda: paris_fusion(paris))
+                                         if depuis is None else set())
     # Fusions automatiques (Fusion 2, 3…) : places activées par recommandees.json (charger_fusions), sans rejeu.
     actives = [f for f in FUSIONS_AUTO if f["actif"]] if depuis is None else []
-    membres = _ids_membres(paris, bases, resultat, {m for f in actives for m in f["membres"]})
+    membres = calculer("membres des fusions", lambda: _ids_membres(paris, bases, resultat,
+                                                               {m for f in actives for m in f["membres"]}), dict)
     for f in FUSIONS_AUTO:
-        resultat[f["cle"]] = selection_fusion_auto(paris, f, membres) if f in actives else set()
+        resultat[f["cle"]] = (calculer(f["cle"], lambda: selection_fusion_auto(paris, f, membres))
+                              if f in actives else set())
     return resultat
 
 
