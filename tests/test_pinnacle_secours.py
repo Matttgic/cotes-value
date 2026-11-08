@@ -99,6 +99,10 @@ def test_age_inconnu_ou_trop_vieux_marque_la_cote_perimee():
     assert vieux and all(l["cote_perimee"] for l in vieux)
     inconnu = S.collecter({29}, NOW, None, Session(Reponse(entetes={"X-Data-Age-Ms": ""})))
     assert inconnu and all(l["cote_perimee"] for l in inconnu)
+    negatif = S.collecter({29}, NOW, None, Session(Reponse(entetes={"X-Data-Age-Ms": "-1000"})))
+    assert negatif and all(l["age_cache_s"] is None and l["cote_perimee"] for l in negatif)
+    zero = S.collecter({29}, NOW, None, Session(Reponse(entetes={"X-Data-Age-Ms": "0"})))
+    assert zero and all(l["age_cache_s"] == 0 and l["cote_perimee"] is False for l in zero)
 
 
 def test_evenements_invalides_ignores():
@@ -252,11 +256,10 @@ def test_heure_sans_fuseau_est_lue_comme_gmt():
 class ReponsePinBook:
     """Format PinBook : heures sans fuseau, fraîcheur dans last_call, aucun en-tête X-Data-*."""
 
-    def __init__(self, evenements=None, statut=200, age_s=20):
-        import time
+    def __init__(self, evenements=None, statut=200, age_s=20, horloge=NOW):
         self.status_code, self.headers = statut, {}
-        debut = (NOW + timedelta(hours=5)).replace(tzinfo=None).isoformat()
-        self._corps = {"sport_id": 1, "last_call": int(time.time()) - age_s,
+        debut = (horloge + timedelta(hours=5)).replace(tzinfo=None).isoformat()
+        self._corps = {"sport_id": 1, "last_call": int(horloge.timestamp()) - age_s,
                        "events": evenements if evenements is not None else [evenement(starts=debut, home_team_type="Team1")]}
 
     def json(self):
@@ -283,7 +286,7 @@ def test_pinbook_seul_comble_football_avec_la_fraicheur_de_last_call(monkeypatch
     assert [a[0] for a in r.appels] == ["pinbook"] * 3                       # football, tennis, basket ; pas le hockey
     assert r.appels[0][3]["x-rapidapi-key"] == "cle-pinbook" and r.appels[0][2]["event_type"] == "prematch"
     assert lignes and all(l["origine"] == "pinbook" and not l["cote_perimee"] for l in lignes)
-    assert lignes[0]["debut"].endswith("Z") and 15 <= lignes[0]["age_cache_s"] <= 40
+    assert lignes[0]["debut"].endswith("Z") and lignes[0]["age_cache_s"] == 20
 
 
 def test_pinbook_ne_sert_pas_quand_pinnodds_donne_des_lignes_fraiches(monkeypatch):
@@ -317,6 +320,10 @@ def test_pinbook_erreurs_et_donnees_absentes_ne_donnent_rien(monkeypatch):
     assert S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(statut=403))) == [] and "403" in S.ERREURS[0]
     vieux = S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(age_s=3600)))
     assert vieux and all(l["cote_perimee"] for l in vieux)                   # last_call vieux d'une heure : jamais une référence
+    futur = S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(age_s=-30)))
+    assert futur and all(l["age_cache_s"] is None and l["cote_perimee"] for l in futur)
+    pile = S.collecter({29}, NOW, None, Routeur(pinbook=ReponsePinBook(age_s=0)))
+    assert pile and all(l["age_cache_s"] == 0 and l["cote_perimee"] is False for l in pile)
 
 
 def test_sports_en_retard_regarde_les_matchs_proches():

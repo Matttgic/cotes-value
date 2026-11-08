@@ -13,6 +13,11 @@ Ce lecteur reste à deux ou trois requêtes par cycle.
 (lecture seule, rien n'est comparé), ``off`` (aucun appel). Une valeur inconnue
 reste ``direct``. Aucun identifiant : pas de compte, pas de session-token.
 Un 401, 403 ou 429 coupe la lecture ; le cycle continue sans Matchbook.
+
+``last-price-update-time`` est le dernier changement de prix, pas l'heure de notre lecture
+(``collecte``). Absente, naïve ou numérique : pas de ``maj_source``, l'âge source reste inconnu.
+Une cote inchangée peut être ancienne sans être périmée. Deux pages qui ramènent la même
+sélection ne la comptent qu'une fois ; le prix de la page suivante remplace le précédent.
 """
 from __future__ import annotations
 
@@ -23,6 +28,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import requests
+from cotes.fraicheur import derniere_observation, horodatage_source
 from cotes.temps import instant_utc
 
 BASE = "https://api.matchbook.com/edge/rest"
@@ -256,11 +262,16 @@ def lignes_brutes(events: list, sport: str, maintenant: datetime, heures: float 
                 if not issue:
                     continue
                 carnet = _carnet(r)
+                brut = r.get("last-price-update-time")
+                iso = horodatage_source(brut)
+                source = {"maj_source": iso} if iso else {}
+                if brut is not None:
+                    source["maj_bookmaker"] = brut
                 if not carnet:
-                    out.append({**base, "issue": issue, "achat": [], "vente": []})
+                    out.append({**base, "issue": issue, "achat": [], "vente": [], **source})
                     continue
                 out.append({**base, "issue": issue, "achat": [carnet[0]], "vente": [carnet[1]],
-                            "maj_bookmaker": r.get("last-price-update-time")})
+                            "maj_bookmaker": brut, **source})
     return out
 
 
@@ -293,6 +304,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None,
         if client.bloque:
             break
     from cotes.comparaison import reference_echange
-    justes = reference_echange(bruts, NOM_SOURCE)
+    # Même sélection revue dans la pagination : une seule observation, la plus récente de cette lecture.
+    justes = reference_echange(derniere_observation(bruts), NOM_SOURCE)
     return justes, {"ok": not client.erreurs or bool(justes), "requetes": client.requetes,
                     "erreurs": list(client.erreurs), "matchs": matchs, "mode": actif}

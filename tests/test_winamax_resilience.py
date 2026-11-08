@@ -171,6 +171,8 @@ def test_demande_principale_ratee_reprise_une_fois_en_fin_de_file(monkeypatch):
     assert client.demandes == ["sport:1", "sport:5", "sport:1"]
     assert lignes and meta["ok"] is True
     assert meta["erreurs"] == [] and meta["relances"] == ["sport:1"]      # rien de perdu : pas d'erreur restante
+    cles = [(l.get("match_id"), l.get("cle_marche"), l.get("issue"), l.get("periode"), l.get("ligne")) for l in lignes]
+    assert len(cles) == len(set(cles))                                    # la reprise ne relit pas deux fois le même prix
 
 
 def test_reprise_unique_l_erreur_reste_si_elle_echoue_encore(monkeypatch):

@@ -1185,7 +1185,8 @@ rendreControle();
 
 // --- Santé : état des automatismes et des sources, en mots simples
 const SOURCES_COTES = [["pinnacle","Pinnacle"],["polymarket","Polymarket"],["netbet","NetBet"],["winamax_direct","Winamax"],
-  ["betclic_direct","Betclic"],["unibet_direct","Unibet"],["pmu_direct","PMU"],["olybet","OlyBet"],["smarkets","Smarkets"]];
+  ["betclic_direct","Betclic"],["unibet_direct","Unibet"],["pmu_direct","PMU"],["olybet","OlyBet"],["smarkets","Smarkets"],
+  ["matchbook","Matchbook"]];
 const SOURCES_RESULTATS = [["espn","ESPN"],["flashscore","Flashscore"],["livescore","LiveScore"],["nhl","NHL officiel"],
   ["thesportsdb","TheSportsDB"],["theodds","The Odds API"],["propline","Propline"]];
 const MOTS_SANTE = {ok:"✓ OK", alerte:"! Alerte", panne:"✗ En panne"};
@@ -1216,7 +1217,23 @@ function ligneFraicheurPinnacle(fr) {
   const detail = !p ? `Cotes de ${de} min (limite ${limite})`
     : p >= fr.lignes ? `En retard : cotes de ${de} min, toutes écartées (limite ${limite}) · Pinnacle ne les renouvelle que toutes les 15 min`
     : `${Math.max(1, Math.round(100*p/fr.lignes))} % des cotes écartées (limite ${limite})`;
-  return ligneSante("Pinnacle · fraîcheur", detail, p ? "alerte" : "ok");
+  return ligneSante("Pinnacle · fraîcheur", detail + " · âge du cache HTTP, pas l'heure du dernier prix", p ? "alerte" : "ok");
+}
+// Dernier mouvement annoncé (Matchbook). Une cote inchangée n'est pas une cote périmée.
+// L'heure de réception et l'heure de la page (diagnosticSante, fin de cycle) restent ailleurs.
+function ligneFraicheurMouvement(fr) {
+  if (!fr || !fr.lignes) return "";
+  const inconnue = (fr.source_inconnue || 0) + (fr.source_invalide || 0);
+  if (!fr.source_connue) {
+    return ligneSante("Matchbook · mouvement",
+      `Heure du dernier prix inconnue (${inconnue} cotes). L'heure de réception n'est pas un âge de cotation.`, "ok");
+  }
+  const mn = s => Math.round(s / 60);
+  const de = Number.isFinite(fr.mouvement_min_s) && mn(fr.mouvement_min_s) !== mn(fr.mouvement_max_s)
+    ? `${mn(fr.mouvement_min_s)} à ${mn(fr.mouvement_max_s)} min` : `${mn(fr.mouvement_max_s)} min`;
+  const reste = inconnue ? ` · ${inconnue} sans heure source` : "";
+  return ligneSante("Matchbook · mouvement",
+    `Dernier mouvement de prix : ${de}${reste}. Une cote inchangée n'est pas périmée.`, "ok");
 }
 function ligneSecoursPinnacle(secours) {
   const nb = (secours.sports || []).length, retard = (secours.retard || []).length ? `Pinnacle en retard (${secours.retard.join(", ")}) · ` : "";
@@ -1264,9 +1281,11 @@ function rendreSante(maintenant=Date.now()) {
       ageReglement == null ? "alerte" : ageReglement > 720 ? "panne" : ageReglement > 180 ? "alerte" : "ok") +
     ligneEchecs((D.etat||{}).echecs_recents, maintenant);
   const secours = dc.pinnacle_secours;
-  document.getElementById("sante-cotes").innerHTML = SOURCES_COTES.filter(([k]) => etapes[k]).map(([k,nom]) =>
-    ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus" : detailEtape(etapes[k]), niveauEtape(etapes[k]))
-      + (k === "pinnacle" ? ligneFraicheurPinnacle(dc.pinnacle_fraicheur) + (secours ? ligneSecoursPinnacle(secours) : "") : "")).join("")
+  document.getElementById("sante-cotes").innerHTML = SOURCES_COTES.filter(([k]) => etapes[k] && !(k === "matchbook" && etapes[k].desactive)).map(([k,nom]) =>
+    ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus"
+      : k === "matchbook" && etapes[k].shadow ? "Lecture seule, hors comparaison" : detailEtape(etapes[k]), niveauEtape(etapes[k]))
+      + (k === "pinnacle" ? ligneFraicheurPinnacle(dc.pinnacle_fraicheur) + (secours ? ligneSecoursPinnacle(secours) : "") : "")
+      + (k === "matchbook" ? ligneFraicheurMouvement(dc.matchbook_fraicheur) : "")).join("")
     || '<p class="aide sante-vide">Aucune lecture enregistrée.</p>';
   document.getElementById("sante-incidents").innerHTML = incidentsSante(D.incidents, maintenant);
   const parSource = new Map();

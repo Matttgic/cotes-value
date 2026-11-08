@@ -22,7 +22,9 @@ Prudence :
   une ligne plus vieille que le seuil de ``pinnacle.est_perimee`` reste marquée périmée et ne sert pas de référence ;
 - PinBook (``PINBOOK_API_KEY``, offre gratuite RapidAPI : 550 requêtes par mois) passe après pinnodds et ne comble
   que les sports sans ligne fraîche : ``PINBOOK_SPORTS`` (football, tennis, basket par défaut),
-  ``PINBOOK_LIMITE_JOUR`` (16 par défaut) et ``PINBOOK_PAUSE_MIN`` (60 par défaut). Sa fraîcheur vient de ``last_call``.
+  ``PINBOOK_LIMITE_JOUR`` (16 par défaut) et ``PINBOOK_PAUSE_MIN`` (60 par défaut). Sa fraîcheur vient de ``last_call``
+  (secondes Unix), mesurée sur l'horloge du cycle. Un ``last_call`` futur ou illisible, comme un
+  ``X-Data-Age-Ms`` négatif, donne un âge inconnu, jamais 0 : la cote est périmée.
 """
 from __future__ import annotations
 
@@ -35,6 +37,7 @@ from pathlib import Path
 import requests
 
 from . import memoire, pinnacle
+from .fraicheur import age_depuis_millisecondes, age_epoch_secondes
 
 BASE = "https://pinnodds.com"
 # sport Pinnacle -> identifiant pinnodds (volley et handball ont chacun leur identifiant)
@@ -189,14 +192,11 @@ def _lire_sport(session, sid_pinnodds: int):
     except (ValueError, AttributeError):
         ERREURS.append(f"pinnodds sport {sid_pinnodds} : JSON invalide")
         return None, None
-    try:
-        age = int(r.headers.get("X-Data-Age-Ms")) // 1000
-    except (TypeError, ValueError):
-        age = None
+    age = age_depuis_millisecondes(r.headers.get("X-Data-Age-Ms"))
     return evenements, age
 
 
-def _lire_pinbook(session, sid_pinbook: int):
+def _lire_pinbook(session, sid_pinbook: int, maintenant: datetime):
     """(événements, âge en secondes d'après last_call) ou (None, None)."""
     r = session.get(f"https://{HOTE_PINBOOK}/kit/v1/markets", timeout=40,
                     params={"sport_id": sid_pinbook, "is_have_odds": 1, "event_type": "prematch"},
@@ -213,10 +213,7 @@ def _lire_pinbook(session, sid_pinbook: int):
     except (ValueError, AttributeError):
         ERREURS.append(f"pinbook sport {sid_pinbook} : JSON invalide")
         return None, None
-    try:
-        age = max(0, int(datetime.now(timezone.utc).timestamp() - float(corps.get("last_call"))))
-    except (TypeError, ValueError):
-        age = None
+    age = age_epoch_secondes(corps.get("last_call"), maintenant)
     return evenements, age
 
 
@@ -246,7 +243,8 @@ def _passer(nom: str, sports: set[int], etat: dict, maintenant: datetime, sessio
     else:
         pause = _entier_env("PINBOOK_PAUSE_MIN", PINBOOK_PAUSE_MIN_DEFAUT)
         limite = _entier_env("PINBOOK_LIMITE_JOUR", PINBOOK_LIMITE_JOUR_DEFAUT)
-        correspondance, lire = SPORTS_PINNODDS, _lire_pinbook
+        correspondance, lire = SPORTS_PINNODDS, (
+            lambda session, sid, horloge=maintenant: _lire_pinbook(session, sid, horloge))
     bloc = _bloc(etat, nom)
     if bloc.get("dernier"):
         try:
