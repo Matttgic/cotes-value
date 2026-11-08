@@ -31,8 +31,9 @@ def test_ancien_json_sans_nouveaux_comparateurs(tmp_path, monkeypatch):
     d=donnees_html(site_web.construire(tmp_path,tmp_path/"site").read_text())
     labo=d["laboratoire"]; nav=labo["navigation"]
     assert len(labo["comparateurs"]) == 43
-    assert "Recommandée · Fusion" in labo["comparateurs"]
-    assert set(d["recommandees"]) >= {"liste", "ecartees", "criteres", "fusion"}
+    assert "Fusion 1 · recommandées du 8/11" in labo["comparateurs"]
+    assert set(d["recommandees"]) >= {"actuelles", "anciennes", "prochaine_revision", "criteres", "fusion"}
+    assert (tmp_path / "recommandees.json").exists()
     assert "Grok 9 · Valeur Pinnacle" in labo["comparateurs"]
     assert "Grok 10 · Valeur Polymarket" in labo["comparateurs"]
     assert "Défi 1 · Écart fort, match proche" in labo["comparateurs"]

@@ -176,10 +176,11 @@ les meilleurs matchs, part du meilleur match), valeur (CLV par match) /25, régu
 
 ### Stratégies recommandées
 
-En haut de **Stratégies** : **Recommandée 1, 2, 3** (les mieux notées dont le résultat tient : ≥ 50 matchs, borne
-basse du ROI positive, ROI positif sans les meilleurs matchs, aucun match ne pèse plus de 25 % du gain, CLV par match
-positive, pas de doublon) et **Recommandée 4 · Fusion** (les trois recommandées du 8/11/2026 réunies, un pari par
-match, suivie depuis le 8/11/2026 à 9 h). [Critères, choix et limites](docs/recommandees.md).
+En haut de **Stratégies** : les **Recommandées**, liste stable revue tous les 7 jours (≥ 50 matchs, borne basse du
+ROI positive, ROI positif sans les meilleurs matchs, aucun match au-delà de 25 % du gain, CLV par match positive, pas
+de doublon ; une recommandée ne sort que si elle échoue un critère ou est dépassée de 5 points), chacune avec sa date
+d'entrée et son résultat depuis. Puis **Fusion 1**, stratégie à part aux membres figés : les trois recommandées du
+8/11/2026, un pari par match, suivie depuis le 8/11/2026 à 9 h. [Critères, choix et limites](docs/recommandees.md).
 
 ### Fiabilité des cotes justes selon la cote
 

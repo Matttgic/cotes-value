@@ -1463,41 +1463,57 @@ function celluleNote(n, id) {
   return `<b class="note-strategie ${ton}">${n.total}</b>${n.provisoire ? "<small>provisoire (&lt; 50 matchs)</small>" : ""}`
     + `<small title="Rentabilité prudente /25 · Robustesse /20 · Valeur /25 · Régularité /15 · Solidité /15">${sousNotes(n)}</small>` + evolutionNote(id, n.total);
 }
-// Stratégies recommandées (cotes/recommandations.py) : choisies sur la vue à mises fixes, chiffres de la mise affichée.
-// La fusion (cotes/strategie_recommandee.py) a ses membres figés ; son rejeu depuis le 14/10 est indicatif.
+// Stratégies recommandées (cotes/recommandations.py) : liste stable, revue tous les 7 jours (recommandees.json).
+// Chaque carte porte le nom de la stratégie et sa date d'entrée ; aucun numéro qui changerait de contenu.
+// Fusion 1 (cotes/strategie_recommandee.py) est une stratégie à part, aux membres figés : elle ne suit pas la liste.
 function rendreRecommandees(rows) {
   const R = D.recommandees, zone = document.getElementById("strategies-recommandees");
   if (!zone) return;
   if (!R) { zone.innerHTML = ""; return; }
   const parId = new Map(rows.map(r => [r.id, r]));
   const p1 = x => x == null ? "—" : (x > 0 ? "+" : "") + Number(x).toFixed(1).replace(".", ",") + " %";
-  const nomDe = id => { const r = parId.get(id); return r ? r.nom + " · " + r.detail : id; };
-  const carte = (titre, r, corps) => `<article class="reco-carte"><div class="reco-tete"><span class="reco-rang">${e(titre)}</span>
-    ${r ? `<button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button>` : ""}</div>${corps}</article>`;
-  const cartes = (R.liste || []).map(x => {
-    const r = parId.get(x.id), s = r?.stats || {}, n = s.note || {}, m = n.mesures || x.mesures || {};
-    return carte("Recommandée " + x.rang, r, `<h3>${e(r ? r.nom : x.id)}</h3><p class="reco-detail">${e(r ? r.detail : "")}</p>
-      <p class="reco-chiffres"><b class="${(n.total ?? x.note) >= 70 ? "pos" : ""}">${n.total ?? x.note}/100</b> · ${n.matchs ?? x.matchs} matchs ·
-      ROI <span class="${signe(m.roi)}">${p1(m.roi)}</span> · gain <span class="${signe(s.gain)}">${s.regles ? eur(s.gain) : "—"}</span></p>
-      <p class="reco-preuves">Sans ses ${m.meilleurs_retires ?? "?"} meilleurs matchs : ROI ${p1(m.roi_sans_meilleurs)} · borne basse ${p1(m.roi_borne_basse_80)}
-      · meilleur match ${p1(m.part_meilleur_match).replace("+", "")} du gain · CLV par match ${p1(m.clv_ajustee)}</p>`);
+  const jour = j => j ? j.slice(8, 10) + "/" + j.slice(5, 7) : "—";
+  const nom = id => parId.get(id)?.nom || id;
+  const nomComplet = id => { const r = parId.get(id); return r ? r.nom + " · " + r.detail : id; };
+  const resultat = x => !x ? "—" : x.regles ? `${x.regles} réglés · ROI <span class="${signe(x.roi)}">${p1(x.roi)}</span> · gain <span class="${signe(x.gain)}">${eur(x.gain)}</span>`
+    : `${x.paris || 0} prise${(x.paris || 0) > 1 ? "s" : ""}, aucun pari réglé pour l'instant`;
+  const bouton = r => r ? `<button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button>` : "";
+  const C = R.criteres || {};
+  const cartes = (R.actuelles || []).map(x => {
+    const r = parId.get(x.id), s = r?.stats || {}, n = s.note || {}, m = n.mesures || {};
+    return `<article class="reco-carte"><div class="reco-tete"><span class="reco-rang">Recommandée depuis le ${jour(x.depuis)}</span>${bouton(r)}</div>
+      <h3>${e(r ? r.nom : x.id)}</h3><p class="reco-detail">${e(r ? r.detail : "")}</p>
+      <p class="reco-chiffres">Depuis son entrée : ${resultat(x.depuis_entree)}</p>
+      <p class="reco-preuves">Note actuelle <b class="${(n.total ?? 0) >= 70 ? "pos" : ""}">${n.total ?? "—"}/100</b> (${x.note_entree}/100 à l'entrée) · tout le suivi : ${n.matchs ?? "—"} matchs, ROI ${p1(m.roi)},
+      ${p1(m.roi_sans_meilleurs)} sans ses ${m.meilleurs_retires ?? "?"} meilleurs matchs, CLV par match ${p1(m.clv_ajustee)}</p></article>`;
   });
-  const F = R.fusion;
+  const anciennes = (R.anciennes || []).map(x => `<li><b>${e(nom(x.id))}</b> : recommandée du ${jour(x.depuis)} au ${jour(x.jusqua)}, sortie car ${e(x.raison)}. Pendant ce temps : ${resultat(x.pendant)}.</li>`);
+  // Fusion 1 : stratégie à part, membres figés. Chaque membre dit s'il est encore recommandé.
+  const F = R.fusion, actuelles = new Set((R.actuelles || []).map(x => x.id));
+  let fusion = "";
   if (F) {
     const r = parId.get(F.nom), s = r?.stats || {}, rejeu = (miseMode === "kelly" ? F.rejeu_kelly : F.rejeu)?.stats;
-    const membres = (F.membres || []).map(nomDe).join(" ; ");
-    cartes.push(carte("Recommandée " + ((R.liste || []).length + 1) + " · Fusion", r, `<h3>${e(F.nom)}</h3>
-      <p class="reco-detail">${e(F.regles)}. Membres : ${e(membres)}.</p>
-      <p class="reco-chiffres">Suivi depuis le ${e(quand(F.debut))} : ${s.regles ? `${s.regles} réglés · ROI <span class="${signe(s.roi)}">${p1(s.roi)}</span> · gain <span class="${signe(s.gain)}">${eur(s.gain)}</span>` : `${s.paris || 0} prise${(s.paris || 0) > 1 ? "s" : ""}, aucun pari réglé pour l'instant`}</p>
-      ${rejeu ? `<p class="reco-preuves">Rejeu indicatif depuis le 14/10 (optimiste : membres choisis après coup) : ${rejeu.regles} matchs · ROI ${p1(rejeu.roi)} · gain ${eur(rejeu.gain)}${rejeu.note ? ` · note ${rejeu.note.total}/100` : ""}</p>` : ""}`));
+    const statut = id => {
+      if (actuelles.has(id)) return "encore recommandée";
+      const sortie = (R.anciennes || []).find(x => x.id === id);
+      return sortie ? `plus recommandée depuis le ${jour(sortie.jusqua)}` : "pas dans la liste actuelle";
+    };
+    fusion = `<h2 class="sous-titre">${e(F.court || "Fusion")} · membres figés</h2>
+      <p class="aide">Une stratégie à part : elle réunit les recommandées du ${jour(F.debut.slice(0, 10))} et ne change jamais de membres, même quand la liste des recommandées change. Une autre combinaison serait une nouvelle fusion (Fusion 2), suivie à part.</p>
+      <article class="reco-carte reco-fusion"><div class="reco-tete"><span class="reco-rang">Suivie depuis le ${e(quand(F.debut))}</span>${bouton(r)}</div>
+      <h3>${e(F.nom)}</h3><p class="reco-detail">${e(F.regles)}.</p>
+      <ul class="reco-membres">${(F.membres || []).map(id => `<li>${e(nomComplet(id))} <small>(${statut(id)})</small></li>`).join("")}</ul>
+      <p class="reco-chiffres">Depuis son lancement : ${resultat(s.paris != null ? s : null)}</p>
+      ${rejeu ? `<p class="reco-preuves">Rejeu indicatif depuis le 14/10 (optimiste : membres choisis après coup) : ${rejeu.regles} matchs · ROI ${p1(rejeu.roi)} · gain ${eur(rejeu.gain)}${rejeu.note ? ` · note ${rejeu.note.total}/100` : ""}</p>` : ""}</article>`;
   }
-  const ecartees = (R.ecartees || []).filter(x => x.proche).map(x => `${e(parId.get(x.id)?.nom || x.id)} (${e(x.raison.replace(x.proche, parId.get(x.proche)?.nom || x.proche))})`);
   zone.innerHTML = `<h2 class="sous-titre">Recommandées</h2>
-    <p class="aide">Les mieux notées dont le résultat tient : au moins ${R.criteres?.min_matchs ?? 50} matchs réglés, borne basse du ROI positive,
-    ROI positif sans les meilleurs matchs, meilleur match ≤ ${R.criteres?.part_meilleur_max ?? 25} % du gain, CLV par match positive, et pas plus de
-    ${Math.round(100 * (R.criteres?.recouvrement_max ?? .6))} % de paris communs avec une recommandée mieux notée. Recalculé à chaque mise à jour ; aucun gain futur garanti.</p>
+    <p class="aide">Liste revue tous les ${C.revision_jours ?? 7} jours (dernière révision le ${jour(R.derniere_revision)}, prochaine le ${jour(R.prochaine_revision)}) ; entre deux révisions, elle ne bouge pas.
+    Une stratégie entre si elle a au moins ${C.min_matchs ?? 50} matchs réglés, un ROI prudent positif, un ROI positif sans ses meilleurs matchs, aucun match au-delà de ${C.part_meilleur_max ?? 25} % du gain,
+    une CLV par match positive, et moins de ${Math.round(100 * (C.recouvrement_max ?? .6))} % de paris communs avec une autre recommandée. Elle sort seulement si elle ne remplit plus ces critères,
+    ou si une candidate la dépasse d'au moins ${C.ecart_remplacement ?? 5} points de note. Aucun gain futur garanti.</p>
     ${cartes.length ? `<div class="reco-grille">${cartes.join("")}</div>` : '<div class="vide">Aucune stratégie ne remplit encore les critères.</div>'}
-    ${ecartees.length ? `<p class="aide">Écartées comme doublons : ${ecartees.join(" ; ")}.</p>` : ""}`;
+    ${anciennes.length ? `<details class="mode-emploi"><summary>Anciennes recommandées (${anciennes.length})</summary><ul class="reco-anciennes">${anciennes.join("")}</ul></details>` : ""}
+    ${fusion}`;
 }
 // Raccourcis de période et dates (Du / Au) de l'onglet Stratégies ; le choix reste sur cet appareil.
 function rendreDatesStrategies() {
