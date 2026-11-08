@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-08T23:05:51+00:00",
+  "debut": "2026-11-08T23:10:29+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,7 +9,7 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 1.7,
+    "secondes": 1.6,
     "ok": true
    },
    "olybet": {
@@ -17,24 +17,26 @@
     "ok": true
    },
    "polymarket": {
-    "secondes": 5.5,
+    "secondes": 4.8,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 15.0,
+    "secondes": 11.3,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 20.1,
+    "secondes": 24.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 27 matchups : HTTP 403",
+     "sport 28 markets/straight : HTTP 403",
+     "sport 9 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403"
-    ]
+    ],
+    "reprise": 8
    },
    "unibet_direct": {
-    "secondes": 1.7,
+    "secondes": 1.8,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -42,11 +44,11 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 29.6,
+    "secondes": 30.7,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 34.1,
+    "secondes": 33.9,
     "ok": true
    },
    "netbet": {
@@ -59,7 +61,7 @@
     "cache": true
    },
    "association": {
-    "secondes": 0.5,
+    "secondes": 0.6,
     "ok": true
    },
    "comparaison": {
@@ -67,7 +69,7 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.1,
     "ok": true
    }
   },
@@ -91,28 +93,28 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 103,
-   "lignes": 1678
+   "lignes": 1630
   },
   "matchbook_fraicheur": {
-   "lignes": 1678,
-   "source_connue": 1678,
+   "lignes": 1630,
+   "source_connue": 1630,
    "source_inconnue": 0,
    "source_invalide": 0,
    "mouvement_min_s": 1,
-   "mouvement_max_s": 62403,
-   "reception": "2026-11-08T23:05:51+00:00"
+   "mouvement_max_s": 62681,
+   "reception": "2026-11-08T23:10:29+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 886,
-   "age_min_s": 131,
-   "lignes": 49801,
-   "lignes_perimees": 496,
+   "age_max_s": 863,
+   "age_min_s": 9,
+   "lignes": 49092,
+   "lignes_perimees": 1582,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 7.8,
+   "rechauffeur_duree_s": 7.7,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -122,18 +124,21 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 36,
-    "choisi_fixe": 8,
-    "head_403": 2,
+    "head_200": 28,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 6,
-    "reprise_403": 2,
+    "choisi_fixe": 8,
+    "choisi_autre": 4,
+    "reprise_403": 3,
     "matchups_sans_speciaux": 1,
-    "sport_vide": 3
+    "sport_vide": 4
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Pinnacle": {
+    "snooker": 8
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -165,39 +170,47 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Querétaro – CF Puebla",
+     "match": "Sportivo San Lorenzo – Club Rubio Nu",
      "source": "Pinnacle",
-     "cote_olybet": 1.75,
-     "cote_reference": 1.862,
-     "ecart_relatif": 0.0602,
+     "cote_olybet": 4.1,
+     "cote_reference": 4.44,
+     "ecart_relatif": 0.0766,
      "aberrant": false
     },
     {
-     "match": "Querétaro – CF Puebla",
+     "match": "Sportivo San Lorenzo – Club Rubio Nu",
      "source": "PMU",
-     "cote_olybet": 1.75,
-     "cote_reference": 1.62,
-     "ecart_relatif": 0.0802,
-     "aberrant": false
-    },
-    {
-     "match": "León – Chivas de Guadalajara",
-     "source": "Pinnacle",
-     "cote_olybet": 3.28,
-     "cote_reference": 3.61,
-     "ecart_relatif": 0.0914,
-     "aberrant": false
-    },
-    {
-     "match": "León – Chivas de Guadalajara",
-     "source": "PMU",
-     "cote_olybet": 3.28,
-     "cote_reference": 2.85,
-     "ecart_relatif": 0.1509,
+     "cote_olybet": 4.1,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.1714,
      "aberrant": true
+    },
+    {
+     "match": "Sportivo Luqueno – Club 2 de Mayo",
+     "source": "Pinnacle",
+     "cote_olybet": 2.33,
+     "cote_reference": 2.47,
+     "ecart_relatif": 0.0567,
+     "aberrant": false
+    },
+    {
+     "match": "Sportivo Luqueno – Club 2 de Mayo",
+     "source": "PMU",
+     "cote_olybet": 2.33,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0591,
+     "aberrant": false
+    },
+    {
+     "match": "CE Sabadell – Real Sociedad B",
+     "source": "PMU",
+     "cote_olybet": 1.66,
+     "cote_reference": 1.55,
+     "ecart_relatif": 0.071,
+     "aberrant": false
     },
     {
      "match": "Kristiansund – Valerenga Oslo",
@@ -216,45 +229,29 @@
      "aberrant": false
     },
     {
-     "match": "Tecnico Universitario – Manta",
+     "match": "SCU Torreense – Uniao Leiria",
      "source": "Pinnacle",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.641,
-     "ecart_relatif": 0.0433,
+     "cote_olybet": 2.04,
+     "cote_reference": 2.14,
+     "ecart_relatif": 0.0467,
      "aberrant": false
     },
     {
-     "match": "Tecnico Universitario – Manta",
+     "match": "SCU Torreense – Uniao Leiria",
      "source": "PMU",
-     "cote_olybet": 1.57,
-     "cote_reference": 1.62,
-     "ecart_relatif": 0.0309,
-     "aberrant": false
-    },
-    {
-     "match": "Mushuc Runa SC – Delfin",
-     "source": "Pinnacle",
-     "cote_olybet": 1.64,
-     "cote_reference": 1.709,
-     "ecart_relatif": 0.0405,
-     "aberrant": false
-    },
-    {
-     "match": "Mushuc Runa SC – Delfin",
-     "source": "PMU",
-     "cote_olybet": 1.64,
-     "cote_reference": 1.65,
-     "ecart_relatif": 0.0061,
+     "cote_olybet": 2.04,
+     "cote_reference": 1.95,
+     "ecart_relatif": 0.0462,
      "aberrant": false
     }
    ],
    "aberrants": [
     {
-     "match": "León – Chivas de Guadalajara",
+     "match": "Sportivo San Lorenzo – Club Rubio Nu",
      "source": "PMU",
-     "cote_olybet": 3.28,
-     "cote_reference": 2.85,
-     "ecart_relatif": 0.1509,
+     "cote_olybet": 4.1,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.1714,
      "aberrant": true
     }
    ]
@@ -262,102 +259,78 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Tecnico U. – Manta FC",
+     "match": "Torreense – União de Leiria",
      "source": "Pinnacle",
-     "cote_netbet": 1.55,
-     "cote_reference": 1.641,
-     "ecart_relatif": 0.0555,
+     "cote_netbet": 1.99,
+     "cote_reference": 2.14,
+     "ecart_relatif": 0.0701,
      "aberrant": false
     },
     {
-     "match": "Tecnico U. – Manta FC",
+     "match": "Torreense – União de Leiria",
      "source": "PMU",
-     "cote_netbet": 1.55,
-     "cote_reference": 1.62,
-     "ecart_relatif": 0.0432,
+     "cote_netbet": 1.99,
+     "cote_reference": 1.95,
+     "ecart_relatif": 0.0205,
      "aberrant": false
     },
     {
-     "match": "Sportivo Luqueño – 2 de Mayo",
+     "match": "Sabadell – Real Sociedad B",
+     "source": "PMU",
+     "cote_netbet": 1.58,
+     "cote_reference": 1.55,
+     "ecart_relatif": 0.0194,
+     "aberrant": false
+    },
+    {
+     "match": "Alianza FC Valledupar – Llaneros FC",
      "source": "Pinnacle",
-     "cote_netbet": 2.3,
-     "cote_reference": 2.47,
-     "ecart_relatif": 0.0688,
+     "cote_netbet": 2.1,
+     "cote_reference": 2.31,
+     "ecart_relatif": 0.0909,
      "aberrant": false
     },
     {
-     "match": "Sportivo Luqueño – 2 de Mayo",
+     "match": "Alianza FC Valledupar – Llaneros FC",
      "source": "PMU",
-     "cote_netbet": 2.3,
-     "cote_reference": 2.2,
-     "ecart_relatif": 0.0455,
-     "aberrant": false
-    },
-    {
-     "match": "Querétaro – Puebla",
-     "source": "Pinnacle",
-     "cote_netbet": 1.68,
-     "cote_reference": 1.862,
-     "ecart_relatif": 0.0978,
-     "aberrant": false
-    },
-    {
-     "match": "Querétaro – Puebla",
-     "source": "PMU",
-     "cote_netbet": 1.68,
-     "cote_reference": 1.62,
-     "ecart_relatif": 0.037,
-     "aberrant": false
-    },
-    {
-     "match": "León – Chivas Guadalajara",
-     "source": "Pinnacle",
-     "cote_netbet": 3.15,
-     "cote_reference": 3.61,
-     "ecart_relatif": 0.1274,
-     "aberrant": false
-    },
-    {
-     "match": "León – Chivas Guadalajara",
-     "source": "PMU",
-     "cote_netbet": 3.15,
-     "cote_reference": 2.85,
-     "ecart_relatif": 0.1053,
+     "cote_netbet": 2.1,
+     "cote_reference": 2.07,
+     "ecart_relatif": 0.0145,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-08T23:05:59+00:00",
-   "pinnacle_derniere_lecture": "2026-11-08T23:06:06+00:00",
+   "pinnacle_premiere_lecture": "2026-11-08T23:06:05+00:00",
+   "pinnacle_derniere_lecture": "2026-11-08T23:10:47+00:00",
    "books_premiere_lecture": "2026-11-08T17:27:53+00:00",
-   "books_derniere_lecture": "2026-11-08T23:05:51+00:00",
-   "ecart_enveloppe_secondes": 20293.0
+   "books_derniere_lecture": "2026-11-08T23:10:29+00:00",
+   "ecart_enveloppe_secondes": 20574.0
   },
   "historique_cotes": {
-   "lignes": 538
+   "lignes": 416
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.7
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 565,
    "a_verifier": 13,
    "non_conforme": 9,
-   "mesures": 7718,
+   "mesures": 7108,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 27982,
-   "mesures": 20420,
+   "ancres": 22708,
+   "mesures": 19808,
    "annotees": 4,
    "figees": 4
   },
@@ -375,27 +348,21 @@
    "dernier_reglement": "2026-11-08T22:20:34+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-08T23:06:46+00:00",
+  "fin": "2026-11-08T23:11:24+00:00",
   "cotes": {
-   "francaises": 24126,
-   "pinnacle": 49801,
-   "polymarket": 7837,
+   "francaises": 23315,
+   "pinnacle": 49100,
+   "polymarket": 7675,
    "smarkets": 2767,
-   "matchbook": 1678,
+   "matchbook": 1630,
    "betfair": 0
   },
-  "matchs_francais": 398,
+  "matchs_francais": 392,
   "opportunites": 0,
   "opportunites_suspectes": 4,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-08T07:43:30+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-08T07:48:08+00:00",
    "mode": "complet",
@@ -1592,6 +1559,12 @@
   },
   {
    "debut": "2026-11-08T23:05:51+00:00",
+   "mode": "complet",
+   "opportunites": 0,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-08T23:10:29+00:00",
    "mode": "complet",
    "opportunites": 0,
    "nouveaux_paris": 0
