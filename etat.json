@@ -1,46 +1,50 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-08T06:28:58+00:00",
+  "debut": "2026-11-08T06:33:40+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.7,
+    "secondes": 3.2,
     "ok": true
    },
    "olybet": {
-    "secondes": 6.6,
+    "secondes": 8.5,
     "ok": true
    },
    "polymarket": {
-    "secondes": 15.0,
+    "secondes": 17.1,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 18.2,
-    "ok": true
+    "secondes": 22.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 26 matchups : HTTP 403"
+    ]
    },
    "unibet_direct": {
-    "secondes": 1.5,
+    "secondes": 1.8,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
-   "betclic_direct": {
-    "secondes": 38.7,
-    "ok": true
-   },
    "pmu_direct": {
-    "secondes": 40.4,
-    "ok": true
-   },
-   "netbet": {
-    "secondes": 52.5,
+    "secondes": 46.5,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 54.8,
+    "secondes": 50.4,
+    "ok": true
+   },
+   "netbet": {
+    "secondes": 52.3,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 68.4,
     "ok": true
    },
    "smarkets": {
@@ -49,15 +53,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 38.0,
+    "secondes": 13.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.2,
+    "secondes": 1.8,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 1.0,
+    "secondes": 0.9,
     "ok": true
    }
   },
@@ -72,27 +76,16 @@
    "requetes": 3,
    "erreurs": [],
    "matchs": 362,
-   "lignes": 17544
-  },
-  "pinnacle_secours": {
-   "sports": [],
-   "requetes": 0,
-   "lignes": 37230,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 37230,
-   "retard": [
-    "football"
-   ]
+   "lignes": 17328
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 881,
-   "age_min_s": 119,
-   "lignes": 124672,
-   "lignes_perimees": 3709,
+   "age_max_s": 879,
+   "age_min_s": 21,
+   "lignes": 124777,
+   "lignes_perimees": 560,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": 7.9,
@@ -105,12 +98,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
+    "head_200": 36,
+    "choisi_fixe": 7,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 4,
-    "choisi_fixe": 10,
-    "sport_vide": 6
+    "choisi_autre": 7,
+    "reprise_403": 1,
+    "matchups_sans_speciaux": 1,
+    "sport_vide": 4
    }
   },
   "reprise": {
@@ -152,75 +147,58 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "SD Aucas – Independiente del Valle",
+     "match": "WSG Tirol – Austria Vienne",
      "source": "Pinnacle",
-     "cote_olybet": 3.06,
-     "cote_reference": 3.26,
-     "ecart_relatif": 0.0613,
-     "aberrant": false
-    },
-    {
-     "match": "SD Aucas – Independiente del Valle",
-     "source": "PMU",
-     "cote_olybet": 3.06,
-     "cote_reference": 3.1,
-     "ecart_relatif": 0.0129,
-     "aberrant": false
-    },
-    {
-     "match": "Mushuc Runa SC – Delfin",
-     "source": "Pinnacle",
-     "cote_olybet": 1.63,
-     "cote_reference": 1.694,
-     "ecart_relatif": 0.038,
-     "aberrant": false
-    },
-    {
-     "match": "Mushuc Runa SC – Delfin",
-     "source": "PMU",
-     "cote_olybet": 1.63,
-     "cote_reference": 1.65,
-     "ecart_relatif": 0.0121,
-     "aberrant": false
-    },
-    {
-     "match": "Macara – CD Universidad Catolica Quito",
-     "source": "Pinnacle",
-     "cote_olybet": 2.6,
+     "cote_olybet": 2.57,
      "cote_reference": 2.79,
-     "ecart_relatif": 0.0681,
+     "ecart_relatif": 0.0789,
      "aberrant": false
     },
     {
-     "match": "Macara – CD Universidad Catolica Quito",
+     "match": "TSV Hartberg – Rheindorf Altach",
      "source": "PMU",
-     "cote_olybet": 2.6,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.1659,
-     "aberrant": true
+     "cote_olybet": 2.29,
+     "cote_reference": 2.35,
+     "ecart_relatif": 0.0255,
+     "aberrant": false
     },
     {
-     "match": "Deportivo Cuenca – Orense SC",
+     "match": "CD Union La Calera – Huachipato",
      "source": "Pinnacle",
-     "cote_olybet": 2.2,
-     "cote_reference": 2.34,
-     "ecart_relatif": 0.0598,
+     "cote_olybet": 1.9,
+     "cote_reference": 2.03,
+     "ecart_relatif": 0.064,
+     "aberrant": false
+    },
+    {
+     "match": "CD Union La Calera – Huachipato",
+     "source": "PMU",
+     "cote_olybet": 1.9,
+     "cote_reference": 1.92,
+     "ecart_relatif": 0.0104,
+     "aberrant": false
+    },
+    {
+     "match": "Universidad de Chile – Cobresal",
+     "source": "Pinnacle",
+     "cote_olybet": 1.26,
+     "cote_reference": 1.306,
+     "ecart_relatif": 0.0351,
+     "aberrant": false
+    },
+    {
+     "match": "Universidad de Chile – Cobresal",
+     "source": "PMU",
+     "cote_olybet": 1.26,
+     "cote_reference": 1.22,
+     "ecart_relatif": 0.0328,
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Macara – CD Universidad Catolica Quito",
-     "source": "PMU",
-     "cote_olybet": 2.6,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.1659,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
@@ -228,101 +206,101 @@
    "examines": 8,
    "comparaisons": [
     {
-     "match": "Jef United Chiba – Mito Hollyhock",
+     "match": "FK Radnik Surdulica – OFK Beograd",
      "source": "Pinnacle",
-     "cote_netbet": 1.82,
-     "cote_reference": 1.909,
-     "ecart_relatif": 0.0467,
+     "cote_netbet": 2.12,
+     "cote_reference": 2.24,
+     "ecart_relatif": 0.0536,
      "aberrant": false
     },
     {
-     "match": "Jef United Chiba – Mito Hollyhock",
+     "match": "FK Radnik Surdulica – OFK Beograd",
      "source": "PMU",
-     "cote_netbet": 1.82,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0267,
+     "cote_netbet": 2.12,
+     "cote_reference": 2.23,
+     "ecart_relatif": 0.0493,
      "aberrant": false
     },
     {
-     "match": "Querétaro – Puebla",
+     "match": "Novi Pazar – Mladost Lucani",
      "source": "Pinnacle",
-     "cote_netbet": 1.68,
-     "cote_reference": 1.84,
-     "ecart_relatif": 0.0871,
+     "cote_netbet": 1.55,
+     "cote_reference": 1.585,
+     "ecart_relatif": 0.022,
      "aberrant": false
     },
     {
-     "match": "Querétaro – Puebla",
+     "match": "Novi Pazar – Mladost Lucani",
      "source": "PMU",
-     "cote_netbet": 1.68,
-     "cote_reference": 1.62,
-     "ecart_relatif": 0.037,
+     "cote_netbet": 1.55,
+     "cote_reference": 1.63,
+     "ecart_relatif": 0.0491,
      "aberrant": false
     },
     {
-     "match": "León – Chivas Guadalajara",
+     "match": "Partizan Belgrade – FK Macva Sabac",
      "source": "Pinnacle",
-     "cote_netbet": 2.87,
-     "cote_reference": 3.25,
-     "ecart_relatif": 0.1169,
+     "cote_netbet": 1.17,
+     "cote_reference": 1.201,
+     "ecart_relatif": 0.026,
      "aberrant": false
     },
     {
-     "match": "León – Chivas Guadalajara",
+     "match": "Partizan Belgrade – FK Macva Sabac",
      "source": "PMU",
-     "cote_netbet": 2.87,
-     "cote_reference": 2.63,
-     "ecart_relatif": 0.0913,
+     "cote_netbet": 1.17,
+     "cote_reference": 1.21,
+     "ecart_relatif": 0.0331,
      "aberrant": false
     },
     {
-     "match": "Hapoel Be'er Sheva – Hapoel Tel Aviv",
+     "match": "Caykur Rizespor – BB Erzurumspor",
      "source": "Pinnacle",
-     "cote_netbet": 2.2,
-     "cote_reference": 2.31,
-     "ecart_relatif": 0.0476,
+     "cote_netbet": 1.75,
+     "cote_reference": 1.901,
+     "ecart_relatif": 0.0794,
      "aberrant": false
     },
     {
-     "match": "Hapoel Be'er Sheva – Hapoel Tel Aviv",
+     "match": "Caykur Rizespor – BB Erzurumspor",
      "source": "PMU",
-     "cote_netbet": 2.2,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0092,
+     "cote_netbet": 1.75,
+     "cote_reference": 1.82,
+     "ecart_relatif": 0.0385,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-08T06:24:44+00:00",
-   "pinnacle_derniere_lecture": "2026-11-08T06:29:11+00:00",
+   "pinnacle_premiere_lecture": "2026-11-08T06:33:49+00:00",
+   "pinnacle_derniere_lecture": "2026-11-08T06:33:59+00:00",
    "books_premiere_lecture": "2026-11-06T16:48:58+00:00",
-   "books_derniere_lecture": "2026-11-08T06:28:58+00:00",
-   "ecart_enveloppe_secondes": 135613.0
+   "books_derniere_lecture": "2026-11-08T06:33:40+00:00",
+   "ecart_enveloppe_secondes": 135901.0
   },
   "historique_cotes": {
-   "lignes": 962
+   "lignes": 1252
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.3
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 567,
    "a_verifier": 12,
    "non_conforme": 8,
-   "mesures": 48437,
+   "mesures": 49639,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 139094,
-   "mesures": 133325,
-   "annotees": 30,
-   "figees": 7
+   "ancres": 147445,
+   "mesures": 125247,
+   "annotees": 14,
+   "figees": 6
   },
   "redecision": {
    "ajoutees": 0
@@ -338,26 +316,20 @@
    "dernier_reglement": "2026-11-08T06:26:33+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-08T06:30:46+00:00",
+  "fin": "2026-11-08T06:35:12+00:00",
   "cotes": {
-   "francaises": 140338,
-   "pinnacle": 161902,
-   "polymarket": 29745,
+   "francaises": 140394,
+   "pinnacle": 124777,
+   "polymarket": 29715,
    "smarkets": 4102,
-   "matchbook": 17544
+   "matchbook": 17328
   },
   "matchs_francais": 2069,
-  "opportunites": 27,
-  "opportunites_suspectes": 12,
-  "nouveaux_paris": 5
+  "opportunites": 18,
+  "opportunites_suspectes": 10,
+  "nouveaux_paris": 1
  },
  "historique": [
-  {
-   "debut": "2026-11-07T15:09:18+00:00",
-   "mode": "complet",
-   "opportunites": 13,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-11-07T15:13:52+00:00",
    "mode": "complet",
@@ -1557,6 +1529,12 @@
    "mode": "complet",
    "opportunites": 27,
    "nouveaux_paris": 5
+  },
+  {
+   "debut": "2026-11-08T06:33:40+00:00",
+   "mode": "complet",
+   "opportunites": 18,
+   "nouveaux_paris": 1
   }
  ],
  "dernier_reglement": "2026-11-08T06:26:33+00:00",
