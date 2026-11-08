@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from .decisions import appliquer
 from .memo import memoriser
+from .pauses import filtrer
 from .protection import calculer
 from .strategie_m3_structure import M3_STRUCTURE, paris_m3_structure
 from .strategie_qwen import QWEN, paris_qwen
@@ -279,6 +280,8 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
     for f in FUSIONS_AUTO:
         resultat[f["cle"]] = (calculer(f["cle"], lambda: selection_fusion_auto(paris, f, membres))
                               if f in actives else set())
+    if depuis is None:      # Qwen, M3 structure et fusions ne passent pas par appliquer : même règle de pause.
+        resultat = {cle: filtrer(paris, ids, cle) for cle, ids in resultat.items()}
     return resultat
 
 

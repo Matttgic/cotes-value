@@ -13,10 +13,14 @@ from __future__ import annotations
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from functools import wraps
+from time import perf_counter
 
 from . import echecs
 
 _ECHECS: dict[str, dict] | None = None
+# Temps propre de chaque stratégie (secondes, sans celui des stratégies qu'elle appelle), page Santé.
+_DUREES: dict[str, float] = {}
+_PILE: list[float] = []
 
 
 @contextmanager
@@ -24,6 +28,7 @@ def proteger_strategies():
     """Active la protection ; rend le dictionnaire des échecs {nom: {"quand", "etape", "message"}}."""
     global _ECHECS
     precedent, _ECHECS = _ECHECS, {}
+    _DUREES.clear()
     try:
         yield _ECHECS
     finally:
@@ -35,6 +40,8 @@ def calculer(nom: str, calcul, vide=set):
     registre = _ECHECS
     if registre is None:
         return calcul()
+    _PILE.append(0.0)
+    debut = perf_counter()
     try:
         return calcul()
     except Exception as e:  # noqa: BLE001 - une stratégie en erreur ne doit pas arrêter le site
@@ -44,6 +51,18 @@ def calculer(nom: str, calcul, vide=set):
                              "etape": f"stratégie {nom}", "message": message}
             echecs.annoter(f"stratégie {nom}", message)
         return vide()
+    finally:
+        total, enfants = perf_counter() - debut, _PILE.pop()
+        if _PILE:
+            _PILE[-1] += total
+        _DUREES[nom] = _DUREES.get(nom, 0.0) + total - enfants
+
+
+def durees(maximum: int = 15) -> dict:
+    """Temps de calcul de la construction en cours : total et stratégies les plus lentes, en secondes."""
+    tri = sorted(_DUREES.items(), key=lambda x: -x[1])
+    return {"total": round(sum(_DUREES.values()), 1), "strategies": len(_DUREES),
+            "plus_lentes": [{"nom": n, "secondes": round(t, 2)} for n, t in tri[:maximum]]}
 
 
 def proteger(nom: str):
