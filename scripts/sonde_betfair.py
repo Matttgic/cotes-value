@@ -1,6 +1,7 @@
 """Sonde Betfair Exchange : les API du site, lues sans compte, répondent-elles depuis cette machine ?
 
-À lancer sur le serveur (IP hors de France et hors des États-Unis : Betfair refuse les deux) :
+À lancer sur le serveur (IP finlandaise ou britannique : France, Allemagne et États-Unis sont refusés, relevé du
+08/11/2026) :
 
     cd /opt/cotes-value && sudo -u cotes .venv/bin/python scripts/sonde_betfair.py
 
