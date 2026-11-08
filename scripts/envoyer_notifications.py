@@ -47,6 +47,8 @@ def preparer(donnees: Path, maintenant: datetime | None = None, retenues: list |
     from cotes.convergence import selections
     from cotes.strategies_prudentes import selections_prudentes
     from cotes.notifications import flux, selections_bases, selections_labo
+    from cotes.strategie_recommandee import charger_fusions
+    charger_fusions(donnees)          # fusions automatiques (Fusion 2, 3…) créées par les révisions
     paris = stockage.fusionner_paris(lire_paris(donnees) if paris_bruts is None else paris_bruts,
                                      stockage.lire_archives(donnees))
     actuelles = json.loads((donnees / "opportunites_actuelles.json").read_text())

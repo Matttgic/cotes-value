@@ -18,9 +18,9 @@ Le 8/11, les recommandées sont Polymarket 1,5–3, Pinnacle 1,3–2 et Polymark
 Si, à la révision du 15/11, Grok 8 dépasse Pinnacle 1,3–2 d'au moins 5 points :
 - la liste devient Polymarket 1,5–3, Polymarket 2–5, Grok 8 (« recommandée depuis le 15/11 ») ; Pinnacle 1,3–2
   passe dans « Anciennes recommandées » avec ses dates et la raison ;
-- Fusion 1 ne change pas : elle garde Pinnacle 1,3–2, marqué « plus recommandée depuis le 15/11 ». Réunir les
-  nouvelles recommandées serait une nouvelle stratégie, Fusion 2, créée à la demande et suivie à partir de sa
-  propre date.
+- Fusion 1 ne change pas : elle garde Pinnacle 1,3–2, marqué « plus recommandée depuis le 15/11 » ;
+- **Fusion 2 est créée automatiquement** le 15/11 avec Polymarket 1,5–3, Polymarket 2–5 et Grok 8, suivie à
+  partir de l'instant de la révision. Fusion 1 et Fusion 2 continuent chacune leur suivi.
 
 ## Révision tous les 7 jours
 
@@ -32,6 +32,20 @@ Entre deux révisions, la liste ne bouge pas, même si les notes changent. À un
    d'au moins 5 points.
 
 Chaque sortie est gardée (dates, raison, résultat pendant la période recommandée).
+
+## Fusions automatiques
+
+Après chaque révision, si la liste des recommandées n'est plus celle de la dernière fusion (et qu'il reste au moins
+deux recommandées), une nouvelle fusion est créée : Fusion 2, puis Fusion 3… Même règle que Fusion 1 : la réunion des
+recommandées du jour, un seul pari par match (la première prise d'un des membres), membres figés, suivie depuis sa
+création, sans rejeu. Les fusions ne sont jamais candidates aux recommandées.
+
+- Les fusions créées sont notées dans `recommandees.json` (« fusions ») ; vingt places sont prévues (Fusion 2 à
+  Fusion 21, `FUSIONS_AUTO` dans `cotes/strategie_recommandee.py`). Une place libre n'apparaît nulle part.
+- Une fusion active apparaît dans la page Stratégies (bloc « Fusions », et parmi les comparateurs) et peut être
+  cochée dans Notifications.
+- Ses prises sont recalculées à partir des prises figées de ses membres (`cotes/decisions.py`) : elles ne dépendent
+  d'aucun résultat.
 
 ## Critères
 

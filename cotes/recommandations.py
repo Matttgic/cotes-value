@@ -23,6 +23,10 @@ Liste **stable** (``reviser``, état ``recommandees.json`` dans « donnees ») :
   ``ECART_REMPLACEMENT`` points.
 Entre deux révisions, rien ne bouge. Chaque recommandée garde sa date d'entrée ; les sorties sont gardées
 avec leur date et leur raison.
+
+Fusions : si une révision change la liste (et qu'il reste au moins deux recommandées), une nouvelle fusion est
+créée (Fusion 2, puis 3…) avec les recommandées du jour, membres figés, suivie depuis l'instant de la révision
+(cotes/strategie_recommandee.py). Fusion 1 (8/11/2026) est la première. Les fusions ne sont jamais candidates.
 """
 from __future__ import annotations
 
@@ -98,11 +102,16 @@ def _note(l: dict | None) -> int:
     return ((l or {}).get("stats") or {}).get("note", {}).get("total", -1) if l else -1
 
 
-def reviser(etat: dict | None, lignes: list[dict], aujourd_hui: date, maximum: int = MAXIMUM) -> dict:
+def est_fusion(id_) -> bool:
+    return str(id_).startswith("Fusion ")
+
+
+def reviser(etat: dict | None, lignes: list[dict], aujourd_hui: date, maximum: int = MAXIMUM,
+            instant: str | None = None) -> dict:
     """État suivant de la liste stable. ``etat`` : {"derniere_revision", "actuelles": [{id, depuis, note_entree}],
     "anciennes": [{id, depuis, jusqua, raison}], "journal": [...]}. Ne révise que si la dernière révision a au moins
     ``REVISION_JOURS`` jours (ou s'il n'y en a jamais eu). Pur : ne lit ni n'écrit aucun fichier."""
-    etat = {"actuelles": [], "anciennes": [], "journal": [], **(etat or {})}
+    etat = {"actuelles": [], "anciennes": [], "journal": [], "fusions": [], **(etat or {})}
     derniere = etat.get("derniere_revision")
     if derniere and (aujourd_hui - date.fromisoformat(derniere)).days < REVISION_JOURS:
         return etat
@@ -122,7 +131,8 @@ def reviser(etat: dict | None, lignes: list[dict], aujourd_hui: date, maximum: i
         else:
             restantes.append(a)
     ensemble = lambda a: par_id[a["id"]]["ensemble"]  # noqa: E731
-    candidates = sorted((l for l in lignes if not l.get("base") and not raisons_refus(l.get("stats"))
+    candidates = sorted((l for l in lignes if not l.get("base") and not est_fusion(l["id"])
+                         and not raisons_refus(l.get("stats"))
                          and l["id"] not in {a["id"] for a in restantes}),
                         key=lambda l: (-_note(l), -l["stats"]["note"]["matchs"], str(l["id"])))
     for c in candidates:
@@ -140,9 +150,21 @@ def reviser(etat: dict | None, lignes: list[dict], aujourd_hui: date, maximum: i
             restantes = autres + [nouvelle]
             sortir(faible, f"remplacée par {c['id']} (note {_note(c)} contre {_note(par_id.get(faible['id']))})")
             entrees.append(c["id"])
-    journal = etat["journal"] + [{"date": jour, "entrees": entrees, "sorties": sorties}]
+    # Nouvelle fusion si la liste a changé depuis la dernière fusion (Fusion 1 : membres du 8/11/2026).
+    from .strategie_recommandee import FUSIONS_AUTO, MEMBRES
+    fusions = list(etat["fusions"])
+    derniers = set(fusions[-1]["membres"]) if fusions else set(MEMBRES)
+    ids = [a["id"] for a in restantes]
+    n = (fusions[-1]["n"] if fusions else 1) + 1
+    nouvelle_fusion = None
+    if len(ids) >= 2 and set(ids) != derniers and n <= FUSIONS_AUTO[-1]["n"]:
+        nouvelle_fusion = {"n": n, "membres": ids, "date": jour,
+                           "debut": instant or datetime.combine(aujourd_hui, datetime.min.time(), PARIS).isoformat()}
+        fusions.append(nouvelle_fusion)
+    journal = etat["journal"] + [{"date": jour, "entrees": entrees, "sorties": sorties,
+                                  "fusion": nouvelle_fusion["n"] if nouvelle_fusion else None}]
     return {"derniere_revision": jour, "actuelles": restantes, "anciennes": anciennes[-ANCIENNES_GARDEES:],
-            "journal": journal[-ANCIENNES_GARDEES:]}
+            "journal": journal[-ANCIENNES_GARDEES:], "fusions": fusions}
 
 
 def mettre_a_jour(donnees: Path, lignes: list[dict], maintenant: datetime) -> dict:
@@ -154,7 +176,8 @@ def mettre_a_jour(donnees: Path, lignes: list[dict], maintenant: datetime) -> di
         etat = etat if isinstance(etat, dict) and isinstance(etat.get("actuelles"), list) else None
     except (OSError, ValueError):
         etat = None
-    nouveau = reviser(etat, lignes, maintenant.astimezone(PARIS).date())
+    nouveau = reviser(etat, lignes, maintenant.astimezone(PARIS).date(),
+                      instant=maintenant.astimezone(PARIS).isoformat(timespec="seconds"))
     if nouveau != etat:
         try:
             tmp = chemin.with_name(chemin.name + ".tmp")
