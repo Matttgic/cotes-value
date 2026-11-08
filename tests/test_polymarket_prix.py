@@ -18,9 +18,13 @@ def test_carnet_vide_ou_a_sens_unique_est_saute_sans_erreur():
     assert erreurs(marche(bestBid=0.4)) == []
     assert erreurs(marche(bestAsk=0.5)) == []
     assert erreurs(marche(bestBid=None, bestAsk=None)) == []
+    assert erreurs(marche(bestBid=0.4, bestAsk=1.0)) == []      # côté vendeur vide, noté 1
+    assert erreurs(marche(bestBid=0, bestAsk=0.3)) == []        # côté acheteur vide, noté 0
 
 
 def test_prix_incoherents_restent_une_erreur():
     assert erreurs(marche(bestBid=0.6, bestAsk=0.5)) == ["prix bid/ask invalides"]
-    assert erreurs(marche(bestBid=0.4, bestAsk=1.0)) == ["prix bid/ask invalides"]
+    assert erreurs(marche(bestBid=0.4, bestAsk=1.2)) == ["prix bid/ask invalides"]
+    assert erreurs(marche(bestBid=0.7, bestAsk=1)) == []         # le seul cas sauté : côté vide noté 0 ou 1
+    assert erreurs(marche(bestBid=-0.1, bestAsk=0.5)) == ["prix bid/ask invalides"]
     assert erreurs(marche(bestBid="n/a", bestAsk=0.5)) == ["prix bid/ask invalides"]

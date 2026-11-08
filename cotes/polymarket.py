@@ -23,6 +23,7 @@ from .connexion import Client
 from .temps import instant_utc
 
 BASE = "https://gamma-api.polymarket.com"
+_PAGES_MAX = 50                # 5 000 événements par fenêtre
 TAG_MATCHS = 100639            # étiquette « games » : événements de match (pas les paris à long terme)
 ERREURS: list[str] = []
 logger = logging.getLogger(__name__)
@@ -145,7 +146,9 @@ def evenements(heures: int = 48) -> list[dict]:
             out += [{**e, "_collecte_debut": debut_lecture, "_collecte_recue": reception} for e in valides]
             if len(page) < 100:
                 break
-            if offset >= 1900:
+            # 1 915 événements dans la première fenêtre le 8/11/2026 à 2 h 40 (pages de 100 au plus) : 2 000 tronquait
+            # aux heures chargées (21 cycles en 24 h).
+            if offset >= _PAGES_MAX * 100 - 100:
                 _erreur("liste d'événements tronquée (plafond de pagination)")
                 break
             offset += 100
@@ -254,6 +257,8 @@ def _lignes(marches, base, dom, ext, sport) -> list[dict]:
         if mk.get("bestBid") is None or mk.get("bestAsk") is None:
             continue          # carnet vide ou d'un seul côté : aucun prix à lire, ce n'est pas une erreur de données
         bid, ask = _nombre(mk.get("bestBid")), _nombre(mk.get("bestAsk"))
+        if bid is not None and ask is not None and bid <= ask and (bid == 0 or ask == 1):
+            continue          # Polymarket note 0 / 1 le côté vide d'un carnet à sens unique (6 marchés le 8/11/2026)
         if bid is None or ask is None or not (0 < bid <= ask < 1):
             _erreur("prix bid/ask invalides")
             continue
