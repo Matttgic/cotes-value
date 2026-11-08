@@ -1,18 +1,28 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-08T01:03:43+00:00",
+  "debut": "2026-11-08T01:08:24+00:00",
   "mode": "complet",
   "etapes": {
    "matchbook": {
-    "secondes": 3.8,
+    "secondes": 3.7,
     "ok": true
    },
+   "winamax_direct": {
+    "secondes": 4.4,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau (CurlError 22)",
+     "connexion impossible (CurlError 22)",
+     "lecture vide"
+    ]
+   },
    "olybet": {
-    "secondes": 7.5,
+    "secondes": 8.7,
     "ok": true
    },
    "polymarket": {
-    "secondes": 17.9,
+    "secondes": 18.5,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -20,15 +30,17 @@
     ]
    },
    "pinnacle": {
-    "secondes": 26.2,
+    "secondes": 28.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 13 matchups : HTTP 403"
-    ]
+     "sport 26 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403"
+    ],
+    "reprise": 14
    },
    "unibet_direct": {
-    "secondes": 1.8,
+    "secondes": 2.1,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -36,23 +48,19 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 49.8,
+    "secondes": 38.6,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.4,
+    "secondes": 52.1,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "budget"
     ]
    },
-   "winamax_direct": {
-    "secondes": 55.4,
-    "ok": true
-   },
    "betclic_direct": {
-    "secondes": 58.7,
+    "secondes": 75.5,
     "ok": true
    },
    "smarkets": {
@@ -61,15 +69,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 24.7,
+    "secondes": 13.9,
     "ok": true
    },
    "comparaison": {
-    "secondes": 3.1,
+    "secondes": 2.1,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.9,
+    "secondes": 0.7,
     "ok": true
    }
   },
@@ -83,33 +91,20 @@
    "ok": true,
    "requetes": 3,
    "erreurs": [],
-   "matchs": 306,
-   "lignes": 15570
-  },
-  "pinnacle_secours": {
-   "sports": [
-    "football"
-   ],
-   "requetes": 1,
-   "lignes": 30912,
-   "erreurs": [],
-   "pause": true,
-   "cache_lignes": 0,
-   "retard": [
-    "football"
-   ]
+   "matchs": 304,
+   "lignes": 15690
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 800,
-   "age_min_s": 28,
-   "lignes": 114748,
-   "lignes_perimees": 3480,
+   "age_max_s": 834,
+   "age_min_s": 54,
+   "lignes": 113981,
+   "lignes_perimees": 3415,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 7.9,
+   "rechauffeur_duree_s": 8.0,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -119,18 +114,20 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 35,
-    "head_403": 2,
+    "head_200": 29,
+    "choisi_fixe": 9,
+    "head_403": 3,
     "ortho_refusee": 2,
-    "choisi_autre": 7,
-    "choisi_fixe": 7,
+    "choisi_autre": 3,
     "reprise_403": 2,
-    "reprise_403_ok": 1,
     "sport_vide": 3
    }
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Pinnacle": {
+    "rugby_league": 14
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -161,7 +158,7 @@
    ]
   },
   "betclic_proches": {
-   "proches": 11,
+   "proches": 10,
    "relances": 0,
    "proches_non_lus": 0,
    "proches_vides": 0
@@ -172,165 +169,198 @@
    "examines": 9,
    "comparaisons": [
     {
-     "match": "Dila Gori – Dinamo Tbilissi",
-     "source": "PMU",
-     "cote_olybet": 2.49,
-     "cote_reference": 2.43,
-     "ecart_relatif": 0.0247,
-     "aberrant": false
-    },
-    {
-     "match": "América de Cali – Deportivo Cali",
+     "match": "Nacional Madeira – Academico Viseu",
      "source": "Pinnacle",
-     "cote_olybet": 2.01,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0607,
+     "cote_olybet": 2.75,
+     "cote_reference": 2.95,
+     "ecart_relatif": 0.0678,
      "aberrant": false
     },
     {
-     "match": "América de Cali – Deportivo Cali",
-     "source": "PMU",
-     "cote_olybet": 2.01,
-     "cote_reference": 1.88,
-     "ecart_relatif": 0.0691,
-     "aberrant": false
-    },
-    {
-     "match": "Jaguares de Córdoba – Atlético Bucaramanga",
+     "match": "Vitoria Guimaraes – FC Porto",
      "source": "Pinnacle",
-     "cote_olybet": 3.39,
-     "cote_reference": 3.64,
-     "ecart_relatif": 0.0687,
+     "cote_olybet": 5.0,
+     "cote_reference": 5.67,
+     "ecart_relatif": 0.1182,
      "aberrant": false
     },
     {
-     "match": "Jaguares de Córdoba – Atlético Bucaramanga",
+     "match": "Vitoria Guimaraes – FC Porto",
      "source": "PMU",
-     "cote_olybet": 3.39,
-     "cote_reference": 3.4,
-     "ecart_relatif": 0.0029,
+     "cote_olybet": 5.0,
+     "cote_reference": 5.5,
+     "ecart_relatif": 0.0909,
      "aberrant": false
     },
     {
-     "match": "Alianza Valledupar – Llaneros Villavicencio",
+     "match": "Santa Clara – Gil Vicente",
      "source": "Pinnacle",
-     "cote_olybet": 2.09,
-     "cote_reference": 2.18,
-     "ecart_relatif": 0.0413,
+     "cote_olybet": 2.17,
+     "cote_reference": 2.31,
+     "ecart_relatif": 0.0606,
      "aberrant": false
     },
     {
-     "match": "Alianza Valledupar – Llaneros Villavicencio",
+     "match": "Santa Clara – Gil Vicente",
      "source": "PMU",
-     "cote_olybet": 2.09,
+     "cote_olybet": 2.17,
      "cote_reference": 2.02,
-     "ecart_relatif": 0.0347,
+     "ecart_relatif": 0.0743,
      "aberrant": false
     },
     {
-     "match": "Deportes Tolima – Millonarios",
+     "match": "Rio Ave – Braga",
      "source": "Pinnacle",
-     "cote_olybet": 2.12,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0493,
+     "cote_olybet": 5.4,
+     "cote_reference": 6.15,
+     "ecart_relatif": 0.122,
      "aberrant": false
     },
     {
-     "match": "Deportes Tolima – Millonarios",
+     "match": "Rio Ave – Braga",
      "source": "PMU",
-     "cote_olybet": 2.12,
-     "cote_reference": 2.0,
-     "ecart_relatif": 0.06,
+     "cote_olybet": 5.4,
+     "cote_reference": 5.6,
+     "ecart_relatif": 0.0357,
+     "aberrant": false
+    },
+    {
+     "match": "Estrela Amadora – Benfica",
+     "source": "Pinnacle",
+     "cote_olybet": 9.5,
+     "cote_reference": 11.38,
+     "ecart_relatif": 0.1652,
+     "aberrant": true
+    },
+    {
+     "match": "Estrela Amadora – Benfica",
+     "source": "PMU",
+     "cote_olybet": 9.5,
+     "cote_reference": 11.0,
+     "ecart_relatif": 0.1364,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Estrela Amadora – Benfica",
+     "source": "Pinnacle",
+     "cote_olybet": 9.5,
+     "cote_reference": 11.38,
+     "ecart_relatif": 0.1652,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "Krylya Sovetov – FC Orenburg",
+     "match": "Gnistan – VPS",
+     "source": "Pinnacle",
+     "cote_netbet": 1.88,
+     "cote_reference": 2.05,
+     "ecart_relatif": 0.0829,
+     "aberrant": false
+    },
+    {
+     "match": "Gnistan – VPS",
+     "source": "PMU",
+     "cote_netbet": 1.88,
+     "cote_reference": 1.89,
+     "ecart_relatif": 0.0053,
+     "aberrant": false
+    },
+    {
+     "match": "HJK Helsinki – AC Oulu",
+     "source": "Pinnacle",
+     "cote_netbet": 1.07,
+     "cote_reference": 1.157,
+     "ecart_relatif": 0.075,
+     "aberrant": false
+    },
+    {
+     "match": "HJK Helsinki – AC Oulu",
+     "source": "PMU",
+     "cote_netbet": 1.07,
+     "cote_reference": 1.07,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "KuPS – Inter Turku",
+     "source": "Pinnacle",
+     "cote_netbet": 3.65,
+     "cote_reference": 4.22,
+     "ecart_relatif": 0.1351,
+     "aberrant": false
+    },
+    {
+     "match": "KuPS – Inter Turku",
+     "source": "PMU",
+     "cote_netbet": 3.65,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.0429,
+     "aberrant": false
+    },
+    {
+     "match": "Nyiregyhaza – Gyor ETO FC",
+     "source": "Pinnacle",
+     "cote_netbet": 2.2,
+     "cote_reference": 2.51,
+     "ecart_relatif": 0.1235,
+     "aberrant": false
+    },
+    {
+     "match": "Nyiregyhaza – Gyor ETO FC",
+     "source": "PMU",
+     "cote_netbet": 2.2,
+     "cote_reference": 2.08,
+     "ecart_relatif": 0.0577,
+     "aberrant": false
+    },
+    {
+     "match": "Debreceni VSC – Újpest FC",
      "source": "Pinnacle",
      "cote_netbet": 2.1,
-     "cote_reference": 2.45,
-     "ecart_relatif": 0.1429,
-     "aberrant": false
-    },
-    {
-     "match": "Spartak Moscou – Akron Tolyatti",
-     "source": "Pinnacle",
-     "cote_netbet": 1.1,
-     "cote_reference": 1.252,
-     "ecart_relatif": 0.1218,
-     "aberrant": false
-    },
-    {
-     "match": "Zenit St.Petersbourg – Rostov",
-     "source": "Pinnacle",
-     "cote_netbet": 1.18,
-     "cote_reference": 1.361,
-     "ecart_relatif": 0.133,
-     "aberrant": false
-    },
-    {
-     "match": "Baltika Kaliningrad – Makhachkala",
-     "source": "Pinnacle",
-     "cote_netbet": 1.5,
-     "cote_reference": 1.694,
-     "ecart_relatif": 0.1147,
-     "aberrant": false
-    },
-    {
-     "match": "Teplice – Pardubice",
-     "source": "Pinnacle",
-     "cote_netbet": 2.25,
-     "cote_reference": 2.56,
-     "ecart_relatif": 0.1211,
-     "aberrant": false
-    },
-    {
-     "match": "Teplice – Pardubice",
-     "source": "PMU",
-     "cote_netbet": 2.25,
-     "cote_reference": 2.25,
-     "ecart_relatif": 0.0,
+     "cote_reference": 2.31,
+     "ecart_relatif": 0.0909,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-08T01:03:53+00:00",
-   "pinnacle_derniere_lecture": "2026-11-08T01:04:15+00:00",
+   "pinnacle_premiere_lecture": "2026-11-08T01:04:02+00:00",
+   "pinnacle_derniere_lecture": "2026-11-08T01:08:45+00:00",
    "books_premiere_lecture": "2026-11-06T16:48:58+00:00",
-   "books_derniere_lecture": "2026-11-08T01:03:43+00:00",
-   "ecart_enveloppe_secondes": 116117.0
+   "books_derniere_lecture": "2026-11-08T01:08:25+00:00",
+   "ecart_enveloppe_secondes": 116387.0
   },
   "historique_cotes": {
-   "lignes": 1354
+   "lignes": 942
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.2
+   "age_min": 13.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 567,
    "a_verifier": 12,
    "non_conforme": 8,
-   "mesures": 46728,
-   "matchs_suspects": 1
+   "mesures": 33271,
+   "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 147694,
-   "mesures": 45380,
-   "annotees": 4,
-   "figees": 0
+   "ancres": 116273,
+   "mesures": 104869,
+   "annotees": 20,
+   "figees": 7
   },
   "redecision": {
    "ajoutees": 0
@@ -346,26 +376,20 @@
    "dernier_reglement": "2026-11-08T00:46:48+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-08T01:05:17+00:00",
+  "fin": "2026-11-08T01:10:03+00:00",
   "cotes": {
-   "francaises": 144775,
-   "pinnacle": 145660,
-   "polymarket": 29666,
+   "francaises": 111551,
+   "pinnacle": 113995,
+   "polymarket": 29687,
    "smarkets": 4058,
-   "matchbook": 15570
+   "matchbook": 15690
   },
-  "matchs_francais": 2132,
-  "opportunites": 40,
-  "opportunites_suspectes": 20,
+  "matchs_francais": 1777,
+  "opportunites": 19,
+  "opportunites_suspectes": 27,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-07T09:40:13+00:00",
-   "mode": "complet",
-   "opportunites": 12,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-07T09:44:49+00:00",
    "mode": "complet",
@@ -1564,6 +1588,12 @@
    "debut": "2026-11-08T01:03:43+00:00",
    "mode": "complet",
    "opportunites": 40,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-08T01:08:24+00:00",
+   "mode": "complet",
+   "opportunites": 19,
    "nouveaux_paris": 0
   }
  ],
