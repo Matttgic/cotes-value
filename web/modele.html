@@ -446,9 +446,25 @@ const SIMS = Object.keys(D.simulations);
 const CUMULS = [...SIMS.filter(s => s !== "X").map((s, i, l) => l.slice(0, i + 1)), SIMS];
 let cumul = CUMULS.length - 1;
 const nomCumul = l => l.length === SIMS.length ? "Toutes" : l.join("+");
-// Intervalle de confiance à 95 % du ROI (estimateur de ratio, approximation normale), depuis les sommes additives
-// du serveur. Paris supposés indépendants : plusieurs paris sur un même match le rendent optimiste.
+// Intervalle de confiance à 95 % du ROI par grappes (le match) : gains et mises de chaque match additionnés, puis
+// estimateur de ratio sur les matchs (approximation normale). Plusieurs paris d'un même match sont corrélés : les
+// compter comme indépendants rendait l'intervalle trop étroit. Repli (bloc sans détail par match) : par pari.
+function unitesMatchs(b) {
+  const d = b?.evenements_detail;
+  if (!d) return null;
+  const u = Object.values(d).filter(v => Array.isArray(v) && v.length > 5 && v[5] > 0).map(v => [v[4], v[5]]);
+  return u.length ? u : null;
+}
+function icRoiMatchs(u) {
+  const k = u.length, M = u.reduce((s, x) => s + x[1], 0);
+  if (k < 2 || !(M > 0)) return null;
+  const r = u.reduce((s, x) => s + x[0], 0) / M;
+  const v = u.reduce((s, [g, m]) => s + (g - r * m) ** 2, 0) * k / (k - 1) / (M * M);
+  return v > 0 ? [r - 1.96 * Math.sqrt(v), r + 1.96 * Math.sqrt(v)] : null;
+}
 function icRoi(b) {
+  const u = unitesMatchs(b);
+  if (u) return icRoiMatchs(u);
   if (!b || !(b.regles > 1) || !b.mises || b.g2 == null) return null;
   const r = b.gains / b.mises, v = (b.g2 - 2 * r * b.gm + r * r * b.m2) * b.regles / (b.regles - 1) / (b.mises * b.mises);
   return v > 0 ? [r - 1.96 * Math.sqrt(v), r + 1.96 * Math.sqrt(v)] : null;
@@ -465,11 +481,12 @@ function additionner(sims, source = D.bilan, prefixe = "", ref = refBilan) {
     vu = true;
     for (const k of Object.keys(t)) t[k] += b[k] || 0;
     for(const [id,mesures] of Object.entries(b.evenements_detail || {})) {
-      const v=evenements.get(id) || [0,0,0,0];
-      evenements.set(id,v.map((x,i)=>x+mesures[i]));
+      const v=evenements.get(id) || [];
+      evenements.set(id,[0,1,2,3,4,5].map(i=>(v[i]||0)+(mesures[i]||0)));      // un match vu dans plusieurs tranches
     }
   }
   if (!vu) return null;
+  t.evenements_detail=Object.fromEntries(evenements);       // grappes de l'intervalle de confiance (icRoi)
   t.evenements=evenements.size;
   t.evenements_regles=[...evenements.values()].filter(v=>v[1]>0).length;
   const cs=[...evenements.values()].filter(v=>v[3]>0).map(v=>v[2]/v[3]);

@@ -375,7 +375,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                                       "g2": 0.0, "gm": 0.0, "m2": 0.0,
                                       "evenements_detail": {}})
             b["paris"] += 1
-            ev = b["evenements_detail"].setdefault(str(numeros[liens[id(p)]]), [0,0,0.0,0])
+            # par match : [paris, réglés, Σ CLV, n CLV, Σ gains réglés, Σ mises réglées] (IC du ROI par grappes)
+            ev = b["evenements_detail"].setdefault(str(numeros[liens[id(p)]]), [0,0,0.0,0,0.0,0.0])
             ev[0] += 1
             ev[1] += p["statut"] not in ("en_cours", "a_regler")
             if p["statut"] in ("en_cours", "a_regler"):
@@ -384,6 +385,8 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                 b["regles"] += 1
                 b["mises"] += p["mise"]
                 b["gains"] += p["gain"] or 0
+                ev[4] += p["gain"] or 0
+                ev[5] += p["mise"]
                 b["g2"] += (p["gain"] or 0) ** 2
                 b["gm"] += (p["gain"] or 0) * p["mise"]
                 b["m2"] += p["mise"] ** 2
@@ -404,6 +407,9 @@ def _cumuler(paris: list[dict], groupe) -> dict:
                 b["regles_sans_clv"] += 1
                 b["gains_sans_clv"] += p["gain"] or 0
     for b in out.values():
+        es = list(b["evenements_detail"].values())
+        for k, v in b["evenements_detail"].items():        # sans pari réglé : 4 champs (page plus légère)
+            b["evenements_detail"][k] = [*v[:4], round(v[4], 2), round(v[5], 2)] if v[5] else v[:4]
         es = list(b["evenements_detail"].values())
         b["evenements"] = len(es)
         b["evenements_regles"] = sum(v[1]>0 for v in es)
