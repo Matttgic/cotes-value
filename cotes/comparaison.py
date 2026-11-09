@@ -42,6 +42,34 @@ ECART_MIN = 0.02
 ECART_SUSPECT = 0.25            # cotes <= 10
 ECART_SUSPECT_GROSSES = 1.0     # cotes > 10
 DESACCORD_MAX = 1.25            # cotes justes de deux références qui diffèrent de plus de 25 % : suspect
+# Liste d'issues Pinnacle ouverte (score exact, mi-temps/fin) : la marge retirée sur les seules issues lues laisse des
+# probabilités trop hautes (399 paris score exact : 3 gagnés pour 10,7 attendus, ROI −79 %). Observée, jamais pariée.
+MOTIF_LISTE_INCOMPLETE = "liste incomplète"
+# « Référence suspecte » (repris d'Autonome, autonome/tracker.py ``suspect``) : marquage seulement. Le pari est pris et
+# compté comme avant (stratégies figées et bilans intacts) ; seules les alertes (Pushover, Web Push, webhook) l'écartent.
+REFERENCE_SUSPECTE = {"ecart_max": 0.30, "fige_bande": 0.016, "fige_proba_book": 0.45}
+
+
+def reference_suspecte(o: dict) -> str | None:
+    """Motif pour lequel la référence d'une opportunité ou d'un pari est douteuse, sinon None. Fonction pure.
+
+    - écart > 30 % : presque toujours une erreur de référence ou de marché (77 paris : 1 gagné, −540 €) ;
+    - Polymarket figé à 50/50 sur un vainqueur de match alors que le bookmaker donne moins de 45 % : marché d'un
+      match non joué (forfait), réglé 50/50 par Polymarket, pas une valeur."""
+    c = REFERENCE_SUSPECTE
+    ecart, cote = o.get("ecart"), o.get("cote")
+    proba = o.get("proba_juste")
+    if not isinstance(proba, (int, float)) or isinstance(proba, bool):
+        juste = o.get("cote_juste")
+        proba = 1 / juste if isinstance(juste, (int, float)) and not isinstance(juste, bool) and juste > 1 else None
+    if (o.get("reference") == "Polymarket" and o.get("marche") == "VAINQUEUR" and o.get("periode") == "MATCH"
+            and proba is not None and abs(proba - 0.5) <= c["fige_bande"]
+            and isinstance(cote, (int, float)) and not isinstance(cote, bool) and cote > 1
+            and 1 / cote < c["fige_proba_book"]):
+        return "Polymarket figé à 50/50"
+    if isinstance(ecart, (int, float)) and not isinstance(ecart, bool) and isfinite(ecart) and ecart > c["ecart_max"]:
+        return "écart > 30 %"
+    return None
 _HORS_ANJ = re.compile(
     r"odd\s*/\s*even|even\s*/\s*odd|odd\s+or\s+even|even\s+or\s+odd|"
     r"pair\s*/\s*impair|impair\s*/\s*pair|pair\s+ou\s+impair|impair\s+ou\s+pair",
@@ -257,6 +285,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
             # sur un marché complet commun, la somme des probabilités reste 1.
             p = sum(r["proba_juste"] for r in membres.values()) / len(membres)
             trouvees["Consensus"] = {"proba_juste": p, "cote_juste": 1 / p, "collecte": l["collecte"],
+                                     # une composante à liste ouverte biaise la moyenne : même motif
+                                     "liste_incomplete": any(r.get("liste_incomplete") for r in membres.values()),
                                      "domicile": l["domicile"], "exterieur": l["exterieur"],
                                      "sources": "+".join(sorted(membres)),
                                      "lectures_references": {n: r.get("collecte") for n, r in membres.items()},
@@ -275,6 +305,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 suspect = "références en désaccord"
             elif not suspect and ecart > (ECART_SUSPECT if l["cote"] <= 10 else ECART_SUSPECT_GROSSES):
                 suspect = "écart trop grand"
+            if not suspect and r.get("liste_incomplete"):
+                suspect = MOTIF_LISTE_INCOMPLETE
             pin = trouvees.get("Pinnacle") or {}
             o = {
                 # filtres à tester (descriptifs, jamais appliqués) : TRJ du marché chez le bookmaker français,
@@ -304,6 +336,11 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "controle": _controle_du_groupe(l, controle),
                 "lien": l.get("lien"), "suspect": suspect,
                 "pariable": not bool(suspect)}
+            if r.get("liste_incomplete"):
+                o["liste_incomplete"] = True
+            motif = reference_suspecte(o)
+            if motif:
+                o["reference_suspecte"] = motif
             if r.get("prix_prudent"):         # cote juste lue au prix d'achat (carnet large) : écart minimal
                 o.update(prix_prudent=True, proba_milieu=r.get("proba_milieu"))
             # Référence reprise d'un cycle précédent (cotes/reprise.py) : notée seulement quand c'est le cas.

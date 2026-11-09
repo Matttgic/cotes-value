@@ -90,12 +90,14 @@ def cle_fiche(p: dict) -> tuple:
 CHAMPS_FICHE = ("reference", "match_id", "marche", "periode", "ligne", "issue", "domicile", "exterieur", "debut",
                 "pari", "bookmaker", "cote", "cote_juste", "ecart", "statut", "gain", "clv", "detecte", "sport",
                 "ligue", "regle_le", "reporte_au", "id", "joueur", "collecte_recue", "collecte_debut", "prix_revu", "prix_revu_le", "alerte_demande_le", "decide_le", "registre_version",
-                "ecart_polymarket", "ecart_smarkets", "lien", "lien_repli")
+                "ecart_polymarket", "ecart_smarkets", "lien", "lien_repli", "reference_suspecte")
 
 
 def fiche(p: dict) -> dict:
     """Champs publiés d'un pari ; le lien du match seulement tant qu'il est en cours (rien à jouer après)."""
     f = {c: p.get(c) for c in CHAMPS_FICHE}
+    # marquage seulement, recalculé aussi pour les anciens paris : le bilan ne change pas
+    f["reference_suspecte"] = p.get("reference_suspecte") or notifications_mod.reference_suspecte(p)
     if p.get("statut") != "en_cours":
         f["lien"] = f["lien_repli"] = None
     return f

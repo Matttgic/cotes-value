@@ -114,6 +114,8 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
                               "version": VERSION}}
         if o.get("reference_reprise"):
             p["preuve_prise"]["reference_reprise"] = True
+        if o.get("reference_suspecte"):       # marquage seulement (comparaison.reference_suspecte) : exclu des alertes
+            p["reference_suspecte"] = o["reference_suspecte"]
         paris.append(p)
         nouveaux.append(p)
     return nouveaux

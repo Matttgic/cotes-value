@@ -787,6 +787,8 @@ def _ajouter_proba_justes(lignes: list[dict]) -> None:
         p = proba_justes(cotes, complet=complet) if valides else None
         m = marge(cotes) if p else None
         for l, pi in zip(g, p or [None] * len(g)):
+            if not complet:           # liste ouverte : prix gardés, mais jamais pariable (cotes/comparaison.py)
+                l["liste_incomplete"] = True
             l["proba_juste"] = round(pi, 6) if pi else None
             l["cote_juste"] = round(1 / pi, 4) if pi else None
             l["marge_pinnacle"] = round(m, 4) if m is not None else None

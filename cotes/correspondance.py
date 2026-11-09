@@ -110,6 +110,82 @@ def ressemblance(a: str | None, b: str | None) -> float:
     return penalite * _ressemblance_mots(ma, mb)
 
 
+# --- Association entre sources (``associer``) : règles plus strictes que ``ressemblance``, qui sert aussi aux
+# lecteurs, au règlement et aux stratégies figées et reste donc inchangée.
+# Marqueur féminin / jeunes / réserve d'un seul côté alors que l'autre source sait l'écrire : équipes différentes
+# (« Arsenal W » / « Arsenal », « France U21 » / « France »). Les bookmakers français l'écrivent toujours (nom ou
+# ligue : « (F) », « F. », « Femmes », « U21 ») ; les références pas toujours (Pinnacle : « WNBA », « D1 Arkema »
+# sans « Women », paris du 10/2026 associés à 0,85) : chez elles, son absence ne prouve rien et la pénalité reste.
+# Clubs distincts qui partagent un mot avec un autre : chaque écriture connue -> identité. Un nom identifié face à
+# un nom d'une autre identité (ou sans identité) qui partage un mot n'est pas le même club (« Paris FC » / « Paris SG »,
+# « Inter » / « Inter Miami ») ; deux écritures de la même identité sont le même club (« Paris SG » / « PSG »).
+IDENTITES = ((frozenset({"paris", "sg"}), "psg"), (frozenset({"paris", "saint", "germain"}), "psg"),
+             (frozenset({"psg"}), "psg"), (frozenset({"inter", "miami"}), "inter miami"))
+LIGUE_FEMININE_APPARIEMENT = re.compile(
+    r"\b(women|womens|feminin|feminine|feminines|femmes|ladies)\b|\((?:w|f)\)"
+    r"|(?<!groupe)(?<!group)(?<!poule)(?<!pool)\sf\.?\s*$", re.I)   # « Liga F », « Eurocoupe F. », pas « Groupe F »
+
+
+def _categorie(nom: str | None) -> tuple[tuple[str, ...], bool, frozenset]:
+    """Comme dans ``ressemblance`` ; « Jong Ajax » (équipe réserve néerlandaise) porte en plus le marqueur « ii »."""
+    mots, fem, jeunes = normaliser(re.sub(r"\b(?:u|under)[ -]?(\d{2})\b", r"u\1", nom or "", flags=re.I))
+    if len(mots) > 1 and mots[0] == "jong":
+        mots, jeunes = mots[1:], jeunes | {"ii"}
+    return mots, fem, jeunes
+
+
+def _identite(mots: tuple[str, ...]) -> str | None:
+    s = set(mots)
+    return next((nom for forme, nom in IDENTITES if forme <= s), None)
+
+
+def _prenoms_compatibles(ma: tuple[str, ...], mb: tuple[str, ...]) -> bool:
+    """Tennis : même nom de famille, prénoms ou initiales qui se contredisent = joueurs différents (« Venus » /
+    « Serena Williams », « Pliskova Ka. » / « Pliskova Kr. »). Compatibles : initiale ou début du prénom (« V. » /
+    « Venus », « Ka. » / « Karolina »), initiales composées (« JL. » / « Jan-Lennard »), translittération proche
+    (« Daniil » / « Danil »). Un côté sans prénom ne contredit rien."""
+    sa, sb = set(ma), set(mb)
+    ra, rb = sa - sb, sb - sa
+    if not (sa & sb) or not ra or not rb:
+        return True
+    petit, grand = (ra, rb) if len(ra) <= len(rb) else (rb, ra)
+    initiales = "".join(m[0] for m in (mb if petit is ra else ma) if m in grand)
+
+    def compatible(x: str) -> bool:
+        if any(y.startswith(x) or x.startswith(y) or (len(x) >= 3 and (x in y or y in x)) for y in grand):
+            return True               # « F. Cabral » est lu « fcabral » (règle « F.C. » de normaliser)
+        if len(x) <= 3 and len(x) > 1 and x == initiales[:len(x)]:
+            return True
+        return any(len(x) >= 4 and len(y) >= 4 and x[0] == y[0]
+                   and difflib.SequenceMatcher(None, x, y).ratio() >= 0.75 for y in grand)
+    return all(compatible(x) for x in petit)
+
+
+@functools.lru_cache(maxsize=262144)
+def ressemblance_appariement(a: str | None, b: str | None, tennis: bool = False,
+                             a_marque: bool = True, b_marque: bool = True) -> float:
+    """``ressemblance`` + règles bloquantes de l'association entre sources (score 0 = refus, pas une pénalité).
+
+    ``a_marque`` / ``b_marque`` : la source de ce nom écrit les marqueurs féminin / jeunes quand ils existent. Au
+    tennis, le marqueur féminin (souvent lu dans la ligue d'un seul côté) reste une simple pénalité."""
+    if ressemblance(a, b) <= 0:         # noms vides ou catégories explicitement contradictoires
+        return 0.0
+    (ma, fa, ja), (mb, fb, jb) = _categorie(a), _categorie(b)
+    if not ma or not mb:
+        return 0.0
+    if ja != jb and ((ja and not jb and b_marque) or (jb and not ja and a_marque) or (ja and jb)):
+        return 0.0
+    if not tennis and ((fa and not fb and b_marque) or (fb and not fa and a_marque)):
+        return 0.0
+    ia, ib = _identite(ma), _identite(mb)
+    if ia != ib and set(ma) & set(mb):
+        return 0.0
+    if tennis and not _prenoms_compatibles(ma, mb):
+        return 0.0
+    penalite = 0.85 if (fa != fb or bool(ja) != bool(jb)) else 1.0
+    return penalite if (ia is not None and ia == ib) else penalite * _ressemblance_mots(ma, mb)
+
+
 def _abrege(m: str, x: str) -> bool:
     """`m` est une abréviation de `x` : même première lettre, lettres dans l'ordre, au moins deux lettres de moins."""
     if len(m) < 2 or m[0] != x[0] or len(x) < len(m) + 2:
@@ -175,14 +251,28 @@ def avec_marqueurs_ligue(nom: str | None, ligue: str | None) -> str | None:
     return nom
 
 
+def _marqueurs_ligue_appariement(nom: str | None, ligue: str | None) -> str | None:
+    """``avec_marqueurs_ligue`` pour l'association, toutes sources : accents ignorés et « (F) » des ligues des
+    bookmakers français (« Tauron Liga (F) », « Féminines D1 »). ``avec_marqueurs_ligue`` reste inchangée (elle sert
+    aussi aux clés de stratégies figées)."""
+    if not nom or not ligue:
+        return nom
+    lu = unicodedata.normalize("NFKD", str(ligue)).encode("ascii", "ignore").decode()
+    nom = avec_marqueurs_ligue(nom, lu)
+    if LIGUE_FEMININE_APPARIEMENT.search(lu) and not normaliser(nom)[1]:
+        nom = f"{nom} Women"
+    return nom
+
+
 def matchs_de(lignes: list[dict]) -> dict[str, dict]:
-    """Un résumé par match (identifiant -> sport, équipes, début, ordre incertain)."""
+    """Un résumé par match (identifiant -> sport, équipes, début, ordre incertain). Le marqueur U21 / Women écrit
+    dans la ligue est reporté sur les noms pour toutes les sources (avant le 9/11/2026 : Pinnacle seulement)."""
     out = {}
     for l in lignes:
-        ligue = l.get("ligue") if l.get("source") == "pinnacle" else None
+        ligue = l.get("ligue")
         out.setdefault(l["match_id"], {"match_id": l["match_id"], "sport": l["sport"],
-                                       "domicile": avec_marqueurs_ligue(l["domicile"], ligue),
-                                       "exterieur": avec_marqueurs_ligue(l["exterieur"], ligue),
+                                       "domicile": _marqueurs_ligue_appariement(l["domicile"], ligue),
+                                       "exterieur": _marqueurs_ligue_appariement(l["exterieur"], ligue),
                                        "debut": _heure(l["debut"]),
                                        "approx": bool(l.get("debut_approximatif")),
                                        "ordre_incertain": bool(l.get("ordre_incertain")) or l["source"] == "polymarket"})
@@ -230,8 +320,13 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
                 # les deux ordres sont toujours essayés : un bookmaker peut inverser domicile et extérieur
                 # (Islanders – Rangers chez NetBet, Rangers – Islanders chez Pinnacle) et deux équipes de la
                 # même ville se ressemblent assez (0,82) pour que l'ordre direct passe à tort
-                paires = [((ressemblance(f["domicile"], r["domicile"]), ressemblance(f["exterieur"], r["exterieur"])), False),
-                          ((ressemblance(f["domicile"], r["exterieur"]), ressemblance(f["exterieur"], r["domicile"])), True)]
+                # règles bloquantes (marqueurs, clubs homonymes, prénoms au tennis) : ressemblance_appariement ;
+                # le nom français écrit ses marqueurs, celui de la référence pas toujours
+                t, mf, mr = f["sport"] == "tennis", True, False
+                paires = [((ressemblance_appariement(f["domicile"], r["domicile"], t, mf, mr),
+                            ressemblance_appariement(f["exterieur"], r["exterieur"], t, mf, mr)), False),
+                          ((ressemblance_appariement(f["domicile"], r["exterieur"], t, mf, mr),
+                            ressemblance_appariement(f["exterieur"], r["domicile"], t, mf, mr)), True)]
                 derby = derby_fr
                 if not derby:
                     derby = derby_ref.get(r["match_id"])

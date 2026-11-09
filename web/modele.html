@@ -837,6 +837,7 @@ ${boutonBookmaker(p) ? `<div class="l1">${boutonBookmaker(p)}</div>` : ""}
 <div class="l3"><span><b>${e(p.bookmaker)} ${cote(p.cote)}</b></span><span>${e(p.reference)} ${cote(p.cote_juste)}</span>
 <span class="ecart">${pct(p.ecart)}</span>${ecartsReferences(p)}</div>
 <div class="l4"><span class="badge ${p.statut}">${STATUTS[p.statut]||p.statut}</span>
+${p.reference_suspecte ? `<span class="badge perdu" title="Référence douteuse : pari compté, jamais alerté">Référence suspecte · ${e(p.reference_suspecte)}</span>` : ""}
 ${badgeStrategies(p)}
 ${p.gain!=null ? `<b class="${signe(p.gain)}">${eur(p.gain)}</b>` : ""}
 <span>CLV <span class="${signe(p.clv)}">${pct(p.clv)}</span></span></div>

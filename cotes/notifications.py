@@ -10,6 +10,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+from .comparaison import reference_suspecte
 from .convergence import STRATEGIES, cle_selection, paris_convergence
 from .laboratoire import DEBUT_SUIVI, REGLES, heure, selectionner
 from .liens import lien_info
@@ -139,7 +140,8 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
     for o in actuelles:
         debut = heure(o.get("debut"))
         recue = heure(o.get("collecte_recue") or o.get("detecte"))
-        if (o.get("suspect") or o.get("pariable") is False or not debut
+        if (o.get("suspect") or o.get("pariable") is False or o.get("reference_suspecte") or reference_suspecte(o)
+                or not debut
                 or debut <= maintenant + timedelta(minutes=1) or not recue):
             continue
         key = (*cle_selection(o), o.get("cote"))
@@ -188,6 +190,7 @@ def alertes_recheck(paris: list[dict], cle_strategie: str = PIN2, maintenant: da
         figees = p.get("selections_figees")
         debut, marque = heure(p.get("debut")), p.get("redecision_lecture_posterieure")
         if (not marque or not isinstance(figees, dict) or cle_strategie not in figees or p.get("suspect")
+                or p.get("reference_suspecte") or reference_suspecte(p)
                 or p.get("statut") != "en_cours" or not debut or debut <= maintenant + timedelta(minutes=1)
                 or not (_nombre(p.get("cote")) or 0) > 1):
             continue

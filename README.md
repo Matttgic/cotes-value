@@ -68,10 +68,17 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    corners, jeux et sets au tennis, les deux équipes marquent, score exact, mi-temps/fin de match ;
    par période (mi-temps, périodes, quart-temps, sets). Les cas ambigus sont écartés plutôt que devinés.
 3. **Association des matchs** entre sources (`cotes/correspondance.py`) : heure, noms d'équipes
-   (pays et villes en français, initiales, noms tronqués, U21, féminin).
+   (pays et villes en français, initiales, noms tronqués, U21, féminin). Depuis le 9/11/2026, refus net
+   (`ressemblance_appariement`) : marqueur féminin / jeunes / réserve chez la référence absent du nom et de la
+   ligue du bookmaker français (qui l'écrit toujours), clubs homonymes (« Paris FC » / « Paris SG »,
+   « Inter » / « Inter Miami »), prénoms différents au tennis (« Venus » / « Serena Williams ») ; le marqueur
+   écrit dans la ligue est reporté sur les noms pour toutes les sources.
 4. **Comparaison** (`cotes/comparaison.py`) : écart = cote française × probabilité juste − 1, pour
    chaque référence fiable lue à moins de 15 minutes d'intervalle ; plus un **consensus** (moyenne
-   des références disponibles).
+   des références disponibles). Score exact et mi-temps/fin de Pinnacle (liste d'issues incomplète) : observés,
+   jamais pariés (motif « liste incomplète »). **Référence suspecte** (écart > 30 %, ou Polymarket figé à 50/50 sur
+   un vainqueur alors que le bookmaker donne < 45 %) : pari pris et compté comme avant, marqué sur le site, jamais
+   alerté (Pushover, Web Push, webhook). Version du moteur `2026-11-09-justesse` dans la trace des nouveaux paris.
 5. **Paris simulés** (`cotes/simulation.py`) : 10 € à la première détection, un pari par référence,
    bookmaker et sélection, rangé dans la tranche de son écart : **A** 2 à 3 %, **B** 3 à 4 %, **C** 4 à 5 %,
    **D** 5 à 7 %, **E** 7 % et plus (cotes ≤ 10), **X** cotes > 10 (≥ 3 %). La cote juste est suivie jusqu'au coup d'envoi (**CLV**).
