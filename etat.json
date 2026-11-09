@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-09T22:04:08+00:00",
+  "debut": "2026-11-09T22:08:54+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,65 +9,68 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 1.8,
+    "secondes": 2.0,
     "ok": true
    },
    "olybet": {
-    "secondes": 2.8,
+    "secondes": 4.2,
     "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 4.3,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau (CurlError 22)",
+     "connexion impossible (CurlError 22)",
+     "lecture vide"
+    ]
    },
    "polymarket": {
-    "secondes": 5.7,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 7.0,
+    "secondes": 7.1,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 16.2,
+    "secondes": 22.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 28 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403",
-     "sport 37 matchups : HTTP 403",
-     "sport 13 matchups : HTTP 403"
+     "sport 37 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.7,
+    "secondes": 2.0,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
-   "pmu_direct": {
-    "secondes": 31.7,
+   "betclic_direct": {
+    "secondes": 28.1,
     "ok": true
    },
-   "winamax_direct": {
-    "secondes": 36.6,
+   "pmu_direct": {
+    "secondes": 32.9,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.3,
+    "secondes": 52.4,
     "ok": true
    },
    "smarkets": {
-    "secondes": 20.4,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 1.2,
+    "secondes": 1.0,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.5,
+    "secondes": 0.3,
     "ok": true
    },
    "cotes_cloture": {
@@ -94,26 +97,26 @@
    "ok": true,
    "requetes": 2,
    "erreurs": [],
-   "matchs": 147,
-   "lignes": 2687
+   "matchs": 144,
+   "lignes": 2604
   },
   "matchbook_fraicheur": {
-   "lignes": 2687,
-   "source_connue": 2684,
+   "lignes": 2604,
+   "source_connue": 2604,
    "source_inconnue": 0,
-   "source_invalide": 3,
-   "mouvement_min_s": 0,
-   "mouvement_max_s": 37164,
-   "reception": "2026-11-09T22:04:08+00:00"
+   "source_invalide": 0,
+   "mouvement_min_s": 1,
+   "mouvement_max_s": 37450,
+   "reception": "2026-11-09T22:08:54+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 850,
-   "age_min_s": 164,
+   "age_max_s": 771,
+   "age_min_s": 136,
    "lignes": 75653,
-   "lignes_perimees": 1698,
+   "lignes_perimees": 408,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -124,13 +127,13 @@
    },
    "choix_prix": {
     "head_200": 31,
-    "choisi_fixe": 7,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 5,
-    "sport_vide": 3,
+    "choisi_autre": 9,
+    "choisi_fixe": 3,
     "reprise_403": 3,
-    "matchups_sans_speciaux": 1
+    "matchups_sans_speciaux": 2,
+    "sport_vide": 4
    }
   },
   "reprise": {
@@ -165,8 +168,32 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 6,
    "comparaisons": [
+    {
+     "match": "Atlético Junior  Barranquilla – Cúcuta Deportivo",
+     "source": "Pinnacle",
+     "cote_olybet": 1.65,
+     "cote_reference": 1.752,
+     "ecart_relatif": 0.0582,
+     "aberrant": false
+    },
+    {
+     "match": "Sportivo Luqueno – Club 2 de Mayo",
+     "source": "Pinnacle",
+     "cote_olybet": 2.33,
+     "cote_reference": 2.53,
+     "ecart_relatif": 0.0791,
+     "aberrant": false
+    },
+    {
+     "match": "Sportivo Luqueno – Club 2 de Mayo",
+     "source": "PMU",
+     "cote_olybet": 2.33,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.0043,
+     "aberrant": false
+    },
     {
      "match": "Rome (F) – Servette FC Chenois (Wom)",
      "source": "PMU",
@@ -190,38 +217,6 @@
      "cote_reference": 11.5,
      "ecart_relatif": 0.1913,
      "aberrant": true
-    },
-    {
-     "match": "Real Madrid (F) – Paris FC (F)",
-     "source": "Pinnacle",
-     "cote_olybet": 1.38,
-     "cote_reference": 1.431,
-     "ecart_relatif": 0.0356,
-     "aberrant": false
-    },
-    {
-     "match": "Real Madrid (F) – Paris FC (F)",
-     "source": "PMU",
-     "cote_olybet": 1.38,
-     "cote_reference": 1.25,
-     "ecart_relatif": 0.104,
-     "aberrant": false
-    },
-    {
-     "match": "Sportivo Luqueno – Club 2 de Mayo",
-     "source": "Pinnacle",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.53,
-     "ecart_relatif": 0.0791,
-     "aberrant": false
-    },
-    {
-     "match": "Sportivo Luqueno – Club 2 de Mayo",
-     "source": "PMU",
-     "cote_olybet": 2.33,
-     "cote_reference": 2.32,
-     "ecart_relatif": 0.0043,
-     "aberrant": false
     }
    ],
    "aberrants": [
@@ -240,6 +235,22 @@
    "seuil_relatif": 0.15,
    "examines": 7,
    "comparaisons": [
+    {
+     "match": "Sportivo Luqueño – 2 de Mayo",
+     "source": "Pinnacle",
+     "cote_netbet": 2.32,
+     "cote_reference": 2.53,
+     "ecart_relatif": 0.083,
+     "aberrant": false
+    },
+    {
+     "match": "Sportivo Luqueño – 2 de Mayo",
+     "source": "PMU",
+     "cote_netbet": 2.32,
+     "cote_reference": 2.32,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
     {
      "match": "BK Häcken – Chelsea",
      "source": "Pinnacle",
@@ -279,52 +290,37 @@
      "cote_reference": 1.233,
      "ecart_relatif": 0.0674,
      "aberrant": false
-    },
-    {
-     "match": "Inter Milano – Manchester City",
-     "source": "Pinnacle",
-     "cote_netbet": 6.1,
-     "cote_reference": 5.57,
-     "ecart_relatif": 0.0952,
-     "aberrant": false
-    },
-    {
-     "match": "Paris SG – Bayern Munich",
-     "source": "PMU",
-     "cote_netbet": 3.8,
-     "cote_reference": 3.8,
-     "ecart_relatif": 0.0,
-     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-09T22:04:09+00:00",
-   "pinnacle_derniere_lecture": "2026-11-09T22:04:20+00:00",
+   "pinnacle_premiere_lecture": "2026-11-09T22:08:55+00:00",
+   "pinnacle_derniere_lecture": "2026-11-09T22:09:15+00:00",
    "books_premiere_lecture": "2026-11-09T21:40:52+00:00",
-   "books_derniere_lecture": "2026-11-09T22:04:08+00:00",
-   "ecart_enveloppe_secondes": 1408.0
+   "books_derniere_lecture": "2026-11-09T22:08:54+00:00",
+   "ecart_enveloppe_secondes": 1703.0
   },
   "historique_cotes": {
-   "lignes": 287
+   "lignes": 492
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.8
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 562,
    "a_verifier": 13,
    "non_conforme": 9,
-   "mesures": 7959,
+   "mesures": 5494,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 26620,
-   "mesures": 19736,
+   "ancres": 20622,
+   "mesures": 19438,
    "annotees": 3,
    "figees": 1
   },
@@ -342,27 +338,21 @@
    "dernier_reglement": "2026-11-09T21:32:33+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-09T22:05:25+00:00",
+  "fin": "2026-11-09T22:09:49+00:00",
   "cotes": {
-   "francaises": 26177,
+   "francaises": 19698,
    "pinnacle": 75653,
-   "polymarket": 8199,
+   "polymarket": 8210,
    "smarkets": 1620,
-   "matchbook": 2687,
+   "matchbook": 2604,
    "betfair": 0
   },
-  "matchs_francais": 349,
+  "matchs_francais": 270,
   "opportunites": 3,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-09T01:26:48+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-09T01:31:22+00:00",
    "mode": "complet",
@@ -1559,6 +1549,12 @@
   },
   {
    "debut": "2026-11-09T22:04:08+00:00",
+   "mode": "complet",
+   "opportunites": 3,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-09T22:08:54+00:00",
    "mode": "complet",
    "opportunites": 3,
    "nouveaux_paris": 0
