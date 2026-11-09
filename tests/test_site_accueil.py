@@ -50,3 +50,17 @@ const diagnosticSante=()=>({niveau:'panne',texte:'En panne : unibet · relevé i
 actualiserFraicheur();
 assert.equal(info.textContent,'1 source en panne · relevé il y a 3 min'); assert.ok(classes.has('panne'));
 ''')
+
+
+def test_blocs_lourds_publies_a_cote_de_la_page(tmp_path):
+    """Kelly et paris des segments : fichiers voisins lus à la demande, absents des données de la page."""
+    import json
+    from scripts.site_web import BLOCS_A_LA_DEMANDE, construire
+    html = construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
+    d = json.JSONDecoder().raw_decode(html[html.index("const D = ") + len("const D = "):])[0]
+    assert BLOCS_A_LA_DEMANDE == ("kelly", "paris_segments")
+    for nom in BLOCS_A_LA_DEMANDE:
+        assert nom not in d
+        assert isinstance(json.loads((tmp_path / "site" / f"{nom}.json").read_text(encoding="utf-8")), (dict, list))
+    assert "bilan" in json.loads((tmp_path / "site/kelly.json").read_text(encoding="utf-8"))
+    assert "__VERSION_SITE__" not in html and "function chargerBloc" in html

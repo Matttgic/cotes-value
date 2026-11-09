@@ -782,6 +782,9 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
         echecs.fusionner(etat, list(echecs_strategies.values()), datetime.now(timezone.utc))
+    # Page allégée : blocs lourds lus seulement à la demande (mise Kelly, détail d'un segment), publiés à côté de la
+    # page. Avant le 9/11/2026 : 8,4 Mo de page dont 1,5 Mo (Kelly) et 0,8 Mo (paris des segments) rarement ouverts.
+    a_la_demande = {nom: json_public(data.pop(nom)) for nom in BLOCS_A_LA_DEMANDE}
     donnees_json = json_public(data)
     flux_alertes = notifications_mod.flux(actuelles, paris, retenus)
     alertes_json = json_public(flux_alertes)
@@ -801,15 +804,17 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     html = html.replace("__PUSHOVER_JS__", (web / "pushover.js").read_text(encoding="utf-8"))
     html = html.replace("__VOYANT_JS__", (web / "voyant.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
-    # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
-    version = hashlib.sha256(html.replace("__DONNEES__", donnees_json, 1).encode("utf-8")).hexdigest()
+    # Empreinte du contenu complet (blocs à la demande compris) : une mise à jour du code déclenche aussi le
+    # renouvellement, et l'empreinte sert de paramètre de version aux fichiers lus à la demande.
+    version = hashlib.sha256((html.replace("__DONNEES__", donnees_json, 1)
+                              + "".join(a_la_demande[n] for n in BLOCS_A_LA_DEMANDE)).encode("utf-8")).hexdigest()
     html = html.replace("__VERSION_SITE__", version)
     # Les données externes ne passent jamais dans les remplacements du gabarit.
     html = html.replace("__DONNEES__", donnees_json, 1)
     # Vitrine publique, gardée à part (vitrine.html, liée nulle part) ; ses deux grands chiffres sont ceux du bilan Kelly ¼.
     vitrine = (web / "vitrine.html").read_text(encoding="utf-8")
     for ref in ("Uniques", "Toutes"):
-        gain = sum(b["gains"] for k, b in data["kelly"]["bilan"].items() if k.endswith("|" + ref))
+        gain = sum(b["gains"] for k, b in json.loads(a_la_demande["kelly"])["bilan"].items() if k.endswith("|" + ref))
         vitrine = vitrine.replace(f"__GAIN_{ref.upper()}_KELLY__", montant_vitrine(gain))
     (sortie / "index.html").write_text(html, encoding="utf-8")
     (sortie / "vitrine.html").write_text(vitrine, encoding="utf-8")
@@ -820,8 +825,14 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
     (sortie / "ordres.json").write_text(ordres_json, encoding="utf-8")
+    for nom, contenu in a_la_demande.items():
+        (sortie / f"{nom}.json").write_text(contenu, encoding="utf-8")
     (sortie / ".nojekyll").write_text("", encoding="utf-8")
     return sortie / "index.html"
+
+
+# Blocs de données sortis de la page et publiés en fichiers voisins (``<nom>.json``), lus par ``chargerBloc``.
+BLOCS_A_LA_DEMANDE = ("kelly", "paris_segments")
 
 
 def montant_vitrine(gain: float) -> str:
