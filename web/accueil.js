@@ -1,4 +1,5 @@
-// Accueil : chiffres du moment, paris en cours, Top 5 des stratégies, gain cumulé, derniers résultats.
+// Accueil, dans l'ordre : santé, paris à jouer maintenant, chiffres clés, Top 5 des stratégies, gain cumulé, derniers
+// résultats.
 // Lecture seule des données déjà chargées : aucune sélection, aucun règlement n'est modifié.
 function ligneAccueilPari(p) {
   const ref=(typeof REF_COURTE!=='undefined' && REF_COURTE[p.reference]!==undefined ? REF_COURTE[p.reference] : (p.reference || '')+' ');
@@ -25,6 +26,14 @@ function rendreAccueil() {
   const mise=miseMode==='kelly' ? 'Kelly ¼' : '10 € fixes';
   const reglees=fiches.filter(p=>p.unique_bilan && p.gain!=null),s=statsBU(reglees);
   const enCours=fiches.filter(p=>p.statut==='en_cours' && !p.a_regler);
+  // Santé d'abord : une source en panne se voit avant de parier (même diagnostic que l'onglet Paris).
+  const sante=document.getElementById('acc-sante');
+  if(sante && typeof diagnosticSante==='function') {
+    const {niveau,texte}=diagnosticSante();
+    sante.className='paris-sante sante-'+niveau;
+    sante.innerHTML=`<span class="sante-point" aria-hidden="true"></span><span class="sante-texte">${e(texte)}</span><span class="sante-suite">Détails ›</span>`;
+    sante.onclick=()=>{ouvrir('controle');window.scrollTo(0,0);};
+  }
   // L'autre mise reste visible : en 10 € fixes, les grosses cotes perdantes pèsent autant que les petites ;
   // en Kelly ¼, la mise suit l'écart et la cote. Les deux lectures se complètent.
   const autreKelly=miseMode!=='kelly', autre=bilanEnMise(reglees,autreKelly), nomAutre=autreKelly ? 'Kelly ¼' : '10 € fixes';
@@ -34,10 +43,12 @@ function rendreAccueil() {
     ['Réussite',pctEntier(s.reussite),'','Gagnés et demi-gagnés / réglés'],
     ['En cours',String(enCours.length),'','Paris pas encore réglés']
   ].map(([t,v,c,d])=>`<div class="acc-kpi"><p>${e(t)}</p><strong class="${c}">${e(v)}</strong><span>${e(d)}</span></div>`).join('');
-  // Values du moment : les cinq dernières prises encore en cours.
-  document.getElementById('acc-values-n').textContent=`${enCours.length} en cours`;
-  document.getElementById('acc-values').innerHTML=enCours.length ? enCours.slice(0,5).map(ligneAccueilPari).join('')
-    : '<p class="aide">Aucun pari en cours pour le moment.</p>';
+  // À jouer maintenant : paris uniques en cours dont le match n'a pas commencé (le plus proche d'abord), hors
+  // référence suspecte. Rien à jouer est un état normal.
+  const jouables=aJouer();
+  document.getElementById('acc-values-n').textContent=`${jouables.length} jouable${jouables.length>1?'s':''} · ${enCours.length} en cours`;
+  document.getElementById('acc-values').innerHTML=jouables.length ? jouables.slice(0,5).map(ligneAccueilPari).join('')
+    : '<p class="aide">Rien à jouer pour le moment : aucun pari en cours sur un match à venir.</p>';
   // Top 5 valeur : rang moyen au ROI et à la CLV depuis le lancement (attribuerValeur) ; les pastilles désignent
   // les meilleurs critères (50 paris réglés minimum).
   const rows=lignesStrategies('futur');attribuerMedailles(rows);attribuerValeur(rows);

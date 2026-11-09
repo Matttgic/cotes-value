@@ -94,7 +94,13 @@ function actualiserFraicheur() {
   const info=document.getElementById('fraicheur');
   if(!info) return;
   info.textContent=age==null ? 'En attente d’un relevé' : age<1 ? 'Relevé à l’instant' : `Relevé il y a ${age} min`;
-  info.classList.toggle('ancien',age!=null && age>15);
+  // Couleur de santé sur toutes les pages : une source en panne se voit partout, pas seulement dans Paris.
+  const diag=typeof diagnosticSante==='function' ? diagnosticSante() : null;
+  const n=diag?.pannes?.length || 0;
+  if(diag && diag.niveau==='panne' && n && age!=null && age<=60) info.textContent=`${n} source${n>1?'s':''} en panne · ${info.textContent.replace(/^Relevé/,'relevé')}`;
+  info.title=diag ? diag.texte : info.title;
+  info.classList.toggle('ancien',diag ? diag.niveau==='alerte' : age!=null && age>15);
+  info.classList.toggle('panne',diag ? diag.niveau==='panne' : false);
 }
 function choisirVueStrategies(vue) {
   const graphiques=vue==='graphiques';

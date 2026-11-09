@@ -28,11 +28,12 @@
   <noscript><p class="vide">Active JavaScript dans Chrome pour afficher les paris et les stratégies.</p></noscript>
   <section class="onglet" id="o-accueil">
     <div class="page-tete"><div><h2 id="acc-titre">Accueil</h2></div></div>
+    <button type="button" class="paris-sante" id="acc-sante"></button>
+    <section class="acc-values"><h3 class="bu-titre">À jouer maintenant <small id="acc-values-n"></small></h3>
+      <div id="acc-values"></div>
+      <p><button type="button" class="acc-lien" data-aller="paris">Voir tous les paris, filtres avancés et export CSV →</button></p></section>
     <div class="acc-kpis" id="acc-kpis"></div>
     <div class="acc-grille">
-      <section class="acc-values"><h3 class="bu-titre">Values du moment <small id="acc-values-n"></small></h3>
-        <div id="acc-values"></div>
-        <p><button type="button" class="acc-lien" data-aller="paris">Voir tous les paris, filtres avancés et export CSV →</button></p></section>
       <section class="acc-top5"><h3 class="bu-titre">Top 5 valeur <small id="acc-top5-mise"></small></h3>
         <div id="acc-top5"></div>
         <p class="aide acc-legende">Classement par <b>valeur</b> : rang moyen au ROI et à la CLV depuis le lancement (30 paris réglés
@@ -718,7 +719,10 @@ if(D.laboratoire?.navigation?.paris) {
     if(p) D.laboratoire.navigation.paris[id]={...p,...meta};
   }
 }
-document.getElementById("nb-paris").textContent = fiches.length || "";
+// Paris encore jouables : un par cote française (premier repéré), en cours, match pas commencé, référence non suspecte.
+const aJouer = (maintenant = Date.now()) => fiches.filter(p => p.unique_bilan && p.statut === "en_cours" && !p.a_regler
+  && !p.reference_suspecte && Date.parse(p.debut) > maintenant).sort((a, b) => Date.parse(a.debut) - Date.parse(b.debut));
+document.getElementById("nb-paris").textContent = aJouer().length || "";        // masqué à 0
 var CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
 var D_FIXE = Object.fromEntries(CLES_MISE.map(k => [k, D[k]]));   // « var » : lu par un rendu antérieur sans erreur
 // --- Mise fixe (10 €) ou Kelly ¼ : les blocs chiffrés du serveur (bilans, courbes, segments, laboratoire) existent
@@ -968,7 +972,7 @@ function diagnosticSante(maintenant=Date.now()) {
     : age > 60 ? ["panne",`Relevés arrêtés · dernier ${depuis}`]
     : age > 15 ? ["alerte",`Relevés en retard · dernier ${depuis}`]
     : ["ok",`Tout fonctionne · relevé ${depuis}`];
-  return {dc, niveau, texte, mineures, age, depuis};
+  return {dc, niveau, texte, mineures, age, depuis, pannes};
 }
 function rendreSanteParis(maintenant=Date.now()) {
   const {niveau, texte, mineures} = diagnosticSante(maintenant);
