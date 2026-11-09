@@ -63,7 +63,8 @@ def test_reglement_aligne_sur_la_collecte():
     collecte = etapes("collecte.yml", "cycle")[index_nom(etapes("collecte.yml", "cycle"), "Enregistrer les données")]
     for ligne in ("printf '/%s.json.gz\\n' \"$f\" >> .git/info/exclude",
                   "git rm -q --cached --ignore-unmatch horizon_direct.json pinnacle_secours_cache.json smarkets_cache.json",
-                  "git push -q origin donnees && exit 0", "git pull -q --rebase origin donnees", "for i in 1 2 3; do"):
+                  "git push -q origin donnees && exit 0", "for i in 1 2 3 4 5; do", "sleep $((i * 15))",
+                  "git pull -q --rebase origin donnees || git rebase --abort 2>/dev/null || true"):
         assert ligne in push["run"] and ligne in collecte["run"]
     assert push["run"].index("git rm -q --cached") < push["run"].index("git add -A")
 

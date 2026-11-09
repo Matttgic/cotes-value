@@ -1191,11 +1191,16 @@ const SOURCES_COTES = [["pinnacle","Pinnacle"],["polymarket","Polymarket"],["net
   ["matchbook","Matchbook"]];
 const SOURCES_RESULTATS = [["espn","ESPN"],["flashscore","Flashscore"],["livescore","LiveScore"],["nhl","NHL officiel"],
   ["thesportsdb","TheSportsDB"],["theodds","The Odds API"],["propline","Propline"]];
-const MOTS_SANTE = {ok:"✓ OK", alerte:"! Alerte", panne:"✗ En panne"};
+const MOTS_SANTE = {ok:"✓ OK", alerte:"! Alerte", panne:"✗ En panne", pause:"⏸ En pause"};
 const ligneSante = (nom, detail, niveau) => `<div class="sante-ligne"><div><b>${e(nom)}</b><small>${e(detail)}</small></div>`+
   `<span class="sante-mot sante-mot-${niveau}">${MOTS_SANTE[niveau]}</span></div>`;
 function detailEtape(v) {
   if (!v) return "Pas de lecture au dernier relevé";
+  if (v.pause) {      // refus 403/429 : état connu, aucune requête jusqu'à la fin de la pause (cotes/pauses_sources.py)
+    const fin = new Date(v.pause_jusqu_a || "");
+    const h = Number.isFinite(fin.getTime()) ? fin.toLocaleTimeString("fr-FR",{timeZone:"Europe/Paris",hour:"2-digit",minute:"2-digit"}) : "?";
+    return `En pause jusqu’à ${h} après un refus${v.pause_motif ? " ("+v.pause_motif+")" : ""} · aucune requête`;
+  }
   if (!v.ok) return "Arrêtée au dernier passage";
   const err = Array.isArray(v.erreurs) ? v.erreurs : [];
   if (v.degrade && err.length) {
@@ -1207,7 +1212,7 @@ function detailEtape(v) {
   }
   return v.degrade ? "Lecture partielle" : v.cache ? "Données gardées en mémoire" : "Lu normalement";
 }
-const niveauEtape = v => !v || !v.ok ? "panne" : v.degrade ? "alerte" : "ok";
+const niveauEtape = v => v && v.pause ? "pause" : !v || !v.ok ? "panne" : v.degrade ? "alerte" : "ok";
 // Âge des cotes Pinnacle lues en direct : au-delà du seuil, elles ne servent pas de référence.
 function ligneFraicheurPinnacle(fr) {
   if (!fr || !fr.lignes || !Number.isFinite(fr.age_max_s)) return "";

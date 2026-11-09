@@ -204,10 +204,14 @@ jobs:
           # --sparse : clone partiel (scripts/cloner_donnees.sh) ; les jours non extraits restent intacts
           git add -A --sparse
           git diff --cached --quiet || git commit -qm "Cycle $(date -u +%FT%TZ)"
-          # un résultat saisi à la main pendant le cycle (autre fichier) : on le reprend avant de pousser
-          for i in 1 2 3; do
+          # un résultat saisi à la main pendant le cycle (autre fichier) : on le reprend avant de pousser.
+          # 5 essais espacés de 15, 30, 45 puis 60 s : les 3 essais en 1-2 s échouaient tous sur une erreur serveur
+          # passagère de GitHub (5 cycles perdus en 7 jours). Un rebase en conflit est annulé avant l'essai suivant.
+          for i in 1 2 3 4 5; do
             git push -q origin donnees && exit 0
-            git pull -q --rebase origin donnees
+            [ "$i" -eq 5 ] && break
+            sleep $((i * 15))
+            git pull -q --rebase origin donnees || git rebase --abort 2>/dev/null || true
           done
           exit 1
 
@@ -273,11 +277,28 @@ jobs:
             echo "publier=false" >> "$GITHUB_OUTPUT"
             echo "Publication ignorée : un code plus récent est disponible. Les données collectées sont conservées."
           fi
+      # Santé = job « cycle » : un échec de Pages (HTTP 500 passager, 7 fois du 3 au 9/11/2026) ne marque pas le
+      # passage en échec. Un second essai 30 s plus tard ; s'il échoue aussi, avertissement visible, données intactes.
       - name: Publier le site (GitHub Pages)
+        id: deploiement
         if: steps.fraicheur.outputs.publier == 'true'
+        continue-on-error: true
         uses: actions/deploy-pages@v5
         with:
           artifact_name: ${{ needs.cycle.outputs.artefact }}
+      - name: Attendre avant un second essai
+        if: steps.fraicheur.outputs.publier == 'true' && steps.deploiement.outcome == 'failure'
+        run: sleep 30
+      - name: Publier le site (second essai)
+        id: deploiement2
+        if: steps.fraicheur.outputs.publier == 'true' && steps.deploiement.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+        with:
+          artifact_name: ${{ needs.cycle.outputs.artefact }}
+      - name: Signaler une publication ratée (sans échec du passage)
+        if: steps.deploiement2.outcome == 'failure'
+        run: echo "::warning::Publication GitHub Pages ratée deux fois ; le cycle et ses données sont enregistrés."
 
   relancer:
     needs: cycle

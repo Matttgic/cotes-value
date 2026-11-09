@@ -90,7 +90,7 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    Polices OFL en WOFF2 dans `web/polices/`. La vitrine
    publique (`web/vitrine.html`, deux chiffres Kelly ¼ recalculés à chaque publication) est publiée à part, en
    `vitrine.html`, sans lien depuis l'interface ni bouton de connexion : l'interface reste la page d'accueil.
-   La page Santé garde un journal des incidents des dernières 24 heures (`sante_incidents.json`, écrit à chaque cycle par `cotes/surveillance.py`) : pannes, lectures dégradées et refus 403/429 qui durent au moins 3 cycles, avec début, durée et nombre de cycles. Le dépassement de budget n'en fait pas partie.
+   La page Santé garde un journal des incidents des dernières 24 heures (`sante_incidents.json`, écrit à chaque cycle par `cotes/surveillance.py`) : pannes, lectures dégradées et refus 403/429 qui durent au moins 3 cycles, avec début, durée et nombre de cycles. Le dépassement de budget n'en fait pas partie. Depuis le 9/11/2026, une source française ou Matchbook dont la lecture est refusée (HTTP 403/429) est mise en pause 30 min, doublée à chaque récidive jusqu'à 6 h (`cotes/pauses_sources.py`, mémoire de travail) : aucune requête pendant la pause, affichée « En pause » sur la page Santé, pas comme une panne. Le push de `donnees` fait 5 essais espacés (15 à 60 s) ; un échec de GitHub Pages ne fait plus échouer le passage (second essai, puis avertissement).
 
 ### Deux stratégies suivies séparément
 

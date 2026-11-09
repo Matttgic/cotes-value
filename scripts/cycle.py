@@ -43,6 +43,7 @@ from cotes import liens  # noqa: E402
 from cotes import reprise  # noqa: E402
 from cotes import historique_cotes, memoire  # noqa: E402
 from cotes import echecs  # noqa: E402
+from cotes import pauses_sources  # noqa: E402
 from cotes.ecriture import ajouter_gzip  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
@@ -214,7 +215,7 @@ def appliquer_smarkets(donnees: Path, sports: set, heures: float, radar: list,
     return lignes, info
 
 
-def appliquer_matchbook(sports: set, heures: float, maintenant: datetime, journal: dict):
+def appliquer_matchbook(sports: set, heures: float, maintenant: datetime, journal: dict, pauses: dict | None = None):
     """Lit Matchbook si ``SOURCE_MATCHBOOK`` n'est pas ``off``.
 
     ``shadow`` enregistre l'état et ne renvoie aucune ligne : pas de pari.
@@ -222,7 +223,7 @@ def appliquer_matchbook(sports: set, heures: float, maintenant: datetime, journa
     ou une exception coupent ce lecteur seulement. Le résumé va dans le journal,
     donc dans ``etat.json`` ; aucun corps de réponse n'y est copié.
     """
-    return _appliquer_bourse(matchbook_direct, "matchbook", sports, heures, maintenant, journal)
+    return _appliquer_bourse(matchbook_direct, "matchbook", sports, heures, maintenant, journal, pauses)
 
 
 def appliquer_betfair(sports: set, heures: float, maintenant: datetime, journal: dict):
@@ -231,12 +232,18 @@ def appliquer_betfair(sports: set, heures: float, maintenant: datetime, journal:
     return _appliquer_bourse(betfair_direct, "betfair", sports, heures, maintenant, journal)
 
 
-def _appliquer_bourse(module, cle: str, sports: set, heures: float, maintenant: datetime, journal: dict):
+def _appliquer_bourse(module, cle: str, sports: set, heures: float, maintenant: datetime, journal: dict,
+                      pauses: dict | None = None):
     actif = module.mode()
     if actif == "off":
         journal["etapes"][cle] = {"secondes": 0.0, "ok": True, "desactive": True}
         journal[cle] = {"mode": "off", "ok": True, "requetes": 0, "erreurs": [],
                         "matchs": 0, "lignes": 0, "desactive": True}
+        return []
+    if pauses_sources.en_pause(pauses, cle, maintenant):          # refus 403/429 récent : aucune requête
+        journal["etapes"][cle] = pauses_sources.etape_en_pause(pauses, cle)
+        journal[cle] = {"mode": actif, "ok": True, "requetes": 0, "erreurs": [], "matchs": 0, "lignes": 0,
+                        "pause": True}
         return []
     recu = source_bornee(module, cle, journal, BUDGETS[cle], module.collecter, sports, heures, maintenant=maintenant)
     if not isinstance(recu, tuple) or len(recu) != 2:
@@ -372,7 +379,7 @@ def memoriser_sports(reprise_chemin: Path | None, sports: set[str], maintenant: 
 
 
 def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: Path | None = None,
-                       reprise_chemin: Path | None = None):
+                       reprise_chemin: Path | None = None, pauses: dict | None = None):
     """Pinnacle, Polymarket et les bookmakers français en parallèle.
 
     Chaque bookmaker est lu directement sur son site (PulseScore n'existe plus) ; la panne
@@ -434,7 +441,14 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
                             polymarket.collecter, HORIZON_H)
         futurs = {}
 
+        en_pause: set = set()
+
         def lancer(nom, module, budget, fonction, *args, **kwargs):
+            if pauses_sources.en_pause(pauses, nom, maintenant):      # refus 403/429 récent : aucune requête
+                with _journal_lock:
+                    journal["etapes"][nom] = pauses_sources.etape_en_pause(pauses, nom)
+                en_pause.add(nom)
+                return
             futurs[nom] = pool.submit(source_bornee, module, nom, journal, budget,
                                       fonction, *args, **kwargs)
 
@@ -523,6 +537,9 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
 
         def recevoir(nom):
             if nom in recus:
+                return recus[nom]
+            if nom in en_pause:                # pas lue ce cycle : ni cote, ni erreur (l'étape reste « pause »)
+                recus[nom] = ([], {"ok": True, "erreurs": [], "requetes": 0})
                 return recus[nom]
             if nom not in futurs:
                 recus[nom] = ([], {"ok": False, "erreurs": [], "requetes": 0})
@@ -887,15 +904,16 @@ def main() -> int:
     # Matchbook ne dépend d'aucune autre source (sports fixes) : lu dès le départ, en parallèle de la collecte,
     # au lieu d'attendre Pinnacle, les bookmakers français puis Smarkets. Son résultat n'est lu qu'au même endroit.
     sports_mb = {"football"} if args.mode == "test" else {"football", "tennis"}
+    pauses = pauses_sources.charger(donnees)      # sources en pause après un refus 403/429 (mémoire de travail)
     pool_mb = ThreadPoolExecutor(max_workers=2, thread_name_prefix="bourses")
     futur_mb = pool_mb.submit(appliquer_matchbook, sports_mb, 12 if args.mode == "test" else HORIZON_H,
-                              maintenant, journal)
+                              maintenant, journal, pauses)
     # Betfair, même logique (sports fixes, aucune dépendance) ; éteint hors serveur
     futur_bf = pool_mb.submit(appliquer_betfair, sports_mb, 12 if args.mode == "test" else HORIZON_H,
                               maintenant, journal)
     pool_mb.shutdown(wait=False)
     pin, poly, francais = collecter_prematch(args.mode, maintenant, journal, donnees,
-                                             Path(args.reprise) if args.reprise else None)
+                                             Path(args.reprise) if args.reprise else None, pauses=pauses)
     references = {"Pinnacle": pin, "Polymarket": poly}
     # Smarkets reste hors de `francais` : bookmaker « smarkets » n'est pas un book français.
     sports_sm = {"football"} if args.mode == "test" else {l["sport"] for l in francais if l.get("sport")}
@@ -923,6 +941,9 @@ def main() -> int:
         journal["betfair"] = {"mode": betfair_direct.mode(), "ok": False, "requetes": 0,
                               "erreurs": [type(e).__name__], "matchs": 0, "lignes": 0}
         bf_lignes = []
+    # Après les lectures (Matchbook compris) : nouvelles pauses sur refus 403/429, récidives effacées si la lecture passe
+    journal["pauses_sources"] = pauses_sources.mettre_a_jour(pauses, journal["etapes"], maintenant)
+    pauses_sources.sauver(donnees, pauses)
     if bf_lignes:
         # Référence sharp attendue par les stratégies (Pinnacle, Betfair, Polymarket) et le Consensus, comme
         # avant la fin du flux Orbit. Hors du contrôle de conformité des intitulés, comme les autres bourses.

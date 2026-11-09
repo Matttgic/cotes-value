@@ -87,10 +87,14 @@ jobs:
           # --sparse : clone partiel (scripts/cloner_donnees.sh) ; les jours non extraits restent intacts
           git add -A --sparse
           git diff --cached --quiet || git commit -qm "Reglement $(date -u +%FT%TZ)"
-          # un cycle de collecte ou un résultat saisi à la main entre-temps : on le reprend avant de pousser
-          for i in 1 2 3; do
+          # un cycle de collecte ou un résultat saisi à la main entre-temps : on le reprend avant de pousser.
+          # 5 essais espacés de 15, 30, 45 puis 60 s : les 3 essais en 1-2 s échouaient tous sur une erreur serveur
+          # passagère de GitHub (5 cycles perdus en 7 jours). Un rebase en conflit est annulé avant l'essai suivant.
+          for i in 1 2 3 4 5; do
             git push -q origin donnees && exit 0
-            git pull -q --rebase origin donnees
+            [ "$i" -eq 5 ] && break
+            sleep $((i * 15))
+            git pull -q --rebase origin donnees || git rebase --abort 2>/dev/null || true
           done
           exit 1
 
