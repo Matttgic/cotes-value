@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-09T00:54:13+00:00",
+  "debut": "2026-11-09T00:58:52+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,32 +9,42 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 1.2,
+    "secondes": 1.6,
     "ok": true
    },
    "olybet": {
-    "secondes": 2.9,
+    "secondes": 3.6,
     "ok": true
    },
+   "winamax_direct": {
+    "secondes": 4.0,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau (CurlError 22)",
+     "connexion impossible (CurlError 22)",
+     "lecture vide"
+    ]
+   },
    "polymarket": {
-    "secondes": 4.8,
+    "secondes": 4.7,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 9.2,
+    "secondes": 10.7,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 19.0,
+    "secondes": 22.6,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 9 matchups : HTTP 403",
-     "sport 45 matchups : HTTP 403"
+     "sport 28 matchups : HTTP 403",
+     "sport 9 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.7,
+    "secondes": 1.8,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -42,15 +52,11 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 26.8,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 37.5,
+    "secondes": 27.4,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.2,
+    "secondes": 52.4,
     "ok": true
    },
    "smarkets": {
@@ -59,11 +65,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 0.8,
+    "secondes": 0.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.4,
+    "secondes": 0.3,
     "ok": true
    },
    "cotes_cloture": {
@@ -90,26 +96,37 @@
    "ok": true,
    "requetes": 2,
    "erreurs": [],
-   "matchs": 87,
-   "lignes": 1760
+   "matchs": 86,
+   "lignes": 1786
   },
   "matchbook_fraicheur": {
-   "lignes": 1760,
-   "source_connue": 1760,
+   "lignes": 1786,
+   "source_connue": 1786,
    "source_inconnue": 0,
    "source_invalide": 0,
    "mouvement_min_s": 0,
-   "mouvement_max_s": 41365,
-   "reception": "2026-11-09T00:54:13+00:00"
+   "mouvement_max_s": 41644,
+   "reception": "2026-11-09T00:58:52+00:00"
+  },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 11774,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 11774,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 819,
-   "age_min_s": 85,
-   "lignes": 47778,
-   "lignes_perimees": 1090,
+   "age_max_s": 802,
+   "age_min_s": 41,
+   "lignes": 48011,
+   "lignes_perimees": 2001,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": 7.7,
@@ -122,14 +139,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 36,
+    "head_200": 34,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 10,
-    "choisi_autre": 4,
-    "sport_vide": 4,
+    "choisi_fixe": 6,
+    "choisi_autre": 8,
     "reprise_403": 2,
-    "matchups_sans_speciaux": 1
+    "matchups_sans_speciaux": 2,
+    "sport_vide": 5
    }
   },
   "reprise": {
@@ -165,30 +182,22 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Atlético Junior  Barranquilla – Cúcuta Deportivo",
+     "match": "León – Chivas de Guadalajara",
      "source": "Pinnacle",
-     "cote_olybet": 1.51,
-     "cote_reference": 1.578,
-     "ecart_relatif": 0.0431,
+     "cote_olybet": 3.47,
+     "cote_reference": 3.81,
+     "ecart_relatif": 0.0892,
      "aberrant": false
     },
     {
-     "match": "Alianza Valledupar – Llaneros Villavicencio",
-     "source": "Pinnacle",
-     "cote_olybet": 2.07,
-     "cote_reference": 2.33,
-     "ecart_relatif": 0.1116,
-     "aberrant": false
-    },
-    {
-     "match": "Alianza Valledupar – Llaneros Villavicencio",
+     "match": "León – Chivas de Guadalajara",
      "source": "PMU",
-     "cote_olybet": 2.07,
-     "cote_reference": 2.04,
-     "ecart_relatif": 0.0147,
+     "cote_olybet": 3.47,
+     "cote_reference": 3.35,
+     "ecart_relatif": 0.0358,
      "aberrant": false
     },
     {
@@ -208,141 +217,126 @@
      "aberrant": false
     },
     {
-     "match": "León – Chivas de Guadalajara",
+     "match": "Sportivo San Lorenzo – Club Rubio Nu",
      "source": "Pinnacle",
-     "cote_olybet": 3.47,
-     "cote_reference": 3.81,
-     "ecart_relatif": 0.0892,
+     "cote_olybet": 4.1,
+     "cote_reference": 4.44,
+     "ecart_relatif": 0.0766,
      "aberrant": false
     },
     {
-     "match": "León – Chivas de Guadalajara",
+     "match": "Sportivo San Lorenzo – Club Rubio Nu",
      "source": "PMU",
-     "cote_olybet": 3.47,
-     "cote_reference": 3.35,
-     "ecart_relatif": 0.0358,
-     "aberrant": false
+     "cote_olybet": 4.1,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.1714,
+     "aberrant": true
     },
     {
-     "match": "SCU Torreense – Uniao Leiria",
+     "match": "Sportivo Luqueno – Club 2 de Mayo",
      "source": "Pinnacle",
-     "cote_olybet": 2.04,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0467,
+     "cote_olybet": 2.33,
+     "cote_reference": 2.47,
+     "ecart_relatif": 0.0567,
      "aberrant": false
     },
     {
-     "match": "SCU Torreense – Uniao Leiria",
+     "match": "Sportivo Luqueno – Club 2 de Mayo",
      "source": "PMU",
-     "cote_olybet": 2.04,
-     "cote_reference": 1.95,
-     "ecart_relatif": 0.0462,
+     "cote_olybet": 2.33,
+     "cote_reference": 2.2,
+     "ecart_relatif": 0.0591,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Sportivo San Lorenzo – Club Rubio Nu",
+     "source": "PMU",
+     "cote_olybet": 4.1,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.1714,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Sportivo Luqueño – 2 de Mayo",
-     "source": "Pinnacle",
-     "cote_netbet": 2.27,
-     "cote_reference": 2.47,
-     "ecart_relatif": 0.081,
-     "aberrant": false
-    },
-    {
-     "match": "Sportivo Luqueño – 2 de Mayo",
+     "match": "Sabadell – Real Sociedad B",
      "source": "PMU",
-     "cote_netbet": 2.27,
-     "cote_reference": 2.2,
-     "ecart_relatif": 0.0318,
+     "cote_netbet": 1.58,
+     "cote_reference": 1.55,
+     "ecart_relatif": 0.0194,
      "aberrant": false
     },
     {
-     "match": "León – Chivas Guadalajara",
+     "match": "Alianza FC Valledupar – Llaneros FC",
      "source": "Pinnacle",
-     "cote_netbet": 3.5,
-     "cote_reference": 3.81,
-     "ecart_relatif": 0.0814,
+     "cote_netbet": 2.07,
+     "cote_reference": 2.33,
+     "ecart_relatif": 0.1116,
      "aberrant": false
     },
     {
-     "match": "León – Chivas Guadalajara",
+     "match": "Alianza FC Valledupar – Llaneros FC",
      "source": "PMU",
-     "cote_netbet": 3.5,
-     "cote_reference": 3.35,
-     "ecart_relatif": 0.0448,
+     "cote_netbet": 2.07,
+     "cote_reference": 2.04,
+     "ecart_relatif": 0.0147,
      "aberrant": false
     },
     {
-     "match": "Kristiansund – Vålerenga",
+     "match": "Mushuc Runa – Delfín SC",
      "source": "Pinnacle",
-     "cote_netbet": 2.42,
-     "cote_reference": 2.72,
-     "ecart_relatif": 0.1103,
+     "cote_netbet": 1.6,
+     "cote_reference": 1.704,
+     "ecart_relatif": 0.0611,
      "aberrant": false
     },
     {
-     "match": "Kristiansund – Vålerenga",
+     "match": "Mushuc Runa – Delfín SC",
      "source": "PMU",
-     "cote_netbet": 2.42,
-     "cote_reference": 2.43,
-     "ecart_relatif": 0.0041,
-     "aberrant": false
-    },
-    {
-     "match": "Torreense – União de Leiria",
-     "source": "Pinnacle",
-     "cote_netbet": 1.99,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0701,
-     "aberrant": false
-    },
-    {
-     "match": "Torreense – União de Leiria",
-     "source": "PMU",
-     "cote_netbet": 1.99,
-     "cote_reference": 1.95,
-     "ecart_relatif": 0.0205,
+     "cote_netbet": 1.6,
+     "cote_reference": 1.65,
+     "ecart_relatif": 0.0303,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-09T00:54:22+00:00",
-   "pinnacle_derniere_lecture": "2026-11-09T00:54:27+00:00",
+   "pinnacle_premiere_lecture": "2026-11-09T00:43:32+00:00",
+   "pinnacle_derniere_lecture": "2026-11-09T00:59:12+00:00",
    "books_premiere_lecture": "2026-11-08T17:27:53+00:00",
-   "books_derniere_lecture": "2026-11-09T00:54:13+00:00",
-   "ecart_enveloppe_secondes": 26794.0
+   "books_derniere_lecture": "2026-11-09T00:58:52+00:00",
+   "ecart_enveloppe_secondes": 27079.0
   },
   "historique_cotes": {
-   "lignes": 634
+   "lignes": 325
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 566,
    "a_verifier": 13,
    "non_conforme": 8,
-   "mesures": 5835,
+   "mesures": 4166,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 17923,
-   "mesures": 12021,
-   "annotees": 4,
-   "figees": 4
+   "ancres": 17051,
+   "mesures": 11214,
+   "annotees": 2,
+   "figees": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -358,27 +352,21 @@
    "dernier_reglement": "2026-11-09T00:11:52+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-09T00:55:09+00:00",
+  "fin": "2026-11-09T00:59:47+00:00",
   "cotes": {
-   "francaises": 20561,
-   "pinnacle": 47778,
-   "polymarket": 6988,
+   "francaises": 16385,
+   "pinnacle": 59785,
+   "polymarket": 6991,
    "smarkets": 2316,
-   "matchbook": 1760,
+   "matchbook": 1786,
    "betfair": 0
   },
-  "matchs_francais": 376,
-  "opportunites": 0,
-  "opportunites_suspectes": 4,
+  "matchs_francais": 320,
+  "opportunites": 1,
+  "opportunites_suspectes": 3,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-08T09:34:57+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-08T09:39:40+00:00",
    "mode": "complet",
@@ -1577,6 +1565,12 @@
    "debut": "2026-11-09T00:54:13+00:00",
    "mode": "complet",
    "opportunites": 0,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-09T00:58:52+00:00",
+   "mode": "complet",
+   "opportunites": 1,
    "nouveaux_paris": 0
   }
  ],
