@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 
 from cotes.correspondance import ressemblance
 from cotes.direct.horizon import fusionner
+from cotes.joueurs import depuis_titre_et_issues, est_titre_joueur
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
 
@@ -420,6 +421,18 @@ def marche_depuis(offre: dict, home: str, away: str) -> dict | None:
     if not paris or not isinstance(paris[0], dict):
         return None
     libelle = str(paris[0].get("label") or "")
+    if est_titre_joueur(libelle):
+        issues = []
+        for sel in paris[0].get("selections") or []:
+            if not isinstance(sel, dict):
+                continue
+            cote = _cote(sel.get("odds") if sel.get("odds") is not None else sel.get("odd"))
+            if cote is None:
+                continue
+            issues.append((str(sel.get("label") or ""), cote))
+        joueur = depuis_titre_et_issues(str(offre.get("order") or "joueur"), libelle, issues)
+        if joueur:
+            return joueur
     if not libelle or _EXCLU.search(libelle):
         return None
     style = str(offre.get("selection_order_type") or "")

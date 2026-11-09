@@ -41,6 +41,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 from .connexion import Client
+from .joueurs import stat_canonique
 from .marge import marge, proba_justes
 
 BASE = "https://guest.api.arcadia.pinnacle.com/0.1"
@@ -254,10 +255,15 @@ def _choisir_chemin_prix(sid: int) -> str:
     Mesuré du 18/10/2026 : une orthographe absente du cache part chez Pinnacle, qui refuse GitHub
     (403). Ce refus vise l'orthographe, pas nous : on l'écarte pour le reste du cycle. On ne coupe
     tout qu'au vrai signal de blocage : 401, 429, ou 403 sur l'URL fixe.
+
+    Les orthographes sans ``withSpecials=true`` (``?primaryOnly=false``, URL nue) n'ont pas les
+    paris joueurs. Le 20/10/2026 leur contenu semblait identique sur les marchés principaux ; les
+    props NBA/NHL n'y sont pas. On ne choisit donc qu'une orthographe qui demande les spéciaux,
+    sinon les lignes ``JOUEUR:`` ne sont jamais construites et disparaissent des dumps.
     """
     global _choix_coupe
     fixe = _chemin_marches(sid)
-    candidates = [q for q in ORTHO_PRIX if q not in _ortho_refusees]
+    candidates = [q for q in ORTHO_PRIX if "withSpecials=true" in q and q not in _ortho_refusees]
     if _choix_coupe or _bloque or not choix_actif() or len(candidates) <= 1:
         return fixe
     meilleur, age_min = fixe, None
@@ -728,17 +734,24 @@ def _lignes_special(mu, mk, prix, par_id, base) -> list[dict]:
     out = []
     if cat == "Player Props":
         m = re.match(r"^(.*?) Total (.*)$", desc)
-        joueur = m.group(1) if m else desc
-        stat = mu.get("units") or (m.group(2) if m else "?")
+        joueur = (m.group(1) if m else desc).strip()
+        joueur = re.sub(r"\s*\([^)]*\)\s*$", "", joueur).strip() or joueur
+        brut_stat = mu.get("units") or (m.group(2) if m else "")
+        stat = stat_canonique(f"{brut_stat} {desc}") or re.sub(r"\s+", "", str(brut_stat or "Autre"))
         for p in prix:
-            issue = {"Over": "PLUS", "Under": "MOINS"}.get(noms.get(p.get("participantId")))
+            nom = str(noms.get(p.get("participantId")) or "")
+            issue = {"over": "PLUS", "under": "MOINS"}.get(nom.strip().lower())
             if issue is None:
+                return []
+            ligne = _nombre(p.get("points"))
+            if not joueur or ligne is None:
                 return []
             out.append({**base, "ligue": (parent.get("league") or {}).get("name"), "match_id": parent["id"],
                         "domicile": dom, "exterieur": ext, "debut": parent.get("startTime"),
-                        "marche": f"JOUEUR:{stat}", "periode": "MATCH", "ligne": p.get("points"),
+                        "marche": f"JOUEUR:{stat}", "periode": "MATCH", "ligne": ligne,
                         "issue": issue, "joueur": joueur, "cote": americaine_vers_decimale(p["price"]),
-                        "cle_marche": f"{mu['id']}|{mk.get('key')}"})
+                        # La ligne dans la clé : deux alternates du même spécial ne partagent pas une marge.
+                        "cle_marche": f"{mu['id']}|{mk.get('key')}|{ligne}"})
         return out
     if cat not in ("Team Props", "Game Props", "Exact Scores", "Double Result"):
         return []

@@ -59,14 +59,14 @@ def fusionner_marches(anciennes, nouvelles, maintenant: datetime, heures: float 
     (match, marché, période) a été relu. Les marchés lus par rotation restent entre deux lectures, au plus
     ``age_max_min`` minutes : au-delà, la comparaison ne les rapproche plus d'une référence fraîche."""
     horizon = maintenant + timedelta(hours=heures)
-    relus = {(l.get("match_id"), l.get("marche"), l.get("periode"))
+    relus = {(l.get("match_id"), l.get("marche"), l.get("periode"), l.get("joueur"))
              for l in nouvelles or [] if isinstance(l, dict) and l.get("match_id")}
     limite = timedelta(minutes=age_max_min)
     gardes = []
     for ligne in anciennes or []:
         if not isinstance(ligne, dict) or not ligne.get("match_id"):
             continue
-        if (ligne.get("match_id"), ligne.get("marche"), ligne.get("periode")) in relus:
+        if (ligne.get("match_id"), ligne.get("marche"), ligne.get("periode"), ligne.get("joueur")) in relus:
             continue
         debut = _heure(ligne.get("debut"))
         lu = _heure(ligne.get("collecte"))

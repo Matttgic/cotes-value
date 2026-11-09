@@ -67,6 +67,9 @@ def libelle_exclu(sport: str, marche_canonique: str | None, libelle: str) -> boo
     l = (libelle or "").lower()
     if "CORNERS" in (marche_canonique or ""):
         return False
+    # Paris joueurs traduits à part (JOUEUR:<stat>) : le mot « joueur » n'est plus un motif d'exclusion.
+    if marche_canonique == "PLAYER_PROP":
+        return False
     return bool(STATISTIQUES.search(l)) or ("corner" in l)
 
 
@@ -248,7 +251,12 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str,
             continue
         if not isinstance(m.get("period"), (str, type(None))):
             continue
-        per = "MATCH" if canon == "HALF_TIME_FULL_TIME" else periode(sport, m.get("period"), libelle)
+        # Même période que Pinnacle (MATCH, prolongation comprise). Un libellé « temps réglementaire »
+        # reste ambigu : on ne le rapproche pas d'un total joueur Pinnacle.
+        if canon == "PLAYER_PROP":
+            per = None if _temps_reglementaire(libelle) else "MATCH"
+        else:
+            per = "MATCH" if canon == "HALF_TIME_FULL_TIME" else periode(sport, m.get("period"), libelle)
         if per is None:
             continue
         try:
@@ -261,18 +269,32 @@ def traduire(e: dict, bookmaker: str, sport: str, moment: str,
             if ligne is not None and _decimal(ligne) is None:
                 continue
             p = per
-            if per == "MATCH":
+            if canon != "PLAYER_PROP" and per == "MATCH":
                 p = periode_match(bookmaker, sport, marche, libelle, ligne)
-            elif sport in ("basket", "football_americain") and per in ("MT2", "QT4"):
+            elif canon != "PLAYER_PROP" and sport in ("basket", "football_americain") and per in ("MT2", "QT4"):
                 p = per + "?"             # prolongation comptée dans la 2e mi-temps ? différent selon les sites
+            joueur = s.get("joueur") if canon == "PLAYER_PROP" else None
+            libelle_ligne = s.get("libelle") if canon == "PLAYER_PROP" and s.get("libelle") else libelle
+            cle_m = f"{bookmaker}|{m.get('marketId')}"
+            if canon == "PLAYER_PROP":
+                cle_m = f"{cle_m}|{joueur or ''}|{ligne}"
             out.append({**base, "marche": marche, "periode": p, "ligne": ligne, "issue": issue,
-                        "cote": float(s["odds"]), "libelle": libelle, "cle_marche": f"{bookmaker}|{m.get('marketId')}",
-                        "achat": s.get("back"), "vente": s.get("lay")})
+                        "joueur": joueur, "cote": float(s["odds"]), "libelle": libelle_ligne,
+                        "cle_marche": cle_m, "achat": s.get("back"), "vente": s.get("lay")})
     return out
 
 
 def _marche(canon, libelle, sels, sport, dom, ext, nul_annonce=False):
     """Générateur de (marché, ligne, issue, sélection) pour un marché PulseScore."""
+    if canon == "PLAYER_PROP":
+        for s in sels:
+            stat = s.get("stat")
+            issue = {"OVER": "PLUS", "UNDER": "MOINS"}.get(s.get("canonicalOutcome"))
+            ligne = s.get("line")
+            if not stat or not issue or ligne is None or not s.get("joueur"):
+                continue
+            yield f"JOUEUR:{stat}", float(ligne), issue, s
+        return
     issues = {s.get("canonicalOutcome"): s for s in sels}
     l = libelle.lower()
     if canon in ("MATCH_RESULT", "HALF_TIME_RESULT", "SET_WINNER"):

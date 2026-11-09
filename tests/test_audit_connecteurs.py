@@ -690,18 +690,21 @@ def _brancher(monkeypatch, tetes, prix_par_url=None):
 
 
 def test_choix_prend_l_orthographe_la_plus_fraiche(monkeypatch):
+    # ?primaryOnly=false est plus fraîche (45 s) mais sans withSpecials : les props n'y sont pas.
+    # On ne la sonde pas. Parmi les URL avec spéciaux, 300 s bat 800 s.
     heads, gets = _brancher(monkeypatch, {
         '?primaryOnly=false&withSpecials=true': Tete(200,'HIT',800),
         '?primaryOnly=false': Tete(200,'HIT',45),
         '?withSpecials=true': Tete(200,'HIT',300),
         '?withSpecials=true&primaryOnly=false': Tete(200,'HIT',None),
         '': Tete(200,'HIT',600)},
-        {'/markets/straight?primaryOnly=false': Reponse([marche_pin()], headers={'cf-cache-status':'HIT','Age':'47'})})
+        {'/markets/straight?withSpecials=true': Reponse([marche_pin()], headers={'cf-cache-status':'HIT','Age':'300'})})
     out=P.collecter({29:'football'})
-    assert len(heads)==2            # 45 s suffit : les suivantes ne sont pas touchées (donc pas rechargées)
-    assert [g for g in gets if 'markets' in g][0].endswith('/markets/straight?primaryOnly=false')
-    assert out and all(l['age_cache_s']==47 and l['cote_perimee'] is False for l in out)
-    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['head_200']==2
+    assert len(heads)==3
+    assert not any(h.endswith('/markets/straight?primaryOnly=false') for h in heads)
+    assert [g for g in gets if 'markets' in g][0].endswith('/markets/straight?withSpecials=true')
+    assert out and all(l['age_cache_s']==300 and l['cote_perimee'] is False for l in out)
+    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['head_200']==3
 
 
 def test_choix_garde_l_url_fixe_sans_age_exploitable(monkeypatch):
@@ -723,7 +726,7 @@ def test_choix_403_sur_une_orthographe_l_ecarte_sans_couper(monkeypatch):
     P._choisir_chemin_prix(33)
     assert P._choix_coupe is False
     assert sum(h.endswith('/markets/straight?withSpecials=true') for h in heads)==1   # pas redemandée
-    assert len(heads)==4+3          # arrêt sur la première de moins de 300 s (40 s, quatrième)
+    assert len(heads)==5            # sans les URL sans spéciaux : 3 puis 2
     assert P.choix_prix['ortho_refusee']==1 and P.choix_prix['choisi_autre']==2
 
 
@@ -733,7 +736,7 @@ def test_choix_coupe_sur_403_de_l_url_fixe_ou_429(monkeypatch):
     assert P._choisir_chemin_prix(33).startswith('/sports/33/') and len(heads)==1
     P._choix_coupe=False; P._ortho_refusees.clear(); heads.clear()
     heads2, _ = _brancher(monkeypatch, {'?primaryOnly=false&withSpecials=true': Tete(200,'HIT',800),
-                                        '?primaryOnly=false': Tete(429)})
+                                        '?withSpecials=true': Tete(429)})
     P._choisir_chemin_prix(29)
     assert P._choix_coupe is True and len(heads2)==2
 
@@ -814,7 +817,7 @@ def test_choix_sans_bonne_copie_sonde_tout_et_garde_la_plus_fraiche(monkeypatch)
         '?withSpecials=true': Tete(403,'BYPASS'),
         '?withSpecials=true&primaryOnly=false': Tete(403,'BYPASS'),
         '': Tete(200,'HIT',650)})
-    assert P._choisir_chemin_prix(29)=='/sports/29/markets/straight?primaryOnly=false' and len(heads)==5
+    assert P._choisir_chemin_prix(29)==FIXE and len(heads)==3
 
 
 def test_sondes_dans_l_ordre_decalent_les_copies_sans_autre_client(monkeypatch):
@@ -822,7 +825,9 @@ def test_sondes_dans_l_ordre_decalent_les_copies_sans_autre_client(monkeypatch):
     # Un HEAD sur une copie expirée la recharge ; une copie non touchée reste expirée. En production (mesuré
     # le 20/10/2026), d'autres clients rechargent les trois copies ensemble : seul le seuil (est_perimee) aide.
     monkeypatch.setenv('PINNACLE_CHOIX_PRIX','oui')
-    rempli={q:0 for q in ('?primaryOnly=false&withSpecials=true','?primaryOnly=false','')}
+    # Copies qui portent les spéciaux (les autres n'ont pas les paris joueurs).
+    rempli={q:0 for q in ('?primaryOnly=false&withSpecials=true','?withSpecials=true',
+                          '?withSpecials=true&primaryOnly=false')}
     horloge={'t':0}
     def toucher(q):
         if horloge['t']-rempli[q]>905:

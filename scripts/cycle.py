@@ -574,7 +574,9 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         bloc = meta.get("reserve") if isinstance(meta, dict) else None
         if isinstance(bloc, dict):
             horizon[nom] = bloc
-    gardes = ("pmu", "unibet", "betclic", "netbet")
+    from cotes.joueurs import est_joueur
+    horizon["props"] = {"lignes": [l for l in list(pin) + list(lignes) if est_joueur(l.get("marche"))]}
+    gardes = ("pmu", "unibet", "betclic", "netbet", "props")
     if donnees and any(k in horizon for k in gardes):
         horizon = {k: horizon[k] for k in gardes if k in horizon}
         memoire.ecrire(donnees, "horizon_direct", horizon)
@@ -950,6 +952,15 @@ def main() -> int:
     opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
                          index=index, controle=(etat_controle, suspects),
                          hors_consensus=hors) or []
+    from cotes import props as props_joueurs
+    rapproches = props_joueurs.comparer(francais, references) or []
+    journal["props_joueurs"] = {
+        **props_joueurs.compter(list(pin) + list(francais)),
+        "rapproches": len(rapproches),
+        "valeur": sum(1 for r in rapproches if r.get("valeur")),
+    }
+    ecrire_json(donnees / "props_joueurs.json",
+                {"maj": journal["debut"], "lignes": rapproches}, compact=True)
     for o in opportunites:           # marqueur de cycle : sert à la persistance (Qwen) et au diagnostic
         o["cycle_id"] = journal["debut"]
     # Mouvement de la cote juste de Pinnacle (dropping odds), inscrit dans le pari. Garde-fou : une cote Pinnacle de
