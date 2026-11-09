@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-09T08:31:09+00:00",
+  "debut": "2026-11-09T08:35:47+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,7 +9,7 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 1.2,
+    "secondes": 1.1,
     "ok": true
    },
    "olybet": {
@@ -17,19 +17,23 @@
     "ok": true
    },
    "polymarket": {
-    "secondes": 5.2,
+    "secondes": 4.5,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 10.8,
+    "secondes": 6.1,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 18.2,
-    "ok": true
+    "secondes": 15.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 45 matchups : HTTP 403"
+    ]
    },
    "unibet_direct": {
-    "secondes": 1.7,
+    "secondes": 1.6,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -37,31 +41,28 @@
     ]
    },
    "pmu_direct": {
-    "secondes": 22.3,
+    "secondes": 22.2,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 40.2,
+    "secondes": 33.3,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.2,
+    "secondes": 52.0,
     "ok": true
    },
    "smarkets": {
-    "secondes": 18.9,
+    "secondes": 0.0,
     "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
+    "cache": true
    },
    "association": {
-    "secondes": 1.1,
+    "secondes": 0.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.5,
+    "secondes": 0.4,
     "ok": true
    },
    "cotes_cloture": {
@@ -89,28 +90,39 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 121,
-   "lignes": 2648
+   "lignes": 2692
   },
   "matchbook_fraicheur": {
-   "lignes": 2648,
-   "source_connue": 2648,
+   "lignes": 2692,
+   "source_connue": 2690,
    "source_inconnue": 0,
-   "source_invalide": 0,
+   "source_invalide": 2,
    "mouvement_min_s": 0,
-   "mouvement_max_s": 59891,
-   "reception": "2026-11-09T08:31:09+00:00"
+   "mouvement_max_s": 60169,
+   "reception": "2026-11-09T08:35:47+00:00"
+  },
+  "pinnacle_secours": {
+   "sports": [],
+   "requetes": 0,
+   "lignes": 14359,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 14359,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 898,
-   "age_min_s": 66,
+   "age_max_s": 875,
+   "age_min_s": 282,
    "lignes": 54734,
-   "lignes_perimees": 822,
+   "lignes_perimees": 1002,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 8.0,
+   "rechauffeur_duree_s": 7.9,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -120,12 +132,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 25,
+    "head_200": 29,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 9,
-    "choisi_fixe": 2,
-    "sport_vide": 5
+    "choisi_autre": 6,
+    "choisi_fixe": 5,
+    "sport_vide": 4,
+    "reprise_403": 1
    }
   },
   "reprise": {
@@ -162,43 +175,43 @@
    "examines": 5,
    "comparaisons": [
     {
-     "match": "Rome (F) – Servette FC Chenois (Wom)",
+     "match": "CE Sabadell – Real Sociedad B",
      "source": "PMU",
-     "cote_olybet": 1.17,
-     "cote_reference": 1.12,
-     "ecart_relatif": 0.0446,
+     "cote_olybet": 1.68,
+     "cote_reference": 1.55,
+     "ecart_relatif": 0.0839,
      "aberrant": false
     },
     {
-     "match": "Paris SG (F) – Bayern Munich (F)",
-     "source": "PMU",
-     "cote_olybet": 3.63,
-     "cote_reference": 3.4,
-     "ecart_relatif": 0.0676,
-     "aberrant": false
-    },
-    {
-     "match": "BK Häcken (F) – Chelsea LFC (F)",
-     "source": "PMU",
-     "cote_olybet": 12.0,
-     "cote_reference": 13.0,
-     "ecart_relatif": 0.0769,
-     "aberrant": false
-    },
-    {
-     "match": "Real Madrid (F) – Paris FC (F)",
+     "match": "Tecnico Universitario – Manta",
      "source": "Pinnacle",
-     "cote_olybet": 1.36,
-     "cote_reference": 1.398,
-     "ecart_relatif": 0.0275,
+     "cote_olybet": 1.54,
+     "cote_reference": 1.61,
+     "ecart_relatif": 0.0434,
      "aberrant": false
     },
     {
-     "match": "Real Madrid (F) – Paris FC (F)",
+     "match": "Tecnico Universitario – Manta",
      "source": "PMU",
-     "cote_olybet": 1.36,
-     "cote_reference": 1.3,
+     "cote_olybet": 1.54,
+     "cote_reference": 1.62,
+     "ecart_relatif": 0.0494,
+     "aberrant": false
+    },
+    {
+     "match": "Mushuc Runa SC – Delfin",
+     "source": "Pinnacle",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.719,
      "ecart_relatif": 0.0462,
+     "aberrant": false
+    },
+    {
+     "match": "Mushuc Runa SC – Delfin",
+     "source": "PMU",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.65,
+     "ecart_relatif": 0.0061,
      "aberrant": false
     }
    ],
@@ -207,7 +220,7 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 6,
    "comparaisons": [
     {
      "match": "BK Häcken – Chelsea",
@@ -244,58 +257,51 @@
     {
      "match": "AS Rome – Servette",
      "source": "Pinnacle",
-     "cote_netbet": 1.12,
+     "cote_netbet": 1.11,
      "cote_reference": 1.204,
-     "ecart_relatif": 0.0698,
+     "ecart_relatif": 0.0781,
      "aberrant": false
     },
     {
      "match": "Inter Milano – Manchester City",
      "source": "Pinnacle",
-     "cote_netbet": 6.0,
+     "cote_netbet": 5.9,
      "cote_reference": 5.23,
-     "ecart_relatif": 0.1472,
-     "aberrant": false
-    },
-    {
-     "match": "Paris SG – Bayern Munich",
-     "source": "PMU",
-     "cote_netbet": 3.65,
-     "cote_reference": 3.4,
-     "ecart_relatif": 0.0735,
+     "ecart_relatif": 0.1281,
      "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-09T08:31:22+00:00",
-   "pinnacle_derniere_lecture": "2026-11-09T08:31:25+00:00",
+   "pinnacle_premiere_lecture": "2026-11-09T08:17:29+00:00",
+   "pinnacle_derniere_lecture": "2026-11-09T08:35:57+00:00",
    "books_premiere_lecture": "2026-11-08T17:27:53+00:00",
-   "books_derniere_lecture": "2026-11-09T08:31:10+00:00",
-   "ecart_enveloppe_secondes": 54212.0
+   "books_derniere_lecture": "2026-11-09T08:35:47+00:00",
+   "ecart_enveloppe_secondes": 54484.0
   },
   "historique_cotes": {
-   "lignes": 288
+   "lignes": 309
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.6
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 565,
    "a_verifier": 13,
    "non_conforme": 8,
-   "mesures": 7184,
+   "mesures": 7182,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
    "ancres": 23356,
-   "mesures": 20837,
+   "mesures": 19602,
    "annotees": 3,
-   "figees": 0
+   "figees": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -310,28 +316,22 @@
    "saute": true,
    "dernier_reglement": "2026-11-09T07:39:58+00:00"
   },
-  "controle_publie": false,
-  "fin": "2026-11-09T08:32:24+00:00",
+  "controle_publie": true,
+  "fin": "2026-11-09T08:36:43+00:00",
   "cotes": {
-   "francaises": 28959,
-   "pinnacle": 54734,
-   "polymarket": 7339,
+   "francaises": 28994,
+   "pinnacle": 69093,
+   "polymarket": 7346,
    "smarkets": 2128,
-   "matchbook": 2648,
+   "matchbook": 2692,
    "betfair": 0
   },
-  "matchs_francais": 498,
-  "opportunites": 8,
-  "opportunites_suspectes": 1,
+  "matchs_francais": 499,
+  "opportunites": 5,
+  "opportunites_suspectes": 3,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-08T17:09:17+00:00",
-   "mode": "complet",
-   "opportunites": 0,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-08T17:13:58+00:00",
    "mode": "complet",
@@ -1531,11 +1531,17 @@
    "mode": "complet",
    "opportunites": 8,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-09T08:35:47+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-11-09T07:39:58+00:00",
+ "dernier_reglement": "2026-11-09T08:36:48+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-11-09T07:39:58+00:00",
+  "debut": "2026-11-09T08:36:48+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_volley": {
@@ -1543,7 +1549,7 @@
     "ok": true
    },
    "resultats_espn_basket": {
-    "secondes": 1.3,
+    "secondes": 0.7,
     "ok": true
    },
    "resultats_espn_mma": {
@@ -1551,7 +1557,7 @@
     "ok": true
    },
    "resultats_espn_football": {
-    "secondes": 0.4,
+    "secondes": 0.2,
     "ok": true
    },
    "resultats_espn_handball": {
@@ -1563,11 +1569,11 @@
     "ok": true
    },
    "resultats_livescore_basket": {
-    "secondes": 1.9,
+    "secondes": 1.1,
     "ok": true
    },
    "resultats_livescore_football": {
-    "secondes": 1.1,
+    "secondes": 0.4,
     "ok": true
    },
    "resultats_nhl_officiel": {
@@ -1575,39 +1581,47 @@
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 5.4,
+    "secondes": 3.2,
     "ok": true
    },
    "resultats_flashscore_basket": {
-    "secondes": 5.1,
-    "ok": true
-   },
-   "resultats_flashscore_football": {
-    "secondes": 6.7,
+    "secondes": 4.1,
     "ok": true
    },
    "resultats_flashscore_handball": {
-    "secondes": 2.5,
+    "secondes": 1.5,
+    "ok": true
+   },
+   "resultats_flashscore_football": {
+    "secondes": 3.7,
     "ok": true
    },
    "resultats_flashscore_rugby": {
-    "secondes": 1.4,
+    "secondes": 1.0,
     "ok": true
    },
    "resultats_thesportsdb": {
-    "secondes": 29.1,
+    "secondes": 37.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "handball Roumanie_vs_Pologne : ValueError('HTTP 429')",
-     "handball Romania_vs_Poland : ValueError('HTTP 429')",
-     "handball Ukraine_vs_Serbie : ValueError('HTTP 429')",
-     "handball Ukraine_vs_Serbia : ValueError('HTTP 429')"
+     "handball Grèce_vs_Macédoine_du_Nord : ValueError('HTTP 429')",
+     "handball Greece_vs_North_Macedonia : ValueError('HTTP 429')",
+     "volley VC_Oudegem_(F)_vs_Volley_Vamos_(F) : ValueError('HTTP 429')",
+     "volley VC_Oudegem_Women_vs_Sint-Gillis-Waas_Women : ValueError('HTTP 429')",
+     "volley VC_Oudegem_F._vs_Volley_Vamos_F. : ValueError('HTTP 429')",
+     "volley VC_Oudegem_Women_vs_Sint-Gillis-Waas_Women : ValueError('HTTP 429')",
+     "handball Luxembourg_vs_Suède : ValueError('HTTP 429')",
+     "handball Luxembourg_vs_Sweden : ValueError('HTTP 429')"
     ]
    },
    "resultats_theodds": {
-    "secondes": 0.0,
-    "ok": true
+    "secondes": 0.1,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "compte 1 : HTTP 401"
+    ]
    },
    "resultats_propline": {
     "secondes": 0.0,
@@ -1616,8 +1630,8 @@
   },
   "reglement": true,
   "thesportsdb": {
-   "appels": 14,
-   "trouves": 6,
+   "appels": 18,
+   "trouves": 2,
    "cle_publique": true
   },
   "theodds": {
@@ -1628,12 +1642,14 @@
    "matchs_valides": 0,
    "paris_compatibles": 0,
    "conflits": 0,
-   "erreurs": [],
+   "erreurs": [
+    "compte 1 : HTTP 401"
+   ],
    "couverture": {
-    "marche_non_couvert": 7,
+    "marche_non_couvert": 4,
     "competition_non_couverte": 44,
-    "deja_valide": 0,
-    "trop_recent": 40,
+    "deja_valide": 43,
+    "trop_recent": 0,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1678,10 +1694,10 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "deja_valide": 0,
-    "marche_non_couvert": 7,
+    "deja_valide": 43,
+    "marche_non_couvert": 4,
     "competition_non_couverte": 44,
-    "trop_recent": 40,
+    "trop_recent": 0,
     "hors_fenetre": 0,
     "eligibles": 0
    },
@@ -1689,8 +1705,8 @@
    "requetes_jour": 0
   },
   "resultats": {
-   "enregistrements": 10329,
-   "matchs_valides": 0,
+   "enregistrements": 10303,
+   "matchs_valides": 4,
    "reportes": 0,
    "non_regles": [
     {
@@ -1762,26 +1778,6 @@
      "validation_apres": null
     },
     {
-     "match_id": "winamax|75865672",
-     "match": "America De Cali – Deportivo Cali",
-     "sport": "football",
-     "debut": "2026-11-08T01:15:00+00:00",
-     "sources": {
-      "espn": {
-       "score": [
-        0,
-        0
-       ],
-       "periodes": []
-      }
-     },
-     "retenues": [
-      "espn"
-     ],
-     "raison": "source unique : délai de validation automatique",
-     "validation_apres": "2026-11-10T01:45:00+00:00"
-    },
-    {
      "match_id": "pmu|1028519669",
      "match": "RK Krim Mercator (F) – Sola HK (F)",
      "sport": "handball",
@@ -1802,26 +1798,6 @@
      "validation_apres": null
     },
     {
-     "match_id": "olybet|31388015",
-     "match": "América de Cali – Deportivo Cali",
-     "sport": "football",
-     "debut": "2026-11-08T01:15:00Z",
-     "sources": {
-      "espn": {
-       "score": [
-        0,
-        0
-       ],
-       "periodes": []
-      }
-     },
-     "retenues": [
-      "espn"
-     ],
-     "raison": "source unique : délai de validation automatique",
-     "validation_apres": "2026-11-10T01:45:00+00:00"
-    },
-    {
      "match_id": "betclic|1272717735124992",
      "match": "Brixia Basket F. – B&P Costa Masnaga W.",
      "sport": "basket",
@@ -1830,26 +1806,6 @@
      "retenues": [],
      "raison": "aucune source",
      "validation_apres": null
-    },
-    {
-     "match_id": "pmu|1029662471",
-     "match": "América de Cali – Deportivo Cali",
-     "sport": "football",
-     "debut": "2026-11-08T01:15:00Z",
-     "sources": {
-      "espn": {
-       "score": [
-        0,
-        0
-       ],
-       "periodes": []
-      }
-     },
-     "retenues": [
-      "espn"
-     ],
-     "raison": "source unique : délai de validation automatique",
-     "validation_apres": "2026-11-10T01:45:00+00:00"
     },
     {
      "match_id": "pmu|1028519645",
@@ -1910,26 +1866,6 @@
      "retenues": [],
      "raison": "aucune source",
      "validation_apres": null
-    },
-    {
-     "match_id": "betclic|1270361256644608",
-     "match": "America de Cali – Deportivo Cali",
-     "sport": "football",
-     "debut": "2026-11-08T01:15:00.0000000Z",
-     "sources": {
-      "espn": {
-       "score": [
-        0,
-        0
-       ],
-       "periodes": []
-      }
-     },
-     "retenues": [
-      "espn"
-     ],
-     "raison": "source unique : délai de validation automatique",
-     "validation_apres": "2026-11-10T01:45:00+00:00"
     },
     {
      "match_id": "pmu|1029625134",
@@ -2476,15 +2412,17 @@
      "validation_apres": "2026-11-09T17:00:00+00:00"
     }
    ],
-   "paris_en_attente": 91,
-   "paris_regles": 0,
-   "selections_en_attente": 89,
+   "paris_en_attente": 48,
+   "paris_regles": 43,
+   "selections_en_attente": 48,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
-   "sources_reglement": {}
+   "sources_reglement": {
+    "espn": 43
+   }
   },
-  "fin": "2026-11-09T07:41:01+00:00"
+  "fin": "2026-11-09T08:37:45+00:00"
  },
  "echecs_recents": {
   "total": 0,
