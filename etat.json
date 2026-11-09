@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-09T02:55:05+00:00",
+  "debut": "2026-11-09T02:59:47+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,7 +9,7 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 1.2,
+    "secondes": 1.5,
     "ok": true
    },
    "olybet": {
@@ -17,48 +17,56 @@
     "ok": true
    },
    "polymarket": {
-    "secondes": 6.4,
+    "secondes": 4.3,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 11.3,
+    "secondes": 13.9,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 13.4,
+    "secondes": 22.4,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 28 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403"
+    ]
+   },
+   "pmu_direct": {
+    "secondes": 22.7,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 2.0,
+    "secondes": 1.9,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
-   "pmu_direct": {
-    "secondes": 24.2,
-    "ok": true
-   },
    "winamax_direct": {
-    "secondes": 35.9,
+    "secondes": 34.1,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.6,
+    "secondes": 52.2,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.7,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 0.7,
+    "secondes": 0.6,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.3,
+    "secondes": 0.2,
     "ok": true
    },
    "cotes_cloture": {
@@ -86,28 +94,41 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 80,
-   "lignes": 1507
+   "lignes": 1509
   },
   "matchbook_fraicheur": {
-   "lignes": 1507,
-   "source_connue": 1507,
+   "lignes": 1509,
+   "source_connue": 1509,
    "source_inconnue": 0,
    "source_invalide": 0,
-   "mouvement_min_s": 1,
-   "mouvement_max_s": 46389,
-   "reception": "2026-11-09T02:55:05+00:00"
+   "mouvement_min_s": 3,
+   "mouvement_max_s": 46671,
+   "reception": "2026-11-09T02:59:47+00:00"
+  },
+  "pinnacle_secours": {
+   "sports": [
+    "football"
+   ],
+   "requetes": 1,
+   "lignes": 11843,
+   "erreurs": [],
+   "pause": true,
+   "cache_lignes": 0,
+   "retard": [
+    "football"
+   ]
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 819,
-   "age_min_s": 89,
-   "lignes": 48723,
-   "lignes_perimees": 236,
+   "age_max_s": 805,
+   "age_min_s": 49,
+   "lignes": 48641,
+   "lignes_perimees": 998,
    "rechauffeur": "ok",
    "rechauffeur_cause": null,
-   "rechauffeur_duree_s": 7.8,
+   "rechauffeur_duree_s": 7.9,
    "rechauffeur_detail": {
     "statuts": {
      "matchups_200": 22,
@@ -117,11 +138,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 34,
+    "head_200": 31,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 8,
-    "choisi_autre": 5,
+    "choisi_fixe": 6,
+    "choisi_autre": 7,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 1,
     "sport_vide": 5
    }
   },
@@ -131,7 +154,6 @@
   "sports_francais": {
    "source": "cycle précédent",
    "sports": [
-    "baseball",
     "basket",
     "boxe",
     "cricket",
@@ -148,7 +170,6 @@
    ],
    "nouveaux_au_cycle_suivant": [],
    "plus_chez_les_references": [
-    "baseball",
     "boxe"
    ]
   },
@@ -161,30 +182,14 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 9,
    "comparaisons": [
     {
-     "match": "CE Sabadell – Real Sociedad B",
-     "source": "PMU",
-     "cote_olybet": 1.66,
-     "cote_reference": 1.55,
-     "ecart_relatif": 0.071,
-     "aberrant": false
-    },
-    {
-     "match": "SCU Torreense – Uniao Leiria",
+     "match": "Atlético Junior  Barranquilla – Cúcuta Deportivo",
      "source": "Pinnacle",
-     "cote_olybet": 2.04,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0467,
-     "aberrant": false
-    },
-    {
-     "match": "SCU Torreense – Uniao Leiria",
-     "source": "PMU",
-     "cote_olybet": 2.04,
-     "cote_reference": 1.95,
-     "ecart_relatif": 0.0462,
+     "cote_olybet": 1.52,
+     "cote_reference": 1.578,
+     "ecart_relatif": 0.0368,
      "aberrant": false
     },
     {
@@ -204,11 +209,19 @@
      "aberrant": false
     },
     {
-     "match": "Atlético Junior  Barranquilla – Cúcuta Deportivo",
+     "match": "Botosani – Otelul Galati",
      "source": "Pinnacle",
-     "cote_olybet": 1.52,
-     "cote_reference": 1.578,
-     "ecart_relatif": 0.0368,
+     "cote_olybet": 2.05,
+     "cote_reference": 2.16,
+     "ecart_relatif": 0.0509,
+     "aberrant": false
+    },
+    {
+     "match": "Botosani – Otelul Galati",
+     "source": "PMU",
+     "cote_olybet": 2.05,
+     "cote_reference": 1.97,
+     "ecart_relatif": 0.0406,
      "aberrant": false
     },
     {
@@ -226,6 +239,22 @@
      "cote_reference": 1.62,
      "ecart_relatif": 0.0432,
      "aberrant": false
+    },
+    {
+     "match": "Mushuc Runa SC – Delfin",
+     "source": "Pinnacle",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.704,
+     "ecart_relatif": 0.0377,
+     "aberrant": false
+    },
+    {
+     "match": "Mushuc Runa SC – Delfin",
+     "source": "PMU",
+     "cote_olybet": 1.64,
+     "cote_reference": 1.65,
+     "ecart_relatif": 0.0061,
+     "aberrant": false
     }
    ],
    "aberrants": []
@@ -233,54 +262,14 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 8,
+   "examines": 7,
    "comparaisons": [
     {
-     "match": "Kristiansund – Vålerenga",
-     "source": "Pinnacle",
-     "cote_netbet": 2.45,
-     "cote_reference": 2.72,
-     "ecart_relatif": 0.0993,
-     "aberrant": false
-    },
-    {
-     "match": "Kristiansund – Vålerenga",
+     "match": "Sabadell – Real Sociedad B",
      "source": "PMU",
-     "cote_netbet": 2.45,
-     "cote_reference": 2.43,
-     "ecart_relatif": 0.0082,
-     "aberrant": false
-    },
-    {
-     "match": "Torreense – União de Leiria",
-     "source": "Pinnacle",
-     "cote_netbet": 1.99,
-     "cote_reference": 2.14,
-     "ecart_relatif": 0.0701,
-     "aberrant": false
-    },
-    {
-     "match": "Torreense – União de Leiria",
-     "source": "PMU",
-     "cote_netbet": 1.99,
-     "cote_reference": 1.95,
-     "ecart_relatif": 0.0205,
-     "aberrant": false
-    },
-    {
-     "match": "FC Botosani – Otelul Galati",
-     "source": "Pinnacle",
-     "cote_netbet": 1.97,
-     "cote_reference": 2.16,
-     "ecart_relatif": 0.088,
-     "aberrant": false
-    },
-    {
-     "match": "FC Botosani – Otelul Galati",
-     "source": "PMU",
-     "cote_netbet": 1.97,
-     "cote_reference": 1.97,
-     "ecart_relatif": 0.0,
+     "cote_netbet": 1.58,
+     "cote_reference": 1.55,
+     "ecart_relatif": 0.0194,
      "aberrant": false
     },
     {
@@ -298,39 +287,70 @@
      "cote_reference": 1.65,
      "ecart_relatif": 0.0303,
      "aberrant": false
+    },
+    {
+     "match": "Tecnico U. – Manta FC",
+     "source": "Pinnacle",
+     "cote_netbet": 1.55,
+     "cote_reference": 1.617,
+     "ecart_relatif": 0.0416,
+     "aberrant": false
+    },
+    {
+     "match": "Tecnico U. – Manta FC",
+     "source": "PMU",
+     "cote_netbet": 1.55,
+     "cote_reference": 1.62,
+     "ecart_relatif": 0.0432,
+     "aberrant": false
+    },
+    {
+     "match": "Sportivo San Lorenzo – Rubio Ñú",
+     "source": "Pinnacle",
+     "cote_netbet": 3.85,
+     "cote_reference": 4.44,
+     "ecart_relatif": 0.1329,
+     "aberrant": false
+    },
+    {
+     "match": "Sportivo San Lorenzo – Rubio Ñú",
+     "source": "PMU",
+     "cote_netbet": 3.85,
+     "cote_reference": 3.5,
+     "ecart_relatif": 0.1,
+     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-09T02:55:14+00:00",
-   "pinnacle_derniere_lecture": "2026-11-09T02:55:16+00:00",
+   "pinnacle_premiere_lecture": "2026-11-09T02:59:56+00:00",
+   "pinnacle_derniere_lecture": "2026-11-09T03:00:10+00:00",
    "books_premiere_lecture": "2026-11-08T17:27:53+00:00",
-   "books_derniere_lecture": "2026-11-09T02:55:05+00:00",
-   "ecart_enveloppe_secondes": 34043.0
+   "books_derniere_lecture": "2026-11-09T02:59:47+00:00",
+   "ecart_enveloppe_secondes": 34337.0
   },
   "historique_cotes": {
-   "lignes": 40
+   "lignes": 78
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.0
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 565,
    "a_verifier": 13,
    "non_conforme": 9,
-   "mesures": 4968,
+   "mesures": 5003,
    "matchs_suspects": 0
   },
   "mouvement": {
    "actif": true,
-   "ancres": 16833,
-   "mesures": 15708,
-   "annotees": 4,
-   "figees": 4
+   "ancres": 16942,
+   "mesures": 15217,
+   "annotees": 2,
+   "figees": 2
   },
   "redecision": {
    "ajoutees": 0
@@ -345,28 +365,22 @@
    "saute": true,
    "dernier_reglement": "2026-11-09T02:05:11+00:00"
   },
-  "controle_publie": false,
-  "fin": "2026-11-09T02:56:00+00:00",
+  "controle_publie": true,
+  "fin": "2026-11-09T03:01:02+00:00",
   "cotes": {
-   "francaises": 18783,
-   "pinnacle": 48723,
-   "polymarket": 5623,
-   "smarkets": 1931,
-   "matchbook": 1507,
+   "francaises": 18819,
+   "pinnacle": 60484,
+   "polymarket": 5621,
+   "smarkets": 1941,
+   "matchbook": 1509,
    "betfair": 0
   },
-  "matchs_francais": 367,
-  "opportunites": 3,
-  "opportunites_suspectes": 4,
+  "matchs_francais": 368,
+  "opportunites": 4,
+  "opportunites_suspectes": 3,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-08T11:34:23+00:00",
-   "mode": "complet",
-   "opportunites": 6,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-08T11:39:03+00:00",
    "mode": "complet",
@@ -1566,11 +1580,17 @@
    "mode": "complet",
    "opportunites": 3,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-09T02:59:47+00:00",
+   "mode": "complet",
+   "opportunites": 4,
+   "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-11-09T02:05:11+00:00",
+ "dernier_reglement": "2026-11-09T03:01:07+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-11-09T02:05:11+00:00",
+  "debut": "2026-11-09T03:01:07+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_volley": {
@@ -1578,7 +1598,7 @@
     "ok": true
    },
    "resultats_espn_basket": {
-    "secondes": 0.8,
+    "secondes": 1.9,
     "ok": true
    },
    "resultats_espn_mma": {
@@ -1586,7 +1606,7 @@
     "ok": true
    },
    "resultats_espn_football": {
-    "secondes": 0.3,
+    "secondes": 0.4,
     "ok": true
    },
    "resultats_espn_handball": {
@@ -1598,11 +1618,11 @@
     "ok": true
    },
    "resultats_livescore_basket": {
-    "secondes": 1.2,
+    "secondes": 2.0,
     "ok": true
    },
    "resultats_livescore_football": {
-    "secondes": 0.4,
+    "secondes": 1.1,
     "ok": true
    },
    "resultats_nhl_officiel": {
@@ -1610,39 +1630,45 @@
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 4.3,
+    "secondes": 4.8,
     "ok": true
    },
    "resultats_flashscore_basket": {
-    "secondes": 3.2,
+    "secondes": 5.4,
     "ok": true
    },
    "resultats_flashscore_handball": {
-    "secondes": 1.4,
+    "secondes": 2.8,
     "ok": true
    },
    "resultats_flashscore_football": {
-    "secondes": 2.9,
+    "secondes": 4.1,
     "ok": true
    },
    "resultats_flashscore_rugby": {
-    "secondes": 0.6,
+    "secondes": 0.7,
     "ok": true
    },
    "resultats_thesportsdb": {
-    "secondes": 28.8,
+    "secondes": 34.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "rugby Angleterre_vs_Australie : ValueError('HTTP 429')",
-     "rugby England_vs_Australia : ValueError('HTTP 429')",
-     "handball Metz_HB_(F)_vs_Odense_Håndbold_(F) : ValueError('HTTP 429')",
-     "handball Metz_Handball_Women_vs_Odense_Handball_Women : ValueError('HTTP 429')"
+     "volley Zeren_Spor_(W)_vs_Kuzeyboru_Aksaray_(F) : ValueError('HTTP 429')",
+     "volley Zeren_Spor_Women_vs_Kuzeyboru_Genclik_Women : ValueError('HTTP 429')",
+     "volley Aras_Kargo_SK_(W)_vs_Iller_Bankasi_Ankara_(F) : ValueError('HTTP 429')",
+     "volley Aras_Kargo_Women_vs_Ilbank_Women : ValueError('HTTP 429')",
+     "volley Kifisias_AO_vs_Foinikas_Syros_VC : ValueError('HTTP 429')",
+     "volley AOP_Kifisias_vs_Foinikas_Syros : ValueError('HTTP 429')"
     ]
    },
    "resultats_theodds": {
-    "secondes": 0.0,
-    "ok": true
+    "secondes": 0.2,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "compte 1 : HTTP 401"
+    ]
    },
    "resultats_propline": {
     "secondes": 0.0,
@@ -1651,7 +1677,7 @@
   },
   "reglement": true,
   "thesportsdb": {
-   "appels": 14,
+   "appels": 16,
    "trouves": 2,
    "cle_publique": true
   },
@@ -1663,11 +1689,13 @@
    "matchs_valides": 0,
    "paris_compatibles": 0,
    "conflits": 0,
-   "erreurs": [],
+   "erreurs": [
+    "compte 1 : HTTP 401"
+   ],
    "couverture": {
     "marche_non_couvert": 7,
     "competition_non_couverte": 44,
-    "deja_valide": 10,
+    "deja_valide": 0,
     "trop_recent": 40,
     "hors_fenetre": 0,
     "eligibles": 0
@@ -1713,7 +1741,7 @@
    "conflits": 0,
    "erreurs": [],
    "couverture": {
-    "deja_valide": 10,
+    "deja_valide": 0,
     "marche_non_couvert": 7,
     "competition_non_couverte": 44,
     "trop_recent": 40,
@@ -1724,8 +1752,8 @@
    "requetes_jour": 0
   },
   "resultats": {
-   "enregistrements": 10273,
-   "matchs_valides": 2,
+   "enregistrements": 10283,
+   "matchs_valides": 0,
    "reportes": 0,
    "non_regles": [
     {
@@ -1885,6 +1913,26 @@
      ],
      "raison": "source unique : délai de validation automatique",
      "validation_apres": "2026-11-10T01:45:00+00:00"
+    },
+    {
+     "match_id": "pmu|1028519645",
+     "match": "CS Gloria Bistrița (F) – HC Podravka Vegeta (F)",
+     "sport": "handball",
+     "debut": "2026-11-08T15:00:00Z",
+     "sources": {},
+     "retenues": [],
+     "raison": "aucune source",
+     "validation_apres": null
+    },
+    {
+     "match_id": "pmu|1028519656",
+     "match": "BVB 09 Dortmund (F) – ŽRK Budućnost T-Mobile (F)",
+     "sport": "handball",
+     "debut": "2026-11-08T15:00:00Z",
+     "sources": {},
+     "retenues": [],
+     "raison": "aucune source",
+     "validation_apres": null
     },
     {
      "match_id": "pmu|1029677611",
@@ -2105,6 +2153,93 @@
      "validation_apres": "2026-11-09T12:20:00+00:00"
     },
     {
+     "match_id": "betclic|1273177688793088",
+     "match": "Grèce – Macédoine du Nord",
+     "sport": "handball",
+     "debut": "2026-11-08T15:00:00.0000000Z",
+     "sources": {
+      "flashscore": {
+       "score": [
+        29,
+        24
+       ],
+       "periodes": [
+        [
+         16,
+         9
+        ],
+        [
+         13,
+         15
+        ]
+       ]
+      }
+     },
+     "retenues": [
+      "flashscore"
+     ],
+     "raison": "source unique : délai de validation automatique",
+     "validation_apres": "2026-11-09T15:00:00+00:00"
+    },
+    {
+     "match_id": "netbet|11203924",
+     "match": "Grèce – Macédoine du Nord",
+     "sport": "handball",
+     "debut": "2026-11-08T15:00:00Z",
+     "sources": {
+      "flashscore": {
+       "score": [
+        29,
+        24
+       ],
+       "periodes": [
+        [
+         16,
+         9
+        ],
+        [
+         13,
+         15
+        ]
+       ]
+      }
+     },
+     "retenues": [
+      "flashscore"
+     ],
+     "raison": "source unique : délai de validation automatique",
+     "validation_apres": "2026-11-09T15:00:00+00:00"
+    },
+    {
+     "match_id": "pmu|1027115683",
+     "match": "Luxembourg – Suède",
+     "sport": "handball",
+     "debut": "2026-11-08T15:00:00Z",
+     "sources": {
+      "flashscore": {
+       "score": [
+        20,
+        50
+       ],
+       "periodes": [
+        [
+         10,
+         26
+        ],
+        [
+         10,
+         24
+        ]
+       ]
+      }
+     },
+     "retenues": [
+      "flashscore"
+     ],
+     "raison": "source unique : délai de validation automatique",
+     "validation_apres": "2026-11-09T15:00:00+00:00"
+    },
+    {
      "match_id": "pmu|1027115475",
      "match": "Ukraine – Serbie",
      "sport": "handball",
@@ -2132,20 +2267,27 @@
      ],
      "raison": "source unique : délai de validation automatique",
      "validation_apres": "2026-11-09T14:00:00+00:00"
+    },
+    {
+     "match_id": "pmu|1028519622",
+     "match": "Metz HB (F) – Odense Håndbold (F)",
+     "sport": "handball",
+     "debut": "2026-11-08T15:00:00Z",
+     "sources": {},
+     "retenues": [],
+     "raison": "aucune source",
+     "validation_apres": null
     }
    ],
-   "paris_en_attente": 75,
-   "paris_regles": 10,
-   "selections_en_attente": 73,
+   "paris_en_attente": 82,
+   "paris_regles": 0,
+   "selections_en_attente": 80,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
-   "sources_reglement": {
-    "espn": 8,
-    "livescore": 10
-   }
+   "sources_reglement": {}
   },
-  "fin": "2026-11-09T02:06:02+00:00"
+  "fin": "2026-11-09T03:02:09+00:00"
  },
  "echecs_recents": {
   "total": 0,
