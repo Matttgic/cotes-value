@@ -50,9 +50,11 @@ def comparer(francais: list[dict], references: dict[str, list[dict]],
                 continue
             ecart = round(l["cote"] * r["proba_juste"] - 1, 4)
             out.append({
-                "bookmaker": l.get("source"), "sport": l.get("sport"), "ligue": l.get("ligue"),
-                "match_id": l.get("match_id"), "domicile": l.get("domicile"), "exterieur": l.get("exterieur"),
-                "debut": l.get("debut"), "joueur": l.get("joueur"), "marche": l.get("marche"),
+                "bookmaker": l.get("source"), "sport": l.get("sport"), "ligue": l.get("ligue") or r.get("ligue"),
+                "match_id": l.get("match_id"), "match_id_reference": r.get("match_id"),
+                "domicile": l.get("domicile"), "exterieur": l.get("exterieur"),
+                "debut": l.get("debut"), "joueur": l.get("joueur"), "cle_joueur": cle_joueur(l.get("joueur")),
+                "marche": l.get("marche"),
                 "periode": l.get("periode"), "ligne": l.get("ligne"), "issue": l.get("issue"),
                 "cote": l.get("cote"), "reference": nom, "cote_juste": round(1 / r["proba_juste"], 3),
                 "cote_reference": r.get("cote"), "proba_juste": round(r["proba_juste"], 5),

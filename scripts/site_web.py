@@ -731,6 +731,9 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
         f[:6] == k[:6] and f[7:] == k[7:] for f, k in zip(segments_fixe, segments_k))
     if segments_fusionnes:
         segments_fixe = [f + [k[6]] for f, k in zip(segments_fixe, segments_k)]
+    from cotes.props_papier import bilan as bilan_props
+    from cotes.props_papier import lire as lire_props
+    props_publies = bilan_props(lire_props(donnees))
     libres = {f["cle"] for f in FUSIONS_AUTO if not f["actif"]}
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:], "notes_reperes": notes_reperes,
             "doublons": doublons, "pauses": pauses_publiees,
@@ -771,7 +774,8 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             "eden": EDEN,
             "m3": M3,
             "laboratoire": laboratoire,
-            "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES}
+            "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES,
+            "props": props_publies}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
     # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/pannes.py).
     from cotes import pannes, protection

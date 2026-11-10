@@ -686,6 +686,29 @@ def charger_paris(donnees: Path, journal: dict) -> list[dict]:
     return paris
 
 
+def _regler_props(donnees: Path, enregistrements: list, maintenant: datetime) -> dict:
+    """Feuilles ESPN des props fictifs encore ouverts. Aucun appel s'il n'y a rien à régler."""
+    from cotes import props_papier
+    from cotes.resultats import _espn_json, lire_espn
+    doc = props_papier.lire(donnees)
+    ouverts = [p for p in doc.get("paris") or [] if p.get("statut") == "en_cours"
+               and (props_papier._heure(p.get("debut")) or maintenant) <= maintenant]
+    if not ouverts:
+        return {"regles": 0, "feuilles": 0}
+    matchs = props_papier.matchs_espn(enregistrements)
+    sports_vus = {m.get("sport") for m in matchs}
+    for sport in sorted({p.get("sport") for p in ouverts if p.get("sport") not in sports_vus}):
+        depuis = min((props_papier._heure(p.get("debut")) for p in ouverts if p.get("sport") == sport
+                      and props_papier._heure(p.get("debut"))), default=maintenant)
+        matchs += props_papier.matchs_espn(lire_espn(sport, depuis, maintenant))
+    ids = props_papier.feuilles_a_lire(doc, matchs, maintenant)
+    sport_de = {str(m.get("espn_id")): m.get("sport") for m in matchs}
+    feuilles = props_papier.charger_feuilles([(i, sport_de.get(i)) for i in ids if sport_de.get(i)], _espn_json)
+    n = props_papier.regler(doc, matchs, feuilles, maintenant)
+    props_papier.ecrire(donnees, doc)
+    return {"regles": n, "feuilles": len(feuilles)}
+
+
 def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dict, mode_reglement: str) -> bool:
     # Le règlement ne lit pas Smarkets : les cotes de l'échange ne servent pas à solder un pari.
     # 4. règlement : ESPN, LiveScore, Flashscore, NHL et les secours, plus les résultats
@@ -814,6 +837,7 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
                 for src in (p.get("preuve_reglement") or {}).get("sources") or ["saisie manuelle"]:
                     sources_reglees[src] = sources_reglees.get(src, 0) + 1
         journal["resultats"]["sources_reglement"] = sources_reglees
+        journal["props_reglement"] = _regler_props(donnees, enregistrements, maintenant)
         # Rien ne règle ces matchs : la liste est prête à être complétée à la main
         ecrire_json(donnees / "resultats_a_saisir.json",
                     {"genere": maintenant.isoformat(timespec="seconds"),
@@ -961,6 +985,17 @@ def main() -> int:
     }
     ecrire_json(donnees / "props_joueurs.json",
                 {"maj": journal["debut"], "lignes": rapproches}, compact=True)
+    from cotes import props_papier
+    papier = props_papier.lire(donnees)
+    seuil_props = props_papier.seuil()
+    journal["props_papier"] = {
+        "seuil": seuil_props,
+        "nouveaux": props_papier.enregistrer(papier, rapproches, maintenant, seuil_props),
+        "clotures": props_papier.clotures(papier, pin, maintenant),
+        "polymarket": props_papier.verdict_polymarket(poly),
+    }
+    papier["polymarket"] = journal["props_papier"]["polymarket"]
+    props_papier.ecrire(donnees, papier)
     for o in opportunites:           # marqueur de cycle : sert à la persistance (Qwen) et au diagnostic
         o["cycle_id"] = journal["debut"]
     # Mouvement de la cote juste de Pinnacle (dropping odds), inscrit dans le pari. Garde-fou : une cote Pinnacle de
