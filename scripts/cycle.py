@@ -37,6 +37,7 @@ from cotes.direct import unibet as unibet_direct  # noqa: E402
 from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes.direct import matchbook as matchbook_direct  # noqa: E402
 from cotes.direct import betfair as betfair_direct  # noqa: E402
+from cotes.direct import fanduel as fanduel_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
@@ -65,6 +66,7 @@ BUDGETS = {
     "smarkets": 60,
     "matchbook": 25,
     "betfair": 45,          # catalogue relu toutes les 10 min (~50 appels) ; sinon prix seuls, 30 appels au plus
+    "fanduel": 40,          # liste NBA/NHL puis onglets de props ; coupé par SOURCE_FANDUEL=off
 }
 SMARKETS_FRAIS_MIN = 15
 _journal_lock = threading.Lock()
@@ -442,6 +444,13 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         journal["olybet_source"] = source_oly
         source_net = netbet_direct.mode_source()
         journal["netbet_source"] = source_net
+        source_fd = fanduel_direct.mode()
+        journal["fanduel_source"] = source_fd
+        fd_lignes, fd_meta = [], {"ok": True, "erreurs": [], "requetes": 0, "props": 0, "mode": "off"}
+        if source_fd == "direct":
+            # Référence props seulement : ne rejoint pas les cotes françaises ni les paris.
+            lancer("fanduel", fanduel_direct, BUDGETS["fanduel"], fanduel_direct.collecter,
+                   {"basket", "hockey"}, heures_directes, maintenant=maintenant)
 
         def lancer_francais(sports_fr):
             """PMU, Winamax, Betclic, OlyBet et NetBet : seul Unibet dépend du radar Pinnacle du cycle."""
@@ -552,6 +561,12 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
             net_lignes, net_meta = recevoir("netbet")
         else:
             net_lignes, net_meta = [], {"ok": False, "erreurs": [], "requetes": 0}
+        if source_fd == "direct":
+            recu = recevoir("fanduel")
+            if isinstance(recu, tuple) and len(recu) == 2:
+                fd_lignes, fd_meta = recu
+            else:
+                fd_lignes, fd_meta = [], {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
     if source_oly == "direct":
         signaler(journal, "olybet", list(oly_meta.get("erreurs") or []))
         lignes = list(lignes) + list(oly_lignes)
@@ -568,6 +583,24 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
             journal["netbet_controle"] = netbet_direct.controle_prix(net_lignes, refs)
         except Exception as e:  # noqa: BLE001
             journal["netbet_controle"] = {"ok": False, "erreur": type(e).__name__}
+    if source_fd == "direct":
+        noter_lecture(journal, "fanduel", fd_meta if isinstance(fd_meta, dict) else {})
+        journal["fanduel"] = {
+            "mode": "direct", "ok": bool((fd_meta or {}).get("ok")),
+            "requetes": (fd_meta or {}).get("requetes") or 0,
+            "matchs": (fd_meta or {}).get("matchs") or 0,
+            "props": (fd_meta or {}).get("props") or 0,
+            "ignores": (fd_meta or {}).get("ignores") or 0,
+            "avertissements": list((fd_meta or {}).get("avertissements") or [])[:5],
+        }
+    else:
+        journal["fanduel"] = {"mode": "off", "ok": True, "requetes": 0, "props": 0}
+    try:
+        from cotes.props import comparer_fanduel
+        journal["props_fanduel"] = comparer_fanduel(fd_lignes, pin)
+    except Exception as e:  # noqa: BLE001 - la comparaison FanDuel ne coupe pas le cycle
+        journal["props_fanduel"] = {"ok": False, "erreur": type(e).__name__, "reference_seule": True,
+                                    "rapproches": 0, "non_rapproches": 0}
     mesures_delta(pin, lignes)
     for nom, meta in (("pmu", metas["pmu_direct"]), ("unibet", metas["unibet_direct"]),
                       ("betclic", metas["betclic_direct"]), ("netbet", net_meta)):
@@ -575,7 +608,8 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         if isinstance(bloc, dict):
             horizon[nom] = bloc
     from cotes.joueurs import est_joueur
-    horizon["props"] = {"lignes": [l for l in list(pin) + list(lignes) if est_joueur(l.get("marche"))]}
+    horizon["props"] = {"lignes": [l for l in list(pin) + list(lignes) + list(fd_lignes)
+                                    if est_joueur(l.get("marche"))]}
     gardes = ("pmu", "unibet", "betclic", "netbet", "props")
     if donnees and any(k in horizon for k in gardes):
         horizon = {k: horizon[k] for k in gardes if k in horizon}
@@ -995,6 +1029,7 @@ def main() -> int:
         "polymarket": props_papier.verdict_polymarket(poly),
     }
     papier["polymarket"] = journal["props_papier"]["polymarket"]
+    papier["fanduel"] = journal.get("props_fanduel") or {}
     props_papier.ecrire(donnees, papier)
     for o in opportunites:           # marqueur de cycle : sert à la persistance (Qwen) et au diagnostic
         o["cycle_id"] = journal["debut"]

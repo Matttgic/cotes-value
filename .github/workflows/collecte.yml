@@ -128,6 +128,8 @@ jobs:
           SMARKETS_COLLECTE: ${{ vars.SMARKETS_COLLECTE || 'oui' }}
           # Matchbook, sans clé. direct = paris value ; shadow = lecture seule ; off = aucun appel.
           SOURCE_MATCHBOOK: ${{ vars.SOURCE_MATCHBOOK || 'direct' }}
+          # FanDuel, référence props NBA/NHL seulement (aucun pari). off coupe les appels.
+          SOURCE_FANDUEL: ${{ vars.SOURCE_FANDUEL || 'direct' }}
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
         run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
 
