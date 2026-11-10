@@ -49,6 +49,7 @@
       <button type="button" role="tab" id="bt-uniques" data-bilan="uniques" aria-controls="bilan-uniques">Paris uniques</button>
       <button type="button" role="tab" id="bt-strategies" data-bilan="strategies" aria-controls="o-strategies">Stratégies</button>
       <button type="button" role="tab" id="bt-mes" data-bilan="mes" aria-controls="o-mes">Mes stratégies</button>
+      <button type="button" role="tab" id="bt-props" data-bilan="props" aria-controls="bilan-props">Props</button>
     </div>
     <div id="bilan-uniques" role="tabpanel" aria-labelledby="bt-uniques">
       <div class="puces bu-periodes" id="bu-periodes" aria-label="Période"></div>
@@ -135,6 +136,14 @@
       une mise par bookmaker et par match, sans plafond journalier. Suivi depuis le 19/10 à 20 h (Paris).
       Le passé est un rejeu descriptif ; le test historique est positif, aucune rentabilité future n'est annoncée.</p></details>
       </details>
+    </div>
+    <div id="bilan-props" role="tabpanel" aria-labelledby="bt-props" hidden>
+      <div class="page-tete"><div><h2>Props</h2><p class="sous-texte">Paris fictifs NBA/NHL, 10 €, jamais notifiés. Seuil d'écart contre la cote juste Pinnacle.</p></div></div>
+      <div class="bu-kpis" id="props-kpis"></div>
+      <p class="aide" id="props-note"></p>
+      <h3 class="bu-titre">Par référence</h3><div class="bu-table" id="props-ref"></div>
+      <h3 class="bu-titre">Par statistique</h3><div class="bu-table" id="props-stats"></div>
+      <p class="aide" id="props-strategies"></p>
     </div>
     <div id="o-mes" role="tabpanel" aria-labelledby="bt-mes" hidden>
       <div class="page-tete"><div><h2>Mes stratégies actives</h2><p class="sous-texte">Les paris des stratégies cochées dans Notifications, à partir du moment où tu les as cochées.</p></div></div>
@@ -360,6 +369,8 @@ function montrerVueBilan(v) {
   document.getElementById("bilan-uniques").hidden = v !== "uniques";
   document.getElementById("o-strategies").hidden = v !== "strategies";
   document.getElementById("o-mes").hidden = v !== "mes";
+  document.getElementById("bilan-props").hidden = v !== "props";
+  if (v === "props") rendreProps();
   if (v === "mes") rendreMesStrategies();
   if (v === "strategies") requestAnimationFrame(() => rendreStrategies());
   else requestAnimationFrame(() => rendreCourbe());
@@ -368,8 +379,8 @@ function montrerVueBilan(v) {
 const GROUPES = {jouer:"paris", regler:"controle", strategies:"bilan", mes:"bilan", segments:"bilan", analyses:"bilan"};
 function ouvrir(o) {
   // « #strategies » ouvre la vue Stratégies du bilan ; « #bilan », les paris uniques.
-  if (o === "strategies" || o === "mes" || o === "bilan") vueBilan = o === "bilan" ? "uniques" : o;
-  const page = o === "strategies" || o === "mes" ? "bilan" : o === "jouer" ? "paris" : o, groupe = GROUPES[page] || page;
+  if (o === "strategies" || o === "mes" || o === "bilan" || o === "props") vueBilan = o === "bilan" ? "uniques" : o;
+  const page = o === "strategies" || o === "mes" || o === "props" ? "bilan" : o === "jouer" ? "paris" : o, groupe = GROUPES[page] || page;
   const nom = page === "bilan" && vueBilan !== "uniques" ? vueBilan : page;
   document.querySelectorAll("nav button[data-o]").forEach(b => {
     b.classList.toggle("actif", b.dataset.o===groupe);
@@ -1054,6 +1065,28 @@ document.getElementById("bu-reference").onclick = ev => {
   if (ev.preventDefault) ev.preventDefault();
   voirReference(a.dataset.ref);
 };
+function ligneProps(nom, r) {
+  if (!r) return "";
+  return `<div class="bu-ligne"><span>${e(nom)}</span><span>${r.n}</span><span>${r.regles}</span><span>${pctEntier(r.reussite)}</span><span class="${signe(r.gain)}">${eur(r.gain)}</span><b class="${signe(r.roi)}">${pct(r.roi)}</b><span>${r.clv_moyenne==null?"—":pct(r.clv_moyenne)}</span></div>`;
+}
+function tableProps(lignes) {
+  return `<div class="bu-ligne bu-entete"><span></span><span>Paris</span><span>Réglés</span><span>Réuss.</span><span>Net</span><span>ROI</span><span>CLV</span></div>` + lignes;
+}
+function rendreProps() {
+  const P = D.props || {}, t = P.total || {};
+  document.getElementById("props-kpis").innerHTML = [["Paris", t.n || 0, ""], ["Réussite", pctEntier(t.reussite), ""],
+    ["ROI", pct(t.roi), signe(t.gain)], ["CLV", t.clv_moyenne==null?"—":pct(t.clv_moyenne), signe(t.clv_moyenne)]]
+    .map(([a,b,c]) => `<div><span>${a}</span><b class="${c}">${b}</b></div>`).join("");
+  const poly = P.polymarket || {};
+  document.getElementById("props-note").textContent =
+    `Seuil ${pct(P.seuil)} · mise ${P.mise || 10} € · ${t.en_cours || 0} en cours · ${t.annules || 0} annulés · CLV sur ${t.clv_n || 0} paris réglés à moins de 30 min du coup d'envoi. ${poly.raison || ""}`;
+  const refs = Object.entries(P.references || {}).map(([n,r]) => ligneProps(n, r)).join("");
+  document.getElementById("props-ref").innerHTML = refs ? tableProps(refs) : '<p class="aide">Aucun papier.</p>';
+  const stats = Object.entries(P.stats || {}).map(([n,r]) => ligneProps(n, r)).join("");
+  document.getElementById("props-stats").innerHTML = stats ? tableProps(stats) : '<p class="aide">Aucune statistique réglée.</p>';
+  const st = (P.strategies || []).map(s => `${s.nom} (${s.actif ? "active" : "désactivée"})`).join(" · ");
+  document.getElementById("props-strategies").textContent = st;
+}
 rendreBilanUniques();
 
 // --- Segments : les groupes de paris qui marchent, avec ce qui relève de la chance
