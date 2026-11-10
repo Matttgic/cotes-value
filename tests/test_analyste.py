@@ -194,6 +194,35 @@ def test_verdict_yoyo():
     assert any("yo-yo" in phrase for phrase in avis["raisons"])
 
 
+def test_moins_de_cent_clv_est_trop_tot_meme_avec_assez_de_paris():
+    # 120 paris réglés, mais seulement 99 clôtures : même règle que POL-1.5-3-e2-h36.
+    clvs = [0.02] * 99 + [None] * 21
+    avis = analyser_serie([1.0] * 120, [10.0] * 120, [1.8] * 120, clvs)
+    assert avis["details"]["paris_regles"] == 120 and avis["details"]["clv_n"] == 99
+    assert avis["verdict"] == TROP_TOT
+    assert any("CLV" in phrase for phrase in avis["raisons"])
+
+
+def test_la_famille_bh_garde_une_strategie_courte_en_clv():
+    # ≥100 paris : elle entre dans la correction, même si le verdict reste « Trop tôt ».
+    courte = [pari_regle(i, clv=0.02 if i < 99 else None) for i in range(120)]
+    solide = [pari_regle(1000 + i, clv=0.03) for i in range(120)]
+    courte_avis, solide_avis = annoter_avis([courte, solide], "2026-11-01T00:00:00Z")
+    assert courte_avis["verdict"] == TROP_TOT
+    assert courte_avis["details"]["q_bh"] is not None
+    assert solide_avis["details"]["q_bh"] is not None
+    assert solide_avis["verdict"] == FIABLE
+
+
+def pari_regle(i, clv=0.02):
+    # Règlement le lendemain de la détection, une minute par pari, pour rester dans la fenêtre de CLV.
+    return {"id": f"p{i}", "statut": "gagne", "cote": 1.5, "mise": 10, "clv": clv,
+            "detecte": "2026-10-16T12:00:00Z", "debut": "2026-10-16T18:00:00Z",
+            "cloture_lue": "2026-10-16T17:40:00Z" if clv is not None else None,
+            "regle_le": f"2026-10-17T{i // 60:02d}:{i % 60:02d}:00Z",
+            "match_id": f"m{i}"}
+
+
 def test_verdict_echantillon_trop_court_meme_si_la_courbe_est_belle():
     avis = _serie([1.0] * 12)
     assert avis["verdict"] == TROP_TOT

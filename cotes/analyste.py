@@ -6,7 +6,8 @@ Pas de modèle de langage, pas d'appel réseau : uniquement les paris déjà ré
 
 Verdicts, exactement l'un de ces quatre libellés :
 
-- « Trop tôt pour juger » : moins de ``min_paris_regles`` paris réglés ;
+- « Trop tôt pour juger » : moins de ``min_paris_regles`` paris réglés, ou moins de ``min_clv``
+  CLV mesurées (le test ne porte pas encore sur assez de clôtures) ;
 - « Fiable » : profit > 0, bootstrap par match sous ``proba_chance_fiable`` (20 %), CLV moyenne > 0
   sur au moins ``min_clv`` mesures, test unilatéral de cette moyenne (erreur-type groupée par match)
   avec q de Benjamini-Hochberg < ``q_bh_fiable`` parmi les stratégies d'au moins 100 paris, CLV
@@ -386,14 +387,17 @@ def _raisons(verdict: str, d: dict, seuils: dict) -> list[str]:
     """Deux ou trois phrases, dans l'ordre du signal le plus parlant."""
     n = d["paris_regles"]
     if verdict == TROP_TOT:
-        phrases = [f"Seulement {n} paris réglés : il en faut au moins {seuils['min_paris_regles']} pour juger."]
+        if n < seuils["min_paris_regles"]:
+            phrases = [f"Seulement {n} paris réglés : il en faut au moins {seuils['min_paris_regles']} pour juger."]
+        else:
+            phrases = [f"Seulement {d['clv_n']} CLV mesurées : il en faut au moins {seuils['min_clv']} pour juger."]
         if d["gain"] > 0:
             phrases.append("Le gain affiché peut encore n'être qu'une bonne série.")
         elif d["gain"] < 0:
             phrases.append("La perte affichée peut encore n'être qu'un mauvais départ.")
         else:
             phrases.append("La courbe est trop courte pour séparer une méthode du hasard.")
-        if d["clv_n"] == 0:
+        if d["clv_n"] == 0 and n >= seuils["min_paris_regles"]:
             phrases.append("Aucune CLV mesurée : on ne sait pas si les cotes battaient la clôture.")
         elif len(phrases) < 3:
             phrases.append("On attend un suivi plus long avant de trancher.")
@@ -499,7 +503,8 @@ def _clv_etablie(details: dict, cfg: dict) -> bool:
 def _verdict(details: dict, cfg: dict) -> str:
     """Le verdict lit les chiffres publiés. ``q_bh`` vaut la p brute quand la stratégie est jugée seule."""
     n = details["paris_regles"]
-    if n < cfg["min_paris_regles"]:
+    # Moins de 100 paris, ou moins de 100 CLV mesurées : le test n'a pas de quoi conclure.
+    if n < cfg["min_paris_regles"] or details["clv_n"] < cfg["min_clv"]:
         return TROP_TOT
     c1, c2 = details["clv_premiere"], details["clv_seconde"]
     clv_ok = _clv_etablie(details, cfg)
