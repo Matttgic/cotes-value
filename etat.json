@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-10T13:18:37+00:00",
+  "debut": "2026-11-10T13:23:16+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,29 +9,27 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 2.1,
+    "secondes": 1.8,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.7,
+    "secondes": 3.8,
     "ok": true
    },
    "polymarket": {
-    "secondes": 7.6,
+    "secondes": 6.0,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 14.8,
+    "secondes": 10.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 28 matchups : HTTP 403",
-     "sport 37 markets/straight : HTTP 403"
-    ],
-    "reprise": 10
+     "sport 27 matchups : HTTP 403"
+    ]
    },
    "unibet_direct": {
-    "secondes": 2.2,
+    "secondes": 1.7,
     "ok": false,
     "degrade": true,
     "erreurs": [
@@ -39,19 +37,19 @@
     ]
    },
    "betclic_direct": {
-    "secondes": 23.8,
+    "secondes": 15.8,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 30.7,
+    "secondes": 29.1,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 47.4,
+    "secondes": 42.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.1,
+    "secondes": 52.6,
     "ok": true
    },
    "smarkets": {
@@ -60,15 +58,15 @@
     "cache": true
    },
    "association": {
-    "secondes": 1.7,
+    "secondes": 1.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.5,
+    "secondes": 0.4,
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.2,
+    "secondes": 0.0,
     "ok": true
    }
   },
@@ -92,25 +90,25 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 137,
-   "lignes": 3927
+   "lignes": 3929
   },
   "matchbook_fraicheur": {
-   "lignes": 3927,
-   "source_connue": 3925,
+   "lignes": 3929,
+   "source_connue": 3927,
    "source_inconnue": 0,
    "source_invalide": 2,
    "mouvement_min_s": 0,
-   "mouvement_max_s": 9571,
-   "reception": "2026-11-10T13:18:37+00:00"
+   "mouvement_max_s": 9850,
+   "reception": "2026-11-10T13:23:16+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 900,
-   "age_min_s": 69,
-   "lignes": 86369,
-   "lignes_perimees": 482,
+   "age_max_s": 716,
+   "age_min_s": 59,
+   "lignes": 86223,
+   "lignes_perimees": 1905,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -120,20 +118,16 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 8,
+    "head_200": 3,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 5,
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 4
+    "choisi_fixe": 2,
+    "reprise_403": 1,
+    "sport_vide": 5
    }
   },
   "reprise": {
-   "actif": true,
-   "Pinnacle": {
-    "padel": 10
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -164,7 +158,7 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 5,
+   "examines": 7,
    "comparaisons": [
     {
      "match": "Rome (F) – Servette FC Chenois (Wom)",
@@ -193,27 +187,60 @@
     {
      "match": "Real Madrid (F) – Paris FC (F)",
      "source": "Pinnacle",
-     "cote_olybet": 1.42,
+     "cote_olybet": 1.4,
      "cote_reference": 1.476,
-     "ecart_relatif": 0.0381,
+     "ecart_relatif": 0.0516,
      "aberrant": false
     },
     {
      "match": "Real Madrid (F) – Paris FC (F)",
      "source": "PMU",
-     "cote_olybet": 1.42,
+     "cote_olybet": 1.4,
      "cote_reference": 1.3,
-     "ecart_relatif": 0.0923,
+     "ecart_relatif": 0.0769,
+     "aberrant": false
+    },
+    {
+     "match": "Juventus (F) – Lyon (F)",
+     "source": "Pinnacle",
+     "cote_olybet": 12.0,
+     "cote_reference": 14.73,
+     "ecart_relatif": 0.1853,
+     "aberrant": true
+    },
+    {
+     "match": "Juventus (F) – Lyon (F)",
+     "source": "PMU",
+     "cote_olybet": 12.0,
+     "cote_reference": 12.5,
+     "ecart_relatif": 0.04,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Juventus (F) – Lyon (F)",
+     "source": "Pinnacle",
+     "cote_olybet": 12.0,
+     "cote_reference": 14.73,
+     "ecart_relatif": 0.1853,
+     "aberrant": true
+    }
+   ]
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
    "examines": 6,
    "comparaisons": [
+    {
+     "match": "Fleury 91 – Toulouse FC",
+     "source": "Pinnacle",
+     "cote_netbet": 1.45,
+     "cote_reference": 1.544,
+     "ecart_relatif": 0.0606,
+     "aberrant": false
+    },
     {
      "match": "BK Häcken – Chelsea",
      "source": "Pinnacle",
@@ -253,44 +280,36 @@
      "cote_reference": 3.8,
      "ecart_relatif": 0.0132,
      "aberrant": false
-    },
-    {
-     "match": "Oud-Heverlee Leuven – HB Koge",
-     "source": "Pinnacle",
-     "cote_netbet": 4.3,
-     "cote_reference": 4.69,
-     "ecart_relatif": 0.0832,
-     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-10T13:14:01+00:00",
-   "pinnacle_derniere_lecture": "2026-11-10T13:18:46+00:00",
+   "pinnacle_premiere_lecture": "2026-11-10T13:23:17+00:00",
+   "pinnacle_derniere_lecture": "2026-11-10T13:23:25+00:00",
    "books_premiere_lecture": "2026-11-10T12:45:56+00:00",
-   "books_derniere_lecture": "2026-11-10T13:18:37+00:00",
-   "ecart_enveloppe_secondes": 1970.0
+   "books_derniere_lecture": "2026-11-10T13:23:16+00:00",
+   "ecart_enveloppe_secondes": 2249.0
   },
   "historique_cotes": {
-   "lignes": 347
+   "lignes": 424
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.5
+   "age_min": 14.1
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 565,
    "a_verifier": 13,
    "non_conforme": 8,
-   "mesures": 8297,
+   "mesures": 8322,
    "matchs_suspects": 0
   },
   "props_joueurs": {
    "pinnacle": 590,
-   "Winamax": 6428,
+   "Winamax": 6437,
    "rapproches": 191,
    "valeur": 0
   },
@@ -308,8 +327,8 @@
   },
   "mouvement": {
    "actif": true,
-   "ancres": 29096,
-   "mesures": 25052,
+   "ancres": 28742,
+   "mesures": 25732,
    "annotees": 1,
    "figees": 1
   },
@@ -327,27 +346,21 @@
    "dernier_reglement": "2026-11-10T12:33:21+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-10T13:19:39+00:00",
+  "fin": "2026-11-10T13:24:12+00:00",
   "cotes": {
-   "francaises": 48077,
-   "pinnacle": 86379,
-   "polymarket": 6796,
+   "francaises": 48081,
+   "pinnacle": 86223,
+   "polymarket": 6788,
    "smarkets": 1902,
-   "matchbook": 3927,
+   "matchbook": 3929,
    "betfair": 0
   },
   "matchs_francais": 622,
-  "opportunites": 5,
+  "opportunites": 3,
   "opportunites_suspectes": 3,
-  "nouveaux_paris": 3
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-09T21:50:15+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-09T21:54:56+00:00",
    "mode": "complet",
@@ -1547,6 +1560,12 @@
    "mode": "complet",
    "opportunites": 5,
    "nouveaux_paris": 3
+  },
+  {
+   "debut": "2026-11-10T13:23:16+00:00",
+   "mode": "complet",
+   "opportunites": 3,
+   "nouveaux_paris": 0
   }
  ],
  "dernier_reglement": "2026-11-10T12:33:21+00:00",
