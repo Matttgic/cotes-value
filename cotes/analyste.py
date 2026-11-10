@@ -13,10 +13,10 @@ Verdicts, exactement l'un de ces quatre libellés :
   avec q de Benjamini-Hochberg < ``q_bh_fiable`` parmi les stratégies d'au moins 100 paris, CLV
   positive sur les deux moitiés, et CLV qui reste positive sans les ``part_cotes`` cotes les plus hautes
   (gagnantes et perdantes) ;
-- « Chance ou yo-yo » : la CLV elle-même est instable (moitiés de signes opposés, ou elle ne tient
-  pas sans les longues cotes), ou bien le profit ressemble au hasard sans CLV significative ;
-- « Prometteur mais pas prouvé » : la CLV porte un signal, mais il manque une condition de
-  « Fiable » (profit, bootstrap, correction entre stratégies, moitiés ou échantillon de CLV).
+- « Chance ou yo-yo », après l'échec de « Fiable » : CLV moyenne ≤ 0, ou CLV ≤ 0 une fois retirées
+  les cotes les plus hautes, ou gain ≤ 0 avec une p de CLV non corrigée ≥ 5 % ;
+- « Prometteur mais pas prouvé » : tout le reste (il manque une condition de « Fiable », sans que
+  la CLV soit négative ou non significative dans une courbe en perte).
 """
 from __future__ import annotations
 
@@ -29,13 +29,11 @@ from random import Random
 SEUILS = {
     "min_paris_regles": 100,       # en dessous : « Trop tôt pour juger », et hors correction BH
     "proba_chance_fiable": 0.20,   # bootstrap par match : part des tirages dont le profit est ≤ 0
-    "proba_chance_yoyo": 0.20,     # à partir de là, un profit positif ressemble encore au hasard
     "min_clv": 100,                # CLV mesurées exigées pour qu'une moyenne positive compte
     "clv_moyenne_min": 0.0,        # fraction : « Fiable » exige une CLV moyenne strictement supérieure
-    "q_bh_fiable": 0.05,           # q de Benjamini-Hochberg du test de CLV, entre les stratégies éligibles
+    "q_bh_fiable": 0.05,           # q de BH pour « Fiable », et seuil de la p brute dans « Chance »
     "part_cotes": 0.05,            # part des paris aux cotes les plus hautes retirée (gagnés et perdus)
-    "r2_yoyo": 0.25,               # R² du profit cumulé contre l'indice de pari, en dessous : irrégulier
-    "sharpe_yoyo": 0.05,           # moyenne / écart-type du P&L par pari, en dessous : peu de pente
+    # R², Sharpe, moitiés et bootstrap restent affichés dans « Détails ». Ils ne décident plus « Chance ».
     "tirages_bootstrap": 10000,    # rééchantillons de matchs, avec remise
     "graine": 20261110,            # graine fixe : le même suivi redonne le même avis
 }
@@ -410,22 +408,15 @@ def _raisons(verdict: str, d: dict, seuils: dict) -> list[str]:
         ]
     if verdict == CHANCE:
         phrases = []
-        c1, c2 = d.get("clv_premiere"), d.get("clv_seconde")
-        if c1 is not None and c2 is not None and c1 * c2 < 0:
-            phrases.append("La CLV change de signe entre les deux moitiés du suivi : la courbe fait le yo-yo.")
-        if d["depend_grosses_cotes"]:
+        if d["clv_moyenne"] is not None and d["clv_moyenne"] <= 0:
+            phrases.append(f"La CLV moyenne est de {_pct(d['clv_moyenne'])} : les cotes prises ne battent pas la clôture.")
+        if d["clv_sans_cotes"] is not None and d["clv_sans_cotes"] <= 0:
             phrases.append("Sans les cotes les plus hautes, gagnantes comme perdantes, la CLV n'est plus positive.")
-        if d["gain"] > 0 and d["proba_chance"] is not None and d["proba_chance"] >= seuils["proba_chance_yoyo"]:
-            phrases.append(f"Le profit disparaît dans {_pct(d['proba_chance'])} des tirages par match : il ressemble à de la chance.")
-        if d["gain"] <= 0:
-            phrases.append("Le suivi est en perte : la courbe ne montre pas une méthode gagnante.")
-        if d["r2"] is not None and d["r2"] < seuils["r2_yoyo"]:
-            phrases.append("Le profit cumulé ne suit pas une pente régulière.")
+        p = d.get("pvalue_clv")
+        if d["gain"] <= 0 and p is not None and p >= seuils["q_bh_fiable"]:
+            phrases.append("Le suivi est en perte, et la CLV n'est pas nettement au-dessus de zéro.")
         if len(phrases) < 2:
-            if d["drawdown_recupere"] is False:
-                phrases.append(f"Le repli maximal ({_eur(-d['drawdown_max'])}) n'a pas été rattrapé.")
-            else:
-                phrases.append(f"Repli maximal de {_eur(-d['drawdown_max'])}, sur {n} paris réglés.")
+            phrases.append(f"Repli maximal de {_eur(-d['drawdown_max'])}, sur {n} paris réglés.")
         if len(phrases) < 2:
             phrases.append("Rien ici ne permet de suivre cette courbe comme une méthode.")
         return phrases[:3]
@@ -514,16 +505,12 @@ def _verdict(details: dict, cfg: dict) -> str:
                  and details["proba_chance"] < cfg["proba_chance_fiable"])
     if clv_ok and moities_ok and robuste and profit_ok:
         return FIABLE
-    # La CLV change de signe ou ne tient qu'aux longues cotes : ce n'est pas un signal stable.
-    if (c1 is not None and c2 is not None and c1 * c2 < 0) or details["depend_grosses_cotes"]:
-        return CHANCE
-    # Sans CLV établie, un profit négatif, trop fragile ou trop irrégulier ressemble au hasard.
-    if not clv_ok and (
-            details["gain"] <= 0
-            or (details["gain"] > 0 and details["proba_chance"] is not None
-                and details["proba_chance"] >= cfg["proba_chance_yoyo"])
-            or (details["r2"] is not None and details["sharpe"] is not None
-                and details["r2"] < cfg["r2_yoyo"] and details["sharpe"] < cfg["sharpe_yoyo"])):
+    # Règle d'Hugo, après « Fiable ». La p est celle du test groupé, avant Benjamini-Hochberg.
+    p = details.get("pvalue_clv")
+    sans = details["clv_sans_cotes"]
+    if ((details["clv_moyenne"] is not None and details["clv_moyenne"] <= 0)
+            or (sans is not None and sans <= 0)
+            or (details["gain"] <= 0 and p is not None and p >= cfg["q_bh_fiable"])):
         return CHANCE
     return PROMETTEUR
 

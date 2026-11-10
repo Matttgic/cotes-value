@@ -27,7 +27,6 @@ def _ligne(identifiant, nom, note, regles):
 def test_seuils_prudents_documentes():
     assert SEUILS["min_paris_regles"] == 100
     assert SEUILS["proba_chance_fiable"] == 0.20
-    assert SEUILS["proba_chance_yoyo"] == 0.20
     assert SEUILS["min_clv"] == 100
     assert SEUILS["q_bh_fiable"] == 0.05
     assert SEUILS["clv_moyenne_min"] == 0
@@ -180,18 +179,39 @@ def test_verdict_longshot_chanceux():
     assert avis["verdict"] == CHANCE
     assert avis["details"]["depend_grosses_cotes"] is True
     assert avis["details"]["clv_sans_cotes"] < 0
-    assert avis["details"]["proba_chance"] >= SEUILS["proba_chance_yoyo"]
     assert any("cotes" in phrase for phrase in avis["raisons"])
 
 
-def test_verdict_yoyo():
+def test_verdict_clv_non_positive_est_chance():
     gains = [10.0] * 60 + [-8.0] * 60
     clvs = [0.02] * 60 + [-0.02] * 60
     avis = analyser_serie(gains, [10.0] * 120, [2.0] * 120, clvs)
+    assert avis["details"]["clv_moyenne"] <= 0
     assert avis["verdict"] == CHANCE
-    assert avis["details"]["clv_premiere"] > 0 > avis["details"]["clv_seconde"]
-    assert avis["details"]["memes_signe"] is False
-    assert any("yo-yo" in phrase for phrase in avis["raisons"])
+    assert any("clôture" in phrase for phrase in avis["raisons"])
+
+
+def test_moities_opposees_ne_suffisent_plus_a_dire_chance():
+    # CLV positive au total et sans les longues cotes, profit positif, mais les deux moitiés
+    # n'ont pas le même signe : ce n'est plus « Chance », seulement « Prometteur ».
+    clvs = [0.04] * 60 + [-0.01] * 60
+    avis = analyser_serie([1.0] * 120, [10.0] * 120, [1.8] * 120, clvs)
+    d = avis["details"]
+    assert d["clv_premiere"] > 0 > d["clv_seconde"]
+    assert d["clv_moyenne"] > 0 and d["clv_sans_cotes"] > 0 and d["gain"] > 0
+    assert avis["verdict"] == PROMETTEUR
+
+
+def test_perte_et_clv_non_significative_est_chance():
+    # Gain négatif et p brute de CLV au-dessus de 5 % : « Chance », même si la moyenne est > 0.
+    clvs = ([0.05] * 52 + [-0.05] * 48) * 2
+    cotes = [1.5 + (i % 10) * 0.1 for i in range(200)]
+    avis = analyser_serie([-1.0] * 200, [10.0] * 200, cotes, clvs)
+    assert avis["details"]["clv_sans_cotes"] > 0
+    assert avis["details"]["gain"] < 0
+    assert avis["details"]["clv_moyenne"] > 0
+    assert avis["details"]["pvalue_clv"] >= SEUILS["q_bh_fiable"]
+    assert avis["verdict"] == CHANCE
 
 
 def test_moins_de_cent_clv_est_trop_tot_meme_avec_assez_de_paris():
