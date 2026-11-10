@@ -35,6 +35,8 @@ FENETRE_MATCH_H = 6
 STRATEGIES = (
     {"cle": "props_pinnacle", "nom": "Props Pinnacle", "reference": "Pinnacle", "actif": False},
     {"cle": "props_polymarket", "nom": "Props Polymarket", "reference": "Polymarket", "actif": False},
+    # Papier seulement, éteint : FanDuel n'est pas un book où Matthieu peut miser.
+    {"cle": "props_fanduel", "nom": "Props FanDuel", "reference": "FanDuel", "actif": False, "papier": True},
 )
 # Colonnes ESPN. NBA : PTS, REB, AST, 3PT (« 2-5 » = 2 réussis). NHL : G, A, SOG, SV.
 # Les points NHL sont G + A (la feuille n'a pas de colonne PTS joueur).
@@ -422,6 +424,11 @@ def bilan(doc: dict) -> dict:
         "strategies": [dict(s) for s in STRATEGIES],
         "polymarket": doc.get("polymarket") or {"present": False, "liquides": 0, "utilise": False,
                                                 "raison": NOTE_POLYMARKET},
+        "fanduel": doc.get("fanduel") or {
+            "fanduel": 0, "pinnacle": 0, "rapproches": 0, "non_rapproches": 0,
+            "ecart_proba_moyen": None, "ecart_absolu_moyen": None, "accord": None,
+            "reference_seule": True,
+        },
         "total": _resume(paris),
         "references": {k: _resume(v) for k, v in sorted(par_ref.items())},
         "stats": {k: _resume(v) for k, v in sorted(par_stat.items())},

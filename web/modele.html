@@ -141,6 +141,7 @@
       <div class="page-tete"><div><h2>Props</h2><p class="sous-texte">Paris fictifs NBA/NHL, 10 €, jamais notifiés. Seuil d'écart contre la cote juste Pinnacle.</p></div></div>
       <div class="bu-kpis" id="props-kpis"></div>
       <p class="aide" id="props-note"></p>
+      <p class="aide" id="props-fanduel"></p>
       <h3 class="bu-titre">Par référence</h3><div class="bu-table" id="props-ref"></div>
       <h3 class="bu-titre">Par statistique</h3><div class="bu-table" id="props-stats"></div>
       <p class="aide" id="props-strategies"></p>
@@ -1080,6 +1081,9 @@ function rendreProps() {
   const poly = P.polymarket || {};
   document.getElementById("props-note").textContent =
     `Seuil ${pct(P.seuil)} · mise ${P.mise || 10} € · ${t.en_cours || 0} en cours · ${t.annules || 0} annulés · CLV sur ${t.clv_n || 0} paris réglés à moins de 30 min du coup d'envoi. ${poly.raison || ""}`;
+  const f = P.fanduel || {};
+  document.getElementById("props-fanduel").textContent =
+    `FanDuel, référence seule (aucun pari). ${f.rapproches || 0} lignes rapprochées à Pinnacle, ${f.non_rapproches || 0} sans correspondance. Écart moyen de probabilité juste ${pct(f.ecart_proba_moyen)}. Accord ${pctEntier(f.accord)}.`;
   const refs = Object.entries(P.references || {}).map(([n,r]) => ligneProps(n, r)).join("");
   document.getElementById("props-ref").innerHTML = refs ? tableProps(refs) : '<p class="aide">Aucun papier.</p>';
   const stats = Object.entries(P.stats || {}).map(([n,r]) => ligneProps(n, r)).join("");

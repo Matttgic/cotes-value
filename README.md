@@ -25,6 +25,7 @@ par lui) est arrêté depuis le 18/10/2026. `cotes/pulsescore.py` ne fait plus d
 | PMU | Cotes à comparer | Kambi (`cotes/direct/pmu.py`) | Gratuit |
 | OlyBet | Cotes à comparer | Swarm BetConstruct (`cotes/direct/olybet.py`) | Gratuit |
 | NetBet | Cotes à comparer | État Nuxt de netbet.fr (`cotes/direct/netbet.py`) | Gratuit |
+| FanDuel | Référence props NBA/NHL | API publique du site (`cotes/direct/fanduel.py`) | Gratuit |
 
 Les paris déjà pris contre Betfair ou Kalshi restent dans les bilans ; ces sources ne sont plus interrogées.
 
@@ -33,6 +34,8 @@ cotes trop vieilles (cache de 15 min chez Pinnacle depuis le 19/10/2026) : voir
 [docs/pinnacle-secours.md](docs/pinnacle-secours.md).
 
 OlyBet et NetBet peuvent être coupés (`SOURCE_OLYBET` ou `SOURCE_NETBET` = `off`).
+FanDuel ne sert que de référence pour les props NBA/NHL (`SOURCE_FANDUEL` = `direct`
+dans la collecte, `off` sinon) : aucun pari, la stratégie Props FanDuel reste éteinte.
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
 compte restent en période `MATCH?` et ne sont pas comparés.
 
