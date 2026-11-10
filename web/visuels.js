@@ -85,8 +85,12 @@ function panneauAnalyste(r) {
     ['Probabilité que le profit soit du hasard', ratio(d.proba_chance)],
     ['Tirages bootstrap', (d.tirages??'—')+' · graine '+(d.graine??'—')],
     ['CLV moyenne', pct(d.clv_moyenne)],
-    ['CLV mesurées', nb(d.clv_n)],
-    ['p du t-test (CLV > 0)', pVal(d.pvalue_clv)],
+    ['CLV mesurées', nb(d.clv_n)+(d.clv_matchs==null?'':' · '+nb(d.clv_matchs)+' matchs')],
+    ['p du t-test par match (CLV > 0)', pVal(d.pvalue_clv)],
+    ['q Benjamini-Hochberg', pVal(d.q_bh)],
+    ['CLV première moitié', pct(d.clv_premiere)],
+    ['CLV seconde moitié', pct(d.clv_seconde)],
+    ['CLV sans les 5 % de cotes les plus hautes', pct(d.clv_sans_cotes)],
     ['Repli maximal', d.drawdown_max==null?'—':eur(-Math.abs(d.drawdown_max))],
     ['Retour au plus haut', retour],
     ['Régularité (R²)', dec(d.r2)],
@@ -94,9 +98,7 @@ function panneauAnalyste(r) {
     ['ROI première moitié', pct(d.roi_premiere)],
     ['ROI seconde moitié', pct(d.roi_seconde)],
     ['Même signe sur les deux moitiés', d.memes_signe==null?'—':(d.memes_signe?'oui':'non')],
-    ['ROI sans le top 5 % des cotes gagnantes', pct(d.roi_sans_cotes)],
-    ['ROI sans les 3 plus gros gains', pct(d.roi_sans_gains)],
-    ['Dépend de quelques grosses cotes', d.depend_grosses_cotes?'oui':'non']
+    ['Dépend des cotes les plus hautes', d.depend_grosses_cotes?'oui':'non']
   ];
   const raisons=(avis.raisons||[]).slice(0,3).map(t=>'<li>'+e(t)+'</li>').join('');
   return '<aside class="avis-analyste" aria-label="Avis d\'analyste"><p class="avis-kicker">Avis d\'analyste</p>'
