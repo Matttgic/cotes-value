@@ -9,7 +9,7 @@ function ligneAccueilPari(p) {
 }
 function rangTexte(n) {return `${n}<sup>${n===1 ? 'er' : 'e'}</sup>`;}
 // Bilan des paris uniques réglés dans une mise donnée, quel que soit le mode affiché : même règle qu'appliquerMise
-// (mise Kelly quand le pari en a une, sinon la mise fixe d'origine).
+// (mise Kelly ¼ quand le pari en a une, sinon la mise fixe d'origine).
 function bilanEnMise(ps, kelly) {
   let mises = 0, net = 0;
   for (const p of ps) {
@@ -18,16 +18,18 @@ function bilanEnMise(ps, kelly) {
   }
   return {net: Math.round(net * 100) / 100, roi: mises ? net / mises : null};
 }
+function nomMiseAccueil(mode) { return typeof nomMise === 'function' ? nomMise(mode) : mode === 'fixe' ? '10 € fixes' : 'Kelly ¼'; }
 function rendreAccueil() {
   const cible=document.getElementById('acc-kpis');if(!cible) return;
   const heure=Number(new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',hourCycle:'h23'}).format(new Date()));
   document.getElementById('acc-titre').textContent=(heure>=5 && heure<18 ? 'Bonjour' : 'Bonsoir')+' Matthieu';
-  const mise=miseMode==='kelly' ? 'Kelly ¼' : '10 € fixes';
+  const mise=nomMiseAccueil(miseMode);
   const reglees=fiches.filter(p=>p.unique_bilan && p.gain!=null),s=statsBU(reglees);
   const enCours=fiches.filter(p=>p.statut==='en_cours' && !p.a_regler);
   // L'autre mise reste visible : en 10 € fixes, les grosses cotes perdantes pèsent autant que les petites ;
   // en Kelly ¼, la mise suit l'écart et la cote. Les deux lectures se complètent.
-  const autreKelly=miseMode!=='kelly', autre=bilanEnMise(reglees,autreKelly), nomAutre=autreKelly ? 'Kelly ¼' : '10 € fixes';
+  // Repère affiché à côté : les mises fixes, ou Kelly ¼ quand on regarde déjà les mises fixes.
+  const autreKelly=miseMode==='fixe', autre=bilanEnMise(reglees,autreKelly), nomAutre=nomMiseAccueil(autreKelly ? 'kelly' : 'fixe');
   cible.innerHTML=[
     [`Gain net · paris uniques · ${mise}`,eurC(s.net),signe(s.net),`${s.n} réglés · en ${nomAutre} : ${eurC(autre.net)}`],
     ['ROI',pct(s.roi),signe(s.net),`Gain net / mises réglées · en ${nomAutre} : ${pct(autre.roi)}`],

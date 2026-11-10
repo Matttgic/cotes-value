@@ -83,7 +83,7 @@ function panneauAnalyste(r) {
     ['Gain net', d.gain==null?'—':eur(d.gain)],
     ['ROI', pct(d.roi)],
     ['Probabilité que le profit soit du hasard', ratio(d.proba_chance)],
-    ['Tirages bootstrap', (d.tirages??'—')+' · graine '+(d.graine??'—')],
+    ['Calcul du hasard', d.methode_hasard==='point-selle'?'par match, sans tirage (point-selle)':d.methode_hasard==='exact'?'exact (tous les matchs du même signe)':(d.tirages??'—')+' tirages par match · graine '+(d.graine??'—')],
     ['CLV moyenne', pct(d.clv_moyenne)],
     ['CLV mesurées', nb(d.clv_n)+(d.clv_matchs==null?'':' · '+nb(d.clv_matchs)+' matchs')],
     ['p du t-test par match (CLV > 0)', pVal(d.pvalue_clv)],
@@ -101,10 +101,31 @@ function panneauAnalyste(r) {
     ['Dépend des cotes les plus hautes', d.depend_grosses_cotes?'oui':'non']
   ];
   const raisons=(avis.raisons||[]).slice(0,3).map(t=>'<li>'+e(t)+'</li>').join('');
-  return '<aside class="avis-analyste" aria-label="Avis d\'analyste"><p class="avis-kicker">Avis d\'analyste</p>'
-    +'<p class="avis-verdict '+ton+'">'+e(avis.verdict)+'</p><ul class="avis-raisons">'+raisons+'</ul>'
-    +'<details class="avis-details"><summary>Détails</summary><dl class="avis-nombres">'
-    +lignes.map(([k,v])=>'<dt>'+e(k)+'</dt><dd>'+e(v)+'</dd>').join('')+'</dl></details></aside>';
+  // Six questions, une réponse chacune : oui (✓), non (✗) ou pas encore mesuré (…). « Fiable » = six oui.
+  // Noms, seuils et sens des verdicts : publiés une fois (laboratoire.analyste), ou portés par l'avis lui-même.
+  const ref=(typeof D!=='undefined' && D.laboratoire && D.laboratoire.analyste) || {};
+  const conseil=(ref.conseils||{})[avis.verdict]||{};
+  const cs=(Array.isArray(avis.criteres)?avis.criteres:[]).map(c=>({...((ref.criteres||{})[c.cle]||{}),...c}));
+  const nOk=avis.criteres_ok ?? cs.filter(c=>c.ok===true).length;
+  const etat=c=>c.ok===true?['oui','✓','oui']:c.ok===false?['non','✗','non']:['attente','…','pas encore mesuré'];
+  const criteres=cs.length?'<ul class="avis-criteres">'+cs.map(c=>{const [cl,signe,dit]=etat(c);
+    return '<li class="'+cl+'"><span class="avis-coche" role="img" aria-label="'+dit+'">'+signe+'</span><span><b>'+e(c.nom)+'</b>'
+      +'<small>'+e(c.montant&&d.gain!=null?eur(d.gain)+(c.valeur?', '+c.valeur:''):c.valeur)+(c.ok===true?'':' · il faut : '+e(c.seuil))+'</small></span></li>';}).join('')+'</ul>'
+    :'<ul class="avis-raisons">'+raisons+'</ul>';
+  const compte=cs.length?'<span class="avis-compte">'+e(nOk)+' preuve'+(nOk>1?'s':'')+' sur '+cs.length+'</span>':'';
+  const txtAction=avis.action||conseil.action, txtSens=avis.sens||conseil.sens;
+  const action=txtAction?'<span class="avis-action '+ton+'">'+e(txtAction)+'</span>':'';
+  const sens=txtSens?'<p class="avis-sens">'+e(txtSens)+'</p>':'';
+  const lecture=cs.length?'<details class="avis-details"><summary>Comment lire cet avis</summary><p class="aide"><b>Fiable</b> : les six preuves sont réunies, à suivre. '
+    +'<b>Prometteur mais pas prouvé</b> : de bons signes, il manque une preuve ou plus, à surveiller. '
+    +'<b>Chance ou yo-yo</b> : les cotes ne battent pas nettement la clôture, à éviter pour l\'instant. '
+    +'<b>Trop tôt pour juger</b> : moins de 100 paris réglés ou de 100 cotes de clôture mesurées. '
+    +'La CLV compare la cote prise à la cote juste juste avant le match : la battre régulièrement est le meilleur signe d\'un vrai avantage. '
+    +'Un avis décrit le passé, il ne promet aucun gain.</p></details>':'';
+  return '<aside class="avis-analyste" aria-label="Avis d\'analyste"><p class="avis-kicker">Avis d\'analyste'+compte+'</p>'
+    +'<p class="avis-verdict '+ton+'">'+e(avis.verdict)+action+'</p>'+sens+criteres
+    +'<details class="avis-details"><summary>Détails</summary>'+(cs.length&&raisons?'<ul class="avis-raisons">'+raisons+'</ul>':'')+'<dl class="avis-nombres">'
+    +lignes.map(([k,v])=>'<dt>'+e(k)+'</dt><dd>'+e(v)+'</dd>').join('')+'</dl></details>'+lecture+'</aside>';
 }
 function pastillesMedailles(cles) {
   const pastilles=MEDAILLES.filter(m=>(cles || []).includes(m.cle)).map(m=>{
@@ -140,10 +161,10 @@ function verdictTemoin(points) {
   const pts=(points || []).filter(p=>Number.isFinite(p[1]));
   if(!avecTemoin(pts)) return '';
   const d=pts.at(-1),ecart=d[1]-d[2],marge=margeTemoin(d);
-  const euros=v=>(v>0?'+':'')+Math.round(v)+' €',classe=v=>v>0?'pos':v<0?'neg':'';
+  const euros=v=>{v=visuelBankroll(v);return (v>0?'+':'')+Math.round(v)+' €';},classe=v=>v>0?'pos':v<0?'neg':'';
   const [mot,c]=Math.abs(ecart)<=marge?['Conforme à l’attendu','']:ecart>0?['Au-dessus de l’attendu','pos']:['En dessous de l’attendu','neg'];
   return `<p class="temoin"><span><i class="temoin-reel"></i>Réel <b class="${classe(d[1])}">${euros(d[1])}</b></span>`+
-    `<span><i class="temoin-attendu"></i>Attendu <b>${euros(d[2])}</b> <small>± ${Math.round(marge)} € de hasard</small></span>`+
+    `<span><i class="temoin-attendu"></i>Attendu <b>${euros(d[2])}</b> <small>± ${Math.round(visuelBankroll(marge))} € de hasard</small></span>`+
     `<b class="temoin-mot ${c}">${mot}</b></p>`;
 }
 function miniCourbe(points, couleur='var(--accent)') {
@@ -171,7 +192,7 @@ function grandeCourbe(points, couleur='var(--accent)') {
   const temoin=avecTemoin(pts);
   const vals=pts.flatMap(p=>temoin?[p[1],p[2]+margeTemoin(p),p[2]-margeTemoin(p)]:[p[1]]);
   const lo=Math.min(0,...vals),hi=Math.max(0,...vals);
-  const euros=v=>(v>0?'+':'')+Math.round(v)+' €';
+  const euros=v=>{v=visuelBankroll(v);return (v>0?'+':'')+Math.round(v)+' €';};
   // Marge gauche à la taille des montants (« +4949 € » n'est plus coupé).
   const W=320,H=150,g=Math.max(44,Math.ceil(8+6.2*Math.max(...[hi,lo].map(v=>euros(v).length)))),d=8,h=10,b=20;
   const t0=pts[0][0],t1=pts.at(-1)[0],x=t=>g+(t-t0)/(t1-t0 || 1)*(W-g-d);
@@ -202,11 +223,13 @@ function couvertureCLV(s) {
   const n=s.clv_n || 0,total=s.regles || 0,largeur=total?Math.min(100,100*n/total):0;
   return `<span class="couverture-clv" aria-hidden="true"><i style="width:${largeur}%"></i></span><small>${n}/${total} mesurés</small>`;
 }
-// Mise moyenne par pari réglé : montrée seulement en mise Kelly ¼ (en 10 € fixes, chaque pari vaut 10 €).
+// Montants pour la bankroll choisie (modele.html) ; inchangés quand ce fichier est testé seul.
+function visuelBankroll(v) {return typeof enBankroll==='function'?enBankroll(v):v;}
+// Mise moyenne par pari réglé : montrée hors mises fixes (en mises fixes, chaque pari vaut la même mise).
 function miseMoyenne(s) {
-  if(typeof miseMode==='undefined' || miseMode!=='kelly' || !s.regles || !Number.isFinite(s.mise)) return '';
-  const moyenne=(s.mise/s.regles).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  return `<div class="mise-moyenne"><dt>Mise moyenne</dt><dd>${moyenne} €</dd><small>Kelly ¼ · sur ${s.regles} réglés</small></div>`;
+  if(typeof miseMode==='undefined' || miseMode==='fixe' || !s.regles || !Number.isFinite(s.mise)) return '';
+  const moyenne=visuelBankroll(s.mise/s.regles).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return `<div class="mise-moyenne"><dt>Mise moyenne</dt><dd>${moyenne} €</dd><small>${typeof nomMise==='function'?e(nomMise()):'Kelly ¼'} · sur ${s.regles} réglés</small></div>`;
 }
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);

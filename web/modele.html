@@ -11,11 +11,10 @@
 <header class="haut">
   <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv<i>.</i></span><div><h1>Cotes Value</h1><label class="signature palette-label">Mode <select id="theme-site" aria-label="Mode jour ou nuit"><option value="auto">Auto</option><option value="nuit">Nuit</option><option value="jour">Jour</option></select></label></div></div>
     <div class="mise-a-jour"><span class="maj" id="maj"></span><button type="button" id="fraicheur" class="fraicheur" data-aller="controle" title="Santé du système : sources, relevés, incidents"></button></div></div>
-  <div class="mode-mise" role="group" aria-label="Mode de mise des bilans"><span>Mise des bilans</span>
-    <button type="button" data-mise="fixe" aria-pressed="true">Fixe 10 €</button>
-    <button type="button" data-mise="kelly" aria-pressed="false">Kelly ¼</button></div>
-  <p class="aide mode-mise-note" id="mode-mise-note" hidden>Mode Kelly : tous les gains, ROI et CLV sont recalculés avec la mise Kelly ¼ de chaque pari
-    (1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 %). Mêmes paris, seule la mise change. L'étude figée du 14/10 (règles du laboratoire) reste en mises fixes.</p>
+  <div class="mode-mise" role="group" aria-label="Mise des bilans">
+    <label for="mode-mise">Mise des bilans</label><select id="mode-mise" aria-describedby="mode-mise-note"></select>
+    <label for="bankroll">Bankroll</label><span class="bankroll-champ"><input id="bankroll" type="number" inputmode="numeric" min="10" max="10000000" step="10" value="1000" aria-describedby="mode-mise-note"><i aria-hidden="true">€</i></span></div>
+  <p class="aide mode-mise-note" id="mode-mise-note" role="status"></p>
   <nav id="onglets" aria-label="Navigation principale">
     <button data-o="accueil"><span>Accueil</span></button>
     <button data-o="paris"><span>Paris<span class="nb" id="nb-paris"></span></span></button>
@@ -340,9 +339,18 @@ const D = __DONNEES__;
 const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cote = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
 const pct = x => x==null ? "—" : (x>0?"+":"") + (100*x).toFixed(1).replace(".", ",") + " %";
-const eur = x => (x>0?"+":"") + Number(x).toFixed(2).replace(".", ",") + " €";
+// Bankroll de départ, choisie sur cet appareil. Les bilans sont calculés pour 1 000 € ; la mise de chaque mode ne
+// dépend que du pari (cote, écart), donc tous les montants sont proportionnels à la bankroll : ils sont multipliés
+// à l'affichage (enBankroll), sans rien recalculer. ROI, CLV, notes et avis ne changent pas.
+const BANKROLL_BASE = 1000;
+let BANKROLL = BANKROLL_BASE;
+const bankrollValide = b => Number.isFinite(b) && b >= 10 && b <= 1e7;
+try { const b = Number(localStorage.getItem("cv-bankroll")); if (bankrollValide(b)) BANKROLL = b; } catch {}
+const enBankroll = x => x == null ? x : Number(x) * BANKROLL / BANKROLL_BASE;
+const eurosNets = x => Number(enBankroll(x)).toLocaleString("fr-FR", {maximumFractionDigits: 2});      // « 10 », « 12,5 »
+const eur = x => { x = Number(enBankroll(x)); return (x>0?"+":"") + x.toFixed(2).replace(".", ",") + " €"; };
 // bilan : montants compacts (euros entiers, séparateur de milliers ; pourcentages sans décimale au-delà de 100 %)
-const eurC = x => x==null ? "—" : (x>0?"+":"") + Math.round(x).toLocaleString("fr-FR") + " €";
+const eurC = x => { if (x == null) return "—"; x = enBankroll(x); return (x>0?"+":"") + Math.round(x).toLocaleString("fr-FR") + " €"; };
 const pctC = x => x==null ? "—" : (x>0?"+":"") + (Math.abs(x) >= 1 ? Math.round(100*x).toLocaleString("fr-FR")
   : (100*x).toFixed(1).replace(".", ",")) + " %";
 const quand = s => s ? new Date(s).toLocaleString("fr-FR",{timeZone:"Europe/Paris",weekday:"short",day:"numeric",month:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
@@ -541,7 +549,7 @@ function rendreKelly() {
 <td class="${signe(t.gains)}">${eurC(t.gains)}<small class="roi ${signe(t.roi)}">${t.roi == null ? "" : pctC(t.roi)}</small></td>
 <td class="${signe(t.gains_kelly)}">${eurC(t.gains_kelly)}<small class="roi ${signe(t.roi_kelly)}">${t.roi_kelly == null ? "" : pctC(t.roi_kelly)}</small><small>${eurC(t.mises_kelly / t.regles)} par pari</small></td></tr>`;
   }).join("");
-  document.getElementById("essai-kelly").innerHTML = `<tr><th>Sélection</th><th>Réglés</th><th>10 € fixes<small>gain · ROI</small></th><th>Kelly ¼<small>gain · ROI</small></th></tr>` + lignes;
+  document.getElementById("essai-kelly").innerHTML = `<tr><th>Sélection</th><th>Réglés</th><th>${eurosNets(10)} € fixes<small>gain · ROI</small></th><th>Kelly ¼<small>gain · ROI</small></th></tr>` + lignes;
 }
 function rendreMises() {
   const M = D.laboratoire?.mises, choix = document.getElementById("mises-selection"), table = document.getElementById("essai-mises");
@@ -675,7 +683,7 @@ function rendreCourbe() {
     viseur.setAttribute("x1", x); viseur.setAttribute("x2", x); viseur.setAttribute("visibility", "visible");
     point.setAttribute("cx", x); point.setAttribute("cy", y); point.setAttribute("visibility", "visible");
     bulle.innerHTML = `Pari ${i} · réglé le ${quand(new Date(p[0] * 60000).toISOString())} · ce pari ${eur(p[1])}<br>Réel <b>${eurC(cum[i])}</b>` +
-      (avecAttendu ? ` · attendu <b>${eurC(att[i])}</b>${avecMarge ? ` ± ${Math.round(marge(i))} €` : ""}` : "");
+      (avecAttendu ? ` · attendu <b>${eurC(att[i])}</b>${avecMarge ? ` ± ${Math.round(enBankroll(marge(i)))} €` : ""}` : "");
     bulle.style.display = "block";
     // à droite du point, ou à gauche s'il n'y a pas la place ; positions relatives à la carte
     const gauche = x + 12 + bulle.offsetWidth > W ? x - 12 - bulle.offsetWidth : x + 12;
@@ -731,26 +739,41 @@ function fusionnerNavigation() {
     nav[id] = "domicile" in meta ? {...meta, mise: p.mise, gain: p.gain} : {...p, ...meta};
   }
 }
-let miseMode = "fixe";
-try { if (localStorage.getItem("cv-mise") === "kelly" && D.kelly) miseMode = "kelly"; } catch {}
+// Modes de mise du menu (cotes/mises.py, MODES_BILAN). « fixe » et « kelly » (¼, le mode par défaut) sont dans la
+// page ; les autres sont chargés à la demande (mises/<mode>.json) et gardés dans BLOCS_MISE.
+const MODES_MISE = (D.modes_mise || []).length ? D.modes_mise
+  : [{cle:"kelly", nom:"Kelly ¼", regle:"", integre:true}, {cle:"fixe", nom:"Fixe 1 %", regle:"", integre:true}];
+const BLOCS_MISE = {};
+const blocMise = mode => mode === "kelly" ? D.kelly : BLOCS_MISE[mode];
+const infoMise = mode => MODES_MISE.find(m => m.cle === mode);
+// Nom du mode pour les titres : « Kelly ¼ », « 10 € fixes » (1 % de la bankroll choisie).
+const nomMise = (mode = miseMode) => mode === "fixe" ? `${eurosNets(10)} € fixes` : (infoMise(mode)?.nom || mode);
+const CLE_MISE = "cv-mise-v2";      // nouvelle clé : Kelly ¼ devient le mode par défaut pour tout le monde
+let miseMode = "fixe", miseVoulue = D.mode_mise_defaut || "kelly";
+try { const m = localStorage.getItem(CLE_MISE); if (m && infoMise(m)) miseVoulue = m; } catch {}
+if (!infoMise(miseVoulue)) miseVoulue = "fixe";
 function appliquerMise(mode) {
-  const K = mode === "kelly" && D.kelly ? D.kelly : null;
-  miseMode = K ? "kelly" : "fixe";
-  // Le laboratoire Kelly ne publie que ce qui change avec la mise : le reste vient de la vue fixe.
+  const K = mode !== "fixe" ? blocMise(mode) : null;
+  miseMode = K ? mode : "fixe";
+  // Le laboratoire d'un mode ne publie que ce qui change avec la mise : le reste vient de la vue fixe.
+  // Paris des segments : seule la colonne du gain (6) change (colonne 12 pour Kelly ¼, gains_segments sinon).
+  const gainSegment = K && !K.paris_segments ? (K.gains_segments ? (r, i) => K.gains_segments[i] : r => r[12]) : null;
   for (const k of CLES_MISE) D[k] = !K ? D_FIXE[k] : k === "laboratoire" ? {...D_FIXE.laboratoire, ...K.laboratoire}
-    : k === "paris_segments" && !K.paris_segments ? (D_FIXE.paris_segments || []).map(r => r.length > 12 ? [...r.slice(0, 6), r[12], ...r.slice(7, 12)] : r)
+    : k === "paris_segments" && !K.paris_segments ? (D_FIXE.paris_segments || []).map((r, i) => K.gains_segments || r.length > 12 ? [...r.slice(0, 6), gainSegment(r, i), ...r.slice(7, 12)] : r)
     : K[k];
   for (const f of fiches) {
-    if (K && f.mise_kelly && f.mise_fixe) {        // la mise change aussi pour un pari encore en cours
-      f.mise = f.mise_kelly;
-      f.gain = f.gain_fixe == null ? f.gain_fixe : Math.round(100 * f.gain_fixe * f.mise_kelly / f.mise_fixe) / 100;
+    const m = !K ? null : mode === "kelly" ? f.mise_kelly : (K.mises_paris || {})[f.id];
+    if (m && f.mise_fixe) {        // la mise change aussi pour un pari encore en cours
+      f.mise = m;
+      f.gain = f.gain_fixe == null ? f.gain_fixe : Math.round(100 * f.gain_fixe * m / f.mise_fixe) / 100;
     } else { f.mise = f.mise_fixe; f.gain = f.gain_fixe; }
   }
   fusionnerNavigation();
-  document.querySelectorAll?.("[data-mise]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mise === miseMode)));
-  document.body?.classList.toggle("mise-kelly", miseMode === "kelly");
+  const menu = document.getElementById?.("mode-mise");
+  if (menu) menu.value = miseMode;
+  document.body?.classList.toggle("mise-kelly", miseMode !== "fixe");
 }
-appliquerMise(miseMode);
+appliquerMise(infoMise(miseVoulue)?.integre ? miseVoulue : (D.mode_mise_defaut || "kelly"));
 const normaliserRecherche = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr");
 let parisFiltres = [];
 let hashParis = null;
@@ -879,7 +902,7 @@ function statsListe(L) {
   return {n:L.length, regles:regles.length, enCours:L.length-regles.length, mises, gain,
     roi:mises ? gain/mises : null, reussite:regles.length ? gagnes/regles.length : null};
 }
-const miseListe = x => Number(x).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+const miseListe = x => Number(enBankroll(x)).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
 function selectionUniqueReference(ref) {
   return fiches.filter(p => p.unique_bilan === true && p.reference === ref);
 }
@@ -976,7 +999,7 @@ rendreSanteParis();
 rendreParis();
 
 // --- Bilan, paris uniques : chaque cote française comptée une fois, par écart, par cote et par sport
-const BU_PERIODES = [["7","7 j"],["30","30 j"],["","Tout"]];
+const BU_PERIODES = [["","Tout le suivi"],["30","30 derniers jours"],["7","7 derniers jours"],["1","Dernières 24 h"]];
 let periodeBU = "";
 const NOMS_ECART = {A:"A · 2 à 3 %",B:"B · 3 à 4 %",C:"C · 4 à 5 %",D:"D · 5 à 7 %",E:"E · 7 % et +",X:"X · cote > 10"};
 const statsBU = L => {
@@ -1003,16 +1026,19 @@ function rendreBilanUniques(maintenant=Date.now()) {
     : (!periodeBU || date(p) >= depuis)));
   rendreDatesBilan();
   const periodes = document.getElementById("bu-periodes");
-  periodes.innerHTML = BU_PERIODES.map(([v,t]) => `<button type="button" data-periode="${v}" aria-pressed="${!perso && v===periodeBU}">${t}</button>`).join("");
-  periodes.onclick = ev => {
-    const b = ev.target?.closest?.("button[data-periode]");
-    if (b) { periodeBU = b.dataset.periode; ecrire(CLE_PERIODE, "{}"); rendreBilanUniques(); }
+  // Menu déroulant, comme la mise des bilans. Des dates choisies (Du / Au) remplacent la période rapide.
+  periodes.innerHTML = `<div class="champ"><label for="bu-periode">Période</label><select id="bu-periode">${perso ? '<option value="perso" selected>Dates choisies</option>' : ""}${
+    BU_PERIODES.map(([v,t]) => `<option value="${v}"${!perso && v===periodeBU ? " selected" : ""}>${t}</option>`).join("")}</select></div>`;
+  periodes.onchange = ev => {
+    const v = ev.target?.value;
+    if (v == null || v === "perso") return;
+    periodeBU = v; ecrire(CLE_PERIODE, "{}"); rendreBilanUniques();
   };
   const s = statsBU(L);
   document.getElementById("bu-kpis").innerHTML = [["Gain net",eur(s.net),signe(s.net)],["ROI",pct(s.roi),signe(s.net)],
     ["Réussite",pctEntier(s.reussite),""]].map(([t,v,c]) => `<div><span>${t}</span><b class="${c}">${v}</b></div>`).join("");
   document.getElementById("bu-note").textContent =
-    `${s.n} paris réglés · mise ${Math.round(s.mises).toLocaleString("fr-FR")} € · chaque cote française comptée une fois`;
+    `${s.n} paris réglés · mise ${Math.round(enBankroll(s.mises)).toLocaleString("fr-FR")} € · ${nomMise()} · chaque cote française comptée une fois`;
   // Les cotes de plus de 10 sont de la loterie (quelques gains sur des dizaines de paris) : leur résultat est montré à part.
   const petites = statsBU(L.filter(p => !(p.cote > 10))), grosses = statsBU(L.filter(p => p.cote > 10));
   const resume = (t, x) => x.n ? `${t} : ${x.n} paris, ${eur(x.net)}, ROI ${pct(x.roi)}` : "";
@@ -1080,7 +1106,7 @@ function rendreProps() {
     .map(([a,b,c]) => `<div><span>${a}</span><b class="${c}">${b}</b></div>`).join("");
   const poly = P.polymarket || {};
   document.getElementById("props-note").textContent =
-    `Seuil ${pct(P.seuil)} · mise ${P.mise || 10} € · ${t.en_cours || 0} en cours · ${t.annules || 0} annulés · CLV sur ${t.clv_n || 0} paris réglés à moins de 30 min du coup d'envoi. ${poly.raison || ""}`;
+    `Seuil ${pct(P.seuil)} · mise ${eurosNets(P.mise || 10)} € · ${t.en_cours || 0} en cours · ${t.annules || 0} annulés · CLV sur ${t.clv_n || 0} paris réglés à moins de 30 min du coup d'envoi. ${poly.raison || ""}`;
   const f = P.fanduel || {};
   document.getElementById("props-fanduel").textContent =
     `FanDuel, référence seule (aucun pari). ${f.rapproches || 0} lignes rapprochées à Pinnacle, ${f.non_rapproches || 0} sans correspondance. Écart moyen de probabilité juste ${pct(f.ecart_proba_moyen)}. Accord ${pctEntier(f.accord)}.`;
@@ -1514,7 +1540,7 @@ function lignesStrategies() {
 // régularité /15, solidité /15.
 // Évolution de la note depuis la veille et sur 7 jours (notes_historique.json, mise fixe, suivi prospectif).
 function evolutionNote(id, total) {
-  const R = !datesStratActives() && miseMode !== "kelly" ? (D.notes_reperes || {}) : {};
+  const R = !datesStratActives() && miseMode === "fixe" ? (D.notes_reperes || {}) : {};
   const jj = j => j ? j.slice(8, 10) + "/" + j.slice(5, 7) : "";
   return [["veille", "depuis le "], ["semaine", "depuis le "]].map(([cle, libelle]) => {
     const avant = R[cle]?.notes?.[id];
@@ -1589,7 +1615,7 @@ function rendreRecommandees(rows) {
   };
   const fusions = [R.fusion && {...R.fusion, n: 1}, ...(R.fusions || [])].filter(Boolean).sort((x, y) => y.n - x.n);
   const carteFusion = F => {
-    const r = parId.get(F.nom), s = r?.stats, rejeu = F.n === 1 ? (miseMode === "kelly" ? F.rejeu_kelly : F.rejeu)?.stats : null;
+    const r = parId.get(F.nom), s = r?.stats, rejeu = F.n === 1 ? (miseMode === "fixe" ? F.rejeu : miseMode === "kelly" ? F.rejeu_kelly : blocMise(miseMode)?.fusion_rejeu)?.stats : null;
     return `<article class="reco-carte reco-fusion"><div class="reco-tete"><span class="reco-rang">Suivie depuis le ${e(quand(F.debut))}</span>${bouton(r)}</div>
       <h3>${e(F.n === 1 ? F.nom : `${F.nom} · recommandées du ${jour(F.date || F.debut.slice(0, 10))}`)}</h3><p class="reco-detail">${e(F.regles)}.</p>
       <ul class="reco-membres">${(F.membres || []).map(id => `<li>${e(nomComplet(id))} <small>(${statut(id)})</small></li>`).join("")}</ul>
@@ -1635,8 +1661,10 @@ function rendreDatesStrategies() {
   const egal = d => (d.depuis || "") === (datesStrat.depuis || "") && (d.jusqua || "") === (datesStrat.jusqua || "");
   const choisir = d => { datesStrat = d; ecrire(CLE_DATES_STRAT, JSON.stringify(d)); rendreStrategies(); };
   const puces = document.getElementById("strategies-periodes");
-  puces.innerHTML = rapides.map(([k, t, d]) => `<button type="button" data-rapide="${k}" class="${egal(d) ? "actif" : ""}" aria-pressed="${egal(d)}">${t}</button>`).join("");
-  for (const b of puces.querySelectorAll("button")) b.onclick = () => choisir(rapides.find(([k]) => k === b.dataset.rapide)[2]);
+  const courant = rapides.find(([, , d]) => egal(d));
+  puces.innerHTML = `<div class="champ"><label for="strat-periode">Période</label><select id="strat-periode">${courant ? "" : '<option value="perso" selected>Dates choisies</option>'}${
+    rapides.map(([k, t, d]) => `<option value="${k}"${egal(d) ? " selected" : ""}>${t}</option>`).join("")}</select></div>`;
+  puces.onchange = ev => { const r = rapides.find(([k]) => k === ev.target?.value); if (r) choisir(r[2]); };
   const zone = document.getElementById("strategies-dates");
   zone.innerHTML = `<div class="filtres periode-bilan"><div class="champ"><label for="strat-depuis">Du</label><input type="date" id="strat-depuis" value="${e(datesStrat.depuis || "")}" max="${auj}"></div>
     <div class="champ"><label for="strat-jusqua">Au</label><input type="date" id="strat-jusqua" value="${e(datesStrat.jusqua || "")}" max="${auj}"></div></div>
@@ -1773,17 +1801,65 @@ function rendreTout() {
   rendreAccueil(); rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSegments(); rendreStrategies(); rendreAnalyses();
   adapterTableaux();
 }
-function choisirMise(mode) {
-  if (mode === miseMode) return;
+// Texte sous le menu : la règle du mode, la bankroll, et ce qui ne change pas.
+function noteMise(message) {
+  const note = document.getElementById("mode-mise-note");
+  if (!note) return;
+  const info = infoMise(miseMode) || {};
+  const regle = miseMode === "fixe" ? `${eurosNets(10)} € par pari (1 % de la bankroll)` : info.regle;
+  note.textContent = message || `${regle} · bankroll de départ ${BANKROLL.toLocaleString("fr-FR")} € · mêmes paris dans tous les modes, seule la mise change.`;
+}
+async function chargerMise(mode) {
+  const info = infoMise(mode);
+  if (!info) return false;
+  if (info.integre || BLOCS_MISE[mode]) return true;
+  try {
+    const url = new URL(`./mises/${encodeURIComponent(mode)}.json`, location.href);
+    url.searchParams.set("v", "__VERSION_SITE__".slice(0, 12));
+    const r = await fetch(url, {signal: AbortSignal.timeout(30000)});
+    if (!r.ok) throw new Error(String(r.status));
+    BLOCS_MISE[mode] = await r.json();
+    return true;
+  } catch { return false; }
+}
+async function choisirMise(mode) {
+  if (mode === miseMode || !infoMise(mode)) return;
+  const menu = document.getElementById("mode-mise");
+  if (!infoMise(mode).integre && !BLOCS_MISE[mode]) noteMise(`Chargement du mode « ${infoMise(mode).nom} »…`);
+  if (!await chargerMise(mode)) {
+    if (menu) menu.value = miseMode;
+    noteMise(`Mode « ${infoMise(mode).nom} » indisponible pour l'instant (connexion). Le mode affiché reste « ${nomMise()} ».`);
+    return;
+  }
   appliquerMise(mode);
-  try { localStorage.setItem("cv-mise", miseMode); } catch {}
-  document.getElementById("mode-mise-note").hidden = miseMode !== "kelly";
+  try { localStorage.setItem(CLE_MISE, miseMode); } catch {}
+  noteMise();
   rendreTout();
 }
-document.querySelectorAll("[data-mise]").forEach(b => b.onclick = () => choisirMise(b.dataset.mise));
-const noteMise = document.getElementById("mode-mise-note");
-if (noteMise) noteMise.hidden = miseMode !== "kelly";
-if (miseMode === "kelly") rendreTout();     // mode mémorisé : les premiers rendus étaient en mise fixe
+function choisirBankroll(valeur) {
+  const b = Math.round(Number(String(valeur).replace(",", ".")));
+  const champ = document.getElementById("bankroll");
+  if (!bankrollValide(b)) { if (champ) champ.value = BANKROLL; return; }
+  if (b === BANKROLL) return;
+  BANKROLL = b;
+  try { localStorage.setItem("cv-bankroll", String(b)); } catch {}
+  const menu = document.getElementById("mode-mise");
+  if (menu) for (const o of menu.options) o.textContent = o.value === "fixe" ? `Fixe 1 % (${eurosNets(10)} €)` : (infoMise(o.value)?.nom || o.value);
+  noteMise();
+  rendreTout();
+}
+{
+  const menu = document.getElementById("mode-mise"), champ = document.getElementById("bankroll");
+  if (menu) {
+    menu.innerHTML = MODES_MISE.map(m => `<option value="${e(m.cle)}">${e(m.cle === "fixe" ? `Fixe 1 % (${eurosNets(10)} €)` : m.nom)}</option>`).join("");
+    menu.value = miseMode;
+    menu.onchange = () => choisirMise(menu.value);
+  }
+  if (champ) { champ.value = BANKROLL; champ.onchange = () => choisirBankroll(champ.value); }
+}
+noteMise();
+if (miseMode !== "fixe" || BANKROLL !== BANKROLL_BASE) rendreTout();     // les premiers rendus étaient en mise fixe
+if (miseVoulue !== miseMode) choisirMise(miseVoulue);                     // mode mémorisé chargé à la demande
 initialiserAnalyses();
 initialiserInterface();
 __ACTUALISATION_JS__

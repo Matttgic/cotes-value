@@ -367,3 +367,64 @@ def test_construire_attache_l_avis_sans_rien_selectionner(tmp_path):
     assert base["avis"]["details"]["paris_regles"] == 1
     assert data["laboratoire"]["analyste"]["seuils"]["min_paris_regles"] == 100
     assert "Avis d'analyste" in html
+
+
+# --- calcul rapide du hasard (point-selle) et critères lisibles (10/11/2026)
+def test_point_selle_donne_la_meme_probabilite_que_les_tirages():
+    """Sur des séries réalistes (gains de paris, cotes variées), l'écart avec 10 000 tirages reste dans leur bruit."""
+    from random import Random
+    from cotes.analyste import SELLE_MIN, _tirages, proba_point_selle
+    rng = Random(4)
+    # mises fixes à cote unique (la somme ne prend que quelques valeurs), puis cotes et mises variées
+    series = [[10 * (cote - 1) if rng.random() < p_gagne else -10.0 for _ in range(n)]
+              for n, p_gagne, cote in ((40, .52, 2.0), (150, .30, 3.6), (400, .55, 1.9), (300, .12, 8.0))]
+    series += [[round(m * (c - 1), 2) if rng.random() < .97 / c else -m
+                for m, c in ((round(rng.uniform(2, 20), 2), round(rng.uniform(1.3, 6), 2)) for _ in range(n))]
+               for n in (30, 120, 600)]
+    for gains in series:
+        assert len(gains) >= SELLE_MIN
+        exact, tire = proba_point_selle(gains), _tirages(gains, 10000, 1)
+        assert exact is not None and abs(exact - tire) < 0.02, (len(gains), exact, tire)
+
+
+def test_point_selle_bornes_et_petites_series():
+    from cotes.analyste import _proba_sans_profit, _tirages, proba_point_selle
+    assert proba_point_selle([5.0, 3.0]) is None and proba_point_selle([-1.0, -2.0]) is None     # un seul signe
+    assert _proba_sans_profit([1.0] * 50, 100, 1) == (0.0, "exact")
+    assert _proba_sans_profit([-1.0] * 50, 100, 1) == (1.0, "exact")
+    assert _proba_sans_profit([9.0, -10.0] * 5, 200, 1)[1] == "tirages"          # peu de matchs : tirages
+    p, methode = _proba_sans_profit([9.0, -10.0] * 40, 200, 1)
+    assert methode == "point-selle" and 0.5 < p < 1                               # moyenne négative
+    p, methode = _proba_sans_profit([10.0, -10.0] * 40, 200, 1)                   # moyenne nulle : un tirage sur deux
+    assert methode == "point-selle" and abs(p - _tirages([10.0, -10.0] * 40, 10000, 3)) < 0.02 and p > 0.5
+    # même réponse à chaque construction, sans graine
+    assert _proba_sans_profit([9.5, -10.0] * 60, 200, 1) == _proba_sans_profit([9.5, -10.0] * 60, 999, 7)
+
+
+def test_six_criteres_lisibles_et_coherents_avec_le_verdict():
+    from random import Random
+    from cotes.analyste import CONSEILS, alleger_avis, reference_avis
+    rng = Random(1)
+    gains = [9.0 if rng.random() < .56 else -10.0 for _ in range(300)]
+    avis = analyser_serie(gains, clvs=[rng.gauss(.02, .05) for _ in gains])
+    assert avis["verdict"] == FIABLE and avis["criteres_ok"] == 6 and avis["manque"] == []
+    assert avis["action"] == "À suivre" and avis["sens"] == CONSEILS[FIABLE][1]
+    assert [c["cle"] for c in avis["criteres"]] == ["recul", "gain", "chance", "cloture", "regularite", "grosses_cotes"]
+    assert "300 paris réglés" in avis["criteres"][0]["valeur"] and "ROI +" in avis["criteres"][1]["valeur"]
+    assert avis["details"]["methode_hasard"] == "point-selle" and avis["details"]["tirages"] == 0
+    # en perte, avec une CLV négative : chaque critère dit non, avec son seuil
+    perd = analyser_serie([9.0 if rng.random() < .45 else -10.0 for _ in range(300)],
+                          clvs=[rng.gauss(-.01, .05) for _ in range(300)])
+    assert perd["verdict"] == CHANCE and perd["action"] == "À éviter pour l'instant"
+    etats = {c["cle"]: c["ok"] for c in perd["criteres"]}
+    assert etats["recul"] is True and etats["gain"] is False and etats["chance"] is False and etats["cloture"] is False
+    assert "Ses cotes battent la clôture" in perd["manque"] and all(c["seuil"] for c in perd["criteres"])
+    # trop tôt : rien n'est encore testé, les critères non mesurés restent en attente
+    court = analyser_serie([9.0, -10.0, 9.0])
+    assert court["verdict"] == TROP_TOT and court["criteres"][0]["ok"] is False and court["criteres"][3]["ok"] is None
+    # publication allégée : textes communs une seule fois, aucun montant en euros dans les textes
+    leger, ref = alleger_avis(avis), reference_avis()
+    assert "raisons" not in leger and "sens" not in leger and "€" not in json.dumps(leger, ensure_ascii=False)
+    assert set(leger["criteres"][0]) == {"cle", "ok", "valeur"} and leger["criteres"][1]["montant"] is True
+    assert set(ref["criteres"]) == set(etats) and ref["conseils"][FIABLE]["action"] == "À suivre"
+    assert ref["criteres"]["chance"]["seuil"] == "moins de 20 %"
