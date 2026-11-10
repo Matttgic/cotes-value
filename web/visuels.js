@@ -47,6 +47,63 @@ function attribuerValeur(rows) {
 function classerParValeur(rows) {
   return rows.filter(r=>r.valeur!=null).sort((a,b)=>a.valeur-b.valeur || b.stats.clv-a.stats.clv || b.stats.roi-a.stats.roi);
 }
+// Classement par la note /100 déjà calculée (cotes/notation.py). Sans note : en dernier.
+// À égalité : plus de paris réglés, puis le nom, puis l'ordre d'origine (tri stable).
+function noteStrategie(r) {
+  const n=r && r.stats && r.stats.note && r.stats.note.total;
+  return typeof n==='number' && Number.isFinite(n) ? n : null;
+}
+function classerParNote(rows) {
+  return rows.map((r,i)=>({r,i})).sort((a,b)=>{
+    const na=noteStrategie(a.r), nb=noteStrategie(b.r);
+    if(na==null && nb!=null) return 1;
+    if(na!=null && nb==null) return -1;
+    if(na!=null && nb!=null && na!==nb) return nb-na;
+    const dr=(Number(b.r.stats&&b.r.stats.regles)||0)-(Number(a.r.stats&&a.r.stats.regles)||0);
+    if(dr) return dr;
+    const cn=(a.r.nom||'').toLocaleLowerCase('fr').localeCompare((b.r.nom||'').toLocaleLowerCase('fr'),'fr');
+    return cn || a.i-b.i;
+  }).map(x=>x.r);
+}
+function panneauAnalyste(r) {
+  const avis=r && r.stats && r.stats.avis;
+  if(!avis || !avis.verdict) {
+    if(r && r.avisSuivi) return '<aside class="avis-analyste" aria-label="Avis d\'analyste"><p class="avis-kicker">Avis d\'analyste</p><p class="aide">Calculé sur tout le suivi, pas sur les dates affichées.</p></aside>';
+    return '';
+  }
+  const d=avis.details||{}, ton=avis.verdict==='Fiable'?'pos':avis.verdict==='Chance ou yo-yo'?'neg':avis.verdict==='Trop tôt pour juger'?'doux':'';
+  const nb=x=>x==null||!Number.isFinite(Number(x))?'—':String(x).replace('.',',');
+  const ratio=x=>x==null||!Number.isFinite(Number(x))?'—':(100*x).toFixed(1).replace('.',',')+' %';
+  const pVal=p=>{if(p==null||!Number.isFinite(Number(p))) return '—'; if(p>0 && p<0.001) return '< 0,001'; return Number(p).toFixed(3).replace('.',',');};
+  const dec=x=>x==null||!Number.isFinite(Number(x))?'—':Number(x).toFixed(2).replace('.',',');
+  const retour=d.drawdown_recupere===false?'pas encore rattrapé'
+    :(d.drawdown_paris==null?'—':d.drawdown_paris+' paris'+(d.drawdown_jours==null?'':' · '+nb(d.drawdown_jours)+' jours'));
+  const lignes=[
+    ['Paris réglés', nb(d.paris_regles)],
+    ['Gain net', d.gain==null?'—':eur(d.gain)],
+    ['ROI', pct(d.roi)],
+    ['Probabilité que le profit soit du hasard', ratio(d.proba_chance)],
+    ['Tirages bootstrap', (d.tirages??'—')+' · graine '+(d.graine??'—')],
+    ['CLV moyenne', pct(d.clv_moyenne)],
+    ['CLV mesurées', nb(d.clv_n)],
+    ['p du t-test (CLV > 0)', pVal(d.pvalue_clv)],
+    ['Repli maximal', d.drawdown_max==null?'—':eur(-Math.abs(d.drawdown_max))],
+    ['Retour au plus haut', retour],
+    ['Régularité (R²)', dec(d.r2)],
+    ['Moyenne / écart-type par pari', dec(d.sharpe)],
+    ['ROI première moitié', pct(d.roi_premiere)],
+    ['ROI seconde moitié', pct(d.roi_seconde)],
+    ['Même signe sur les deux moitiés', d.memes_signe==null?'—':(d.memes_signe?'oui':'non')],
+    ['ROI sans le top 5 % des cotes gagnantes', pct(d.roi_sans_cotes)],
+    ['ROI sans les 3 plus gros gains', pct(d.roi_sans_gains)],
+    ['Dépend de quelques grosses cotes', d.depend_grosses_cotes?'oui':'non']
+  ];
+  const raisons=(avis.raisons||[]).slice(0,3).map(t=>'<li>'+e(t)+'</li>').join('');
+  return '<aside class="avis-analyste" aria-label="Avis d\'analyste"><p class="avis-kicker">Avis d\'analyste</p>'
+    +'<p class="avis-verdict '+ton+'">'+e(avis.verdict)+'</p><ul class="avis-raisons">'+raisons+'</ul>'
+    +'<details class="avis-details"><summary>Détails</summary><dl class="avis-nombres">'
+    +lignes.map(([k,v])=>'<dt>'+e(k)+'</dt><dd>'+e(v)+'</dd>').join('')+'</dl></details></aside>';
+}
 function pastillesMedailles(cles) {
   const pastilles=MEDAILLES.filter(m=>(cles || []).includes(m.cle)).map(m=>{
     const titre=`${m.nom} (${MEDAILLES_MIN_PARIS} paris réglés minimum)`;
@@ -159,7 +216,7 @@ function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
     <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button></div>
     <p class="strategie-regle">${e(r.detail)}</p>${typeof etiquettesStrategie==='function'?etiquettesStrategie(r):''}
     <div class="strategie-apercu"><div><span class="libelle-gain">Gain net simulé</span><strong class="${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</strong></div>${s.note?`<div><span class="libelle-gain">Note</span><strong class="${s.note.total>=70?'pos':s.note.total<40?'neg':''}">${s.note.total}/100</strong><small>${s.note.provisoire?'provisoire · ':''}${typeof sousNotes==='function'?sousNotes(s.note):''}</small>${typeof evolutionNote==='function'?evolutionNote(r.id,s.note.total):''}</div>`:''}</div>
-    <div class="strategie-trajectoire">${grandeCourbe(points,couleur)}<span>Gain cumulé par date de règlement · pointillés : gain attendu si les cotes justes sont exactes · zone grisée : marge du hasard (8 fois sur 10)</span></div>
+    <div class="strategie-lecture"><div class="strategie-trajectoire">${grandeCourbe(points,couleur)}<span>Gain cumulé par date de règlement · pointillés : gain attendu si les cotes justes sont exactes · zone grisée : marge du hasard (8 fois sur 10)</span></div>${panneauAnalyste(r)}</div>
     <dl class="strat-chiffres">
       <div><dt>ROI</dt><dd class="${signe(s.roi)}">${pp(s.roi)}</dd><small>${r.reussite==null?'—':r.reussite.toFixed(1).replace('.',',')+' %'} de réussite</small></div>
       <div><dt>CLV moyenne</dt><dd class="${signe(s.clv)}">${pp(s.clv)}</dd>${couvertureCLV(s)}<small>Par match <b class="${signe(s.clv_evenement)}">${pp(s.clv_evenement)}</b> · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"} mesurés</small></div>

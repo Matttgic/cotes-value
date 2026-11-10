@@ -33,11 +33,11 @@
       <section class="acc-values"><h3 class="bu-titre">Values du moment <small id="acc-values-n"></small></h3>
         <div id="acc-values"></div>
         <p><button type="button" class="acc-lien" data-aller="paris">Voir tous les paris, filtres avancés et export CSV →</button></p></section>
-      <section class="acc-top5"><h3 class="bu-titre">Top 5 valeur <small id="acc-top5-mise"></small></h3>
+      <section class="acc-top5"><h3 class="bu-titre">Classement des stratégies <small id="acc-top5-mise"></small></h3>
         <div id="acc-top5"></div>
-        <p class="aide acc-legende">Classement par <b>valeur</b> : rang moyen au ROI et à la CLV depuis le lancement (30 paris réglés
-        et 20 CLV mesurées au moins). Le ROI dit ce qui a été gagné ; la CLV si les cotes prises battaient la clôture, ce qui
-        dépend moins de la chance. Pastilles, 50 paris réglés minimum : étoile = meilleur ROI, cercle € = meilleur gain net, trèfle = meilleure réussite, cible = meilleure CLV.</p>
+        <p class="aide acc-legende">Les cinq premières par la <b>note /100</b> déjà calculée (la même que la page Stratégies),
+        de la meilleure à la moins bonne. À note égale : plus de paris réglés, puis le nom. Sans note (moins de 10 matchs
+        réglés) : en dernier. Pastilles, 50 paris réglés minimum : étoile = meilleur ROI, cercle € = meilleur gain net, trèfle = meilleure réussite, cible = meilleure CLV.</p>
         <p><button type="button" class="acc-lien" data-aller="strategies">Classement complet →</button></p></section>
       <section class="acc-courbe"><h3 class="bu-titre">Gain cumulé <small id="acc-courbe-mise"></small></h3><div id="acc-courbe"></div></section>
       <section class="acc-derniers"><h3 class="bu-titre">Derniers résultats <small>paris uniques réglés</small></h3><div id="acc-derniers"></div></section>
@@ -1657,7 +1657,7 @@ function rendreStrategies() {
     const b = bornesStrat();
     rows = rows.map(r => {
       const parisDates = parisDeStrategie(r).filter(p => dansDatesStrat(p, b)), stats = statsStrategie(parisDates);
-      return {...r, parisDates, stats, reussite:stats.regles ? 100*stats.gagnes/stats.regles : null};
+      return {...r, parisDates, stats, avisSuivi:r.stats && r.stats.avis, reussite:stats.regles ? 100*stats.gagnes/stats.regles : null};
     }).filter(r => r.stats.paris);
   }
   // Courbe de chaque stratégie (règles, comparateurs, bases du Bilan) : [instant, réel, attendu, écart type].
