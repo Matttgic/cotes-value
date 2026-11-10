@@ -30,6 +30,7 @@ from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REG
 from cotes.mises import METHODES as METHODES_MISE, comparer as comparer_mises  # noqa: E402
 from cotes.securite import json_public
 from cotes.protection import calculer, proteger_strategies  # noqa: E402
+from cotes.analyste import SEUILS as SEUILS_AVIS, avis_des_paris  # noqa: E402
 from cotes import notifications as notifications_mod  # noqa: E402
 from cotes import ordres as ordres_mod  # noqa: E402
 
@@ -690,6 +691,21 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             # Les 30 dernières prises de chaque règle ne sont pas publiées : « Les paris » de la règle les montre toutes.
             for r in laboratoire["futur"]:
                 r.pop("ids_recents", None)
+            # Avis d'analyste (cotes/analyste.py), sur les mêmes paris que la courbe, pour la mise en cours.
+            par_id = {p["id"]: p for p in paris}
+
+            def _avis(ids):
+                return avis_des_paris([par_id[i] for i in ids if i in par_id], maintenant)
+
+            for bloc in laboratoire.get("futur") or []:
+                bloc["avis"] = _avis(ensembles.get(bloc.get("id"), ()))
+            for nom, stats in (laboratoire.get("comparateurs_futur") or {}).items():
+                if isinstance(stats, dict):
+                    stats["avis"] = _avis(ensembles.get(nom, ()))
+            for nom, stats in (laboratoire.get("bases_futur") or {}).items():
+                if isinstance(stats, dict):
+                    stats["avis"] = _avis(ensembles.get("base:" + nom, ()))
+            laboratoire["analyste"] = {"seuils": SEUILS_AVIS}
         return laboratoire
 
     laboratoire = _laboratoire(paris)

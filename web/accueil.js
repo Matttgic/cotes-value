@@ -1,4 +1,4 @@
-// Accueil : chiffres du moment, paris en cours, Top 5 des stratégies, gain cumulé, derniers résultats.
+// Accueil : chiffres du moment, paris en cours, classement des stratégies par la note /100, gain cumulé, derniers résultats.
 // Lecture seule des données déjà chargées : aucune sélection, aucun règlement n'est modifié.
 function ligneAccueilPari(p) {
   const ref=(typeof REF_COURTE!=='undefined' && REF_COURTE[p.reference]!==undefined ? REF_COURTE[p.reference] : (p.reference || '')+' ');
@@ -38,15 +38,19 @@ function rendreAccueil() {
   document.getElementById('acc-values-n').textContent=`${enCours.length} en cours`;
   document.getElementById('acc-values').innerHTML=enCours.length ? enCours.slice(0,5).map(ligneAccueilPari).join('')
     : '<p class="aide">Aucun pari en cours pour le moment.</p>';
-  // Top 5 valeur : rang moyen au ROI et à la CLV depuis le lancement (attribuerValeur) ; les pastilles désignent
-  // les meilleurs critères (50 paris réglés minimum).
-  const rows=lignesStrategies('futur');attribuerMedailles(rows);attribuerValeur(rows);
-  const top=classerParValeur(rows).slice(0,5);
-  document.getElementById('acc-top5-mise').textContent=`ROI + CLV · ${mise}`;
-  document.getElementById('acc-top5').innerHTML=top.length ? top.map((r,i)=>`<div class="acc-rang"><span class="acc-num">${i+1}.</span>
-<span class="acc-rang-nom"><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<small class="acc-rang-detail"><span class="${signe(r.stats.roi)}">ROI ${pct(r.stats.roi/100)}</span> (${rangTexte(r.rang_roi)}) · <span class="${signe(r.stats.clv)}">CLV ${pct(r.stats.clv/100)}</span> (${rangTexte(r.rang_clv)}) · ${r.stats.regles} réglés</small></span>
-<span class="acc-rang-gain ${signe(r.stats.gain)}">${eurC(r.stats.gain)}</span></div>`).join('')
-    : '<p class="aide">Pas encore de stratégie classée (30 paris réglés et 20 CLV mesurées au moins).</p>';
+  // Classement par la note /100 déjà publiée (classerParNote) : meilleure d'abord, sans note en dernier.
+  // À égalité : plus de paris réglés, puis le nom. Les pastilles restent les meilleurs critères (50 réglés).
+  const rows=lignesStrategies('futur');attribuerMedailles(rows);
+  const top=classerParNote(rows).slice(0,5);
+  document.getElementById('acc-top5-mise').textContent=`note /100 · ${mise}`;
+  document.getElementById('acc-top5').innerHTML=top.length ? top.map((r,i)=>{
+    const note=r.stats&&r.stats.note&&typeof r.stats.note.total==='number'?r.stats.note.total:null;
+    const ton=note==null?'':note>=70?'pos':note<40?'neg':'';
+    return `<div class="acc-rang"><span class="acc-num">${i+1}.</span>
+<span class="acc-rang-nom"><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<small class="acc-rang-detail"><span class="${ton}">${note==null?'Sans note':'Note '+note+'/100'}</span> · ${r.stats.regles} réglés · <span class="${signe(r.stats.roi)}">ROI ${pct(r.stats.roi/100)}</span></small></span>
+<span class="acc-rang-gain ${ton}">${note==null?'—':String(note)}</span></div>`;
+  }).join('')
+    : '<p class="aide">Pas encore de stratégie à classer.</p>';
   // Gain cumulé des paris uniques (même courbe que le Bilan, tracée en marches), avec la ligne témoin : gain attendu
   // cumulé et marge du hasard (variance cumulée de chaque pari, 5e colonne).
   let total=0,attendu=0,variance=0;

@@ -106,6 +106,21 @@ test('valeur : rang moyen ROI + CLV, seulement avec assez de paris et de CLV',()
   assert.equal(c.valeur,2.5);
   assert.equal(rows[3].valeur,null);assert.equal(rows[4].valeur,null);
   assert.deepEqual(fn('classerParValeur')(rows).map(x=>x.id),['b','a','c']);
+  const notes=[
+    {id:'z',nom:'Zed',stats:{regles:5}},
+    {id:'c',nom:'Charlie',stats:{regles:9,note:{total:80}}},
+    {id:'b',nom:'Bravo',stats:{regles:3,note:{total:80}}},
+    {id:'a',nom:'Alpha',stats:{regles:10,note:{total:40}}},
+    {id:'d',nom:'delta',stats:{regles:9,note:{total:80}}},
+    {id:'e',nom:'Echo',stats:{regles:100,note:null}},
+    {id:'zero',nom:'Zero',stats:{regles:1,note:{total:0}}}
+  ];
+  assert.deepEqual(fn('classerParNote')(notes).map(x=>x.id),['c','d','b','a','zero','e','z']);
+  const egaux=[
+    {id:'1',nom:'Meme',stats:{regles:4,note:{total:50}}},
+    {id:'2',nom:'Meme',stats:{regles:4,note:{total:50}}}
+  ];
+  assert.deepEqual(fn('classerParNote')(egaux).map(x=>x.id),['1','2']);
   // ex aequo : même rang
   const eg=[r('x',5,2),r('y',5,1)];fn('attribuerValeur')(eg);
   assert.equal(eg[0].rang_roi,1);assert.equal(eg[1].rang_roi,1);
@@ -120,6 +135,22 @@ test('ligne témoin : attendu en pointillés, marge du hasard et verdict lisible
   assert.ok(!ancien.includes('temoin') && ancien.includes('<path'));
   assert.ok(fn('miniCourbe')([[1,5,2,1],[2,10,4,2]]).includes('stroke-dasharray="4 3"'));
   assert.ok(!/NaN|Infinity/.test(svg));
+});
+test('l\'avis d\'analyste s\'ouvre à côté de la courbe, et manque sans calcul',()=>{
+  const html=fn('carteStrategieVisuelle')({id:'x',nom:'Claude',detail:'d',reussite:60,
+    stats:{regles:120,clv:1,roi:5,gain:50,paris:120,attente:0,gagnes:70,perdus:50,
+      avis:{verdict:'Fiable',raisons:['Assez de paris.','CLV positive.','Deux moitiés gagnantes.'],
+        details:{paris_regles:120,gain:50,roi:0.05,proba_chance:0.01,tirages:1000,graine:20261110,
+          clv_moyenne:0.02,clv_n:100,pvalue_clv:0.01,drawdown_max:12,drawdown_recupere:true,
+          drawdown_paris:4,drawdown_jours:2,r2:0.9,sharpe:0.2,roi_premiere:0.04,roi_seconde:0.06,
+          memes_signe:true,roi_sans_cotes:0.03,roi_sans_gains:0.02,depend_grosses_cotes:false}}}},
+    [[0,10],[86400,50]]);
+  assert.ok(html.includes('strategie-lecture') && html.includes("Avis d'analyste"));
+  assert.ok(html.includes('avis-verdict pos') && html.includes('Fiable') && html.includes('>Détails</summary>'));
+  assert.ok(html.includes('Deux moitiés gagnantes.'));
+  const sans=fn('carteStrategieVisuelle')({id:'y',nom:'Y',detail:'d',reussite:null,
+    stats:{regles:0,clv:null,roi:null,gain:0,paris:0,attente:0,gagnes:0,perdus:0}},[]);
+  assert.ok(!sans.includes('avis-verdict'));
 });
 test('points depuis les paris : même calcul que le serveur, poids et paris non réglés ignorés',()=>{
   const pts=fn('pointsDepuisParis')([
