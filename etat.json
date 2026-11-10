@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-10T06:44:41+00:00",
+  "debut": "2026-11-10T06:49:17+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -13,36 +13,35 @@
     "ok": true
    },
    "olybet": {
-    "secondes": 4.6,
+    "secondes": 3.8,
     "ok": true
    },
    "polymarket": {
-    "secondes": 6.4,
+    "secondes": 4.8,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 12.8,
+    "secondes": 9.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 28 matchups : HTTP 403",
      "sport 45 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.8,
+    "secondes": 1.6,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
-   "pmu_direct": {
-    "secondes": 27.9,
+   "betclic_direct": {
+    "secondes": 13.1,
     "ok": true
    },
-   "betclic_direct": {
-    "secondes": 31.2,
+   "pmu_direct": {
+    "secondes": 26.1,
     "ok": true
    },
    "winamax_direct": {
@@ -59,7 +58,7 @@
     "cache": true
    },
    "association": {
-    "secondes": 1.3,
+    "secondes": 1.0,
     "ok": true
    },
    "comparaison": {
@@ -91,25 +90,25 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 134,
-   "lignes": 3233
+   "lignes": 3245
   },
   "matchbook_fraicheur": {
-   "lignes": 3233,
-   "source_connue": 3233,
+   "lignes": 3245,
+   "source_connue": 3245,
    "source_inconnue": 0,
    "source_invalide": 0,
    "mouvement_min_s": 0,
-   "mouvement_max_s": 38352,
-   "reception": "2026-11-10T06:44:41+00:00"
+   "mouvement_max_s": 38628,
+   "reception": "2026-11-10T06:49:17+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 891,
-   "age_min_s": 277,
-   "lignes": 77754,
-   "lignes_perimees": 446,
+   "age_max_s": 886,
+   "age_min_s": 188,
+   "lignes": 77692,
+   "lignes_perimees": 1110,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -123,9 +122,8 @@
     "head_403": 2,
     "ortho_refusee": 2,
     "choisi_fixe": 1,
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 3
+    "sport_vide": 3,
+    "reprise_403": 1
    }
   },
   "reprise": {
@@ -160,30 +158,38 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 3,
+   "examines": 4,
    "comparaisons": [
-    {
-     "match": "Rome (F) – Servette FC Chenois (Wom)",
-     "source": "PMU",
-     "cote_olybet": 1.2,
-     "cote_reference": 1.12,
-     "ecart_relatif": 0.0714,
-     "aberrant": false
-    },
-    {
-     "match": "Paris SG (F) – Bayern Munich (F)",
-     "source": "PMU",
-     "cote_olybet": 3.51,
-     "cote_reference": 3.8,
-     "ecart_relatif": 0.0763,
-     "aberrant": false
-    },
     {
      "match": "BK Häcken (F) – Chelsea LFC (F)",
      "source": "PMU",
      "cote_olybet": 10.0,
      "cote_reference": 11.5,
      "ecart_relatif": 0.1304,
+     "aberrant": false
+    },
+    {
+     "match": "Real Madrid (F) – Paris FC (F)",
+     "source": "Pinnacle",
+     "cote_olybet": 1.38,
+     "cote_reference": 1.425,
+     "ecart_relatif": 0.0319,
+     "aberrant": false
+    },
+    {
+     "match": "Real Madrid (F) – Paris FC (F)",
+     "source": "PMU",
+     "cote_olybet": 1.38,
+     "cote_reference": 1.25,
+     "ecart_relatif": 0.104,
+     "aberrant": false
+    },
+    {
+     "match": "Rome (F) – Servette FC Chenois (Wom)",
+     "source": "PMU",
+     "cote_olybet": 1.2,
+     "cote_reference": 1.12,
+     "ecart_relatif": 0.0714,
      "aberrant": false
     }
    ],
@@ -194,6 +200,14 @@
    "seuil_relatif": 0.15,
    "examines": 7,
    "comparaisons": [
+    {
+     "match": "Fleury 91 – Toulouse FC",
+     "source": "Pinnacle",
+     "cote_netbet": 1.45,
+     "cote_reference": 1.513,
+     "ecart_relatif": 0.0415,
+     "aberrant": false
+    },
     {
      "match": "BK Häcken – Chelsea",
      "source": "Pinnacle",
@@ -241,45 +255,37 @@
      "cote_reference": 5.52,
      "ecart_relatif": 0.1051,
      "aberrant": false
-    },
-    {
-     "match": "Paris SG – Bayern Munich",
-     "source": "PMU",
-     "cote_netbet": 3.8,
-     "cote_reference": 3.8,
-     "ecart_relatif": 0.0,
-     "aberrant": false
     }
    ],
    "aberrants": []
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-10T06:44:42+00:00",
-   "pinnacle_derniere_lecture": "2026-11-10T06:44:53+00:00",
+   "pinnacle_premiere_lecture": "2026-11-10T06:49:19+00:00",
+   "pinnacle_derniere_lecture": "2026-11-10T06:49:26+00:00",
    "books_premiere_lecture": "2026-11-10T05:11:31+00:00",
-   "books_derniere_lecture": "2026-11-10T06:44:41+00:00",
-   "ecart_enveloppe_secondes": 5602.0
+   "books_derniere_lecture": "2026-11-10T06:49:18+00:00",
+   "ecart_enveloppe_secondes": 5875.0
   },
   "historique_cotes": {
-   "lignes": 365
+   "lignes": 1594
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.6
+   "age_min": 9.2
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 563,
    "a_verifier": 13,
    "non_conforme": 8,
-   "mesures": 6433,
+   "mesures": 6576,
    "matchs_suspects": 0
   },
   "props_joueurs": {
    "pinnacle": 590,
-   "Winamax": 80,
-   "rapproches": 8,
+   "Winamax": 108,
+   "rapproches": 26,
    "valeur": 0
   },
   "props_papier": {
@@ -296,8 +302,8 @@
   },
   "mouvement": {
    "actif": true,
-   "ancres": 23580,
-   "mesures": 9008,
+   "ancres": 23960,
+   "mesures": 11860,
    "annotees": 1,
    "figees": 1
   },
@@ -315,27 +321,21 @@
    "dernier_reglement": "2026-11-10T05:59:08+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-10T06:45:37+00:00",
+  "fin": "2026-11-10T06:50:13+00:00",
   "cotes": {
-   "francaises": 31023,
-   "pinnacle": 77754,
-   "polymarket": 6274,
+   "francaises": 32602,
+   "pinnacle": 77692,
+   "polymarket": 6334,
    "smarkets": 1288,
-   "matchbook": 3233,
+   "matchbook": 3245,
    "betfair": 0
   },
-  "matchs_francais": 455,
+  "matchs_francais": 475,
   "opportunites": 1,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-09T10:04:03+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-09T10:08:45+00:00",
    "mode": "complet",
@@ -1532,6 +1532,12 @@
   },
   {
    "debut": "2026-11-10T06:44:41+00:00",
+   "mode": "complet",
+   "opportunites": 1,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-10T06:49:17+00:00",
    "mode": "complet",
    "opportunites": 1,
    "nouveaux_paris": 0
