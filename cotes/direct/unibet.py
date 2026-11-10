@@ -25,6 +25,7 @@ import requests
 from cotes.correspondance import ressemblance
 from cotes.delai import Reduite
 from cotes.direct.horizon import fusionner_marches, tranche
+from cotes.joueurs import depuis_titre_et_issues, est_titre_joueur
 from cotes.liens import slug
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
@@ -68,6 +69,20 @@ MARCHES = {
     "football_americain": ((10089, 120), (11, 119)),
     "baseball": ((19, 205),),
 }
+# Paris joueurs, relevés le 9/11/2026 (page match + lvs-api, période 209 basket / 1191 hockey).
+# Plus/moins NBA : points 994003092, rebonds 994003094, passes 994003093, PRA 100000560.
+# NHL : buts 994033137, points 994033135, passes 994033136 (paliers « 1+ » = PLUS 0,5, pas de moins).
+# Pas de tirs cadrés ce soir-là. Lus à chaque cycle, à la place d'autant de marchés secondaires
+# tournants : le nombre de requêtes du cycle ne change pas.
+PROPS = {
+    "basket": (
+        (994003092, 209), (994003094, 209), (994003093, 209), (100000560, 209),
+    ),
+    "hockey": (
+        (994033137, 1191), (994033135, 1191), (994033136, 1191),
+    ),
+}
+_PAGES_PROPS = 2
 PARAMS = {"lineId": "1", "originId": "3", "breakdownEventsIntoDays": "true", "showPromotions": "true"}
 _PAGES_MAX = 16
 _PAGES_COURT = 3
@@ -415,10 +430,28 @@ def _sans_equipes(texte: str, home: str, away: str) -> str:
     return texte
 
 
+def _marche_joueur(cle: str, offre: dict) -> dict | None:
+    desc = str(offre.get("desc") or "")
+    if not est_titre_joueur(desc):
+        return None
+    issues = []
+    for issue in offre.get("outcomes") or []:
+        if not isinstance(issue, dict) or _cache(issue):
+            continue
+        cote = _cote(issue.get("price"))
+        if cote is None:
+            continue
+        issues.append((str(issue.get("desc") or ""), cote))
+    return depuis_titre_et_issues(cle, desc, issues)
+
+
 def marche_depuis(cle: str, offre: dict, home: str, away: str) -> dict | None:
     if not isinstance(offre, dict):
         return None
     desc = str(offre.get("desc") or "")
+    joueur = _marche_joueur(cle, offre)
+    if joueur:
+        return joueur
     style = str(offre.get("style") or "")
     canon = _canon(desc, style)
     if not canon:
@@ -749,7 +782,15 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
                 primaires.append((noeud, interne, filtres[0][0], filtres[0][1]))
                 secondaires += [(noeud, interne, t, p) for t, p in filtres[1:]]
         executer(primaires)
-        pris, curseur_suivant = tranche(secondaires, bloc.get("curseur"), _SECONDAIRES_PAR_CYCLE)
+        props = [(noeud, interne, t, p) for interne, noeud in candidats for t, p in PROPS.get(interne, ())]
+        for noeud, sport, type_id, periode in props:
+            if echeance is not None and not echeance.ok():
+                client._noter("budget")
+                break
+            _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
+                         _PAGES_PROPS, session=session)
+        places = max(0, _SECONDAIRES_PAR_CYCLE - len(props))
+        pris, curseur_suivant = tranche(secondaires, bloc.get("curseur"), places)
         executer(pris)
     elif filtre_radar:
         primaires = []
@@ -769,6 +810,8 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         tout = []
         for interne, noeud in candidats:
             for type_id, periode in _filtres(interne, filtres_heures):
+                tout.append((noeud, interne, type_id, periode))
+            for type_id, periode in PROPS.get(interne, ()):
                 tout.append((noeud, interne, type_id, periode))
         executer(tout)
     _attacher(sac)

@@ -20,6 +20,7 @@ import select
 import time
 from datetime import datetime, timedelta, timezone
 
+from cotes.joueurs import depuis_titre_et_issues, est_titre_joueur
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
 
@@ -87,6 +88,13 @@ FILTRES = {
     "basket": (207, 208, 228, 229, 231, 237, 232, 233),
     "tennis": (107, 108, 116, 121, 122, 123),
     "hockey": (247, 248, 249, 253, 255),
+}
+# Stats joueurs, relevés le 9/11/2026 sur le socket (le filtre 207 est « Nb points » des équipes,
+# pas les joueurs). Basket : points 593 (market 921), rebonds 224 (923), passes 225, PRP 516 (9053).
+# Hockey : la page n'a pas de plus/moins ; « 1 ou plus » est un palier (PLUS 0,5). Pas de tirs cadrés.
+FILTRES_JOUEURS = {
+    "basket": (593, 224, 225, 516),
+    "hockey": (671, 672),
 }
 # En dessous, la lecture a vu les matchs mais n'a presque pas sorti de cotes.
 _SEUIL_LECTURE = 0.5
@@ -428,6 +436,25 @@ def _nom_score(code, libelle: str) -> str | None:
     return f"{m.group(1)} - {m.group(2)}" if m else None
 
 
+def _marche_joueur(offre: dict, outcomes: dict, odds: dict) -> dict | None:
+    """Total d'un joueur (plus/moins ou palier « N ou plus »). None pour les autres marchés."""
+    if not isinstance(offre, dict) or offre.get("available") is False:
+        return None
+    titre = str(offre.get("betTitle") or "")
+    if not est_titre_joueur(titre):
+        return None
+    issues = []
+    for oid in offre.get("outcomes") or []:
+        issue = outcomes.get(str(oid))
+        if not isinstance(issue, dict) or issue.get("available") is False:
+            continue
+        cote = _nombre(odds.get(str(oid)))
+        if cote is None or cote <= 1:
+            continue
+        issues.append((str(issue.get("label") or ""), cote))
+    return depuis_titre_et_issues(offre.get("betId"), titre, issues)
+
+
 def marche_depuis(offre: dict, outcomes: dict, odds: dict, domicile: str, exterieur: str,
                   sport: str) -> dict | None:
     if not isinstance(offre, dict) or offre.get("available") is False:
@@ -498,6 +525,10 @@ def evenement_depuis(match: dict, detail: dict, sport: str) -> dict | None:
     for offre in (detail.get("bets") or {}).values():
         if isinstance(offre, dict) and str(offre.get("matchId")) != str(match.get("matchId")):
             continue
+        joueur = _marche_joueur(offre, outcomes, odds)
+        if joueur:
+            marches.append(joueur)
+            continue
         marche = marche_depuis(offre, outcomes, odds, str(domicile), str(exterieur), sport)
         if marche:
             marches.append(marche)
@@ -533,7 +564,7 @@ def _retenir(lignes: list[dict]) -> list[dict]:
     ordre: list[tuple] = []
     for ligne in lignes:
         cle = (ligne.get("match_id"), ligne.get("marche"), ligne.get("periode"),
-               ligne.get("ligne"), ligne.get("issue"))
+               ligne.get("ligne"), ligne.get("issue"), ligne.get("joueur"))
         if cle not in gardes:
             ordre.append(cle)
             gardes[cle] = ligne
@@ -621,7 +652,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, transport=None
                 relances.append(route)
             sac = {"bets": {}, "outcomes": {}, "odds": {}}
             _fusionner(sac, doc)
-            for filtre in FILTRES.get(sport, ()):
+            for filtre in (*FILTRES.get(sport, ()), *FILTRES_JOUEURS.get(sport, ())):
                 if echeance is not None and not echeance.ok():
                     _noter_budget(client)
                     break

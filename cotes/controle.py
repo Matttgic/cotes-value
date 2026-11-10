@@ -103,6 +103,8 @@ def mesurer(francais: list[dict], index: dict[str, dict]) -> list[tuple]:
     en face (Pinnacle de préférence), lue au même moment (même règle de fraîcheur que la comparaison)."""
     out = []
     for l in francais:
+        if str(l.get("marche") or "").startswith("JOUEUR:"):
+            continue
         if l["periode"].endswith("?") or not l.get("cote"):
             continue
         t_fr, debut = _lue(l.get("collecte")), _lue(l.get("debut"))

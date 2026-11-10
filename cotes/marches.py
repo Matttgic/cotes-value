@@ -105,9 +105,17 @@ def deriver_double_chance(lignes: list[dict]) -> list[dict]:
 
 
 def cle(l: dict) -> tuple:
-    """Clé de comparaison d'une cote (indépendante de la source)."""
+    """Clé de comparaison d'une cote (indépendante de la source).
+
+    Les marchés ``JOUEUR:`` ajoutent le joueur normalisé : deux joueurs à la même ligne
+    ne sont pas le même pari. Les autres marchés gardent la clé à quatre champs.
+    """
     ligne = l.get("ligne")
-    return (l["marche"], l["periode"], None if ligne is None else round(float(ligne), 2), l["issue"])
+    base = (l["marche"], l["periode"], None if ligne is None else round(float(ligne), 2), l["issue"])
+    if str(l.get("marche") or "").startswith("JOUEUR:"):
+        from .joueurs import cle_joueur
+        return (*base, cle_joueur(l.get("joueur")))
+    return base
 
 
 def inverser(l: dict) -> dict:

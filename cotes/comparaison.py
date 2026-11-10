@@ -229,6 +229,10 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
     for l in francais:
         if hors_perimetre_anj(l):
             continue
+        # Les props joueurs ont leur propre rapprochement (cotes/props.py). Les mettre ici
+        # créerait des paris dans les stratégies figées, qui ne filtrent pas le type de marché.
+        if str(l.get("marche") or "").startswith("JOUEUR:"):
+            continue
         if l["periode"].endswith("?") or not l.get("cote"):
             continue
         t_fr, debut = _t(l.get("collecte")), _t(l.get("debut"))
