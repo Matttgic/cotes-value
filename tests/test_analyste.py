@@ -8,9 +8,10 @@ from pathlib import Path
 import pytest
 
 from cotes.analyste import (CHANCE, FIABLE, PROMETTEUR, SEUILS, TROP_TOT, VERDICTS,
-                            analyser_serie, avis_des_paris, betainc, dependance_grosses_cotes,
-                            moities, proba_hasard, pvalue_clv, pvalue_student, r_carre, ratio_sharpe,
-                            repli, trier_par_note)
+                            analyser_serie, annoter_avis, avis_des_paris, benjamini_hochberg, betainc,
+                            clv_sans_hautes_cotes, moities, moities_clv, proba_hasard, proba_hasard_matchs,
+                            pvalue_clv, pvalue_clv_matchs, pvalue_student, r_carre, ratio_sharpe, repli,
+                            trier_par_note)
 
 RACINE = Path(__file__).resolve().parents[1]
 NODE = shutil.which("node")
@@ -25,12 +26,13 @@ def _ligne(identifiant, nom, note, regles):
 
 def test_seuils_prudents_documentes():
     assert SEUILS["min_paris_regles"] == 100
-    assert SEUILS["proba_chance_fiable"] == 0.05
+    assert SEUILS["proba_chance_fiable"] == 0.20
     assert SEUILS["proba_chance_yoyo"] == 0.20
-    assert SEUILS["min_clv"] >= 20
+    assert SEUILS["min_clv"] == 100
+    assert SEUILS["q_bh_fiable"] == 0.05
     assert SEUILS["clv_moyenne_min"] == 0
-    assert SEUILS["part_cotes_gagnantes"] == 0.05
-    assert SEUILS["nb_gros_gains"] == 3
+    assert SEUILS["part_cotes"] == 0.05
+    assert SEUILS["tirages_bootstrap"] == 10000
     assert SEUILS["graine"] == 20261110
     assert set(VERDICTS) == {FIABLE, PROMETTEUR, CHANCE, TROP_TOT}
 
@@ -95,6 +97,12 @@ def test_regularite_r2_et_ratio():
     assert ratio_sharpe([2, 2, 2, -1]) > 0
 
 
+def test_moities_de_clv():
+    oppose = moities_clv([0.02, 0.01, -0.03, -0.01])
+    assert oppose["clv_premiere"] > 0 > oppose["clv_seconde"] and oppose["memes_signe"] is False
+    assert moities_clv([0.01])["memes_signe"] is None
+
+
 def test_moities_meme_signe():
     mises = [10.0] * 8
     stable = moities([1, 1, 1, 1, 2, 2, 2, 2], mises)
@@ -104,19 +112,47 @@ def test_moities_meme_signe():
     assert moities([1], [10])["memes_signe"] is None
 
 
-def test_dependance_aux_grosses_cotes_et_aux_gros_gains():
-    # Vingt petites pertes et un longshot : sans lui, le ROI s'effondre.
-    gains = [-10.0] * 20 + [400.0]
-    mises = [10.0] * 21
-    cotes = [1.5] * 20 + [41.0]
-    dep = dependance_grosses_cotes(gains, mises, cotes, 0.05, 3)
-    assert dep["depend"] is True
-    assert dep["roi_sans_cotes"] < 0 and dep["roi_sans_gains"] < 0
-    # Gains réguliers, cotes semblables : retirer le haut ne change pas le signe.
-    plat = dependance_grosses_cotes([1.0] * 40, [10.0] * 40, [1.8] * 40, 0.05, 3)
-    assert plat["depend"] is False
-    assert plat["roi_sans_cotes"] > 0 and plat["roi_sans_gains"] > 0
-    assert plat["cotes_retirees"] == 2 and plat["gains_retires"] == 3   # 5 % de 40, au moins 1
+def test_clv_sans_les_cotes_les_plus_hautes_gagnantes_ou_perdantes():
+    # La CLV positive ne tient qu'aux paris les plus chers, qu'ils soient gagnés ou perdus.
+    clvs = [-0.02] * 19 + [0.5]
+    cotes = [1.5] * 19 + [30.0]
+    dep = clv_sans_hautes_cotes(cotes, clvs, 0.05)
+    assert dep["cotes_retirees"] == 1
+    assert dep["clv_sans_cotes"] < 0 and dep["depend"] is True
+    # Une cote haute perdante compte aussi : la retirer peut faire baisser la CLV.
+    plat = clv_sans_hautes_cotes([1.8] * 40, [0.01] * 40, 0.05)
+    assert plat["depend"] is False and plat["clv_sans_cotes"] > 0
+    assert plat["cotes_retirees"] == 2
+
+
+def test_t_test_groupe_par_match_et_bootstrap_de_grappes():
+    # Deux paris du même match ne font pas deux essais : la p-value groupée est plus haute.
+    clvs = [0.1, 0.1, -0.05, -0.05]
+    p_matchs, moyenne, n, g = pvalue_clv_matchs(clvs, ["a", "a", "b", "b"])
+    p_paris, _, _, g_paris = pvalue_clv_matchs(clvs, ["a", "b", "c", "d"])
+    assert n == 4 and g == 2 and g_paris == 4
+    assert moyenne == pytest.approx(0.025)
+    assert p_matchs > p_paris
+    # Un match gagnant et beaucoup de matchs perdants : tirer des paris au hasard sous-estime le risque
+    # de rater le match gagnant si ses paris sont liés. Ici un seul pari par match, les deux coïncident.
+    gains = [-10.0] * 30 + [400.0]
+    assert proba_hasard_matchs(gains, list(range(31)), 200, 3) == proba_hasard(gains, 200, 3)
+    # Grouper les deux gros gains dans un seul match change la probabilité (graine fixe).
+    gains_bloc = [-10.0] * 20 + [200.0, 200.0]
+    matchs = list(range(20)) + ["long", "long"]
+    assert proba_hasard_matchs(gains_bloc, matchs, 500, 1) != proba_hasard(gains_bloc, 500, 1)
+
+
+def test_benjamini_hochberg_et_famille_de_strategies():
+    assert benjamini_hochberg([]) == []
+    # p triées 0,01 ; 0,03 ; 0,04. q brutes 0,03 ; 0,045 ; 0,04, puis monotonie : 0,03 ; 0,04 ; 0,04.
+    assert benjamini_hochberg([0.04, 0.01, 0.03]) == pytest.approx([0.04, 0.03, 0.04])
+    # Une p de 0,04 seule passerait 5 %. Au milieu de 19 tests à 0,5, la monotonie la ramène à 0,5.
+    p = [0.04] + [0.5] * 19
+    q = benjamini_hochberg(p)
+    assert q[0] == pytest.approx(0.5)
+    assert q[0] >= SEUILS["q_bh_fiable"]
+    assert all(valeur >= brute - 1e-12 for valeur, brute in zip(q, p))
 
 
 def _serie(gains, cote=1.8, clv=0.02, mise=10.0):
@@ -136,22 +172,24 @@ def test_verdict_gagnant_regulier():
 
 
 def test_verdict_longshot_chanceux():
-    # 119 pertes et une cote très longue : le profit tient à ce seul pari.
+    # 119 pertes et une cote très longue. La CLV moyenne n'est positive que grâce à cette cote.
     gains = [-10.0] * 119 + [1490.0]
     cotes = [1.9] * 119 + [150.0]
-    avis = analyser_serie(gains, [10.0] * 120, cotes, [0.01] * 120)
+    clvs = [-0.01] * 119 + [2.0]
+    avis = analyser_serie(gains, [10.0] * 120, cotes, clvs)
     assert avis["verdict"] == CHANCE
     assert avis["details"]["depend_grosses_cotes"] is True
+    assert avis["details"]["clv_sans_cotes"] < 0
     assert avis["details"]["proba_chance"] >= SEUILS["proba_chance_yoyo"]
-    assert avis["details"]["roi_sans_gains"] < 0
-    assert any("cotes" in phrase or "gains" in phrase for phrase in avis["raisons"])
+    assert any("cotes" in phrase for phrase in avis["raisons"])
 
 
 def test_verdict_yoyo():
     gains = [10.0] * 60 + [-8.0] * 60
-    avis = _serie(gains, cote=2.0, clv=0.01)
+    clvs = [0.02] * 60 + [-0.02] * 60
+    avis = analyser_serie(gains, [10.0] * 120, [2.0] * 120, clvs)
     assert avis["verdict"] == CHANCE
-    assert avis["details"]["roi_premiere"] > 0 > avis["details"]["roi_seconde"]
+    assert avis["details"]["clv_premiere"] > 0 > avis["details"]["clv_seconde"]
     assert avis["details"]["memes_signe"] is False
     assert any("yo-yo" in phrase for phrase in avis["raisons"])
 
@@ -165,19 +203,30 @@ def test_verdict_echantillon_trop_court_meme_si_la_courbe_est_belle():
     assert 2 <= len(avis["raisons"]) <= 3
 
 
-def test_verdict_prometteur_quand_le_hasard_n_est_pas_ecarte():
-    # 110 gains de +10 et 90 pertes de −10, les deux moitiés restent gagnantes.
-    gains = [10.0] * 56 + [-10.0] * 44 + [10.0] * 54 + [-10.0] * 46
-    avis = _serie(gains, cote=2.0, clv=0.01)
+def test_verdict_prometteur_quand_la_clv_n_est_pas_significative():
+    # Profit sûr, CLV légèrement positive sur les deux moitiés, mais le test par match ne passe pas 5 %.
+    clvs = ([0.05] * 52 + [-0.05] * 48) * 2
+    cotes = [1.5 + (i % 10) * 0.1 for i in range(200)]
+    avis = analyser_serie([1.0] * 200, [10.0] * 200, cotes, clvs)
     d = avis["details"]
-    assert d["paris_regles"] == 200
-    assert d["roi_premiere"] > 0 and d["roi_seconde"] > 0
+    assert d["paris_regles"] == 200 and d["clv_n"] == 200
+    assert d["clv_moyenne"] > 0 and d["clv_premiere"] > 0 and d["clv_seconde"] > 0
+    assert d["proba_chance"] < SEUILS["proba_chance_fiable"]
+    assert d["q_bh"] >= SEUILS["q_bh_fiable"]
     assert d["depend_grosses_cotes"] is False
-    assert d["clv_moyenne"] > 0
-    assert SEUILS["proba_chance_fiable"] <= d["proba_chance"] < SEUILS["proba_chance_yoyo"]
     assert avis["verdict"] == PROMETTEUR
     assert avis["verdict"] in VERDICTS
     assert 2 <= len(avis["raisons"]) <= 3
+
+
+def test_clv_solide_et_profit_negatif_reste_prometteur():
+    # Beaucoup de longues cotes : la CLV est nettement positive, le gain en euros ne l'est pas.
+    gains = [-10.0] * 80 + [8.0] * 50
+    clvs = [0.04] * 130
+    avis = analyser_serie(gains, [10.0] * 130, [3.0] * 130, clvs)
+    assert avis["details"]["gain"] < 0
+    assert avis["details"]["clv_moyenne"] > 0 and avis["details"]["q_bh"] < SEUILS["q_bh_fiable"]
+    assert avis["verdict"] == PROMETTEUR
 
 
 def test_perte_longue_nest_pas_fiable():
