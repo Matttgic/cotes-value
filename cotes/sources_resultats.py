@@ -50,6 +50,7 @@ SOURCES: dict[str, list[tuple[tuple[str, ...], list[tuple[str, str]]]]] = {
             ("LeccoChannelNews (Costa Masnaga, quarts-temps)", "https://www.leccochannelnews.it/"),
         ]),
         (("elite 2", "pro b"), [
+            ("Flashscore (quarts-temps)", "https://www.flashscore.com/basketball/france/elite-2/"),
             ("FFBB (feuille de match)", "https://competitions.ffbb.com/competitions/elit2"),
             ("BeBasket", "https://www.bebasket.fr/ligue/pro-b"),
             ("ICI (France Bleu)", "https://www.ici.fr/"),
