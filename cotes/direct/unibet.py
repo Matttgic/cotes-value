@@ -148,10 +148,15 @@ def _heure(valeur):
     return instant_utc(valeur)
 
 
-def _page_chrome():
+# Empreintes de navigateur essayées dans l'ordre pour l'accueil. Depuis le 8/11/2026, DataDome refuse (403) les
+# empreintes Chrome et Edge sur l'accueil ; Safari et Firefox passent (sonde Unibet du 11/11/2026).
+EMPREINTES = ("safari", "firefox", "chrome")
+
+
+def _page_chrome(empreinte: str = EMPREINTES[0]):
     """Page d'accueil seulement : le jeton est dans le HTML, l'API se lit ensuite avec requests."""
     from curl_cffi.requests import Session
-    return Session(impersonate="chrome")
+    return Session(impersonate=empreinte)
 
 
 def _etat(html: str) -> tuple[str | None, dict[str, int]]:
@@ -217,7 +222,6 @@ class Client:
         return min(_TIMEOUT_APPEL, max(1.0, reste - 1))
 
     def ouvrir(self) -> bool:
-        lecteur = self.page or _page_chrome()
         delai = 8.0 if self.echeance is not None else 30.0
         if self.echeance is not None:
             reste = self.echeance.reste()
@@ -226,11 +230,13 @@ class Client:
                 return False
             if reste is not None:
                 delai = min(8.0, max(1.0, reste - 1))
-        # Refus 403 de l'accueil : 5 cycles sur 349, aléatoires (durée de 1 s). Un second essai après une courte
-        # pause, si le budget le permet, avant de renoncer.
+        # Refus 403 de l'accueil (DataDome) : un essai par empreinte de navigateur, après une courte pause,
+        # si le budget le permet, avant de renoncer. Une page fournie (tests) est essayée deux fois.
         r = None
-        for essai in range(2):
+        essais = 2 if self.page is not None else len(EMPREINTES)
+        for essai in range(essais):
             try:
+                lecteur = self.page if self.page is not None else _page_chrome(EMPREINTES[essai])
                 r = lecteur.get(ACCUEIL, timeout=delai, headers={
                     "Accept": "text/html", "Accept-Language": "fr-FR"})
             except (requests.RequestException, OSError):
@@ -238,7 +244,7 @@ class Client:
             if getattr(r, "status_code", None) == 200:
                 break
             restant = self.echeance.reste() if self.echeance is not None else None
-            if essai == 1 or (restant is not None and restant < _MARGE_S + 3):
+            if essai == essais - 1 or (restant is not None and restant < _MARGE_S + 3):
                 break
             _pause(1.0)
         if r is None:

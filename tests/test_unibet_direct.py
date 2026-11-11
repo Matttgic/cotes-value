@@ -351,3 +351,19 @@ def test_accueil_refuse_deux_fois_est_note_et_rend_la_memoire(monkeypatch):
                                     maintenant=MAINTENANT, reserve=memoire)
     assert len(page.urls) == 2 and meta["erreurs"] == ["accueil HTTP 403"] and meta["ok"] is False
     assert lignes == memoire["lignes"] and meta["reserve"] is memoire
+
+
+def test_accueil_change_d_empreinte_quand_datadome_refuse(monkeypatch):
+    """DataDome refuse Chrome sur l'accueil depuis le 8/11/2026 : on essaie les empreintes dans l'ordre."""
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    essayees = []
+
+    def page(empreinte="safari"):
+        essayees.append(empreinte)
+        return Page(status=403) if empreinte == "safari" else Page()
+
+    monkeypatch.setattr(unibet, "_page_chrome", page)
+    session = Session([(200, {"items": {}, "numberOfEvents": 0}, {})] * 60)
+    _, meta = unibet.collecter({"football"}, 36, session=session, pause=(0, 0), maintenant=MAINTENANT)
+    assert essayees == ["safari", "firefox"] and not any("accueil" in e for e in meta["erreurs"])
+    assert unibet.EMPREINTES[:2] == ("safari", "firefox") and "chrome" not in unibet.EMPREINTES[:2]
