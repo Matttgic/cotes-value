@@ -1270,7 +1270,7 @@ rendreControle();
 // --- Santé : état des automatismes et des sources, en mots simples
 const SOURCES_COTES = [["pinnacle","Pinnacle"],["polymarket","Polymarket"],["netbet","NetBet"],["winamax_direct","Winamax"],
   ["betclic_direct","Betclic"],["unibet_direct","Unibet"],["pmu_direct","PMU"],["olybet","OlyBet"],["smarkets","Smarkets"],
-  ["matchbook","Matchbook"]];
+  ["matchbook","Matchbook"],["betfair","Betfair"],["draftkings","DraftKings"],["fanduel","FanDuel"]];
 const SOURCES_RESULTATS = [["espn","ESPN"],["flashscore","Flashscore"],["livescore","LiveScore"],["nhl","NHL officiel"],
   ["thesportsdb","TheSportsDB"],["theodds","The Odds API"],["propline","Propline"]];
 const MOTS_SANTE = {ok:"✓ OK", alerte:"! Alerte", panne:"✗ En panne"};
@@ -1381,7 +1381,9 @@ function rendreSante(maintenant=Date.now()) {
   const secours = dc.pinnacle_secours;
   document.getElementById("sante-cotes").innerHTML = SOURCES_COTES.filter(([k]) => etapes[k] && !(k === "matchbook" && etapes[k].desactive)).map(([k,nom]) =>
     ligneSante(nom, k === "smarkets" && !etapes[k].degrade ? "Lu · affiché seulement, hors consensus"
-      : k === "matchbook" && etapes[k].shadow ? "Lecture seule, hors comparaison" : detailEtape(etapes[k]), niveauEtape(etapes[k]))
+      : k === "matchbook" && etapes[k].shadow ? "Lecture seule, hors comparaison"
+      : k === "betfair" && etapes[k].desactive ? "Éteint (SOURCE_BETFAIR hors serveur) · 0 ligne"
+      : k === "draftkings" || k === "fanduel" ? "Référence seule, aucun pari · " + detailEtape(etapes[k]) : detailEtape(etapes[k]), k === "betfair" && etapes[k].desactive ? "alerte" : niveauEtape(etapes[k]))
       + (k === "pinnacle" ? ligneFraicheurPinnacle(dc.pinnacle_fraicheur) + (secours ? ligneSecoursPinnacle(secours) : "") : "")
       + (k === "matchbook" ? ligneFraicheurMouvement(dc.matchbook_fraicheur) : "")).join("")
     || '<p class="aide sante-vide">Aucune lecture enregistrée.</p>';
