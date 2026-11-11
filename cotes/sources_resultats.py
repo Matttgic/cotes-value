@@ -77,6 +77,15 @@ SOURCES: dict[str, list[tuple[tuple[str, ...], list[tuple[str, str]]]]] = {
             ("World Snooker Tour", "https://www.wst.tv/matches/"),
         ]),
     ],
+    # Paris joueurs (props) : feuille de match, stat par joueur. ESPN est aussi la source du règlement automatique.
+    "props": [
+        (("nba",), [
+            ("ESPN (box score)", "https://www.espn.com/nba/"),
+            ("NBC Sports (fiches joueurs)", "https://www.nbcsports.com/fantasy/basketball/player-news"),
+        ]),
+        (("nhl",), [("ESPN (box score)", "https://www.espn.com/nhl/")]),
+        (("*",), [("ESPN", "https://www.espn.com/")]),
+    ],
     "football_americain": [(("*",), [("ESPN", "https://www.espn.com/")])],
 }
 

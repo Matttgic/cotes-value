@@ -131,3 +131,19 @@ def test_feuilles_plafonnees_et_sans_reseau():
     feuilles = P.charger_feuilles([(i, "basket") for i in ids], lire)
     assert appels == [("basketball/nba/summary", "99")]
     assert P.regler(doc, matchs, feuilles, datetime(2026, 11, 10, 4, tzinfo=timezone.utc)) == 1
+
+
+def test_feuille_nba_lit_les_deux_equipes():
+    """Bug du 11/11/2026 : seule la première équipe était lue (props des joueurs à domicile jamais réglés)."""
+    def equipe(nom, pa):
+        return {"statistics": [{"names": ["MIN", "PTS", "REB", "AST"],
+                                "athletes": [{"athlete": {"displayName": nom}, "stats": ["38", "43", "10", pa]}]}]}
+    summary = {"boxscore": {"players": [equipe("Pascal Siakam", "4"), equipe("Cooper Flagg", "6")]}}
+    joueurs = P.joueurs_feuille(summary)
+    assert [j["nom"] for j in joueurs] == ["Pascal Siakam", "Cooper Flagg"]
+    assert joueurs[1]["stats"]["AST"] == 6
+
+
+def test_sources_des_props():
+    from cotes.sources_resultats import ou_chercher
+    assert ou_chercher("props", "NBA")[0]["url"] == "https://www.espn.com/nba/"
