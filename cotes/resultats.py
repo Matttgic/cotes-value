@@ -58,6 +58,14 @@ RESSEMBLANCE_ANNULE = 0.85
 # ni Interwetten seul (1-0 figé pour un 3-0)
 DELAI_SOURCE_QUELCONQUE_H = 24
 SEULES_SPORTS_EXCLUS = {"tennis", "hockey"}
+# Flashscore seul, 6 h après le début au lieu de 24 h, dans les sports où il est presque toujours la seule source
+# gratuite : attendre n'apporte pas de deuxième avis. Son flux ne garde que les matchs terminés normalement
+# (cotes/flashscore.py) : ce n'est jamais un score figé en cours de match, le risque que couvraient les 24 h.
+# Mesure du 20/10 au 10/11/2026 : 285 paris (9 % des règlements automatiques) ont attendu 24 h pour cette raison
+# (basket 137, volley 67, handball 33, rugby 28, snooker 14, baseball 6). Football et hockey gardent 24 h
+# (LiveScore et ESPN y donnent d'habitude un deuxième avis ; prolongation au hockey).
+FLASHSCORE_SEUL_SPORTS = {"basket", "volley", "handball", "rugby", "snooker", "baseball", "flechettes", "badminton"}
+DELAI_FLASHSCORE_SEUL_H = 6
 SEULES_SOURCES_EXCLUES = {"interwetten-de"}
 ESPN = "https://site.api.espn.com/apis/site/v2/sports"
 ESPN_LIGUES = {"football": ["soccer/all"], "hockey": ["hockey/nhl"], "basket": ["basketball/nba", "basketball/wnba"],
@@ -389,6 +397,11 @@ def reporte(p: dict, enregistrements: list[dict]) -> datetime | None:
     debut = _heure(p.get("debut"))
     if not debut:
         return None
+    # Le match a eu lieu à sa date : une source en donne le score. La même affiche programmée plus tard est alors un
+    # autre match (coupe le mercredi, championnat le samedi), pas un report. Cas réel du 28/10/2026 : Manchester
+    # City – Brighton, 2-2 en Coupe, réglé avec le 0-1 du championnat du 31/10.
+    if retrouver({**p, "reporte_au": None}, enregistrements):
+        return None
     dom, ext = _noms(p)
     proche = lambda noms, x: max(ressemblance(n, x) for n in noms)  # noqa: E731
     for r in enregistrements:
@@ -478,7 +491,8 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
         seule_annulee = bool(trouves[0].get("annule")) and depuis >= timedelta(hours=DELAI_ANNULE_H)
         seule_ancienne = sport_ok \
             and trouves[0]["source"] not in SEULES_SOURCES_EXCLUES \
-            and depuis >= timedelta(hours=DELAI_SOURCE_QUELCONQUE_H) and plausible(p["sport"], trouves[0]["score"])
+            and depuis >= timedelta(hours=delai_source_seule(p["sport"], trouves[0]["source"])) \
+            and plausible(p["sport"], trouves[0]["score"])
         if not (seule_fiable or seule_ancienne or seule_annulee):
             return None
     score = trouves[0]["score"]
@@ -497,6 +511,13 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
             "corners": corners[0] if len(corners) >= SOURCES_MIN and len(set(corners)) == 1 else None,
             "sources": sorted(r["source"] for r in trouves),
             **({"preuve_source": base["preuve_source"]} if base and base.get("preuve_source") else {})}
+
+
+def delai_source_seule(sport: str, source: str) -> int:
+    """Heures après le début au bout desquelles une source non « fiable » règle seule un match de ce sport."""
+    if source == "flashscore" and sport in FLASHSCORE_SEUL_SPORTS:
+        return DELAI_FLASHSCORE_SEUL_H
+    return DELAI_SOURCE_QUELCONQUE_H
 
 
 def a_lire(paris: list[dict], maintenant: datetime, apres_debut_h: float = 2) -> dict[str, datetime]:
@@ -522,7 +543,7 @@ def diagnostic(p: dict, enregistrements: list[dict], maintenant: datetime | None
     if len(majoritaires) == 1 and debut and maintenant and not consensus(p, enregistrements, maintenant):
         r = majoritaires[0]
         if p["sport"] not in SEULES_SPORTS_EXCLUS and r["source"] not in SEULES_SOURCES_EXCLUES:
-            limite = debut + timedelta(hours=DELAI_SOURCE_QUELCONQUE_H)
+            limite = debut + timedelta(hours=delai_source_seule(p["sport"], r["source"]))
             if maintenant < limite:
                 raison = "source unique : délai de validation automatique"
                 validation = limite.isoformat(timespec="seconds")
@@ -534,6 +555,149 @@ def diagnostic(p: dict, enregistrements: list[dict], maintenant: datetime | None
             "sources": {r["source"]: {"score": r["score"], "periodes": r["periodes"]} for r in trouves},
             "retenues": sorted(r["source"] for r in retenus),
             "raison": raison, "validation_apres": validation}
+
+
+FRERE_NOM_MIN = 0.9           # les deux équipes, dans le même sens ou inversées
+FRERE_ECART_SENS = 0.2        # le sens retenu doit l'emporter nettement sur l'autre
+FRERE_APRES_DEBUT_H = 2
+ORIGINES_FRERE = ("automatique", "résultat saisi à la main")
+
+
+def sens_meme_match(a: dict, b: dict) -> bool | None:
+    """Les deux paris portent-ils sur le même match, vu par deux bookmakers ? False : oui, équipes dans le même
+    ordre ; True : oui, ordre inversé ; None : non, ou pas assez sûr.
+
+    Sans preuve de lien : même sport, même coup d'envoi (± 15 min), deux équipes très proches (≥ 0,9, ce qui écarte
+    le féminin et les jeunes), et un sens nettement meilleur que l'autre. Prudent : une erreur réglerait un pari
+    avec le score d'un autre match."""
+    ta, tb = _heure(a.get("debut")), _heure(b.get("debut"))
+    if a.get("sport") != b.get("sport") or not ta or not tb or abs((ta - tb).total_seconds()) > SECOURS_HEURE_MIN * 60:
+        return None
+    try:
+        direct = min(ressemblance(a["domicile"], b["domicile"]), ressemblance(a["exterieur"], b["exterieur"]))
+        inverse = min(ressemblance(a["domicile"], b["exterieur"]), ressemblance(a["exterieur"], b["domicile"]))
+    except (KeyError, TypeError):
+        return None
+    if max(direct, inverse) < FRERE_NOM_MIN - 1e-9 or abs(direct - inverse) < FRERE_ECART_SENS:
+        return None
+    return inverse > direct
+
+
+def _inverser_scores(scores: dict) -> dict:
+    """Scores par période vus de l'autre équipe : chaque couple (domicile, extérieur) est retourné."""
+    def retourne(v):
+        if isinstance(v, (list, tuple)) and len(v) == 2 and all(isinstance(x, int) and not isinstance(x, bool) for x in v):
+            return (v[1], v[0])
+        return v
+    return {k: retourne(v) for k, v in scores.items()}
+
+
+def par_freres(paris: list[dict], resultats: dict[str, dict], maintenant: datetime) -> dict[str, dict]:
+    """Résultats repris d'un « match frère » : le même match chez un autre bookmaker, déjà validé.
+
+    Chaque bookmaker a son identifiant et son orthographe. Un match retrouvé chez les sources sous le nom d'Unibet
+    (« Manacor – Cisneros ») ne l'est pas toujours sous celui de PMU (« Conectabalear CV Manacor – Cisneros
+    Alter ») : le pari PMU restait « à régler à la main » alors que le score était déjà validé (3 des 31 saisies
+    manuelles du 25/10 au 1/11/2026). Le frère vient de ce cycle (``resultats``) ou d'un pari déjà réglé avec ses
+    scores par période (``preuve_reglement``), jamais d'un pari lui-même réglé par un frère ni d'un statut saisi
+    à la main. Renvoie les résultats à ajouter, par ``match_id``, orientés comme le pari à régler."""
+    ouverts = [p for p in paris if p.get("statut") in ("en_cours", "a_regler") and p.get("match_id")
+               and p["match_id"] not in resultats]
+    if not ouverts:
+        return {}
+    par_sport: dict[str, list[tuple[dict, dict]]] = {}
+    vus = set()
+    for q in paris:
+        mid = q.get("match_id")
+        if not mid or mid in vus:
+            continue
+        r = None
+        if q.get("statut") in ("en_cours", "a_regler"):
+            r = resultats.get(mid)
+            if r and (not r.get("final") or "id_paris_autorises" in r or r.get("frere")):
+                r = None                      # résultat réservé à certains paris (secours) : pas généralisable
+        else:
+            preuve = q.get("preuve_reglement") or {}
+            scores = preuve.get("scores")
+            if (preuve.get("origine") in ORIGINES_FRERE and not preuve.get("frere") and isinstance(scores, dict)
+                    and _score_valide(scores.get("MATCH")) and not preuve.get("annule")):
+                r = {"sport": q.get("sport"), "score": tuple(scores["MATCH"]), "final": True, "periodes": [],
+                     "libelles": [], "scores": dict(scores),
+                     "sources": list(preuve.get("sources") or ["saisie manuelle"])}
+        if r:
+            vus.add(mid)
+            par_sport.setdefault(q.get("sport"), []).append((q, r))
+    ajouts: dict[str, dict] = {}
+    for p in ouverts:
+        if p["match_id"] in ajouts:
+            continue
+        # heure d'origine, même pour un pari noté « reporté » : un frère réglé à cette date prouve que le match a eu lieu
+        debut = _heure(p.get("debut"))
+        if not debut or maintenant - debut < timedelta(hours=FRERE_APRES_DEBUT_H):
+            continue
+        candidats = [(q, r, sens) for q, r in par_sport.get(p.get("sport"), [])
+                     if q["match_id"] != p["match_id"] and (sens := sens_meme_match(p, q)) is not None]
+        # plusieurs frères possibles : ils doivent raconter le même match (même score, vu du pari)
+        vues = {(r["score"][::-1] if sens else tuple(r["score"])) for _, r, sens in candidats}
+        if len(vues) != 1:
+            continue
+        q, r, sens = candidats[0]
+        frere = {"match_id": q["match_id"], "bookmaker": q.get("bookmaker"),
+                 "match": f'{q.get("domicile")} – {q.get("exterieur")}', "inverse": sens}
+        if r.get("scores"):
+            scores = _inverser_scores(r["scores"]) if sens else dict(r["scores"])
+            ajouts[p["match_id"]] = {**r, "score": tuple(scores["MATCH"]), "scores": scores, "frere": frere}
+        else:
+            tourne = lambda c: (c[1], c[0]) if sens and c else c       # noqa: E731
+            ajouts[p["match_id"]] = {**r, "score": tuple(tourne(r["score"])),
+                                     "periodes": [tuple(tourne(x)) for x in r.get("periodes") or []],
+                                     "corners": tourne(r.get("corners")), "frere": frere}
+    return ajouts
+
+
+def incoherences_freres(paris: list[dict], limite: int = 50) -> list[dict]:
+    """Même match réglé chez deux bookmakers avec deux scores différents : l'un des deux règlements est faux.
+
+    Contrôle sans réseau sur les paris déjà réglés (un par ``match_id``, avec ses scores). Mesure du 10/11/2026 :
+    700 paires de frères, 696 d'accord, 4 désaccords dont le règlement faux de Manchester City – Brighton. Pour
+    corriger : le bon statut sous l'identifiant du pari dans ``resultats_manuels.json`` (cotes/reglement.py)."""
+    un_par_match: dict[str, dict] = {}
+    for p in paris:
+        preuve = p.get("preuve_reglement") or {}
+        scores = preuve.get("scores")
+        if (p.get("match_id") and preuve.get("origine") in ORIGINES_FRERE and isinstance(scores, dict)
+                and _score_valide(scores.get("MATCH")) and not preuve.get("frere")):
+            un_par_match.setdefault(p["match_id"], p)
+    par_sport: dict[str, list[dict]] = {}
+    for p in un_par_match.values():
+        par_sport.setdefault(p.get("sport"), []).append(p)
+    ids_par_match: dict[str, list[str]] = {}
+    for p in paris:
+        if p.get("match_id") in un_par_match and p.get("id"):
+            ids_par_match.setdefault(p["match_id"], []).append(p["id"])
+    out = []
+    for ps in par_sport.values():
+        ps.sort(key=lambda p: str(_heure(p.get("debut")) or ""))
+        for i, a in enumerate(ps):
+            ta = _heure(a.get("debut"))
+            for b in ps[i + 1:]:
+                tb = _heure(b.get("debut"))
+                if ta and tb and (tb - ta).total_seconds() > SECOURS_HEURE_MIN * 60:
+                    break                      # triés par heure : plus aucun frère possible
+                sens = sens_meme_match(a, b)
+                if sens is None:
+                    continue
+                sa, sb = tuple(a["preuve_reglement"]["scores"]["MATCH"]), tuple(b["preuve_reglement"]["scores"]["MATCH"])
+                if sa != (sb[::-1] if sens else sb):
+                    cote = lambda p, s: {"bookmaker": p.get("bookmaker"), "match_id": p["match_id"],  # noqa: E731
+                                         "match": f'{p.get("domicile")} – {p.get("exterieur")}', "score": list(s),
+                                         "sources": (p["preuve_reglement"].get("sources") or ["saisie manuelle"]),
+                                         "regle_le": p.get("regle_le"), "reporte_au": p.get("reporte_au"),
+                                         "paris": ids_par_match.get(p["match_id"], [])}
+                    out.append({"sport": a.get("sport"), "debut": a.get("debut"), "a": cote(a, sa), "b": cote(b, sb)})
+                    if len(out) >= limite:
+                        return out
+    return out
 
 
 def a_saisir(paris: list[dict], enregistrements: list[dict], maintenant: datetime | None = None,
@@ -557,7 +721,7 @@ def a_saisir(paris: list[dict], enregistrements: list[dict], maintenant: datetim
             return False
         sim = lambda x, y: min(ressemblance(x["domicile"], y["domicile"]), ressemblance(x["exterieur"], y["exterieur"]))  # noqa: E731
         inv = min(ressemblance(a["domicile"], b["exterieur"]), ressemblance(a["exterieur"], b["domicile"]))
-        return max(sim(a, b), inv) >= 0.9 - 1e-9
+        return max(sim(a, b), inv) >= FRERE_NOM_MIN - 1e-9
 
     fusionnes: list[list[dict]] = []
     for ps in sorted(groupes.values(), key=lambda g: str(g[0].get("debut"))):

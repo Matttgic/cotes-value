@@ -840,7 +840,11 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
                 resultats.update(secours[0])
                 journal["propline"] = secours[1]
                 signaler(journal, "resultats_propline", secours[1]["erreurs"])
-        journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats)}
+        # Même match chez un autre bookmaker, déjà validé (ce cycle ou avant) : son score règle aussi ces paris.
+        freres = resultats_mod.par_freres(paris, resultats, maintenant)
+        resultats.update(freres)
+        journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats),
+                                "par_match_frere": len(freres)}
         # matchs reportés (vus « à venir » chez ESPN à une date plus tardive) : ils restent en cours
         reportes = {p["match_id"]: d for p in paris
                     if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats
@@ -871,12 +875,18 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
                 for src in (p.get("preuve_reglement") or {}).get("sources") or ["saisie manuelle"]:
                     sources_reglees[src] = sources_reglees.get(src, 0) + 1
         journal["resultats"]["sources_reglement"] = sources_reglees
+        # Même match réglé avec deux scores différents chez deux bookmakers : à vérifier à la main
+        incoherences = resultats_mod.incoherences_freres(paris)
+        journal["resultats"]["incoherences_freres"] = len(incoherences)
         journal["props_reglement"] = _regler_props(donnees, enregistrements, maintenant)
         # Rien ne règle ces matchs : la liste est prête à être complétée à la main
         ecrire_json(donnees / "resultats_a_saisir.json",
                     {"genere": maintenant.isoformat(timespec="seconds"),
                      "aide": "Copier `modele` dans resultats_manuels.json sous chaque clé de `match_ids`, y remplir le score.",
-                     "matchs": resultats_mod.a_saisir(paris, enregistrements, maintenant)})
+                     "matchs": resultats_mod.a_saisir(paris, enregistrements, maintenant),
+                     "aide_incoherences": "Même match, deux scores : vérifier, puis écrire le bon statut (gagne, perdu, "
+                                          "rembourse…) sous l'identifiant de chaque pari faux dans resultats_manuels.json.",
+                     "incoherences": incoherences})
     else:
         journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
 

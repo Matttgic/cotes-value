@@ -163,6 +163,8 @@ def trace(p: dict) -> list[str]:
         if per and (r.get("scores") or {}).get(p.get("periode")):
             txt += f", {per} {_score(r['scores'][p['periode']])}"
         out.append(txt + " · sources : " + ", ".join(r.get("sources") or []) + ".")
+        if isinstance(r.get("frere"), dict):      # même match validé chez un autre bookmaker (resultats.par_freres)
+            out.append(f"Score repris du même match chez {r['frere'].get('bookmaker')} (« {r['frere'].get('match')} »).")
     elif r.get("origine"):
         out.append("Réglé à la main" + (f" : {r['source']}" if r.get("source") else "") + ".")
     return out
