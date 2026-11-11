@@ -337,6 +337,24 @@ def ligne_macro(a: dict, mise: float | None) -> str:
     return "|".join(champs + [f"URL:{lien}"])
 
 
+METHODE_CLAUDE = "claude_humain"
+METHODE_ECART_MIN = 1.03          # on ne joue plus si l'écart est tombé sous 3 %
+METHODE_MISE = 0.01               # 1 % de la bankroll
+
+
+def ligne_methode_claude(a: dict, env) -> str:
+    """Alerte de « Claude · Méthode humaine » : la cote minimale à jouer (écart 3 %) et la mise (1 % de
+    ``PUSHOVER_BANKROLL``), déjà calculées. Vide pour les autres stratégies."""
+    if METHODE_CLAUDE not in (a.get("strategies") or []):
+        return ""
+    juste = a.get("cote_juste")
+    if not isinstance(juste, (int, float)) or isinstance(juste, bool) or juste <= 1:
+        return ""
+    cote_min = math.ceil(round(juste * METHODE_ECART_MIN * 100, 6)) / 100
+    mise = max(1.0, round(_bankroll(env) * METHODE_MISE))
+    return f"Méthode Claude : jouer si cote ≥ {_fr(cote_min, 2)} · mise {_fr(mise, 0)} €"
+
+
 def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> dict:
     """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable). Mise Kelly ¼ ramenée à
     ``PUSHOVER_BANKROLL`` ; ligne MacroDroid (STAKE|MIN|URL) avant les stratégies, sauf ``PUSHOVER_LIGNE_MACRO=non``."""
@@ -346,6 +364,9 @@ def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> d
     if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
         a = {**a, "mise_kelly": round(kelly * _bankroll(env) / BANKROLL_REFERENCE, 2)}
     titre, corps = message_ntfy(a)
+    methode = ligne_methode_claude(a, env)
+    if methode:
+        corps = corps + "\n" + methode
     noms = [str(x) for x in (a.get("labels") or [])]
     ligne = f"\n{len(noms)} stratégie{'s' if len(noms) > 1 else ''} : {', '.join(noms)}" if noms else ""
     macro = ligne_macro(a, a.get("mise_kelly")) if str(env.get("PUSHOVER_LIGNE_MACRO", "oui")).lower() != "non" else ""

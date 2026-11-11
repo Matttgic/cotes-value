@@ -218,3 +218,11 @@ def test_ligne_macrodroid_mise_selon_bankroll_minimum_et_lien():
     assert "STAKE" not in E.message_pushover(alerte(mise_kelly=5, lien_repli=True), ENV, NOW)["message"]  # page du sport
     assert E.message_pushover(a, {**ENV, "PUSHOVER_BANKROLL": "abc"}, NOW)["message"] == m      # valeur absurde : défaut
     assert E.ligne_macro({"lien": "https://x.test/m", "cote_min": 1.8}, 0.1) == "STAKE:0.5|MIN:1.80|URL:https://x.test/m"
+
+
+def test_methode_claude_cote_minimale_et_mise_deja_calculees():
+    a = alerte(strategies=("claude_humain",), cote=2.10, cote_juste=1.95)
+    msg = E.message_pushover(a, env={"PUSHOVER_BANKROLL": "1500"})["message"]
+    assert "Méthode Claude : jouer si cote ≥ 2,01 · mise 15 €" in msg      # 1,95 × 1,03 = 2,0085 -> 2,01
+    assert "Méthode Claude" not in E.message_pushover(alerte(cote_juste=1.95), env={})["message"]
+    assert "mise 10 €" in E.message_pushover(a, env={})["message"]          # bankroll par défaut 1 000 €
