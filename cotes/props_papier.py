@@ -364,6 +364,11 @@ def regler(doc: dict, matchs: list[dict], feuilles: dict[str, list[dict]], maint
         if not joueurs:
             continue
         meme = [j for j in joueurs if j.get("cle") and j["cle"] == p.get("cle_joueur")]
+        if not meme and p.get("cle_joueur"):
+            # Suffixe présent d'un seul côté (« Darius Acuff » chez Winamax, « Darius Acuff Jr. » chez ESPN) :
+            # même nom et même initiale, seulement si un seul joueur de la feuille correspond.
+            base = p["cle_joueur"].rsplit("|", 1)[0]
+            meme = [j for j in joueurs if j.get("cle") and j["cle"].rsplit("|", 1)[0] == base]
         if len(meme) != 1:
             p["reglement_note"] = "joueur ambigu ou absent"
             continue
