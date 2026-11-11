@@ -1,0 +1,22 @@
+name: Sonde Unibet
+
+# Teste depuis GitHub pourquoi l'accueil Unibet répond 403 (empreintes de navigateur, pages, API). Rien n'est écrit.
+# À lancer à la main (Actions → Sonde Unibet → Run workflow).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sonde:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python scripts/sonde_unibet.py
