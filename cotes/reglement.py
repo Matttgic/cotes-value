@@ -269,6 +269,7 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
     reportes = reportes or {}
     for p in paris:
         if p["statut"] not in ("en_cours", "a_regler"):
+            corriger(p, manuels.get(p.get("id")), maintenant)
             continue
         statut = manuels.get(p["id"]) if isinstance(manuels.get(p["id"]), str) else None
         if statut is not None and statut not in GAIN:
@@ -311,16 +312,22 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
                 statut = "rembourse"
                 preuve = {"origine": "automatique", "sources": r.get("sources"), "annule": True}
             elif r and r.get("final") and ("id_paris_autorises" not in r or p["id"] in r["id_paris_autorises"]):
-                sc = scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"])
-                if r.get("abandon") and p["sport"] == "tennis":
-                    sc["ABANDON"] = True               # même quand le détail des sets est incohérent avec le score
-                if r.get("corners"):
-                    sc["CORNERS"] = tuple(r["corners"])
+                if r.get("scores"):
+                    # match frère déjà réglé (cotes/resultats.py, par_freres) : ses scores par période, tels quels
+                    sc = {k: tuple(v) if isinstance(v, (list, tuple)) else v for k, v in r["scores"].items()}
+                else:
+                    sc = scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"])
+                    if r.get("abandon") and p["sport"] == "tennis":
+                        sc["ABANDON"] = True           # même quand le détail des sets est incohérent avec le score
+                    if r.get("corners"):
+                        sc["CORNERS"] = tuple(r["corners"])
                 statut = regler(p, sc)
                 preuve = {"origine": "automatique", "sources": r.get("sources"), "score": r["score"],
                           "periodes": r["periodes"], "scores": sc}
                 if r.get("preuve_source"):
                     preuve["preuve_source"] = r["preuve_source"]
+                if r.get("frere"):
+                    preuve["frere"] = r["frere"]
         if statut in GAIN:
             p["statut"] = statut
             p["gain"] = gain(statut, p["mise"], p["cote"])
@@ -341,6 +348,24 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
             p["reporte_au"] = reportes[p["match_id"]].isoformat(timespec="seconds")
         elif maintenant - debut > timedelta(hours=12):
             p["statut"] = "a_regler"              # résultat introuvable : à régler à la main
+
+
+def corriger(p: dict, statut, maintenant: datetime) -> bool:
+    """Corrige un pari déjà réglé quand ``resultats_manuels.json`` donne un autre statut sous son identifiant.
+
+    Un règlement automatique peut être faux (mauvais match, score erroné d'une source) : sans cela, rien ne
+    permettait de le reprendre. La date du règlement reste celle d'origine (les courbes ne bougent pas dans le
+    temps) ; la trace garde l'ancien statut et la date de la correction."""
+    if not isinstance(statut, str) or statut not in GAIN or p.get("statut") not in GAIN or statut == p["statut"]:
+        return False
+    ancienne = p.get("preuve_reglement") or {}
+    p["preuve_reglement"] = {"origine": "statut saisi à la main", "corrige_le": maintenant.isoformat(timespec="seconds"),
+                             "ancien_statut": p["statut"], "ancienne_origine": ancienne.get("origine"),
+                             "anciennes_sources": ancienne.get("sources"), "periode_utilisee": p.get("periode"),
+                             "version": VERSION}
+    p["statut"] = statut
+    p["gain"] = gain(statut, p["mise"], p["cote"])
+    return True
 
 
 def _alerte(p: dict, code: str) -> None:

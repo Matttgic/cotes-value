@@ -57,14 +57,27 @@ def test_jours_hors_fenetre_ignores_et_panne_notee():
     assert len(flashscore.ERREURS) == avant + 1
 
 
-def test_une_source_seule_ne_regle_qu_apres_24_heures():
+def test_flashscore_seul_regle_apres_6_heures_au_volley_24_au_football():
     p = {"statut": "a_regler", "match_id": "x|1", "sport": "volley", "domicile": "Oudegem F", "exterieur": "Gent F",
          "debut": "2026-10-17T10:00:00Z", "periode": "MATCH", "marche": "VAINQUEUR", "issue": "DOM"}
     d = dict(kv.split("÷", 1) for kv in _bloc(AD=str(int(datetime(2026, 10, 17, 10, tzinfo=timezone.utc).timestamp()))).split("¬"))
     rec = [flashscore.match("volley", d)]
-    assert resultats.consensus(p, rec, datetime(2026, 10, 17, 20, tzinfo=timezone.utc)) is None
-    r = resultats.consensus(p, rec, datetime(2026, 10, 18, 11, tzinfo=timezone.utc))
+    # volley : Flashscore est la seule source gratuite et ne garde que les matchs terminés ; 6 h suffisent
+    assert resultats.consensus(p, rec, datetime(2026, 10, 17, 15, tzinfo=timezone.utc)) is None
+    r = resultats.consensus(p, rec, datetime(2026, 10, 17, 16, 30, tzinfo=timezone.utc))
     assert r and r["score"] == (3, 1) and r["sources"] == ["flashscore"]
+    assert resultats.delai_source_seule("volley", "flashscore") == 6
+    assert resultats.delai_source_seule("basket", "flashscore") == 6
+    # football et hockey : un deuxième avis arrive d'habitude ; Flashscore seul attend toujours 24 h
+    assert resultats.delai_source_seule("football", "flashscore") == 24
+    assert resultats.delai_source_seule("hockey", "flashscore") == 24
+    assert resultats.delai_source_seule("volley", "unibet-uk") == 24          # une autre source seule : 24 h
+    foot = {**p, "sport": "football"}
+    rec_foot = [{**rec[0], "sport": "football", "score": (2, 1), "periodes": []}]
+    assert resultats.consensus(foot, rec_foot, datetime(2026, 10, 17, 20, tzinfo=timezone.utc)) is None
+    assert resultats.consensus(foot, rec_foot, datetime(2026, 10, 18, 11, tzinfo=timezone.utc))["score"] == (2, 1)
+    d = resultats.diagnostic(p, rec, datetime(2026, 10, 17, 12, tzinfo=timezone.utc))
+    assert d["validation_apres"] == "2026-10-17T16:00:00+00:00"
     assert flashscore.jours_a_lire([p], MAINTENANT) == {"volley": ["2026-10-16", "2026-10-17"]}
 
 

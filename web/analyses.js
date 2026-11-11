@@ -62,7 +62,7 @@ function groupesAnalyse(rows,champ) {
   for(const p of rows) {const k=p[champ] || 'Non renseigné';if(!groupes.has(k)) groupes.set(k,[]);groupes.get(k).push(p);}
   return [...groupes].map(([nom,lignes])=>({nom,...statsAnalyse(lignes)}));
 }
-function argentAnalyse(v) {return v==null?'—':new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2,minimumFractionDigits:0,signDisplay:'exceptZero'}).format(Math.abs(v)<.000001?0:v);}
+function argentAnalyse(v) {if(v!=null && typeof enBankroll==='function') v=enBankroll(v);return v==null?'—':new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2,minimumFractionDigits:0,signDisplay:'exceptZero'}).format(Math.abs(v)<.000001?0:v);}
 function tauxAnalyse(v) {return v==null?'—':new Intl.NumberFormat('fr-FR',{style:'percent',maximumFractionDigits:1,signDisplay:'exceptZero'}).format(v);}
 function entierAnalyse(v) {return Number(v).toLocaleString('fr-FR');}
 function videAnalyse(texte='Aucune donnée sur cette sélection.') {return `<p class="analyse-absence">${e(texte)}</p>`;}

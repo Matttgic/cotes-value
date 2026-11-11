@@ -66,6 +66,7 @@ const document={getElementById(id){
 },querySelectorAll(){return []}};
 const e=s => String(s ?? "").replaceAll("<","&lt;").replaceAll('"','&quot;');
 const cote=e,pct=e,eur=e,quand=e,signe=()=>"",ouvrir=()=>{};
+const enBankroll=x=>x, eurosNets=x=>String(x);      // bankroll de base : montants inchangés
 const STATUTS={}, STRAT_PERIODES={futur:"Depuis le lancement",ensemble:"Historique"};
 const lire=()=>null, ecrire=()=>{};
 '''+(Path(__file__).resolve().parents[1]/'web/liens.js').read_text()+(Path(__file__).resolve().parents[1]/'web/horaires.js').read_text()+(Path(__file__).resolve().parents[1]/'web/suivi.js').read_text()

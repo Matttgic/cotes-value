@@ -455,6 +455,11 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 .mode-mise button{font:inherit;font-size:12px;padding:6px 12px;border:1px solid var(--ligne);background:transparent;color:inherit;cursor:pointer}
 .mode-mise button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-f);color:var(--accent);font-weight:600}
 .mode-mise-note{margin:0 0 8px}
+.mode-mise label{color:var(--discret,#667085)}
+.mode-mise select,.mode-mise input{font:inherit;font-size:12px;min-height:32px;padding:5px 8px;border:1px solid var(--ligne);background:var(--fond);color:var(--texte);border-radius:0}
+.mode-mise input{width:92px;text-align:right;font-variant-numeric:tabular-nums}
+.bankroll-champ{display:inline-flex;align-items:center;gap:4px}.bankroll-champ i{font-style:normal;color:var(--doux)}
+.bu-periodes .champ,#strategies-periodes .champ{min-width:200px}
 body.mise-kelly .mode-mise{outline:1px solid var(--accent);outline-offset:3px;padding:2px 4px}
 /* Bouton « Parier chez … » : lien direct vers la page du match chez le bookmaker (web/liens.js). */
 .lien-bookmaker{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
@@ -506,6 +511,9 @@ button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,s
 nav .nb{background:none;border:0;padding:0;margin-left:6px;font-size:11px;color:var(--doux)}
 .mode-mise{grid-column:3;grid-row:1;display:flex;align-items:center;gap:0;margin:0;flex-wrap:nowrap}
 .mode-mise>span{margin-right:10px;white-space:nowrap}
+.mode-mise label{margin:0 8px 0 0;white-space:nowrap;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--doux)}
+.mode-mise select,.mode-mise input{font-family:var(--mono);border-color:var(--texte)}
+.mode-mise select{margin-right:16px;max-width:210px}
 .mode-mise button{min-height:0;padding:6px 11px;border:1px solid var(--texte);background:transparent;color:var(--texte);font-size:12px;font-weight:400;white-space:nowrap}
 .mode-mise button+button{margin-left:-1px}
 .mode-mise button[aria-pressed="true"]{background:var(--texte);border-color:var(--texte);color:var(--fond);font-weight:400}
@@ -603,6 +611,9 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
   .mise-a-jour{grid-column:2;grid-row:1;padding:10px 0 8px}.maj{display:none}.fraicheur{font-size:12.5px}
   .mode-mise{grid-column:1/-1;grid-row:2;padding:8px 0 10px;border-top:1px solid var(--ligne)}
   .mode-mise button{min-height:36px;flex:1}
+  .mode-mise{flex-wrap:wrap;gap:6px 0}.mode-mise label{font-size:10px;letter-spacing:.04em;margin-right:6px}
+  .mode-mise select{flex:1 1 150px;min-width:150px;min-height:36px;max-width:none;margin-right:12px}.mode-mise input{min-height:36px;width:84px}
+  .mode-mise-note{font-size:11.5px;line-height:1.35}
   .mode-mise-note{grid-row:3}
   #onglets{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:0;
     padding:0 0 env(safe-area-inset-bottom);background:var(--fond);border-top:1px solid var(--texte)}
@@ -722,6 +733,20 @@ tr.en-pause td{opacity:.7}
 .avis-kicker{margin:0 0 2px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--doux);font-weight:600}
 .avis-verdict{margin:0 0 8px;font-size:18px;font-weight:700;letter-spacing:-.3px;line-height:1.25}
 .avis-verdict.pos{color:var(--vert)}.avis-verdict.neg{color:var(--rouge)}.avis-verdict.doux{color:var(--doux)}
+.avis-mini{display:inline-block;margin-left:6px;padding:0 5px;border:1px solid currentColor;font-size:10.5px;font-weight:600;letter-spacing:.02em;line-height:1.5;color:var(--texte);vertical-align:middle;white-space:nowrap}
+.avis-mini.pos{color:var(--vert)}.avis-mini.neg{color:var(--rouge)}.avis-mini.doux{color:var(--doux)}
+.avis-kicker{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.avis-compte{font-weight:500;letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
+.avis-action{display:inline-block;margin-left:8px;padding:1px 7px;border:1px solid currentColor;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle;color:var(--texte)}
+.avis-action.pos{color:var(--vert)}.avis-action.neg{color:var(--rouge)}.avis-action.doux{color:var(--doux)}
+.avis-sens{margin:0 0 8px;font-size:13px;line-height:1.4}
+.avis-criteres{list-style:none;margin:0;padding:0;font-size:13px;line-height:1.35}
+.avis-criteres li{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-top:1px solid var(--ligne)}
+.avis-criteres b{font-weight:600}
+.avis-criteres small{display:block;color:var(--doux);font-size:12px}
+.avis-coche{flex:0 0 18px;width:18px;height:18px;line-height:18px;text-align:center;font-weight:700;font-size:13px;margin-top:1px}
+.avis-criteres .oui .avis-coche{color:var(--vert)}.avis-criteres .non .avis-coche{color:var(--rouge)}.avis-criteres .attente .avis-coche{color:var(--doux)}
+.avis-criteres .non b{color:var(--rouge)}
 .avis-raisons{margin:0;padding-left:16px;font-size:13px;line-height:1.4}
 .avis-raisons li{margin:3px 0}
 .avis-details{margin-top:8px}

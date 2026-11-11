@@ -27,10 +27,11 @@ from cotes.strategie_qwen import QWEN, paris_qwen  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,  # noqa: E402
                               attendu_et_variance, courbe, evaluer, heure, resume, selectionner, suivi_futur)
-from cotes.mises import METHODES as METHODES_MISE, comparer as comparer_mises  # noqa: E402
+from cotes.mises import (METHODES as METHODES_MISE, MODE_DEFAUT, MODES_BILAN, MODES_INTEGRES,  # noqa: E402
+                         comparer as comparer_mises, mise_du_mode)
 from cotes.securite import json_public
 from cotes.protection import calculer, proteger_strategies  # noqa: E402
-from cotes.analyste import SEUILS as SEUILS_AVIS, annoter_avis  # noqa: E402
+from cotes.analyste import SEUILS as SEUILS_AVIS, alleger_avis, annoter_avis, reference_avis  # noqa: E402
 from cotes import notifications as notifications_mod  # noqa: E402
 from cotes import ordres as ordres_mod  # noqa: E402
 
@@ -162,6 +163,8 @@ def trace(p: dict) -> list[str]:
         if per and (r.get("scores") or {}).get(p.get("periode")):
             txt += f", {per} {_score(r['scores'][p['periode']])}"
         out.append(txt + " · sources : " + ", ".join(r.get("sources") or []) + ".")
+        if isinstance(r.get("frere"), dict):      # même match validé chez un autre bookmaker (resultats.par_freres)
+            out.append(f"Score repris du même match chez {r['frere'].get('bookmaker')} (« {r['frere'].get('match')} »).")
     elif r.get("origine"):
         out.append("Réglé à la main" + (f" : {r['source']}" if r.get("source") else "") + ".")
     return out
@@ -305,18 +308,24 @@ def enrichir_comparateurs(paris: list[dict], laboratoire: dict, maintenant: str)
         comparateurs[nom] = {**stats, "ensemble": resume(commun, releve, incertitude=False)}
 
 
-def paris_en_mise_kelly(paris: list[dict]) -> list[dict]:
-    """Copies des paris misés en Kelly ¼ : mise propre, gain réglé proportionnel (le gain suit la mise).
+def paris_en_mise(paris: list[dict], mode: str) -> list[dict]:
+    """Copies des paris misés dans un mode du sélecteur (cotes/mises.py, MODES_BILAN) : mise propre, gain réglé
+    proportionnel (le gain suit la mise).
 
     Les copies servent aux mêmes calculs que les paris d'origine ; rien n'est écrit dans les données."""
     out = []
     for p in paris:
-        k = mise_kelly(p) or 1.0
+        k = mise_du_mode(mode, p)
         q = {**p, "mise": k}
         if p.get("gain") is not None and p.get("mise"):
             q["gain"] = round(p["gain"] * k / p["mise"], 2)
         out.append(q)
     return out
+
+
+def paris_en_mise_kelly(paris: list[dict]) -> list[dict]:
+    """Copies des paris misés en Kelly ¼, le mode par défaut du site."""
+    return paris_en_mise(paris, "kelly")
 
 
 def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]], regles: dict[str, set[int]] | None = None) -> dict:
@@ -591,8 +600,9 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     liste, _, valeurs = selection_paris(paris)
-    def _laboratoire(paris):
-        """Laboratoire des stratégies pour un jeu de paris (mises fixes ou mises Kelly)."""
+    def _laboratoire(paris, complet=True):
+        """Laboratoire des stratégies pour un jeu de paris (mises fixes ou autre mode de mise). ``complet`` faux :
+        sans la comparaison des méthodes de mise, qui ne lit ni la mise ni le gain (identique dans tous les modes)."""
         laboratoire = _lire(Path(__file__).resolve().parent.parent / "docs/comparaison-strategies.json", {})
         if laboratoire:
             # L'étude figée contient encore les règles Betfair (BET-*) : seules les règles actuelles sont gardées.
@@ -679,11 +689,12 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             laboratoire["_fusion_rejeu"] = {"stats": resume(rejeu, maintenant, incertitude=False, depuis=DEBUT_SUIVI),
                                             "courbe": courbe(rejeu, maintenant)}
             depart = heure(DEBUT_SUIVI)
-            laboratoire["mises"] = {"methodes": {k: {"nom": m[0], "regle": m[1]} for k, m in METHODES_MISE.items()},
-                                    "selections": {"Paris uniques": comparer_mises(
-                                        [p for p in paris if id(p) in uniques_suivi and heure(p.get("detecte"))
-                                         and depart <= heure(p["detecte"])])}}
-            for nom, ids in officiels.items():
+            if complet:
+                laboratoire["mises"] = {"methodes": {k: {"nom": m[0], "regle": m[1]} for k, m in METHODES_MISE.items()},
+                                        "selections": {"Paris uniques": comparer_mises(
+                                            [p for p in paris if id(p) in uniques_suivi and heure(p.get("detecte"))
+                                             and depart <= heure(p["detecte"])])}}
+            for nom, ids in officiels.items() if complet else ():
                 debut_nom = heure(lancements.get(nom, DEBUT_SUIVI))
                 laboratoire["mises"]["selections"][nom] = comparer_mises(
                     [p for p in paris if id(p) in ids and heure(p.get("detecte")) and debut_nom <= heure(p["detecte"])])
@@ -703,8 +714,8 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
                        if isinstance(stats, dict)]
             avis = annoter_avis([[par_id[i] for i in ids if i in par_id] for _, ids in cibles], maintenant)
             for (cible, _), a in zip(cibles, avis):
-                cible["avis"] = a
-            laboratoire["analyste"] = {"seuils": SEUILS_AVIS}
+                cible["avis"] = alleger_avis(a)       # textes communs publiés une seule fois, ci-dessous
+            laboratoire["analyste"] = {"seuils": SEUILS_AVIS, **reference_avis()}
         return laboratoire
 
     laboratoire = _laboratoire(paris)
@@ -731,7 +742,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     _alleger_navigation(laboratoire)
     # Même historique rejoué en mise Kelly : le navigateur échange ces blocs quand on choisit « Kelly ».
     paris_k = paris_en_mise_kelly(paris)
-    laboratoire_k = _laboratoire(paris_k)
+    laboratoire_k = _laboratoire(paris_k, complet=False)
     retirer_places_libres(laboratoire_k)
     fusion_rejeu_k = laboratoire_k.pop("_fusion_rejeu", None)
     laboratoire_k.pop("_ensembles", None)
@@ -746,11 +757,46 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
         f[:6] == k[:6] and f[7:] == k[7:] for f, k in zip(segments_fixe, segments_k))
     if segments_fusionnes:
         segments_fixe = [f + [k[6]] for f, k in zip(segments_fixe, segments_k)]
+    # Autres modes de mise du sélecteur (Kelly ⅛, Kelly ½…) : un fichier par mode (site/mises/<mode>.json), chargé
+    # par la page seulement quand on le choisit. Un mode en erreur est retiré du menu, le site continue.
+    from cotes import protection
+    durees_strategies = protection.durees()         # avant les modes supplémentaires, qui recalculent les mêmes
+    blocs_mises: dict[str, dict] = {}
+    for mode in MODES_BILAN:
+        if mode in MODES_INTEGRES:
+            continue
+        try:
+            paris_m = paris_en_mise(paris, mode)
+            labo_m = _laboratoire(paris_m, complet=False)
+            retirer_places_libres(labo_m)
+            rejeu_m = labo_m.pop("_fusion_rejeu", None)
+            labo_m.pop("_ensembles", None)
+            _alleger_navigation(labo_m)
+            segments_m = paris_des_segments(paris_m)
+            alignes = len(segments_m) == len(segments_fixe) and all(
+                f[:6] == m[:6] and f[7:12] == m[7:12] for f, m in zip(segments_fixe, segments_m))
+            blocs_mises[mode] = {
+                "bilan": bilan(paris_m), "courbes": courbes(paris_m), "segments": segments(paris_m),
+                "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"}
+                                   for k, b in bilan_tranches(paris_m).items()},
+                "filtres": bilan_filtres(paris_m),
+                "laboratoire": {k: v for k, v in labo_m.items() if laboratoire.get(k) != v},
+                # seule la colonne du gain (6) des paris des segments dépend de la mise
+                **({"gains_segments": [m[6] for m in segments_m]} if alignes else {"paris_segments": segments_m}),
+                "fusion_rejeu": rejeu_m,
+                "mises_paris": {p["id"]: p["mise"] for p in paris_m if p.get("id")}}
+        except Exception as e:  # noqa: BLE001 - un mode de mise en erreur ne doit pas arrêter le site
+            from cotes import echecs
+            echecs.annoter(f"mode de mise {mode}", echecs.message_court(e))
     from cotes.props_papier import bilan as bilan_props
     from cotes.props_papier import lire as lire_props
     props_publies = bilan_props(lire_props(donnees))
     libres = {f["cle"] for f in FUSIONS_AUTO if not f["actif"]}
     data = {"diagnostic_alertes": journal_alertes.get("cycles", [])[-5:], "notes_reperes": notes_reperes,
+            "modes_mise": [{"cle": mode, "nom": nom, "regle": regle, "integre": mode in MODES_INTEGRES}
+                           for mode, (nom, regle, _) in MODES_BILAN.items()
+                           if mode in MODES_INTEGRES or mode in blocs_mises],
+            "mode_mise_defaut": MODE_DEFAUT,
             "doublons": doublons, "pauses": pauses_publiees,
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": {k: v for k, v in notifications_mod.NOMS.items()
@@ -793,8 +839,8 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             "props": props_publies}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
     # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/pannes.py).
-    from cotes import pannes, protection
-    data["durees_strategies"] = protection.durees()
+    from cotes import pannes
+    data["durees_strategies"] = durees_strategies
     data["pannes_strategies"] = pannes.mettre_a_jour(donnees, echecs_strategies or {}, datetime.now(timezone.utc))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
@@ -834,6 +880,11 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     for police in (web / "polices").glob("*.woff2"):
         (sortie / "polices" / police.name).write_bytes(police.read_bytes())
     (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
+    (sortie / "mises").mkdir(exist_ok=True)
+    for ancien in (sortie / "mises").glob("*.json"):          # un mode retiré du menu ne reste pas publié
+        ancien.unlink()
+    for mode, bloc in blocs_mises.items():
+        (sortie / "mises" / f"{mode}.json").write_text(json_public(bloc), encoding="utf-8")
     (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
     (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
     (sortie / "ordres.json").write_text(ordres_json, encoding="utf-8")

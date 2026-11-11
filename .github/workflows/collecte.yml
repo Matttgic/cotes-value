@@ -130,6 +130,8 @@ jobs:
           SOURCE_MATCHBOOK: ${{ vars.SOURCE_MATCHBOOK || 'direct' }}
           # FanDuel, référence props NBA/NHL seulement (aucun pari). off coupe les appels.
           SOURCE_FANDUEL: ${{ vars.SOURCE_FANDUEL || 'direct' }}
+          # DraftKings, référence seulement (matchs NBA, NHL, NFL, MLB et props NBA, NHL ; aucun pari). off coupe les appels.
+          SOURCE_DRAFTKINGS: ${{ vars.SOURCE_DRAFTKINGS || 'direct' }}
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
         run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
 

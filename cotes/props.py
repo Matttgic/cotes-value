@@ -79,9 +79,15 @@ def _meme_rencontre(a: dict, b: dict) -> bool:
 
 
 def comparer_fanduel(fanduel: list[dict], pinnacle: list[dict]) -> dict:
-    """Écart de probabilité juste FanDuel − Pinnacle, et taux d'accord du côté favori.
+    """Props FanDuel contre Pinnacle (``comparer_reference``)."""
+    return comparer_reference(fanduel, pinnacle, "fanduel")
 
-    FanDuel est une référence : le résultat ne contient que des comptes. Une ligne
+
+def comparer_reference(fanduel: list[dict], pinnacle: list[dict], source: str = "fanduel") -> dict:
+    """Écart de probabilité juste d'une référence de props (FanDuel, DraftKings) − Pinnacle, et taux d'accord du
+    côté favori.
+
+    C'est une référence : le résultat ne contient que des comptes. Une ligne
     sans jumelle Pinnacle (joueur, statistique, ligne, rencontre) augmente
     ``non_rapproches`` et n'est pas nommée.
     """
@@ -101,7 +107,7 @@ def comparer_fanduel(fanduel: list[dict], pinnacle: list[dict]) -> dict:
             out.append(l)
         return out
 
-    fd = plus(fanduel, "fanduel")
+    fd = plus(fanduel, source)
     pin = plus(pinnacle, "pinnacle")
     index: dict[tuple, list[dict]] = {}
     for l in pin:
@@ -124,12 +130,74 @@ def comparer_fanduel(fanduel: list[dict], pinnacle: list[dict]) -> dict:
             accords += 1
     n = len(ecarts)
     return {
-        "fanduel": len(fd), "pinnacle": len(pin), "rapproches": n, "non_rapproches": non,
+        source: len(fd), "pinnacle": len(pin), "rapproches": n, "non_rapproches": non,
         "ecart_proba_moyen": round(sum(ecarts) / n, 5) if n else None,
         "ecart_absolu_moyen": round(sum(abs(x) for x in ecarts) / n, 5) if n else None,
         "accord": round(accords / n, 4) if n else None,
         "reference_seule": True,
     }
+
+
+MARCHES_MATCH = ("VAINQUEUR", "HANDICAP", "TOTAL")
+
+
+def comparer_matchs(lignes: list[dict], pinnacle: list[dict], source: str = "draftkings") -> dict:
+    """Vainqueur, handicap et total d'une référence (DraftKings) contre Pinnacle, match entier : écart de
+    probabilité juste et accord du favori, par sport. Des comptes seulement, aucune ligne nommée.
+
+    Même rencontre (± 3 h, équipes à 0,85), même marché et même ligne. Équipes inversées entre les deux sources :
+    domicile et extérieur s'échangent, et le handicap change de signe. Une issue par marché (domicile ou « plus »),
+    l'autre s'en déduit."""
+    def lue(l, origine):
+        return (l.get("source") == origine and l.get("marche") in MARCHES_MATCH and l.get("periode") == "MATCH"
+                and l.get("proba_juste") and l.get("issue") in ("DOM", "PLUS"))
+
+    def cle(l, inverse=False):
+        ligne = l.get("ligne")
+        if l["marche"] == "VAINQUEUR":
+            ligne = None
+        elif isinstance(ligne, bool) or not isinstance(ligne, (int, float)):
+            return None
+        elif inverse and l["marche"] == "HANDICAP":
+            ligne = -ligne
+        return (l.get("sport"), l["marche"], None if ligne is None else round(float(ligne), 2))
+
+    index: dict[tuple, list[dict]] = {}
+    for l in pinnacle or []:
+        if lue(l, "pinnacle") and cle(l):
+            index.setdefault(cle(l), []).append(l)
+    par_sport: dict[str, list[float]] = {}
+    accords: dict[str, int] = {}
+    lues = non = 0
+    for l in lignes or []:
+        if not lue(l, source) or not cle(l):
+            continue
+        lues += 1
+        trouve = None
+        for inverse in (False, True):
+            for p in index.get(cle(l, inverse), []):
+                da, db = instant_utc(l.get("debut")), instant_utc(p.get("debut"))
+                if da is None or db is None or abs((da - db).total_seconds()) > 3 * 3600:
+                    continue
+                a, b = (("exterieur", "domicile") if inverse else ("domicile", "exterieur"))
+                if min(ressemblance(l.get("domicile"), p.get(a)), ressemblance(l.get("exterieur"), p.get(b))) >= 0.85:
+                    # vainqueur et handicap : la probabilité « domicile » de l'un est celle « extérieur » de l'autre
+                    proba_pin = 1 - p["proba_juste"] if inverse and l["marche"] != "TOTAL" else p["proba_juste"]
+                    trouve = (trouve or []) + [proba_pin]
+        if not trouve or len(trouve) != 1:
+            non += 1
+            continue
+        ecart = l["proba_juste"] - trouve[0]
+        par_sport.setdefault(l.get("sport"), []).append(ecart)
+        accords[l.get("sport")] = accords.get(l.get("sport"), 0) + ((l["proba_juste"] - 0.5) * (trouve[0] - 0.5) >= 0)
+    tous = [e for es in par_sport.values() for e in es]
+    resume = lambda es: {"rapproches": len(es),  # noqa: E731
+                         "ecart_absolu_moyen": round(sum(abs(x) for x in es) / len(es), 5) if es else None}
+    return {source: lues, "non_rapproches": non, **resume(tous),
+            "ecart_proba_moyen": round(sum(tous) / len(tous), 5) if tous else None,
+            "accord": round(sum(accords.values()) / len(tous), 4) if tous else None,
+            "par_sport": {s: {**resume(es), "accord": round(accords[s] / len(es), 4)} for s, es in sorted(par_sport.items())},
+            "reference_seule": True}
 
 
 def compter(lignes: list[dict]) -> dict[str, int]:

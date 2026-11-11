@@ -99,6 +99,35 @@ METHODES = {
 EVOLUTIVES = {"kelly_4_evol", "pct_1", "martingale"}
 
 
+# Modes du sélecteur « Mise des bilans » (site) : mode -> (libellé, règle en clair, clé de METHODES).
+# Seulement des méthodes où la mise ne dépend que du pari (cote, écart), jamais du solde ni de la série : tous les
+# montants sont alors proportionnels à la bankroll, et le site peut les afficher pour n'importe quelle bankroll de
+# départ (× bankroll / 1 000) sans rien recalculer. « kelly » (¼) est le mode par défaut ; lui et « fixe » sont
+# dans la page, les autres sont chargés à la demande (site/mises/<mode>.json).
+MODES_BILAN = {
+    "kelly": ("Kelly ¼", "¼ de Kelly, 2 % de la bankroll au plus par pari", "kelly_4"),
+    "kelly_8": ("Kelly ⅛", "⅛ de Kelly, 2 % de la bankroll au plus par pari", "kelly_8"),
+    "kelly_2": ("Kelly ½", "½ de Kelly, 2 % de la bankroll au plus par pari", "kelly_2"),
+    "kelly_4_p1": ("Kelly ¼ plafonné à 1 %", "¼ de Kelly, 1 % de la bankroll au plus par pari", "kelly_4_p1"),
+    "gain_constant": ("Gain constant", "miser pour gagner 1 % de la bankroll, 2,5 % au plus par pari",
+                      "gain_constant"),
+    "fixe": ("Fixe 1 %", "1 % de la bankroll de départ sur chaque pari", "fixe"),
+}
+MODE_DEFAUT = "kelly"
+MODES_INTEGRES = ("fixe", "kelly")          # présents dans la page ; les autres : un fichier par mode
+
+
+def mise_du_mode(mode: str, p: dict) -> float:
+    """Mise du pari dans un mode du sélecteur, pour 1 000 € de bankroll. Jamais nulle : un pari sans écart
+    exploitable garde 1 € (même repli que la mise Kelly ¼ d'origine), pour rester dans les bilans."""
+    if mode == "kelly":                     # la fonction d'origine, au centime près (bilans déjà publiés)
+        from .simulation import mise_kelly
+        return mise_kelly(p) or 1.0
+    if not _fini(p.get("cote")):
+        return 1.0
+    return round(METHODES[MODES_BILAN[mode][2]][2](p, BANKROLL, []), 2) or 1.0
+
+
 def simuler(rows: list[dict], cle: str) -> dict:
     """Rejoue les paris réglés avec une méthode de mise. Renvoie nombre, mise, gain, ROI, mise moyenne et maximale,
     plus forte baisse du gain cumulé, solde final et solde minimum."""

@@ -429,6 +429,8 @@ def bilan(doc: dict) -> dict:
             "ecart_proba_moyen": None, "ecart_absolu_moyen": None, "accord": None,
             "reference_seule": True,
         },
+        # DraftKings, référence seule : props NBA/NHL et lignes de match NBA, NHL, NFL, MLB contre Pinnacle
+        "draftkings": doc.get("draftkings") or {},
         "total": _resume(paris),
         "references": {k: _resume(v) for k, v in sorted(par_ref.items())},
         "stats": {k: _resume(v) for k, v in sorted(par_stat.items())},

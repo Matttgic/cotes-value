@@ -122,18 +122,22 @@ function suiviAmorcer(cochees, since) {                  // appareil déjà abon
 }
 
 // --- affichage
-const eur2 = x => x == null ? '—' : (x > 0 ? '+' : '') + x.toFixed(2).replace('.', ',') + ' €';
+function suiviBankroll(x) { return typeof enBankroll === 'function' ? enBankroll(x) : x; }      // montants pour la bankroll choisie
+const eur2 = x => { if (x == null) return '—'; x = suiviBankroll(x); return (x > 0 ? '+' : '') + x.toFixed(2).replace('.', ',') + ' €'; };
 const nomStrategie = k => (D.notifications?.strategies || {})[k] || (D.strategies_badges || {})[k] || k;
 let suiviFiltre = '', suiviLimite = 50;
 let prisesCache = [null, [], false];
-// Copie des prises propre à cet onglet, refaite quand la mise des bilans change (fixe 10 € ou Kelly ¼).
+// Copie des prises propre à cet onglet, refaite quand la mise des bilans change (fixe, Kelly ¼ ou un autre mode).
 const prisesSuivi = () => {
-  const kelly = typeof miseMode !== 'undefined' && miseMode === 'kelly';
-  if (prisesCache[0] !== D.catalogue || prisesCache[2] !== kelly) {
+  const mode = typeof miseMode !== 'undefined' ? miseMode : 'fixe';
+  if (prisesCache[0] !== D.catalogue || prisesCache[2] !== mode) {
     let objets = suiviObjets(D.catalogue);
-    if (kelly) objets = objets.map(p => p.mise_kelly && p.mise ? {...p, mise: p.mise_kelly,
-      gain: p.gain == null ? p.gain : Math.round(100 * p.gain * p.mise_kelly / p.mise) / 100} : p);
-    prisesCache = [D.catalogue, objets, kelly];
+    // Kelly ¼ : la mise est dans le catalogue ; autre mode : dans son bloc chargé (mises_paris, par identifiant).
+    const autres = mode !== 'fixe' && mode !== 'kelly' && typeof blocMise === 'function' ? (blocMise(mode)?.mises_paris || {}) : null;
+    const miseDe = p => mode === 'kelly' ? p.mise_kelly : autres ? autres[p.id] : null;
+    if (mode !== 'fixe') objets = objets.map(p => { const m = miseDe(p); return m && p.mise ? {...p, mise: m,
+      gain: p.gain == null ? p.gain : Math.round(100 * p.gain * m / p.mise) / 100} : p; });
+    prisesCache = [D.catalogue, objets, mode];
   }
   return prisesCache[1];
 };
@@ -153,7 +157,7 @@ function lierDates(racine, rapides) {
 }
 const bornesActuelles = () => { const p = suiviPeriode(); return suiviBornes(p.depuis, p.jusqua); };
 const resumeHtml = b => `<div class="carte resume-suivi"><div class="l1"><span><b>${b.regles}</b> réglé${b.regles > 1 ? 's' : ''} · ${b.gagnes} gagné${b.gagnes > 1 ? 's' : ''}${b.regles ? ' (' + Math.round(100 * b.gagnes / b.regles) + ' %)' : ''}${b.en_cours ? ' · ' + b.en_cours + ' en cours' : ''}</span></div>
-  <div class="l1"><span><b class="${signe(b.gains)}">${eur2(b.regles ? b.gains : null)}</b> <small class="roi ${signe(b.roi)}">ROI ${b.roi == null ? '—' : pctC(b.roi)}</small> <small>· ${typeof miseMode !== 'undefined' && miseMode === 'kelly' ? 'mise Kelly ¼ par stratégie et par pari' : '10 € par stratégie et par pari'}</small></span></div></div>`;
+  <div class="l1"><span><b class="${signe(b.gains)}">${eur2(b.regles ? b.gains : null)}</b> <small class="roi ${signe(b.roi)}">ROI ${b.roi == null ? '—' : pctC(b.roi)}</small> <small>· ${typeof miseMode !== 'undefined' && miseMode !== 'fixe' ? 'mise ' + (typeof nomMise === 'function' ? nomMise() : 'Kelly ¼') + ' par stratégie et par pari' : (typeof eurosNets === 'function' ? eurosNets(10) : '10') + ' € par stratégie et par pari'}</small></span></div></div>`;
 // Bilan « Paris uniques » : deux dates au choix en plus des périodes rapides.
 function rendreDatesBilan() {
   const zone = document.getElementById('bu-dates');
@@ -230,7 +234,7 @@ const carteSuivi = (p, mises = 1) => {
   const [etat, libelle] = LIGNE_SUIVI[p.statut] || ['cours', 'En cours'];
   const quand = new Date(p.detecte).toLocaleString('fr-FR', {timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
   const valeur = suiviNombre(p.gain) != null ? eur2(p.gain * mises) : '';
-  const miseTexte = suiviNombre(p.mise) != null ? ` · mise ${p.mise.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €` : '';
+  const miseTexte = suiviNombre(p.mise) != null ? ` · mise ${suiviBankroll(p.mise).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €` : '';
   return `<details class="ligne-detail ligne-pari pari-ligne etat-${etat}"><summary>
 <span class="pari-gauche"><span class="pari-tete"><span class="puce-sport">${e((typeof nomsSports !== 'undefined' && nomsSports[p.sport]) || p.sport || 'Sport')}</span><span class="pari-ligue">${e(p.ligue || '')}</span></span>
 <span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span>${typeof horairePari === 'function' ? `<span class="pari-debut">Match ${horairePari(p)}</span>` : ''}</span>
