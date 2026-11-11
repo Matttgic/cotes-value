@@ -335,14 +335,28 @@ jobs:
             if [ "$code" -eq 0 ]; then
               plus_recents=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 20 \
                 --json createdAt,conclusion \
-                --jq "[.[] | select(.createdAt > \"$cree\") | select(.conclusion != \"cancelled\" and .conclusion != \"skipped\")] | length" 2>"$erreur") \
+                --jq "[.[] | select(.createdAt > \"$cree\") | select(.conclusion != \"cancelled\" and .conclusion != \"skipped\" and .conclusion != \"startup_failure\")] | length" 2>"$erreur") \
                 || { classer || code=$?; }
             fi
             if [ "$code" -eq 0 ]; then
               if [ "$plus_recents" -gt 0 ]; then echo "Un lancement plus récent continue la chaîne."; exit 0; fi
               if gh workflow run collecte.yml --repo "$DEPOT" --ref "${{ github.ref_name }}" \
                   -f mode="${{ vars.MODE_COLLECTE || 'complet' }}" 2>"$erreur"; then
-                echo "Cycle suivant lancé."; exit 0
+                echo "Cycle suivant lancé."
+                # Garde-fou (11/11/2026) : un lancement peut échouer au démarrage (« startup_failure », incident
+                # GitHub) ; la chaîne s'arrêtait alors, le watchdog planifié ne passant que rarement. On vérifie
+                # que le cycle suivant démarre vraiment, et on le relance jusqu'à 3 fois sinon.
+                for verif in 1 2 3; do
+                  sleep 60
+                  dernier=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 5 \
+                    --json createdAt,conclusion,status \
+                    --jq "[.[] | select(.createdAt > \"$cree\")][0] | (.conclusion // .status)" 2>/dev/null || echo inconnu)
+                  if [ "$dernier" != startup_failure ]; then echo "Cycle suivant démarré ($dernier)."; exit 0; fi
+                  echo "::warning title=Relance::Le cycle suivant a échoué au démarrage : nouvelle relance ($verif/3)."
+                  gh workflow run collecte.yml --repo "$DEPOT" --ref "${{ github.ref_name }}" \
+                    -f mode="${{ vars.MODE_COLLECTE || 'complet' }}" || true
+                done
+                echo "::error::Le cycle suivant échoue au démarrage malgré 3 relances."; exit 1
               fi
               classer || code=$?
             fi
