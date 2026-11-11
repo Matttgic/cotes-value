@@ -142,6 +142,7 @@
       <p class="aide" id="props-note"></p>
       <p class="aide" id="props-fanduel"></p>
       <p class="aide" id="props-draftkings"></p>
+      <h3 class="bu-titre">Paris props</h3><div class="bu-table" id="props-liste"></div>
       <h3 class="bu-titre">Par référence</h3><div class="bu-table" id="props-ref"></div>
       <h3 class="bu-titre">Par statistique</h3><div class="bu-table" id="props-stats"></div>
       <p class="aide" id="props-strategies"></p>
@@ -1125,6 +1126,14 @@ function rendreProps() {
   document.getElementById("props-ref").innerHTML = refs ? tableProps(refs) : '<p class="aide">Aucun papier.</p>';
   const stats = Object.entries(P.stats || {}).map(([n,r]) => ligneProps(n, r)).join("");
   document.getElementById("props-stats").innerHTML = stats ? tableProps(stats) : '<p class="aide">Aucune statistique réglée.</p>';
+  const lst = (P.liste || []).map(p => {
+    const sp = p.sport === "basket" ? "NBA" : p.sport === "hockey" ? "NHL" : (p.sport || "");
+    const etat = p.statut === "gagne" ? "✅ gagné" : p.statut === "perdu" ? "❌ perdu" : p.statut === "annule" ? "↩️ annulé" : "⏳ en cours";
+    const res = p.stat_reelle != null ? ` (réel ${p.stat_reelle})` : "";
+    const jour = p.debut ? String(p.debut).slice(0, 10) : "";
+    return `<div class="bu-ligne"><span>${e(p.joueur || "")} · ${e(p.issue === "PLUS" ? "Plus de" : "Moins de")} ${e(p.ligne)} ${e(p.stat || "")}<br><small>${e(sp)} · ${e(p.domicile || "")} – ${e(p.exterieur || "")} · ${e(jour)} · ${e(p.bookmaker || "")}</small></span><span>@${p.cote}</span><span>${etat}${res}</span><span class="${signe(p.gain)}">${p.gain == null ? "—" : eur(p.gain)}</span></div>`;
+  }).join("");
+  document.getElementById("props-liste").innerHTML = lst || '<p class="aide">Aucun pari.</p>';
   const st = (P.strategies || []).map(s => `${s.nom} (${s.actif ? "active" : "désactivée"})`).join(" · ");
   document.getElementById("props-strategies").textContent = st;
 }

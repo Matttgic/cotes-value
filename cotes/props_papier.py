@@ -409,6 +409,17 @@ def _resume(paris: list[dict]) -> dict:
     }
 
 
+LISTE_MAX = 300
+
+
+def liste_paris(paris: list[dict], limite: int = LISTE_MAX) -> list[dict]:
+    """Les paris props eux-mêmes (les plus récents d'abord), pour les voir dans le Bilan et pas seulement les stats."""
+    champs = ("joueur", "stat", "sport", "ligue", "issue", "ligne", "cote", "bookmaker", "domicile", "exterieur",
+              "debut", "statut", "gain", "mise", "stat_reelle", "reglement", "clv")
+    triees = sorted(paris, key=lambda p: p.get("debut") or "", reverse=True)[:limite]
+    return [{c: p.get(c) for c in champs} for p in triees]
+
+
 def bilan(doc: dict) -> dict:
     """Compte, réussite, ROI et CLV moyenne, par référence et par statistique."""
     paris = [p for p in (doc or {}).get("paris") or [] if isinstance(p, dict)]
@@ -432,6 +443,7 @@ def bilan(doc: dict) -> dict:
         # DraftKings, référence seule : props NBA/NHL et lignes de match NBA, NHL, NFL, MLB contre Pinnacle
         "draftkings": doc.get("draftkings") or {},
         "total": _resume(paris),
+        "liste": liste_paris(paris),
         "references": {k: _resume(v) for k, v in sorted(par_ref.items())},
         "stats": {k: _resume(v) for k, v in sorted(par_stat.items())},
     }
