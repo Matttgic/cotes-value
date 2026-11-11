@@ -96,7 +96,9 @@ GEMINI_DEFI_5 = _regle(
            "règles de Gemini Argon")
 
 # Gemini Défi 2 (convergence ≥ 2) : abandonnée par Gemini, ni clé ni sélecteur.
-GEMINI_DEFIS = (GEMINI_DEFI_1, GEMINI_DEFI_3, GEMINI_DEFI_4, GEMINI_DEFI_5)
+# Gemini Défi 5 (exotiques, cotes 12–75) : retirée le 11/11/2026 avec le plafond de cote à 5 (cotes/simulation.py) ;
+# sa règle reste ci-dessus pour l'historique, mais elle n'est plus suivie ni proposée aux alertes.
+GEMINI_DEFIS = (GEMINI_DEFI_1, GEMINI_DEFI_3, GEMINI_DEFI_4)
 
 
 def cle_cote(p: dict) -> tuple:
@@ -217,4 +219,4 @@ paris_gemini_defi_3 = _selecteur(GEMINI_DEFI_3)
 paris_gemini_defi_4 = _selecteur(GEMINI_DEFI_4)
 paris_gemini_defi_5 = _selecteur(GEMINI_DEFI_5)
 SELECTEURS = {c["cle"]: f for c, f in zip(GEMINI_DEFIS, (
-    paris_gemini_defi_1, paris_gemini_defi_3, paris_gemini_defi_4, paris_gemini_defi_5))}
+    paris_gemini_defi_1, paris_gemini_defi_3, paris_gemini_defi_4))}

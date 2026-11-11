@@ -30,7 +30,7 @@ def test_ancien_json_sans_nouveaux_comparateurs(tmp_path, monkeypatch):
     monkeypatch.setattr(site_web,"_lire",lire)
     d=donnees_html(site_web.construire(tmp_path,tmp_path/"site").read_text())
     labo=d["laboratoire"]; nav=labo["navigation"]
-    assert len(labo["comparateurs"]) == 46
+    assert len(labo["comparateurs"]) == 45
     assert "Fusion 1 · recommandées du 8/11" in labo["comparateurs"]
     assert set(d["recommandees"]) >= {"actuelles", "anciennes", "prochaine_revision", "criteres", "fusion"}
     assert (tmp_path / "recommandees.json").exists()
@@ -38,7 +38,7 @@ def test_ancien_json_sans_nouveaux_comparateurs(tmp_path, monkeypatch):
     assert "Grok 10 · Valeur Polymarket" in labo["comparateurs"]
     assert "Défi 1 · Écart fort, match proche" in labo["comparateurs"]
     assert "Défi 4 · Pinnacle très gros écart" in labo["comparateurs"]
-    assert sum(nom.startswith("Gemini Défi ") for nom in labo["comparateurs"]) == 4
+    assert sum(nom.startswith("Gemini Défi ") for nom in labo["comparateurs"]) == 3
     assert not any(nom.startswith("Gemini Défi 2") for nom in labo["comparateurs"])
     assert sum(nom.startswith("Claude Défi ") for nom in labo["comparateurs"]) == 6
     assert "Claude Fusion · Défi 4 + Défi 5" in labo["comparateurs"]

@@ -167,7 +167,7 @@ def test_tranches_d_ecart_un_pari_une_fois():
     from cotes.simulation import placer, simulation_de
     assert [simulation_de(e, 2.0) for e in (0.019, 0.02, 0.029, 0.03, 0.045, 0.06, 0.07, 0.30)] == \
         [None, "A", "A", "B", "C", "D", "E", "E"]
-    assert simulation_de(0.025, 12.0) is None and simulation_de(0.05, 12.0) == "X"
+    assert simulation_de(0.025, 12.0) is None and simulation_de(0.05, 12.0) is None
     maintenant = datetime(2026, 10, 17, 11, tzinfo=timezone.utc)
     o = {"reference": "Pinnacle", "detecte": maintenant.isoformat(), "lu_reference": maintenant.isoformat(),
          "bookmaker": "Winamax", "sport": "football", "match_id": "w1",

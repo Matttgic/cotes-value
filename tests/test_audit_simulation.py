@@ -22,7 +22,7 @@ def test_cotes_invalides_identifiables_et_jamais_prises(cote):
 @pytest.mark.parametrize('ecart,cote,attendu', [
     (.0199, 2, None), (.02, 2, 'A'), (.0299, 2, 'A'), (.03, 2, 'B'),
     (.04, 2, 'C'), (.05, 2, 'D'), (.07, 2, 'E'), (.025, 10, 'A'),
-    (.035, 10.0001, 'X'), (.025, 10.0001, None)])
+    (.035, 10.0001, None), (.025, 10.0001, None)])
 def test_bornes_simulations_conservees(ecart, cote, attendu):
     assert S.simulation_de(ecart, cote) == attendu
 

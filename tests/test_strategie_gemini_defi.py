@@ -50,7 +50,7 @@ TYPES = {
     "gemini_defi_4": base(sport="rugby", marche="HANDICAP", ligne=-4.5, cote=2.0, ecart=0.08),
     "gemini_defi_5": base(sport="football", marche="CORRECT_SCORE", issue="2-1", cote=20.0, ecart=0.15),
 }
-REGLES = {c["cle"]: c for c in GEMINI_DEFIS}
+REGLES = {c["cle"]: c for c in (*GEMINI_DEFIS, GEMINI_DEFI_5)}   # Défi 5 : retirée, règle gardée
 
 
 def refus(cle, **kw):
@@ -62,7 +62,7 @@ def test_pari_type_retenu_apres_lancement_mise_10(cle):
     c = REGLES[cle]
     assert refus(cle) is None
     p = pari("type", **TYPES[cle])
-    assert SELECTEURS[cle]([p]) == {id(p)}
+    assert (SELECTEURS.get(cle) or paris_gemini_defi_5)([p]) == {id(p)}
     assert c["mise"] == 10.0 and c["version"] == "1" and c["debut"] == DEBUT == "2026-10-30T01:00:00+00:00"
     assert c["auteur"] == "Gemini Argon" and c["nom"].startswith("Gemini Défi ")
 
@@ -130,10 +130,10 @@ def test_defi_1_3_4_references_pinnacle_betfair_polymarket_seulement(cle):
     for ref in ("Pinnacle", "Betfair", "Polymarket"):
         assert refus(cle, reference=ref) is None
         p = pari("r-" + ref, **{**TYPES[cle], "reference": ref})
-        assert SELECTEURS[cle]([p]) == {id(p)}
+        assert (SELECTEURS.get(cle) or paris_gemini_defi_5)([p]) == {id(p)}
     # Matchbook est exclu, comme le reste.
     m = pari("m", **{**TYPES[cle], "reference": "Matchbook"})
-    assert refus(cle, reference="Matchbook") == "référence hors périmètre" and SELECTEURS[cle]([m]) == set()
+    assert refus(cle, reference="Matchbook") == "référence hors périmètre" and (SELECTEURS.get(cle) or paris_gemini_defi_5)([m]) == set()
 
 
 def test_gemini_defi_1_indoor_et_glace():
@@ -261,11 +261,11 @@ def test_lancement_sans_rejeu_ni_lecture_du_resultat():
     # Résultat, gain, CLV et clôture n'entrent jamais dans la décision.
     for cle in REGLES:
         p = pari("type", **TYPES[cle])
-        attendu = SELECTEURS[cle]([p])
+        attendu = (SELECTEURS.get(cle) or paris_gemini_defi_5)([p])
         for issue in (dict(statut="gagne", gain=10.0, clv=0.3, cote_juste_cloture=1.5),
                       dict(statut="perdu", gain=-10.0, clv=-0.4, cote_juste_cloture=99.0)):
             q = {**p, **issue}
-            assert SELECTEURS[cle]([q]) == {id(q)} and attendu == {id(p)}
+            assert (SELECTEURS.get(cle) or paris_gemini_defi_5)([q]) == {id(q)} and attendu == {id(p)}
 
 
 def test_gel_au_lancement_et_famille_distincte():
@@ -282,7 +282,7 @@ def test_gel_au_lancement_et_famille_distincte():
                      "selections_figees": {"gemini_defi_1": {"version": "1", "decide_le": iso(T0)}}})
     assert paris_gemini_defi_1([r]) == {id(r)}
     cles = [c["cle"] for c in GEMINI_DEFIS]
-    assert cles == ["gemini_defi_1", "gemini_defi_3", "gemini_defi_4", "gemini_defi_5"] and list(SELECTEURS) == cles
+    assert cles == ["gemini_defi_1", "gemini_defi_3", "gemini_defi_4"] and list(SELECTEURS) == cles
     # Gemini Défi 2 : abandonnée par Gemini, ni règle, ni sélecteur, ni clé suivie.
     import cotes.strategie_gemini_defi as module
     assert not hasattr(module, "GEMINI_DEFI_2") and not hasattr(module, "paris_gemini_defi_2")
