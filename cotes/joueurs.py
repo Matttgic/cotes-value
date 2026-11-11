@@ -58,7 +58,8 @@ def stat_canonique(texte: str | None) -> str | None:
         return "Rebounds"
     if passe:
         return "Assists"
-    if "shotsongoal" in t or "shot on goal" in t or "tirs cadre" in t or "tir cadre" in t:
+    # « Shots on Goal » contient « goal » : à tester avant les buts (bug du 11/11/2026, tirs pris pour des buts).
+    if ("shotsongoal" in t or re.search(r"\bshots?\b|\bsog\b", t) or "tirs cadre" in t or "tir cadre" in t):
         return "ShotsOnGoal"
     if re.search(r"\b(buts?|goals?)\b", t):
         return "Goals"

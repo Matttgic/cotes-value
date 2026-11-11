@@ -147,3 +147,12 @@ def test_feuille_nba_lit_les_deux_equipes():
 def test_sources_des_props():
     from cotes.sources_resultats import ou_chercher
     assert ou_chercher("props", "NBA")[0]["url"] == "https://www.espn.com/nba/"
+
+
+def test_tirs_cadres_ne_sont_pas_des_buts():
+    """Bug du 11/11/2026 : « Shots on Goal » (Pinnacle) lu comme « Goals », comparé aux buts Unibet (cotes 24 à 72)."""
+    from cotes.joueurs import stat_canonique
+    assert stat_canonique("Shots on Goal") == "ShotsOnGoal"
+    assert stat_canonique("Shots N. Kucherov Total Shots") == "ShotsOnGoal"
+    assert stat_canonique("Goals N. Kucherov Total Goals") == "Goals"
+    assert stat_canonique("Nombre de buts - Kucherov") == "Goals"
