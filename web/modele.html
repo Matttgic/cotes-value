@@ -45,6 +45,7 @@
   </section>
   <section class="onglet" id="o-bilan">
     <div class="page-tete"><div><h2>Bilan</h2></div></div>
+    <p class="aide" id="bilan-hors-plafond" hidden></p>
     <div class="bilan-onglets" role="tablist" aria-label="Vue du bilan">
       <button type="button" role="tab" id="bt-uniques" data-bilan="uniques" aria-controls="bilan-uniques">Paris uniques</button>
       <button type="button" role="tab" id="bt-strategies" data-bilan="strategies" aria-controls="o-strategies">Stratégies</button>
@@ -376,6 +377,9 @@ __INTERFACE_JS__
 // --- en-tête et onglets
 const dc = (D.etat||{}).dernier_cycle || {};
 document.getElementById("maj").textContent = dc.debut ? "mis à jour " + quand(dc.debut) + (dc.mode==="test" ? " · test" : "") : "pas encore de données";
+{ const h = D.hors_plafond, z = document.getElementById("bilan-hors-plafond");
+  if (z && h && h.paris) { z.hidden = false;
+    z.innerHTML = `Les paris à cote supérieure à ${h.plafond} (${h.paris}, dont ${h.regles} réglés, ${eur(h.gain)} en mises de ${eurosNets(h.mises)} €) sont retirés des bilans et gardés en <a href="hors_plafond.json">archive</a>.`; } }
 document.getElementById("fraicheur")?.setAttribute("title", "Santé du système · " + document.getElementById("maj").textContent);
 // Le bilan a deux vues : les paris uniques et les stratégies (ancienne page Stratégies).
 let vueBilan = "uniques";
