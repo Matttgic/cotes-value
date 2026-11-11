@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (flashscore, livescore, comparaison, controle, pinnacle, polymarket, reglement,  # noqa: E402
-                   simulation, smarkets, stockage)
+                   scores365, simulation, smarkets, stockage)
 from cotes.direct import betclic as betclic_direct  # noqa: E402
 from cotes.direct import netbet as netbet_direct  # noqa: E402
 from cotes.direct import olybet as olybet_direct  # noqa: E402
@@ -38,6 +38,7 @@ from cotes.direct import winamax as winamax_direct  # noqa: E402
 from cotes.direct import matchbook as matchbook_direct  # noqa: E402
 from cotes.direct import betfair as betfair_direct  # noqa: E402
 from cotes.direct import fanduel as fanduel_direct  # noqa: E402
+from cotes.direct import draftkings as draftkings_direct  # noqa: E402
 from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
@@ -66,6 +67,7 @@ BUDGETS = {
     "smarkets": 60,
     "matchbook": 25,
     "betfair": 45,          # catalogue relu toutes les 10 min (~50 appels) ; sinon prix seuls, 30 appels au plus
+    "draftkings": 20,       # 4 ligues puis 7 sous-catégories de props, 0,1 à 0,3 s par appel ; SOURCE_DRAFTKINGS=off coupe
     "fanduel": 40,          # liste NBA/NHL puis onglets de props ; coupé par SOURCE_FANDUEL=off
 }
 SMARKETS_FRAIS_MIN = 15
@@ -452,6 +454,14 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
             lancer("fanduel", fanduel_direct, BUDGETS["fanduel"], fanduel_direct.collecter,
                    {"basket", "hockey"}, heures_directes, maintenant=maintenant)
 
+        source_dk = draftkings_direct.mode()
+        journal["draftkings_source"] = source_dk
+        dk_lignes, dk_meta = [], {"ok": True, "erreurs": [], "requetes": 0, "props": 0, "mode": "off"}
+        if source_dk == "direct":
+            # Référence seulement (matchs NBA, NHL, NFL, MLB et props NBA, NHL) : ni cotes françaises ni paris.
+            lancer("draftkings", draftkings_direct, BUDGETS["draftkings"], draftkings_direct.collecter,
+                   None, heures_directes, maintenant=maintenant)
+
         def lancer_francais(sports_fr):
             """PMU, Winamax, Betclic, OlyBet et NetBet : seul Unibet dépend du radar Pinnacle du cycle."""
             lancer("pmu_direct", pmu_direct, BUDGETS["pmu_direct"], pmu_direct.collecter,
@@ -567,6 +577,12 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
                 fd_lignes, fd_meta = recu
             else:
                 fd_lignes, fd_meta = [], {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
+        if source_dk == "direct":
+            recu = recevoir("draftkings")
+            if isinstance(recu, tuple) and len(recu) == 2:
+                dk_lignes, dk_meta = recu
+            else:
+                dk_lignes, dk_meta = [], {"ok": False, "erreurs": ["lecture interrompue"], "requetes": 0}
     if source_oly == "direct":
         signaler(journal, "olybet", list(oly_meta.get("erreurs") or []))
         lignes = list(lignes) + list(oly_lignes)
@@ -601,6 +617,22 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
     except Exception as e:  # noqa: BLE001 - la comparaison FanDuel ne coupe pas le cycle
         journal["props_fanduel"] = {"ok": False, "erreur": type(e).__name__, "reference_seule": True,
                                     "rapproches": 0, "non_rapproches": 0}
+    # DraftKings : même rôle que FanDuel pour les props, plus les lignes de match NBA, NHL, NFL et MLB.
+    if source_dk == "direct":
+        noter_lecture(journal, "draftkings", dk_meta if isinstance(dk_meta, dict) else {})
+        journal["draftkings"] = {"mode": "direct", "ok": bool((dk_meta or {}).get("ok")),
+                                 **{k: (dk_meta or {}).get(k) or 0 for k in ("requetes", "matchs", "lignes", "props", "ignores")},
+                                 "avertissements": list((dk_meta or {}).get("avertissements") or [])[:5]}
+    else:
+        journal["draftkings"] = {"mode": "off", "ok": True, "requetes": 0, "lignes": 0, "props": 0}
+    try:
+        from cotes.props import comparer_matchs, comparer_reference
+        journal["props_draftkings"] = comparer_reference(dk_lignes, pin, "draftkings")
+        journal["matchs_draftkings"] = comparer_matchs(dk_lignes, pin, "draftkings")
+    except Exception as e:  # noqa: BLE001 - la comparaison DraftKings ne coupe pas le cycle
+        journal["props_draftkings"] = {"ok": False, "erreur": type(e).__name__, "reference_seule": True,
+                                       "rapproches": 0, "non_rapproches": 0}
+        journal["matchs_draftkings"] = {"ok": False, "erreur": type(e).__name__, "reference_seule": True}
     mesures_delta(pin, lignes)
     for nom, meta in (("pmu", metas["pmu_direct"]), ("unibet", metas["unibet_direct"]),
                       ("betclic", metas["betclic_direct"]), ("netbet", net_meta)):
@@ -787,6 +819,13 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
             enregistrements += etape(f"resultats_flashscore_{sport}", journal, flashscore.lire, sport, jours,
                                      maintenant) or []
             signaler(journal, f"resultats_flashscore_{sport}", flashscore.ERREURS[n:])
+        # 365Scores : deuxième avis gratuit pour le basket, le volley, le handball et le rugby (score final seul).
+        # Deux sources d'accord règlent tout de suite ; en désaccord, le pari attend une saisie à la main.
+        for sport, jours in scores365.jours_a_lire(restants, maintenant).items():
+            n = len(scores365.ERREURS)
+            enregistrements += etape(f"resultats_365scores_{sport}", journal, scores365.lire, sport, jours,
+                                     maintenant) or []
+            signaler(journal, f"resultats_365scores_{sport}", scores365.ERREURS[n:])
         for p in restants:
             if p["match_id"] not in resultats:
                 r = resultats_mod.consensus(p, enregistrements, maintenant)
@@ -1040,6 +1079,8 @@ def main() -> int:
     }
     papier["polymarket"] = journal["props_papier"]["polymarket"]
     papier["fanduel"] = journal.get("props_fanduel") or {}
+    papier["draftkings"] = {"props": journal.get("props_draftkings") or {}, "matchs": journal.get("matchs_draftkings") or {},
+                            "lecture": journal.get("draftkings") or {}}
     props_papier.ecrire(donnees, papier)
     for o in opportunites:           # marqueur de cycle : sert à la persistance (Qwen) et au diagnostic
         o["cycle_id"] = journal["debut"]

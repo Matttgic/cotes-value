@@ -141,6 +141,7 @@
       <div class="bu-kpis" id="props-kpis"></div>
       <p class="aide" id="props-note"></p>
       <p class="aide" id="props-fanduel"></p>
+      <p class="aide" id="props-draftkings"></p>
       <h3 class="bu-titre">Par référence</h3><div class="bu-table" id="props-ref"></div>
       <h3 class="bu-titre">Par statistique</h3><div class="bu-table" id="props-stats"></div>
       <p class="aide" id="props-strategies"></p>
@@ -1110,6 +1111,13 @@ function rendreProps() {
   const f = P.fanduel || {};
   document.getElementById("props-fanduel").textContent =
     `FanDuel, référence seule (aucun pari). ${f.rapproches || 0} lignes rapprochées à Pinnacle, ${f.non_rapproches || 0} sans correspondance. Écart moyen de probabilité juste ${pct(f.ecart_proba_moyen)}. Accord ${pctEntier(f.accord)}.`;
+  // DraftKings : lu depuis GitHub (États-Unis), référence seule. Props, puis lignes de match par sport.
+  const dk = P.draftkings || {}, dkp = dk.props || {}, dkm = dk.matchs || {}, dkl = dk.lecture || {};
+  const sportsDk = {basket: "NBA", hockey: "NHL", football_americain: "NFL", baseball: "MLB"};
+  const parSport = Object.entries(dkm.par_sport || {}).map(([s, x]) =>
+    `${sportsDk[s] || s} ${x.rapproches} lignes, écart moyen ${pct(x.ecart_absolu_moyen).replace("+", "")}, même favori ${pctEntier(x.accord)}`).join(" ; ");
+  document.getElementById("props-draftkings").textContent = dkl.mode !== "direct" ? "DraftKings : pas lu à ce relevé."
+    : `DraftKings, référence seule (aucun pari). Props : ${dkp.rapproches || 0} lignes rapprochées à Pinnacle, ${dkp.non_rapproches || 0} sans correspondance, écart moyen de probabilité juste ${pct(dkp.ecart_proba_moyen)}, accord ${pctEntier(dkp.accord)}. Matchs (vainqueur, handicap, total) : ${parSport || "aucune ligne rapprochée"}.`;
   const refs = Object.entries(P.references || {}).map(([n,r]) => ligneProps(n, r)).join("");
   document.getElementById("props-ref").innerHTML = refs ? tableProps(refs) : '<p class="aide">Aucun papier.</p>';
   const stats = Object.entries(P.stats || {}).map(([n,r]) => ligneProps(n, r)).join("");
