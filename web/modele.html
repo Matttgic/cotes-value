@@ -45,7 +45,6 @@
   </section>
   <section class="onglet" id="o-bilan">
     <div class="page-tete"><div><h2>Bilan</h2></div></div>
-    <p class="aide" id="bilan-hors-plafond" hidden></p>
     <div class="bilan-onglets" role="tablist" aria-label="Vue du bilan">
       <button type="button" role="tab" id="bt-uniques" data-bilan="uniques" aria-controls="bilan-uniques">Paris uniques</button>
       <button type="button" role="tab" id="bt-strategies" data-bilan="strategies" aria-controls="o-strategies">Stratégies</button>
@@ -53,6 +52,7 @@
       <button type="button" role="tab" id="bt-props" data-bilan="props" aria-controls="bilan-props">Props</button>
     </div>
     <div id="bilan-uniques" role="tabpanel" aria-labelledby="bt-uniques">
+      <p class="aide" id="bilan-hors-plafond" hidden></p>
       <div class="puces bu-periodes" id="bu-periodes" aria-label="Période"></div>
       <div id="bu-dates"></div>
       <div class="bu-kpis" id="bu-kpis"></div>
@@ -229,7 +229,7 @@
     <div class="paris-puces" id="paris-puces" role="group" aria-label="Statut des paris"></div>
     <div id="paris-strategie-banner" class="carte" hidden></div>
     <div class="filtres recherche"><input type="search" id="f-q" placeholder="Rechercher équipe, ligue, pari…" aria-label="Rechercher équipe, ligue ou pari">
-      <button class="btn" id="export-csv">Exporter CSV</button></div>
+</div>
     <p class="aide" id="paris-compte" aria-live="polite"></p>
     <div class="outils-horaires" aria-label="Horaires des paris">
       <label>Début du match<select id="paris-horaire"><option value="">Tous les horaires</option><option value="imminent">Imminent · moins de 2 h</option><option value="aujourdhui">Aujourd’hui</option><option value="demain">Demain</option></select></label>
@@ -243,7 +243,7 @@
       <label>Bookmaker<select id="f-book"></select></label>
       <label>Sport<select id="f-sport"></select></label>
     </div>
-    <div class="outils-paris"><button class="btn secondaire" id="reinitialiser-filtres">Réinitialiser les filtres</button>
+    <div class="outils-paris"><button class="btn secondaire" id="reinitialiser-filtres">Réinitialiser les filtres</button><button class="btn secondaire" id="export-csv">Exporter CSV</button>
     <details class="mode-emploi"><summary>Comptage et export CSV</summary><p class="aide">Une prise par référence, au prix enregistré. Le filtre Référence ne garde que les paris uniques du bilan (première détection), réglés et en cours : le total égale la ligne « Par référence ». L’export inclut tous les paris filtrés. Écarts et CLV en ratios dans le CSV.</p></details></div>
     <p class="aide" id="paris-ref-aide">Référence : paris uniques du bilan, toute la période. Mise, gain et ROI sur les réglés seulement.</p>
     <p class="paris-resume" id="paris-resume" aria-live="polite"></p>
@@ -274,6 +274,7 @@
     <div class="page-tete"><div><h2>Notifications</h2></div></div>
     <h3 class="bu-titre">Alertes Pushover</h3>
     <p class="aide" id="pushover-etat" role="status" aria-live="polite">Chargement du choix…</p>
+    <label class="notif-filtre"><input type="checkbox" data-filtre="pushover-strategies"> Activées seulement</label>
     <fieldset class="carte" id="pushover-strategies"><legend>Stratégies envoyées sur Pushover</legend></fieldset>
     <p class="aide">Chaque règle affiche son bilan depuis le 14/10 : paris réglés, réussite, gain net (mise de 10 € par pari) et ROI.</p>
     <p><label class="aide" for="pushover-code">Code personnel</label>
@@ -292,6 +293,7 @@
     <div class="bu-table notif-rapidite" id="notif-rapidite"></div>
     <p class="aide">Chiffres réels des derniers relevés. Pendant un trou entre deux relevés, aucune opportunité n’est vue : c’est la cause des alertes ratées, pas l’envoi.</p>
     <h3 class="bu-titre">Me prévenir pour</h3>
+    <label class="notif-filtre"><input type="checkbox" data-filtre="notif-strategies"> Activées seulement</label>
     <fieldset class="carte" id="notif-strategies"><legend>Stratégies à suivre</legend></fieldset>
     <p><button class="btn" id="notif-sauver" disabled>Enregistrer mes choix</button></p>
     <p class="aide" id="notif-message" role="status" aria-live="polite"></p>
@@ -1112,12 +1114,15 @@ function tableProps(lignes) {
 }
 function rendreProps() {
   const P = D.props || {}, t = P.total || {};
-  document.getElementById("props-kpis").innerHTML = [["Paris", t.n || 0, ""], ["Réussite", pctEntier(t.reussite), ""],
-    ["ROI", pct(t.roi), signe(t.gain)], ["CLV", t.clv_moyenne==null?"—":pct(t.clv_moyenne), signe(t.clv_moyenne)]]
+  // Moins de 10 paris réglés : réussite et ROI ne veulent rien dire (1 gagné sur 1 = 100 %), affichés « — ».
+  const assez = (t.regles || 0) >= 10;
+  document.getElementById("props-kpis").innerHTML = [["Paris", t.n || 0, ""], ["Réglés", t.regles || 0, ""],
+    ["Réussite", assez ? pctEntier(t.reussite) : "—", ""],
+    ["ROI", assez ? pct(t.roi) : "—", assez ? signe(t.gain) : ""], ["CLV", t.clv_moyenne==null?"—":pct(t.clv_moyenne), signe(t.clv_moyenne)]]
     .map(([a,b,c]) => `<div><span>${a}</span><b class="${c}">${b}</b></div>`).join("");
   const poly = P.polymarket || {};
   document.getElementById("props-note").textContent =
-    `Seuil ${pct(P.seuil)} · mise ${eurosNets(P.mise || 10)} € · ${t.en_cours || 0} en cours · ${t.annules || 0} annulés · CLV sur ${t.clv_n || 0} paris réglés à moins de 30 min du coup d'envoi. ${poly.raison || ""}`;
+    `${assez ? "" : `Réussite et ROI affichés à partir de 10 paris réglés (${t.regles || 0} pour l'instant). `}Seuil ${pct(P.seuil)} · mise ${eurosNets(P.mise || 10)} € · ${t.en_cours || 0} en cours · ${t.annules || 0} annulés · CLV sur ${t.clv_n || 0} paris réglés à moins de 30 min du coup d'envoi. ${poly.raison || ""}`;
   const f = P.fanduel || {};
   document.getElementById("props-fanduel").textContent =
     `FanDuel, référence seule (aucun pari). ${f.rapproches || 0} lignes rapprochées à Pinnacle, ${f.non_rapproches || 0} sans correspondance. Écart moyen de probabilité juste ${pct(f.ecart_proba_moyen)}. Accord ${pctEntier(f.accord)}.`;
@@ -1661,10 +1666,10 @@ function rendreRecommandees(rows) {
       une nouvelle fusion est créée automatiquement (Fusion 2, 3…), suivie à partir de sa création ; les anciennes continuent leur suivi.</p>
       <div class="reco-grille">${fusions.map(carteFusion).join("")}</div>` : "";
   zone.innerHTML = `<h2 class="sous-titre">Recommandées</h2>
-    <p class="aide">Liste revue tous les ${C.revision_jours ?? 7} jours (dernière révision le ${jour(R.derniere_revision)}, prochaine le ${jour(R.prochaine_revision)}) ; entre deux révisions, elle ne bouge pas.
+    <details class="mode-emploi"><summary>Comment elles sont choisies</summary><p class="aide">Liste revue tous les ${C.revision_jours ?? 7} jours (dernière révision le ${jour(R.derniere_revision)}, prochaine le ${jour(R.prochaine_revision)}) ; entre deux révisions, elle ne bouge pas.
     Une stratégie entre si elle a au moins ${C.min_matchs ?? 50} matchs réglés, un ROI prudent positif, un ROI positif sans ses meilleurs matchs, aucun match au-delà de ${C.part_meilleur_max ?? 25} % du gain,
     une CLV par match positive, et moins de ${Math.round(100 * (C.recouvrement_max ?? .6))} % de paris communs avec une autre recommandée. Elle sort seulement si elle ne remplit plus ces critères,
-    ou si une candidate la dépasse d'au moins ${C.ecart_remplacement ?? 5} points de note. Aucun gain futur garanti.</p>
+    ou si une candidate la dépasse d'au moins ${C.ecart_remplacement ?? 5} points de note. Aucun gain futur garanti.</p></details>
     ${cartes.length ? `<div class="reco-grille">${cartes.join("")}</div>` : '<div class="vide">Aucune stratégie ne remplit encore les critères.</div>'}
     ${anciennes.length ? `<details class="mode-emploi"><summary>Anciennes recommandées (${anciennes.length})</summary><ul class="reco-anciennes">${anciennes.join("")}</ul></details>` : ""}
     ${fusion}${pausesEtDoublons(nom)}`;
@@ -1945,6 +1950,9 @@ installerActualisation({
     });
   }
 });
+// Notifs : « Activées seulement » masque les stratégies non cochées (affichage seulement).
+document.querySelectorAll(".notif-filtre input[data-filtre]").forEach(c => c.addEventListener("change", () =>
+  document.getElementById(c.dataset.filtre)?.classList.toggle("seulement-actives", c.checked)));
 // Résumé des réglages repliés : « Kelly ¼ · 1 000 € », mis à jour à chaque changement.
 (function(){
   const menu=document.getElementById("mode-mise"), champ=document.getElementById("bankroll"), cible=document.getElementById("reglages-resume");

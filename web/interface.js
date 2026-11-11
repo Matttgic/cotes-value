@@ -106,7 +106,7 @@ function choisirVueStrategies(vue) {
 function compacterFiltres() {
   for(const [id,selecteur,titre] of [
     ['filtres-bilan','#puces-ref','Choisir la référence ou la stratégie'],
-    ['filtres-paris','.grille-filtres','Filtres des paris']
+    ['filtres-paris','.outils-horaires, .grille-filtres, .outils-paris, #paris-ref-aide','Filtres et export']
   ]) {
     const elements=[...document.querySelectorAll(selecteur)];if(!elements.length) continue;
     const d=document.createElement('details'),summary=document.createElement('summary'),corps=document.createElement('div');
