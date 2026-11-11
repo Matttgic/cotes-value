@@ -18,7 +18,7 @@ def test_sport_inconnu_ou_ligue_absente():
 
 
 def test_registre_bien_forme():
-    for sport, regles in SOURCES.items():
+    for regles in SOURCES.values():
         for cles, sites in regles:
             assert cles and sites
             for nom, url in sites:
