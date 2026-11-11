@@ -303,7 +303,15 @@ def joueurs_feuille(summary: dict) -> list[dict]:
                     vus.add(j["cle"])
                     joueurs.append(j)
         return joueurs
-    return _joueurs_bloc(blocs[0])
+    # NBA : un bloc par équipe. Avant le 11/11/2026, seul le premier (l'équipe à l'extérieur) était lu : les props
+    # des joueurs à domicile restaient « joueur ambigu ou absent » (Cooper Flagg, Mavericks–Pacers du 9/11).
+    joueurs, vus = [], set()
+    for b in blocs:
+        for j in _joueurs_bloc(b):
+            if j["cle"] not in vus:
+                vus.add(j["cle"])
+                joueurs.append(j)
+    return joueurs
 
 
 def _match_espn(pari: dict, matchs: list[dict]) -> dict | None:
