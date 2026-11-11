@@ -707,6 +707,7 @@ def a_saisir(paris: list[dict], enregistrements: list[dict], maintenant: datetim
     et le modèle de saisie (`modele` à copier dans resultats_manuels.json sous chacune des clés de `match_ids`).
     Un même match vu par plusieurs bookmakers (autre `match_id`, autre orthographe) n'est listé qu'une fois."""
     from .evenements import identites
+    from .sources_resultats import ou_chercher
     a_regler = [p for p in paris if p["statut"] == "a_regler"]
     identite = identites(a_regler)
     groupes: dict = {}
@@ -748,7 +749,7 @@ def a_saisir(paris: list[dict], enregistrements: list[dict], maintenant: datetim
                        "sport": p["sport"],
                        "ligue": p.get("ligue"), "debut": p.get("debut"), "paris": len(ps),
                        "periodes_requises": periodes, "raison": d.get("raison"), "sources_vues": d.get("sources", {}),
-                       "modele": modele})
+                       "modele": modele, "ou_chercher": ou_chercher(p["sport"], p.get("ligue"))})
         if len(sortie) >= limite:
             break
     return sortie

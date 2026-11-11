@@ -17,6 +17,7 @@ from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_conver
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
 from cotes.strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, charger_fusions, paris_fusion  # noqa: E402
 from cotes.reglement import GAIN  # noqa: E402
+from cotes.sources_resultats import ou_chercher  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
@@ -206,6 +207,10 @@ def selection_paris(paris: list[dict], en_cours: int = EN_COURS_AFFICHES,
         f["trace"] = trace(lignes[0])
         f["sims"] = sorted({r.get("simulation") for r in lignes})
         f["a_regler"] = any(r.get("statut") == "a_regler" for r in lignes)
+        if f["a_regler"]:
+            sites = ou_chercher(lignes[0].get("sport"), lignes[0].get("ligue"))
+            if sites:
+                f["trace"].append("Score à chercher sur : " + ", ".join(f"{x['nom']} ({x['url']})" for x in sites) + ".")
         f["strategie"] = any(id(r) in strategie for r in lignes)
         f["chatgpt"] = any(id(r) in chatgpt for r in lignes)
         f["gemini"] = any(id(r) in gemini for r in lignes)
