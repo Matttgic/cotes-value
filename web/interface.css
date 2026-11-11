@@ -754,3 +754,38 @@ tr.en-pause td{opacity:.7}
 .avis-nombres{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin:8px 0 0;font-size:12px}
 .avis-nombres dt{color:var(--doux);margin:0}
 .avis-nombres dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+
+
+/* Revue visuelle du 11/11/2026 : réglages repliés, accueil plus direct, couleurs de lecture. */
+.reglages{grid-column:3;grid-row:1;position:relative;justify-self:end;align-self:center}
+.reglages>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:8px;padding:6px 10px;border:1px solid var(--ligne);white-space:nowrap}
+.reglages>summary::-webkit-details-marker{display:none}
+.reglages>summary::after{content:"";width:6px;height:6px;border:solid var(--doux);border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translateY(-2px)}
+.reglages[open]>summary::after{transform:rotate(-135deg)}
+.reglages-mot{font:400 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--doux)}
+.reglages-resume{font:600 12.5px var(--mono);color:var(--texte)}
+.reglages .mode-mise{grid-column:auto;grid-row:auto}
+.reglages[open] .mode-mise{position:absolute;right:0;top:calc(100% + 6px);z-index:30;background:var(--fond);border:1px solid var(--texte);
+  padding:14px;display:flex;flex-wrap:wrap;gap:10px 0;width:max-content;max-width:min(92vw,440px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.reglages:not([open]) .mode-mise{display:none}
+.maj{display:none}
+/* L'avantage d'un pari est un bon signe : vert, comme les gains. Le rouge reste aux pertes et aux pannes. */
+.ecart,.acc-ecart,:is(#liste-paris,#mes-liste) .etat-cours>summary .ligne-valeur{color:var(--vert)}
+/* Bouton bookmaker : contour, plein au survol, pour laisser la cote au premier plan. */
+.acc-pari-prix .btn,.lien-bookmaker.btn{background:transparent;color:var(--texte);border:1px solid var(--texte)}
+.acc-pari-prix .btn:hover,.lien-bookmaker.btn:hover{background:var(--texte);color:var(--fond)}
+/* Petits textes plus lisibles. */
+:root{--doux:#5A574F}
+:root[data-theme=dark]{--doux:#B8B4A9}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--doux:#B8B4A9}}
+@media(max-width:760px){
+  .reglages{grid-column:1/-1;grid-row:2;justify-self:stretch;padding:0 0 8px}
+  .reglages>summary{justify-content:space-between;border:0;border-top:1px solid var(--ligne);padding:8px 0 0}
+  .reglages[open] .mode-mise{position:static;width:auto;max-width:none;box-shadow:none;border:0;border-top:1px solid var(--ligne);padding:10px 0 4px;margin-top:8px}
+  .reglages .mode-mise{border-top:0;padding:0}
+  .acc-values{order:1}.acc-top5{order:2}.acc-grille>section{width:100%;box-sizing:border-box}
+  .acc-kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin:10px 0 18px}
+  .acc-kpi,.acc-kpi:nth-child(odd){padding:8px 6px 10px;border-left:1px solid var(--ligne);border-top:0}
+  .acc-kpi:first-child{border-left:0;padding-left:0}
+  .acc-kpi strong{font-size:24px;margin:4px 0 0}.acc-kpi p{font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.acc-kpi span{display:none}
+}
