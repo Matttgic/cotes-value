@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-11T05:22:39+00:00",
+  "debut": "2026-11-11T05:27:16+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,51 +9,53 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 1.7,
+    "secondes": 1.4,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.0,
+    "secondes": 3.8,
     "ok": true
    },
    "polymarket": {
-    "secondes": 7.4,
+    "secondes": 4.9,
+    "ok": true
+   },
+   "fanduel": {
+    "secondes": 11.3,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 11.0,
+    "secondes": 18.0,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 17 matchups : HTTP 403"
+     "sport 17 markets/straight : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "sport 37 matchups : HTTP 403"
     ]
    },
    "unibet_direct": {
-    "secondes": 1.9,
+    "secondes": 2.0,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
-   "fanduel": {
-    "secondes": 20.7,
+   "pmu_direct": {
+    "secondes": 24.1,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 22.5,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 26.1,
+    "secondes": 27.9,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 45.7,
+    "secondes": 41.8,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.5,
+    "secondes": 52.3,
     "ok": true
    },
    "smarkets": {
@@ -62,7 +64,7 @@
     "cache": true
    },
    "association": {
-    "secondes": 1.9,
+    "secondes": 1.6,
     "ok": true
    },
    "comparaison": {
@@ -102,18 +104,18 @@
    "source_connue": 672,
    "source_inconnue": 0,
    "source_invalide": 0,
-   "mouvement_min_s": 0,
-   "mouvement_max_s": 40592,
-   "reception": "2026-11-11T05:22:39+00:00"
+   "mouvement_min_s": 1,
+   "mouvement_max_s": 40869,
+   "reception": "2026-11-11T05:27:16+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 825,
-   "age_min_s": 103,
-   "lignes": 90989,
-   "lignes_perimees": 2258,
+   "age_max_s": 889,
+   "age_min_s": 85,
+   "lignes": 90781,
+   "lignes_perimees": 30,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -123,13 +125,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 1,
+    "head_200": 6,
+    "choisi_fixe": 4,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 1,
-    "reprise_403": 1,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 5
+    "choisi_autre": 1,
+    "reprise_403": 3,
+    "sport_vide": 3,
+    "matchups_sans_speciaux": 1
    }
   },
   "reprise": {
@@ -138,7 +141,6 @@
   "sports_francais": {
    "source": "cycle précédent",
    "sports": [
-    "baseball",
     "basket",
     "cricket",
     "esport",
@@ -156,7 +158,7 @@
    ],
    "nouveaux_au_cycle_suivant": [],
    "plus_chez_les_references": [
-    "baseball"
+    "golf"
    ]
   },
   "betclic_proches": {
@@ -170,30 +172,6 @@
    "seuil_relatif": 0.15,
    "examines": 6,
    "comparaisons": [
-    {
-     "match": "Arménie – Chypre",
-     "source": "PMU",
-     "cote_olybet": 2.18,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.014,
-     "aberrant": false
-    },
-    {
-     "match": "Turquie – Belgique",
-     "source": "Pinnacle",
-     "cote_olybet": 3.6,
-     "cote_reference": 3.94,
-     "ecart_relatif": 0.0863,
-     "aberrant": false
-    },
-    {
-     "match": "Turquie – Belgique",
-     "source": "PMU",
-     "cote_olybet": 3.6,
-     "cote_reference": 3.65,
-     "ecart_relatif": 0.0137,
-     "aberrant": false
-    },
     {
      "match": "Juventus (F) – Lyon (F)",
      "source": "Pinnacle",
@@ -216,6 +194,30 @@
      "cote_olybet": 2.75,
      "cote_reference": 2.9,
      "ecart_relatif": 0.0517,
+     "aberrant": false
+    },
+    {
+     "match": "Arménie – Chypre",
+     "source": "PMU",
+     "cote_olybet": 2.18,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.014,
+     "aberrant": false
+    },
+    {
+     "match": "Turquie – Belgique",
+     "source": "Pinnacle",
+     "cote_olybet": 3.6,
+     "cote_reference": 3.94,
+     "ecart_relatif": 0.0863,
+     "aberrant": false
+    },
+    {
+     "match": "Turquie – Belgique",
+     "source": "PMU",
+     "cote_olybet": 3.6,
+     "cote_reference": 3.65,
+     "ecart_relatif": 0.0137,
      "aberrant": false
     }
    ],
@@ -244,11 +246,11 @@
    "examines": 4,
    "comparaisons": [
     {
-     "match": "Islande U21 – Grèce U21",
+     "match": "Oud-Heverlee Leuven – HB Koge",
      "source": "Pinnacle",
-     "cote_netbet": 2.6,
-     "cote_reference": 2.9,
-     "ecart_relatif": 0.1034,
+     "cote_netbet": 4.3,
+     "cote_reference": 4.71,
+     "ecart_relatif": 0.087,
      "aberrant": false
     },
     {
@@ -268,11 +270,11 @@
      "aberrant": false
     },
     {
-     "match": "Oud-Heverlee Leuven – HB Koge",
+     "match": "Islande U21 – Grèce U21",
      "source": "Pinnacle",
-     "cote_netbet": 4.3,
-     "cote_reference": 4.71,
-     "ecart_relatif": 0.087,
+     "cote_netbet": 2.6,
+     "cote_reference": 2.9,
+     "ecart_relatif": 0.1034,
      "aberrant": false
     }
    ],
@@ -283,41 +285,41 @@
    "ok": true,
    "requetes": 72,
    "matchs": 14,
-   "props": 732,
+   "props": 730,
    "ignores": 193,
    "avertissements": []
   },
   "props_fanduel": {
-   "fanduel": 366,
+   "fanduel": 365,
    "pinnacle": 164,
    "rapproches": 0,
-   "non_rapproches": 366,
+   "non_rapproches": 365,
    "ecart_proba_moyen": null,
    "ecart_absolu_moyen": null,
    "accord": null,
    "reference_seule": true
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-11T05:22:41+00:00",
-   "pinnacle_derniere_lecture": "2026-11-11T05:22:48+00:00",
-   "books_premiere_lecture": "2026-11-11T05:13:23+00:00",
-   "books_derniere_lecture": "2026-11-11T05:22:39+00:00",
-   "ecart_enveloppe_secondes": 565.0
+   "pinnacle_premiere_lecture": "2026-11-11T05:27:17+00:00",
+   "pinnacle_derniere_lecture": "2026-11-11T05:27:32+00:00",
+   "books_premiere_lecture": "2026-11-11T05:18:01+00:00",
+   "books_derniere_lecture": "2026-11-11T05:27:16+00:00",
+   "ecart_enveloppe_secondes": 571.0
   },
   "historique_cotes": {
-   "lignes": 586
+   "lignes": 867
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.3
+   "age_min": 13.9
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 563,
    "a_verifier": 12,
    "non_conforme": 10,
-   "mesures": 6988,
+   "mesures": 7097,
    "matchs_suspects": 0
   },
   "props_joueurs": {
@@ -340,9 +342,9 @@
   },
   "mouvement": {
    "actif": true,
-   "ancres": 27628,
-   "mesures": 21934,
-   "annotees": 6,
+   "ancres": 28004,
+   "mesures": 23912,
+   "annotees": 5,
    "figees": 3
   },
   "redecision": {
@@ -358,28 +360,22 @@
    "saute": true,
    "dernier_reglement": "2026-11-11T04:32:27+00:00"
   },
-  "controle_publie": false,
-  "fin": "2026-11-11T05:23:39+00:00",
+  "controle_publie": true,
+  "fin": "2026-11-11T05:28:12+00:00",
   "cotes": {
-   "francaises": 38161,
-   "pinnacle": 90989,
-   "polymarket": 7103,
+   "francaises": 38275,
+   "pinnacle": 90781,
+   "polymarket": 7110,
    "smarkets": 1182,
    "matchbook": 672,
    "betfair": 0
   },
   "matchs_francais": 622,
-  "opportunites": 6,
+  "opportunites": 5,
   "opportunites_suspectes": 3,
-  "nouveaux_paris": 3
+  "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-10T13:55:53+00:00",
-   "mode": "complet",
-   "opportunites": 2,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-10T14:00:40+00:00",
    "mode": "complet",
@@ -1579,11 +1575,17 @@
    "mode": "complet",
    "opportunites": 6,
    "nouveaux_paris": 3
+  },
+  {
+   "debut": "2026-11-11T05:27:16+00:00",
+   "mode": "complet",
+   "opportunites": 5,
+   "nouveaux_paris": 0
   }
  ],
- "dernier_reglement": "2026-11-11T04:32:27+00:00",
+ "dernier_reglement": "2026-11-11T05:28:17+00:00",
  "dernier_cycle_reglement": {
-  "debut": "2026-11-11T04:32:27+00:00",
+  "debut": "2026-11-11T05:28:17+00:00",
   "mode": "reglement",
   "etapes": {
    "resultats_espn_basket": {
@@ -1603,7 +1605,7 @@
     "ok": true
    },
    "resultats_espn_football": {
-    "secondes": 0.5,
+    "secondes": 0.7,
     "ok": true
    },
    "resultats_espn_snooker": {
@@ -1615,11 +1617,11 @@
     "ok": true
    },
    "resultats_livescore_basket": {
-    "secondes": 2.1,
+    "secondes": 2.5,
     "ok": true
    },
    "resultats_livescore_football": {
-    "secondes": 1.3,
+    "secondes": 1.8,
     "ok": true
    },
    "resultats_livescore_hockey": {
@@ -1631,23 +1633,23 @@
     "ok": true
    },
    "resultats_flashscore_basket": {
-    "secondes": 5.2,
+    "secondes": 5.8,
     "ok": true
    },
    "resultats_flashscore_volley": {
-    "secondes": 3.8,
+    "secondes": 5.4,
     "ok": true
    },
    "resultats_flashscore_handball": {
-    "secondes": 2.0,
+    "secondes": 3.5,
     "ok": true
    },
    "resultats_flashscore_football": {
-    "secondes": 5.5,
+    "secondes": 5.7,
     "ok": true
    },
    "resultats_flashscore_snooker": {
-    "secondes": 2.6,
+    "secondes": 0.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -1655,30 +1657,18 @@
     ]
    },
    "resultats_flashscore_hockey": {
-    "secondes": 0.9,
+    "secondes": 2.3,
     "ok": true
    },
    "resultats_thesportsdb": {
-    "secondes": 41.7,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "basket Brixia_Basket_Women_vs_ASD_Basket_Costa_B_Women : ValueError('HTTP 429')",
-     "handball CS_Gloria_Bistrița_(F)_vs_HC_Podravka_Vegeta_(F) : ValueError('HTTP 429')",
-     "handball CS_Gloria_2018_Bistrita-Nasaud_Women_vs_Podravka_Koprivnica_Women : ValueError('HTTP 429')",
-     "handball BVB_09_Dortmund_(F)_vs_ŽRK_Budućnost_T-Mobile_(F) : ValueError('HTTP 429')",
-     "handball Borussia_Dortmund_Women_vs_ZRK_Buducnost_Women : ValueError('HTTP 429')",
-     "football FC_Andorra_vs_Mallorca : ValueError('HTTP 429')",
-     "football FC_Andorra_vs_RCD_Mallorca : ValueError('HTTP 429')",
-     "hockey Abbotsford_Canucks_vs_Colorado_Eagles : ValueError('HTTP 429')",
-     "hockey Colorado_Eagles_vs_Abbotsford_Canucks : ValueError('HTTP 429')"
-    ]
+    "secondes": 23.0,
+    "ok": true
    }
   },
   "reglement": true,
   "thesportsdb": {
-   "appels": 20,
-   "trouves": 2,
+   "appels": 11,
+   "trouves": 3,
    "cle_publique": true
   },
   "theodds": {
@@ -1688,8 +1678,8 @@
    "configure": false
   },
   "resultats": {
-   "enregistrements": 10622,
-   "matchs_valides": 0,
+   "enregistrements": 10638,
+   "matchs_valides": 2,
    "reportes": 0,
    "non_regles": [
     {
@@ -1902,18 +1892,22 @@
     }
    ],
    "paris_en_attente": 32,
-   "paris_regles": 0,
+   "paris_regles": 6,
    "selections_en_attente": 32,
    "ignores": [],
    "ignores_limite": 100,
    "paris_avec_alertes": 0,
-   "sources_reglement": {}
+   "sources_reglement": {
+    "flashscore": 6,
+    "livescore": 5,
+    "thesportsdb": 1
+   }
   },
   "props_reglement": {
    "regles": 0,
-   "feuilles": 1
+   "feuilles": 2
   },
-  "fin": "2026-11-11T04:33:38+00:00"
+  "fin": "2026-11-11T05:29:14+00:00"
  },
  "echecs_recents": {
   "total": 25,
