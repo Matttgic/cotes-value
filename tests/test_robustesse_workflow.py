@@ -281,3 +281,30 @@ def test_pas_de_relance_quand_le_serveur_en_direct_tient_la_collecte(tmp_path):
     r, appels = relancer(tmp_path / "x" if (tmp_path / "x").mkdir() is None else tmp_path,
                          battement=base64.b64encode(arret.encode()).decode())
     assert "Cycle suivant lancé." in r.stdout                  # arrêt propre du serveur : GitHub reprend
+
+
+def test_relance_reprend_un_cycle_echoue_au_demarrage(tmp_path):
+    """Incident du 11/11/2026 : le cycle relancé échoue au démarrage (startup_failure) et la chaîne s'arrêtait."""
+    journal, compteur = tmp_path / "appels", tmp_path / "n"
+    gh = tmp_path / "gh"
+    gh.write_text(f"""#!/bin/bash
+echo "$*" >> {journal}
+case "$1 $2" in
+  "api repos/test/repo/actions/workflows/collecte.yml") echo active;;
+  "api repos/test/repo/actions/runs/42") echo "2026-10-30T00:00:00Z";;
+  "run list")
+    n=$(cat {compteur} 2>/dev/null || echo 0); echo $((n+1)) > {compteur}
+    case $n in 0) echo 0;; 1) echo startup_failure;; *) echo in_progress;; esac;;
+  "workflow run") exit 0;;
+esac
+""")
+    gh.chmod(0o755)
+    sleep = tmp_path / "sleep"
+    sleep.write_text("#!/bin/sh\nexit 0\n")
+    sleep.chmod(0o755)
+    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "DEPOT": "test/repo", "DEBUT": "0"}
+    r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script_relance()],
+                       env=env, capture_output=True, text=True)
+    appels = journal.read_text().splitlines()
+    assert r.returncode == 0 and "Cycle suivant démarré (in_progress)" in r.stdout
+    assert sum(a.startswith("workflow run") for a in appels) == 2          # lancement + une relance
