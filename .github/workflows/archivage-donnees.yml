@@ -1,0 +1,74 @@
+name: Archivage des données brutes
+
+# Chaque mois : les jours de cotes/ et opportunites/ d'un mois terminé depuis plus de 30 jours partent dans une
+# release GitHub « donnees-brutes-AAAA-MM » (tar + manifeste SHA-256), hors de la taille du dépôt, puis sont retirés
+# de la branche « donnees » après vérification du téléchargement. Les bilans du site n'en dépendent pas.
+# Lancement à la main : « reel » décoché = essai à blanc (liste et vérifie, ne publie ni ne supprime rien).
+# Planifié : réel seulement si la variable du dépôt ARCHIVAGE_AUTO vaut « oui », sinon essai à blanc.
+on:
+  workflow_dispatch:
+    inputs:
+      reel:
+        description: "Publier les releases et retirer les fichiers de la branche donnees"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 3 5 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  archiver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: donnees
+      queue: max
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REEL: ${{ (github.event_name == 'workflow_dispatch' && inputs.reel) || (github.event_name == 'schedule' && vars.ARCHIVAGE_AUTO == 'oui') }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Cloner la branche « donnees » en entier
+        run: git clone -q --depth 1 --branch donnees "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" donnees
+      - name: Préparer les archives (tar + manifeste, vérifiés)
+        run: python scripts/archiver_donnees_brutes.py donnees --sortie archives_brutes
+      - name: Publier, vérifier le téléchargement, retirer de la branche
+        if: env.REEL == 'true'
+        run: |
+          set -euo pipefail
+          cible=$(git -C donnees rev-parse HEAD)
+          retires=0
+          while read -r mois; do
+            [ -n "$mois" ] || continue
+            tag="donnees-brutes-$mois"
+            if ! gh release view "$tag" >/dev/null 2>&1; then
+              gh release create "$tag" "archives_brutes/$tag.tar" "archives_brutes/$tag.json" --target "$cible" \
+                --title "Données brutes $mois" --notes "cotes/ et opportunites/ de $mois (tar non compressé de fichiers .jsonl.gz). Contrôle : python scripts/archiver_donnees_brutes.py --verifier $tag.tar $tag.json"
+            fi
+            rm -rf verif && mkdir verif
+            gh release download "$tag" --dir verif
+            python scripts/archiver_donnees_brutes.py --verifier "verif/$tag.tar" "verif/$tag.json"
+            python -c 'import json,sys; print("\n".join(f["chemin"] for f in json.load(open(sys.argv[1]))["fichiers"]))' "verif/$tag.json" > liste.txt
+            (cd donnees && xargs git rm -q --ignore-unmatch < ../liste.txt)
+            retires=$((retires + $(wc -l < liste.txt)))
+          done < archives_brutes/mois.txt
+          cd donnees
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --cached --quiet && { echo "Rien à retirer."; exit 0; }
+          git commit -qm "Archivage : $retires fichiers bruts déplacés en release ($(paste -sd' ' ../archives_brutes/mois.txt))"
+          for i in 1 2 3 4 5; do
+            git push -q origin donnees && exit 0
+            sleep $((i * 5)); git pull -q --rebase origin donnees
+          done
+          exit 1
+      - name: Résumé
+        if: always()
+        run: |
+          echo "Mode réel : $REEL ; mois : $(paste -sd' ' archives_brutes/mois.txt 2>/dev/null || echo aucun)"
