@@ -19,6 +19,7 @@ from cotes.strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, charge
 from cotes.reglement import GAIN  # noqa: E402
 from cotes.sources_resultats import ou_chercher  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
+from cotes.simulation import COTE_MAX_PRISE  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
 from cotes.strategie_jules import JULES, paris_jules  # noqa: E402
@@ -586,11 +587,30 @@ def retirer_places_libres(labo: dict) -> None:
                 bloc.pop(nom, None)
 
 
+def resume_hors_plafond(paris: list[dict]) -> dict:
+    """Paris à cote > plafond : nombre, réglés, gain en mises fixes (hors des bilans, gardés en archive)."""
+    regles = [p for p in paris if p.get("statut") not in ("en_cours", "a_regler")]
+    return {"plafond": COTE_MAX_PRISE, "paris": len(paris), "regles": len(regles),
+            "gain": round(sum(p.get("gain") or 0 for p in regles), 2),
+            "mises": round(sum(p.get("mise") or 0 for p in regles), 2)}
+
+
+def archive_hors_plafond(paris: list[dict]) -> list[dict]:
+    """Archive lisible : une ligne par pari, du plus récent au plus ancien."""
+    cles = ("id", "simulation", "reference", "bookmaker", "sport", "ligue", "domicile", "exterieur", "debut", "pari",
+            "cote", "cote_juste", "ecart", "mise", "statut", "gain")
+    return [{k: p.get(k) for k in cles} for p in sorted(paris, key=lambda p: str(p.get("debut")), reverse=True)]
+
+
 def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = None) -> Path:
     charger_fusions(donnees)          # fusions automatiques déjà créées (recommandees.json)
     from cotes import pauses
     pauses.charger(donnees)           # stratégies en pause (pauses.json) : plus de nouveaux paris
     paris = fusionner_paris(_lire(donnees / "paris.json", []), lire_archives(donnees))
+    # Paris au-dessus du plafond de cote (décision du 11/11/2026) : retirés de tous les bilans du site, jamais supprimés
+    # des données ; listés dans site/hors_plafond.json (archive consultable).
+    hors_plafond = [p for p in paris if (p.get("cote") or 0) > COTE_MAX_PRISE]
+    paris = [p for p in paris if (p.get("cote") or 0) <= COTE_MAX_PRISE]
     journal_alertes = _lire(donnees / "notifications_diagnostic.json", {"cycles": []})
     demandes = {a["id"]: c.get("envoi_demande_le") for c in journal_alertes.get("cycles", [])
                 for a in c.get("alertes", []) if a.get("id")}
@@ -856,6 +876,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES,
             "props": props_publies,
             # même match réglé avec deux scores chez deux bookmakers (resultats.incoherences_freres), page Santé
+            "hors_plafond": resume_hors_plafond(hors_plafond),
             "incoherences_reglement": [x for x in (_lire(donnees / "resultats_a_saisir.json", {}) or {}).get("incoherences") or []
                                        if isinstance(x, dict)][:20]}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
@@ -900,6 +921,8 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     (sortie / "polices").mkdir(exist_ok=True)
     for police in (web / "polices").glob("*.woff2"):
         (sortie / "polices" / police.name).write_bytes(police.read_bytes())
+    (sortie / "hors_plafond.json").write_text(json.dumps(archive_hors_plafond(hors_plafond), ensure_ascii=False),
+                                              encoding="utf-8")
     (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
     (sortie / "mises").mkdir(exist_ok=True)
     for ancien in (sortie / "mises").glob("*.json"):          # un mode retiré du menu ne reste pas publié

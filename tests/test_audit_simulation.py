@@ -191,3 +191,13 @@ def test_plafond_de_cote_a_la_prise():
     assert S.placer([candidat(cote=5.0, cote_juste=4.7)], [], NOW)
     assert S.placer([candidat(cote=5.01, cote_juste=4.7)], [], NOW) == []
     assert S.placer([candidat(cote=12.0, cote_juste=10.0)], [], NOW) == []
+
+
+def test_paris_hors_plafond_resume_et_archive():
+    from scripts import site_web as W
+    a = {"id": "a", "cote": 7.0, "statut": "perdu", "gain": -10.0, "mise": 10.0, "debut": "2026-11-01T10:00:00+00:00"}
+    b = {"id": "b", "cote": 12.0, "statut": "gagne", "gain": 110.0, "mise": 10.0, "debut": "2026-11-02T10:00:00+00:00"}
+    c = {"id": "c", "cote": 30.0, "statut": "en_cours", "gain": None, "mise": 10.0, "debut": "2026-11-03T10:00:00+00:00"}
+    r = W.resume_hors_plafond([a, b, c])
+    assert r == {"plafond": 5.0, "paris": 3, "regles": 2, "gain": 100.0, "mises": 20.0}
+    assert [x["id"] for x in W.archive_hors_plafond([a, b, c])] == ["c", "b", "a"]
