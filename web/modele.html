@@ -11,9 +11,10 @@
 <header class="haut">
   <div class="titre"><div class="marque"><span class="monogramme" aria-hidden="true">cv<i>.</i></span><div><h1>Cotes Value</h1><label class="signature palette-label">Mode <select id="theme-site" aria-label="Mode jour ou nuit"><option value="auto">Auto</option><option value="nuit">Nuit</option><option value="jour">Jour</option></select></label></div></div>
     <div class="mise-a-jour"><span class="maj" id="maj"></span><button type="button" id="fraicheur" class="fraicheur" data-aller="controle" title="Santé du système : sources, relevés, incidents"></button></div></div>
+  <details class="reglages" id="reglages"><summary aria-label="Réglages de mise et de bankroll"><span class="reglages-mot">Réglages</span> <span class="reglages-resume" id="reglages-resume"></span></summary>
   <div class="mode-mise" role="group" aria-label="Mise des bilans">
     <label for="mode-mise">Mise des bilans</label><select id="mode-mise" aria-describedby="mode-mise-note"></select>
-    <label for="bankroll">Bankroll</label><span class="bankroll-champ"><input id="bankroll" type="number" inputmode="numeric" min="10" max="10000000" step="10" value="1000" aria-describedby="mode-mise-note"><i aria-hidden="true">€</i></span></div>
+    <label for="bankroll">Bankroll</label><span class="bankroll-champ"><input id="bankroll" type="number" inputmode="numeric" min="10" max="10000000" step="10" value="1000" aria-describedby="mode-mise-note"><i aria-hidden="true">€</i></span></div></details>
   <p class="aide mode-mise-note" id="mode-mise-note" role="status"></p>
   <nav id="onglets" aria-label="Navigation principale">
     <button data-o="accueil"><span>Accueil</span></button>
@@ -375,6 +376,7 @@ __INTERFACE_JS__
 // --- en-tête et onglets
 const dc = (D.etat||{}).dernier_cycle || {};
 document.getElementById("maj").textContent = dc.debut ? "mis à jour " + quand(dc.debut) + (dc.mode==="test" ? " · test" : "") : "pas encore de données";
+document.getElementById("fraicheur")?.setAttribute("title", "Santé du système · " + document.getElementById("maj").textContent);
 // Le bilan a deux vues : les paris uniques et les stratégies (ancienne page Stratégies).
 let vueBilan = "uniques";
 function montrerVueBilan(v) {
@@ -855,7 +857,7 @@ document.getElementById("export-csv").onclick = () => {
 const ETAT_LIGNE = {gagne:["gagne","✓ Gagné"], demi_gagne:["gagne","✓ ½ gagné"], perdu:["perdu","✗ Perdu"],
   demi_perdu:["perdu","✗ ½ perdu"], rembourse:["rembourse","Remboursé"], a_regler:["regler","À régler"]};
 const etatLigne = p => ETAT_LIGNE[p.statut] || (p.a_regler ? ETAT_LIGNE.a_regler : ["cours","En cours"]);
-const REF_COURTE = {Pinnacle:"", Polymarket:"Poly ", Matchbook:"Mb ", Consensus:"Cons. ", Smarkets:"Sm. "};
+const REF_COURTE = {Pinnacle:"", Polymarket:"Polymarket ", Matchbook:"Matchbook ", Consensus:"Consensus ", Smarkets:"Smarkets "};
 const heureEnvoi = p => {
   const t = new Date(p.alerte_demande_le || p.detecte || "");
   if (!Number.isFinite(t.getTime())) return "";
@@ -1939,6 +1941,16 @@ installerActualisation({
     });
   }
 });
+// Résumé des réglages repliés : « Kelly ¼ · 1 000 € », mis à jour à chaque changement.
+(function(){
+  const menu=document.getElementById("mode-mise"), champ=document.getElementById("bankroll"), cible=document.getElementById("reglages-resume");
+  if(!menu||!champ||!cible) return;
+  const maj=()=>{const o=menu.options[menu.selectedIndex];const b=Number(champ.value);
+    cible.textContent=(o?o.textContent.trim():"")+(Number.isFinite(b)&&b>0?" · "+b.toLocaleString("fr-FR")+" €":"");};
+  menu.addEventListener("change",maj);champ.addEventListener("input",maj);champ.addEventListener("change",maj);
+  maj();setTimeout(maj,300);
+  document.addEventListener("click",ev=>{const d=document.getElementById("reglages");if(d&&d.open&&!d.contains(ev.target)) d.open=false;});
+})();
 </script>
 </body>
 </html>
