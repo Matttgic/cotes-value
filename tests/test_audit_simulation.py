@@ -183,3 +183,11 @@ def test_segments_limite_10_et_chiffres_conserves():
     assert s['n'] == 10 and s['roi'] == .8 and s['gains'] == 80
     assert s['gagnes'] == 10 and s['attendus'] == 5
     assert s['ecart_sigma'] == round(5/(10*.5*.5)**.5, 2)
+
+
+def test_plafond_de_cote_a_la_prise():
+    """Décision du 11/11/2026 : aucun nouveau pari au-dessus de la cote 5 (les anciens restent comptés)."""
+    assert S.COTE_MAX_PRISE == 5.0
+    assert S.placer([candidat(cote=5.0, cote_juste=4.7)], [], NOW)
+    assert S.placer([candidat(cote=5.01, cote_juste=4.7)], [], NOW) == []
+    assert S.placer([candidat(cote=12.0, cote_juste=10.0)], [], NOW) == []

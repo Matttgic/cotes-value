@@ -30,6 +30,10 @@ from .liens import lien_match
 from .temps import date_iso
 
 MISE = 10.0
+# Plafond de cote à la prise (décidé le 11/11/2026). Sur les paris réglés, ≤ 5 : ROI +3,6 % (3 192 paris) ;
+# 5–10 : −33 % ; > 15 : réussite de 0 à 3 % et ROI de −39 à −80 %, avec des écarts annoncés de 12 à 20 %
+# (cotes fantômes, biais favori/outsider de la cote juste). Les anciens paris restent comptés tels quels.
+COTE_MAX_PRISE = 5.0
 INF = float("inf")
 FRAICHEUR_PRISE_MIN = 15
 SIMULATIONS = {     # écart dans [ecart, ecart_max[, cote dans [cote_min, cote_max]
@@ -74,6 +78,8 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
         if not debut or not debut.tzinfo or debut <= decision + timedelta(seconds=30):
             continue
         if not _lectures_fraiches(o, decision, debut):
+            continue
+        if o["cote"] > COTE_MAX_PRISE:
             continue
         code = simulation_de(o["ecart"], o["cote"])
         if code is None:
