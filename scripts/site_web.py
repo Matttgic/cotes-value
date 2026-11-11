@@ -125,6 +125,11 @@ def _score(x) -> str:
     return f"{x[0]}-{x[1]}" if isinstance(x, (list, tuple)) and len(x) == 2 else str(x)
 
 
+# Délai médian avant que le bookmaker baisse une cote « value » (docs/duree-values.md, mesuré du 30/10 au 10/11/2026).
+DUREE_VALUE_MIN = {"Betclic": 14, "PMU": 65, "NetBet": 19, "Unibet": 14}
+PRIX_FRAIS_S = 400          # au-delà, la CLV des paris Pinnacle est négative (docs/strategie-claude-signal.md)
+
+
 def trace(p: dict) -> list[str]:
     """Le parcours d'un pari en quelques phrases : où et quand il a été repéré, contre quelle cote juste,
     la cote juste avant le match, le résultat et d'où il vient. Les paris d'avant le 7/10/2026 n'ont qu'une
@@ -145,6 +150,14 @@ def trace(p: dict) -> list[str]:
     if p.get("lu_reference"):
         ref += f", lue à {_h(p['lu_reference'])}"
     out.append(ref + ".")
+    age = p.get("age_prix_pinnacle_s")
+    if isinstance(age, (int, float)) and not isinstance(age, bool) and age >= 0:
+        duree = f"{round(age)} s" if age < 120 else f"{round(age / 60)} min"
+        out.append(f"Prix Pinnacle vieux de {duree} à la détection"
+                   + (" : frais." if age <= PRIX_FRAIS_S else " : ancien, l'écart peut être un retard de la référence."))
+    if p.get("statut") == "en_cours" and p.get("bookmaker") in DUREE_VALUE_MIN:
+        out.append(f"Chez {p['bookmaker']}, une cote value baisse d'habitude après environ "
+                   f"{DUREE_VALUE_MIN[p['bookmaker']]} min (médiane mesurée) : vérifier la cote avant de jouer plus tard.")
     ctl = prise.get("controle") or {}
     if ctl.get("statut") == "conforme":
         out.append(f"Intitulé contrôlé conforme ({ctl.get('n')} comparaisons).")
@@ -836,7 +849,10 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             "m3": M3,
             "laboratoire": laboratoire,
             "simulations": {k: v["nom"].replace(" %", "\u00a0%").replace("≥ ", "≥\u00a0") for k, v in SIMULATIONS.items()}, "references": REFERENCES,
-            "props": props_publies}
+            "props": props_publies,
+            # même match réglé avec deux scores chez deux bookmakers (resultats.incoherences_freres), page Santé
+            "incoherences_reglement": [x for x in (_lire(donnees / "resultats_a_saisir.json", {}) or {}).get("incoherences") or []
+                                       if isinstance(x, dict)][:20]}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
     # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/pannes.py).
     from cotes import pannes

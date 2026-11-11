@@ -67,26 +67,26 @@
       Les boutons 7 j et 30 j ne changent pas ce tableau. Une ligne ouvre la liste Paris déjà filtrée sur cette référence :
       même nombre, même mise, même gain et même ROI.</p>
       <div class="bu-table" id="bu-reference"></div>
-      <h3 class="bu-titre">Essais en cours <small>à comparer, rien n'est appliqué</small></h3>
-      <details class="mode-emploi" open><summary>Mise Kelly ¼ contre 10 € fixes, rejouée sur tout l'historique</summary>
+      <h3 class="bu-titre">Essais en cours <small>à comparer, rien n'est appliqué · ouvrir une ligne pour le détail</small></h3>
+      <details class="mode-emploi"><summary>Mise Kelly ¼ contre 10 € fixes, rejouée sur tout l'historique</summary>
       <p class="aide">Mêmes paris, seule la mise change : 1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 % (20 €), bankroll fixe.
       Gain = gain réel × mise Kelly / mise fixe, sur les paris réglés. Une simulation de taille de mise, pas une sélection.
       Les lignes par bookmaker additionnent toutes les simulations de cette référence. Le tableau « Par référence », au-dessus, est le bilan des paris uniques.</p>
       <div class="tableau"><table id="essai-kelly"></table></div></details>
-      <details class="mode-emploi" open><summary>Quelle méthode de mise aurait été la meilleure ? 18 méthodes sur les mêmes paris</summary>
+      <details class="mode-emploi"><summary>Quelle méthode de mise aurait été la meilleure ? 18 méthodes sur les mêmes paris</summary>
       <p class="aide">Paris réglés du suivi depuis le 14/10 (ou depuis le lancement de la stratégie), tous misés au moment de leur détection avec
       une bankroll de départ de 1 000 €. Le solde et la série de résultats ne comptent que les paris déjà réglés à cet instant. Simulation :
       rien n'est appliqué. <b>★</b> plus gros gain, <b>◆</b> meilleur gain par euro de baisse (la plus forte baisse du gain cumulé), 20 paris
       au moins. Avec peu de paris, la chance domine : ne choisis pas avant 150 paris réglés.</p>
       <label class="aide">Sélection <select id="mises-selection"></select></label>
       <div class="tableau"><table id="essai-mises"></table></div></details>
-      <details class="mode-emploi" open><summary>Le meilleur compromis : stratégie × méthode de mise</summary>
+      <details class="mode-emploi"><summary>Le meilleur compromis : stratégie × méthode de mise</summary>
       <p class="aide">Toutes les combinaisons de stratégies et de méthodes de mise, classées. 50 paris au moins par combinaison. <b>Attention</b> :
       en testant des centaines de combinaisons, la première est souvent la plus chanceuse, pas la meilleure. Une combinaison est solide seulement
       si elle reste en tête sur les nouveaux paris : suis-la quelques semaines avant de la retenir.</p>
       <label class="aide">Classer par <select id="combos-critere"><option value="rendement">Gain par euro de baisse</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="baisse">Plus faible baisse (gain positif)</option></select></label>
       <div class="tableau"><table id="essai-combos"></table></div></details>
-      <details class="mode-emploi" open><summary>TRJ, liquidité Pinnacle, mouvement de cote : ROI et CLV par tranche</summary>
+      <details class="mode-emploi"><summary>TRJ, liquidité Pinnacle, mouvement de cote : ROI et CLV par tranche</summary>
       <p class="aide">Paris uniques. <b>Marge Pinnacle</b> : indicateur de liquidité, disponible aussi sur les anciens paris à 2 issues
       (retrouvée à partir de la cote et de la cote juste, « estimée »). <b>TRJ</b> du bookmaker français, <b>limite de mise
       Pinnacle</b> et <b>mouvement de cote</b> : mesurés à l'enregistrement, donc seulement sur les paris pris depuis leur ajout.
@@ -159,6 +159,8 @@
       <div class="filtres filtres-strategies">
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
+        <div class="champ"><label for="strategies-avis">Avis d'analyste</label>
+        <select id="strategies-avis"><option value="bons" selected>Fiables et prometteuses</option><option value="">Tous les avis</option><option value="Fiable">Fiable</option><option value="Prometteur mais pas prouvé">Prometteur</option><option value="Chance ou yo-yo">Chance ou yo-yo</option><option value="Trop tôt pour juger">Trop tôt pour juger</option></select></div>
         <div class="champ"><label for="strategies-tri">Classer par</label>
         <select id="strategies-tri"><option value="note" selected>Note /100 (par match, robustesse)</option><option value="progression">Progression de la note (7 jours)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
@@ -319,6 +321,7 @@
     <h3 class="bu-titre">Incidents des dernières 24 heures</h3><div class="bu-table" id="sante-incidents"></div>
     <h3 class="bu-titre">Sources de résultats</h3><div class="bu-table" id="sante-resultats"></div>
     <p class="aide" id="sante-attente"></p>
+    <div id="sante-incoherences"></div>
     <p><button type="button" class="btn secondaire" data-aller="regler" id="sante-saisie">Matchs à saisir à la main ›</button></p>
     <details class="mode-emploi sante-controle"><summary>Contrôle des intitulés des bookmakers</summary>
     <p class="aide">Chaque type d'intitulé de chaque bookmaker est comparé à la référence à chaque passage. Bien
@@ -1388,6 +1391,12 @@ function rendreSante(maintenant=Date.now()) {
   }).join("") || '<p class="aide sante-vide">Aucun passage de règlement enregistré.</p>';
   const attente = jr.resultats?.paris_en_attente;
   document.getElementById("sante-attente").textContent = Number.isInteger(attente) ? `${attente} paris attendent un résultat.` : "";
+  // Même match réglé avec deux scores chez deux bookmakers : l'un des deux règlements est faux (cotes/resultats.py).
+  const inc = D.incoherences_reglement || [], zoneInc = document.getElementById("sante-incoherences");
+  const coteInc = x => `${e(x.bookmaker)} ${e((x.score || []).join("-"))} <small>(${e((x.sources || []).join(", "))} · ${(x.paris || []).length} pari${(x.paris || []).length > 1 ? "s" : ""} : ${e((x.paris || []).join(", "))})</small>`;
+  if (zoneInc) zoneInc.innerHTML = inc.length ? `<h3 class="bu-titre">Règlements à vérifier <small>même match, deux scores</small></h3>
+    <div class="bu-table">${inc.map(x => `<div class="sante-ligne"><div><b>${e(x.a?.match)}</b><small>${e(quand(x.debut))} · ${coteInc(x.a || {})} contre ${coteInc(x.b || {})}</small></div><span class="sante-mot sante-mot-alerte">À vérifier</span></div>`).join("")}</div>
+    <p class="aide">L'un des deux scores est faux. Pour corriger : le bon statut (gagne, perdu, rembourse…) sous l'identifiant du pari dans resultats_manuels.json.</p>` : "";
   document.getElementById("sante-saisie").textContent = `Matchs à saisir à la main${man.length ? " ("+groupesReglement.size+")" : ""} ›`;
 }
 rendreSante();
@@ -1706,6 +1715,11 @@ function rendreStrategies() {
   attribuerValeur(rows);          // rang moyen ROI + CLV, calculé sur toutes les stratégies avant le filtre
   const ref = document.getElementById("strategies-ref").value;
   if (ref) rows = rows.filter(r => r.reference === ref);
+  // Avis d'analyste : par défaut, seulement ce qui mérite d'être lu (« Fiable » ou « Prometteur »).
+  const avisChoisi = document.getElementById("strategies-avis")?.value || "", avantAvis = rows.length;
+  const verdictDe = r => (r.avisSuivi || r.stats?.avis)?.verdict;
+  if (avisChoisi === "bons") rows = rows.filter(r => ["Fiable", "Prometteur mais pas prouvé"].includes(verdictDe(r)));
+  else if (avisChoisi) rows = rows.filter(r => verdictDe(r) === avisChoisi);
   // Avec des dates, la note /100 (sur tout le suivi) n'est pas recalculée : son classement devient le gain net.
   const triChoisi = document.getElementById("strategies-tri").value;
   const tri = datesStratActives() && ["note", "progression"].includes(triChoisi) ? "gain" : triChoisi;
@@ -1719,7 +1733,7 @@ function rendreStrategies() {
   });
   rendreDatesStrategies();
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
-  document.getElementById("strategies-total").textContent = `${rows.length} stratégies · ${reglees.length} avec des règlements · résultats non cumulables.`;
+  document.getElementById("strategies-total").textContent = `${rows.length} stratégies${rows.length < avantAvis ? " sur " + avantAvis + " (filtre « Avis d'analyste »)" : ""} · ${reglees.length} avec des règlements · résultats non cumulables.`;
   document.getElementById("strategies-quoi").textContent = "Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h, Eden le 19/10 à 20 h (Paris), puis chaque nouvelle stratégie à son lancement. Les décisions sont figées ; les paris en attente ne sont pas comptés comme perdus. Avec des dates : seuls les paris détectés ces jours-là comptent, et la note /100 n'est pas recalculée." +
     ` ${(L.resultats || []).length} règles, ${Object.keys(L.comparateurs || {}).length} comparateurs et ${Object.keys(L.bases_futur || {}).length} bases du Bilan ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Note<small>/100</small></th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
@@ -1778,6 +1792,14 @@ function rendreStrategies() {
   }).join("");
 }
 document.getElementById("strategies-ref").onchange = rendreStrategies;
+{
+  const menuAvis = document.getElementById("strategies-avis");
+  if (menuAvis) {
+    const garde = lire("cv-strategies-avis-v1");
+    if (garde != null && [...menuAvis.options].some(o => o.value === garde)) menuAvis.value = garde;
+    menuAvis.onchange = () => { ecrire("cv-strategies-avis-v1", menuAvis.value); rendreStrategies(); };
+  }
+}
 document.getElementById("strategies-tri").onchange = rendreStrategies;
 rendreStrategies();
 
@@ -1815,6 +1837,9 @@ function noteMise(message) {
   if (!note) return;
   const info = infoMise(miseMode) || {};
   const regle = miseMode === "fixe" ? `${eurosNets(10)} € par pari (1 % de la bankroll)` : info.regle;
+  note.classList?.toggle("message", Boolean(message));       // sur mobile, seule une information ponctuelle s'affiche
+  const menuMise = document.getElementById("mode-mise");
+  if (menuMise && !message) menuMise.title = `${regle} · mêmes paris dans tous les modes, seule la mise change`;
   note.textContent = message || `${regle} · bankroll de départ ${BANKROLL.toLocaleString("fr-FR")} € · mêmes paris dans tous les modes, seule la mise change.`;
 }
 async function chargerMise(mode) {

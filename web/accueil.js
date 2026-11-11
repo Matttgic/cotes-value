@@ -24,15 +24,18 @@ function rendreAccueil() {
   const heure=Number(new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',hourCycle:'h23'}).format(new Date()));
   document.getElementById('acc-titre').textContent=(heure>=5 && heure<18 ? 'Bonjour' : 'Bonsoir')+' Matthieu';
   const mise=nomMiseAccueil(miseMode);
-  const reglees=fiches.filter(p=>p.unique_bilan && p.gain!=null),s=statsBU(reglees);
+  // Premier chiffre : les cotes de 10 au plus. Au-delà, c'est de la loterie (quelques gains sur des centaines de
+  // paris) qui masquait tout le reste ; le total toutes cotes reste écrit dessous.
+  const toutes=fiches.filter(p=>p.unique_bilan && p.gain!=null),sToutes=statsBU(toutes);
+  const reglees=toutes.filter(p=>!(p.cote>10)),s=statsBU(reglees);
   const enCours=fiches.filter(p=>p.statut==='en_cours' && !p.a_regler);
   // L'autre mise reste visible : en 10 € fixes, les grosses cotes perdantes pèsent autant que les petites ;
   // en Kelly ¼, la mise suit l'écart et la cote. Les deux lectures se complètent.
   // Repère affiché à côté : les mises fixes, ou Kelly ¼ quand on regarde déjà les mises fixes.
   const autreKelly=miseMode==='fixe', autre=bilanEnMise(reglees,autreKelly), nomAutre=nomMiseAccueil(autreKelly ? 'kelly' : 'fixe');
   cible.innerHTML=[
-    [`Gain net · paris uniques · ${mise}`,eurC(s.net),signe(s.net),`${s.n} réglés · en ${nomAutre} : ${eurC(autre.net)}`],
-    ['ROI',pct(s.roi),signe(s.net),`Gain net / mises réglées · en ${nomAutre} : ${pct(autre.roi)}`],
+    [`Gain net · cotes ≤ 10 · ${mise}`,eurC(s.net),signe(s.net),`${s.n} paris uniques réglés · en ${nomAutre} : ${eurC(autre.net)} · toutes cotes : ${eurC(sToutes.net)}`],
+    ['ROI · cotes ≤ 10',pct(s.roi),signe(s.net),`Gain net / mises réglées · en ${nomAutre} : ${pct(autre.roi)} · toutes cotes : ${pct(sToutes.roi)}`],
     ['Réussite',pctEntier(s.reussite),'','Gagnés et demi-gagnés / réglés'],
     ['En cours',String(enCours.length),'','Paris pas encore réglés']
   ].map(([t,v,c,d])=>`<div class="acc-kpi"><p>${e(t)}</p><strong class="${c}">${e(v)}</strong><span>${e(d)}</span></div>`).join('');
