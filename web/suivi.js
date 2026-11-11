@@ -162,7 +162,7 @@ const resumeHtml = b => `<div class="carte resume-suivi"><div class="l1"><span><
 function rendreDatesBilan() {
   const zone = document.getElementById('bu-dates');
   if (!zone) return;
-  if (!zone.dataset.pret) { zone.innerHTML = datesHtml() + '<p class="aide">Dates de règlement des paris. Choisir des dates remplace la période rapide.</p>'; zone.dataset.pret = '1'; lierDates(zone, false); }
+  if (!zone.dataset.pret) { zone.innerHTML = '<details class="mode-emploi bu-dates-perso"><summary>Dates personnalisées</summary>' + datesHtml() + '<p class="aide">Dates de règlement des paris. Choisir des dates remplace la période rapide.</p></details>'; zone.dataset.pret = '1'; lierDates(zone, false); }
   else zone.querySelectorAll('input[data-p]').forEach(i => i.value = suiviPeriode()[i.dataset.p] || '');
 }
 
