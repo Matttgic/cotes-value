@@ -156,3 +156,22 @@ def test_tirs_cadres_ne_sont_pas_des_buts():
     assert stat_canonique("Shots N. Kucherov Total Shots") == "ShotsOnGoal"
     assert stat_canonique("Goals N. Kucherov Total Goals") == "Goals"
     assert stat_canonique("Nombre de buts - Kucherov") == "Goals"
+
+
+def test_cycle_relit_espn_pour_un_prop_de_la_veille(tmp_path, monkeypatch):
+    """Bug du 11/11/2026 : les matchs NBA du jour déjà lus empêchaient de relire la veille ; le prop restait ouvert."""
+    import json
+    from scripts import cycle
+    from cotes import resultats
+    doc = {"paris": []}
+    P.enregistrer(doc, [ligne()], NOW)
+    (tmp_path / "props_papier.json").write_text(json.dumps(doc))
+    du_jour = [{"source": "espn", "sport": "basket", "espn_id": "1", "domicile": "Autre", "exterieur": "Equipe",
+                "debut": "2026-11-11T00:00:00+00:00"}]
+    veille = [{"source": "espn", "sport": "basket", "espn_id": "99", "domicile": "Los Angeles Lakers",
+               "exterieur": "Boston Celtics", "debut": DEBUT}]
+    appels = []
+    monkeypatch.setattr(resultats, "lire_espn", lambda sport, depuis, fin: appels.append(sport) or veille)
+    monkeypatch.setattr(resultats, "_espn_json", lambda chemin, params: _feuille())
+    r = cycle._regler_props(tmp_path, du_jour, datetime(2026, 11, 11, 4, tzinfo=timezone.utc))
+    assert appels == ["basket"] and r["regles"] == 1
