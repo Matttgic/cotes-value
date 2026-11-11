@@ -31,21 +31,17 @@ qu'il faut pour le faire.
   « À éviter pour l'instant », « Attendre »), et le seuil de chaque preuve manquante.
 - **Props** : la comparaison DraftKings – Pinnacle sous celle de FanDuel.
 
-## Interface : suggestions
+## Interface : suggestions appliquées le 11/11/2026
 
-1. **Accueil** : le premier chiffre est le bilan de tous les paris uniques, tiré vers le bas par les cotes de plus
-   de 10 (767 paris, −3 400 € en mises fixes). Montrer plutôt le bilan des stratégies recommandées, ou des cotes
-   de 10 au plus, et garder l'ensemble en second.
-2. **Fait** : le verdict de l'analyste en un mot (« Fiable », « Prometteur », « Chance », « Trop tôt ») à
-   côté de la note dans la liste des stratégies, sans ouvrir la fiche.
-3. **Bilan trop long** : « Essais en cours » (18 méthodes de mise, combinaisons) devrait être replié par défaut ou
-   déplacé dans un sous-onglet « Laboratoire ». Les tableaux par écart, cote, sport et référence suffisent en
-   première lecture.
-4. **Stratégies** : 77 lignes. Un filtre « Fiable ou prometteur » coché par défaut réduirait la liste à ce qui
-   mérite d'être lu ; le reste à la demande.
-5. **Fiche d'un pari** : afficher « encore jouable ~X min chez ce bookmaker » et l'âge du prix de référence, les
-   deux informations qui décident s'il faut jouer.
-6. **Mobile** : la ligne d'explication sous le menu des mises prend une ligne entière ; la passer en infobulle une
-   fois le mode choisi.
-7. **Santé** : y afficher les règlements incohérents (`resultats_a_saisir.json` › `incoherences`), pas seulement
-   dans le fichier.
+1. **Accueil** : le premier chiffre est le bilan des cotes de 10 au plus ; le total toutes cotes reste écrit dessous.
+2. **Verdict dans la liste** : l'avis de l'analyste en un mot (« Fiable », « Prometteur », « Chance », « Trop tôt ») à
+   côté de la note.
+3. **Bilan** : les quatre blocs d'« Essais en cours » sont repliés ; une ligne s'ouvre pour le détail.
+4. **Stratégies** : menu « Avis d'analyste », réglé par défaut sur « Fiables et prometteuses » (23 lignes sur 77 au
+   10/11). Le choix reste sur l'appareil.
+5. **Fiche d'un pari** : l'âge du prix Pinnacle à la détection (frais sous 400 s), et pour un pari en cours le délai
+   médian avant que ce bookmaker baisse sa cote (docs/duree-values.md).
+6. **Mobile** : la ligne d'explication sous le menu des mises n'apparaît plus que pour un message (chargement, mode
+   indisponible) ; la règle du mode est dans l'infobulle du menu.
+7. **Santé** : « Règlements à vérifier », les matchs réglés avec deux scores chez deux bookmakers, avec les
+   identifiants des paris à corriger.
