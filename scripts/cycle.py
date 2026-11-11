@@ -762,11 +762,14 @@ def _regler_props(donnees: Path, enregistrements: list, maintenant: datetime) ->
     if not ouverts:
         return {"regles": 0, "feuilles": 0}
     matchs = props_papier.matchs_espn(enregistrements)
-    sports_vus = {m.get("sport") for m in matchs}
-    for sport in sorted({p.get("sport") for p in ouverts if p.get("sport") not in sports_vus}):
-        depuis = min((props_papier._heure(p.get("debut")) for p in ouverts if p.get("sport") == sport
+    # Relire ESPN pour chaque sport dont un prop ouvert n'a pas son match dans ce qui est déjà lu. Avant le
+    # 11/11/2026, un sport déjà présent (matchs du jour) n'était jamais relu : un prop de la veille ne retrouvait
+    # plus son match et restait en attente (Cooper Flagg, Darius Acuff).
+    orphelins = [p for p in ouverts if props_papier._match_espn(p, matchs) is None]
+    for sport in sorted({p.get("sport") for p in orphelins if p.get("sport")}):
+        depuis = min((props_papier._heure(p.get("debut")) for p in orphelins if p.get("sport") == sport
                       and props_papier._heure(p.get("debut"))), default=maintenant)
-        matchs += props_papier.matchs_espn(lire_espn(sport, depuis, maintenant))
+        matchs += props_papier.matchs_espn(lire_espn(sport, depuis - timedelta(hours=12), maintenant))
     ids = props_papier.feuilles_a_lire(doc, matchs, maintenant)
     sport_de = {str(m.get("espn_id")): m.get("sport") for m in matchs}
     feuilles = props_papier.charger_feuilles([(i, sport_de.get(i)) for i in ids if sport_de.get(i)], _espn_json)
