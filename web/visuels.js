@@ -65,6 +65,12 @@ function classerParNote(rows) {
     return cn || a.i-b.i;
   }).map(x=>x.r);
 }
+// Verdict de l'analyste en un mot, dans la ligne de la stratégie : lisible sans ouvrir la fiche.
+const AVIS_COURTS={'Fiable':['Fiable','pos'],'Prometteur mais pas prouvé':['Prometteur',''],'Chance ou yo-yo':['Chance','neg'],'Trop tôt pour juger':['Trop tôt','doux']};
+function etiquetteAvis(avis) {
+  const c=avis && AVIS_COURTS[avis.verdict];
+  return c?` <small class="avis-mini ${c[1]}" title="Avis d'analyste : ${e(avis.verdict)}">${c[0]}</small>`:'';
+}
 function panneauAnalyste(r) {
   const avis=r && r.stats && r.stats.avis;
   if(!avis || !avis.verdict) {
@@ -234,7 +240,7 @@ function miseMoyenne(s) {
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}</span>${pastillesMedailles(r.medailles)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="badge-pause neg">⏸</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}${etiquetteAvis(s.avis)}</span>${pastillesMedailles(r.medailles)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="badge-pause neg">⏸</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><h3>${e(r.nom)}</h3></div>

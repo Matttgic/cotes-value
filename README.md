@@ -26,6 +26,7 @@ par lui) est arrêté depuis le 18/10/2026. `cotes/pulsescore.py` ne fait plus d
 | OlyBet | Cotes à comparer | Swarm BetConstruct (`cotes/direct/olybet.py`) | Gratuit |
 | NetBet | Cotes à comparer | État Nuxt de netbet.fr (`cotes/direct/netbet.py`) | Gratuit |
 | FanDuel | Référence props NBA/NHL | API publique du site (`cotes/direct/fanduel.py`) | Gratuit |
+| DraftKings | Référence matchs NBA, NHL, NFL, MLB et props NBA/NHL | API publique du site (`cotes/direct/draftkings.py`) | Gratuit |
 
 Les paris déjà pris contre Betfair ou Kalshi restent dans les bilans ; ces sources ne sont plus interrogées.
 
@@ -36,6 +37,9 @@ cotes trop vieilles (cache de 15 min chez Pinnacle depuis le 19/10/2026) : voir
 OlyBet et NetBet peuvent être coupés (`SOURCE_OLYBET` ou `SOURCE_NETBET` = `off`).
 FanDuel ne sert que de référence pour les props NBA/NHL (`SOURCE_FANDUEL` = `direct`
 dans la collecte, `off` sinon) : aucun pari, la stratégie Props FanDuel reste éteinte.
+DraftKings joue le même rôle (`SOURCE_DRAFTKINGS`), avec en plus les lignes de match NBA, NHL, NFL et MLB : sa
+comparaison à Pinnacle est publiée dans Bilan › Props. Betfair répond 403 depuis GitHub.
+[Relevés, Betfair et reverse-api-engineer](docs/sources-us.md).
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
 compte restent en période `MATCH?` et ne sont pas comparés.
 
@@ -170,6 +174,22 @@ mi-temps/fin. Choisie sur la construction (7–22/10), validée une seule fois (
 CLV +4,2 %). Déclinaisons plus ciblées : Favoris réguliers (cote 1,60–2,20), Hors football, Handicaps.
 [Méthode, candidates et limites](docs/strategie-claude-opus.md).
 
+### Claude Signal · Double avis et Prix frais
+
+Deux stratégies de Claude, suivies dès le **12/11/2026 à 00:00 UTC**, figées au lancement. Double avis : Pinnacle et
+Polymarket donnent chacun au moins 2 % sur la même cote française. Prix frais : prix Pinnacle de moins de 400 s, sans
+mouvement contraire. Cote 1,30–5,00, écart 2–15 %, tous les bookmakers sauf OlyBet. Rejeu du 18/10 au 10/11 : CLV par
+match +3,1 % (96 matchs) et +2,0 % (228 matchs), contre +0,3 % sans le signal. Seuils fixés en regardant ces
+périodes : pas une validation indépendante. [Mesures et limites](docs/strategie-claude-signal.md).
+
+### Avis d'analyste
+
+Chaque fiche de stratégie porte un verdict (« Fiable », « Prometteur mais pas prouvé », « Chance ou yo-yo », « Trop
+tôt pour juger »), ce qu'il faut en faire, et six questions cochées : assez de recul, gain, gain qui ne tient pas à
+la chance, cotes qui battent la clôture, régularité, indépendance des grosses cotes (`cotes/analyste.py`). « Fiable »
+= six oui. La probabilité que le gain soit un hasard est calculée sans tirage à partir de 30 matchs (point-selle,
+même résultat que 10 000 rééchantillons à 0,25 point près) : la construction du site est passée de 54 s à 10 s.
+
 ### Note des stratégies sur 100
 
 **Stratégies → Classer par « Note /100 »** (tri par défaut). Version 2 (8/11/2026) : calculée **par match**
@@ -192,11 +212,15 @@ liste, une nouvelle fusion (Fusion 2, 3…) est créée automatiquement avec les
 les cotes justes sont exactes à quelques pour cent près ; au-delà, elles surestiment la probabilité de gain
 d'environ moitié (score exact, mi-temps/fin et cotes classiques de 5 à 10).
 
-### Mise fixe ou mise Kelly (tous les bilans)
+### Mise des bilans et bankroll (tous les bilans)
 
-Le sélecteur « Mise des bilans » (en haut du site) bascule **tous** les gains, ROI, CLV pondérés, courbes, segments et
-tableaux des stratégies entre les 10 € fixes et une mise **Kelly ¼** par pari (bankroll fictive 1 000 €, plafond 2 %,
-`simulation.mise_kelly`). Mêmes paris, seule la mise change : le serveur calcule les deux versions
+Le menu « Mise des bilans » (en haut du site) recalcule **tous** les gains, ROI, CLV pondérés, courbes, segments et
+tableaux des stratégies dans le mode choisi : **Kelly ¼** par défaut (plafond 2 %, `simulation.mise_kelly`), Kelly ⅛,
+Kelly ½, Kelly ¼ plafonné à 1 %, gain constant, ou mise fixe de 1 % (`cotes/mises.py`, `MODES_BILAN`). Kelly ¼ et la
+mise fixe sont dans la page ; les autres modes sont publiés à part (`site/mises/<mode>.json`) et chargés quand on
+les choisit. La **bankroll de départ** (1 000 € par défaut) se modifie à côté du menu : la mise de chaque mode ne
+dépend que du pari, donc tous les montants sont multipliés par bankroll / 1 000, sans rien recalculer ; ROI, CLV,
+notes et avis ne changent pas. Les deux choix restent sur l'appareil. Mêmes paris, seule la mise change : le serveur calcule les deux versions
 (`site_web.paris_en_mise_kelly` rejoue les mêmes fonctions sur des copies misées en Kelly) et le navigateur échange
 les blocs. Le choix est mémorisé. Seule l'étude figée du 14/10 (règles du laboratoire, `docs/comparaison-strategies.json`)
 reste en mises fixes.
@@ -328,6 +352,11 @@ cycle, cache évincé) : démarrage à froid, le cycle relit tout. Un seul commi
   `{"winamax|72036146": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3]}}` ; `periodes` donne le
   score de chaque période (manches de baseball pour les marchés « 5 manches »).
 
+## Études et idées
+
+[Durée de vie des values, CLV maison, origine de la value](docs/duree-values.md)
+(`python scripts/etude_duree_values.py --donnees donnees`) · [Idées et suggestions d'interface](docs/idees.md).
+
 ## Développement
 
 ```bash
@@ -362,15 +391,26 @@ Les scores viennent de plusieurs sources gratuites, rapprochées par noms d'équ
 | Sport | Sources | Contrôle |
 |---|---|---|
 | Football | LiveScore, ESPN, Flashscore (secours) | 99,8 % d'accord sur 2 041 matchs déjà réglés |
-| Basket | LiveScore, ESPN, Flashscore (secours) | ~97 % |
+| Basket | LiveScore, ESPN, Flashscore (secours), 365Scores (deuxième avis) | ~97 % |
 | Hockey | LiveScore, NHL officiel, ESPN, Flashscore (secours) | 93,6 % (les écarts sont d'anciens scores du temps réglementaire) |
 | Tennis | LiveScore, ESPN, Flashscore (secours) | 96 % |
 | Baseball, football américain | ESPN, Flashscore (secours) | baseball 32/32 |
-| Handball | Flashscore | 56/58 (mesuré avec API-Sports, retiré) |
-| Volley | Flashscore | 18/18 retrouvés (3 absents) |
-| Rugby | Flashscore | 11/13 |
+| Handball | Flashscore, 365Scores (deuxième avis) | 56/58 (mesuré avec API-Sports, retiré) |
+| Volley | Flashscore, 365Scores (deuxième avis) | 18/18 retrouvés (3 absents) |
+| Rugby | Flashscore, 365Scores (deuxième avis) | 11/13 |
 
-Une source seule ne règle qu'après 24 h (6 h pour LiveScore, ESPN, NHL). `donnees/resultats_a_saisir.json`
+**365Scores** (`cotes/scores365.py`, `SCORES_365` = `non` pour couper) donne un deuxième avis au basket, au volley,
+au handball et au rugby, où Flashscore était seul : deux sources d'accord règlent tout de suite, un désaccord attend
+la saisie à la main.
+
+Une source seule ne règle qu'après 24 h (6 h pour LiveScore, ESPN, NHL, et pour Flashscore au basket, volley,
+handball, rugby, snooker et baseball, où il est d'habitude la seule source et ne garde que les matchs terminés).
+**Match frère** : un pari sans résultat est réglé par le même match déjà validé chez un autre bookmaker (même
+sport, même heure à 15 min, deux équipes à 0,9 ; `resultats.par_freres`). **Report** : une affiche rejouée quelques
+jours plus tard n'est un report que si aucune source ne donne de score à la date d'origine. **Correction** : écrire
+le bon statut sous l'identifiant d'un pari déjà réglé dans `resultats_manuels.json` le corrige, sans changer sa date
+de règlement. **Cohérence** : `resultats_a_saisir.json` liste aussi (`incoherences`) les matchs réglés avec deux
+scores différents chez deux bookmakers. `donnees/resultats_a_saisir.json`
 liste les matchs qu'aucune source ne règle (un match vu par plusieurs bookmakers n'y figure qu'une fois, avec toutes
 ses clés dans `match_ids`), avec le modèle de saisie de `resultats_manuels.json`. Le journal du
 cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non

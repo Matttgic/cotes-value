@@ -24,6 +24,7 @@ from .strategie_defi import DEFIS, paris_defi
 from .strategie_gemini_defi import GEMINI_DEFIS, SELECTEURS as SELECTEURS_GEMINI_DEFI
 from .strategie_claude_defi import CLAUDE_DEFIS, SELECTEURS as SELECTEURS_CLAUDE_DEFI
 from .strategie_claude_opus import CLAUDE_OPUS, SELECTEURS as SELECTEURS_CLAUDE_OPUS
+from .strategie_claude_signal import CLAUDE_SIGNAL, SELECTEURS as SELECTEURS_CLAUDE_SIGNAL
 from .strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, paris_fusion, selection_fusion_auto
 from .convergence import STRATEGIES, selections, votes
 from .laboratoire import heure
@@ -43,6 +44,7 @@ CONVERGENCE_3 = {
 }
 VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN, COEUR, LIQUIDITE,
              *GROKS, *GROKS_V2, *GROKS_V3, *CONSEILS, *DEFIS, *GEMINI_DEFIS, *CLAUDE_DEFIS, *CLAUDE_OPUS,
+             *CLAUDE_SIGNAL,
              RECOMMANDEE_FUSION, *FUSIONS_AUTO)
 PARIS = ZoneInfo("Europe/Paris")
 
@@ -270,6 +272,9 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
     # Claude Opus · Valeur solide : figée au lancement (3/11/2026), sans rejeu.
     for c in CLAUDE_OPUS:
         resultat[c["cle"]] = SELECTEURS_CLAUDE_OPUS[c["cle"]](paris) if depuis is None else set()
+    # Claude Signal (double avis, prix frais) : figées au lancement (12/11/2026), sans rejeu.
+    for c in CLAUDE_SIGNAL:
+        resultat[c["cle"]] = SELECTEURS_CLAUDE_SIGNAL[c["cle"]](paris) if depuis is None else set()
     # Fusion 1 : membres figés le 8/11/2026, un pari par match, sans rejeu.
     resultat[RECOMMANDEE_FUSION["cle"]] = (calculer(RECOMMANDEE_FUSION["cle"], lambda: paris_fusion(paris))
                                          if depuis is None else set())
