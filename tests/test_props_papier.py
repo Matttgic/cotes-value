@@ -175,3 +175,16 @@ def test_cycle_relit_espn_pour_un_prop_de_la_veille(tmp_path, monkeypatch):
     monkeypatch.setattr(resultats, "_espn_json", lambda chemin, params: _feuille())
     r = cycle._regler_props(tmp_path, du_jour, datetime(2026, 11, 11, 4, tzinfo=timezone.utc))
     assert appels == ["basket"] and r["regles"] == 1
+
+
+def test_suffixe_jr_d_un_seul_cote():
+    """Darius Acuff (Winamax) = Darius Acuff Jr. (ESPN) ; ambigu s'il y a deux joueurs de même nom."""
+    doc = {"paris": []}
+    P.enregistrer(doc, [ligne(joueur="Darius Acuff", marche="JOUEUR:Rebounds", stat="Rebounds", ligne=3.5,
+                              issue="MOINS")], NOW)
+    feuille = {"boxscore": {"players": [{"statistics": [{"names": ["MIN", "PTS", "REB", "AST"], "athletes": [
+        {"athlete": {"displayName": "Darius Acuff Jr."}, "stats": ["40", "29", "4", "6"]}]}]}]}}
+    matchs = [{"sport": "basket", "domicile": "Los Angeles Lakers", "exterieur": "Boston Celtics",
+               "debut": DEBUT, "espn_id": "99", "final": True}]
+    assert P.regler(doc, matchs, {"99": P.joueurs_feuille(feuille)}, datetime(2026, 11, 10, 4, tzinfo=timezone.utc)) == 1
+    assert doc["paris"][0]["statut"] == "perdu" and doc["paris"][0]["stat_reelle"] == 4
