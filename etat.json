@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-11T11:12:28+00:00",
+  "debut": "2026-11-11T11:16:59+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,51 +9,57 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 2.2,
+    "secondes": 1.5,
     "ok": true
    },
    "draftkings": {
-    "secondes": 3.2,
+    "secondes": 2.2,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.7,
+    "secondes": 3.7,
     "ok": true
    },
    "polymarket": {
-    "secondes": 7.9,
+    "secondes": 5.0,
     "ok": true
    },
-   "pinnacle": {
+   "fanduel": {
     "secondes": 10.1,
     "ok": true
    },
+   "betclic_direct": {
+    "secondes": 12.7,
+    "ok": true
+   },
+   "pinnacle": {
+    "secondes": 15.6,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 28 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
+     "sport 37 matchups : HTTP 403"
+    ]
+   },
    "unibet_direct": {
-    "secondes": 1.8,
+    "secondes": 1.6,
     "ok": false,
     "degrade": true,
     "erreurs": [
      "accueil HTTP 403"
     ]
    },
-   "fanduel": {
-    "secondes": 24.6,
-    "ok": true
-   },
    "pmu_direct": {
-    "secondes": 30.1,
+    "secondes": 28.3,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 52.1,
+    "secondes": 45.2,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.2,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 55.6,
+    "secondes": 52.3,
     "ok": true
    },
    "smarkets": {
@@ -62,11 +68,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 4.5,
+    "secondes": 2.8,
     "ok": true
    },
    "comparaison": {
-    "secondes": 1.1,
+    "secondes": 0.8,
     "ok": true
    },
    "cotes_cloture": {
@@ -100,21 +106,21 @@
   },
   "matchbook_fraicheur": {
    "lignes": 1470,
-   "source_connue": 1468,
+   "source_connue": 1470,
    "source_inconnue": 0,
-   "source_invalide": 2,
-   "mouvement_min_s": 1,
-   "mouvement_max_s": 60790,
-   "reception": "2026-11-11T11:12:28+00:00"
+   "source_invalide": 0,
+   "mouvement_min_s": 0,
+   "mouvement_max_s": 61061,
+   "reception": "2026-11-11T11:16:59+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 904,
-   "age_min_s": 66,
-   "lignes": 93411,
-   "lignes_perimees": 4834,
+   "age_max_s": 678,
+   "age_min_s": 54,
+   "lignes": 93838,
+   "lignes_perimees": 2088,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -124,11 +130,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 8,
+    "head_200": 2,
+    "choisi_fixe": 2,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_fixe": 5,
-    "sport_vide": 4
+    "reprise_403": 3,
+    "matchups_sans_speciaux": 2,
+    "sport_vide": 3
    }
   },
   "reprise": {
@@ -164,7 +172,7 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 9,
+   "examines": 10,
    "comparaisons": [
     {
      "match": "République Tchèque – Espagne",
@@ -183,19 +191,11 @@
      "aberrant": true
     },
     {
-     "match": "Arménie – Chypre",
-     "source": "PMU",
-     "cote_olybet": 2.21,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0279,
-     "aberrant": false
-    },
-    {
      "match": "Angleterre – Croatie",
      "source": "Pinnacle",
      "cote_olybet": 1.21,
-     "cote_reference": 1.251,
-     "ecart_relatif": 0.033,
+     "cote_reference": 1.258,
+     "ecart_relatif": 0.0379,
      "aberrant": false
     },
     {
@@ -207,36 +207,52 @@
      "aberrant": false
     },
     {
-     "match": "Italie – France",
+     "match": "Monténégro – Lettonie",
      "source": "Pinnacle",
-     "cote_olybet": 3.93,
-     "cote_reference": 4.23,
-     "ecart_relatif": 0.0709,
+     "cote_olybet": 1.25,
+     "cote_reference": 1.279,
+     "ecart_relatif": 0.0229,
      "aberrant": false
     },
     {
-     "match": "Italie – France",
+     "match": "Monténégro – Lettonie",
      "source": "PMU",
-     "cote_olybet": 3.93,
-     "cote_reference": 4.2,
-     "ecart_relatif": 0.0643,
+     "cote_olybet": 1.25,
+     "cote_reference": 1.24,
+     "ecart_relatif": 0.0081,
      "aberrant": false
     },
     {
-     "match": "Saint-Marin – Biélorussie",
+     "match": "Albanie – Finlande",
      "source": "Pinnacle",
-     "cote_olybet": 15.0,
-     "cote_reference": 18.1,
-     "ecart_relatif": 0.1713,
-     "aberrant": true
+     "cote_olybet": 1.81,
+     "cote_reference": 1.87,
+     "ecart_relatif": 0.0319,
+     "aberrant": false
     },
     {
-     "match": "Saint-Marin – Biélorussie",
+     "match": "Albanie – Finlande",
      "source": "PMU",
-     "cote_olybet": 15.0,
-     "cote_reference": 20.0,
-     "ecart_relatif": 0.25,
-     "aberrant": true
+     "cote_olybet": 1.81,
+     "cote_reference": 1.73,
+     "ecart_relatif": 0.0462,
+     "aberrant": false
+    },
+    {
+     "match": "Turquie – Belgique",
+     "source": "Pinnacle",
+     "cote_olybet": 3.65,
+     "cote_reference": 3.97,
+     "ecart_relatif": 0.0806,
+     "aberrant": false
+    },
+    {
+     "match": "Turquie – Belgique",
+     "source": "PMU",
+     "cote_olybet": 3.65,
+     "cote_reference": 3.8,
+     "ecart_relatif": 0.0395,
+     "aberrant": false
     }
    ],
    "aberrants": [
@@ -255,22 +271,6 @@
      "cote_reference": 12.0,
      "ecart_relatif": 0.1667,
      "aberrant": true
-    },
-    {
-     "match": "Saint-Marin – Biélorussie",
-     "source": "Pinnacle",
-     "cote_olybet": 15.0,
-     "cote_reference": 18.1,
-     "ecart_relatif": 0.1713,
-     "aberrant": true
-    },
-    {
-     "match": "Saint-Marin – Biélorussie",
-     "source": "PMU",
-     "cote_olybet": 15.0,
-     "cote_reference": 20.0,
-     "ecart_relatif": 0.25,
-     "aberrant": true
     }
    ]
   },
@@ -288,14 +288,6 @@
      "aberrant": false
     },
     {
-     "match": "Islande U21 – Grèce U21",
-     "source": "Pinnacle",
-     "cote_netbet": 2.62,
-     "cote_reference": 3.0,
-     "ecart_relatif": 0.1267,
-     "aberrant": false
-    },
-    {
      "match": "FC Barcelone – Arsenal",
      "source": "Pinnacle",
      "cote_netbet": 1.17,
@@ -309,6 +301,14 @@
      "cote_netbet": 1.17,
      "cote_reference": 1.13,
      "ecart_relatif": 0.0354,
+     "aberrant": false
+    },
+    {
+     "match": "Islande U21 – Grèce U21",
+     "source": "Pinnacle",
+     "cote_netbet": 2.62,
+     "cote_reference": 3.0,
+     "ecart_relatif": 0.1267,
      "aberrant": false
     }
    ],
@@ -328,9 +328,9 @@
    "pinnacle": 438,
    "rapproches": 174,
    "non_rapproches": 208,
-   "ecart_proba_moyen": 0.00055,
-   "ecart_absolu_moyen": 0.00896,
-   "accord": 0.8851,
+   "ecart_proba_moyen": 0.00046,
+   "ecart_absolu_moyen": 0.00856,
+   "accord": 0.8966,
    "reference_seule": true
   },
   "draftkings": {
@@ -346,24 +346,24 @@
   "props_draftkings": {
    "draftkings": 673,
    "pinnacle": 438,
-   "rapproches": 202,
-   "non_rapproches": 471,
-   "ecart_proba_moyen": 0.00217,
-   "ecart_absolu_moyen": 0.01681,
-   "accord": 0.8069,
+   "rapproches": 204,
+   "non_rapproches": 469,
+   "ecart_proba_moyen": 0.00219,
+   "ecart_absolu_moyen": 0.01626,
+   "accord": 0.8137,
    "reference_seule": true
   },
   "matchs_draftkings": {
    "draftkings": 48,
    "non_rapproches": 6,
    "rapproches": 42,
-   "ecart_absolu_moyen": 0.00709,
-   "ecart_proba_moyen": -0.00037,
+   "ecart_absolu_moyen": 0.00687,
+   "ecart_proba_moyen": -0.00016,
    "accord": 0.881,
    "par_sport": {
     "basket": {
      "rapproches": 27,
-     "ecart_absolu_moyen": 0.00791,
+     "ecart_absolu_moyen": 0.00758,
      "accord": 0.8148
     },
     "hockey": {
@@ -375,31 +375,31 @@
    "reference_seule": true
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-11T11:12:30+00:00",
-   "pinnacle_derniere_lecture": "2026-11-11T11:12:36+00:00",
+   "pinnacle_premiere_lecture": "2026-11-11T11:17:00+00:00",
+   "pinnacle_derniere_lecture": "2026-11-11T11:17:13+00:00",
    "books_premiere_lecture": "2026-11-11T10:30:31+00:00",
-   "books_derniere_lecture": "2026-11-11T11:12:31+00:00",
-   "ecart_enveloppe_secondes": 2525.0
+   "books_derniere_lecture": "2026-11-11T11:17:01+00:00",
+   "ecart_enveloppe_secondes": 2802.0
   },
   "historique_cotes": {
-   "lignes": 1491
+   "lignes": 1238
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.5
+   "age_min": 14.0
   },
   "smarkets_dans_decision": false,
   "controle": {
    "conforme": 563,
    "a_verifier": 12,
    "non_conforme": 9,
-   "mesures": 12364,
+   "mesures": 12363,
    "matchs_suspects": 0
   },
   "props_joueurs": {
    "pinnacle": 876,
-   "Winamax": 6231,
+   "Winamax": 6233,
    "rapproches": 240,
    "valeur": 0
   },
@@ -417,9 +417,9 @@
   },
   "mouvement": {
    "actif": true,
-   "ancres": 43602,
-   "mesures": 22727,
-   "annotees": 3,
+   "ancres": 43534,
+   "mesures": 28054,
+   "annotees": 2,
    "figees": 1
   },
   "redecision": {
@@ -436,27 +436,21 @@
    "dernier_reglement": "2026-11-11T11:04:24+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-11T11:13:33+00:00",
+  "fin": "2026-11-11T11:18:00+00:00",
   "cotes": {
    "francaises": 66680,
-   "pinnacle": 93411,
-   "polymarket": 9147,
+   "pinnacle": 93838,
+   "polymarket": 9150,
    "smarkets": 3645,
    "matchbook": 1470,
    "betfair": 0
   },
-  "matchs_francais": 938,
-  "opportunites": 5,
+  "matchs_francais": 935,
+  "opportunites": 4,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-10T19:49:38+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-10T19:54:23+00:00",
    "mode": "complet",
@@ -1655,6 +1649,12 @@
    "debut": "2026-11-11T11:12:28+00:00",
    "mode": "complet",
    "opportunites": 5,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-11T11:16:59+00:00",
+   "mode": "complet",
+   "opportunites": 4,
    "nouveaux_paris": 0
   }
  ],
