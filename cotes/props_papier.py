@@ -426,7 +426,10 @@ LISTE_MAX = 300
 
 
 def liste_paris(paris: list[dict], limite: int = LISTE_MAX) -> list[dict]:
-    """Les paris props eux-mêmes (les plus récents d'abord), pour les voir dans le Bilan et pas seulement les stats."""
+    """Les paris props eux-mêmes (les plus récents d'abord), pour les voir dans le Bilan et pas seulement les stats.
+    Les annulés (DNP, ligne poussée, faux rapprochements) n'y figurent pas : ils restent dans les données et dans
+    le compte « annulés » du bilan."""
+    paris = [p for p in paris if p.get("statut") != "annule"]
     champs = ("joueur", "stat", "sport", "ligue", "issue", "ligne", "cote", "bookmaker", "domicile", "exterieur",
               "debut", "statut", "gain", "mise", "stat_reelle", "reglement", "clv")
     triees = sorted(paris, key=lambda p: p.get("debut") or "", reverse=True)[:limite]
