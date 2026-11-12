@@ -117,7 +117,7 @@ def test_alerte_porte_la_mise_kelly_dans_le_texte_pushover_et_l_ordre():
     assert champs["mise_kelly"] == 10.0
     titre, corps = message_ntfy({"bookmaker": "PMU", "sport": "football", "cote": 2.0, "pari": "x", "domicile": "A",
                                  "exterieur": "B", "debut": "2026-10-26T18:00:00Z", **champs})
-    assert "Mise Kelly ¼ : 10,00 €" in corps
+    assert "Mise Kelly ¼ : 10 €" in corps
     assert "Mise Kelly" not in message_ntfy({"bookmaker": "PMU", "cote": 2.0, "pari": "x",
                                              "debut": "2026-10-26T18:00:00Z"})[1]
 
