@@ -1140,7 +1140,7 @@ function rendreProps() {
   const lst = (P.liste || []).map(p => {
     const sp = p.sport === "basket" ? "NBA" : p.sport === "hockey" ? "NHL" : (p.sport || "");
     const etat = p.statut === "gagne" ? "✅ gagné" : p.statut === "perdu" ? "❌ perdu" : p.statut === "annule" ? "↩️ annulé" : "⏳ en cours";
-    const res = p.stat_reelle != null ? ` (réel ${p.stat_reelle})` : "";
+    const res = p.stat_reelle != null ? `<br><small>réel ${e(p.stat_reelle)}</small>` : "";
     const jour = p.debut ? String(p.debut).slice(0, 10) : "";
     return `<div class="bu-ligne"><span>${e(p.joueur || "")} · ${e(p.issue === "PLUS" ? "Plus de" : "Moins de")} ${e(p.ligne)} ${e(p.stat || "")}<br><small>${e(sp)} · ${e(p.domicile || "")} – ${e(p.exterieur || "")} · ${e(jour)} · ${e(p.bookmaker || "")}</small></span><span>@${p.cote}</span><span>${etat}${res}</span><span class="${signe(p.gain)}">${p.gain == null ? "—" : eur(p.gain)}</span></div>`;
   }).join("");
