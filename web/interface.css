@@ -531,6 +531,9 @@ main{max-width:1440px;padding:26px 48px 56px}
 .bu-ligne{padding:10px 0;border-top:1px solid var(--ligne);grid-template-columns:minmax(0,1fr) 64px 56px 96px 80px;gap:8px;font-size:14px}
 .bu-ligne:first-child{border-top:0}.bu-ligne>:not(:first-child){font-size:13.5px}.bu-ligne>b{font-size:14px;font-weight:600}
 #bu-reference .bu-ligne{grid-template-columns:minmax(0,1fr) 56px 80px 56px 96px 80px}
+/* Paris props : 4 cases (sélection, cote, état, gain) ; l'état va à la ligne au lieu de chevaucher le gain */
+#props-liste .bu-ligne{grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px 10px}
+#props-liste .bu-ligne>span:nth-child(3){white-space:normal}
 a.bu-ref{color:inherit;text-decoration:none;cursor:pointer}
 a.bu-ref:hover{background:var(--accent-f)}
 .bu-entete{background:transparent;padding:10px 0}.bu-etoile{color:var(--texte)}
