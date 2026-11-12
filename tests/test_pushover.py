@@ -209,15 +209,15 @@ def test_seules_les_strategies_cochees_sont_nommees():
 def test_ligne_macrodroid_mise_selon_bankroll_minimum_et_lien():
     a = alerte(mise_kelly=12.34)
     m = E.message_pushover(a, ENV, NOW)["message"]
-    assert "\nSTAKE:12.5|MIN:2.00|URL:https://www.winamax.fr/paris-sportifs/match/68932762\n1 stratégie : Eden" in m
-    assert "Mise Kelly ¼ : 12,34 €" in m
+    assert "\nSTAKE:13|MIN:2.00|URL:https://www.winamax.fr/paris-sportifs/match/68932762\n1 stratégie : Eden" in m
+    assert "Mise Kelly ¼ : 13 €" in m                    # 12,34 arrondi à l'euro supérieur
     moitie = E.message_pushover(a, {**ENV, "PUSHOVER_BANKROLL": "500"}, NOW)["message"]
-    assert "STAKE:6|MIN:2.00|" in moitie and "Mise Kelly ¼ : 6,17 €" in moitie       # 12,34 × 500/1000 -> 6
+    assert "STAKE:7|MIN:2.00|" in moitie and "Mise Kelly ¼ : 7 €" in moitie       # 12,34 × 500/1000 = 6,17 -> 7
     assert "STAKE" not in E.message_pushover(a, {**ENV, "PUSHOVER_LIGNE_MACRO": "non"}, NOW)["message"]
     assert "STAKE" not in E.message_pushover(alerte(), ENV, NOW)["message"]                         # sans mise Kelly
     assert "STAKE" not in E.message_pushover(alerte(mise_kelly=5, lien_repli=True), ENV, NOW)["message"]  # page du sport
     assert E.message_pushover(a, {**ENV, "PUSHOVER_BANKROLL": "abc"}, NOW)["message"] == m      # valeur absurde : défaut
-    assert E.ligne_macro({"lien": "https://x.test/m", "cote_min": 1.8}, 0.1) == "STAKE:0.5|MIN:1.80|URL:https://x.test/m"
+    assert E.ligne_macro({"lien": "https://x.test/m", "cote_min": 1.8}, 0.1) == "STAKE:1|MIN:1.80|URL:https://x.test/m"
 
 
 def test_methode_claude_cote_minimale_et_mise_deja_calculees():
@@ -226,3 +226,9 @@ def test_methode_claude_cote_minimale_et_mise_deja_calculees():
     assert "Méthode Claude : jouer si cote ≥ 2,01 · mise 15 €" in msg      # 1,95 × 1,03 = 2,0085 -> 2,01
     assert "Méthode Claude" not in E.message_pushover(alerte(cote_juste=1.95), env={})["message"]
     assert "mise 10 €" in E.message_pushover(a, env={})["message"]          # bankroll par défaut 1 000 €
+
+
+def test_mise_arrondie_a_l_euro_superieur():
+    from cotes.recap_jouables import mise_arrondie
+    assert [mise_arrondie(x) for x in (8.74, 9.01, 9.0, 0.3, 20)] == [9, 10, 9, 1, 20]
+    assert mise_arrondie(0) is None and mise_arrondie(None) is None

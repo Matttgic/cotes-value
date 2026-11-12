@@ -21,6 +21,7 @@ from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.notifications import API, NOMS, PIN2  # noqa: E402
+from cotes.recap_jouables import mise_arrondie  # noqa: E402
 
 WEBHOOK_TIMEOUT_S = 5            # par requête
 WEBHOOK_BUDGET_S = 25            # pour tout le passage : ne jamais retarder le scan ni les alertes Chrome
@@ -133,7 +134,7 @@ def message_ntfy(a: dict) -> tuple[str, str]:
     lignes += _ligne_pinnacle(a)
     kelly = a.get("mise_kelly")
     if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
-        lignes.append(f"Mise Kelly ¼ : {_fr(kelly, 2)} €")
+        lignes.append(f"Mise Kelly ¼ : {mise_arrondie(kelly)} €")
     return f'{a.get("bookmaker") or "—"} – {_sport(a.get("sport"))}', "\n".join(lignes)
 
 
@@ -324,14 +325,14 @@ def _bankroll(env) -> float:
 
 
 def ligne_macro(a: dict, mise: float | None) -> str:
-    """Ligne lue par MacroDroid (docs/pari-rapide-android.md) : « STAKE:7.5|MIN:1.85|URL:https://… ».
-    Mise arrondie à 0,50 € (au moins 0,50), point décimal, sans zéro inutile ; vide sans mise ou sans lien direct."""
+    """Ligne lue par MacroDroid (docs/pari-rapide-android.md) : « STAKE:8|MIN:1.85|URL:https://… ».
+    Mise arrondie à l'euro supérieur (8,74 -> 9), au moins 1 € ; vide sans mise ou sans lien direct."""
     lien = a.get("lien")
     if (not isinstance(mise, (int, float)) or isinstance(mise, bool) or mise <= 0 or a.get("lien_repli")
             or not isinstance(lien, str) or not lien.startswith("https://") or len(lien) > 500):
         return ""
-    stake = max(0.5, round(mise * 2) / 2)
-    champs = [f"STAKE:{stake:g}"]
+    stake = mise_arrondie(mise)
+    champs = [f"STAKE:{stake}"]
     if isinstance(a.get("cote_min"), (int, float)) and not isinstance(a.get("cote_min"), bool):
         champs.append(f"MIN:{a['cote_min']:.2f}")
     return "|".join(champs + [f"URL:{lien}"])
@@ -351,8 +352,8 @@ def ligne_methode_claude(a: dict, env) -> str:
     if not isinstance(juste, (int, float)) or isinstance(juste, bool) or juste <= 1:
         return ""
     cote_min = math.ceil(round(juste * METHODE_ECART_MIN * 100, 6)) / 100
-    mise = max(1.0, round(_bankroll(env) * METHODE_MISE))
-    return f"Méthode Claude : jouer si cote ≥ {_fr(cote_min, 2)} · mise {_fr(mise, 0)} €"
+    mise = mise_arrondie(_bankroll(env) * METHODE_MISE)
+    return f"Méthode Claude : jouer si cote ≥ {_fr(cote_min, 2)} · mise {mise} €"
 
 
 def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> dict:
@@ -455,10 +456,51 @@ def pushover(donnees: Path, flux: dict, env=None, paris: list[dict] | None = Non
             recents[pid] = maintenant.isoformat(timespec="seconds")
         if bilan["envoyees"] or amorcage or len(recents) != len(envoyes):
             ecrire_json(chemin, recents)
+        recap = recap_pushover(donnees, paris, recents, env, maintenant)
         return {**base, "envoyees": len(bilan["envoyees"]), "echecs": bilan["echecs"],
-                "erreurs": bilan["erreurs"]}
+                "erreurs": bilan["erreurs"], "recap": recap}
     except Exception as e:  # noqa: BLE001 - le scan ne doit jamais dépendre de Pushover
         return {"actif": False, "envoyees": 0, "echecs": 0, "erreurs": [type(e).__name__]}
+
+
+def recap_pushover(donnees: Path, paris: list[dict], envoyes: dict, env, maintenant: datetime,
+                   ouvrir=urlopen) -> dict:
+    """Récapitulatif « encore jouables » (cotes/recap_jouables.py), une fois par jour à ``PUSHOVER_RECAP_HEURE``.
+    Jamais de levée ; l'état (dernier jour, dernière heure) est dans ``pushover_recap.json``."""
+    from cotes import recap_jouables as R
+    from scripts.cycle import ecrire_json
+    try:
+        heure = R.heure_recap(env)
+        if heure is None:
+            return {"actif": False}
+        chemin = donnees / R.ETAT
+        try:
+            etat = json.loads(chemin.read_text()) if chemin.exists() else {}
+        except ValueError:
+            etat = {}
+        if not R.est_l_heure(maintenant, heure, etat.get("jour")):
+            return {"actif": True, "envoye": False}
+        depuis = (datetime.fromisoformat(etat["le"]) if etat.get("le") else maintenant - R.FENETRE_MAX)
+        depuis = max(depuis, maintenant - R.FENETRE_MAX)
+        cands = R.candidats(paris, envoyes, depuis, maintenant)
+        cotes = R.dernieres_cotes(donnees, {R.cle_historique(p) for p in cands}, maintenant)
+        lignes = R.jouables(cands, cotes)
+        msgs = R.messages(lignes, _bankroll(env), maintenant) if lignes else [{
+            "title": f"Encore jouables · {maintenant.astimezone(R.PARIS):%d/%m %Hh}",
+            "message": f"Aucune alerte encore jouable ({len(cands)} alerte(s) revue(s) depuis le dernier récapitulatif)."}]
+        jeton, cle = env.get("PUSHOVER_APP_TOKEN", "").strip(), env.get("PUSHOVER_USER_KEY", "").strip()
+        envoyes_n = 0
+        for m in msgs[:5]:
+            donnees_req = urlencode({"token": jeton, "user": cle, **m}).encode()
+            with ouvrir(Request(PUSHOVER_URL, data=donnees_req, method="POST",
+                                headers={"User-Agent": "cotes-value"}), timeout=WEBHOOK_TIMEOUT_S) as r:
+                if json.load(r).get("status") == 1:
+                    envoyes_n += 1
+        ecrire_json(chemin, {"jour": maintenant.astimezone(R.PARIS).date().isoformat(),
+                             "le": maintenant.isoformat(timespec="seconds")})
+        return {"actif": True, "envoye": True, "revues": len(cands), "jouables": len(lignes), "messages": envoyes_n}
+    except Exception as e:  # noqa: BLE001 - le récapitulatif ne doit jamais bloquer les alertes
+        return {"actif": True, "envoye": False, "erreur": type(e).__name__}
 
 
 def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:

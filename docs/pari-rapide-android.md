@@ -68,3 +68,14 @@ installée, Android peut ouvrir le lien dedans. Le choix du navigateur dans l'ac
 - Les alertes suivent les cycles (environ toutes les 5 minutes). Le délai entre la cote vue et la notification
   est affiché dans la page Notifications.
 - Jeu responsable : Joueurs Info Service, 09 74 75 13 13.
+
+## Récapitulatif « encore jouables » (11 h)
+
+Chaque jour à 11 h (heure de Paris), une notification Pushover reprend les alertes envoyées depuis le récapitulatif
+précédent dont la cote, revérifiée dans l'historique des cotes, est encore au moins la cote minimale, et dont le
+match commence dans plus de 10 minutes. Une ligne par pari : match, cote actuelle, cote minimale, mise, lien.
+Pour les alertes de la nuit ou des heures de travail (`cotes/recap_jouables.py`).
+
+- `PUSHOVER_RECAP_HEURE` : heure du récapitulatif (0–23, défaut 11) ; `non` pour le couper.
+- Les mises (alertes et récapitulatif) sont arrondies à l'euro supérieur (8,74 € → 9 €) : sur l'historique, le ROI
+  ne change pas (+2,95 % → +3,01 % sur les paris uniques, mises +3,6 %).
