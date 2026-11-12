@@ -1,4 +1,5 @@
-"""Historique des cotes des bookmakers gardés en mémoire (PMU, Unibet, Betclic, NetBet), en ajout seul.
+"""Historique des cotes des bookmakers gardés en mémoire (PMU, Unibet, Betclic, NetBet, et depuis le 12/11/2026
+Winamax et OlyBet hors props ; props de tous), en ajout seul.
 
 Avant le 30/10/2026, cet historique n'existait que dans les versions successives de ``horizon_direct.json``
 de la branche « donnees » (53 Mo réécrits toutes les 5 minutes). Désormais, seules les lignes dont la cote a
@@ -13,14 +14,38 @@ Un match vu pour la première fois reçoit en plus une ligne descriptive (sans `
 
 Aucune ligne n'est écrite si rien ne change. Au démarrage à froid (mémoire absente), toutes les cotes en
 mémoire sont écrites une fois : c'est l'état de départ de l'historique.
+
+Depuis le 12/11/2026, une cote qui disparaît reçoit une ligne de retrait ``"c": null``, mais seulement si son
+match a été relu pendant le cycle (au moins une ligne du même bookmaker et du même match lue après le début du
+cycle). Une source ou un match non relus (panne, lecture tournante) ne donnent jamais de retrait : l'absence
+d'une ligne reste alors « inconnue ». Le relevé des sources lues à chaque cycle est dans ``releves/``
+(cotes/historique_references.py).
 """
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .ecriture import ajouter_gzip
+from .temps import instant_utc
+
+# Lignes lues pendant le cycle : heure de lecture postérieure au début du cycle (petite marge d'horloge).
+MARGE_FRAICHEUR = timedelta(seconds=5)
+
+
+def fraiche(l: dict, maintenant: datetime | None) -> bool:
+    """Ligne lue pendant ce cycle (et non reprise d'une mémoire ou d'un cycle précédent)."""
+    if maintenant is None:
+        return False
+    t = instant_utc(l.get("collecte"))
+    return t is not None and t >= maintenant - MARGE_FRAICHEUR
+
+
+def texte_cle(marche, periode, ligne, issue, joueur=None) -> str:
+    """« marché|période|ligne|issue[|joueur] » : la clé d'une sélection dans les historiques."""
+    k = "|".join(_texte(x) for x in (marche, periode, ligne, issue))
+    return k + "|" + _texte(joueur) if joueur else k
 
 
 def _cle(l: dict) -> tuple:
@@ -43,17 +68,22 @@ def index(horizon: dict | None) -> dict[tuple, object]:
     return out
 
 
-def changements(avant: dict[tuple, object], horizon: dict | None) -> list[dict]:
-    """Lignes réduites des cotes nouvelles ou changées, plus la description des matchs nouveaux."""
+def changements(avant: dict[tuple, object], horizon: dict | None, maintenant: datetime | None = None) -> list[dict]:
+    """Lignes réduites des cotes nouvelles ou changées, plus la description des matchs nouveaux.
+
+    Avec ``maintenant`` (début du cycle) : retraits ``"c": None`` des cotes disparues d'un match relu."""
     matchs_avant = {k[1] for k in avant}
     decrits: set = set()
     out: list[dict] = []
     vues: set = set()
+    relus: set = set()
     for bloc in (horizon or {}).values() if isinstance(horizon, dict) else []:
         for l in (bloc.get("lignes") or []) if isinstance(bloc, dict) else []:
             if not isinstance(l, dict) or not l.get("match_id") or l.get("cote") is None:
                 continue
             cle = _cle(l)
+            if fraiche(l, maintenant):
+                relus.add(cle[:2])
             if cle in vues:
                 continue
             vues.add(cle)
@@ -65,16 +95,19 @@ def changements(avant: dict[tuple, object], horizon: dict | None) -> list[dict]:
                 out.append({"t": l.get("collecte"), "b": l.get("source"), "m": mid, "sport": l.get("sport"),
                             "ligue": l.get("ligue"), "dom": l.get("domicile"), "ext": l.get("exterieur"),
                             "debut": l.get("debut")})
-            k = "|".join(_texte(x) for x in (l.get("marche"), l.get("periode"), l.get("ligne"), l.get("issue")))
-            if l.get("joueur"):
-                k += "|" + _texte(l["joueur"])
+            k = texte_cle(l.get("marche"), l.get("periode"), l.get("ligne"), l.get("issue"), l.get("joueur"))
             out.append({"t": l.get("collecte"), "b": l.get("source"), "m": mid, "k": k, "c": l.get("cote")})
+    if maintenant is not None:
+        t = maintenant.astimezone(timezone.utc).isoformat(timespec="seconds")
+        for cle in avant:
+            if cle not in vues and cle[:2] in relus:
+                out.append({"t": t, "b": cle[0], "m": cle[1], "k": texte_cle(*cle[2:]), "c": None})
     return out
 
 
 def ajouter(donnees: Path, avant: dict[tuple, object], horizon: dict | None, maintenant: datetime) -> int:
     """Ajoute les changements au fichier du jour (UTC). Rend le nombre de lignes écrites ; 0 = fichier intact."""
-    lignes = changements(avant, horizon)
+    lignes = changements(avant, horizon, maintenant)
     if not lignes:
         return 0
     jour = Path(donnees) / "cotes" / f"{maintenant.astimezone(timezone.utc):%Y-%m-%d}.jsonl.gz"

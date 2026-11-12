@@ -68,12 +68,16 @@ def url_depot(jeton: str, depot: str = DEPOT) -> str:
     return f"https://x-access-token:{jeton}@github.com/{depot}"
 
 
+# Dossiers à un fichier par jour (mêmes que scripts/cloner_donnees.sh et scripts/archiver_donnees_brutes.py).
+JOURNALIERS = ("cotes", "opportunites", "references", "releves", "correspondances")
+
+
 def motifs_du_jour(maintenant: datetime) -> list[str]:
-    """Mêmes motifs que scripts/cloner_donnees.sh : tout, sauf les jours passés de cotes/ et opportunites/."""
-    motifs = ["/*", "!/cotes/*", "!/opportunites/*"]
+    """Mêmes motifs que scripts/cloner_donnees.sh : tout, sauf les jours passés des dossiers journaliers."""
+    motifs = ["/*"] + [f"!/{d}/*" for d in JOURNALIERS]
     for decalage in (-1, 0, 1):
         jour = (maintenant + timedelta(days=decalage)).astimezone(timezone.utc).strftime("%Y-%m-%d")
-        motifs += [f"/cotes/{jour}.jsonl.gz", f"/opportunites/{jour}.jsonl.gz"]
+        motifs += [f"/{d}/{jour}.jsonl.gz" for d in JOURNALIERS]
     return motifs
 
 
