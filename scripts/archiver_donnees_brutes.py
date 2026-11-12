@@ -25,7 +25,7 @@ import tarfile
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-DOSSIERS = ("cotes", "opportunites")
+DOSSIERS = ("cotes", "opportunites", "references", "releves", "correspondances")
 NOM = re.compile(r"^(\d{4})-(\d{2})-(\d{2})\.jsonl(\.gz)?$")
 GARDER_JOURS = 30
 

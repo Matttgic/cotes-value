@@ -10,6 +10,7 @@ Le règlement des paris (lecture des résultats : environ 6 minutes, 220 requêt
 heure (REGLEMENT_MINUTES, 55 par défaut) : les cotes, elles, sont lues à chaque cycle.
 
 Données (branche « donnees ») : paris.json, etat.json, opportunites/AAAA-MM-JJ.jsonl, cotes/AAAA-MM-JJ.jsonl.gz,
+references/, releves/ et correspondances/ (cotes/historique_references.py),
 resultats_manuels.json (règlements faits à la main ; « supprime » retire un pari). Site : dossier site/.
 Mémoire de travail (cache Actions, MEMOIRE_CHEMIN) : horizon_direct, caches de secours, contrôle (cotes/memoire.py).
 """
@@ -43,7 +44,7 @@ from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
 from cotes import reprise  # noqa: E402
-from cotes import historique_cotes, memoire  # noqa: E402
+from cotes import historique_cotes, historique_references, memoire  # noqa: E402
 from cotes import echecs  # noqa: E402
 from cotes.ecriture import ajouter_gzip  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
@@ -642,7 +643,13 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
     from cotes.joueurs import est_joueur
     horizon["props"] = {"lignes": [l for l in list(pin) + list(lignes) + list(fd_lignes)
                                     if est_joueur(l.get("marche"))]}
-    gardes = ("pmu", "unibet", "betclic", "netbet", "props")
+    # Winamax et OlyBet n'ont pas de mémoire de lecture : leurs marchés hors props ne sont gardés que pour
+    # l'historique (seuls les changements sont écrits au cycle suivant). Lecture vide (panne) : dernier état gardé.
+    for nom, source in (("winamax", "Winamax"), ("olybet", "OlyBet")):
+        a_garder = [l for l in lignes if l.get("source") == source and not est_joueur(l.get("marche"))]
+        if a_garder:
+            horizon[nom] = {"lignes": a_garder}
+    gardes = ("pmu", "unibet", "betclic", "netbet", "props", "winamax", "olybet")
     if donnees and any(k in horizon for k in gardes):
         horizon = {k: horizon[k] for k in gardes if k in horizon}
         memoire.ecrire(donnees, "horizon_direct", horizon)
@@ -1049,6 +1056,11 @@ def main() -> int:
     #    Le contrôle reste celui des références déjà en place : Smarkets a sa table,
     #    pas une nouvelle mesure de conformité.
     index = etape("association", journal, comparaison.indexer, francais, references) or {}
+    try:            # historique des références, relevé des sources et rapprochements : jamais bloquant
+        journal["historique_references"] = historique_references.enregistrer(donnees, francais, references, index,
+                                                                              maintenant)
+    except Exception as e:  # noqa: BLE001
+        journal["historique_references"] = {"erreur": echecs.noter(journal, "historique_references", e, maintenant)}
     index_controle = {n: v for n, v in index.items() if n not in ("Smarkets", "Matchbook", "Betfair")}
     mesures = controle.mesurer(francais, index_controle)
     etat_controle = controle.mettre_a_jour(lire_controle(donnees), mesures, journal["debut"])
