@@ -188,3 +188,8 @@ def test_suffixe_jr_d_un_seul_cote():
                "debut": DEBUT, "espn_id": "99", "final": True}]
     assert P.regler(doc, matchs, {"99": P.joueurs_feuille(feuille)}, datetime(2026, 11, 10, 4, tzinfo=timezone.utc)) == 1
     assert doc["paris"][0]["statut"] == "perdu" and doc["paris"][0]["stat_reelle"] == 4
+
+
+def test_liste_sans_les_annules():
+    paris = [{"joueur": "A", "statut": "annule", "debut": "2026-11-12"}, {"joueur": "B", "statut": "perdu", "debut": "2026-11-11"}]
+    assert [p["joueur"] for p in P.liste_paris(paris)] == ["B"]
