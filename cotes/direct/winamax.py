@@ -20,6 +20,7 @@ import select
 import time
 from datetime import datetime, timedelta, timezone
 
+from cotes import inconnus
 from cotes.joueurs import depuis_titre_et_issues, est_titre_joueur
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
@@ -464,6 +465,7 @@ def marche_depuis(offre: dict, outcomes: dict, odds: dict, domicile: str, exteri
         return None
     canon = _canon(sport, offre.get("marketId"))
     if not canon:
+        inconnus.noter("winamax", titre)
         return None
     spec = _spec(offre.get("specialBetValue"))
     ligne = None

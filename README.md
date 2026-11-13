@@ -418,6 +418,9 @@ liste les matchs qu'aucune source ne règle (un match vu par plusieurs bookmaker
 ses clés dans `match_ids`), avec le modèle de saisie de `resultats_manuels.json`. Le journal du
 cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non
 officiels : ils peuvent changer sans préavis.
+La page Santé liste aussi les **marchés non reconnus** par bookmaker (`cotes/inconnus.py`,
+`donnees/marches_inconnus.json`) : libellés ignorés faute de traduction, chiffres remplacés par #, et ceux apparus
+depuis moins de 24 h (souvent un libellé qui a changé).
 La page Santé suit la part des paris des 7 derniers jours réglés à la main ou encore à régler, contre les 7 jours
 d'avant (`reglement.taux_manuel`) ; au-delà de 5 %, elle passe en alerte : une source de scores décroche.
 

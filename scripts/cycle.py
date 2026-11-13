@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (flashscore, livescore, comparaison, controle, pinnacle, polymarket, reglement,  # noqa: E402
-                   scores365, simulation, smarkets, stockage)
+                   scores365, simulation, smarkets, stockage, inconnus)
 from cotes.direct import betclic as betclic_direct  # noqa: E402
 from cotes.direct import netbet as netbet_direct  # noqa: E402
 from cotes.direct import olybet as olybet_direct  # noqa: E402
@@ -1014,8 +1014,14 @@ def main() -> int:
     futur_bf = pool_mb.submit(appliquer_betfair, sports_mb, 12 if args.mode == "test" else HORIZON_H,
                               maintenant, journal)
     pool_mb.shutdown(wait=False)
+    inconnus.vider()
     pin, poly, francais = collecter_prematch(args.mode, maintenant, journal, donnees,
                                              Path(args.reprise) if args.reprise else None)
+    # Marchés français qu'aucun traducteur ne reconnaît (couverture, libellés changés) : page Santé
+    releve = inconnus.vider()
+    journal["marches_inconnus"] = {b: sum(v.values()) for b, v in releve.items()}
+    ecrire_json(donnees / "marches_inconnus.json",
+                inconnus.fusionner(lire_json(donnees / "marches_inconnus.json", {}), releve, maintenant))
     references = {"Pinnacle": pin, "Polymarket": poly}
     # Smarkets reste hors de `francais` : bookmaker « smarkets » n'est pas un book français.
     sports_sm = {"football"} if args.mode == "test" else {l["sport"] for l in francais if l.get("sport")}
