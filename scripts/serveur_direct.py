@@ -180,8 +180,32 @@ def code_a_change() -> bool:
     return bool(avant and apres and avant != apres)
 
 
+def dossier_flux() -> Path | None:
+    """Flux websocket Polymarket (cotes/polymarket_flux.py) : actif sauf ``POLYMARKET_FLUX`` = ``non``."""
+    v = os.environ.get("POLYMARKET_FLUX", "").strip()
+    if v.lower() in ("non", "off"):
+        return None
+    return Path(v) if v else RACINE / "flux_polymarket"
+
+
+def flux_polymarket(processus: subprocess.Popen | None, lancer=subprocess.Popen) -> subprocess.Popen | None:
+    """Lance le flux, ou le relance s'il s'est arrêté. Ne lève jamais."""
+    d = dossier_flux()
+    if d is None or (processus is not None and processus.poll() is None):
+        return processus
+    try:
+        if processus is not None:
+            journal(f"flux Polymarket arrêté (code {processus.returncode}) : relance")
+        return lancer([sys.executable, "-m", "cotes.polymarket_flux", "--dossier", str(d)], cwd=RACINE)
+    except OSError as e:
+        journal(f"flux Polymarket impossible à lancer : {e}")
+        return None
+
+
 def environnement(donnees: Path) -> dict:
+    d = dossier_flux()
     return {**os.environ, "MEMOIRE_CHEMIN": str(RACINE / "memoire"),
+            "POLYMARKET_FLUX": str(d) if d else "non",
             "REPRISE_CHEMIN": str(RACINE / "reprise" / "derniere_lecture.json.gz"),
             "MODE_COLLECTE": os.environ.get("MODE_COLLECTE", "complet"),
             # Sans identité GitHub Actions : choix Pushover lu sur le site (lecture publique), envoi Chrome laissé à GitHub
@@ -258,8 +282,10 @@ def main() -> int:
     tirer(donnees)
     journal(f"démarrage : cycle toutes les {PERIODE_S:g} s, enregistrement toutes les {PUBLICATION_S:g} s")
     cycles, reussis, derniere_publication, derniere_maj = 0, 0, time.monotonic(), time.monotonic()
+    flux = None
     while not _arret:
         t0 = time.monotonic()
+        flux = flux_polymarket(flux)
         try:
             jour = rafraichir_extraction(donnees, datetime.now(timezone.utc), jour)
             reussis += un_cycle(donnees, env)
@@ -273,6 +299,8 @@ def main() -> int:
                 if code_a_change():
                     journal("nouveau code : enregistrement puis redémarrage")
                     publier(donnees, env, jeton, branche, cycles)
+                    if flux is not None:
+                        flux.terminate()
                     return 0                                     # systemd relance sur le nouveau code
         except Exception as e:  # noqa: BLE001 - la boucle ne tombe jamais
             journal(f"erreur inattendue : {type(e).__name__}: {e}")
@@ -280,6 +308,8 @@ def main() -> int:
         while reste > 0 and not _arret:
             time.sleep(min(reste, 5))
             reste -= 5
+    if flux is not None:
+        flux.terminate()
     journal("arrêt demandé : la main est rendue à GitHub")
     ecrire_battement(donnees, datetime.now(timezone.utc), actif=False, cycles=cycles)
     enregistrer(donnees, "Serveur en direct : arrêt")

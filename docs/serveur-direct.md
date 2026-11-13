@@ -97,6 +97,12 @@ GitHub reprend à sa prochaine surveillance (30 minutes au plus). Pour reprendre
   `opportunites/` restent intacts sur GitHub.
 - **Conflits** : si quelqu'un écrit dans `donnees` en même temps (un résultat saisi à la main, par exemple), ses
   changements sont repris ; sur un même fichier, la version du serveur l'emporte.
+- **Flux Polymarket** : un processus à part (`cotes/polymarket_flux.py`) reste abonné au websocket des carnets
+  Polymarket et écrit le meilleur achat / vente toutes les 2 s dans `flux_polymarket/prix.json`. Chaque cycle prend
+  ce prix à la place de celui de l'API gamma quand il est plus récent (`prix_flux` sur la ligne, compteur
+  `polymarket_flux` dans le journal du cycle). Sans message depuis 30 s, le prix du flux est ignoré et gamma reprend.
+  Coupure : reconnexion seule, attente de 1 à 60 s ; processus arrêté : relancé au cycle suivant.
+  `POLYMARKET_FLUX=non` le coupe. Sur GitHub Actions, rien ne change.
 - **Page Santé** : les seuils d'alerte sont ajustés aux cycles d'une minute : même durée qu'avant avant une
   alerte, environ 10 minutes.
 
