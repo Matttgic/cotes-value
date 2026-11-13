@@ -4,6 +4,16 @@ Avant chaque session : `/effort high`, puis `/clear`. Une session traite un suje
 conclusions dans `docs/`, ce qui permet à la suivante de repartir de là.
 
 Ordre : d'abord les chiffres justes (1), puis l'avantage réel (2), l'amélioration (3 à 5), enfin la durée (6 à 8).
+Les sessions 9 à 13 sont des projets plus ambitieux, à lancer une fois les sessions 1 et 2 faites.
+
+## Comment s'en servir
+
+- Effort `xhigh` pour les sessions 1 à 3, `high` pour les autres.
+- Demander d'abord un plan (`/plan`), le valider, puis le laisser exécuter.
+- Exiger une preuve pour chaque conclusion : un chiffre mesuré, un test ou un exemple réel.
+- Lui faire attaquer ses propres conclusions : « Qu'est-ce qui rendrait ta conclusion fausse ? »
+- Lui donner un objectif, pas une méthode.
+- Fable conçoit, Opus exécute les tâches simples : c'est bien moins cher.
 
 ## Session 1 : les bilans sont-ils justes ?
 
@@ -93,4 +103,38 @@ Lis d'abord `docs/avantage-reel.md`.
 2. Quelles autres références sharp ou quels autres marchés gratuits, accessibles sans compte, pourraient ajouter de la valeur ? Vérifie chaque source avant de la proposer, et n'invente aucune URL.
 
 Écris les conclusions dans `docs/recherche.md`.
+```
+
+## Session 9 : un modèle de prix à nous
+
+```markdown
+Lis d'abord `docs/avantage-reel.md` et `docs/cote-juste.md`. Construis un modèle de prix indépendant des bookmakers (Elo, Poisson, Dixon-Coles ou autre, selon le sport), à partir de résultats historiques gratuits. Vérifie chaque source avant de l'utiliser, sans inventer d'URL.
+
+Mesure sa calibration contre Pinnacle sur des données qu'il n'a pas vues. Dis où il apporte une information que les références n'ont pas, et où il est moins bon. Écris les conclusions dans `docs/modele-prix.md`.
+```
+
+## Session 10 : un protocole de validation fixé à l'avance
+
+```markdown
+Lis d'abord `docs/avantage-reel.md`. Rédige un protocole de validation fixé à l'avance pour chaque stratégie en cours : hypothèse, règles figées, nombre de paris à atteindre, critère d'arrêt (succès ou échec) et test statistique. Le but est qu'on ne puisse plus changer les règles en cours de route.
+
+Implémente le suivi automatique dans les bilans. Écris le protocole dans `docs/protocole.md`.
+```
+
+## Session 11 : le tableau de bord de décision
+
+```markdown
+Lis d'abord `docs/avantage-reel.md` et `docs/protocole.md` s'il existe. Conçois une page de décision quotidienne qui répond seulement à trois questions : l'avantage est-il prouvé, quoi jouer aujourd'hui, quoi couper. Chaque réponse doit renvoyer au chiffre mesuré qui la justifie. Implémente-la dans `web/`, en réutilisant l'existant.
+```
+
+## Session 12 : l'architecture cible
+
+```markdown
+Étudie le projet et dessine une architecture cible : modules, flux de données, stockage, tâches planifiées. Compare-la à l'existant, puis écris un plan de refonte par petites étapes. Chaque étape doit être testable et pouvoir être exécutée seule par un modèle moins puissant. Écris le plan dans `docs/architecture-cible.md`, sans encore modifier le code.
+```
+
+## Session 13 : les erreurs systématiques des bookmakers français
+
+```markdown
+Lis d'abord `docs/avantage-reel.md`. Sur nos données, trouve les marchés où les bookmakers français se trompent de façon systématique (props, mi-temps, petits championnats, cotes boostées, etc.). Pour chacun, donne l'erreur mesurée, la raison structurelle probable (modèle copié, mise à jour lente, marge mal répartie) et si elle est stable dans le temps. Écris les conclusions dans `docs/erreurs-systematiques.md`.
 ```
