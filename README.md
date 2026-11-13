@@ -185,6 +185,11 @@ mouvement contraire. Cote 1,30–5,00, écart 2–15 %, tous les bookmakers sauf
 match +3,1 % (96 matchs) et +2,0 % (228 matchs), contre +0,3 % sans le signal. Seuils fixés en regardant ces
 périodes : pas une validation indépendante. [Mesures et limites](docs/strategie-claude-signal.md).
 
+### Claude · PMU régulier
+Stratégie de Claude, suivie dès le **13/11/2026 à 02:00 UTC**, figée au lancement : PMU, référence Pinnacle ou
+Polymarket, cote 1,50–3,00, écart 2–7 %, ni score exact ni mi-temps/fin. PMU est le seul bookmaker dont la CLV par
+match reste positive sur les trois tiers du 10/10 au 12/11 (+0,7 %, 756 matchs). Choisie parmi 102 sous-ensembles :
+pas une validation. [Mesures et limites](docs/strategie-claude-pmu.md).
 ### Avis d'analyste
 
 Chaque fiche de stratégie porte un verdict (« Fiable », « Prometteur mais pas prouvé », « Chance ou yo-yo », « Trop
