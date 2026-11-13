@@ -264,6 +264,16 @@ def _regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
         if m == "VAINQUEUR" and gagnant == "NUL":
             return "rembourse"
         return "gagne" if gagnant == i else "perdu"
+    if m == "AVANCE_OU_GAGNE":
+        # Gagné si l'équipe gagne, ou si elle a mené un jour de `ligne`. Le déroulé n'est pas connu : la
+        # mi-temps suffit à le prouver ; une équipe qui finit sous `ligne` buts n'a jamais mené de `ligne`.
+        pour, contre = (d, e) if i == "DOM" else (e, d)
+        if pour > contre:
+            return "gagne"
+        mt = scores.get("MT1")
+        if mt and per in ("MATCH", "TEMPS_REG") and (mt[0] - mt[1] if i == "DOM" else mt[1] - mt[0]) >= ligne:
+            return "gagne"
+        return "perdu" if pour < ligne else None
     if m == "DRAW_NO_BET":
         if d == e:
             return "rembourse"

@@ -40,6 +40,10 @@ dans la collecte, `off` sinon) : aucun pari, la stratégie Props FanDuel reste �
 DraftKings joue le même rôle (`SOURCE_DRAFTKINGS`), avec en plus les lignes de match NBA, NHL, NFL et MLB : sa
 comparaison à Pinnacle est publiée dans Bilan › Props. Betfair répond 403 depuis GitHub.
 [Relevés, Betfair et reverse-api-engineer](docs/sources-us.md).
+Betclic « L'équipe possède X buts (points) d'avance ou gagne » (`AVANCE_OU_GAGNE`) est gagné dès que l'équipe gagne :
+il est comparé à la cote juste de la **victoire** (1N2 ou vainqueur, même période). L'écart est donc un **minimum**
+(`ecart_minimum` sur le pari). Règlement : gagné si l'équipe gagne ou menait de X à la mi-temps, perdu si elle finit
+sous X buts, sinon à la main.
 Les marchés de hockey et de basket dont le libellé ne dit pas si la prolongation
 compte restent en période `MATCH?` et ne sont pas comparés.
 
