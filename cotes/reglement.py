@@ -259,6 +259,11 @@ def _regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     if not s:
         return None
     d, e = s
+    if p.get("sport") == "hockey" and per == "MATCH" and d == e:
+        # Un match de hockey ne finit jamais à égalité : ce score est celui des 60 minutes, publié comme final
+        # par une source sans la prolongation. Aucun pari « prolongation incluse » ne peut en être déduit
+        # (docs/audit-bilans.md : 3 « vainqueur » remboursés à tort). Reste « à régler ».
+        return None
     if m in ("RESULTAT_1N2", "VAINQUEUR"):
         gagnant = "DOM" if d > e else "EXT" if e > d else "NUL"
         if m == "VAINQUEUR" and gagnant == "NUL":
@@ -271,8 +276,15 @@ def _regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
         if pour > contre:
             return "gagne"
         mt = scores.get("MT1")
-        if mt and per in ("MATCH", "TEMPS_REG") and (mt[0] - mt[1] if i == "DOM" else mt[1] - mt[0]) >= ligne:
-            return "gagne"
+        if mt and per in ("MATCH", "TEMPS_REG"):
+            pour_mt, contre_mt = (mt[0], mt[1]) if i == "DOM" else (mt[1], mt[0])
+            if pour_mt - contre_mt >= ligne:
+                return "gagne"
+            # Avance maximale possible, en marquant tous ses buts d'abord : ses buts de 1re mi-temps, puis tous
+            # ses buts moins ceux encaissés avant la pause. Sous `ligne`, l'avance demandée n'a jamais existé
+            # (ex. 1-1 puis 2-2) : perdu, sans attendre une saisie à la main.
+            if 0 <= pour_mt <= pour and max(pour_mt, pour - contre_mt) < ligne:
+                return "perdu"
         return "perdu" if pour < ligne else None
     if m == "DRAW_NO_BET":
         if d == e:

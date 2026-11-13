@@ -394,6 +394,8 @@ sur le test du 17–19 octobre. Cela ne démontre pas une rentabilité future.
 ## Sécurité et audit
 
 [Configuration, secrets et publication](SECURITY.md).
+[Audit de la justesse des bilans](docs/audit-bilans.md) (13/11/2026) : biais, règlement, chiffres refaits par
+`scripts/audit_bilans.py`.
 Le retrait complet de la valeur guest Pinnacle reste conditionné à une configuration de remplacement validée. La revue détaillée de cinq moteurs de sélection reste ouverte ; les rapports ne certifient pas une rentabilité future.
 
 ## Règlement

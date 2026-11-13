@@ -37,5 +37,6 @@ def test_reglement():
     assert reglement.regler(p, {"MATCH": (2, 1)}) == "gagne"
     assert reglement.regler(p, {"MATCH": (2, 2), "MT1": (2, 0)}) == "gagne"
     assert reglement.regler(p, {"MATCH": (1, 1)}) == "perdu"
-    assert reglement.regler(p, {"MATCH": (2, 2), "MT1": (1, 1)}) is None      # déroulé inconnu : à la main
+    assert reglement.regler(p, {"MATCH": (2, 2), "MT1": (1, 0)}) is None      # 2-0 possible avant 2-2 : à la main
+    assert reglement.regler(p, {"MATCH": (2, 2), "MT1": (1, 1)}) == "perdu"   # jamais plus d'un but d'avance
     assert reglement.regler({**p, "issue": "EXT"}, {"MATCH": (3, 1)}) == "perdu"
