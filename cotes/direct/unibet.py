@@ -373,7 +373,10 @@ def _canon(desc: str, style: str) -> str | None:
         return "DOUBLE_CHANCE"
     if "remboursé si nul" in d or "rembourse si nul" in d:
         return "DRAW_NO_BET"
-    if "marqueront" in d and ("2 équipes" in d or "deux équipes" in d or "2 equipes" in d):
+    # « Les 2 équipes marqueront » (ancien libellé) ou « Les 2 équipes marquent » (depuis novembre 2026) ;
+    # « marquent au moins 2 buts » est un autre marché.
+    if (("marqueront" in d or re.search(r"\bmarquent\b", d)) and "au moins" not in d
+            and ("2 équipes" in d or "deux équipes" in d or "2 equipes" in d)):
         return "BOTH_TEAMS_TO_SCORE"
     if "score exact" in d or str(style).startswith("CORRECT_SCORE"):
         return "CORRECT_SCORE"
