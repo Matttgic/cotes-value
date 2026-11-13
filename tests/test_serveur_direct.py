@@ -229,3 +229,25 @@ def test_signal_healthchecks_dans_la_chaine_github():
     assert "steps.enregistrer.outcome == 'success'" in signal["if"] and signal["continue-on-error"] is True
     assert any(s.get("id") == "cycle_collecte" and s.get("name") == "Cycle (collecte, comparaison, paris, site)"
                for s in etapes)
+
+
+def test_flux_polymarket_lance_relance_ou_coupe(monkeypatch):
+    lances = []
+
+    class Proc:
+        def __init__(self, code):
+            self.returncode = code
+
+        def poll(self):
+            return self.returncode
+
+    def lancer(cmd, cwd):
+        lances.append(cmd)
+        return Proc(None)
+    monkeypatch.delenv("POLYMARKET_FLUX", raising=False)
+    p = SD.flux_polymarket(None, lancer)
+    assert lances[0][1:3] == ["-m", "cotes.polymarket_flux"] and SD.flux_polymarket(p, lancer) is p
+    SD.flux_polymarket(Proc(1), lancer)
+    assert len(lances) == 2
+    monkeypatch.setenv("POLYMARKET_FLUX", "non")
+    assert SD.flux_polymarket(None, lancer) is None and len(lances) == 2

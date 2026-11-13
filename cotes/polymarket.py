@@ -7,6 +7,9 @@ marchés trop peu échangés.
 
 Un match = un événement principal (vainqueur) + des événements « enfants » (« More Markets »,
 « Exact Score », « Total Corners »…) reliés par parentEventId.
+
+Sur le serveur en direct, le flux websocket (cotes/polymarket_flux.py) remplace le meilleur achat / vente de gamma
+quand il est plus récent : les autres champs (issues, ligne, liquidité) viennent toujours de gamma.
 """
 from __future__ import annotations
 
@@ -19,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
+from . import polymarket_flux
 from .connexion import Client
 from .temps import instant_utc
 
@@ -29,6 +33,8 @@ ERREURS: list[str] = []
 logger = logging.getLogger(__name__)
 _bloque = False
 _http = Client()               # connexion gardée entre les pages d'événements
+_flux: dict = {}               # {jeton: (achat, vente, heure)} du flux websocket, relu à chaque collecte
+FLUX = {"jetons": 0, "utilises": 0}
 
 
 def _erreur(message: str) -> None:
@@ -187,7 +193,11 @@ def _sport(types: set[str], ligue: str, etiquettes: list[str] | None = None) -> 
 
 
 def collecter(heures: int = 48) -> list[dict]:
+    global _flux
     evs = evenements(heures)
+    _flux = polymarket_flux.prix_frais()
+    FLUX.update(jetons=len(_flux), utilises=0)
+    jetons: list[str] = []
     par_id = {str(e["id"]): e for e in evs}
     # regrouper chaque enfant sous son événement principal
     groupes: dict[str, list[dict]] = {}
@@ -233,8 +243,9 @@ def collecter(heures: int = 48) -> list[dict]:
         base = {"source": "polymarket", "sport": sport, "ligue": principal.get("seriesSlug"),
                 "match_id": racine, "domicile": dom, "exterieur": ext, "debut": debut, "collecte": maintenant,
                 "joueur": None, "lien": f"https://polymarket.com/event/{principal.get('slug')}"}
-        lignes += _lignes(marches, base, dom, ext, sport)
+        lignes += _lignes(marches, base, dom, ext, sport, jetons)
     _normaliser_1n2(lignes)
+    polymarket_flux.ecrire_jetons(jetons)
     return lignes
 
 
@@ -264,7 +275,13 @@ def _equipe_du_total(mk: dict, dom: str, ext: str) -> str | None:
     return None
 
 
-def _lignes(marches, base, dom, ext, sport) -> list[dict]:
+def _jeton(mk: dict) -> str | None:
+    """Jeton CLOB de la 1re issue : celui dont gamma donne bestBid / bestAsk."""
+    ids = _liste(mk.get("clobTokenIds"))
+    return str(ids[0]) if ids and ids[0] else None
+
+
+def _lignes(marches, base, dom, ext, sport, jetons: list | None = None) -> list[dict]:
     out = []
     for mk in marches:
         if not isinstance(mk, dict):
@@ -276,6 +293,15 @@ def _lignes(marches, base, dom, ext, sport) -> list[dict]:
         cible = TYPES.get(t)
         if not cible or mk.get("acceptingOrders") is not True or mk.get("closed") is not False:
             continue
+        jeton = _jeton(mk)
+        if jeton and jetons is not None:
+            jetons.append(jeton)
+        flux = _flux.get(jeton) if jeton else None
+        lu = _heure(mk.get("_collecte_recue"))
+        if flux and (lu is None or flux[2] > lu):
+            mk = {**mk, "bestBid": flux[0], "bestAsk": flux[1], "_collecte_recue": flux[2].isoformat(timespec="seconds"),
+                  "_flux": True}
+            FLUX["utilises"] += 1
         if mk.get("bestBid") is None or mk.get("bestAsk") is None:
             continue          # carnet vide ou d'un seul côté : aucun prix à lire, ce n'est pas une erreur de données
         bid, ask = _nombre(mk.get("bestBid")), _nombre(mk.get("bestAsk"))
@@ -301,6 +327,8 @@ def _lignes(marches, base, dom, ext, sport) -> list[dict]:
         if mk.get("_collecte_recue"):
             commun.update(collecte=mk["_collecte_recue"], collecte_recue=mk["_collecte_recue"],
                           collecte_debut=mk.get("_collecte_debut"))
+        if mk.get("_flux"):
+            commun["prix_flux"] = True
         debut, lecture = _heure(commun.get("debut")), _heure(commun.get("collecte"))
         if debut is not None and lecture is not None and lecture >= debut:
             _erreur("prix lu après le coup d'envoi : rejet pré-match")

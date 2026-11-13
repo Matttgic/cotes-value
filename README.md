@@ -50,6 +50,9 @@ date : handicaps de 1re mi-temps et des quarts-temps 1 à 3, totaux par équipe 
 sets, handicap de sets et vainqueur du 1er set au tennis. Mesure du 8/11 à 3 h (PMU et Winamax) : 15 450 cotes
 françaises ont une cote juste Polymarket, contre 14 307 avec l'ancienne lecture (+8 %).
 
+Sur le serveur en direct, le meilleur achat / vente Polymarket vient du **websocket** des carnets quand il est plus
+récent que gamma (`cotes/polymarket_flux.py`, voir [docs/serveur-direct.md](docs/serveur-direct.md)).
+
 Smarkets est lu sur son API publique, sans compte. La cote juste est le milieu
 achat/vente : le spread est dans le milieu, aucune commission
 n'est retirée en plus. Le bilan a une table Smarkets, comme Polymarket :

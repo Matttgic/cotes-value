@@ -518,6 +518,7 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         }
         signaler(journal, "pinnacle", list(pinnacle.ERREURS))
         signaler(journal, "polymarket", list(polymarket.ERREURS))
+        journal["polymarket_flux"] = dict(polymarket.FLUX)     # prix du websocket repris (serveur en direct)
         # Après le secours : un sport resté sans référence reprend son dernier passage (cotes/reprise.py).
         # La panne reste notée dans l'étape ; les bookmakers français lisent encore ce sport.
         repris, journal["reprise"] = reprise.appliquer(reprise_chemin, {"Pinnacle": pin, "Polymarket": poly},
