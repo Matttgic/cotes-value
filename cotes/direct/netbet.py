@@ -17,6 +17,7 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 
+from cotes import inconnus
 from cotes.correspondance import ressemblance
 from cotes.direct.horizon import fusionner
 from cotes.joueurs import depuis_titre_et_issues, est_titre_joueur
@@ -447,6 +448,7 @@ def marche_depuis(offre: dict, home: str, away: str) -> dict | None:
     elif style == "handicap_2ways":
         canon = "ASIAN_HANDICAP"
     else:
+        inconnus.noter("netbet", libelle)
         return None
     selections = []
     for sel in paris[0].get("selections") or []:

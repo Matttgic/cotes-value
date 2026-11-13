@@ -36,6 +36,7 @@ from cotes.protection import calculer, proteger_strategies  # noqa: E402
 from cotes.analyste import SEUILS as SEUILS_AVIS, alleger_avis, annoter_avis, reference_avis  # noqa: E402
 from cotes import notifications as notifications_mod  # noqa: E402
 from cotes import ordres as ordres_mod  # noqa: E402
+from cotes import inconnus as inconnus_mod  # noqa: E402
 
 
 # Les variantes sont des comparateurs supplémentaires, jamais des votes de base.
@@ -878,6 +879,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             # même match réglé avec deux scores chez deux bookmakers (resultats.incoherences_freres), page Santé
             "hors_plafond": resume_hors_plafond(hors_plafond),
             "taux_manuel": taux_manuel(paris, datetime.now(timezone.utc)),
+            "marches_inconnus": inconnus_mod.resume(_lire(donnees / "marches_inconnus.json", {}) or {}, datetime.now(timezone.utc)),
             "incoherences_reglement": [x for x in (_lire(donnees / "resultats_a_saisir.json", {}) or {}).get("incoherences") or []
                                        if isinstance(x, dict)][:20]}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.

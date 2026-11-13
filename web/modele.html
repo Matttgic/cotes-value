@@ -328,6 +328,7 @@
     <h3 class="bu-titre">Sources de résultats</h3><div class="bu-table" id="sante-resultats"></div>
     <p class="aide" id="sante-attente"></p>
     <div id="sante-manuel"></div>
+    <div id="sante-inconnus"></div>
     <div id="sante-incoherences"></div>
     <p><button type="button" class="btn secondaire" data-aller="regler" id="sante-saisie">Matchs à saisir à la main ›</button></p>
     <details class="mode-emploi sante-controle"><summary>Contrôle des intitulés des bookmakers</summary>
@@ -1427,6 +1428,15 @@ function rendreSante(maintenant=Date.now()) {
   if (zoneInc) zoneInc.innerHTML = inc.length ? `<h3 class="bu-titre">Règlements à vérifier <small>même match, deux scores</small></h3>
     <div class="bu-table">${inc.map(x => `<div class="sante-ligne"><div><b>${e(x.a?.match)}</b><small>${e(quand(x.debut))} · ${coteInc(x.a || {})} contre ${coteInc(x.b || {})}</small></div><span class="sante-mot sante-mot-alerte">À vérifier</span></div>`).join("")}</div>
     <p class="aide">L'un des deux scores est faux. Pour corriger : le bon statut (gagne, perdu, rembourse…) sous l'identifiant du pari dans resultats_manuels.json.</p>` : "";
+  // Marchés qu'aucun traducteur ne reconnaît (cotes/inconnus.py) : un libellé « nouveau » est souvent un libellé changé.
+  const mi = D.marches_inconnus || {}, zoneMi = document.getElementById("sante-inconnus");
+  const nomsBooks = {"unibet-fr": "Unibet", pmu: "PMU", winamax: "Winamax", betclic: "Betclic", netbet: "NetBet", olybet: "OlyBet"};
+  if (zoneMi) zoneMi.innerHTML = Object.keys(mi).length ? `<h3 class="bu-titre">Marchés non reconnus <small>24 dernières heures</small></h3>
+    <div class="bu-table">${Object.entries(mi).map(([b, x]) => ligneSante(nomsBooks[b] || b,
+      `${x.distincts} libellé${x.distincts > 1 ? "s" : ""}` + (x.n_nouveaux ? ` · nouveaux : ${x.nouveaux.join(" ; ")}` : "") +
+      (x.frequents.length ? ` · fréquents : ${x.frequents.map(([l, n]) => `${l} (${n})`).join(" ; ")}` : ""),
+      x.n_nouveaux ? "alerte" : "ok")).join("")}</div>
+    <p class="aide">Marchés ignorés faute de traduction (chiffres remplacés par #). « Nouveaux » : vus pour la première fois depuis moins de 24 h, souvent un libellé qui a changé.</p>` : "";
   // Part réglée à la main ou encore « à régler » : une hausse signale une source de scores qui décroche.
   const pctT = x => x == null ? "—" : (100 * x).toFixed(1).replace(".", ",") + " %";
   const tm = D.taux_manuel, zoneMan = document.getElementById("sante-manuel");

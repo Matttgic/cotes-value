@@ -22,6 +22,7 @@ from urllib.parse import urlencode
 
 import requests
 
+from cotes import inconnus
 from cotes.correspondance import ressemblance
 from cotes.delai import Reduite
 from cotes.direct.horizon import fusionner_marches, tranche
@@ -461,6 +462,7 @@ def marche_depuis(cle: str, offre: dict, home: str, away: str) -> dict | None:
     style = str(offre.get("style") or "")
     canon = _canon(desc, style)
     if not canon:
+        inconnus.noter("unibet-fr", desc)
         return None
     if canon == "TEAM_TOTAL":
         droite = desc.split(" - ", 1)[-1]

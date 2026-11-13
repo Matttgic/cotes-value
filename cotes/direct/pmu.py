@@ -27,6 +27,7 @@ from urllib.parse import urlencode
 
 import requests
 
+from cotes import inconnus
 from cotes.direct.horizon import fusionner, tranche
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
@@ -425,6 +426,8 @@ def marche_depuis(offre: dict, domicile: str, exterieur: str) -> dict | None:
         return None
     classe = _canonique(offre, domicile, exterieur)
     if not classe:
+        crit = offre.get("criterion") or {}
+        inconnus.noter("pmu", crit.get("label") or crit.get("englishLabel"))
         return None
     canon, libelle = classe
     selections = []

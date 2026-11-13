@@ -16,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
+from cotes import inconnus
 from cotes.direct.horizon import fusionner
 from cotes.liens import BETCLIC_SPORTS, slug
 from cotes.pulsescore import traduire
@@ -601,6 +602,7 @@ def marches_pulse(marche: dict, domicile: str, exterieur: str, sport: str | None
     ne garderait que la dernière (la plus haute)."""
     canon = _classe(marche.get("nom") or "", domicile, exterieur)
     if not canon:
+        inconnus.noter("betclic", marche.get("nom"))
         return []
     if canon == "ECART":
         return _marches_handicap(marche, domicile, exterieur, sport)

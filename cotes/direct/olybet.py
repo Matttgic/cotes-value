@@ -18,6 +18,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
+from cotes import inconnus
 from cotes.correspondance import ressemblance
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
@@ -187,6 +188,7 @@ def marche_depuis(offre: dict, sport: str) -> dict | None:
     nom = str(offre.get("name") or "")
     canon = _canonique(str(offre.get("type") or ""), nom, sport)
     if not canon:
+        inconnus.noter("olybet", nom)
         return None
     selections = []
     for issue in (offre.get("event") or {}).values():
