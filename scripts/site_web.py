@@ -10,13 +10,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bilan,  # noqa: E402
-                              bilan_filtres, bilan_tranches, moyennes_ecarts, paris_strategie,
+                              bilan_filtres, bilan_plafond, bilan_tranches, moyennes_ecarts, paris_strategie,
                               mise_kelly, premiers_par_selection, profil_horaire, REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
 from cotes.strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, charger_fusions, paris_fusion  # noqa: E402
-from cotes.reglement import GAIN  # noqa: E402
+from cotes.reglement import GAIN, taux_manuel  # noqa: E402
 from cotes.sources_resultats import ou_chercher  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.simulation import COTE_MAX_PRISE  # noqa: E402
@@ -861,7 +861,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
                       **({} if segments_fusionnes else {"paris_segments": segments_k}), "filtres": bilan_filtres(paris_k),
                       "laboratoire": laboratoire_k},
             "ecarts_references": moyennes_ecarts(paris),
-            "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "profil_horaire": profil_horaire(paris), "filtres": bilan_filtres(paris), "segments": segments(paris),
+            "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "profil_horaire": profil_horaire(paris), "filtres": bilan_filtres(paris), "plafond_match": bilan_plafond(paris), "segments": segments(paris),
             "paris_segments": segments_fixe, "paris_a_venir_segments": paris_a_venir_des_segments(paris),
             "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
@@ -877,6 +877,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             "props": props_publies,
             # même match réglé avec deux scores chez deux bookmakers (resultats.incoherences_freres), page Santé
             "hors_plafond": resume_hors_plafond(hors_plafond),
+            "taux_manuel": taux_manuel(paris, datetime.now(timezone.utc)),
             "incoherences_reglement": [x for x in (_lire(donnees / "resultats_a_saisir.json", {}) or {}).get("incoherences") or []
                                        if isinstance(x, dict)][:20]}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.

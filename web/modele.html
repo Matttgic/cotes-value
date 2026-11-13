@@ -93,6 +93,7 @@
       (retrouvée à partir de la cote et de la cote juste, « estimée »). <b>TRJ</b> du bookmaker français, <b>limite de mise
       Pinnacle</b> et <b>mouvement de cote</b> : mesurés à l'enregistrement, donc seulement sur les paris pris depuis leur ajout.
       Les tranches de quelques dizaines de paris ne prouvent rien.</p>
+      <div id="bilan-plafond"></div>
       <div id="bilan-filtres"></div></details>
       <p class="bilan-liens"><button type="button" class="btn secondaire" data-aller="analyses">Analyses et graphiques ›</button>
         <button type="button" class="btn secondaire" data-aller="segments">Segments ›</button></p>
@@ -326,6 +327,7 @@
     <h3 class="bu-titre">Incidents des dernières 24 heures</h3><div class="bu-table" id="sante-incidents"></div>
     <h3 class="bu-titre">Sources de résultats</h3><div class="bu-table" id="sante-resultats"></div>
     <p class="aide" id="sante-attente"></p>
+    <div id="sante-manuel"></div>
     <div id="sante-incoherences"></div>
     <p><button type="button" class="btn secondaire" data-aller="regler" id="sante-saisie">Matchs à saisir à la main ›</button></p>
     <details class="mode-emploi sante-controle"><summary>Contrôle des intitulés des bookmakers</summary>
@@ -607,6 +609,12 @@ function rendreCombos() {
 }
 const TITRES_FILTRES = {famille: "Type de marché (longues cotes à part)", marge: "Marge de Pinnacle (liquidité, ancien et nouveau)", trj: "TRJ du bookmaker", limite: "Limite de mise Pinnacle (liquidité)", mouvement: "Mouvement de la cote Pinnacle"};
 function rendreFiltres() {
+  // Mise totale d'un match plafonnée (paris corrélés) : si le ROI ne tient que sans plafond, il repose sur quelques matchs chargés.
+  const zonePl = document.getElementById("bilan-plafond"), pl = D.plafond_match || [];
+  if (zonePl) zonePl.innerHTML = pl.length ? `<h3 class="bu-titre">Mise plafonnée par match <small>${pl[0].paris} paris sur ${pl[0].matchs} matchs</small></h3>
+<div class="tableau"><table><tr><th>Plafond</th><th>Matchs réduits</th><th>Gain<small>ROI</small></th></tr>${pl.map(r => `<tr><td>${r.plafond == null ? "Sans plafond" : r.plafond + " € par match"}</td><td>${r.matchs_reduits}</td>
+<td class="${signe(r.gains)}">${eurC(r.gains)}<small class="roi ${signe(r.roi)}">${r.roi == null ? "" : pctC(r.roi)}</small></td></tr>`).join("")}</table></div>
+<p class="aide">Au-delà du plafond, toutes les mises du match sont réduites dans la même proportion. Descriptif : aucun plafond n'est appliqué.</p>` : "";
   const cible = document.getElementById("bilan-filtres"), f = D.filtres || {};
   cible.innerHTML = Object.keys(TITRES_FILTRES).map(nom => {
     const b = f[nom];
@@ -1419,6 +1427,12 @@ function rendreSante(maintenant=Date.now()) {
   if (zoneInc) zoneInc.innerHTML = inc.length ? `<h3 class="bu-titre">Règlements à vérifier <small>même match, deux scores</small></h3>
     <div class="bu-table">${inc.map(x => `<div class="sante-ligne"><div><b>${e(x.a?.match)}</b><small>${e(quand(x.debut))} · ${coteInc(x.a || {})} contre ${coteInc(x.b || {})}</small></div><span class="sante-mot sante-mot-alerte">À vérifier</span></div>`).join("")}</div>
     <p class="aide">L'un des deux scores est faux. Pour corriger : le bon statut (gagne, perdu, rembourse…) sous l'identifiant du pari dans resultats_manuels.json.</p>` : "";
+  // Part réglée à la main ou encore « à régler » : une hausse signale une source de scores qui décroche.
+  const pctT = x => x == null ? "—" : (100 * x).toFixed(1).replace(".", ",") + " %";
+  const tm = D.taux_manuel, zoneMan = document.getElementById("sante-manuel");
+  if (zoneMan) zoneMan.innerHTML = tm && tm.total ? ligneSante(`Règlement manuel (${tm.jours} j)`,
+    `${pctT(tm.taux)} des ${tm.total} paris terminés (${tm.manuel} saisis à la main, ${tm.a_regler} à régler)` +
+    (tm.taux_avant == null ? "" : ` · ${tm.jours} j d'avant : ${pctT(tm.taux_avant)}`), tm.alerte ? "alerte" : "ok") : "";
   document.getElementById("sante-saisie").textContent = `Matchs à saisir à la main${man.length ? " ("+groupesReglement.size+")" : ""} ›`;
 }
 rendreSante();

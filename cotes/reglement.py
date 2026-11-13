@@ -18,6 +18,41 @@ from . import VERSION
 GAIN = {"gagne": 1.0, "demi_gagne": 0.5, "rembourse": 0.0, "demi_perdu": -0.5, "perdu": -1.0}
 
 
+MANUEL_JOURS = 7
+MANUEL_ALERTE = 0.05   # part manuelle au-delà de laquelle la page Santé alerte (habituellement 2 à 4 %)
+
+
+def taux_manuel(paris: list[dict], maintenant: datetime, jours: int = MANUEL_JOURS) -> dict:
+    """Part des paris terminés (matchs des `jours` derniers jours) réglés à la main ou encore « à régler », contre la
+    période d'avant. Une hausse signale une source de scores qui décroche."""
+    def periode(debut: datetime, fin: datetime) -> dict:
+        total = manuel = attente = 0
+        for p in paris:
+            statut = p.get("statut")
+            if statut == "en_cours":
+                continue
+            try:
+                d = datetime.fromisoformat(str(p.get("debut")).replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            if d.tzinfo is None:
+                d = d.replace(tzinfo=timezone.utc)
+            if not debut <= d < fin:
+                continue
+            total += 1
+            if statut == "a_regler":
+                attente += 1
+            elif "main" in str((p.get("preuve_reglement") or {}).get("origine") or ""):   # « saisi à la main »
+                manuel += 1
+        return {"total": total, "manuel": manuel, "a_regler": attente,
+                "taux": round((manuel + attente) / total, 4) if total else None}
+    fin = maintenant
+    debut = fin - timedelta(days=jours)
+    actuel, avant = periode(debut, fin), periode(debut - timedelta(days=jours), debut)
+    return {"jours": jours, **actuel, "taux_avant": avant["taux"], "total_avant": avant["total"],
+            "alerte": actuel["taux"] is not None and actuel["taux"] >= MANUEL_ALERTE}
+
+
 def gain(statut: str, mise: float, cote: float) -> float:
     if statut not in GAIN:
         raise ValueError(f"Statut de règlement inconnu : {statut!r}")

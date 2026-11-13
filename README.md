@@ -164,7 +164,7 @@ référence strictement inchangée depuis 10 minutes ou plus (copie de cache fig
 (« cote Pinnacle figée »), pour Pinnacle et pour le Consensus qui la contient. Le Bilan compare le ROI et la CLV par tranche (`simulation.bilan_filtres`). Les anciens paris n'ont pas ces
 mesures : les tranches se remplissent au fil des nouveaux paris. Le Bilan montre aussi une mise **Kelly ¼** (bankroll
 fictive 1 000 €, 2 % maximum) calculée sur les mêmes paris, à côté des 10 € fixes, ainsi que la part des paris qui
-battent la clôture et le profil horaire des détections par bookmaker.
+battent la clôture et le profil horaire des détections par bookmaker. Il montre enfin le ROI avec une **mise plafonnée par match** (10, 20 et 30 €, `simulation.bilan_plafond`) : plusieurs paris d'un même match sont corrélés, et un ROI qui ne tient que sans plafond repose sur quelques matchs chargés.
 
 ### Claude Opus · Valeur solide (et trois déclinaisons)
 
@@ -415,6 +415,8 @@ liste les matchs qu'aucune source ne règle (un match vu par plusieurs bookmaker
 ses clés dans `match_ids`), avec le modèle de saisie de `resultats_manuels.json`. Le journal du
 cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non
 officiels : ils peuvent changer sans préavis.
+La page Santé suit la part des paris des 7 derniers jours réglés à la main ou encore à régler, contre les 7 jours
+d'avant (`reglement.taux_manuel`) ; au-delà de 5 %, elle passe en alerte : une source de scores décroche.
 
 TheSportsDB (`cotes/thesportsdb.py`, clé publique gratuite ou `THESPORTSDB_API_KEY`) sert de secours pour les paris
 restés sans résultat : recherche match par match (20 appels au plus par cycle, cache `donnees/thesportsdb.json`),
