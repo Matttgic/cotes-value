@@ -572,6 +572,37 @@ def bilan_filtres(paris: list[dict]) -> dict:
     return out
 
 
+PLAFONDS_MATCH = (10.0, 20.0, 30.0)
+
+
+def bilan_plafond(paris: list[dict], plafonds=PLAFONDS_MATCH) -> list[dict]:
+    """Paris uniques réglés, avec la mise totale d'un match plafonnée : au-delà, toutes ses mises sont réduites dans la
+    même proportion. Plusieurs paris d'un même match sont corrélés ; si le ROI ne tient que sans plafond, il repose sur
+    quelques matchs chargés. Descriptif : aucun plafond n'est appliqué aux paris."""
+    from .evenements import identites
+    uniques = premiers_par_selection(paris)
+    regles = [p for p in paris if id(p) in uniques and p.get("statut") in REGLES]
+    liens = identites(regles)
+    matchs: dict = {}
+    for p in regles:
+        m = matchs.setdefault(liens[id(p)], [0, 0.0, 0.0])
+        m[0] += 1
+        m[1] += p["mise"]
+        m[2] += p["gain"] or 0
+    out = []
+    for plafond in (None, *plafonds):
+        mises = gains = 0.0
+        au_dessus = 0
+        for n, mise, gain in matchs.values():
+            f = 1.0 if plafond is None or mise <= plafond else plafond / mise
+            au_dessus += f < 1
+            mises += mise * f
+            gains += gain * f
+        out.append({"plafond": plafond, "matchs": len(matchs), "paris": len(regles), "matchs_reduits": au_dessus,
+                    "mises": round(mises, 2), "gains": round(gains, 2), "roi": round(gains / mises, 4) if mises else None})
+    return out
+
+
 def bilan_tranches(paris: list[dict]) -> dict:
     """Par tranche de cote (« 1,51 – 2,00|Pinnacle »…) ; chaque pari n'appartient qu'à une simulation."""
     return _cumuler(paris, lambda p: tranche(p["cote"]))
