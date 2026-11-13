@@ -447,6 +447,11 @@ def marche_depuis(offre: dict, home: str, away: str) -> dict | None:
         canon = "DOUBLE_CHANCE"
     elif style == "handicap_2ways":
         canon = "ASIAN_HANDICAP"
+    elif re.match(r"qui va gagner le match ?\?", libelle.casefold()):
+        canon = "MATCH_RESULT"            # règle (prolongations, tirs au but) lue dans le libellé par traduire
+    elif m_set := re.match(r"set ([1-4]) - qui va gagner le set", libelle.casefold()):
+        canon = "MATCH_RESULT"
+        libelle = f"{m_set.group(1)}e set - {libelle}"   # « 1e set » : période SET1 pour traduire
     else:
         inconnus.noter("netbet", libelle)
         return None

@@ -439,12 +439,14 @@ def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
         return "ECART"
     # « prolong. & pen. inclus » n'est pas une combinaison de marchés.
     sans_abrege = re.sub(r"prolong\w*\.?\s*&\s*pen\w*\.?", "prolongations", bas)
+    # « (prolongations et penaltys inclus) » : règle du marché, pas un marché de tirs au but.
+    sans_abrege = re.sub(r"\(prolongations? et penaltys? inclus\)", "(prolongations incluses)", sans_abrege)
     if any(mot in sans_abrege for mot in _EXCLU):
         return None
     if bas.startswith(("résultat du match (rembours", "resultat du match (rembours")):
         return "DRAW_NO_BET"
     if bas.startswith(("résultat du match", "resultat du match", "vainqueur du match")) or (
-            m and bas in ("vainqueur", "résultat", "resultat")):
+            m and bas in ("vainqueur", "résultat", "resultat", "vainqueur du set")):
         return "MATCH_RESULT"
     if bas.startswith("double chance") and not m:
         return "DOUBLE_CHANCE"
