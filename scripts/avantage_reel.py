@@ -2,7 +2,9 @@
 
 Usage : python scripts/avantage_reel.py --donnees CHEMIN [--tirages 50000] [--json FICHIER] [--markdown FICHIER]
 CHEMIN = branche « donnees » extraite (paris.json, archives/, recommandees.json). Demande numpy
-(requirements-dev.txt). Même graine, mêmes données : mêmes chiffres. Méthode et lecture : docs/avantage-reel.md.
+(requirements-dev.txt). Environ 8 minutes avec 50 000 tirages ; « --tirages 5000 » pour un aperçu en une minute
+(les p-valeurs corrigées sont alors plafonnées). Même graine, mêmes données : mêmes chiffres.
+Sortie standard : le tableau court de docs/avantage-reel.md ; « --markdown » : docs/avantage-reel-tableaux.md.
 
 Résumé de la méthode :
 - paris réglés seulement ; ROI = gain / mises, remboursés comptés dans les mises (convention du site) ;
@@ -288,23 +290,26 @@ def verdict(x: dict) -> tuple[str, str]:
         return PROUVE, "ROI positif après correction de Holm"
     if x["roi"] < 0 and x["roi_p_neg_bh"] < ALPHA:
         return NEGATIF, "ROI négatif après correction"
-    for bloc, nom in ((pin, "Pinnacle"), (clv, "de la meilleure référence")):
-        if bloc.get("p_neg_bh") is not None and bloc["moyenne"] < 0 and bloc["p_neg_bh"] < ALPHA:
-            return NEGATIF, f"CLV {nom} négative après correction"
+    clv_negative = next((nom for bloc, nom in ((pin, "Pinnacle"), (clv, "de la meilleure référence"))
+                         if bloc.get("p_neg_bh") is not None and bloc["moyenne"] < 0 and bloc["p_neg_bh"] < ALPHA), None)
+    if x["roi"] < 0 and clv_negative:
+        return NEGATIF, f"ROI négatif et CLV {clv_negative} négative après correction"
     contredit = bool(pin.get("roi_moins_clv_ic")) and pin["roi_moins_clv_ic"][1] < 0
     clv_prouvee = (pin.get("p_pos_holm") is not None and pin["moyenne"] > 0 and pin["p_pos_holm"] < ALPHA
                    and pin["part_mesuree"] >= PART_PINNACLE_MIN)
     if x["roi"] > 0 and x["roi_p_pos_bh"] < ALPHA:
         return PROBABLE, "ROI positif après correction de Benjamini-Hochberg"
     if x["roi"] > 0 and clv_prouvee and not contredit:
-        return PROBABLE, "CLV Pinnacle positive après correction de Holm, ROI positif mais non distinguable de zéro"
+        return PROBABLE, "CLV Pinnacle prouvée, ROI positif mais non prouvé"
     if x["roi_ic"][1] < 0:
-        return NON_PROUVE, "tendance négative : l'intervalle du ROI est sous zéro, mais pas après correction"
+        return NON_PROUVE, "tendance négative, non confirmée après correction"
+    if clv_negative:
+        return NON_PROUVE, f"CLV {clv_negative} négative après correction, ROI positif"
     if clv_prouvee and contredit:
-        return NON_PROUVE, "CLV Pinnacle positive mais contredite par le ROI"
+        return NON_PROUVE, "CLV Pinnacle prouvée mais contredite par le ROI"
     if clv_prouvee:
-        return NON_PROUVE, "CLV Pinnacle positive, ROI négatif ou nul"
-    return NON_PROUVE, "ROI non distinguable de zéro, CLV non établie"
+        return NON_PROUVE, "CLV Pinnacle prouvée, ROI négatif"
+    return NON_PROUVE, "ni le ROI ni la CLV ne se distinguent de zéro"
 
 
 # ---------------------------------------------------------------- la CLV prédit-elle le ROI ?
@@ -370,9 +375,16 @@ def clv_predit_roi(paris: list[dict], evenement, clv_pin: dict, resultats: list[
         out["cinquiemes"].append({"clv_de": part[0][1], "clv_a": part[-1][1],
                                   **{k: b[k] for k in ("paris", "clv_moyenne", "roi", "roi_ic")}})
     out["signe"] = {}
+    pin5 = sorted((l for l in lignes if l[2] == "Pinnacle" and l[0]["cote"] <= plafond), key=lambda l: l[1])
     for nom, test in (("clv_positive", lambda c: c > 0), ("clv_negative_ou_nulle", lambda c: c <= 0)):
         b = bloc([l for l in lignes if test(l[1])])
         out["signe"][nom] = b and {k: b[k] for k in ("paris", "clv_moyenne", "roi", "roi_ic")}
+    out["cinquiemes_pinnacle_cote_max_5"] = []
+    for i in range(5):
+        part = pin5[i * len(pin5) // 5:(i + 1) * len(pin5) // 5]
+        b = bloc(part)
+        out["cinquiemes_pinnacle_cote_max_5"].append({"clv_de": part[0][1], "clv_a": part[-1][1],
+                                                      **{k: b[k] for k in ("paris", "clv_moyenne", "roi", "roi_ic")}})
     # Entre lignes : la CLV moyenne d'une ligne annonce-t-elle son ROI ? Descriptif, les lignes partagent des paris.
     pts = [(x["clv"]["moyenne"], x["roi"]) for x in resultats
            if x["teste"] and x["famille"] in ("strategie", "laboratoire") and x["regles"] >= 100
@@ -423,7 +435,7 @@ def tableau_roi(resultats: list[dict], famille: str) -> str:
         if x["famille"] != famille:
             continue
         sens = "roi_p_pos" if x.get("roi", 0) > 0 else "roi_p_neg"
-        note = "" if x["raison"].startswith(("ROI non", "ROI positif après", "ROI négatif après")) else f" ({x['raison']})"
+        note = "" if x["raison"].startswith(("ni le ROI", "ROI positif après", "ROI négatif après")) else f" ({x['raison']})"
         out.append(
             f"| {x['nom']} | {x['regles']} ({x.get('matchs', 0)}) | {str(x['cote_moyenne'] or '—').replace('.', ',')} | {pct(x.get('roi'))} "
             f"| {ic(x.get('roi_ic'))} | {pv(x.get(sens))} | {pv(x.get(sens + '_holm'))} | {pv(x.get(sens + '_bh'))} "
@@ -454,8 +466,14 @@ FAMILLES = (("base", "Ensemble"), ("bookmaker", "Bookmakers (paris uniques)"), (
 
 def markdown(rapport_: dict) -> str:
     r, c = rapport_["lignes"], rapport_["clv_predit_roi"]
-    out = [f"<!-- Produit par scripts/avantage_reel.py : données {rapport_['commit_donnees']}, {rapport_['tirages']} tirages, "
-           f"graine {rapport_['graine']}, {rapport_['tests']} tests du ROI. -->", "", "## ROI", ""]
+    out = ["# Avantage réel : tous les tableaux", "",
+           f"Produit par `scripts/avantage_reel.py --markdown` : données `{rapport_['commit_donnees']}`, "
+           f"{rapport_['regles']} paris réglés sur {rapport_['paris']}, {rapport_['tirages']} tirages, graine "
+           f"{rapport_['graine']}, {rapport_['tests']} tests du ROI ({rapport_['lignes_testees']} lignes, deux sens). "
+           "Lecture et conclusions : [avantage-reel.md](avantage-reel.md).", "",
+           "« p » : p-valeur unilatérale dans le sens du ROI observé. « Encore » : paris réglés qu'il manque pour passer "
+           "le seuil corrigé (5 % / nombre de tests) avec une puissance de 80 %. « — » : trop peu de mesures.", "",
+           "## ROI", ""]
     for famille, titre in FAMILLES:
         out += [f"### {titre}", "", tableau_roi(r, famille), ""]
     out += ["## CLV", ""]
@@ -474,10 +492,13 @@ def markdown(rapport_: dict) -> str:
             pente_ = f"{g['pente']:.2f} | [{g['ic'][0]:.2f} ; {g['ic'][1]:.2f}]".replace(".", ",")
             out.append(f"| {nom} | {b['paris']} | {pct(b['clv_moyenne'], 2)} | {pct(b['roi'])} | {ic(b['roi_ic'])} "
                        f"| {pct(b['roi_moins_clv'])} | {ic(b['roi_moins_clv_ic'])} | {pente_} |")
-    out += ["", "| Cinquième de CLV | Paris | CLV moyenne | ROI | IC 95 % |", "|---|---|---|---|---|"]
-    for q in c["cinquiemes"]:
-        out.append(f"| {pct(q['clv_de'], 1)} à {pct(q['clv_a'], 1)} | {q['paris']} | {pct(q['clv_moyenne'], 2)} "
-                   f"| {pct(q['roi'])} | {ic(q['roi_ic'])} |")
+    for cle, titre in (("cinquiemes", "Cinquième de CLV, tous"),
+                       ("cinquiemes_pinnacle_cote_max_5", "Cinquième de CLV, clôture Pinnacle et cote ≤ 5")):
+        out += ["", f"| {titre} | Paris | CLV moyenne | ROI | IC 95 % |", "|---|---|---|---|---|"]
+        for q in c[cle]:
+            out.append(f"| {pct(q['clv_de'], 1)} à {pct(q['clv_a'], 1)} | {q['paris']} | {pct(q['clv_moyenne'], 2)} "
+                       f"| {pct(q['roi'])} | {ic(q['roi_ic'])} |")
+    out += ["", "| Signe de la CLV, tous | Paris | CLV moyenne | ROI | IC 95 % |", "|---|---|---|---|---|"]
     for cle, nom in (("clv_positive", "CLV > 0"), ("clv_negative_ou_nulle", "CLV ≤ 0")):
         q = c["signe"].get(cle)
         if q:
@@ -487,6 +508,23 @@ def markdown(rapport_: dict) -> str:
         out += ["", f"Entre {e['lignes']} stratégies et règles d'au moins 100 paris réglés : corrélation entre CLV moyenne et "
                     f"ROI {e['correlation']:+.2f} (rangs : {e['correlation_rangs']:+.2f}).".replace(".", ",")[:-2] + ")."]
     return "\n".join(out) + "\n"
+
+
+def synthese(rapport_: dict) -> str:
+    """Tableau court par famille : ce qu'il faut pour lire le verdict de chaque ligne."""
+    out = []
+    for famille, titre in FAMILLES:
+        out += [f"### {titre}", "", "| Ligne | Réglés | ROI | IC 95 % | p corrigée (Holm) | CLV Pinnacle | IC 95 % | Verdict |",
+                "|---|---|---|---|---|---|---|---|"]
+        for x in rapport_["lignes"]:
+            if x["famille"] != famille:
+                continue
+            sens = "roi_p_pos_holm" if x.get("roi", 0) > 0 else "roi_p_neg_holm"
+            p = x["clv_pinnacle"] if x["regles"] else {}
+            out.append(f"| {x['nom']} | {x['regles']} | {pct(x.get('roi'))} | {ic(x.get('roi_ic'))} | {pv(x.get(sens))} "
+                       f"| {pct(p.get('moyenne'), 2)} | {ic(p.get('ic'), 2)} | **{x['verdict']}** : {x['raison']} |")
+        out.append("")
+    return "\n".join(out)
 
 
 def analyser(donnees: Path, tirages: int = 50000, graine: int = GRAINE) -> dict:
@@ -527,16 +565,14 @@ def main() -> None:
     ap.add_argument("--tirages", type=int, default=50000)
     ap.add_argument("--graine", type=int, default=GRAINE)
     ap.add_argument("--json", type=Path, help="écrit tous les chiffres dans ce fichier")
-    ap.add_argument("--markdown", type=Path, help="écrit les tableaux dans ce fichier (sinon sortie standard)")
+    ap.add_argument("--markdown", type=Path, help="écrit les tableaux complets dans ce fichier")
     a = ap.parse_args()
     rapport_ = analyser(a.donnees, a.tirages, a.graine)
     if a.json:
         a.json.write_text(json.dumps(rapport_, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    texte = markdown(rapport_)
     if a.markdown:
-        a.markdown.write_text(texte, encoding="utf-8")
-    else:
-        print(texte)
+        a.markdown.write_text(markdown(rapport_), encoding="utf-8")
+    print(synthese(rapport_))
     print(f"{rapport_['regles']} paris réglés sur {rapport_['paris']} ({rapport_['du']} au {rapport_['au']}), "
           f"{rapport_['lignes_testees']} lignes testées | CLV : {rapport_['clv']}", file=sys.stderr)
     for cle, n in sorted(rapport_["verdicts"].items()):

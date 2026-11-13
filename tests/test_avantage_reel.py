@@ -75,5 +75,6 @@ def test_verdicts():
     assert verdict(_ligne(clv_pinnacle={**clv_prouvee, "part_mesuree": 0.3}))[0] == NON_PROUVE
     assert verdict(_ligne(clv_pinnacle={**clv_prouvee, "roi_moins_clv_ic": [-0.4, -0.1]}))[0] == NON_PROUVE
     assert verdict(_ligne(roi=-0.2, roi_ic=[-0.3, -0.1], roi_p_neg_bh=0.01))[0] == NEGATIF
-    assert verdict(_ligne(clv={"moyenne": -0.03, "p_neg_bh": 0.01}))[0] == NEGATIF
+    assert verdict(_ligne(roi=-0.02, clv={"moyenne": -0.03, "p_neg_bh": 0.01}))[0] == NEGATIF
+    assert verdict(_ligne(clv={"moyenne": -0.03, "p_neg_bh": 0.01}))[0] == NON_PROUVE          # ROI positif
     assert verdict(_ligne(roi=-0.2, roi_ic=[-0.3, -0.1]))[1].startswith("tendance négative")
