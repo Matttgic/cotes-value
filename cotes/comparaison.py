@@ -241,15 +241,21 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
         if debut and t_fr and debut <= t_fr:
             continue
         k = cle(l)
+        cles = cles_reference(l)
         trouvees = {}
         for nom in references:
-            r = index[nom].get(l["match_id"], {}).get(k)
+            par_cle = index[nom].get(l["match_id"], {})
+            r = next((par_cle[c] for c in cles if c in par_cle), None)
             if not r:
                 continue
             if not CT.contemporaines(l, r):
                 continue
             trouvees[nom] = r
         controle_raison = CT.raison(l, *controle) if controle and trouvees else None
+        if controle_raison and l["marche"] in MARCHES_MINORES:
+            # Contrôle des intitulés : il compare la cote à sa cote juste, toujours sous 1 ici (borne).
+            # Seule l'association du match compte ; la règle de période est écrite dans le libellé.
+            controle_raison = "match mal associé ?" if l["match_id"] in (controle[1] or {}) else None
         desaccord = False
         # Une référence hors consensus garde sa table de paris. Elle ne change
         # ni la moyenne partagée, ni le désaccord des tables déjà en place.
@@ -308,6 +314,8 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 "controle": _controle_du_groupe(l, controle),
                 "lien": l.get("lien"), "suspect": suspect,
                 "pariable": not bool(suspect)}
+            if l["marche"] in MARCHES_MINORES:  # probabilité de victoire seulement : le vrai écart est plus grand
+                o["ecart_minimum"] = True
             if r.get("prix_prudent"):         # cote juste lue au prix d'achat (carnet large) : écart minimal
                 o.update(prix_prudent=True, proba_milieu=r.get("proba_milieu"))
             # Référence reprise d'un cycle précédent (cotes/reprise.py) : notée seulement quand c'est le cas.
@@ -315,6 +323,19 @@ def comparer(francais: list[dict], references: dict[str, list[dict]], ecart_min:
                 o["reference_reprise"] = True
             opportunites.append(o)
     return opportunites
+
+
+# Marchés sans référence directe, comparés à un marché dont la probabilité est forcément plus petite.
+# « A X d'avance ou gagne » est gagné dès que l'équipe gagne : P ≥ P(victoire, même période). La cote juste
+# retenue est celle de la victoire, donc l'écart calculé est un minimum (champ ecart_minimum).
+MARCHES_MINORES = {"AVANCE_OU_GAGNE": ("RESULTAT_1N2", "VAINQUEUR")}
+
+
+def cles_reference(l: dict) -> list[tuple]:
+    """Clés de référence à chercher pour une cote française, dans l'ordre."""
+    if l["marche"] in MARCHES_MINORES:
+        return [(m, l["periode"], None, l["issue"]) for m in MARCHES_MINORES[l["marche"]]]
+    return [cle(l)]
 
 
 def _controle_du_groupe(l: dict, controle: tuple[dict, dict] | None) -> dict | None:
@@ -393,6 +414,9 @@ def libelle_pari(l: dict) -> str:
         defaut = {"football": " buts", "hockey": " buts", "handball": " buts", "basket": " points",
                   "football_americain": " points", "rugby": " points", "volley": " points"}.get(l.get("sport"), "")
         s = f"{'Plus' if i == 'PLUS' else 'Moins'} de {str(ligne).replace('.', ',')}{unite or defaut}{qui}"
+    elif m == "AVANCE_OU_GAGNE":
+        u = {"basket": "points", "football_americain": "points", "rugby": "points"}.get(l.get("sport"), "buts")
+        s = f"{eq[i]} gagne ou mène de {str(ligne).replace('.0', '')} {u}"
     elif m == "DOUBLE_CHANCE":
         s = {"HOME_DRAW": f"{dom} ou nul", "HOME_AWAY": f"{dom} ou {ext}", "DRAW_AWAY": f"Nul ou {ext}"}[i]
     elif m == "BOTH_TEAMS_TO_SCORE":

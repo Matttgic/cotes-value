@@ -303,6 +303,10 @@ def _marche(canon, libelle, sels, sport, dom, ext, nul_annonce=False):
             i = {"HOME": "DOM", "AWAY": "EXT", "DRAW": "NUL"}.get(k)
             if i:
                 yield ("RESULTAT_1N2" if nul else "VAINQUEUR"), None, i, s
+    elif canon == "AVANCE_OU_GAGNE":            # ligne = avance (buts ou points) qui suffit à gagner le pari
+        for k, s in issues.items():
+            if k in ("HOME", "AWAY") and s.get("line") is not None:
+                yield "AVANCE_OU_GAGNE", float(s["line"]), {"HOME": "DOM", "AWAY": "EXT"}[k], s
     elif canon == "DRAW_NO_BET":
         for k, s in issues.items():
             if k in ("HOME", "AWAY"):

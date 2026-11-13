@@ -437,6 +437,9 @@ def _classe(nom: str, domicile: str, exterieur: str) -> str | None:
     # « X gagne de 2 buts ou + » est le handicap X −1,5. Selon le sport, l'unité décide du marché.
     if re.match(r"(?:[ée]cart (?:de (?:buts|points|sets|jeux)(?: entre les [ée]quipes)?|entre les [ée]quipes)|vainqueur avec handicap)\s*(?:\(t\.? ?r[ée]g\.?\))?\s*$", bas):
         return "ECART"
+    # « L'équipe possède 2 buts d'avance ou gagne » : gagné si l'équipe gagne, ou si elle mène un jour de 2.
+    if re.match(r"l['’]équipe possède \d+ (?:buts?|points?) d['’]avance ou gagne\b", bas) and not m:
+        return "AVANCE_OU_GAGNE"
     # « prolong. & pen. inclus » n'est pas une combinaison de marchés.
     sans_abrege = re.sub(r"prolong\w*\.?\s*&\s*pen\w*\.?", "prolongations", bas)
     # « (prolongations et penaltys inclus) » : règle du marché, pas un marché de tirs au but.
@@ -617,6 +620,12 @@ def marches_pulse(marche: dict, domicile: str, exterieur: str, sport: str | None
             issue, ligne = _sens_total(nom), _ligne_totale(nom)
         elif canon == "DOUBLE_CHANCE":
             issue, ligne = _double_chance(nom, domicile, exterieur), None
+        elif canon == "AVANCE_OU_GAGNE":
+            avance = re.search(r"possède (\d+)", str(marche.get("nom") or "").lower())
+            issue = _issue(nom, domicile, exterieur)
+            issue, ligne = (issue if issue in ("HOME", "AWAY") else None), (float(avance.group(1)) if avance else None)
+            if ligne is None:
+                continue
         elif canon == "BOTH_TEAMS_TO_SCORE":
             issue, ligne = _issue(nom, domicile, exterieur), None
             if issue not in ("YES", "NO"):

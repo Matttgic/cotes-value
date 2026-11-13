@@ -252,7 +252,9 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], mai
             continue
         if not debut.tzinfo:
             continue
-        proba, lue = justes.get((p["match_id"], cle(p)), {}).get(p["reference"]) or (None, None)
+        from .comparaison import cles_reference      # « a X d'avance ou gagne » : clôture de la victoire
+        proba, lue = next((justes[(p["match_id"], c)][p["reference"]] for c in cles_reference(p)
+                           if p["reference"] in justes.get((p["match_id"], c), {})), (None, None))
         t = _heure(lue)
         if not proba or not t or t.tzinfo is None or t >= debut:
             continue
