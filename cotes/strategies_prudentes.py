@@ -246,42 +246,23 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
         resultat = {cle: appliquer(paris, ids, cle) for cle, ids in resultat.items()}
     resultat["m3_structure"] = calculer("m3_structure", lambda: paris_m3_structure(paris)) if depuis is None else set()
     resultat["qwen_persistence"] = calculer("qwen_persistence", lambda: paris_qwen(paris, depuis))
-    resultat["coeur_value"] = (appliquer(paris, calculer("coeur_value", lambda: paris_coeur(paris, depuis)), "coeur_value")
-                               if depuis is None else set())
-    resultat["liquidite_sure"] = (appliquer(paris, calculer("liquidite_sure", lambda: paris_liquidite(paris, depuis)),
-                                            "liquidite_sure") if depuis is None else set())
-    for g in GROKS:
-        resultat[g["cle"]] = (appliquer(paris, calculer(g["cle"], lambda: paris_grok(paris, g)), g["cle"])
-                              if depuis is None else set())
-    for g in GROKS_V2:
-        resultat[g["cle"]] = (appliquer(paris, calculer(g["cle"], lambda: paris_grok(paris, g)), g["cle"])
-                              if depuis is None else set())
-    for g in GROKS_V3:
-        resultat[g["cle"]] = (appliquer(paris, calculer(g["cle"], lambda: paris_grok(paris, g)), g["cle"])
-                              if depuis is None else set())
-    for c in CONSEILS:
-        resultat[c["cle"]] = (appliquer(paris, calculer(c["cle"], lambda: paris_conseil(paris, c)), c["cle"])
-                              if depuis is None else set())
-    for d in DEFIS:
-        resultat[d["cle"]] = (appliquer(paris, calculer(d["cle"], lambda: paris_defi(paris, d)), d["cle"])
-                              if depuis is None else set())
-    # Gemini Défi : sélecteurs déjà figés par @figer_selecteur, sans rejeu.
-    for g in GEMINI_DEFIS:
-        resultat[g["cle"]] = SELECTEURS_GEMINI_DEFI[g["cle"]](paris) if depuis is None else set()
-    # Claude Défi : même principe, sélecteurs figés au lancement, sans rejeu.
-    for c in CLAUDE_DEFIS:
-        resultat[c["cle"]] = SELECTEURS_CLAUDE_DEFI[c["cle"]](paris) if depuis is None else set()
-    # Claude Opus · Valeur solide : figée au lancement (3/11/2026), sans rejeu.
-    for c in CLAUDE_OPUS:
-        resultat[c["cle"]] = SELECTEURS_CLAUDE_OPUS[c["cle"]](paris) if depuis is None else set()
-    # Claude Signal (double avis, prix frais) : figées au lancement (12/11/2026), sans rejeu.
-    for c in CLAUDE_SIGNAL:
-        resultat[c["cle"]] = SELECTEURS_CLAUDE_SIGNAL[c["cle"]](paris) if depuis is None else set()
-    # Claude · Méthode humaine : la stratégie que Claude jouerait s'il était humain, figée le 12/11/2026, sans rejeu.
-    resultat[CLAUDE_HUMAIN["cle"]] = (SELECTEURS_CLAUDE_HUMAIN[CLAUDE_HUMAIN["cle"]](paris)
-                                      if depuis is None else set())
-    # Claude · PMU régulier : figée le 13/11/2026, sans rejeu.
-    resultat[CLAUDE_PMU["cle"]] = paris_claude_pmu(paris) if depuis is None else set()
+
+    def figee(cle, calcul):       # prospectif seulement : décision figée (cotes/decisions.py), rien en rejeu
+        return appliquer(paris, calculer(cle, calcul), cle) if depuis is None else set()
+    resultat["coeur_value"] = figee("coeur_value", lambda: paris_coeur(paris, depuis))
+    resultat["liquidite_sure"] = figee("liquidite_sure", lambda: paris_liquidite(paris, depuis))
+    for regles, selecteur in (((*GROKS, *GROKS_V2, *GROKS_V3), paris_grok), (CONSEILS, paris_conseil),
+                              (DEFIS, paris_defi)):
+        for c in regles:
+            resultat[c["cle"]] = figee(c["cle"], lambda: selecteur(paris, c))
+    # Sélecteurs déjà figés au lancement par @figer_selecteur, sans rejeu : Gemini Défi (30/10), Claude Défi (2/11),
+    # Claude Opus (3/11), Claude Signal et Méthode humaine (12/11), PMU régulier (13/11/2026).
+    for regles, selecteurs in ((GEMINI_DEFIS, SELECTEURS_GEMINI_DEFI), (CLAUDE_DEFIS, SELECTEURS_CLAUDE_DEFI),
+                               (CLAUDE_OPUS, SELECTEURS_CLAUDE_OPUS), (CLAUDE_SIGNAL, SELECTEURS_CLAUDE_SIGNAL),
+                               ((CLAUDE_HUMAIN,), SELECTEURS_CLAUDE_HUMAIN),
+                               ((CLAUDE_PMU,), {CLAUDE_PMU["cle"]: paris_claude_pmu})):
+        for c in regles:
+            resultat[c["cle"]] = selecteurs[c["cle"]](paris) if depuis is None else set()
     # Fusion 1 : membres figés le 8/11/2026, un pari par match, sans rejeu.
     resultat[RECOMMANDEE_FUSION["cle"]] = (calculer(RECOMMANDEE_FUSION["cle"], lambda: paris_fusion(paris))
                                          if depuis is None else set())
