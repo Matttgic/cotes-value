@@ -114,6 +114,38 @@ def ecart_pct(p: dict) -> float | None:
     return None if e is None else round(100 * e, 4)
 
 
+def premieres_par_cote(paris: list[dict], refus, depart: str, ordre=None) -> list[dict]:
+    """Moteur commun des stratégies « une mise par cote française » (Gemini Défi, Claude Défi, Opus, Signal, PMU) :
+    première détection acceptée (``refus(p) is None``) de chaque cote française, à partir de ``depart``, dans l'ordre
+    d'arrivée (à la même seconde : ``ordre`` s'il est donné, sinon ordre du registre). Une détection refusée ne
+    consomme pas la cote."""
+    t0 = heure(depart)
+    if t0 is None:
+        return []
+    candidats = sorted((p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) >= t0
+                        and refus(p) is None), key=ordre or (lambda p: heure(p["detecte"])))
+    premiers, vues = [], set()
+    for p in candidats:
+        cle = cle_cote(p)
+        if cle not in vues:
+            vues.add(cle)
+            premiers.append(p)
+    return premiers
+
+
+def selecteur_sans_rejeu(c: dict, selection, doc: str = ""):
+    """Sélecteur figé au lancement (cotes/decisions.py) de la règle ``c`` : ``selection(paris)``, et l'ensemble
+    vide pour tout rejeu (seul le suivi depuis la mise en service compte)."""
+    @figer_selecteur(c["cle"])
+    def selectionner(paris, depuis=None):
+        if depuis is not None:
+            return set()
+        return selection(paris)
+    selectionner.__name__ = selectionner.__qualname__ = "paris_" + c["cle"]
+    selectionner.__doc__ = c["nom"] + " (figée au lancement, " + c["debut"] + ")." + doc
+    return selectionner
+
+
 def motif_refus_gemini_defi(p: dict, c: dict) -> str | None:
     """Raison du refus, ou None si la détection passe la règle (avant dédoublonnage et plafonds)."""
     if p.get("reference") not in c["references"]:
@@ -164,9 +196,6 @@ def selection_gemini_defi(paris: list[dict], c: dict, depart: str,
     est perdue : sa détection suivante ne la rattrape pas. ``evenements`` (id → match) sert aux
     rejeux ; par défaut, les matchs reliés du registre (cotes.evenements.identites).
     """
-    t0 = heure(depart)
-    if t0 is None:
-        return set()
     plafonnee = c["maximum_jour"] is not None or c["max_par_match"] is not None
 
     def ordre(p):
@@ -175,15 +204,8 @@ def selection_gemini_defi(paris: list[dict], c: dict, depart: str,
         # écart égal, ordre du registre (tri stable).
         return (heure(p["detecte"]), -(ecart_pct(p) or 0.0) if plafonnee else 0.0)
 
-    candidats = sorted((p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) >= t0
-                        and motif_refus_gemini_defi(p, c) is None), key=ordre)
-    premiers, vues = [], set()
-    for p in candidats:
-        cle = cle_cote(p)
-        if cle not in vues:
-            vues.add(cle)
-            premiers.append(p)
-    if not plafonnee:
+    premiers = premieres_par_cote(paris, lambda p: motif_refus_gemini_defi(p, c), depart, ordre)
+    if not plafonnee or not premiers:
         return {id(p) for p in premiers}
     if evenements is None:
         from .evenements import identites
@@ -203,15 +225,7 @@ def selection_gemini_defi(paris: list[dict], c: dict, depart: str,
 
 
 def _selecteur(c: dict):
-    @figer_selecteur(c["cle"])
-    def selectionner(paris, depuis=None):
-        # Pas de rejeu : seul le suivi depuis la mise en service compte.
-        if depuis is not None:
-            return set()
-        return selection_gemini_defi(paris, c, c["debut"])
-    selectionner.__name__ = selectionner.__qualname__ = "paris_" + c["cle"]
-    selectionner.__doc__ = c["nom"] + " (figée au lancement, " + c["debut"] + ")."
-    return selectionner
+    return selecteur_sans_rejeu(c, lambda paris: selection_gemini_defi(paris, c, c["debut"]))
 
 
 paris_gemini_defi_1 = _selecteur(GEMINI_DEFI_1)
