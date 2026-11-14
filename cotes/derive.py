@@ -27,11 +27,10 @@ import os
 import zlib
 from collections import defaultdict
 from datetime import datetime
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import urlopen
 
 from . import memoire
-from .pannes import URL
+from .echecs import alerter_pushover
 
 FICHIER = "derive_sources"
 PREFIXE = "dérive : "
@@ -195,19 +194,9 @@ def messages(constats: dict[str, list[dict]]) -> dict[str, list[str]]:
 
 def envoyer(constats: dict[str, list[dict]], env=None, ouvrir=urlopen) -> bool:
     """Un message Pushover pour les constats nouveaux. Faux si rien n'est parti (pas de clé, échec)."""
-    env = os.environ if env is None else env
-    jeton, cle = env.get("PUSHOVER_APP_TOKEN", "").strip(), env.get("PUSHOVER_USER_KEY", "").strip()
     lignes = [f"{NOMS.get(s, s)} : {c['detail']} (depuis {str(c['depuis'])[11:16]} UTC)"
               for s, vus in constats.items() for c in vus if c.get("nouveau")]
-    if not lignes or not jeton or not cle:
-        return False
-    corps = {"token": jeton, "user": cle, "title": f"Source qui dérive ({len(lignes)})", "message": "\n".join(lignes)[:1000]}
-    try:
-        with ouvrir(Request(URL, data=urlencode(corps).encode(), method="POST",
-                            headers={"User-Agent": "cotes-value"}), timeout=10) as r:
-            return 200 <= getattr(r, "status", 200) < 300
-    except Exception:  # noqa: BLE001
-        return False
+    return alerter_pushover(f"Source qui dérive ({len(lignes)})", "\n".join(lignes), env, ouvrir)
 
 
 def mesures_du_cycle(etapes: dict, lignes_par_source: dict[str, list], releve_inconnus: dict | None = None) -> dict:

@@ -32,7 +32,7 @@ from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REG
 from cotes.mises import (METHODES as METHODES_MISE, MODE_DEFAUT, MODES_BILAN, MODES_INTEGRES,  # noqa: E402
                          comparer as comparer_mises, mise_du_mode)
 from cotes.securite import json_public
-from cotes.protection import calculer, proteger_strategies  # noqa: E402
+from cotes.protection import calculer, mettre_a_jour_pannes, proteger_strategies  # noqa: E402
 from cotes.analyste import SEUILS as SEUILS_AVIS, alleger_avis, annoter_avis, reference_avis  # noqa: E402
 from cotes import notifications as notifications_mod  # noqa: E402
 from cotes import ordres as ordres_mod  # noqa: E402
@@ -883,10 +883,9 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             "incoherences_reglement": [x for x in (_lire(donnees / "resultats_a_saisir.json", {}) or {}).get("incoherences") or []
                                        if isinstance(x, dict)][:20]}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
-    # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/pannes.py).
-    from cotes import pannes
+    # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/protection.py).
     data["durees_strategies"] = durees_strategies
-    data["pannes_strategies"] = pannes.mettre_a_jour(donnees, echecs_strategies or {}, datetime.now(timezone.utc))
+    data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, datetime.now(timezone.utc))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
         echecs.fusionner(etat, list(echecs_strategies.values()), datetime.now(timezone.utc))

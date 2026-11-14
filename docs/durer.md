@@ -151,7 +151,7 @@ après un mouvement), pas contre la mesure de la CLV.
 | Marché mal traduit (cotes aberrantes) | `cotes/controle.py` : bloque les paris | Page Santé |
 | Libellé qu'aucun traducteur ne reconnaît | `cotes/inconnus.py` : relevé | Page Santé, sans seuil |
 | Cote Pinnacle figée ou trop vieille | `cotes/mouvement.py`, `cotes/pinnacle.py` | Pari bloqué |
-| Stratégie en erreur | `cotes/pannes.py` | Pushover |
+| Stratégie en erreur | `cotes/protection.py` | Pushover |
 
 Trou : une source lue **sans erreur** dont le contenu a changé. Lecture vide, marché qui disparaît parce que son
 libellé a été renommé, cache qui sert les mêmes cotes. Rien ne le signalait.

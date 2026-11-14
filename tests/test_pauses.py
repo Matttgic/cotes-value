@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
 
-from cotes import pannes, pauses, protection
+from cotes import pauses, protection
 from cotes.decisions import appliquer
 from cotes.recommandations import doublons
 
@@ -61,11 +61,11 @@ def test_pannes_alerte_une_fois_au_seuil(tmp_path):
     envois = []
     ouvrir = lambda req, timeout: envois.append(req) or _Rep()
     env = {"PUSHOVER_APP_TOKEN": "jeton", "PUSHOVER_USER_KEY": "cle"}
-    for _ in range(pannes.SEUIL + 2):
-        etat = pannes.mettre_a_jour(tmp_path, {"grok_1": {"message": "KeyError: x"}}, T, env, ouvrir)
-    assert len(envois) == 1 and etat["strategies"]["grok_1"]["consecutifs"] == pannes.SEUIL + 2
-    pannes.mettre_a_jour(tmp_path, {}, T, env, ouvrir)               # retour à la normale : compteur remis à zéro
-    assert json.loads((tmp_path / pannes.FICHIER).read_text()) == {}
+    for _ in range(protection.SEUIL_PANNES + 2):
+        etat = protection.mettre_a_jour_pannes(tmp_path, {"grok_1": {"message": "KeyError: x"}}, T, env, ouvrir)
+    assert len(envois) == 1 and etat["strategies"]["grok_1"]["consecutifs"] == protection.SEUIL_PANNES + 2
+    protection.mettre_a_jour_pannes(tmp_path, {}, T, env, ouvrir)               # retour à la normale : compteur remis à zéro
+    assert json.loads((tmp_path / protection.FICHIER_PANNES).read_text()) == {}
 
 
 def test_durees_temps_propre():
