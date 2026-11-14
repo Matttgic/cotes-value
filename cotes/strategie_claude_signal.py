@@ -18,6 +18,17 @@ les deux périodes d'étude), match pas commencé. Une seule mise par cote fran�
 passe la règle. Aucun plafond.
 
 La sélection ne lit jamais statut, gain, CLV ni cote de clôture. Pas de rejeu : seul le suivi depuis DEBUT compte.
+
+Claude · PMU régulier (docs/strategie-claude-pmu.md), conçue le 13/11/2026, suivie dès DEBUT_PMU : même moteur
+(``motif_refus_claude_signal``), autres seuils.
+Origine : sur les paris uniques réglés du 10/10 au 12/11/2026 (hors écarts ≥ 7 %, scores exacts et cotes > 10), PMU
+est le seul bookmaker dont la CLV par match est positive dans les trois tiers de la période : +0,7 % sur 756 matchs
+(+1,1 / +0,9 / +0,9), et +1,4 % sur 281 matchs entre 2,01 et 3,00. Les gros écarts ont une CLV forte mais un ROI très
+négatif : ce sont surtout des erreurs de cote ou d'association, d'où le plafond d'écart à 7 %.
+Choisie en regardant ces données parmi 102 sous-ensembles : pas une validation. Seul le suivi depuis DEBUT compte.
+
+Règle : PMU, référence Pinnacle ou Polymarket, cote 1,50–3,00, écart 2–7 %, ni score exact ni mi-temps/fin, équipes
+non inversées, match pas commencé ; une mise de 10 € par cote française (première détection qui passe la règle).
 """
 from __future__ import annotations
 
@@ -55,6 +66,19 @@ CLAUDE_SIGNAL_FRAIS = {
               "0,5 % sur 10 à 60 min · " + _COMMUN,
 }
 CLAUDE_SIGNAL = (CLAUDE_SIGNAL_DOUBLE, CLAUDE_SIGNAL_FRAIS)
+
+DEBUT_PMU = "2026-11-13T02:00:00+00:00"
+CLAUDE_PMU = {
+    "cle": "claude_pmu", "nom": "Claude · PMU régulier", "court": "PMU régulier",
+    "debut": DEBUT_PMU, "version": "1", "mise": 10.0, "maximum_jour": None, "auteur": "Claude",
+    "prospectif_seulement": True,
+    "references": ("Pinnacle", "Polymarket"), "bookmakers": ("PMU",),
+    "marches_exclus": ("CORRECT_SCORE", "HALF_TIME_FULL_TIME"),
+    "cote_min": 1.50, "cote_max": 3.00, "ecart_min_pct": 2.0, "ecart_max_pct": 7.0,
+    "regles": "PMU · référence Pinnacle ou Polymarket · cote 1,50–3,00 · écart 2–7 % · ni score exact ni "
+              "mi-temps/fin · équipes non inversées · une mise par cote française, la première détection qui passe "
+              "la règle · mise fictive 10 € · règles de Claude",
+}
 
 
 def motif_refus_claude_signal(p: dict, c: dict = CLAUDE_SIGNAL_DOUBLE) -> str | None:
@@ -128,3 +152,4 @@ def _selecteur(c: dict):
 SELECTEURS = {c["cle"]: _selecteur(c) for c in CLAUDE_SIGNAL}
 paris_claude_signal_double = SELECTEURS["claude_signal_double"]
 paris_claude_signal_frais = SELECTEURS["claude_signal_frais"]
+paris_claude_pmu = _selecteur(CLAUDE_PMU)
