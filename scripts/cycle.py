@@ -10,7 +10,7 @@ Le règlement des paris (lecture des résultats : environ 6 minutes, 220 requêt
 heure (REGLEMENT_MINUTES, 55 par défaut) : les cotes, elles, sont lues à chaque cycle.
 
 Données (branche « donnees ») : paris.json, etat.json, opportunites/AAAA-MM-JJ.jsonl, cotes/AAAA-MM-JJ.jsonl.gz,
-references/, releves/ et correspondances/ (cotes/historique_references.py),
+references/, releves/ et correspondances/ (cotes/historiques.py),
 resultats_manuels.json (règlements faits à la main ; « supprime » retire un pari). Site : dossier site/.
 Mémoire de travail (cache Actions, MEMOIRE_CHEMIN) : horizon_direct, caches de secours, contrôle (cotes/memoire.py).
 """
@@ -44,9 +44,8 @@ from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
 from cotes import reprise  # noqa: E402
-from cotes import historique_cotes, historique_references, memoire  # noqa: E402
+from cotes import historiques, memoire  # noqa: E402
 from cotes import echecs  # noqa: E402
-from cotes.ecriture import ajouter_gzip  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 from cotes.fraicheur import resume_lignes  # noqa: E402
@@ -416,7 +415,7 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
     horizon = memoire.lire(donnees, "horizon_direct", {}) if donnees else {}
     if not isinstance(horizon, dict):
         horizon = {}
-    cotes_avant = historique_cotes.index(horizon) if donnees else {}
+    cotes_avant = historiques.index_cotes(horizon) if donnees else {}
 
     def _reserve(nom: str) -> dict:
         bloc = horizon.get(nom)
@@ -655,7 +654,7 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         horizon = {k: horizon[k] for k in gardes if k in horizon}
         memoire.ecrire(donnees, "horizon_direct", horizon)
         try:            # historique en ajout seul : jamais bloquant pour la collecte
-            journal["historique_cotes"] = {"lignes": historique_cotes.ajouter(donnees, cotes_avant, horizon,
+            journal["historique_cotes"] = {"lignes": historiques.ajouter_cotes(donnees, cotes_avant, horizon,
                                                                                maintenant)}
         except Exception as e:  # noqa: BLE001
             journal["historique_cotes"] = {"erreur": echecs.noter(journal, "historique_cotes", e, maintenant)}
@@ -1076,7 +1075,7 @@ def main() -> int:
     #    pas une nouvelle mesure de conformité.
     index = etape("association", journal, comparaison.indexer, francais, references) or {}
     try:            # historique des références, relevé des sources et rapprochements : jamais bloquant
-        journal["historique_references"] = historique_references.enregistrer(donnees, francais, references, index,
+        journal["historique_references"] = historiques.enregistrer(donnees, francais, references, index,
                                                                               maintenant)
     except Exception as e:  # noqa: BLE001
         journal["historique_references"] = {"erreur": echecs.noter(journal, "historique_references", e, maintenant)}
@@ -1165,7 +1164,7 @@ def main() -> int:
         jour = donnees / "opportunites" / f"{maintenant:%Y-%m-%d}.jsonl.gz"
         jour.parent.mkdir(parents=True, exist_ok=True)
         # Ajout atomique (copie + nouveau membre gzip + os.replace) : un job tué ne tronque jamais le fichier.
-        ajouter_gzip(jour, "".join(json.dumps(o, ensure_ascii=False) + "\n" for o in opportunites))
+        historiques.ajouter_gzip(jour, "".join(json.dumps(o, ensure_ascii=False) + "\n" for o in opportunites))
     etat = lire_json(donnees / "etat.json", {})
     journal.update({
         "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),

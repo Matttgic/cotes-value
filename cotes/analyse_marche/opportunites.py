@@ -25,7 +25,7 @@ import json
 from bisect import bisect_right
 from datetime import datetime, timedelta
 
-from ..historique_cotes import texte_cle
+from ..historiques import texte_cle
 from . import lecture as L
 
 LECTURE_CYCLE = timedelta(minutes=3)      # les cotes d'un cycle sont lues dans les 3 minutes qui suivent son début

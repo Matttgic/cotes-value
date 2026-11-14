@@ -3,7 +3,7 @@ import gzip
 import json
 from datetime import datetime, timedelta, timezone
 
-from cotes import historique_cotes, historique_references as H
+from cotes import historiques as H
 
 NOW = datetime(2026, 11, 12, 10, 0, tzinfo=timezone.utc)
 
@@ -48,12 +48,12 @@ def test_retrait_seulement_si_le_match_est_relu(tmp_path, monkeypatch):
                                                 "k": "RESULTAT_1N2|MATCH||EXT", "c": None}
     # reprise d'une lecture ancienne (référence en panne) : pas fraîche, pas de retrait
     encore = plus_tard + timedelta(minutes=5)
-    lignes, _ = H.changements({"Pinnacle\t111\tRESULTAT_1N2|MATCH||NUL": 3.0}, {"Pinnacle": [pin(t=NOW)]}, encore)
+    lignes, _ = H.changements_references({"Pinnacle\t111\tRESULTAT_1N2|MATCH||NUL": 3.0}, {"Pinnacle": [pin(t=NOW)]}, encore)
     assert [x for x in lignes if x.get("c") is None] == []
 
 
 def test_ligne_sans_proba_juste_ignoree_et_champs_des_bourses():
-    lignes, etat = H.changements({}, {"Smarkets": [pin(p=None), pin("EXT", 0.4, liquidite=35.5,
+    lignes, etat = H.changements_references({}, {"Smarkets": [pin(p=None), pin("EXT", 0.4, liquidite=35.5,
                                                                     ecart_achat_vente=0.012, marge_pinnacle=None,
                                                                     mise_max=None)]}, NOW)
     assert len(etat) == 1
@@ -96,13 +96,13 @@ def test_retrait_d_une_cote_bookmaker_dans_un_match_relu():
         return {"source": "PMU", "match_id": mid, "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None,
                 "issue": issue, "cote": cote, "collecte": lu(t)}
     vieux = NOW - timedelta(minutes=5)
-    avant = historique_cotes.index({"pmu": {"lignes": [l("DOM", 2.0, vieux), l("EXT", 3.0, vieux),
+    avant = H.index_cotes({"pmu": {"lignes": [l("DOM", 2.0, vieux), l("EXT", 3.0, vieux),
                                                        l("DOM", 1.5, vieux, "pmu|2"), l("EXT", 2.5, vieux, "pmu|2")]}})
     # pmu|1 relu sans EXT ; pmu|2 gardé en mémoire sans relecture (lecture tournante) et sans EXT
     horizon = {"pmu": {"lignes": [l("DOM", 2.0, NOW), l("DOM", 1.5, vieux, "pmu|2")]}}
-    assert historique_cotes.changements(avant, horizon, NOW) == [
+    assert H.changements_cotes(avant, horizon, NOW) == [
         {"t": lu(NOW), "b": "PMU", "m": "pmu|1", "k": "RESULTAT_1N2|MATCH||EXT", "c": None}]
-    assert historique_cotes.changements(avant, horizon) == []                # sans heure de cycle : comme avant
+    assert H.changements_cotes(avant, horizon) == []                # sans heure de cycle : comme avant
 
 
 def test_dossiers_journaliers_alignes():

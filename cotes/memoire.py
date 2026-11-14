@@ -6,7 +6,7 @@ limite GitHub de 100 Mo) en faisait 76 %, réécrit en entier toutes les 5 minut
 changeait. ``pinnacle_secours_cache.json`` et ``smarkets_cache.json`` étaient aussi des caches réécrits en
 entier. Ces fichiers ne servent qu'au cycle suivant : ils vivent maintenant en gzip dans le dossier
 ``MEMOIRE_CHEMIN`` (``memoire/`` dans .github/workflows/collecte.yml), gardé par ``actions/cache`` comme
-``reprise/``. L'historique utile des cotes va dans ``cotes/AAAA-MM-JJ.jsonl.gz`` (cotes/historique_cotes.py).
+``reprise/``. L'historique utile des cotes va dans ``cotes/AAAA-MM-JJ.jsonl.gz`` (cotes/historiques.py).
 
 Lecture : ``<memoire>/<nom>.json.gz``, sinon l'ancien ``<donnees>/<nom>.json`` (premier cycle après la
 migration), sinon la valeur par défaut. Absent ou illisible : démarrage à froid, jamais d'exception.

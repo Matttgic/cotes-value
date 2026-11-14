@@ -352,7 +352,7 @@ suivent les scans et ne garantissent pas que la cote reste disponible.
 - `cotes/AAAA-MM-JJ.jsonl.gz` (depuis le 30/10/2026) : historique des cotes PMU, Unibet, Betclic et NetBet,
   en ajout seul : seules les cotes nouvelles ou changées d'un cycle à l'autre, champs réduits
   (`t` heure de lecture, `b` bookmaker, `m` match, `k` marché|période|ligne|issue[|joueur], `c` cote), plus une
-  ligne de description (équipes, ligue, début) à la première apparition d'un match (cotes/historique_cotes.py) ;
+  ligne de description (équipes, ligue, début) à la première apparition d'un match (cotes/historiques.py) ;
 - `controle.json` : contrôle des intitulés, JSON compact publié au plus une fois par heure (champ `publie`) ;
   la version de chaque cycle reste dans la mémoire de travail.
 

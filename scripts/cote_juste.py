@@ -91,7 +91,7 @@ def retirer_marge(cotes: np.ndarray, methode: str) -> np.ndarray:
 
 def cotes_depuis_puissance(p: np.ndarray, marge: np.ndarray) -> np.ndarray:
     """Cotes brutes d'un marché dont on connaît les probabilités « puissance » et la marge : q_i = p_i^(1/k),
-    1/k tel que Σ q_i = 1 + marge. C'est ce que garde references/ (cotes/historique_references.py)."""
+    1/k tel que Σ q_i = 1 + marge. C'est ce que garde references/ (cotes/historiques.py)."""
     cible = 1.0 + np.asarray(marge, dtype=float)
     a = _bissection(lambda a: (p ** a[:, None]).sum(axis=1) - cible, np.full(len(p), 0.2), np.full(len(p), 5.0))
     return 1.0 / (p ** a[:, None])

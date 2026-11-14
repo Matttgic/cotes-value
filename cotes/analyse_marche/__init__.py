@@ -3,10 +3,10 @@
 Module indépendant de la détection (rien ici n'est importé par le cycle). Il lit les fichiers journaliers de la
 branche « donnees » un par un, en flux, sans tout charger en mémoire :
 
-- ``cotes/`` (bookmakers, changements seuls, cotes/historique_cotes.py) ;
+- ``cotes/`` (bookmakers, changements seuls, cotes/historiques.py) ;
 - ``opportunites/`` (écarts d'au moins 2 % à chaque cycle) ;
 - ``references/``, ``releves/`` et ``correspondances/`` quand ils existent (depuis le 12/11/2026,
-  cotes/historique_references.py).
+  cotes/historiques.py).
 
 Chaque jour terminé est résumé une fois et gardé en cache (cache.py) : le passé n'est jamais recalculé. Deux
 études pour l'instant :
