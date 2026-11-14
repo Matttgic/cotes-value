@@ -1134,9 +1134,10 @@ def main() -> int:
     redecider(registre, maintenant, journal, redecider_ouverts)
     suivre_qwen(donnees, registre, opportunites, maintenant, journal)
     simulation.suivre_prix(paris, francais)
+    prudentes: set[tuple] = set()     # clôtures lues au prix d'achat de Polymarket : CLV minimale
     justes = etape("cotes_cloture", journal, comparaison.cotes_justes_depuis, index,
-                   hors_consensus=hors) or {}
-    simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
+                   hors_consensus=hors, prudentes=prudentes) or {}
+    simulation.suivre_cloture(paris, justes, prudentes=prudentes)      # heure réelle : un match peut commencer pendant le cycle
 
     # La collecte reprend le règlement si le workflow horaire a été retardé.
     regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)

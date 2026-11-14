@@ -59,8 +59,12 @@ STATISTIQUES = re.compile(
     r"rebond|rebound|passes? d[ée]cisive|assist|interception|steal|\bcontres?\b|\bblocks?\b|strikeout|"
     r"\bhits?\b|home runs?|penalt|buteur|scorer|marqueur|\bjoueur|player|s[ée]ries?\b(?! [ab]\b)|\bbreaks?\b|"
     r"\bwalks?\b|\bbases?\b|touchdowns?|field goals?|yards|sacks?|turnover|panier|\b3 points|three|3-pt")
-MANCHES = re.compile(r"(?:first|premi[eè]res?)\s+(\d+)\s+(?:innings|manches)|(\d+)\s+(?:premi[eè]res?|first)\s+"
-                     r"(?:innings|manches)|(?:innings|manches)\s+1\s*[-àa]\s*(\d+)")
+# « First 5 Innings », « 5 premières manches », mais aussi les intitulés français de PMU depuis la lecture directe :
+# « Handicap - 5 1eres manches », « Total de Runs - 7 1ers Tours de Batte ».
+_PREMIERES = r"(?:first|premi[eè]re?s?|1\s*[eè]?re?s?)"
+_MANCHES = r"(?:innings|manches|tours de batte)"
+MANCHES = re.compile(rf"{_PREMIERES}\s+(\d+)\s+{_MANCHES}|(\d+)\s+{_PREMIERES}\s+{_MANCHES}|"
+                     rf"{_MANCHES}\s+1\s*[-àa]\s*(\d+)")
 
 
 def libelle_exclu(sport: str, marche_canonique: str | None, libelle: str) -> bool:
@@ -81,7 +85,7 @@ def periode(sport: str, canonique: str | None, libelle: str) -> str | None:
         m = MANCHES.search(l)
         if m:                             # « First 5 Innings » -> 5_MANCHES ; 3 ou 7 manches : non comparé
             return "5_MANCHES" if next(g for g in m.groups() if g) == "5" else None
-        if re.search(r"\b(inning|manche)\b", l):
+        if re.search(r"\b(inning|manche)\b|\btours? de batte\b", l):
             return None                   # une manche précise (« 1st Inning ») : non comparé
     m = re.search(r"\b([1-4])\s*(?:er|ère|re|e|ème|eme|de|nd|st|rd|th)?\s*(mi-temps|half|tiers-temps|période|periode|"
                   r"quart-temps|quarter|set|period)", l)
@@ -153,6 +157,11 @@ PERIODE_VERIFIEE = {
 #   Pinnacle 10 fois plus étroitement que la version prolongation incluse (0,0065 contre 0,070 sur 3 476
 #   cotes, nuit du 5 au 6/10/2026), comme le prévoit le règlement Unibet par défaut.
 PERIODE_CONSTATEE = {("unibet-fr", "hockey"): {"TOTAL": "TEMPS_REG"}}
+# Handicap ±0,5 égal au vainqueur prolongation incluse, quand l'intitulé ne dit rien. Winamax, hockey : sur les
+# trois matchs de l'archive des 12-14/11/2026, « Écart de buts (handicap) » ±0,5 a exactement les cotes du vainqueur
+# à 2 issues (1,18 / 3,65 ; 1,90 / 1,60 ; 1,31 / 2,65) alors que le 1N2 des 60 minutes vaut 1,36, 2,50… Classé
+# « temps réglementaire », il donnait de faux écarts de 8 à 14 % contre le handicap des 60 minutes de Pinnacle.
+HANDICAP_DEMI_PROLONGATION = {("winamax", "hockey")}
 # marchés où le nul existe : forcément sur le temps réglementaire
 MARCHES_AVEC_NUL = {"RESULTAT_1N2", "DOUBLE_CHANCE", "DRAW_NO_BET", "HANDICAP_3", "HALF_TIME_FULL_TIME"}
 
@@ -187,6 +196,9 @@ def periode_match(bookmaker: str, sport: str, marche: str, libelle: str, ligne=N
     if _temps_reglementaire(libelle) or marche in MARCHES_AVEC_NUL:
         return "TEMPS_REG"
     if _prolongation_incluse(libelle):
+        return "MATCH"
+    if (marche == "HANDICAP" and ligne is not None and abs(ligne) == 0.5
+            and (bookmaker, sport) in HANDICAP_DEMI_PROLONGATION):
         return "MATCH"
     for table in (PERIODE_VERIFIEE, PERIODE_CONSTATEE):
         if marche in table.get((bookmaker, sport), {}):

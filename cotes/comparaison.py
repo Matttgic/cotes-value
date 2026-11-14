@@ -179,13 +179,21 @@ def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str
     matchs_fr = C.matchs_de(francais)
     index: dict[str, dict] = {}
     for nom, lignes in references.items():
+        # L'association voit TOUS les matchs de la référence, pas seulement ceux dont une cote est fiable à cet
+        # instant : sinon, quand le vrai match n'a que des cotes périmées ou à forte marge, il disparaît des candidats
+        # et un sosie prend sa place (cas réel du 30/10/2026 : Tappara – Ilves, Liiga, associé à l'envers chez six
+        # bookmakers au match Pinnacle 1639061776 « Ilves – Tappara » d'une autre catégorie, score 0,85, alors que
+        # le bon match 1639048394 existait ; 6 paris). Seules les lignes fiables servent ensuite à la comparaison.
+        tous = C.matchs_de([l for l in lignes if isinstance(l, dict) and l.get("match_id")])
         lignes = [x for x in (_lisible(nom, l) for l in lignes) if x is not None]
         par_match: dict[str, list[dict]] = {}
         for l in lignes:
             par_match.setdefault(l["match_id"], []).append(l)
-        assoc = C.associer(matchs_fr, C.matchs_de(lignes))
+        assoc = C.associer(matchs_fr, tous)
         index[nom] = {}
         for mid_fr, (mid_ref, inverse, score) in assoc.items():
+            if mid_ref not in par_match:
+                continue                      # bon match, mais aucune cote fiable ce cycle : pas de comparaison
             index[nom][mid_fr] = {cle(inverser(l) if inverse else l): {**l, "score_association": round(score, 2),
                                                                         "inverse": inverse}
                                   for l in par_match.get(mid_ref, [])}
@@ -346,13 +354,15 @@ def _controle_du_groupe(l: dict, controle: tuple[dict, dict] | None) -> dict | N
     return {k: g.get(k) for k in ("statut", "n", "mediane")} if g else None
 
 
-def cotes_justes_depuis(index: dict, hors_consensus: set[str] | None = None) -> dict[tuple, dict[str, tuple]]:
+def cotes_justes_depuis(index: dict, hors_consensus: set[str] | None = None,
+                        prudentes: set[tuple] | None = None) -> dict[tuple, dict[str, tuple]]:
     """Même table que ``index_cotes_justes``, lue sur un index déjà associé.
 
-    Évite de relancer l'association (environ une minute) à la clôture.
+    Évite de relancer l'association (environ une minute) à la clôture. ``prudentes``, s'il est fourni, reçoit les
+    (match français, clé, référence) lus au prix d'achat : leur cote juste est une borne (``suivre_cloture``).
     """
     out: dict[tuple, dict[str, tuple]] = {}
-    prudents: set[tuple] = set()      # lignes au prix prudent : hors consensus, comme dans ``comparer``
+    prudents: set[tuple] = prudentes if prudentes is not None else set()   # hors consensus, comme dans ``comparer``
     for nom, par_match in (index or {}).items():
         if not isinstance(par_match, dict):
             continue
