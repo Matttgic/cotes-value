@@ -23,21 +23,14 @@ from __future__ import annotations
 import gzip
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from . import pinnacle
+from .temps import instant_utc as _instant
 
 REFERENCES = ("Pinnacle", "Polymarket")
 TOLERANCE_HORLOGE_S = 60
-
-
-def _instant(valeur) -> datetime | None:
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return None
-    return t.astimezone(timezone.utc) if t.tzinfo else None
 
 
 class Seuils:

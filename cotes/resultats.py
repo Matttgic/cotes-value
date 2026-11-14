@@ -23,6 +23,7 @@ import requests
 
 from .connexion import Client
 from .correspondance import normaliser, ressemblance
+from .temps import instant as _heure
 
 _http = Client()                 # connexion gardée : ESPN, un appel par jour et par ligue
 ECART_HEURE_MIN = 45
@@ -82,14 +83,6 @@ ESPN_NOTES_FEMININES = re.compile(r"women|^wwc|ncaaw|nwsl|usl super league|liga 
 ESPN_ABANDONS = {"STATUS_RETIRED"}
 REPORT_MAX_J = 7
 LIGUE_FEMININE = re.compile(r"\((?:f|w)\)|\b(?:femmes?|women|womens|feminin|f\.)\b|(?<!groupe )(?<!group )(?<!poule )(?<!pool )\bf\.?$", re.I)
-
-
-def _heure(s) -> datetime | None:
-    try:
-        date = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
-        return date if date.tzinfo is not None and date.utcoffset() is not None else None
-    except (TypeError, ValueError):
-        return None
 
 
 def libelles_periodes(sport: str, libelles: list | None, n: int) -> list[str]:

@@ -15,6 +15,7 @@ import tempfile
 import zlib
 from datetime import datetime, timedelta
 from pathlib import Path
+from .temps import instant as _heure
 
 ARCHIVE_APRES_JOURS = 30
 DOSSIER = "archives"
@@ -24,14 +25,6 @@ STATUTS_REGLES = {"gagne", "perdu", "demi_gagne", "demi_perdu", "rembourse"}
 
 class ArchiveInvalide(ValueError):
     """Une archive ne doit pas être remplacée ni omise d'un bilan officiel."""
-
-
-def _heure(s) -> datetime | None:
-    try:
-        date = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
-        return date if date.tzinfo is not None and date.utcoffset() is not None else None
-    except (TypeError, ValueError):
-        return None
 
 
 def fusionner_paris(*lots: list[dict]) -> list[dict]:

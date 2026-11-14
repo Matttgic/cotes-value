@@ -22,20 +22,13 @@ import os
 from datetime import datetime
 from math import sqrt
 from pathlib import Path
+from .temps import instant as _date
 
 FICHIER = "pauses.json"
 MIN_REGLES = 200
 MIN_CLV = 100
 Z95 = 1.645
 _ACTIVES: dict[str, datetime] = {}
-
-
-def _date(valeur) -> datetime | None:
-    try:
-        d = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return d if d.tzinfo else None
 
 
 def _lire(donnees) -> dict:
