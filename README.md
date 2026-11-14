@@ -401,6 +401,8 @@ sur le test du 17–19 octobre. Cela ne démontre pas une rentabilité future.
 et validée sur l'autre, Kelly fractionné simulé contre la mise fixe par `scripts/strategie_mises.py`.
 [Cote juste](docs/cote-juste.md) (14/11/2026) : méthodes de retrait de la marge et pondérations du consensus
 mesurées par `scripts/cote_juste.py` ; aucun changement retenu.
+[Recherche](docs/recherche.md) (14/11/2026) : la clôture Pinnacle est-elle prévisible (tests hors échantillon par
+`scripts/recherche_cloture.py`), parier tôt ou attendre, autres références vérifiées.
 Le retrait complet de la valeur guest Pinnacle reste conditionné à une configuration de remplacement validée. La revue détaillée de cinq moteurs de sélection reste ouverte ; les rapports ne certifient pas une rentabilité future.
 
 ## Règlement
