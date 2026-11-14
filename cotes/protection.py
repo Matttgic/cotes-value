@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from functools import wraps
 from time import perf_counter
 
 from . import echecs
@@ -64,12 +63,3 @@ def durees(maximum: int = 15) -> dict:
     return {"total": round(sum(_DUREES.values()), 1), "strategies": len(_DUREES),
             "plus_lentes": [{"nom": n, "secondes": round(t, 2)} for n, t in tri[:maximum]]}
 
-
-def proteger(nom: str):
-    """Décorateur : ``calculer`` autour d'un sélecteur ``f(paris, ...) -> set``."""
-    def decorer(f):
-        @wraps(f)
-        def protege(*args, **kwargs):
-            return calculer(nom, lambda: f(*args, **kwargs))
-        return protege
-    return decorer

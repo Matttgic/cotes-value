@@ -9,7 +9,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from cotes.temps import instant_utc
 
-PRES_H = 6
 AGE_MAX_H = 3
 
 

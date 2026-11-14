@@ -27,4 +27,3 @@ CLAUDE_PMU = {
               "la règle · mise fictive 10 € · règles de Claude",
 }
 SELECTEURS = {CLAUDE_PMU["cle"]: _selecteur(CLAUDE_PMU)}
-paris_claude_pmu = SELECTEURS["claude_pmu"]
