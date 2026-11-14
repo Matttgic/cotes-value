@@ -101,6 +101,3 @@ Une seule étape reste proposée, à décider : déplacer les 19 `strategie_*.py
 `cotes/` passerait de 75 à 56 modules. Coût : environ 70 fichiers d'imports à modifier, les chemins de
 `.github/workflows/site.yml` et de `scripts/verifier_strategie_jules_v2.py`, et les empreintes des cinq fichiers
 figés changeraient. Aucun code en moins : c'est du rangement.
-
-Reste aussi un commentaire à corriger à la main dans `.github/workflows/collecte.yml` (ligne 191) :
-`cotes/pannes.py` est devenu `cotes/protection.py`.
