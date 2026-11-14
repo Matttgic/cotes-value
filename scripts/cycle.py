@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (flashscore, livescore, comparaison, controle, pinnacle, polymarket, reglement,  # noqa: E402
-                   scores365, simulation, smarkets, stockage, inconnus)
+                   scores365, simulation, smarkets, stockage, inconnus, derive)
 from cotes.direct import betclic as betclic_direct  # noqa: E402
 from cotes.direct import netbet as netbet_direct  # noqa: E402
 from cotes.direct import olybet as olybet_direct  # noqa: E402
@@ -1053,6 +1053,18 @@ def main() -> int:
         # Référence sharp attendue par les stratégies (Pinnacle, Betfair, Polymarket) et le Consensus, comme
         # avant la fin du flux Orbit. Hors du contrôle de conformité des intitulés, comme les autres bourses.
         references["Betfair"] = bf_lignes
+    # Dérive des sources (cotes/derive.py) : volume anormal, marchés disparus ou non reconnus, cotes figées.
+    # Une anomalie marque l'étape dégradée (page Santé, journal d'incidents) et alerte ; aucun pari n'est bloqué.
+    if args.mode == "complet":
+        par_source = {"pinnacle": pin, "polymarket": poly, "smarkets": sm_lignes, "matchbook": mb_lignes}
+        for l in francais:
+            par_source.setdefault(l.get("bookmaker"), []).append(l)
+        journal["derive"] = derive.mettre_a_jour(
+            donnees, derive.mesures_du_cycle(journal["etapes"], par_source, releve), maintenant)
+        for nom, textes in journal["derive"].pop("etapes", {}).items():
+            if nom in journal["etapes"]:
+                journal["etapes"][nom] |= {"degrade": True, "erreurs": (
+                    textes + list(journal["etapes"][nom].get("erreurs") or []))[:10]}
     # Matchbook a sa table de paris (mêmes seuils que Pinnacle). Il reste hors
     # de la moyenne : le Consensus et le désaccord des tables déjà en place
     # ne changent pas, donc les stratégies figées non plus.

@@ -1301,6 +1301,8 @@ function detailEtape(v) {
   if (!v.ok) return "Arrêtée au dernier passage";
   const err = Array.isArray(v.erreurs) ? v.erreurs : [];
   if (v.degrade && err.length) {
+    const derive = err.find(t => t.startsWith("dérive : "));       // cotes/derive.py : source qui répond autrement
+    if (derive) return "Dérive : " + derive.slice(9);
     const http = err.map(t => /HTTP (\d{3})/.exec(t)?.[1]).filter(Boolean);
     if (http.length === err.length) return `Refus (${[...new Set(http)].join(", ")}) sur ${err.length} requête${err.length>1?"s":""} · reprise automatique`;
     if (err.some(t => /budget/i.test(t))) return "Lecture partielle : limite de temps atteinte";

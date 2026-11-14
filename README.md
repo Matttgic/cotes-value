@@ -98,6 +98,7 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    publique (`web/vitrine.html`, deux chiffres Kelly ¼ recalculés à chaque publication) est publiée à part, en
    `vitrine.html`, sans lien depuis l'interface ni bouton de connexion : l'interface reste la page d'accueil.
    La page Santé garde un journal des incidents des dernières 24 heures (`sante_incidents.json`, écrit à chaque cycle par `cotes/surveillance.py`) : pannes, lectures dégradées et refus 403/429 qui durent au moins 3 cycles, avec début, durée et nombre de cycles. Le dépassement de budget n'en fait pas partie.
+   Une source lue sans erreur mais plus comme d'habitude (volume divisé par deux, marché disparu, marchés non reconnus en hausse, cotes figées) passe aussi en alerte, avec un message Pushover (`cotes/derive.py`, [docs/durer.md](docs/durer.md)).
 
 ### Deux stratégies suivies séparément
 

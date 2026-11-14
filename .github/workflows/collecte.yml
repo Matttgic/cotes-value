@@ -104,6 +104,9 @@ jobs:
         env:
           REPRISE_CHEMIN: reprise/derniere_lecture.json.gz
           MEMOIRE_CHEMIN: memoire
+          # Alerte « source qui dérive » (cotes/derive.py)
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
           PINNACLE_API_KEY: ${{ secrets.PINNACLE_API_KEY }}
           PINNACLE_RECHAUFFEUR_URL: ${{ secrets.PINNACLE_RECHAUFFEUR_URL }}
           PINNACLE_RECHAUFFEUR_SECRET: ${{ secrets.PINNACLE_RECHAUFFEUR_SECRET }}
