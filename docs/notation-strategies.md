@@ -54,7 +54,7 @@ normalisée, cote moyenne.
 
 La note est recalculée à chaque cycle (environ toutes les 5 minutes), pour chaque période et chaque mise. Le dernier
 calcul de chaque jour (heure de Paris, mise fixe, suivi prospectif) est gardé 60 jours dans `notes_historique.json`
-(branche `donnees`, `cotes/historique_notes.py`), avec la version de la formule : les notes de la version 1 ne sont
+(branche `donnees`, `cotes/notation.py`), avec la version de la formule : les notes de la version 1 ne sont
 pas comparées aux notes de la version 2 (l'historique repart du 8/11/2026). La page Stratégies montre l'évolution
 depuis la veille et sur 7 jours (▲ / ▼).
 

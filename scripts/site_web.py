@@ -764,10 +764,10 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     doublons = recommandees.pop("doublons", [])
     pauses_publiees = recommandees.pop("pauses", {})
     # Classement vivant : notes du jour gardées dans « donnees », progression depuis la veille et sur 7 jours.
-    from cotes import historique_notes
+    from cotes import notation
     instant_notes = datetime.now(timezone.utc)
-    notes_reperes = historique_notes.reperes(historique_notes.mettre_a_jour(
-        donnees, historique_notes.notes_du_laboratoire(laboratoire), instant_notes), instant_notes)
+    notes_reperes = notation.reperes(notation.historiser(
+        donnees, notation.notes_du_laboratoire(laboratoire), instant_notes), instant_notes)
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     actuelles = valider_actuelles(actuelles, paris, retenus)
