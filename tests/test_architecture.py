@@ -46,7 +46,7 @@ _PAR_COUCHE = {
                "cotes.alertes.pushover cotes.alertes.chrome cotes.alertes.envoi",
     "site": "scripts.site_web cotes.site cotes.site.construction",
     "cycle": "cotes.pipeline cotes.pipeline.contexte cotes.pipeline.outils cotes.pipeline.reglement cotes.pipeline.sauvegarde cotes.pipeline.analyse cotes.pipeline.prise cotes.pipeline.collecte cotes.pipeline.cycle",
-    "scripts": "cotes.__main__ scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "
+    "scripts": "cotes.__main__ scripts.relancer scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "
                "scripts.serveur_actif scripts.protocole scripts.verifier_secrets scripts.verifier_strategie_jules "
                "scripts.verifier_strategie_jules_v2 scripts.archiver_donnees_brutes scripts.sonde_betfair "
                "scripts.sonde_sources_us scripts.sonde_unibet scripts.empreinte_site",

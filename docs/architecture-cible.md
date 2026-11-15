@@ -536,6 +536,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
   essai. Appeler `gh` par `subprocess` (même authentification). Porter les 8 scénarios de test existants (faux `gh`)
   vers le script Python.
 - Test : `tests/test_robustesse_workflow.py`. Risque élevé : après fusion, suivre 3 cycles dans Actions.
+- Fait le 15/11/2026 : `scripts/relancer.py` (bibliothèque standard, `gh` et `sleep` par sous-processus) ; le job
+  extrait ce fichier et `serveur_actif.py`, lance `python3 -u scripts/relancer.py` ; `GITHUB_RUN_ID` et
+  `GITHUB_REF_NAME` viennent d'Actions, `MODE_COLLECTE` du YAML. Les 8 scénarios (faux `gh`, faux `sleep`) passent
+  tels quels sur le script Python ; le banc de test ne fait qu'ajouter ces trois variables.
 
 **E6.3 — Les workflows appellent le point d'entrée** (un workflow par commit : `site.yml`, `reglement.yml`,
 `collecte.yml`, `surveillance-collecte.yml`)
@@ -606,7 +610,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E5.3 | Heure du site injectée | E5.2 | faible | ☑ |
 | E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☑ |
 | E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☑ |
-| E6.2 | Relance en Python | — | élevé | ☐ |
+| E6.2 | Relance en Python | — | élevé | ☑ |
 | E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☑ |
 | E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☑ |
 | E6.5 | Calendrier vérifié | E1.1 | faible | ☑ |
