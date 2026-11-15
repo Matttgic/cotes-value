@@ -200,7 +200,10 @@ def test_cycle_betfair_lance_au_depart_et_hors_controle():
     from scripts import cycle
     src = inspect.getsource(cycle.main)
     assert src.index("futur_bf = pool_mb.submit(appliquer_betfair") < src.index("collecter_prematch(args.mode")
-    assert src.index('references["Betfair"] = bf_lignes') < src.index("comparaison.indexer")
+    # association et contrôle dans l'étape analyse depuis E3.3 (cotes/pipeline/analyse.py)
+    analyse = inspect.getsource(cycle.analyser)
+    assert src.index('references["Betfair"] = bf_lignes') < src.index("analyser(ctx)")
+    assert "comparaison.indexer" in analyse
     # pas dans le contrôle de conformité (liste du registre des sources depuis E2.2)
-    assert "not in registre_sources.hors_controle()" in src
+    assert "not in registre_sources.hors_controle()" in analyse
     assert "Betfair" in cycle.registre_sources.hors_controle()

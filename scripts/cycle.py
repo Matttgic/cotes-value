@@ -54,6 +54,7 @@ from cotes.depot.json_io import lire_json, ecrire_json  # noqa: E402,F401  (noms
 from cotes.sources import registre as registre_sources  # noqa: E402
 from cotes.pipeline.contexte import Contexte  # noqa: E402
 from cotes.pipeline import reglement as pipeline_reglement  # noqa: E402
+from cotes.pipeline.analyse import analyser  # noqa: E402
 from cotes.pipeline.sauvegarde import (sauvegarder, CONTROLE_PUBLICATION_MIN, _derniere_mesure,  # noqa: E402,F401
                                        lire_controle, enregistrer_controle)
 # déplacés dans cotes/pipeline/ (E3.1) ; noms gardés sur le module
@@ -726,67 +727,13 @@ def main() -> int:
     # ne changent pas, donc les stratégies figées non plus.
     hors = smarkets.hors_consensus() | matchbook_direct.hors_consensus()
 
-    # 3. contrôle de conformité des marchés (cumulé d'un cycle à l'autre), comparaison et paris simulés :
-    #    seules les cotes dont l'intitulé est contrôlé conforme peuvent donner un pari.
-    #    Le contrôle reste celui des références déjà en place : Smarkets a sa table,
-    #    pas une nouvelle mesure de conformité.
-    index = etape("association", journal, comparaison.indexer, francais, references) or {}
-    try:            # historique des références, relevé des sources et rapprochements : jamais bloquant
-        journal["historique_references"] = historiques.enregistrer(donnees, francais, references, index,
-                                                                              maintenant)
-    except Exception as e:  # noqa: BLE001
-        journal["historique_references"] = {"erreur": echecs.noter(journal, "historique_references", e, maintenant)}
-    index_controle = {n: v for n, v in index.items() if n not in registre_sources.hors_controle()}
-    mesures = controle.mesurer(francais, index_controle)
-    etat_controle = controle.mettre_a_jour(lire_controle(donnees), mesures, journal["debut"])
-    suspects = controle.matchs_suspects(mesures)
-    etat_controle["matchs_suspects"] = [
-        {"match_id": l["match_id"], "bookmaker": l["source"], "match": f'{l["domicile"]} – {l["exterieur"]}',
-         "rapport_median": suspects[l["match_id"]]}
-        for l in {l["match_id"]: l for l, *_ in mesures if l["match_id"] in suspects}.values()]
-    journal["controle"] = controle.resume(etat_controle) | {"mesures": len(mesures),
-                                                            "matchs_suspects": len(suspects)}
-    opportunites = etape("comparaison", journal, comparaison.comparer, francais, references,
-                         index=index, controle=(etat_controle, suspects),
-                         hors_consensus=hors) or []
-    from cotes import props as props_joueurs
-    rapproches = props_joueurs.comparer(francais, references) or []
-    journal["props_joueurs"] = {
-        **props_joueurs.compter(list(pin) + list(francais)),
-        "rapproches": len(rapproches),
-        "valeur": sum(1 for r in rapproches if r.get("valeur")),
-    }
-    ecrire_json(donnees / "props_joueurs.json",
-                {"maj": journal["debut"], "lignes": rapproches}, compact=True)
-    from cotes import props_papier
-    papier = props_papier.lire(donnees)
-    seuil_props = props_papier.seuil()
-    journal["props_papier"] = {
-        "seuil": seuil_props,
-        "nouveaux": props_papier.enregistrer(papier, rapproches, maintenant, seuil_props),
-        "clotures": props_papier.clotures(papier, pin, maintenant),
-        "polymarket": props_papier.verdict_polymarket(poly),
-    }
-    papier["polymarket"] = journal["props_papier"]["polymarket"]
-    papier["fanduel"] = journal.get("props_fanduel") or {}
-    papier["draftkings"] = {"props": journal.get("props_draftkings") or {}, "matchs": journal.get("matchs_draftkings") or {},
-                            "lecture": journal.get("draftkings") or {}}
-    props_papier.ecrire(donnees, papier)
-    for o in opportunites:           # marqueur de cycle : sert à la persistance (Qwen) et au diagnostic
-        o["cycle_id"] = journal["debut"]
-    # Mouvement de la cote juste de Pinnacle (dropping odds), inscrit dans le pari. Garde-fou : une cote Pinnacle de
-    # référence inchangée depuis 10 min ou plus (copie de cache figée) rend l'opportunité suspecte, avant le placement.
-    from cotes import mouvement
-    journal["mouvement"] = mouvement.annoter(
-        opportunites, index,
-        Path(args.reprise).with_name("ancres_mouvement.json.gz") if args.reprise else None, maintenant)
-    # Écarts d'affichage, y compris quand Smarkets ne décide pas. Avant le placement :
-    # le pari enregistre les trois champs.
-    # L'index de l'association contient déjà Polymarket et Smarkets (mêmes lignes) : pas de seconde association.
-    references_ecarts = {"Polymarket": poly, "Smarkets": sm_lignes}
-    comparaison.annoter_ecarts(opportunites, francais, references_ecarts,
-                               index={n: index[n] for n in references_ecarts
-                                      if n in index and references.get(n) is references_ecarts[n]})
+    # 3. analyse : association, contrôle des intitulés, comparaison, props, mouvement (cotes/pipeline/analyse.py)
+    ctx = Contexte(maintenant=maintenant, mode=args.mode, donnees=donnees,
+                   reprise=Path(args.reprise) if args.reprise else None, journal=journal,
+                   pinnacle=pin, polymarket=poly, francais=francais, smarkets=sm_lignes, matchbook=mb_lignes,
+                   betfair=bf_lignes, references=references, hors_consensus=hors)
+    analyser(ctx)
+    index, opportunites = ctx.index, ctx.opportunites
     paris = charger_paris(donnees, journal)
     # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
     manuels = lire_json(donnees / "resultats_manuels.json", {})
@@ -811,11 +758,7 @@ def main() -> int:
     regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)
 
     # 5. sauvegarde (cotes/pipeline/sauvegarde.py)
-    ctx = Contexte(maintenant=maintenant, mode=args.mode, donnees=donnees,
-                   reprise=Path(args.reprise) if args.reprise else None, journal=journal,
-                   pinnacle=pin, polymarket=poly, francais=francais, smarkets=sm_lignes, matchbook=mb_lignes,
-                   betfair=bf_lignes, etat_controle=etat_controle, opportunites=opportunites, paris=paris,
-                   nouveaux=nouveaux, regle=regler)
+    ctx.paris, ctx.nouveaux, ctx.regle = paris, nouveaux, regler
     sauvegarder(ctx)
 
     # 6. site
