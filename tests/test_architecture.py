@@ -20,7 +20,7 @@ RANG = {c: i for i, c in enumerate(RANG)}
 RANG["site"] = RANG["alertes"]          # alertes et site : même couche
 
 _PAR_COUCHE = {
-    "socle": "cotes cotes.config cotes.depot cotes.depot.catalogue cotes.depot.json_io cotes.temps cotes.delai cotes.connexion cotes.securite cotes.echecs cotes.memoire "
+    "socle": "cotes cotes.config cotes.depot cotes.depot.catalogue cotes.depot.json_io cotes.depot.archivage cotes.temps cotes.delai cotes.connexion cotes.securite cotes.echecs cotes.memoire "
              "cotes.historiques cotes.stockage cotes.fraicheur cotes.protection cotes.surveillance cotes.derive",
     "vocabulaire": "cotes.pulsescore cotes.marches cotes.joueurs cotes.inconnus cotes.marge cotes.correspondance "
                    "cotes.liens",
@@ -43,10 +43,10 @@ _PAR_COUCHE = {
               "cotes.analyse_marche cotes.analyse_marche.cache cotes.analyse_marche.lecture "
               "cotes.analyse_marche.meneurs cotes.analyse_marche.opportunites cotes.analyse_marche.segments",
     "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables cotes.alertes cotes.alertes.webhook "
-               "cotes.alertes.pushover cotes.alertes.chrome",
+               "cotes.alertes.pushover cotes.alertes.chrome cotes.alertes.envoi",
     "site": "scripts.site_web cotes.site cotes.site.construction",
-    "cycle": "cotes.pipeline cotes.pipeline.contexte cotes.pipeline.outils cotes.pipeline.reglement cotes.pipeline.sauvegarde cotes.pipeline.analyse cotes.pipeline.prise cotes.pipeline.collecte",
-    "scripts": "scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "
+    "cycle": "cotes.pipeline cotes.pipeline.contexte cotes.pipeline.outils cotes.pipeline.reglement cotes.pipeline.sauvegarde cotes.pipeline.analyse cotes.pipeline.prise cotes.pipeline.collecte cotes.pipeline.cycle",
+    "scripts": "cotes.__main__ scripts.relancer scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "
                "scripts.serveur_actif scripts.protocole scripts.verifier_secrets scripts.verifier_strategie_jules "
                "scripts.verifier_strategie_jules_v2 scripts.archiver_donnees_brutes scripts.sonde_betfair "
                "scripts.sonde_sources_us scripts.sonde_unibet scripts.empreinte_site",
@@ -56,7 +56,7 @@ _PAR_COUCHE = {
 }
 COUCHES = {m: c for c, noms in _PAR_COUCHE.items() for m in noms.split()}
 
-# Violations relevées le 15/11/2026 : 23 ; 21 après E1.4 ; 18 après E5.4. À faire baisser, jamais monter.
+# Violations relevées le 15/11/2026 : 23 ; 21 après E1.4 ; 18 après E5.4 ; 17 après E6.1. À faire baisser, jamais monter.
 EXCEPTIONS = {
     # sources -> domaine : prix des bourses convertis par comparaison.reference_echange ; résultats -> bilans
     ("cotes.smarkets", "cotes.comparaison"),
@@ -79,7 +79,6 @@ EXCEPTIONS = {
     ("cotes.strategie_gemini_defi", "cotes.evenements"),
     # scripts qui s'importent entre eux
     ("scripts.cycle", "scripts.site_web"),
-    ("scripts.envoyes_secours", "scripts.envoyer_notifications"),
 }
 
 # importés par sys.path (scripts/ ajouté au chemin) : `from site_web import construire`

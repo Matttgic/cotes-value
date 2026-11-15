@@ -5,7 +5,7 @@ Boucle continue, à la place de la chaîne GitHub Actions (5 minutes, parfois re
 - au démarrage : battement « actif » poussé dans « donnees » (GitHub cesse de relancer sa chaîne), attente de la fin
   d'un cycle ou d'un règlement GitHub en cours, puis reprise de leurs données ;
 - chaque cycle (au plus un par ``PERIODE_S``, 60 s par défaut) : collecte, comparaison, paris, puis alertes
-  Pushover tout de suite (scripts/cycle.py, scripts/envoyer_notifications.py ; stratégies du bloc « Alertes
+  Pushover tout de suite (python -m cotes cycle, puis alertes ; stratégies du bloc « Alertes
   Pushover » du site). Les alertes Chrome restent réservées à GitHub Actions (le service exige son identité) ;
 - toutes les ``PUBLICATION_S`` (300 s) : règlement (effectif une fois par heure), battement, un commit et un push
   de « donnees », puis publication du site par le workflow site.yml ;
@@ -230,9 +230,9 @@ def signaler_vie(ouvrir=urllib.request.urlopen) -> bool:
 def un_cycle(donnees: Path, env: dict) -> bool:
     """True si le cycle de collecte a réussi (les alertes Pushover n'en décident pas)."""
     py = sys.executable
-    reussi = executer([py, "scripts/cycle.py", "--reglement", "non", "--sans-site", "--donnees", str(donnees),
+    reussi = executer([py, "-m", "cotes", "cycle", "--reglement", "non", "--sans-site", "--donnees", str(donnees),
               "--site", str(RACINE / "site"), "--reprise", env["REPRISE_CHEMIN"]], timeout=420, env=env)
-    executer([py, "scripts/envoyer_notifications.py", "--donnees", str(donnees),
+    executer([py, "-m", "cotes", "alertes", "--donnees", str(donnees),
               "--flux", "notifications-rapides.json"], timeout=120, env=env)
     return reussi
 
@@ -240,7 +240,7 @@ def un_cycle(donnees: Path, env: dict) -> bool:
 def publier(donnees: Path, env: dict, jeton: str, branche: str, cycles: int, vivant: bool = False) -> bool:
     """``vivant`` : au moins un cycle réussi depuis le dernier enregistrement ; le signal de vie part alors après le push."""
     py = sys.executable
-    executer([py, "scripts/cycle.py", "--seulement-reglement", "--reglement", "auto", "--sans-site",
+    executer([py, "-m", "cotes", "reglement", "--reglement", "auto", "--sans-site",
               "--donnees", str(donnees), "--site", str(RACINE / "site")], timeout=1500, env=env)
     ecrire_battement(donnees, datetime.now(timezone.utc), True, cycles)
     if not enregistrer(donnees, f"Serveur {datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%SZ}"):

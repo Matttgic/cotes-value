@@ -37,7 +37,7 @@ jobs:
       - name: Cloner la branche « donnees » en entier
         run: git clone -q --depth 1 --branch donnees "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" donnees
       - name: Préparer les archives (tar + manifeste, vérifiés)
-        run: python scripts/archiver_donnees_brutes.py donnees --sortie archives_brutes
+        run: python -m cotes archiver donnees --sortie archives_brutes
       - name: Publier, vérifier le téléchargement, retirer de la branche
         if: env.REEL == 'true'
         run: |
@@ -53,7 +53,7 @@ jobs:
             fi
             rm -rf verif && mkdir verif
             gh release download "$tag" --dir verif
-            python scripts/archiver_donnees_brutes.py --verifier "verif/$tag.tar" "verif/$tag.json"
+            python -m cotes archiver --verifier "verif/$tag.tar" "verif/$tag.json"
             python -c 'import json,sys; print("\n".join(f["chemin"] for f in json.load(open(sys.argv[1]))["fichiers"]))' "verif/$tag.json" > liste.txt
             (cd donnees && xargs git rm -q --ignore-unmatch < ../liste.txt)
             retires=$((retires + $(wc -l < liste.txt)))

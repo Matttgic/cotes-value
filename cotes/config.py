@@ -98,6 +98,28 @@ VARIABLES: dict[str, Variable] = {
     "ACTIONS_ID_TOKEN_REQUEST_URL": _secret("GitHub Actions : jeton OIDC (Supabase)"),
     "ACTIONS_ID_TOKEN_REQUEST_TOKEN": _secret("GitHub Actions : jeton OIDC (Supabase)"),
     "PYTHONHASHSEED": Variable("", str, "empreinte du site : relancée avec 0"),
+    # relance de la chaîne (scripts/relancer.py) : début du cycle, et variables données par GitHub Actions
+    "DEBUT": Variable("", int, "relance : début du cycle (secondes epoch) ; vide : maintenant"),
+    "GITHUB_RUN_ID": Variable("", str, "relance : lancement en cours (donné par GitHub Actions)"),
+    "GITHUB_REF_NAME": Variable("", str, "relance : branche du lancement (donnée par GitHub Actions)"),
+}
+
+
+@dataclass(frozen=True)
+class Tache:
+    workflow: str            # fichier de .github/workflows/
+    cron: str                # ligne `cron:` (UTC)
+    role: str
+
+
+# Calendrier des tâches planifiées (docs/architecture-cible.md, tableau 1.4) : `tests/test_config.py` vérifie que les
+# lignes `cron:` des workflows et le tableau du document y correspondent (E6.5).
+TACHES: dict[str, Tache] = {
+    "collecte": Tache("collecte.yml", "7 * * * *", "redémarre la chaîne de collecte (qui se relance seule toutes les "
+                                                   "5 minutes)"),
+    "reglement": Tache("reglement.yml", "27 * * * *", "règlement horaire, sauf serveur actif"),
+    "surveillance": Tache("surveillance-collecte.yml", "17,47 * * * *", "relance la chaîne arrêtée"),
+    "archivage": Tache("archivage-donnees.yml", "17 3 5 * *", "release mensuelle des données brutes"),
 }
 
 

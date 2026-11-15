@@ -6,6 +6,7 @@ on:
     paths:
       - scripts/site_web.py
       - cotes/site/**
+      - cotes/__main__.py
       - cotes/laboratoire.py
       - cotes/simulation.py
       - cotes/convergence.py
@@ -43,12 +44,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Construire avec les données existantes
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          from scripts.site_web import construire
-          construire(Path('donnees'), Path('site'))
-          PY
+        run: python -m cotes site --donnees donnees --sortie site
       - name: Vérifier la syntaxe JavaScript du site
         run: |
           python - <<'PY'

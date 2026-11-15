@@ -28,7 +28,12 @@ def test_recent_et_actif_seulement():
 def test_les_workflows_consultent_le_serveur_avant_de_relancer_ou_de_regler():
     collecte = (RACINE / ".github/workflows/collecte.yml").read_text(encoding="utf-8")
     relance = next(s["run"] for s in yaml.safe_load(collecte)["jobs"]["relancer"]["steps"] if "run" in s)
-    assert relance.index("serveur_actif.py") < relance.index("gh workflow run collecte.yml")
+    if "scripts/relancer.py" in relance:          # relance en Python depuis E6.2 : même ordre dans relancer()
+        source = (RACINE / "scripts/relancer.py").read_text(encoding="utf-8")
+        corps = source[source.index("def relancer("):]
+        assert corps.index("serveur_actif(depot)") < corps.index("lancer(depot, ref, mode)")
+    else:
+        assert relance.index("serveur_actif.py") < relance.index("gh workflow run collecte.yml")
     surveillance = yaml.safe_load((RACINE / ".github/workflows/surveillance-collecte.yml").read_text(encoding="utf-8"))
     run = next(s["run"] for s in surveillance["jobs"]["verifier"]["steps"] if "run" in s)
     assert run.index("serveur_actif.py") < run.index("gh workflow run collecte.yml")

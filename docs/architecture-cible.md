@@ -523,6 +523,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 - Faire : `python -m cotes cycle|reglement|alertes|site|archiver` avec les mêmes options que les scripts actuels ;
   chaque commande appelle la fonction de `cotes/` correspondante. Les scripts restent des enveloppes.
 - Test : chaque commande appelle la bonne fonction (remplacée dans le test) ; `--help` les liste.
+- Fait le 15/11/2026 : `cycle` et `reglement` → `cotes/pipeline/cycle.py` (arguments et enchaînement sortis de
+  `scripts/cycle.py`, qui garde le site par `site_web` pour les tests) ; `alertes` → `cotes/alertes/envoi.py` et
+  `archiver` → `cotes/depot/archivage.py` (`git mv`, scripts en enveloppes qui renvoient le module) ; `site` →
+  `cotes/site/construction.py › main`. 17 exceptions d'architecture.
 
 **E6.2 — Relance de la chaîne en Python**
 - Fichiers : nouveau `scripts/relancer.py` ; `collecte.yml` (job `relancer`) ; `tests/test_robustesse_workflow.py`.
@@ -532,17 +536,25 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
   essai. Appeler `gh` par `subprocess` (même authentification). Porter les 8 scénarios de test existants (faux `gh`)
   vers le script Python.
 - Test : `tests/test_robustesse_workflow.py`. Risque élevé : après fusion, suivre 3 cycles dans Actions.
+- Fait le 15/11/2026 : `scripts/relancer.py` (bibliothèque standard, `gh` et `sleep` par sous-processus) ; le job
+  extrait ce fichier et `serveur_actif.py`, lance `python3 -u scripts/relancer.py` ; `GITHUB_RUN_ID` et
+  `GITHUB_REF_NAME` viennent d'Actions, `MODE_COLLECTE` du YAML. Les 8 scénarios (faux `gh`, faux `sleep`) passent
+  tels quels sur le script Python ; le banc de test ne fait qu'ajouter ces trois variables.
 
 **E6.3 — Les workflows appellent le point d'entrée** (un workflow par commit : `site.yml`, `reglement.yml`,
 `collecte.yml`, `surveillance-collecte.yml`)
 - Test : `tests/test_robustesse_workflow.py` ; après fusion, un lancement manuel en mode `test`.
+- Fait le 15/11/2026 : `site.yml`, `reglement.yml`, `collecte.yml` (cycle, alertes, règlement) et
+  `archivage-donnees.yml`, un commit chacun. `surveillance-collecte.yml` n'appelle que la relance (E6.2).
 
 **E6.4 — Le serveur appelle le point d'entrée**
 - Fichier : `scripts/serveur_direct.py` (`un_cycle`, `publier`). Test : `tests/test_serveur_direct.py`.
+- Fait le 15/11/2026 : `python -m cotes cycle`, `alertes` et `reglement` (test des trois commandes).
 
 **E6.5 — Calendrier vérifié**
 - Faire : `TACHES` dans `cotes/config.py` (nom, workflow, cron) ; un test compare aux lignes `cron:` des workflows
   et au tableau 1.4 de ce document.
+- Fait le 15/11/2026 : 4 tâches (`collecte`, `reglement`, `surveillance`, `archivage`), tests dans `tests/test_config.py`.
 
 ### 4.9 Phase 7 et 8 — Rangement et stockage (facultatif, à décider)
 
@@ -597,11 +609,11 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E5.2 | `_construire` en quatre | E0.1 | moyen | ☑ |
 | E5.3 | Heure du site injectée | E5.2 | faible | ☑ |
 | E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☑ |
-| E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☐ |
-| E6.2 | Relance en Python | — | élevé | ☐ |
-| E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☐ |
-| E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☐ |
-| E6.5 | Calendrier vérifié | E1.1 | faible | ☐ |
+| E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☑ |
+| E6.2 | Relance en Python | — | élevé | ☑ |
+| E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☑ |
+| E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☑ |
+| E6.5 | Calendrier vérifié | E1.1 | faible | ☑ |
 | E7.1 | Études dans `etudes/` | — | faible | ☐ |
 | E7.2 | Une couche par dossier | E0.3, phases 1 à 6 | moyen | ☐ |
 | E8.1 | Mesure du stockage | — | aucun | ☐ |

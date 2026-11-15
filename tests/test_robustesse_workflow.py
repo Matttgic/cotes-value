@@ -125,6 +125,10 @@ def test_fusion_ignore_les_fichiers_illisibles(tmp_path):
 
 # --- relance de la chaîne -------------------------------------------------------------------------------------
 
+# Variables que GitHub Actions donne au job (scripts/relancer.py, E6.2) : remplacent ${{ github.run_id }}…
+ENV_RELANCE = {"GITHUB_RUN_ID": "42", "GITHUB_REF_NAME": "branche", "MODE_COLLECTE": "complet"}
+
+
 def script_relance():
     steps = etapes("collecte.yml", "relancer")
     run = next(s["run"] for s in steps if "run" in s)
@@ -157,9 +161,10 @@ esac
     sleep = tmp_path / "sleep"
     sleep.write_text(f"#!/bin/sh\necho sleep >> {journal}\n")
     sleep.chmod(0o755)
-    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "DEPOT": "test/repo", "DEBUT": "0"}
+    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "DEPOT": "test/repo", "DEBUT": "0",
+           **ENV_RELANCE}
     r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script_relance()],
-                       env=env, capture_output=True, text=True)
+                       env=env, capture_output=True, text=True, cwd=RACINE)
     appels = journal.read_text().splitlines() if journal.exists() else []
     return r, appels
 
@@ -302,9 +307,32 @@ esac
     sleep = tmp_path / "sleep"
     sleep.write_text("#!/bin/sh\nexit 0\n")
     sleep.chmod(0o755)
-    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "DEPOT": "test/repo", "DEBUT": "0"}
+    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "DEPOT": "test/repo", "DEBUT": "0",
+           **ENV_RELANCE}
     r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script_relance()],
-                       env=env, capture_output=True, text=True)
+                       env=env, capture_output=True, text=True, cwd=RACINE)
     appels = journal.read_text().splitlines()
     assert r.returncode == 0 and "Cycle suivant démarré (in_progress)" in r.stdout
     assert sum(a.startswith("workflow run") for a in appels) == 2          # lancement + une relance
+
+
+def test_relance_par_le_script_python():
+    """E6.2 : le job n'extrait que les deux scripts dont il a besoin, et lance scripts/relancer.py."""
+    steps = etapes("collecte.yml", "relancer")
+    extraits = steps[0]["with"]["sparse-checkout"].split()
+    assert extraits == ["scripts/serveur_actif.py", "scripts/relancer.py"]
+    assert script_relance() == "python3 -u scripts/relancer.py"
+    import ast
+    imports = {a.name.split(".")[0] for n in ast.walk(ast.parse((RACINE / "scripts/relancer.py").read_text()))
+               if isinstance(n, ast.Import) for a in n.names}
+    imports |= {n.module.split(".")[0] for n in ast.walk(ast.parse((RACINE / "scripts/relancer.py").read_text()))
+                if isinstance(n, ast.ImportFrom) and n.module}
+    assert imports <= {"__future__", "os", "re", "subprocess", "sys", "time", "pathlib"}   # bibliothèque standard
+
+
+@pytest.mark.parametrize("erreur,code", [
+    ("could not create workflow dispatch event: HTTP 422: Workflow is disabled", 10), ("workflow désactivé", 10),
+    ("HTTP 502: Bad Gateway", 12), ("HTTP 404: Not Found", 11), ("dial tcp: no such host", 12), ("", 12)])
+def test_classement_des_erreurs(erreur, code):
+    from scripts import relancer
+    assert relancer.classer(erreur) == code

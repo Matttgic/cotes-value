@@ -68,7 +68,7 @@ jobs:
           THE_ODDS_API_KEY_2: ${{ secrets.THE_ODDS_API_KEY_2 }}
           THE_ODDS_API_KEY_3: ${{ secrets.THE_ODDS_API_KEY_3 }}
           THE_ODDS_API_KEY_4: ${{ secrets.THE_ODDS_API_KEY_4 }}
-        run: python scripts/cycle.py --seulement-reglement --reglement auto --donnees donnees --site site
+        run: python -m cotes cycle --seulement-reglement --reglement auto --donnees donnees --site site
 
       # Même enregistrement que collecte.yml : même si le règlement a échoué en cours de route (les paris déjà
       # réglés sont gardés), sans jamais ajouter les caches sortis de la branche (mémoire de travail écrite dans

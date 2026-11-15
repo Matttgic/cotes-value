@@ -136,7 +136,7 @@ jobs:
           # DraftKings, référence seulement (matchs NBA, NHL, NFL, MLB et props NBA, NHL ; aucun pari). off coupe les appels.
           SOURCE_DRAFTKINGS: ${{ vars.SOURCE_DRAFTKINGS || 'direct' }}
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
-        run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
+        run: python -m cotes cycle --reglement non --sans-site --donnees donnees --site site
 
       # Non bloquante (continue-on-error), mais visible : le script annonce l'échec (::warning::) et l'ajoute à
       # etat.json › echecs_recents (page Santé) ; l'étape suivante l'annonce aussi s'il s'est arrêté avant.
@@ -157,7 +157,7 @@ jobs:
           PUSHOVER_PRIORITY: ${{ vars.PUSHOVER_PRIORITY || '0' }}
           # Mise Kelly ¼ des alertes ramenée à ta bankroll
           PUSHOVER_BANKROLL: ${{ vars.PUSHOVER_BANKROLL || '1000' }}
-        run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
+        run: python -m cotes alertes --donnees donnees --flux notifications-rapides.json
 
       - name: Signaler un échec des alertes Chrome
         if: steps.alertes_chrome.outcome == 'failure'
@@ -190,7 +190,7 @@ jobs:
           # Alerte Pushover si une stratégie échoue plusieurs constructions du site de suite (cotes/protection.py).
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
-        run: python scripts/cycle.py --seulement-reglement --reglement auto --donnees donnees --site site
+        run: python -m cotes cycle --seulement-reglement --reglement auto --donnees donnees --site site
 
       # Un seul commit et un seul push par cycle (collecte, alertes, règlement), même si une étape a échoué.
       # Les caches sortis de la branche ne sont jamais ajoutés ; au premier cycle, ils sont retirés de l'index
@@ -295,77 +295,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          sparse-checkout: scripts/serveur_actif.py
+          sparse-checkout: |
+            scripts/serveur_actif.py
+            scripts/relancer.py
           sparse-checkout-cone-mode: false
       - name: Relancer le cycle suivant (5 minutes après le début de celui-ci)
+        # scripts/relancer.py (E6.2) : attente, serveur en direct, lancement plus récent, gh workflow run, contrôle
+        # du démarrage (startup_failure), erreurs 422 / 4xx / 5xx et réseau, comme l'ancien script bash.
         env:
           GH_TOKEN: ${{ github.token }}
           DEBUT: ${{ needs.cycle.outputs.debut }}
           DEPOT: ${{ github.repository }}
-        run: |
-          debut=${DEBUT:-$(date +%s)}
-          reste=$(( debut + 300 - $(date +%s) - 30 ))
-          if [ "$reste" -gt 0 ]; then sleep "$reste"; fi
-          # Serveur « en direct » actif (docs/serveur-direct.md) : il tient la collecte, la chaîne GitHub s'arrête ici.
-          if [ "$(python3 scripts/serveur_actif.py --depot "$DEPOT")" = oui ]; then
-            echo "Serveur en direct actif : pas de relance."; exit 0
-          fi
-          # une seule chaîne : c'est le lancement le plus récent qui relance le suivant.
-          # L'API GitHub renvoie parfois une erreur passagère (HTTP 500 le 7/10/2026 à 16:59, chaîne
-          # arrêtée 2 h) : jusqu'à 6 essais espacés, en revérifiant à chaque fois qu'aucun lancement plus
-          # récent n'existe (une erreur 500 peut quand même avoir créé le lancement).
-          # Seules les erreurs 5xx et réseau (aucun code HTTP) sont réessayées. Workflow désactivé ou HTTP 422
-          # (relance refusée) : arrêt immédiat et propre, rien à réessayer. Autre 4xx : échec immédiat.
-          erreur=$(mktemp)
-          # 0 = succès ; 10 = arrêt propre ; 11 = échec définitif ; 12 = passager (à réessayer)
-          classer() {
-            if grep -qiE 'HTTP 422|disabled|désactivé' "$erreur"; then return 10; fi
-            if grep -qE 'HTTP 5[0-9][0-9]' "$erreur"; then return 12; fi
-            if grep -qE 'HTTP [0-9]{3}' "$erreur"; then return 11; fi
-            return 12
-          }
-          for essai in 1 2 3 4 5 6; do
-            code=0
-            etat=$(gh api "repos/$DEPOT/actions/workflows/collecte.yml" --jq .state 2>"$erreur") || { classer || code=$?; }
-            if [ "$code" -eq 0 ] && [ -n "$etat" ] && [ "$etat" != active ]; then
-              echo "Workflow de collecte non actif ($etat) : pas de relance."; exit 0
-            fi
-            if [ "$code" -eq 0 ]; then
-              cree=$(gh api "repos/$DEPOT/actions/runs/${{ github.run_id }}" --jq .created_at 2>"$erreur") || { classer || code=$?; }
-              if [ "$code" -eq 0 ] && [ -z "$cree" ]; then code=12; fi
-            fi
-            if [ "$code" -eq 0 ]; then
-              plus_recents=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 20 \
-                --json createdAt,conclusion \
-                --jq "[.[] | select(.createdAt > \"$cree\") | select(.conclusion != \"cancelled\" and .conclusion != \"skipped\" and .conclusion != \"startup_failure\")] | length" 2>"$erreur") \
-                || { classer || code=$?; }
-            fi
-            if [ "$code" -eq 0 ]; then
-              if [ "$plus_recents" -gt 0 ]; then echo "Un lancement plus récent continue la chaîne."; exit 0; fi
-              if gh workflow run collecte.yml --repo "$DEPOT" --ref "${{ github.ref_name }}" \
-                  -f mode="${{ vars.MODE_COLLECTE || 'complet' }}" 2>"$erreur"; then
-                echo "Cycle suivant lancé."
-                # Garde-fou (11/11/2026) : un lancement peut échouer au démarrage (« startup_failure », incident
-                # GitHub) ; la chaîne s'arrêtait alors, le watchdog planifié ne passant que rarement. On vérifie
-                # que le cycle suivant démarre vraiment, et on le relance jusqu'à 3 fois sinon.
-                for verif in 1 2 3; do
-                  sleep 60
-                  dernier=$(gh run list --repo "$DEPOT" --workflow collecte.yml --limit 5 \
-                    --json createdAt,conclusion,status \
-                    --jq "[.[] | select(.createdAt > \"$cree\")][0] | (.conclusion // .status)" 2>/dev/null || echo inconnu)
-                  if [ "$dernier" != startup_failure ]; then echo "Cycle suivant démarré ($dernier)."; exit 0; fi
-                  echo "::warning title=Relance::Le cycle suivant a échoué au démarrage : nouvelle relance ($verif/3)."
-                  gh workflow run collecte.yml --repo "$DEPOT" --ref "${{ github.ref_name }}" \
-                    -f mode="${{ vars.MODE_COLLECTE || 'complet' }}" || true
-                done
-                echo "::error::Le cycle suivant échoue au démarrage malgré 3 relances."; exit 1
-              fi
-              classer || code=$?
-            fi
-            sed -n "1,5s/^/  /p" "$erreur"
-            if [ "$code" -eq 10 ]; then echo "Relance refusée (HTTP 422 ou workflow désactivé) : arrêt propre."; exit 0; fi
-            if [ "$code" -eq 11 ]; then echo "::error::Relance refusée par l'API GitHub (erreur 4xx, voir ci-dessus)."; exit 1; fi
-            echo "API GitHub indisponible (essai $essai), nouvel essai dans $((essai * 20)) s"
-            sleep $((essai * 20))
-          done
-          exit 1
+          MODE_COLLECTE: ${{ vars.MODE_COLLECTE || 'complet' }}
+        run: python3 -u scripts/relancer.py

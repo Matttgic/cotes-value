@@ -251,3 +251,14 @@ def test_flux_polymarket_lance_relance_ou_coupe(monkeypatch):
     assert len(lances) == 2
     monkeypatch.setenv("POLYMARKET_FLUX", "non")
     assert SD.flux_polymarket(None, lancer) is None and len(lances) == 2
+
+
+def test_le_serveur_appelle_le_point_d_entree(monkeypatch, tmp_path):
+    """E6.4 : mêmes commandes que GitHub (python -m cotes cycle, alertes, reglement)."""
+    commandes = []
+    monkeypatch.setattr(SD, "executer", lambda commande, **k: commandes.append(commande) or True)
+    SD.un_cycle(tmp_path, {"REPRISE_CHEMIN": "r.json.gz"})
+    monkeypatch.setattr(SD, "enregistrer", lambda *a, **k: False)
+    SD.publier(tmp_path, {}, "jeton", "branche", 0)
+    assert [c[1:4] for c in commandes] == [["-m", "cotes", "cycle"], ["-m", "cotes", "alertes"],
+                                          ["-m", "cotes", "reglement"]]
