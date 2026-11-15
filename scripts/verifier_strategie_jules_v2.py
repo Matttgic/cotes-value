@@ -23,7 +23,7 @@ from cotes.strategie_gemini import paris_gemini  # noqa: E402
 from cotes.strategie_jules import paris_jules  # noqa: E402
 from cotes.strategie_jules_v2 import JULES_V2, diagnostic_jules_v2, paris_jules_v2  # noqa: E402
 from cotes.strategie_m3 import paris_m3  # noqa: E402
-from scripts.comparer_strategies import claude_rejouee  # noqa: E402
+from cotes.laboratoire import claude_rejouee  # noqa: E402
 
 LIVREE = "b3e8e8c927b51747170e21892815f0903653a52c"
 RELEVE = "2026-10-14T10:09:28+00:00"

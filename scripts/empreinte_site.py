@@ -101,7 +101,7 @@ def empreinte(donnees: Path, maintenant: str = MAINTENANT_DEFAUT) -> dict:
     if instant.tzinfo is None:
         raise ValueError("--maintenant doit porter un fuseau (ex. +00:00)")
     ignores = importer_tout()
-    from scripts.site_web import construire
+    from cotes.site.construction import construire
     with tempfile.TemporaryDirectory(prefix="empreinte-site-") as tmp:
         copie, site = Path(tmp) / "donnees", Path(tmp) / "site"
         shutil.copytree(donnees, copie, ignore=shutil.ignore_patterns(".git"))

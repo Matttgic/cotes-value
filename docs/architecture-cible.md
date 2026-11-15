@@ -509,6 +509,11 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 **E5.4 — Site dans `cotes/site/`**
 - Faire : le calcul et le rendu vont dans `cotes/site/` ; `scripts/site_web.py` garde `construire` et les noms
   importés par les tests. `site.yml` : ajouter `cotes/site/**` aux chemins surveillés. Test : empreinte identique.
+- Fait le 15/11/2026 : `git mv` vers `cotes/site/construction.py` ; `scripts/site_web.py` (13 lignes) renvoie ce
+  module (`sys.modules[__name__] = construction`), donc `import site_web`, `from scripts import site_web` et les
+  remplacements des tests visent le code qui tourne, sans toucher aux tests. `claude_rejouee` passe dans
+  `cotes/laboratoire.py` (le site n'importe plus `scripts/`). Test d'architecture : 18 exceptions (trois de moins).
+  Empreinte identique.
 
 ### 4.8 Phase 6 — Tâches planifiées
 
@@ -591,7 +596,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☑ |
 | E5.2 | `_construire` en quatre | E0.1 | moyen | ☑ |
 | E5.3 | Heure du site injectée | E5.2 | faible | ☑ |
-| E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☐ |
+| E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☑ |
 | E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☐ |
 | E6.2 | Relance en Python | — | élevé | ☐ |
 | E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☐ |
