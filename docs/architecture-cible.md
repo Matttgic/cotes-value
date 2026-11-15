@@ -422,6 +422,7 @@ Toutes les étapes de cette phase sont des **déplacements** : même code, même
 - Faire : chargement des paris, retrait des supprimés, placement, fusions, pauses, décisions figées, redécision, Qwen,
   suivi des prix et clôture deviennent `pipeline/prise.py › prendre(ctx)`.
 - Test : E0.2, `tests/test_decision*.py`, `tests/test_strategie_qwen.py`, `tests/test_protocole.py`.
+- Fait le 15/11/2026 : `redecider` et `suivre_qwen` déplacés avec (`cotes/pipeline/prise.py`), noms gardés sur `cycle`.
 
 **E3.5 — Étape collecte**
 - Prérequis : E2.4.
@@ -552,7 +553,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E3.1 | Contexte, règlement seul | E0.2 | moyen | ☑ |
 | E3.2 | Étape sauvegarde | E3.1 | moyen | ☑ |
 | E3.3 | Étape analyse | E3.1 | moyen | ☑ |
-| E3.4 | Étape prise | E3.1 | moyen | ☐ |
+| E3.4 | Étape prise | E3.1 | moyen | ☑ |
 | E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☐ |
 | E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☐ |
 | E4.1 | Registre des stratégies | — | faible | ☐ |

@@ -55,6 +55,7 @@ from cotes.sources import registre as registre_sources  # noqa: E402
 from cotes.pipeline.contexte import Contexte  # noqa: E402
 from cotes.pipeline import reglement as pipeline_reglement  # noqa: E402
 from cotes.pipeline.analyse import analyser  # noqa: E402
+from cotes.pipeline.prise import prendre, redecider, suivre_qwen  # noqa: E402,F401
 from cotes.pipeline.sauvegarde import (sauvegarder, CONTROLE_PUBLICATION_MIN, _derniere_mesure,  # noqa: E402,F401
                                        lire_controle, enregistrer_controle)
 # déplacés dans cotes/pipeline/ (E3.1) ; noms gardés sur le module
@@ -611,26 +612,6 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
     return pin, poly, lignes
 
 
-def redecider(registre: list, maintenant: datetime, journal: dict, redecider_ouverts) -> None:
-    """Redécision des paris ouverts. Jamais bloquante ; un échec est annoncé et noté (cotes/echecs.py)."""
-    try:
-        journal["redecision"] = {"ajoutees": redecider_ouverts(registre, maintenant)}
-    except Exception as e:      # une correction ratée ne doit jamais arrêter la collecte
-        journal["redecision"] = {"erreur": echecs.noter(journal, "redecision", e, maintenant)}
-
-
-def suivre_qwen(donnees: Path, registre: list, opportunites: list, maintenant: datetime, journal: dict) -> None:
-    """Qwen : validation après deux cycles consécutifs. Jamais bloquante ; un échec est annoncé et noté."""
-    try:
-        from cotes import strategie_qwen
-        chemin_qwen = donnees / "persistance_qwen.json"
-        etat_qwen, vues_qwen = strategie_qwen.suivre(lire_json(chemin_qwen, {}), opportunites, maintenant, journal["debut"])
-        journal["qwen"] = strategie_qwen.valider(registre, vues_qwen, maintenant)
-        ecrire_json(chemin_qwen, etat_qwen)
-    except Exception as e:  # noqa: BLE001
-        journal["qwen"] = {"erreur": echecs.noter(journal, "qwen", e, maintenant)}
-
-
 def main() -> int:
     a = argparse.ArgumentParser()
     a.add_argument("--mode", choices=["complet", "test"], default=os.environ.get("MODE_COLLECTE", "complet"))
@@ -733,32 +714,11 @@ def main() -> int:
                    pinnacle=pin, polymarket=poly, francais=francais, smarkets=sm_lignes, matchbook=mb_lignes,
                    betfair=bf_lignes, references=references, hors_consensus=hors)
     analyser(ctx)
-    index, opportunites = ctx.index, ctx.opportunites
-    paris = charger_paris(donnees, journal)
-    # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
-    manuels = lire_json(donnees / "resultats_manuels.json", {})
-    paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
-    nouveaux = simulation.placer(opportunites, paris)
-    from cotes.decisions import figer_nouveaux, redecider_ouverts
-    from cotes.strategie_recommandee import charger_fusions
-    charger_fusions(donnees)          # fusions automatiques actives : leurs prises sont notées avec les autres
-    from cotes import pauses
-    pauses.charger(donnees)           # stratégies en pause (pauses.json) : plus de nouveaux paris
-    registre = stockage.fusionner_paris(paris, stockage.lire_archives(donnees))
-    figer_nouveaux(registre, nouveaux)
-    redecider(registre, maintenant, journal, redecider_ouverts)
-    suivre_qwen(donnees, registre, opportunites, maintenant, journal)
-    simulation.suivre_prix(paris, francais)
-    prudentes: set[tuple] = set()     # clôtures lues au prix d'achat de Polymarket : CLV minimale
-    justes = etape("cotes_cloture", journal, comparaison.cotes_justes_depuis, index,
-                   hors_consensus=hors, prudentes=prudentes) or {}
-    simulation.suivre_cloture(paris, justes, prudentes=prudentes)      # heure réelle : un match peut commencer pendant le cycle
-
+    # 4. prise : placement, décisions figées, Qwen, suivi des prix et de la clôture (cotes/pipeline/prise.py)
+    prendre(ctx)
     # La collecte reprend le règlement si le workflow horaire a été retardé.
-    regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)
-
+    ctx.regle = effectuer_reglement(ctx.paris, donnees, maintenant, journal, args.reglement)
     # 5. sauvegarde (cotes/pipeline/sauvegarde.py)
-    ctx.paris, ctx.nouveaux, ctx.regle = paris, nouveaux, regler
     sauvegarder(ctx)
 
     # 6. site
