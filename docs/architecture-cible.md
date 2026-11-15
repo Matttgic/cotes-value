@@ -291,6 +291,8 @@ cette étape. »
   `etat.json › dernier_cycle` a `cotes`, `opportunites`, `nouveaux_paris`, `etapes` ; un second passage n'ajoute
   aucun pari.
 - Fini quand : test vert en moins de 5 s.
+- Fait le 15/11/2026 : deux tests, 0,1 s. Le contrôle des intitulés est pré-rempli « conforme » (sinon le premier
+  cycle ne prend aucun pari) ; `SOURCE_BETFAIR=off` et `pinnacle_secours.disponible` coupés en plus.
 
 **E0.3 — Test d'architecture**
 - Fichier : nouveau `tests/test_architecture.py`.
@@ -507,7 +509,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | Étape | Titre | Prérequis | Risque | Fait |
 |---|---|---|---|---|
 | E0.1 | Empreinte du site | — | faible | ☑ |
-| E0.2 | Cycle à blanc | — | faible | ☐ |
+| E0.2 | Cycle à blanc | — | faible | ☑ |
 | E0.3 | Test d'architecture | — | faible | ☐ |
 | E1.1 | Catalogue de configuration | — | faible | ☐ |
 | E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
