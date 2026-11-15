@@ -501,6 +501,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 - Faire : `construire(donnees, sortie, maintenant=None)` transmet l'heure aux 5 appels `datetime.now` de
   `site_web.py` et aux fonctions qui l'acceptent déjà. Puis `scripts/empreinte_site.py` passe l'heure au lieu de la
   figer par remplacement. Test : empreinte identique.
+- Fait le 15/11/2026 : `construire(donnees, sortie, maintenant=None)` ; l'heure va aux bilans, aux recommandées, au
+  protocole, à la décision, aux notifications, aux ordres et aux échecs notés par `cotes/protection.py`
+  (`proteger_strategies(maintenant)`). Sans heure donnée, chaque lecture reste l'heure réelle, comme avant.
+  `scripts/empreinte_site.py` ne remplace plus `datetime` (seulement les chronomètres) : empreinte identique, deux fois.
 
 **E5.4 — Site dans `cotes/site/`**
 - Faire : le calcul et le rendu vont dans `cotes/site/` ; `scripts/site_web.py` garde `construire` et les noms
@@ -586,7 +590,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☑ |
 | E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☑ |
 | E5.2 | `_construire` en quatre | E0.1 | moyen | ☑ |
-| E5.3 | Heure du site injectée | E5.2 | faible | ☐ |
+| E5.3 | Heure du site injectée | E5.2 | faible | ☑ |
 | E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☐ |
 | E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☐ |
 | E6.2 | Relance en Python | — | élevé | ☐ |

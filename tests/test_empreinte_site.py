@@ -60,16 +60,22 @@ def test_l_heure_figee_compte(base):
         es.empreinte(dossier, "2026-11-15T12:00:00")           # sans fuseau
 
 
-def test_heure_et_chronometres_figes_puis_remis_en_place():
+def test_chronometres_figes_puis_remis_en_place():
     es.importer_tout()
     from cotes import protection
+    with es.chronometres_figes() as remplaces:
+        assert remplaces > 0 and protection.perf_counter() == 0.0
+    assert protection.perf_counter is time.perf_counter
+
+
+def test_l_heure_est_passee_a_la_construction(base, monkeypatch):
+    """L'heure n'est plus figée par remplacement (E5.3) : ``construire`` la reçoit."""
     from scripts import site_web
-    instant = dt.datetime(2026, 11, 15, 12, tzinfo=dt.timezone.utc)
-    with es.heure_figee(instant):
-        assert site_web.datetime.now(dt.timezone.utc) == instant
-        assert isinstance(dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc), site_web.datetime)      # les vraies dates restent des dates
-        assert protection.perf_counter() == 0.0
-    assert site_web.datetime is dt.datetime and protection.perf_counter is time.perf_counter
+    vues = []
+    vraie = site_web.construire
+    monkeypatch.setattr(site_web, "construire", lambda d, s, m=None: vues.append(m) or vraie(d, s, m))
+    es.empreinte(base[0], "2026-11-15T12:00:00+00:00")
+    assert vues == [dt.datetime(2026, 11, 15, 12, tzinfo=dt.timezone.utc)]
 
 
 def test_sans_reseau_ni_envoi_puis_remis_en_place(monkeypatch):

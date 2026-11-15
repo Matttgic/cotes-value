@@ -509,7 +509,8 @@ def enrichir_evenements(paris: list[dict], laboratoire: dict, maintenant: str):
                          clv_evenements_n=len(cs))
 
 
-def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees: Path) -> dict:
+def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees: Path,
+                                   instant: datetime | None = None) -> dict:
     """Liste stable des recommandées (cotes/recommandations.py, état ``recommandees.json``), sur la vue à mises fixes,
     avec le résultat de chaque stratégie depuis son entrée dans la liste (et jusqu'à sa sortie pour les anciennes).
     Retire du laboratoire les blocs de travail (« _ensembles », « _fusion_rejeu ») qui ne sont pas publiés tels quels."""
@@ -522,7 +523,7 @@ def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees
                for nom, s in (laboratoire.get("comparateurs_futur") or {}).items()]
     lignes += [{"id": "base:" + nom, "stats": s, "ensemble": ensembles.get("base:" + nom, set()), "base": True}
                for nom, s in (laboratoire.get("bases_futur") or {}).items()]
-    maintenant = datetime.now(timezone.utc)
+    maintenant = _maintenant(instant)
     etat = reco.mettre_a_jour(donnees, lignes, maintenant)
     par_id = {l["id"]: l for l in lignes}
     pauses_etat = evaluer_pauses(donnees, lignes, paris, maintenant, etat)
@@ -564,7 +565,8 @@ def evaluer_pauses(donnees: Path, lignes: list[dict], paris: list[dict], mainten
     return pauses.mettre_a_jour(donnees, lignes, cle_de, clvs_de, exemptes, maintenant)
 
 
-def suivi_protocole(paris: list[dict], donnees: Path, echecs: dict | None = None) -> dict:
+def suivi_protocole(paris: list[dict], donnees: Path, echecs: dict | None = None,
+                    instant: datetime | None = None) -> dict:
     """Protocole de validation (cotes/protocole.py, docs/protocole.md) : état de chaque stratégie, à mises fixes.
     Les empreintes des règles sont recalculées sur le jeu témoin, dans un mémo à part (mêmes identifiants que les
     vrais paris, contenu différent). Une stratégie en erreur à cette construction (``echecs``, cotes/protection.py)
@@ -578,16 +580,21 @@ def suivi_protocole(paris: list[dict], donnees: Path, echecs: dict | None = None
     for nom in set(echecs) - en_erreur if actuelles else ():
         actuelles.pop(nom, None)
         actuelles.pop("labo:" + nom, None)
-    return protocole.suivre(paris, protocole.selections_officielles(paris), donnees, datetime.now(timezone.utc),
+    return protocole.suivre(paris, protocole.selections_officielles(paris), donnees, _maintenant(instant),
                             actuelles, indisponibles=en_erreur | {"labo:" + nom for nom in en_erreur})
 
 
-def construire(donnees: Path, sortie: Path) -> Path:
+def _maintenant(instant: datetime | None) -> datetime:
+    """Heure donnée (empreinte, tests) ou heure réelle, relue à chaque appel comme avant E5.3."""
+    return instant or datetime.now(timezone.utc)
+
+
+def construire(donnees: Path, sortie: Path, maintenant: datetime | None = None) -> Path:
     """Site complet. Les sélections de la vue à mises fixes servent aussi à la vue Kelly (cotes/memo.py).
     Chaque stratégie est isolée (cotes/protection.py) : une erreur la vide sans arrêter le site."""
     from cotes.memo import memoriser_selections
-    with memoriser_selections(), proteger_strategies() as echecs_strategies:
-        return _construire(donnees, sortie, echecs_strategies)
+    with memoriser_selections(), proteger_strategies(maintenant) as echecs_strategies:
+        return _construire(donnees, sortie, echecs_strategies, maintenant)
 
 
 def retirer_places_libres(labo: dict) -> None:
@@ -615,11 +622,12 @@ def archive_hors_plafond(paris: list[dict]) -> list[dict]:
     return [{k: p.get(k) for k in cles} for p in sorted(paris, key=lambda p: str(p.get("debut")), reverse=True)]
 
 
-def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = None) -> Path:
+def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = None,
+                maintenant: datetime | None = None) -> Path:
     """Lecture des données, calcul des blocs, rendu des pages, écriture du site (E5.2 : quatre étapes)."""
     entrees = charger_entrees(donnees)
-    blocs = calculer_blocs(entrees, donnees, echecs_strategies)
-    pages = rendre_pages(blocs)
+    blocs = calculer_blocs(entrees, donnees, echecs_strategies, maintenant)
+    pages = rendre_pages(blocs, maintenant)
     return ecrire_site(sortie, pages)
 
 
@@ -663,7 +671,8 @@ def charger_entrees(donnees: Path) -> dict:
             "actuelles": actuelles, "controle": controle}
 
 
-def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None = None) -> dict:
+def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None = None,
+                   instant: datetime | None = None) -> dict:
     """Bilans, laboratoire (mises fixes, Kelly et autres modes), recommandées, notes, protocole, décision : le
     dictionnaire publié dans la page. Écrit aussi les états du site dans « donnees » (notes, recommandées, protocole,
     pannes des stratégies)."""
@@ -678,7 +687,7 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
             # L'étude figée contient encore les règles Betfair (BET-*) : seules les règles actuelles sont gardées.
             ids_regles = {r.id for r in REGLES_LABO}
             laboratoire["resultats"] = [r for r in laboratoire.get("resultats", []) if r["regle"]["id"] in ids_regles]
-            maintenant = datetime.now(timezone.utc).isoformat()
+            maintenant = _maintenant(instant).isoformat()
             releve_str = laboratoire.get("releve") or maintenant
             releve_dt = heure(releve_str) or heure(maintenant)
             rapport_v2 = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-jules-v2.json", {})
@@ -777,13 +786,13 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
 
     laboratoire = _laboratoire(paris)
     retirer_places_libres(laboratoire)
-    recommandees = recommandations_du_laboratoire(laboratoire, paris, donnees)
+    recommandees = recommandations_du_laboratoire(laboratoire, paris, donnees, instant)
     fusion_rejeu = recommandees.pop("fusion_rejeu", None)
     doublons = recommandees.pop("doublons", [])
     pauses_publiees = recommandees.pop("pauses", {})
     # Classement vivant : notes du jour gardées dans « donnees », progression depuis la veille et sur 7 jours.
     from cotes import notation
-    instant_notes = datetime.now(timezone.utc)
+    instant_notes = _maintenant(instant)
     notes_reperes = notation.reperes(notation.historiser(
         donnees, notation.notes_du_laboratoire(laboratoire), instant_notes), instant_notes)
     retenus = selections(paris)
@@ -818,10 +827,10 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     # par la page seulement quand on le choisit. Un mode en erreur est retiré du menu, le site continue.
     from cotes import protection
     durees_strategies = protection.durees()         # avant les modes supplémentaires, qui recalculent les mêmes
-    protocole_publie = calculer("protocole", lambda: suivi_protocole(paris, donnees, echecs_strategies), dict)
+    protocole_publie = calculer("protocole", lambda: suivi_protocole(paris, donnees, echecs_strategies, instant), dict)
     # Page Décision (cotes/decision.py, web/decision.js) : ROI et CLV Pinnacle par bookmaker et par référence.
     from cotes import decision
-    decision_publiee = calculer("décision", lambda: decision.construire(paris, datetime.now(timezone.utc)), dict)
+    decision_publiee = calculer("décision", lambda: decision.construire(paris, _maintenant(instant)), dict)
     blocs_mises: dict[str, dict] = {}
     for mode in MODES_BILAN:
         if mode in MODES_INTEGRES:
@@ -886,7 +895,7 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
                       "laboratoire": laboratoire_k},
             "ecarts_references": moyennes_ecarts(paris),
             "bilan_tranches": {k: {c: x for c, x in b.items() if c != "evenements_detail"} for k, b in bilan_tranches(paris).items()}, "courbes": courbes(paris), "profil_horaire": profil_horaire(paris), "filtres": bilan_filtres(paris), "plafond_match": bilan_plafond(paris), "segments": segments(paris),
-            "paris_segments": segments_fixe, "paris_a_venir_segments": paris_a_venir_des_segments(paris),
+            "paris_segments": segments_fixe, "paris_a_venir_segments": paris_a_venir_des_segments(paris, instant),
             "bookmakers": sorted({p["bookmaker"] for p in paris if p.get("bookmaker")}), "tranches": [t[2] for t in TRANCHES], "controle": controle,
             "strategie": {"debut": STRATEGIE["debut"], "references": list(STRATEGIE["references"]),
                           "cote_max": STRATEGIE["cote_max"], "avance_max_h": STRATEGIE["avance_max_h"]},
@@ -901,29 +910,29 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
             "props": props_publies,
             # même match réglé avec deux scores chez deux bookmakers (resultats.incoherences_freres), page Santé
             "hors_plafond": resume_hors_plafond(hors_plafond),
-            "taux_manuel": taux_manuel(paris, datetime.now(timezone.utc)),
-            "marches_inconnus": inconnus_mod.resume(_lire(donnees / "marches_inconnus.json", {}) or {}, datetime.now(timezone.utc)),
+            "taux_manuel": taux_manuel(paris, _maintenant(instant)),
+            "marches_inconnus": inconnus_mod.resume(_lire(donnees / "marches_inconnus.json", {}) or {}, _maintenant(instant)),
             "incoherences_reglement": [x for x in (_lire(donnees / "resultats_a_saisir.json", {}) or {}).get("incoherences") or []
                                        if isinstance(x, dict)][:20]}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
     # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/protection.py).
     data["durees_strategies"] = durees_strategies
-    data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, datetime.now(timezone.utc))
+    data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, _maintenant(instant))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
-        echecs.fusionner(etat, list(echecs_strategies.values()), datetime.now(timezone.utc))
+        echecs.fusionner(etat, list(echecs_strategies.values()), _maintenant(instant))
     return {"data": data, "actuelles": actuelles, "paris": paris, "retenus": retenus, "hors_plafond": hors_plafond,
             "blocs_mises": blocs_mises}
 
 
-def rendre_pages(blocs: dict) -> dict:
+def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     """Contenu de chaque fichier du site, tout calculé avant d'écrire (le site existant n'est remplacé qu'après)."""
     data, actuelles, paris, retenus = blocs["data"], blocs["actuelles"], blocs["paris"], blocs["retenus"]
     hors_plafond, blocs_mises = blocs["hors_plafond"], blocs["blocs_mises"]
     donnees_json = json_public(data)
-    flux_alertes = notifications_mod.flux(actuelles, paris, retenus)
+    flux_alertes = notifications_mod.flux(actuelles, paris, retenus, instant)
     alertes_json = json_public(flux_alertes)
-    ordres_json = json_public(ordres_mod.construire(flux_alertes, actuelles))
+    ordres_json = json_public(ordres_mod.construire(flux_alertes, actuelles, instant))
     web = Path(__file__).resolve().parent.parent / "web"
     html = MODELE
     html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
