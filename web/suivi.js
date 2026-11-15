@@ -230,16 +230,25 @@ const LIGNE_SUIVI = {gagne: ['gagne', '✓ Gagné'], demi_gagne: ['gagne', '✓ 
 const REF_SUIVI = {Pinnacle: '', Polymarket: 'Poly ', Consensus: 'Cons. ', Smarkets: 'Sm. '};
 // Bouton « Parier chez … » de liens.js (absent quand ce fichier est testé seul).
 const boutonSuivi = (p, court = false) => typeof boutonBookmaker === 'function' ? boutonBookmaker(p, court) : '';
+// Affichage seul : un pari pris par plusieurs stratégies suivies montre la mise totale (unitaire × nombre),
+// le détail reste en petit et en infobulle. Mise inconnue : 10 €, comme dans suiviBilan.
+const montantSuivi = x => suiviBankroll(x).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+function texteMiseSuivi(mise, mises = 1) {
+  const m = suiviNombre(mise);
+  if (!(mises > 1)) return m != null ? ` · mise ${montantSuivi(m)}` : '';
+  const u = m ?? 10, detail = `${mises} × ${montantSuivi(u)}`;
+  return ` · mise totale ${montantSuivi(u * mises)} <small class="mise-detail" title="${mises} mises de ${montantSuivi(u)}">(${detail})</small>`;
+}
 const carteSuivi = (p, mises = 1) => {
   const [etat, libelle] = LIGNE_SUIVI[p.statut] || ['cours', 'En cours'];
   const quand = new Date(p.detecte).toLocaleString('fr-FR', {timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
   const valeur = suiviNombre(p.gain) != null ? eur2(p.gain * mises) : '';
-  const miseTexte = suiviNombre(p.mise) != null ? ` · mise ${suiviBankroll(p.mise).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €` : '';
+  const miseTexte = texteMiseSuivi(p.mise, mises);
   return `<details class="ligne-detail ligne-pari pari-ligne etat-${etat}"><summary>
 <span class="pari-gauche"><span class="pari-tete"><span class="puce-sport">${e((typeof nomsSports !== 'undefined' && nomsSports[p.sport]) || p.sport || 'Sport')}</span><span class="pari-ligue">${e(p.ligue || '')}</span></span>
 <span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span>${typeof horairePari === 'function' ? `<span class="pari-debut">Match ${horairePari(p)}</span>` : ''}</span>
 <span class="pari-milieu"><span class="pari-bookmaker">${e(p.bookmaker)} · ${quand}</span>
 <span><b class="ligne-cote">${cote(p.cote)}</b> <span class="pari-ref">(${e(REF_SUIVI[p.reference] ?? (p.reference || '') + ' ')}${cote(p.cote_juste)})</span></span></span>
-<span class="pari-droite"><b class="ligne-valeur">${valeur}</b><span class="pari-etat">${libelle}${miseTexte}${mises > 1 ? ` · ${mises} mises` : ''}</span>${boutonSuivi(p, true)}</span></summary>
+<span class="pari-droite"><b class="ligne-valeur">${valeur}</b><span class="pari-etat">${libelle}${miseTexte}</span>${boutonSuivi(p, true)}</span></summary>
 <div class="ligne-corps"><div class="carte">${boutonSuivi(p) ? `<div class="l1">${boutonSuivi(p)}</div>` : ''}<div class="l4">${p.suivies.map(k => `<span class="badge">${e(nomStrategie(k))}</span>`).join('')}</div></div></div></details>`;
 };
