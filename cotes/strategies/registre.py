@@ -10,6 +10,7 @@ stratégie dans le laboratoire et la navigation du site (« Claude (rejeu) », i
 """
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
@@ -32,6 +33,16 @@ class Strategie:
     ligne: str
 
 
+def _a_l_appel(f: Callable) -> Callable:
+    """Sélecteur relu dans son module à chaque appel : un sélecteur remplacé (tests) est bien pris."""
+    module, nom = sys.modules[f.__module__], f.__name__
+
+    def selectionner(paris, *args, **kwargs):
+        return getattr(module, nom)(paris, *args, **kwargs)
+    selectionner.__qualname__ = f"{f.__module__}.{nom}"
+    return selectionner
+
+
 def _bases():
     from cotes.convergence import STRATEGIES
     from cotes.simulation import STRATEGIE
@@ -48,14 +59,14 @@ def _bases():
                "m3": "strategie_m3.py"}
     for cle, _famille_vote, libelle, ligne, selecteur in STRATEGIES:
         r = regles[cle]
-        yield Strategie(cle, libelle, "base", r.get("version"), r.get("debut"), selecteur,
+        yield Strategie(cle, libelle, "base", r.get("version"), r.get("debut"), _a_l_appel(selecteur),
                         modules[cle] in FICHIERS_FIGES, ligne)
 
 
 def _convergence():
     from cotes.convergence import CONVERGENCE, paris_convergence
     yield Strategie("convergence", CONVERGENCE["nom"], "convergence", CONVERGENCE.get("version"),
-                    CONVERGENCE["debut"], paris_convergence, False, CONVERGENCE["nom"])
+                    CONVERGENCE["debut"], _a_l_appel(paris_convergence), False, CONVERGENCE["nom"])
 
 
 def _famille_variante(cle: str) -> str:

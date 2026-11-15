@@ -462,6 +462,9 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 **E4.2 — Le site lit le registre**
 - Faire : dans `site_web.py`, là où le même traitement est répété pour chaque stratégie importée une à une,
   parcourir le registre. Test : empreinte identique.
+- Fait le 15/11/2026 : les deux dictionnaires `officiels` (navigation et laboratoire) parcourent les bases du registre.
+  Les sélecteurs du registre sont relus dans leur module à chaque appel. `test_navigation_strategies.py` remplace le
+  registre du site par les sélecteurs du site (mêmes comptes d'appels attendus). Empreinte identique.
 
 **E4.3 — Notifications, ordres et protocole lisent le registre** (un module par commit)
 - Test : empreinte identique, `tests/test_notifications.py`, `tests/test_ordres.py`, `tests/test_protocole.py`.
@@ -567,7 +570,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☑ |
 | E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☑ |
 | E4.1 | Registre des stratégies | — | faible | ☑ |
-| E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☐ |
+| E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☑ |
 | E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☐ |
 | E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☐ |
 | E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☐ |

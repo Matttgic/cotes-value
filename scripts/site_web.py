@@ -15,6 +15,7 @@ from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bila
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
+from cotes.strategies import registre as registre_strategies  # noqa: E402
 from cotes.strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, charger_fusions, paris_fusion  # noqa: E402
 from cotes.reglement import GAIN, taux_manuel  # noqa: E402
 from cotes.sources_resultats import ou_chercher  # noqa: E402
@@ -421,15 +422,8 @@ def navigation_strategies(paris: list[dict], laboratoire: dict, maintenant: str)
         "Eden (rejeu)": paris_eden(observes, depuis=DEBUT_ETUDE),
         "M3 (rejeu)": paris_m3(observes, depuis=DEBUT_ETUDE),
     }
-    officiels = {
-        "Claude (rejeu)": paris_strategie(paris),
-        "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
-        "Gemini Argon v1 (rejeu)": paris_gemini(paris),
-        "JULES EDGE v1 (rejeu)": paris_jules(paris),
-        "JULES EDGE v2 (rejeu)": paris_jules_v2(paris),
-        "Eden (rejeu)": paris_eden(paris),
-        "M3 (rejeu)": paris_m3(paris),
-    }
+    # sélections officielles des 7 bases, dans l'ordre du registre (cotes/strategies/registre.py)
+    officiels = {s.ligne: s.selectionner(paris) for s in registre_strategies.par_famille("base")}
     cles = {nom: cle for cle, _, _, nom, _ in STRATEGIES}
     historiques[CONVERGENCE["nom"]] = paris_convergence(
         observes, {cles[nom]: ids for nom, ids in historiques.items()}, depuis=DEBUT_ETUDE)
@@ -667,7 +661,6 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             laboratoire["resultats"] = [r for r in laboratoire.get("resultats", []) if r["regle"]["id"] in ids_regles]
             maintenant = datetime.now(timezone.utc).isoformat()
             releve_str = laboratoire.get("releve") or maintenant
-            m3_ids = paris_m3(paris)
             releve_dt = heure(releve_str) or heure(maintenant)
             rapport_v2 = _lire(Path(__file__).resolve().parent.parent / "docs/strategie-jules-v2.json", {})
             v2_historique = rapport_v2.get("comparateurs", {}).get("JULES EDGE v2 reconstruite")
@@ -696,19 +689,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
                 for r in manquantes:
                     laboratoire["courbes"].setdefault(r.id, {})["futur"] = courbe(
                         calculer(r.id, lambda: selectionner(suivies, r, DEBUT_SUIVI), list), maintenant)
-            gemini_ids = paris_gemini(paris)
-            jules_ids = paris_jules(paris)
-            jules_v2_ids = paris_jules_v2(paris)
-            eden_ids = paris_eden(paris)
-            officiels = {
-                "Claude (rejeu)": paris_strategie(paris),
-                "ChatGPT v1 (rejeu)": paris_chatgpt(paris),
-                "Gemini Argon v1 (rejeu)": gemini_ids,
-                "JULES EDGE v1 (rejeu)": jules_ids,
-                "JULES EDGE v2 (rejeu)": jules_v2_ids,
-                "Eden (rejeu)": eden_ids,
-                "M3 (rejeu)": m3_ids,
-            }
+            officiels = {s.ligne: s.selectionner(paris) for s in registre_strategies.par_famille("base")}
             officiels[CONVERGENCE["nom"]] = paris_convergence(paris)
             prudentes = selections_prudentes(paris, bases={cle: officiels[nom] for cle, _, _, nom, _ in STRATEGIES})
             officiels.update({v["nom"]: prudentes[v["cle"]] for v in VARIANTES})
