@@ -489,7 +489,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 - Test : `tests/test_pushover.py`, `tests/test_notifications.py`, `tests/test_recap_jouables.py`.
 - Fait le 15/11/2026 : `webhook.py` (charge utile, texte ntfy et mise en forme commune, alertes Pinnacle 2),
   `pushover.py` (stratégies cochées, alertes, champs du message), `chrome.py` (`lire_paris`, `preparer`). Le script
-  garde l'envoi, la lecture des choix et la journalisation (587 → ~330 lignes). Aucun test modifié.
+  garde l'envoi, la lecture des choix et la journalisation (587 → 363 lignes). Aucun test modifié.
 
 **E5.2 — `_construire` en quatre fonctions** (même fichier)
 - Faire : `charger_entrees(donnees)`, `calculer_blocs(entrees, maintenant)`, `rendre_pages(blocs)`,
