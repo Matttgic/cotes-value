@@ -370,6 +370,7 @@ cette étape. »
 - Faire : ajouter `mode()` à `direct/olybet.py` et `direct/netbet.py` (alias de `mode_source`, qui reste) ; dans le
   registre, adaptateurs qui rendent `(lignes, meta)` pour Pinnacle et Polymarket (aujourd'hui une liste).
 - Test : un test par adaptateur avec `collecter` remplacé.
+- Fait le 15/11/2026 : `meta` des adaptateurs = `ok` (aucune erreur), `erreurs` (copie de `ERREURS`), `lignes`.
 
 **E2.4 — Lancement des bookmakers français en boucle**
 - Fichier : `scripts/cycle.py › collecter_prematch`.
@@ -534,7 +535,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E1.4 | Une E/S JSON | E0.1 | faible | ☑ |
 | E2.1 | Registre des sources | — | faible | ☑ |
 | E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☑ |
-| E2.3 | Lecture de même forme | E2.1 | faible | ☐ |
+| E2.3 | Lecture de même forme | E2.1 | faible | ☑ |
 | E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☐ |
 | E2.5 | Erreurs sans liste globale | — | faible | ☐ |
 | E3.1 | Contexte, règlement seul | E0.2 | moyen | ☐ |

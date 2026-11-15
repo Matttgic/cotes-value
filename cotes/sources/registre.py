@@ -4,7 +4,8 @@ Une entrée par source lue par le cycle : budget (s), mode, mémoire de réserve
 contrôle des intitulés. Rempli depuis `scripts/cycle.py` (`BUDGETS`, `MEMOIRES`, exclusions du contrôle) et les
 `hors_consensus()` de Smarkets et Matchbook ; `tests/test_registre_sources.py` vérifie qu'ils concordent.
 
-`lire` appelle la fonction du module au moment de l'appel (un `collecter` remplacé dans un test est bien pris).
+`lire` appelle la fonction du module au moment de l'appel (un `collecter` remplacé dans un test est bien pris) et
+rend toujours `(lignes, meta)` ; `mode()` rend toujours "direct", "shadow" ou "off".
 """
 from __future__ import annotations
 
@@ -23,6 +24,16 @@ def _appel(module: ModuleType, nom: str) -> Callable:
         return getattr(module, nom)(*args, **kwargs)
     appeler.__qualname__ = f"{module.__name__}.{nom}"
     return appeler
+
+
+def _en_lignes_meta(module: ModuleType) -> Callable:
+    """Pinnacle et Polymarket rendent une liste : même forme `(lignes, meta)` que les autres lecteurs."""
+    def lire(*args, **kwargs):
+        lignes = list(module.collecter(*args, **kwargs) or [])
+        erreurs = list(module.ERREURS)
+        return lignes, {"ok": not erreurs, "erreurs": erreurs, "requetes": None, "lignes": len(lignes)}
+    lire.__qualname__ = f"{module.__name__}.collecter"
+    return lire
 
 
 def _toujours_direct() -> str:
@@ -48,17 +59,17 @@ def _source(nom, role, budget, module, fonction="collecter", **kw) -> Source:
 
 
 SOURCES: tuple[Source, ...] = (
-    _source("pinnacle", "reference", 45, pinnacle, reference="Pinnacle"),
-    _source("polymarket", "reference", 30, polymarket, reference="Polymarket"),
+    Source("pinnacle", "reference", 45, _en_lignes_meta(pinnacle), reference="Pinnacle"),
+    Source("polymarket", "reference", 30, _en_lignes_meta(polymarket), reference="Polymarket"),
     # PMU, Winamax, Unibet, Betclic, OlyBet, NetBet : bookmakers français, lus en direct
     _source("pmu_direct", "francais", 75, pmu, memoire="pmu"),
     _source("winamax_direct", "francais", 80, winamax),       # 25 filtres depuis le 25/10 : ~70 s
     # coupé par le budget dans la moitié des cycles les 23-24/10 (médiane 72 s)
     _source("unibet_direct", "francais", 80, unibet, memoire="unibet", attend_radar=True),
-    _source("olybet", "francais", 40, olybet, mode=_appel(olybet, "mode_source")),
+    _source("olybet", "francais", 40, olybet, mode=_appel(olybet, "mode")),
     # coupé par son budget à chaque cycle jusqu'au 2/11 (lecture tournante incomplète) ; lu en parallèle, et le cycle
     # attend déjà Winamax (~60 s) et Unibet (~75 s après le départ) : 55 s ne rallongent pas la collecte
-    _source("netbet", "francais", 55, netbet, mode=_appel(netbet, "mode_source"), memoire="netbet"),
+    _source("netbet", "francais", 55, netbet, mode=_appel(netbet, "mode"), memoire="netbet"),
     _source("betclic_direct", "francais", 80, betclic, memoire="betclic"),
     # bourses : leur table de paris, hors du contrôle des intitulés
     _source("smarkets", "bourse", 60, smarkets,

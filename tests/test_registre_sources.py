@@ -1,13 +1,13 @@
 """Registre des sources (cotes/sources/registre.py, E2.1) : mêmes valeurs que scripts/cycle.py."""
 import pytest
 
-from cotes import smarkets
-from cotes.direct import matchbook, winamax
+from cotes import pinnacle, polymarket, smarkets
+from cotes.direct import matchbook, netbet, olybet, winamax
 from cotes.sources import registre
 from scripts import cycle
 
 
-# Valeurs de scripts/cyc.py avant E2.2 (BUDGETS, MEMOIRES, exclusions de index_controle), recopiées ici
+# Valeurs de scripts/cycle.py avant E2.2 (BUDGETS, MEMOIRES, exclusions de index_controle), recopiées ici
 BUDGETS_15_11 = {"pinnacle": 45, "polymarket": 30, "pmu_direct": 75, "winamax_direct": 80, "unibet_direct": 80,
                  "olybet": 40, "netbet": 55, "betclic_direct": 80, "smarkets": 60, "matchbook": 25, "betfair": 45,
                  "draftkings": 20, "fanduel": 40}
@@ -58,3 +58,30 @@ def test_modes(monkeypatch):
     monkeypatch.setenv("SMARKETS_COLLECTE", "oui")
     assert registre.source("olybet").mode() == "off"
     assert registre.source("smarkets").mode() == "direct"
+
+
+@pytest.mark.parametrize("module,nom", [(pinnacle, "pinnacle"), (polymarket, "polymarket")])
+def test_adaptateur_lignes_meta(monkeypatch, module, nom):
+    def collecter(*a, **k):
+        module.ERREURS.clear()
+        return [{"cote": 2.0}]
+
+    monkeypatch.setattr(module, "collecter", collecter)
+    lignes, meta = registre.source(nom).lire()
+    assert lignes == [{"cote": 2.0}] and meta["ok"] is True and meta["erreurs"] == [] and meta["lignes"] == 1
+
+    def en_panne(*a, **k):
+        module.ERREURS.append("HTTP 503")
+        return None
+
+    monkeypatch.setattr(module, "collecter", en_panne)
+    lignes, meta = registre.source(nom).lire()
+    assert lignes == [] and meta["ok"] is False and meta["erreurs"] == ["HTTP 503"]
+    module.ERREURS.clear()
+
+
+@pytest.mark.parametrize("module,variable", [(olybet, "SOURCE_OLYBET"), (netbet, "SOURCE_NETBET")])
+def test_mode_alias_de_mode_source(monkeypatch, module, variable):
+    for valeur in ("", "off", "direct", "inconnu"):
+        monkeypatch.setenv(variable, valeur)
+        assert module.mode() == module.mode_source()

@@ -64,6 +64,11 @@ def mode_source() -> str:
     return valeur if valeur in MODES else "direct"
 
 
+def mode() -> str:
+    """Même nom que les autres lecteurs (cotes/sources/registre.py) ; `mode_source` reste."""
+    return mode_source()
+
+
 def sports_demandes(sports: set[str] | None) -> list[tuple[str, str]]:
     if sports is None:
         return list(SPORTS.items())
