@@ -19,6 +19,13 @@ from functools import lru_cache
 FICHIERS_FIGES = ("strategie_jules_v2.py", "strategie_commune.py", "strategie_jules.py", "correspondance.py",
                   "decisions.py")
 FAMILLES = ("base", "convergence", "variante", "grok", "conseil", "defi", "claude", "fusion", "labo")
+# Doc de chaque famille (README › Ajouter une stratégie ; tests/test_registre_strategies.py vérifie qu'elle existe)
+DOCS_FAMILLES = {
+    "base": "docs/comparaison-strategies.md", "convergence": "docs/strategie-convergence.md",
+    "variante": "docs/variantes-prudentes.md", "grok": "docs/strategie-grok.md", "conseil": "docs/strategie-conseil.md",
+    "defi": "docs/strategie-defi.md", "claude": "docs/strategie-claude-opus.md", "fusion": "docs/recommandees.md",
+    "labo": "docs/comparaison-strategies.md",
+}
 
 
 @dataclass(frozen=True)

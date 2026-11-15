@@ -477,6 +477,8 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 - Faire : section du README : un fichier `strategie_x.py`, une entrée de registre, une doc `docs/strategie-x.md`,
   l'inscription au protocole (`scripts/protocole.py --inscrire`). Test : un test vérifie que chaque famille du
   registre a sa doc.
+- Fait le 15/11/2026 : `registre.DOCS_FAMILLES` ; nouvelle doc `docs/strategie-convergence.md` (seule famille sans
+  doc). L'« entrée de registre » est l'ajout à `VARIANTES` et à `selections_prudentes`, que le registre reprend.
 
 ### 4.7 Phase 5 — Alertes et site
 
@@ -576,7 +578,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E4.1 | Registre des stratégies | — | faible | ☑ |
 | E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☑ |
 | E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☑ |
-| E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☐ |
+| E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☑ |
 | E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☐ |
 | E5.2 | `_construire` en quatre | E0.1 | moyen | ☐ |
 | E5.3 | Heure du site injectée | E5.2 | faible | ☐ |

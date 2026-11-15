@@ -78,3 +78,16 @@ def test_noms_des_notifications_identiques():
     avant = {**{cle: nom for cle, _, nom, _, _ in STRATEGIES}, "convergence": "Convergence ≥ 2",
              **{v["cle"]: v["court"] for v in VARIANTES}, **labo, **notifications.NOMS_BASES}
     assert list(notifications.NOMS.items()) == list(avant.items())
+
+
+def test_chaque_famille_a_sa_doc():
+    familles = {s.famille for s in registre.toutes()}
+    assert familles <= set(registre.DOCS_FAMILLES)
+    for famille in familles:
+        assert (RACINE / registre.DOCS_FAMILLES[famille]).exists(), famille
+
+
+def test_fiche_ajouter_une_strategie_dans_le_readme():
+    texte = (RACINE / "README.md").read_text(encoding="utf-8")
+    assert "### Ajouter une stratégie" in texte
+    assert "cotes/strategies/registre.py" in texte and "--inscrire" in texte
