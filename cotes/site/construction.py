@@ -528,7 +528,8 @@ def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees
     lignes += [{"id": "base:" + nom, "stats": s, "ensemble": ensembles.get("base:" + nom, set()), "base": True}
                for nom, s in (laboratoire.get("bases_futur") or {}).items()]
     maintenant = _maintenant(instant)
-    etat = reco.mettre_a_jour(donnees, lignes, maintenant)
+    mesure = reco.mesurer_preuves(lignes, paris)       # ROI et CLV Pinnacle par match, corrigées : les critères
+    etat = reco.mettre_a_jour(donnees, lignes, maintenant, reviser_permis=mesure)
     par_id = {l["id"]: l for l in lignes}
     pauses_etat = evaluer_pauses(donnees, lignes, paris, maintenant, etat)
 
@@ -544,7 +545,8 @@ def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees
     return {"actuelles": [{**x, "depuis_entree": depuis_entree(x)} for x in etat["actuelles"]],
             "anciennes": [{**x, "pendant": depuis_entree(x)} for x in etat["anciennes"]][::-1],
             "derniere_revision": etat["derniere_revision"], "prochaine_revision": etat["prochaine_revision"],
-            "criteres": {"min_matchs": reco.MIN_MATCHS, "part_meilleur_max": reco.PART_MEILLEUR_MAX,
+            "criteres": {"version": reco.CRITERES, "min_matchs": reco.MIN_MATCHS, "min_clv": reco.MIN_CLV,
+                         "part_pinnacle_min": reco.PART_PINNACLE_MIN, "alpha": reco.ALPHA,
                          "recouvrement_max": reco.RECOUVREMENT_MAX, "maximum": reco.MAXIMUM,
                          "revision_jours": reco.REVISION_JOURS, "ecart_remplacement": reco.ECART_REMPLACEMENT},
             "fusion_rejeu": rejeu, "doublons": reco.doublons(lignes), "pauses": pauses_etat}

@@ -2,9 +2,9 @@
 
 En haut de la page Stratégies, deux blocs distincts :
 
-- **Recommandées** : une liste **stable** de stratégies existantes (au plus trois). Chaque carte porte le nom de la
-  stratégie et sa date d'entrée (« Recommandée depuis le 8/11 »), avec son résultat depuis cette date. La liste
-  n'est revue que tous les 7 jours.
+- **Recommandées** : une liste **stable** de stratégies existantes (au plus trois), celles qui battent le plus
+  sûrement la clôture Pinnacle. Chaque carte porte le nom de la stratégie et sa date d'entrée, avec son résultat
+  depuis cette date. La liste n'est revue que tous les 7 jours.
 - **Fusion 1** : une stratégie à part, qui réunit les trois recommandées du 8/11/2026 avec un seul pari par match.
   Ses membres sont figés : elle ne suit pas la liste des recommandées.
 
@@ -15,7 +15,7 @@ liste : `recommandees.json` dans la branche `donnees`.
 ## Exemple pour lire les deux blocs
 
 Le 8/11, les recommandées sont Polymarket 1,5–3, Pinnacle 1,3–2 et Polymarket 2–5 ; Fusion 1 les réunit.
-Si, à la révision du 15/11, Grok 8 dépasse Pinnacle 1,3–2 d'au moins 5 points :
+Si, à la révision du 15/11, Grok 8 dépasse Pinnacle 1,3–2 d'au moins 0,5 point (borne basse de la CLV Pinnacle) :
 - la liste devient Polymarket 1,5–3, Polymarket 2–5, Grok 8 (« recommandée depuis le 15/11 ») ; Pinnacle 1,3–2
   passe dans « Anciennes recommandées » avec ses dates et la raison ;
 - Fusion 1 ne change pas : elle garde Pinnacle 1,3–2, marqué « plus recommandée depuis le 15/11 » ;
@@ -47,22 +47,52 @@ création, sans rejeu. Les fusions ne sont jamais candidates aux recommandées.
 - Ses prises sont recalculées à partir des prises figées de ses membres (`cotes/decisions.py`) : elles ne dépendent
   d'aucun résultat.
 
-## Critères
+## Critères (version 2, depuis le 16/11/2026)
 
-Sur le suivi depuis le lancement de chaque stratégie, en mise fixe, une stratégie est **candidate** si :
+Sur le suivi depuis le lancement de chaque stratégie (mise fixe, cote ≤ plafond), mesuré comme une ligne de la page
+Décision (`cotes/decision.py` › `mesurer` : CLV contre la clôture Pinnacle sans marge, le match comme unité de hasard,
+Student), une stratégie est **candidate** si :
 
 | Critère | Seuil | Pourquoi |
 |---|---|---|
-| Matchs réglés | ≥ 50 (note non provisoire) | Assez de matchs pour que le hasard pèse peu |
-| Borne basse à 80 % du ROI, par match | > 0 | Rentable même dans un scénario prudent |
-| ROI sans les meilleurs matchs (5 %, au moins un) | > 0 | Le gain ne tient pas à quelques matchs chanceux |
-| Part du meilleur match dans les gains | ≤ 25 % | Pas de dépendance à un seul match |
-| CLV moyenne par match | > 0 | Les cotes prises battent la clôture : avantage réel, pas seulement de la chance |
+| Matchs réglés | ≥ 50 | Assez de matchs pour mesurer |
+| Clôture Pinnacle connue | ≥ 50 % des paris réglés, ≥ 30 mesures | Sinon la CLV ne décrit qu'une partie des paris |
+| CLV Pinnacle positive | p de Holm < 5 %, sur toutes les stratégies testées | La CLV prédit le rendement à cote ≤ 5 (avantage-reel.md, point 6) ; la correction empêche le nombre de stratégies comparées de fabriquer des gagnantes |
+| Rendement pas nettement sous la CLV | écart (rendement − CLV) : borne haute à 95 % ≥ 0 | Écarte les stratégies qui battent la clôture mais perdent quand même (Claude Défi 5) |
+| ROI | > 0 | Garde-fou, comme « jouer » dans la page Décision |
 
-Les candidates sont classées par note /100 (docs/notation-strategies.md, version 2). Une candidate qui partage plus
-de 60 % de ses paris avec une recommandée est écartée comme doublon (paris communs / paris de la plus petite des
-deux). Trois recommandées au plus. Les bases du Bilan (tous les paris d'une référence) ne sont pas candidates. Le
-choix se fait en mise fixe.
+Classement : **borne basse à 95 % de la CLV Pinnacle** (le cas prudent). Une candidate remplace la plus faible si sa
+borne basse la dépasse d'au moins 0,5 point. Une candidate qui partage plus de 60 % de ses paris avec une recommandée
+est écartée comme doublon (paris communs / paris de la plus petite des deux). Trois recommandées au plus. Les bases du
+Bilan (tous les paris d'une référence) et les fusions ne sont pas candidates. Mesures publiées pour chaque stratégie
+dans `stats.preuve` (`cotes/recommandations.py` › `mesurer_preuves`).
+
+**Pourquoi la version 1 a été remplacée.** Elle demandait une borne basse du ROI à 80 % positive, sans correction,
+et classait par note /100 (fondée sur le ROI). Avec une centaine de lignes comparées, environ une stratégie sans
+avantage sur dix passait par hasard ; à 50 matchs, le ROI varie de ±25 points. Le 13/11, la meilleure recommandée
+(Polymarket 2–5) avait une p corrigée de 0,50. La version 2 juge sur la CLV, mesure qui tranche bien plus vite.
+
+**Changement de version** : il déclenche une révision immédiate (`CRITERES` dans `cotes/recommandations.py`). Les
+recommandées qui ne remplissent pas les nouveaux critères sortent, avec la raison « (critères version 2) ».
+
+**Différence avec le protocole de validation** (docs/protocole.md) : les recommandées sont relues chaque semaine sur
+tout l'historique, y compris les paris qui ont servi à les choisir ; c'est une sélection, pas une preuve. Le protocole
+fixe tout à l'avance, ne compte que les paris d'après le 16/11/2026, demande un seuil bien plus strict (p < 0,025 %)
+et rend un verdict définitif. Seul le protocole peut dire qu'un avantage est prouvé.
+
+### Révision du 16/11/2026 (passage à la version 2)
+
+Sur les données du 16/11 à 0 h 45 (Paris), 50 stratégies testées :
+
+| Stratégie | Matchs | Clôture connue | CLV Pinnacle [IC 95 %] | p corrigée | ROI |
+|---|---|---|---|---|---|
+| Défi 4 · Pinnacle très gros écart | 73 | 75 % | +9,51 % [+5,56 ; +13,46] | 0,0003 | +13,0 % |
+| Pinnacle · 2–5 · ≥ 5 % · ≤ 36 h | 140 | 79 % | +4,55 % [+2,41 ; +6,69] | 0,0012 | +13,4 % |
+| Pinnacle · 1,5–3 · ≥ 5 % · ≤ 36 h | 166 | 83 % | +4,16 % [+2,34 ; +5,98] | 0,0003 | +9,8 % |
+
+Sorties : Polymarket 1,5–3 et Polymarket 2–5 (clôture Pinnacle connue pour moins de la moitié des paris),
+Pinnacle 1,3–2 · ≥ 2 % (CLV non prouvée après correction). Fusion 2 est créée avec les trois entrantes. Écartée :
+Claude Défi 5 (CLV +7,8 % mais ROI −35,9 % : rendement nettement sous la CLV).
 
 ## Première liste (8/11/2026)
 

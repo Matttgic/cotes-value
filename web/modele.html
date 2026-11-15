@@ -1652,6 +1652,20 @@ function etiquettesStrategie(r) {
   const f = fiabilite(r.stats.note);
   return pause + `<small class="fiabilite ${f.ton}">${e(f.texte)} · ${e(f.detail)}</small>`;
 }
+// Preuve d'une stratégie (cotes/recommandations.py › mesurer_preuves) : CLV Pinnacle par match, corrigée, et ROI à
+// mise fixe. Publiée dans la vue à mise fixe seulement : elle ne dépend pas du mode de mise choisi.
+function preuveDe(id) {
+  const L = D_FIXE.laboratoire || {};
+  return ((L.futur || []).find(r => r.id === id) || L.comparateurs_futur?.[id])?.preuve;
+}
+function preuveReco(P) {
+  if (!P || !P.regles) return '<p class="reco-preuves doux">Aucun pari réglé.</p>';
+  const v = (x, d = 1) => x == null ? "—" : (x > 0 ? "+" : "") + Number(x).toFixed(d).replace(".", ",") + " %";
+  const ic = P.clv_ic ? ` [${v(P.clv_ic[0], 2)} ; ${v(P.clv_ic[1], 2)}]` : "";
+  const p = P.p == null ? "" : ` · p corrigée ${P.p < 0.001 ? "&lt; 0,001" : String(P.p.toFixed(3)).replace(".", ",")}`;
+  return `<p class="reco-preuves">Tout le suivi : ${P.matchs} matchs · CLV Pinnacle <b class="${signe(P.clv)}">${v(P.clv, 2)}</b>${ic}${p}
+    · clôture connue pour ${String(P.couverture).replace(".", ",")} % · ROI à mise fixe ${v(P.roi)}</p>`;
+}
 // Stratégies recommandées (cotes/recommandations.py) : liste stable, revue tous les 7 jours (recommandees.json).
 // Chaque carte porte le nom de la stratégie et sa date d'entrée ; aucun numéro qui changerait de contenu.
 // Fusion 1 (cotes/strategie_recommandee.py) est une stratégie à part, aux membres figés : elle ne suit pas la liste.
@@ -1669,12 +1683,11 @@ function rendreRecommandees(rows) {
   const bouton = r => r ? `<button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button>` : "";
   const C = R.criteres || {};
   const cartes = (R.actuelles || []).map(x => {
-    const r = parId.get(x.id), s = r?.stats || {}, n = s.note || {}, m = n.mesures || {};
+    const r = parId.get(x.id);
     return `<article class="reco-carte"><div class="reco-tete"><span class="reco-rang">Recommandée depuis le ${jour(x.depuis)}</span>${bouton(r)}</div>
       <h3>${e(r ? r.nom : x.id)}</h3><p class="reco-detail">${e(r ? r.detail : "")}</p>
       <p class="reco-chiffres">Depuis son entrée : ${resultat(x.depuis_entree)}</p>
-      <p class="reco-preuves">Note actuelle <b class="${(n.total ?? 0) >= 70 ? "pos" : ""}">${n.total ?? "—"}/100</b> (${x.note_entree}/100 à l'entrée) · tout le suivi : ${n.matchs ?? "—"} matchs, ROI ${p1(m.roi)},
-      ${p1(m.roi_sans_meilleurs)} sans ses ${m.meilleurs_retires ?? "?"} meilleurs matchs, CLV par match ${p1(m.clv_ajustee)}</p></article>`;
+      ${preuveReco(preuveDe(x.id))}</article>`;
   });
   const anciennes = (R.anciennes || []).map(x => `<li><b>${e(nom(x.id))}</b> : recommandée du ${jour(x.depuis)} au ${jour(x.jusqua)}, sortie car ${e(x.raison)}. Pendant ce temps : ${resultat(x.pendant)}.</li>`);
   // Fusions : stratégies à part, membres figés (Fusion 1 le 8/11, puis une nouvelle à chaque révision qui change la
@@ -1700,9 +1713,11 @@ function rendreRecommandees(rows) {
       <div class="reco-grille">${fusions.map(carteFusion).join("")}</div>` : "";
   zone.innerHTML = `<h2 class="sous-titre">Recommandées</h2>
     <details class="mode-emploi"><summary>Comment elles sont choisies</summary><p class="aide">Liste revue tous les ${C.revision_jours ?? 7} jours (dernière révision le ${jour(R.derniere_revision)}, prochaine le ${jour(R.prochaine_revision)}) ; entre deux révisions, elle ne bouge pas.
-    Une stratégie entre si elle a au moins ${C.min_matchs ?? 50} matchs réglés, un ROI prudent positif, un ROI positif sans ses meilleurs matchs, aucun match au-delà de ${C.part_meilleur_max ?? 25} % du gain,
-    une CLV par match positive, et moins de ${Math.round(100 * (C.recouvrement_max ?? .6))} % de paris communs avec une autre recommandée. Elle sort seulement si elle ne remplit plus ces critères,
-    ou si une candidate la dépasse d'au moins ${C.ecart_remplacement ?? 5} points de note. Aucun gain futur garanti.</p></details>
+    Une stratégie entre si, sur tout son suivi, elle bat la clôture Pinnacle de façon prouvée : au moins ${C.min_matchs ?? 50} matchs réglés, clôture Pinnacle connue pour au moins ${C.part_pinnacle_min ?? 50} % de ses paris,
+    CLV Pinnacle positive après correction pour le nombre de stratégies comparées (p &lt; ${Math.round(100 * (C.alpha ?? .05))} %), rendement pas nettement sous la CLV, ROI positif,
+    et moins de ${Math.round(100 * (C.recouvrement_max ?? .6))} % de paris communs avec une autre recommandée. Classement : la CLV Pinnacle dans le cas prudent (borne basse à 95 %).
+    Elle sort si elle ne remplit plus ces critères, ou si une candidate la dépasse d'au moins ${String(C.ecart_remplacement ?? .5).replace(".", ",")} point dans le cas prudent.
+    Ce sont les mesures de l'onglet Décision ; seul le protocole de validation, fixé à l'avance, peut dire qu'un avantage est prouvé. Aucun gain futur garanti.</p></details>
     ${cartes.length ? `<div class="reco-grille">${cartes.join("")}</div>` : '<div class="vide">Aucune stratégie ne remplit encore les critères.</div>'}
     ${anciennes.length ? `<details class="mode-emploi"><summary>Anciennes recommandées (${anciennes.length})</summary><ul class="reco-anciennes">${anciennes.join("")}</ul></details>` : ""}
     ${fusion}${pausesEtDoublons(nom)}`;
