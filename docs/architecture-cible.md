@@ -398,22 +398,31 @@ Toutes les étapes de cette phase sont des **déplacements** : même code, même
   `if args.seulement_reglement:` dans `pipeline/reglement.py`. `cycle.py` garde ces noms par import ; les tests qui
   remplacent `cycle.effectuer_reglement` ou `cycle.REGLEMENT_MINUTES` visent le nouveau module.
 - Test : `tests/test_cycle_reglement.py`, contrôle standard.
+- Fait le 15/11/2026 : `regler_seul(ctx, mode)` ; le site et l'affichage restent dans `main()` (`cotes/` n'importe
+  pas `scripts/`). Déplacés aussi, car le chemin règlement en a besoin : `etape`, `signaler`, `charger_paris`,
+  `retirer_obsoletes` et `FICHIERS_OBSOLETES` (`cotes/pipeline/outils.py`). `tests/test_fichiers_obsoletes.py` exclut
+  désormais le fichier qui écrit la liste au lieu de `cycle.py`.
 
 **E3.2 — Étape sauvegarde**
 - Faire : le bloc « 5. sauvegarde » de `main()` (archives, liens, `paris.json`, obsolètes, contrôle, opportunités,
   `etat.json`, surveillance) devient `pipeline/sauvegarde.py › sauvegarder(ctx)`. Le chemin règlement appelle la même
   fonction avec un drapeau pour sa partie commune, dans le même ordre.
 - Test : E0.2, `tests/test_cycle_reglement.py`.
+- Fait le 15/11/2026 : `sauvegarder(ctx, reglement_seul=False)` ; `lire_controle`, `enregistrer_controle` et
+  `CONTROLE_PUBLICATION_MIN` déplacés avec (`cotes/pipeline/sauvegarde.py`), noms gardés sur `cycle`.
 
 **E3.3 — Étape analyse**
 - Faire : association → historique des références → contrôle → comparaison → props → mouvement → écarts d'affichage
   deviennent `pipeline/analyse.py › analyser(ctx)`.
 - Test : E0.2, `tests/test_controle.py`, `tests/test_props_*.py`.
+- Fait le 15/11/2026 : le `Contexte` est créé avant l'analyse (champs `references`, `hors_consensus`, `index`) et
+  rempli jusqu'à la sauvegarde. `tests/test_betfair.py` lit l'ordre dans `main()` et l'association dans `analyser`.
 
 **E3.4 — Étape prise**
 - Faire : chargement des paris, retrait des supprimés, placement, fusions, pauses, décisions figées, redécision, Qwen,
   suivi des prix et clôture deviennent `pipeline/prise.py › prendre(ctx)`.
 - Test : E0.2, `tests/test_decision*.py`, `tests/test_strategie_qwen.py`, `tests/test_protocole.py`.
+- Fait le 15/11/2026 : `redecider` et `suivre_qwen` déplacés avec (`cotes/pipeline/prise.py`), noms gardés sur `cycle`.
 
 **E3.5 — Étape collecte**
 - Prérequis : E2.4.
@@ -421,11 +430,18 @@ Toutes les étapes de cette phase sont des **déplacements** : même code, même
   `_appliquer_bourse`, `repli_reserve`, sports précédents et dérive vont dans `pipeline/collecte.py`. Mettre à jour
   les 12 `monkeypatch.setattr(cycle, "harmoniser_pinnacle", …)` des tests.
 - Test : contrôle standard, E0.2. Plus gros déplacement de la phase.
+- Fait le 15/11/2026 : `collecter(ctx)` reprend aussi la partie collecte de `main()` (bourses lancées au départ,
+  marchés inconnus, Smarkets, dérive, `hors_consensus`). Les 13 remplacements de `harmoniser_pinnacle` visent
+  `cotes.pipeline.collecte` ; `tests/test_betfair.py` et `tests/test_lancement_anticipe.py` lisent l'ordre dans
+  `collecter`.
 
 **E3.6 — `main()` ne fait plus qu'enchaîner**
 - Faire : `main()` lit les arguments, crée le `Contexte` et appelle `collecter`, `analyser`, `prendre`, `regler`,
   `sauvegarder`, puis le site. Moins de 60 lignes.
 - Test : contrôle standard, E0.1, E0.2, test de E0.3 (exceptions en baisse).
+- Fait le 15/11/2026 : `main()` fait 49 lignes ; `scripts/cycle.py` passe de 1 198 à ~140 lignes (arguments,
+  enchaînement, noms gardés pour les tests). Étape `regler(ctx, mode)` ajoutée. Empreinte identique ; 21 exceptions
+  (l'import du site par `cycle.py` reste, il disparaîtra avec E5.4 et E6.1).
 
 ### 4.6 Phase 4 — Stratégies
 
@@ -541,12 +557,12 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E2.3 | Lecture de même forme | E2.1 | faible | ☑ |
 | E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☑ |
 | E2.5 | Erreurs sans liste globale | — | faible | ☐ |
-| E3.1 | Contexte, règlement seul | E0.2 | moyen | ☐ |
-| E3.2 | Étape sauvegarde | E3.1 | moyen | ☐ |
-| E3.3 | Étape analyse | E3.1 | moyen | ☐ |
-| E3.4 | Étape prise | E3.1 | moyen | ☐ |
-| E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☐ |
-| E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☐ |
+| E3.1 | Contexte, règlement seul | E0.2 | moyen | ☑ |
+| E3.2 | Étape sauvegarde | E3.1 | moyen | ☑ |
+| E3.3 | Étape analyse | E3.1 | moyen | ☑ |
+| E3.4 | Étape prise | E3.1 | moyen | ☑ |
+| E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☑ |
+| E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☑ |
 | E4.1 | Registre des stratégies | — | faible | ☐ |
 | E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☐ |
 | E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☐ |

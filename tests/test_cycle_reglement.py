@@ -20,7 +20,7 @@ NOW = datetime(2026, 10, 16, 18, tzinfo=timezone.utc)
     ('2026-10-16T17:05:00Z', True),
 ])
 def test_auto_reprend_un_reglement_en_retard_ou_une_date_invalide(monkeypatch,date,attendu):
-    monkeypatch.setattr(cycle,'REGLEMENT_MINUTES',55)
+    monkeypatch.setattr(cycle.pipeline_reglement,'REGLEMENT_MINUTES',55)
     assert cycle.reglement_echu({'dernier_reglement':date},NOW,'auto') is attendu
 
 
@@ -101,7 +101,7 @@ def test_commande_seulement_reglement_respecte_mode_et_preserve_le_journal(tmp_p
         assert choix==mode
         j['resultats']={'paris_en_attente':40} if effectue else {'saute':True}
         return effectue
-    monkeypatch.setattr(cycle,'effectuer_reglement',regler)
+    monkeypatch.setattr(cycle.pipeline_reglement,'effectuer_reglement',regler)
     monkeypatch.setitem(sys.modules,'site_web',SimpleNamespace(construire=lambda *a:None))
     monkeypatch.setattr(sys,'argv',['cycle.py','--seulement-reglement','--reglement',mode,'--donnees',str(tmp_path)])
     assert cycle.main()==0

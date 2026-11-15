@@ -35,7 +35,7 @@ def montage(monkeypatch, sports_pin=("football",)):
 
     monkeypatch.setattr(cycle.pinnacle, "collecter", pinnacle)
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     monkeypatch.setattr(cycle.winamax_direct, "collecter", winamax)
     monkeypatch.setattr(cycle.unibet_direct, "collecter", unibet)
     return vu
@@ -94,8 +94,8 @@ def test_fichier_absent_vieux_ou_illisible(tmp_path):
 
 
 def test_matchbook_lance_au_depart():
-    src = inspect.getsource(cycle.main)
+    src = inspect.getsource(cycle.collecter)          # étape collecte depuis E3.5 (cotes/pipeline/collecte.py)
     depart = src.index("futur_mb = pool_mb.submit(appliquer_matchbook")
-    assert depart < src.index("collecter_prematch(args.mode") < src.index("appliquer_smarkets(")
+    assert depart < src.index("collecter_prematch(mode") < src.index("appliquer_smarkets(")
     assert src.index("appliquer_smarkets(") < src.index("mb_lignes = futur_mb.result()")
     assert src.count("appliquer_matchbook(") == 0

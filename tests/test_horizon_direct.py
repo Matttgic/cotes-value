@@ -172,7 +172,7 @@ def test_cycle_enregistre_l_horizon(monkeypatch, tmp_path):
                         lambda *a, **k: ([], {"ok": True, "erreurs": [], "requetes": 0, "matchs": 0}))
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     maintenant = datetime(2026, 10, 17, tzinfo=timezone.utc)
     cycle.collecter_prematch("complet", maintenant, {"etapes": {}}, donnees=tmp_path)
     assert vus["pmu"][0][1] == 36 and vus["pmu"][1]["reserve"] == {} and vus["pmu"][1]["concurrence"] == 2

@@ -181,7 +181,7 @@ def test_cycle_garde_fanduel_hors_des_paris(monkeypatch):
                    cycle.betclic_direct, cycle.olybet_direct, cycle.netbet_direct):
         monkeypatch.setattr(module, "collecter", vide)
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a, **k: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     pin = [{"source": "pinnacle", "sport": "basket", "marche": "JOUEUR:Points", "periode": "MATCH",
             "ligne": 25.5, "issue": "PLUS", "joueur": "L. James", "proba_juste": 0.52, "cote": 1.92,
             "domicile": "Los Angeles Lakers", "exterieur": "Boston Celtics",

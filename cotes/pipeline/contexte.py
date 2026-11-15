@@ -1,0 +1,32 @@
+"""Contexte d'un cycle (docs/architecture-cible.md, E3.1) : ce que les étapes se passent, sans variable globale."""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+
+
+@dataclass
+class Contexte:
+    maintenant: datetime
+    mode: str                                  # "complet", "test" (ou "reglement" écrit dans le journal)
+    donnees: Path
+    reprise: Path | None = None                # dernier bon état des références (cache Actions)
+    journal: dict = field(default_factory=dict)  # sortie du cycle : etat.json › dernier_cycle
+    # collecte
+    pinnacle: list = field(default_factory=list)
+    polymarket: list = field(default_factory=list)
+    francais: list = field(default_factory=list)
+    smarkets: list = field(default_factory=list)
+    matchbook: list = field(default_factory=list)
+    betfair: list = field(default_factory=list)
+    references: dict = field(default_factory=dict)       # nom de la référence -> ses lignes (mêmes objets)
+    hors_consensus: frozenset = frozenset()
+    # analyse
+    index: dict = field(default_factory=dict)             # association : référence -> match français -> lignes
+    etat_controle: dict = field(default_factory=dict)
+    opportunites: list = field(default_factory=list)
+    # prise et règlement
+    paris: list = field(default_factory=list)
+    nouveaux: list = field(default_factory=list)
+    regle: bool = False                        # le règlement a eu lieu à ce cycle
