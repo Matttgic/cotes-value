@@ -247,7 +247,12 @@ class Strategie:                   # cotes/strategies/registre.py
    python -m pytest -q tests 2>&1 | tail -3
    node --test tests/*.test.mjs 2>&1 | tail -5
    ```
-   Après E0.1, ajouter l'empreinte du site (même résultat attendu avant et après, sauf mention contraire).
+   Empreinte du site (même résultat attendu avant et après, sauf mention contraire) :
+   ```bash
+   bash scripts/cloner_donnees.sh "$(git remote get-url origin)" ../donnees-ref    # une fois, hors du dépôt
+   python scripts/empreinte_site.py --donnees ../donnees-ref --sortie ../avant.json  # avant le changement
+   python scripts/empreinte_site.py --donnees ../donnees-ref --comparer ../avant.json  # après : « identique »
+   ```
 6. Si un test échoue et que la cause n'est pas évidente en deux essais : annuler l'étape (`git checkout .`) et le
    noter dans la PR plutôt que modifier un test.
 7. À la fin : cocher l'étape dans le tableau 4.10 de ce fichier.
@@ -269,6 +274,9 @@ cette étape. »
   modifié la change.
 - Données de référence : `git clone --branch donnees`, puis `git checkout <sha>` ; noter le sha dans la PR.
 - Fini quand : deux passages de suite sur les vraies données donnent un `--comparer` vide.
+- Fait le 15/11/2026. Les chronomètres (`perf_counter`, `monotonic`) sont aussi figés à 0 : `protection.py` publie la
+  durée de chaque stratégie dans la page, qui changeait sinon à chaque construction. Sur le clone partiel de
+  `donnees` au commit `1829127` : 17 fichiers, deux passages identiques, 24 s chacun.
 
 **E0.2 — Cycle à blanc hors réseau**
 - Fichier : nouveau `tests/test_cycle_a_blanc.py`.
@@ -498,7 +506,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 
 | Étape | Titre | Prérequis | Risque | Fait |
 |---|---|---|---|---|
-| E0.1 | Empreinte du site | — | faible | ☐ |
+| E0.1 | Empreinte du site | — | faible | ☑ |
 | E0.2 | Cycle à blanc | — | faible | ☐ |
 | E0.3 | Test d'architecture | — | faible | ☐ |
 | E1.1 | Catalogue de configuration | — | faible | ☐ |
