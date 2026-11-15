@@ -118,7 +118,7 @@ def test_lancement_des_bookmakers_identique(monkeypatch, mode, heures):
             for s in ("football", "tennis")]
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda *a, **k: refs)
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a, **k: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     monkeypatch.setattr(cycle.pinnacle_secours, "disponible", lambda: False)
     cycle.collecter_prematch(mode, datetime(2026, 10, 17, 6, tzinfo=timezone.utc), {"etapes": {}})
     for nom, (sports, options) in ARGS_15_11.items():

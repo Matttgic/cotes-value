@@ -144,7 +144,7 @@ def test_cycle_ajoute_olybet_par_defaut(monkeypatch):
         "domicile": "Sporting CP", "exterieur": "Academico Viseu", "cote": 1.20,
         "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM", "match_id": "pin|1"}])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
 
     def lire(sports, heures):
         return ([{

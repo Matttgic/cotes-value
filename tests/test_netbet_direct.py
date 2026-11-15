@@ -206,7 +206,7 @@ def test_cycle_ajoute_netbet_par_defaut(monkeypatch):
         "domicile": "Lyon", "exterieur": "Nice", "cote": 2.40,
         "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM", "match_id": "pin|1"}])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     monkeypatch.setattr(cycle.pmu_direct, "collecter", lambda *a, **k: ([{
         "bookmaker": "pmu", "sport": "football", "debut": "2026-10-18T18:45:00Z",
         "domicile": "Lyon", "exterieur": "Nice", "cote": 1.85, "marche": "RESULTAT_1N2",

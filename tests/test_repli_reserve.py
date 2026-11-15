@@ -33,7 +33,7 @@ def test_cycle_complet_unibet_coupe_rend_sa_memoire_et_la_garde(monkeypatch):
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
     monkeypatch.setattr(cycle.pinnacle_secours, "disponible", lambda: False)
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     monkeypatch.setattr(cycle.unibet_direct, "collecter", lambda *a, **k: None)      # source coupée : rien rendu
     bloc = {"curseur": 7, "lignes": [ligne("unibet-fr|1", 4)]}
     import json, tempfile

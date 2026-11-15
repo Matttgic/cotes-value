@@ -25,7 +25,7 @@ def _cycle_unibet(monkeypatch, lignes_unibet):
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
     monkeypatch.setattr(cycle.pinnacle_secours, "disponible", lambda: False)
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     monkeypatch.setattr(cycle.unibet_direct, "collecter", lambda *a, **k: (
         list(lignes_unibet), {"ok": True, "erreurs": [], "requetes": 1, "matchs": 1,
                               "reserve": {"curseur": 1, "lignes": list(lignes_unibet)}}))

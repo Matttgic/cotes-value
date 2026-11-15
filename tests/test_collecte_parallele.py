@@ -63,7 +63,7 @@ def test_toutes_les_cotes_francaises_viennent_des_lecteurs_directs(monkeypatch):
         monkeypatch.setenv(variable, "pulsescore")
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football", "pinnacle")])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     j = {"etapes": {}}
     _, _, lignes = cycle.collecter_prematch("complet", NOW, j)
     assert [l["bookmaker"] for l in lignes] == ["pmu", "winamax", "unibet-fr", "betclic"]
@@ -78,7 +78,7 @@ def test_winamax_incomplet_marque_son_etape(monkeypatch):
                         lambda *a, **k: ([ligne("football")], {"ok": False, "erreurs": ["socket fermé"], "requetes": 1}))
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football", "pinnacle")])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     j = {"etapes": {}}
     _, _, lignes = cycle.collecter_prematch("complet", NOW, j)
     assert [l["bookmaker"] for l in lignes] == ["winamax"]          # les cotes lues restent utilisées
@@ -107,7 +107,7 @@ def test_sources_independantes_partent_ensemble(monkeypatch):
     monkeypatch.setattr(cycle.netbet_direct, "collecter", lent)
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [ligne("football")])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     cycle.collecter_prematch("complet", NOW, {"etapes": {}})
     assert len(starts) == 6
     assert max(starts) - min(starts) < 0.5

@@ -140,7 +140,7 @@ def test_cycle_pinnacle_en_panne_reprend_le_sport_et_garde_la_panne_visible(tmp_
                                                                {"ok": True, "erreurs": [], "requetes": 0}))
     monkeypatch.setattr(cycle.pinnacle_secours, "disponible", lambda: False)
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
     chemin = tmp_path / "reprise" / "derniere_lecture.json.gz"
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda: [pin()])
     cycle.collecter_prematch("complet", T0, {"etapes": {}}, None, chemin)

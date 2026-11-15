@@ -178,7 +178,7 @@ def _cycle_sans_reseau(monkeypatch, erreurs, lignes_pinnacle):
 
     monkeypatch.setattr(cycle.pinnacle, "collecter", lire)
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a: [])
-    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr("cotes.pipeline.collecte.harmoniser_pinnacle", lambda x: x)
 
 
 def test_cycle_utilise_le_secours_pour_les_sports_en_echec(monkeypatch):

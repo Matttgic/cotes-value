@@ -430,6 +430,10 @@ Toutes les étapes de cette phase sont des **déplacements** : même code, même
   `_appliquer_bourse`, `repli_reserve`, sports précédents et dérive vont dans `pipeline/collecte.py`. Mettre à jour
   les 12 `monkeypatch.setattr(cycle, "harmoniser_pinnacle", …)` des tests.
 - Test : contrôle standard, E0.2. Plus gros déplacement de la phase.
+- Fait le 15/11/2026 : `collecter(ctx)` reprend aussi la partie collecte de `main()` (bourses lancées au départ,
+  marchés inconnus, Smarkets, dérive, `hors_consensus`). Les 13 remplacements de `harmoniser_pinnacle` visent
+  `cotes.pipeline.collecte` ; `tests/test_betfair.py` et `tests/test_lancement_anticipe.py` lisent l'ordre dans
+  `collecter`.
 
 **E3.6 — `main()` ne fait plus qu'enchaîner**
 - Faire : `main()` lit les arguments, crée le `Contexte` et appelle `collecter`, `analyser`, `prendre`, `regler`,
@@ -554,7 +558,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E3.2 | Étape sauvegarde | E3.1 | moyen | ☑ |
 | E3.3 | Étape analyse | E3.1 | moyen | ☑ |
 | E3.4 | Étape prise | E3.1 | moyen | ☑ |
-| E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☐ |
+| E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☑ |
 | E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☐ |
 | E4.1 | Registre des stratégies | — | faible | ☐ |
 | E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☐ |
