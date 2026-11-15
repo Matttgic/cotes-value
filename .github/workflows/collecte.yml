@@ -190,7 +190,7 @@ jobs:
           # Alerte Pushover si une stratégie échoue plusieurs constructions du site de suite (cotes/protection.py).
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
-        run: python -m cotes reglement --reglement auto --donnees donnees --site site
+        run: python -m cotes cycle --seulement-reglement --reglement auto --donnees donnees --site site
 
       # Un seul commit et un seul push par cycle (collecte, alertes, règlement), même si une étape a échoué.
       # Les caches sortis de la branche ne sont jamais ajoutés ; au premier cycle, ils sont retirés de l'index
