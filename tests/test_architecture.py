@@ -32,7 +32,7 @@ _PAR_COUCHE = {
                "cotes.direct.pmu cotes.direct.unibet cotes.direct.winamax",
     "domaine": "cotes.controle cotes.comparaison cotes.mouvement cotes.props",
     "paris": "cotes.simulation cotes.reglement cotes.mises cotes.props_papier",
-    "strategies": "cotes.decisions cotes.convergence cotes.laboratoire cotes.memo cotes.pauses "
+    "strategies": "cotes.strategies cotes.strategies.registre cotes.decisions cotes.convergence cotes.laboratoire cotes.memo cotes.pauses "
                   "cotes.strategies_prudentes cotes.strategie_recommandee cotes.strategie_chatgpt "
                   "cotes.strategie_claude_defi cotes.strategie_claude_humain cotes.strategie_claude_opus "
                   "cotes.strategie_claude_signal cotes.strategie_coeur cotes.strategie_commune "

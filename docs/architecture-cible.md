@@ -455,6 +455,9 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 - Test : les clés du registre contiennent `protocole.definitions()` et celles que `site_web.navigation_strategies`
   affiche sur le jeu témoin (`tests/fixtures/protocole_temoin.json.gz`) ; pas de clé en double ; `figee=True` pour
   les stratégies des 5 fichiers figés.
+- Fait le 15/11/2026 : 90 stratégies (7 bases, Convergence, 58 variantes en 6 familles, 24 règles du laboratoire).
+  Champ `ligne` en plus (libellé du laboratoire et de la navigation). Le test rejoue la navigation du site sur le
+  témoin et compare des sélections du registre à celles des sélecteurs d'origine.
 
 **E4.2 — Le site lit le registre**
 - Faire : dans `site_web.py`, là où le même traitement est répété pour chaque stratégie importée une à une,
@@ -563,7 +566,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E3.4 | Étape prise | E3.1 | moyen | ☑ |
 | E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☑ |
 | E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☑ |
-| E4.1 | Registre des stratégies | — | faible | ☐ |
+| E4.1 | Registre des stratégies | — | faible | ☑ |
 | E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☐ |
 | E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☐ |
 | E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☐ |
