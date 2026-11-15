@@ -123,3 +123,13 @@ test('repartir de zéro pour une seule stratégie laisse les autres intactes',()
   eq(tout,{a:[[500,null]],b:[[500,null]]});
   assert.notEqual(un.b,etat.b);                                    // copie, pas la même liste
 });
+
+test('Plusieurs mises : la carte affiche la mise totale, le détail en petit',()=>{
+  const f=vm.runInContext('texteMiseSuivi',c);
+  assert.equal(f(10,1),' · mise 10,00 €');
+  assert.equal(f(null,1),'');
+  const deux=f(10,2);
+  assert.match(deux,/mise totale 20,00 €/); assert.match(deux,/\(2 × 10,00 €\)/); assert.match(deux,/title="2 mises de 10,00 €"/);
+  assert.match(f(null,3),/mise totale 30,00 €/);
+  assert.match(f(12.5,2),/mise totale 25,00 €/);
+});
