@@ -36,6 +36,7 @@ from cotes import pauses, reglement, simulation, stockage  # noqa: E402
 from cotes.convergence import CONVERGENCE, STRATEGIES, cle_selection, paris_convergence  # noqa: E402
 from cotes.evenements import identites  # noqa: E402
 from cotes.laboratoire import DEBUT_SUIVI, REGLES as REGLES_LABO, selectionner  # noqa: E402
+from cotes.protocole import clv_pinnacle  # noqa: E402
 from cotes.strategie_recommandee import charger_fusions  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
 
@@ -143,26 +144,7 @@ def paris_necessaires(ecart_type_pari: float, effet: float | None, tests: int = 
 
 # ---------------------------------------------------------------- CLV
 
-def cloture_pinnacle(paris: list[dict]) -> dict[int, float]:
-    """CLV contre la clôture Pinnacle : celle du pari si Pinnacle est sa référence, sinon celle du même pari
-    (même bookmaker, même match, même marché, même issue) repéré aussi par Pinnacle, recalculée à la cote du pari."""
-    juste: dict[tuple, tuple[str, float]] = {}
-    for p in paris:
-        if p.get("reference") == "Pinnacle" and simulation.clv_finale(p) is not None and p.get("match_id"):
-            lu, k = p["cloture_lue"], cle_selection(p)
-            if k not in juste or lu > juste[k][0]:
-                juste[k] = (lu, p["cote_juste_cloture"])
-    out = {}
-    for p in paris:
-        if p.get("statut") not in REGLES:
-            continue
-        if p.get("reference") == "Pinnacle":
-            c = simulation.clv_finale(p)
-            if c is not None:
-                out[id(p)] = c
-        elif p.get("match_id") and cle_selection(p) in juste:
-            out[id(p)] = p["cote"] / juste[cle_selection(p)][1] - 1
-    return out
+cloture_pinnacle = clv_pinnacle     # même mesure que le protocole de validation (cotes/protocole.py)
 
 
 # ---------------------------------------------------------------- lignes à tester

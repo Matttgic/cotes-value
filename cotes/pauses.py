@@ -50,6 +50,11 @@ def charger(source) -> dict[str, datetime]:
     return dict(_ACTIVES)
 
 
+def actives() -> dict[str, datetime]:
+    """Pauses en vigueur ({clé: début}), telles que ``charger`` les a lues."""
+    return dict(_ACTIVES)
+
+
 def filtrer(paris: list[dict], ids: set[int], cle: str) -> set[int]:
     """``ids`` sans les paris détectés depuis la pause de ``cle`` (inchangés si ``cle`` n'est pas en pause)."""
     limite = _ACTIVES.get(cle)

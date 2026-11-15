@@ -1716,7 +1716,26 @@ function pausesEtDoublons(nom) {
       const [faible, forte] = d.note_a <= d.note_b ? [d.a, d.b] : [d.b, d.a];
       return `<li><b>${e(String(d.part).replace(".", ","))} %</b> en commun (${d.communs} paris) : <b>${e(nom(faible))}</b> et ${e(nom(forte))}</li>`;
     }).join("")}</ul>` : '<p class="aide">Aucune paire à 80 % ou plus.</p>'}</details>`;
-  return pauses + doublons;
+  return protocoleResume() + pauses + doublons;
+}
+// Protocole de validation (cotes/protocole.py) : où en est chaque stratégie, sans chiffre intermédiaire.
+function protocoleResume() {
+  const P = D.protocole || {}, R = P.regles || {}, lignes = Object.values(P.lignes || {}), n = P.resume || {};
+  if (!lignes.length) return "";
+  const j = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4) : "—";
+  const titres = {succes: "Validées", echec: "Non validées", rompu: "Protocole rompu", hors_protocole: "Hors protocole", en_cours: "En cours"};
+  const groupe = statut => {
+    const l = lignes.filter(x => x.statut === statut).sort((a, b) => (b.mesures || 0) / (b.n || 1) - (a.mesures || 0) / (a.n || 1));
+    if (!l.length) return "";
+    return `<p class="aide"><b>${titres[statut]} (${l.length})</b></p><ul class="reco-anciennes">${l.map(x => `<li><b>${e(x.nom)}</b>` +
+      (x.n ? ` : ${Math.min(x.mesures, x.n)} / ${x.n} paris mesurés` : "") + (x.motif ? ` · ${e(x.motif)}` : "") +
+      (x.statut === "en_cours" && x.fin_estimee ? ` · ${/^\d/.test(x.fin_estimee) ? "fin vers le " + j(x.fin_estimee) : e(x.fin_estimee)}` : "") + "</li>").join("")}</ul>`;
+  };
+  return `<details class="mode-emploi"><summary>Protocole de validation (${n.en_cours || 0} en cours · ${n.succes || 0} validées · ${n.echec || 0} non validées)</summary>
+    <p class="aide">Règles fixées avant les paris, les mêmes pour toutes : seuls comptent les paris détectés depuis le ${j(R.debut)} dont la clôture Pinnacle est connue.
+    Chaque stratégie a un nombre de paris à atteindre et deux lectures (mi-parcours, finale) ; entre les deux, aucun verdict. Validée si sa CLV contre la clôture Pinnacle
+    est positive avec p &lt; ${String(100 * R.alpha).replace(".", ",")} % (${R.places} places prévues, 5 % de risque pour l'ensemble). ${R.empreintes_verifiees ? "" : "Empreintes des règles non vérifiées à cette construction. "}Détail : docs/protocole.md.</p>
+    ${["succes", "echec", "rompu", "en_cours", "hors_protocole"].map(groupe).join("")}</details>`;
 }
 // Raccourcis de période et dates (Du / Au) de l'onglet Stratégies ; le choix reste sur cet appareil.
 function rendreDatesStrategies() {

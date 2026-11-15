@@ -397,6 +397,8 @@ sur le test du 17–19 octobre. Cela ne démontre pas une rentabilité future.
 [Configuration, secrets et publication](SECURITY.md).
 [Audit de la justesse des bilans](docs/audit-bilans.md) (13/11/2026) : biais, règlement, chiffres refaits par
 `scripts/audit_bilans.py`.
+[Protocole de validation](docs/protocole.md) (15/11/2026) : hypothèse, règles figées, nombre de paris, critère d'arrêt
+et test fixés avant les paris pour chaque stratégie ; suivi automatique dans le Bilan (`cotes/protocole.py`).
 [Stratégie de mises](docs/strategie-mises.md) (14/11/2026) : segments à couper, stratégie figée choisie sur une période
 et validée sur l'autre, Kelly fractionné simulé contre la mise fixe par `scripts/strategie_mises.py`.
 [Cote juste](docs/cote-juste.md) (14/11/2026) : méthodes de retrait de la marge et pondérations du consensus
