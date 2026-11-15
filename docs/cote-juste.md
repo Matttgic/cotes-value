@@ -3,7 +3,7 @@
 Fait le 14/11/2026. Deux jeux de données : 330 fichiers de football-data.co.uk (22 divisions, saisons 2012/13 à
 2026/27, cotes Pinnacle et bet365 avec le score), et la branche `donnees` (commit `f13913e`, 14/11 à 11:38 UTC :
 paris réglés depuis le 05/10, `references/` depuis le 12/11). Tous les chiffres sortent de
-`scripts/cote_juste.py` (lecture seule, graine fixe) ; tous les tableaux : [cote-juste-tableaux.md](cote-juste-tableaux.md).
+`etudes/cote_juste.py` (lecture seule, graine fixe) ; tous les tableaux : [cote-juste-tableaux.md](cote-juste-tableaux.md).
 Suite de [avantage-reel.md](avantage-reel.md).
 
 ## Conclusion
@@ -343,7 +343,7 @@ poids ne peut être mesuré.
 ## Décisions proposées
 
 1. Garder la méthode puissance et la moyenne simple du consensus, avec les filtres actuels.
-2. Relancer `scripts/cote_juste.py` vers le 05/12 : les marchés à deux issues et l'ajout de Matchbook seront
+2. Relancer `etudes/cote_juste.py` vers le 05/12 : les marchés à deux issues et l'ajout de Matchbook seront
    tranchés par les résultats, pas par la clôture.
 3. Enregistrer les cotes de DraftKings dans `references/`, comme les autres références : sans cela il ne sera
    jamais pesé.
@@ -365,11 +365,11 @@ git clone --depth 1 --branch donnees https://github.com/Matttgic/cotes-value don
 ```
 
 ```bash
-python scripts/cote_juste.py marge --football football --donnees donnees
+python etudes/cote_juste.py marge --football football --donnees donnees
 ```
 
 ```bash
-python scripts/cote_juste.py consensus --donnees donnees
+python etudes/cote_juste.py consensus --donnees donnees
 ```
 
 Demande numpy (`requirements-dev.txt`). Deux minutes pour le football, une minute pour chaque partie sur les

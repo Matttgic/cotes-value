@@ -1,7 +1,7 @@
 # Stratégie de mises : quoi couper, quoi figer, combien miser
 
 Fait le 14/11/2026 sur la branche `donnees` (commit `4283860`, 17:17 UTC) : 5 040 paris uniques réglés du 05/10 au
-14/11. Tous les chiffres sortent de `python scripts/strategie_mises.py --donnees <dossier>` (lecture seule, une
+14/11. Tous les chiffres sortent de `python etudes/strategie_mises.py --donnees <dossier>` (lecture seule, une
 minute, graine fixe : deux exécutions donnent le même fichier). Tous les tableaux :
 [strategie-mises-tableaux.md](strategie-mises-tableaux.md). Suite de [avantage-reel.md](avantage-reel.md) et de
 [cote-juste.md](cote-juste.md).
@@ -254,7 +254,7 @@ bash scripts/cloner_donnees.sh https://github.com/Matttgic/cotes-value donnees
 ```
 
 ```bash
-python scripts/strategie_mises.py --donnees donnees --markdown docs/strategie-mises-tableaux.md
+python etudes/strategie_mises.py --donnees donnees --markdown docs/strategie-mises-tableaux.md
 ```
 
 Demande numpy (`requirements-dev.txt`). Les données changent toutes les heures : pour retrouver ces chiffres, se

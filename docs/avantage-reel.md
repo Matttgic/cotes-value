@@ -1,7 +1,7 @@
 # Avantage réel : ce que les paris réglés prouvent
 
 Fait le 13/11/2026 sur la branche `donnees` (commit `db927c7`, 18:42 UTC) : 6 227 paris détectés du 05/10 au
-13/11, dont 6 027 réglés. Tous les chiffres sortent de `python scripts/avantage_reel.py --donnees <dossier>`
+13/11, dont 6 027 réglés. Tous les chiffres sortent de `python etudes/avantage_reel.py --donnees <dossier>`
 (lecture seule, 8 minutes, graine fixe : deux exécutions donnent les mêmes chiffres). Toutes les colonnes de chaque
 ligne : [avantage-reel-tableaux.md](avantage-reel-tableaux.md). ROI = gain / mises, mise fixe de 10 €. Suite de
 [audit-bilans.md](audit-bilans.md).
@@ -313,7 +313,7 @@ bash scripts/cloner_donnees.sh https://github.com/Matttgic/cotes-value donnees
 ```
 
 ```bash
-python scripts/avantage_reel.py --donnees donnees --markdown docs/avantage-reel-tableaux.md
+python etudes/avantage_reel.py --donnees donnees --markdown docs/avantage-reel-tableaux.md
 ```
 
 Demande numpy (`requirements-dev.txt`). La sortie standard est le tableau « Verdict par ligne ». Les données

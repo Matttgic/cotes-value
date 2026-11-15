@@ -1,10 +1,10 @@
 """Peut-on prédire la clôture Pinnacle ? Tests hors échantillon (docs/recherche.md). Lecture seule, numpy seul.
 
-    python scripts/recherche_cloture.py --donnees donnees --football fd
+    python etudes/recherche_cloture.py --donnees donnees --football fd
 
 ``--donnees`` : branche « donnees » complète (paris.json, archives/, cotes/, references/, correspondances/).
 ``--football`` : dossier des CSV de football-data.co.uk nommés ``SAISON-DIVISION.csv`` (p. ex. ``2425-E0.csv``),
-comme pour scripts/cote_juste.py. Sans lui, la partie football est sautée.
+comme pour etudes/cote_juste.py. Sans lui, la partie football est sautée.
 
 Quatre parties, chacune apprise sur une période et jugée sur une période plus récente, jamais vue :
 

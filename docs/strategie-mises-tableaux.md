@@ -1,6 +1,6 @@
 # Stratégie de mises : tableaux complets
 
-Produit par `scripts/strategie_mises.py` sur le commit `4283860 du 2026-11-14T17:17:10+00:00` de `donnees`, graine 20261114, 10000 tirages. 5040 paris uniques réglés du 2026-10-05 au 2026-11-14. A : matchs détectés avant le 2026-10-26 (2839 paris, 1417 matchs) ; B : les autres (2201 paris, 1005 matchs). Lecture : [strategie-mises.md](strategie-mises.md).
+Produit par `etudes/strategie_mises.py` sur le commit `4283860 du 2026-11-14T17:17:10+00:00` de `donnees`, graine 20261114, 10000 tirages. 5040 paris uniques réglés du 2026-10-05 au 2026-11-14. A : matchs détectés avant le 2026-10-26 (2839 paris, 1417 matchs) ; B : les autres (2201 paris, 1005 matchs). Lecture : [strategie-mises.md](strategie-mises.md).
 
 ## Segments
 

@@ -38,7 +38,7 @@ Abonnement (Pro, 10 requêtes par seconde sans plafond) : mettre `PINNODDS_LIMIT
 Quand Pinnacle répond de nouveau, comparer les deux lectures :
 
 ```bash
-PINNODDS_API_KEY=... PINNODDS_HANDICAPS=oui python scripts/comparer_secours_pinnacle.py football basket
+PINNODDS_API_KEY=... PINNODDS_HANDICAPS=oui python etudes/comparer_secours_pinnacle.py football basket
 ```
 
 La couverture et la part de cotes à ±1 % doivent être très élevées. Tant que ce n'est pas vérifié,

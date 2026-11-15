@@ -1,6 +1,6 @@
 """Diagnostic descriptif reproductible ; ne modifie ni règles, ni paris, ni site.
 
-python scripts/analyse_chatgpt.py --donnees chemin/vers/donnees
+python etudes/analyse_chatgpt.py --donnees chemin/vers/donnees
 Rejouer sur le commit de données cité dans docs/strategie-chatgpt.md pour obtenir
 exactement les chiffres de conception. Les résultats futurs ne sont pas un backtest.
 """

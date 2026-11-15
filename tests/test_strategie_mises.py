@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 import pytest
 
-from scripts.strategie_mises import (MISE_FIXE, PLAFOND_OUVERT, PLAFOND_PARI, _mise_fixe, avantage, difference, droite,
+from etudes.strategie_mises import (MISE_FIXE, PLAFOND_OUVERT, PLAFOND_PARI, _mise_fixe, avantage, difference, droite,
                                      ecartes, facteur_incertitude, mise_kelly, parts_du_jour, rejouer, retenu,
                                      resumer_trajectoires, tirer_jour, variance, variance_entre_periodes)
 

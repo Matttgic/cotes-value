@@ -1,6 +1,6 @@
 """Avantage réel : ROI, incertitude, tests corrigés et CLV de chaque stratégie et de chaque bookmaker. Lecture seule.
 
-Usage : python scripts/avantage_reel.py --donnees CHEMIN [--tirages 50000] [--json FICHIER] [--markdown FICHIER]
+Usage : python etudes/avantage_reel.py --donnees CHEMIN [--tirages 50000] [--json FICHIER] [--markdown FICHIER]
 CHEMIN = branche « donnees » extraite (paris.json, archives/, recommandees.json). Demande numpy
 (requirements-dev.txt). Environ 8 minutes avec 50 000 tirages ; « --tirages 5000 » pour un aperçu en une minute
 (les p-valeurs corrigées sont alors plafonnées). Même graine, mêmes données : mêmes chiffres.
@@ -449,7 +449,7 @@ FAMILLES = (("base", "Ensemble"), ("bookmaker", "Bookmakers (paris uniques)"), (
 def markdown(rapport_: dict) -> str:
     r, c = rapport_["lignes"], rapport_["clv_predit_roi"]
     out = ["# Avantage réel : tous les tableaux", "",
-           f"Produit par `scripts/avantage_reel.py --markdown` : données `{rapport_['commit_donnees']}`, "
+           f"Produit par `etudes/avantage_reel.py --markdown` : données `{rapport_['commit_donnees']}`, "
            f"{rapport_['regles']} paris réglés sur {rapport_['paris']}, {rapport_['tirages']} tirages, graine "
            f"{rapport_['graine']}, {rapport_['tests']} tests du ROI ({rapport_['lignes_testees']} lignes, deux sens). "
            "Lecture et conclusions : [avantage-reel.md](avantage-reel.md).", "",

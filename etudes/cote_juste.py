@@ -1,8 +1,8 @@
 """Cote juste : comparaison des méthodes de retrait de la marge et des pondérations du consensus. Lecture seule.
 
 Usage :
-    python scripts/cote_juste.py marge --football DOSSIER [--donnees CHEMIN] [--tirages 2000]
-    python scripts/cote_juste.py consensus --donnees CHEMIN [--tirages 2000]
+    python etudes/cote_juste.py marge --football DOSSIER [--donnees CHEMIN] [--tirages 2000]
+    python etudes/cote_juste.py consensus --donnees CHEMIN [--tirages 2000]
 
 ``--football`` : dossier des fichiers CSV de football-data.co.uk nommés ``SAISON-DIVISION.csv`` (p. ex.
 ``2425-E0.csv``), cotes Pinnacle et bet365 avec le score final (2 minutes). ``--donnees`` : branche « donnees »

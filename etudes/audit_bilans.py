@@ -1,6 +1,6 @@
 """Audit de la justesse des bilans : recalcule chaque chiffre de docs/audit-bilans.md. Lecture seule.
 
-Usage : python scripts/audit_bilans.py --donnees CHEMIN [--sans-archive]
+Usage : python etudes/audit_bilans.py --donnees CHEMIN [--sans-archive]
 CHEMIN = branche « donnees » extraite (paris.json, archives/, resultats_manuels.json, opportunites/).
 """
 from __future__ import annotations

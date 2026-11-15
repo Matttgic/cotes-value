@@ -68,7 +68,7 @@ Reproduction, depuis le dépôt de code :
 
 ```bash
 git worktree add --detach ../donnees-audit 2503f8b3d245cf20a329f9b3bdbefb02c73b7d95
-python scripts/analyse_chatgpt.py --donnees ../donnees-audit
+python etudes/analyse_chatgpt.py --donnees ../donnees-audit
 ```
 
 Le commit doit être disponible localement (`git fetch origin donnees` au besoin).

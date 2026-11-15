@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from scripts.avantage_reel import (NEGATIF, NON_PROUVE, PROBABLE, PROUVE, benjamini_hochberg, cloture_pinnacle, grappes,
+from etudes.avantage_reel import (NEGATIF, NON_PROUVE, PROBABLE, PROUVE, benjamini_hochberg, cloture_pinnacle, grappes,
                                    holm, paris_necessaires, rapport, verdict)
 
 

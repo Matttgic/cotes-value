@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from scripts.modele_prix import (COTES_1N2, COTES_HANDICAP, COTES_TOTAL, ELO, POISSON, ajuster_melange, elo,
+from etudes.modele_prix import (COTES_1N2, COTES_HANDICAP, COTES_TOTAL, ELO, POISSON, ajuster_melange, elo,
                                  gagnants, grille_scores, holm, marches_poisson, melange, poisson, proba_elo)
 
 

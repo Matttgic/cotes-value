@@ -1,6 +1,6 @@
 # Durer : tableaux du profil discret
 
-Produit par `python scripts/durer.py --donnees <dossier> --markdown docs/durer-tableaux.md`. Lecture : [durer.md](durer.md).
+Produit par `python etudes/durer.py --donnees <dossier> --markdown docs/durer-tableaux.md`. Lecture : [durer.md](durer.md).
 
 5050 paris uniques réglés, détectés du 2026-10-05 au 2026-11-14. Segments écartés par la stratégie figée : Écart annoncé : 2 à 3 %, Bookmaker : Winamax, Bookmaker : OlyBet, Avance sur le match : plus de 24 h. « Avantage gardé » : paris × CLV Pinnacle moyenne, rapporté à la base du tableau. Intervalles à 95 % par bootstrap sur les matchs.
 

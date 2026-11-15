@@ -327,6 +327,8 @@ cette étape. »
 
 **E1.2 — Les modules lisent `config.lire`** (facultatif, un module par commit)
 - Remplacer `os.environ.get("X", "d")` par `config.lire("X")` sans changer le défaut. Test : tests du module.
+- Reporté le 15/11/2026 (facultatif) : chaque module interprète sa variable à sa façon (`oui`, `off`, `non`…) ; le
+  catalogue et son test (E1.1) couvrent déjà les défauts. À faire module par module si l'un d'eux est retouché.
 
 **E1.3 — Catalogue des fichiers de `donnees`**
 - Fichiers : nouveau `cotes/depot/__init__.py`, `cotes/depot/catalogue.py`, `tests/test_catalogue.py`.
@@ -386,6 +388,7 @@ cette étape. »
 **E2.5 — Erreurs des lecteurs de scores sans liste globale** (facultatif, un module par commit)
 - Faire : `lire()` rend aussi ses erreurs (nouvelle fonction ou tuple) ; la liste `ERREURS` reste remplie pour les
   appelants actuels, puis disparaît quand plus rien ne la lit.
+- Reporté le 15/11/2026 (facultatif) : change la forme rendue par 8 lecteurs de scores pour un gain de propreté.
 
 ### 4.5 Phase 3 — Cycle découpé
 
@@ -561,23 +564,44 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 **E7.1 — Études dans `etudes/`**
 - Faire : déplacer les 15 scripts d'étude ; corriger `from scripts import strategie_mises` et les imports des tests.
   Test : contrôle standard.
+- Fait le 15/11/2026 : 12 scripts déplacés (`git mv`), références mises à jour dans le code, les tests, le README et
+  `docs/`. Les sondes (`sonde_*.py`, lancées par des workflows) restent dans `scripts/`.
 
 **E7.2 — Une couche par dossier** (un dossier par PR, jamais les 5 fichiers figés)
 - Faire : `git mv` des modules d'une couche vers son dossier, ancien chemin gardé par un module qui réimporte ;
   mettre à jour `COUCHES` (E0.3) et les chemins de `site.yml`. Test : contrôle standard, empreinte identique.
+- Non retenu le 15/11/2026 : les couches sont déjà vérifiées par le test d'architecture sans déplacer de fichier
+  (2.2) ; déplacer ~80 modules coûterait des enveloppes partout pour un gain de rangement seul.
 
 **E8.1 — Mesurer le coût du stockage** (aucun code)
 - Faire : sur un clone complet de `donnees` : `git count-objects -vH`, taille ajoutée par jour, croissance de
   `paris.json` par semaine, durée du push par cycle (journaux Actions). Noter les chiffres ici.
+- Mesuré le 15/11/2026 (clone complet de `donnees`, journaux Actions) :
+  - historique : **408 Mio** (pack), 80 589 objets, 4 961 commits depuis le 30/10/2026 (début de l'historique
+    actuel), soit environ **25 Mio de plus par jour** ; 310 commits par jour ;
+  - arbre courant : 236 Mo (`references/` 100 Mo, `cotes/` 70 Mo, `opportunites/` 52 Mo, racine 15 Mo) ; il pesait
+    78 Mo le 31/10 et 126 Mo le 12/11 ;
+  - ajout par jour (fichier du jour complet) : `references/` 18 à 33 Mo depuis le 12/11, `cotes/` 2 à 9 Mo,
+    `opportunites/` 0,3 à 0,7 Mo, `releves/` et `correspondances/` < 0,1 Mo ;
+  - `paris.json` : 9,0 Mo (31/10), 10,3 Mo (4/11), 11,9 Mo (8/11), 11,8 Mo (12/11), 12,3 Mo (15/11) : l'archivage à
+    30 jours le stabilise vers 12 Mo ;
+  - durée par cycle : récupération des données 4 s, enregistrement (commit + push) 5 s.
+  - Conclusion : le poste à surveiller est `references/` (≈ 30 Mo par jour, réécrit à chaque cycle dans le fichier du
+    jour), pas `paris.json`. E8.2 n'apporte presque rien ; l'archivage mensuel (`archivage-donnees.yml`) devrait
+    inclure `references/` avant que la branche n'approche 1 Go (environ un mois au rythme actuel).
 
 **E8.2 — `paris.json` allégé** (décision à prendre après E8.1)
 - Faire : archiver les paris réglés après N jours au lieu de 30 (`stockage.archiver`). Avant : vérifier avec le
   catalogue (E1.3) chaque lecteur de `paris.json` seul (placement, alertes, règlement). Test : empreinte identique
   (le site fusionne déjà les archives), contrôle standard.
+- Non retenu le 15/11/2026 : E8.1 montre `paris.json` stable vers 12 Mo ; le poste qui grossit est `references/`
+  (voir la conclusion de E8.1).
 
 **E8.3 — Deux caches Actions au lieu de trois** (gain faible)
 - Faire : `reprise/` et `envoyes/` (tous deux toujours sauvés) dans un même cache ; `memoire/` reste à part (sauvé
   seulement après un push réussi). Test : `tests/test_robustesse_workflow.py`.
+- Non retenu le 15/11/2026 : gain d'une restauration de cache par cycle, contre un risque sur le dédoublonnage des
+  alertes (`envoyes/`).
 
 ### 4.10 Récapitulatif
 
@@ -587,14 +611,14 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E0.2 | Cycle à blanc | — | faible | ☑ |
 | E0.3 | Test d'architecture | — | faible | ☑ |
 | E1.1 | Catalogue de configuration | — | faible | ☑ |
-| E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
+| E1.2 | Modules sur `config.lire` | E1.1 | faible | ✗ reporté |
 | E1.3 | Catalogue des fichiers | — | faible | ☑ |
 | E1.4 | Une E/S JSON | E0.1 | faible | ☑ |
 | E2.1 | Registre des sources | — | faible | ☑ |
 | E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☑ |
 | E2.3 | Lecture de même forme | E2.1 | faible | ☑ |
 | E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☑ |
-| E2.5 | Erreurs sans liste globale | — | faible | ☐ |
+| E2.5 | Erreurs sans liste globale | — | faible | ✗ reporté |
 | E3.1 | Contexte, règlement seul | E0.2 | moyen | ☑ |
 | E3.2 | Étape sauvegarde | E3.1 | moyen | ☑ |
 | E3.3 | Étape analyse | E3.1 | moyen | ☑ |
@@ -614,11 +638,11 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☑ |
 | E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☑ |
 | E6.5 | Calendrier vérifié | E1.1 | faible | ☑ |
-| E7.1 | Études dans `etudes/` | — | faible | ☐ |
-| E7.2 | Une couche par dossier | E0.3, phases 1 à 6 | moyen | ☐ |
-| E8.1 | Mesure du stockage | — | aucun | ☐ |
-| E8.2 | `paris.json` allégé | E1.3, E8.1, décision | moyen | ☐ |
-| E8.3 | Deux caches au lieu de trois | — | faible | ☐ |
+| E7.1 | Études dans `etudes/` | — | faible | ☑ |
+| E7.2 | Une couche par dossier | E0.3, phases 1 à 6 | moyen | ✗ non retenu |
+| E8.1 | Mesure du stockage | — | aucun | ☑ |
+| E8.2 | `paris.json` allégé | E1.3, E8.1, décision | moyen | ✗ non retenu |
+| E8.3 | Deux caches au lieu de trois | — | faible | ✗ non retenu |
 
 Ordre conseillé : phase 0 en entier, puis E1.3, E1.4, E2.1 à E2.4, phase 3, phase 4, phase 5, phase 6. Les phases 7
 et 8 attendent une décision.

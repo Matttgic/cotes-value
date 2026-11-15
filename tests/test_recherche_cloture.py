@@ -4,7 +4,7 @@ import math
 import numpy as np
 import pytest
 
-from scripts.recherche_cloture import (ajuster, bon_sens, cote_a, lire_football, mesurer_attente, moyenne, predire,
+from etudes.recherche_cloture import (ajuster, bon_sens, cote_a, lire_football, mesurer_attente, moyenne, predire,
                                        r2_hors_echantillon)
 
 

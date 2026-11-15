@@ -389,7 +389,7 @@ cycle, cache évincé) : démarrage à froid, le cycle relit tout. Un seul commi
 ## Études et idées
 
 [Durée de vie des values, CLV maison, origine de la value](docs/duree-values.md)
-(`python scripts/etude_duree_values.py --donnees donnees`) · [Idées et suggestions d'interface](docs/idees.md).
+(`python etudes/etude_duree_values.py --donnees donnees`) · [Idées et suggestions d'interface](docs/idees.md).
 
 ## Développement
 
@@ -417,7 +417,7 @@ sur le test du 17–19 octobre. Cela ne démontre pas une rentabilité future.
 
 [Configuration, secrets et publication](SECURITY.md).
 [Audit de la justesse des bilans](docs/audit-bilans.md) (13/11/2026) : biais, règlement, chiffres refaits par
-`scripts/audit_bilans.py`.
+`etudes/audit_bilans.py`.
 [Protocole de validation](docs/protocole.md) (15/11/2026) : hypothèse, règles figées, nombre de paris, critère d'arrêt
 et test fixés avant les paris pour chaque stratégie ; suivi automatique dans le Bilan (`cotes/protocole.py`).
 Page **Décision** du site (`web/decision.js`, chiffres de `cotes/decision.py`) : trois questions par jour (l'avantage
@@ -425,11 +425,11 @@ est-il prouvé, quoi jouer, quoi couper), chaque réponse renvoyant au chiffre m
 du protocole seul ; « jouer » et « couper » appliquent les règles du verdict de avantage-reel.md à la CLV contre la
 clôture Pinnacle, par bookmaker et par référence, recalculée à chaque construction.
 [Stratégie de mises](docs/strategie-mises.md) (14/11/2026) : segments à couper, stratégie figée choisie sur une période
-et validée sur l'autre, Kelly fractionné simulé contre la mise fixe par `scripts/strategie_mises.py`.
+et validée sur l'autre, Kelly fractionné simulé contre la mise fixe par `etudes/strategie_mises.py`.
 [Cote juste](docs/cote-juste.md) (14/11/2026) : méthodes de retrait de la marge et pondérations du consensus
-mesurées par `scripts/cote_juste.py` ; aucun changement retenu.
+mesurées par `etudes/cote_juste.py` ; aucun changement retenu.
 [Recherche](docs/recherche.md) (14/11/2026) : la clôture Pinnacle est-elle prévisible (tests hors échantillon par
-`scripts/recherche_cloture.py`), parier tôt ou attendre, autres références vérifiées.
+`etudes/recherche_cloture.py`), parier tôt ou attendre, autres références vérifiées.
 Le retrait complet de la valeur guest Pinnacle reste conditionné à une configuration de remplacement validée. La revue détaillée de cinq moteurs de sélection reste ouverte ; les rapports ne certifient pas une rentabilité future.
 
 ## Règlement

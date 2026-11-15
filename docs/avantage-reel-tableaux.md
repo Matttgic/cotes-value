@@ -1,6 +1,6 @@
 # Avantage réel : tous les tableaux
 
-Produit par `scripts/avantage_reel.py --markdown` : données `db927c7 du 2026-11-13T18:42:40+00:00`, 6027 paris réglés sur 6227, 50000 tirages, graine 20261113, 192 tests du ROI (96 lignes, deux sens). Lecture et conclusions : [avantage-reel.md](avantage-reel.md).
+Produit par `etudes/avantage_reel.py --markdown` : données `db927c7 du 2026-11-13T18:42:40+00:00`, 6027 paris réglés sur 6227, 50000 tirages, graine 20261113, 192 tests du ROI (96 lignes, deux sens). Lecture et conclusions : [avantage-reel.md](avantage-reel.md).
 
 « p » : p-valeur unilatérale dans le sens du ROI observé. « Encore » : paris réglés qu'il manque pour passer le seuil corrigé (5 % / nombre de tests) avec une puissance de 80 %. « — » : trop peu de mesures.
 

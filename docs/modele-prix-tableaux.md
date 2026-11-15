@@ -1,6 +1,6 @@
 # Modèle de prix : tous les tableaux
 
-Sortie de `python scripts/modele_prix.py mesurer` puis `regler`, le 15/11/2026, sur les fichiers de
+Sortie de `python etudes/modele_prix.py mesurer` puis `regler`, le 15/11/2026, sur les fichiers de
 football-data.co.uk lus le 14/11/2026. Conclusions et lecture : [modele-prix.md](modele-prix.md).
 
 Matchs lus : 174 333 du 02/03/2012 au 09/11/2026. Réglage : 60 761 matchs (01/07/2014 au 30/06/2019). Test : 89 162 matchs depuis le 01/07/2019, dont 77 461 avec la clôture Pinnacle.

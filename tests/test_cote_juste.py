@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from cotes.marge import proba_justes
-from scripts.cote_juste import (METHODES, ajuster, cotes_depuis_puissance, etat, famille, intervalle, log_loss,
+from etudes.cote_juste import (METHODES, ajuster, cotes_depuis_puissance, etat, famille, intervalle, log_loss,
                                 melange, pente_calibration, poids_de, retirer_marge, variables)
 
 

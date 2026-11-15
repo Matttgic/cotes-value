@@ -145,7 +145,7 @@ jamais recalculée, même si un règlement est corrigé plus tard.
 ## 6. Test statistique
 
 - **Statistique** : t = CLV moyenne par pari / erreur type. L'erreur type est calculée par match (les paris d'un
-  même match varient ensemble), avec l'estimateur de `scripts/avantage_reel.py`.
+  même match varient ensemble), avec l'estimateur de `etudes/avantage_reel.py`.
 - **Loi** : Student à (matchs − 1) degrés de liberté, test unilatéral.
 - **Seuil** : p < 0,025 % (t > 3,5 environ). Un seul test par stratégie, à la lecture finale.
 - **Correction** : Bonferroni sur 200 places, fixée d'avance. Les stratégies partagent des paris : Bonferroni reste

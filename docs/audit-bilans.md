@@ -1,7 +1,7 @@
 # Audit de la justesse des bilans
 
 Fait le 13/11/2026 sur la branche `donnees` (commit `e727827`) : 6 117 paris détectés du 05/10 au 13/11, dont
-6 008 réglés. Tous les chiffres sortent de `python scripts/audit_bilans.py --donnees <dossier>` (lecture seule,
+6 008 réglés. Tous les chiffres sortent de `python etudes/audit_bilans.py --donnees <dossier>` (lecture seule,
 10 secondes). ROI = gain / mises, mise fixe de 10 €.
 
 ## Verdict
@@ -119,7 +119,7 @@ possible ici (recoupement entre bookmakers) en trouve 1 sur 2 365 matchs ; un co
   le pari reste « à régler ». Les paris sur le temps réglementaire ne changent pas.
 - `cotes/reglement.py:283-287` : « avance ou gagne » perdu dès que l'avance demandée était impossible.
 - `tests/test_audit_bilans.py` (9 tests, cas réels) ; `tests/test_avance_ou_gagne.py` mis à jour.
-- `scripts/audit_bilans.py` : refait tous les chiffres de ce rapport.
+- `etudes/audit_bilans.py` : refait tous les chiffres de ce rapport.
 
 Aucune correction n'a été écrite sur `donnees` : aucun vrai résultat n'a pu être confirmé par une source extérieure.
 
