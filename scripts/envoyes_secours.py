@@ -47,7 +47,7 @@ def fusion(branche: dict, secours: dict) -> dict:
 
 def fusionner(donnees: Path, secours: Path) -> list[str]:
     """Complète les fichiers de la branche avec la copie de secours. Renvoie les fichiers modifiés."""
-    from scripts.cycle import ecrire_json
+    from cotes.depot.json_io import ecrire_json
     modifies = []
     for nom in FICHIERS:
         copie = _lire(secours / nom)

@@ -345,6 +345,8 @@ cette étape. »
   importe (les noms restent sur le module) ; remplacer les deux `from scripts.cycle import ecrire_json` de
   `envoyer_notifications.py`. Ne pas toucher aux autres écritures.
 - Test : contrôle standard, empreinte identique, une exception de moins dans E0.3.
+- Fait le 15/11/2026 : cinq imports remplacés (quatre dans `envoyer_notifications.py`, un dans `envoyes_secours.py`) ;
+  21 exceptions (deux de moins). Empreinte identique (17 fichiers, `donnees` au commit `715ed0c`).
 
 ### 4.4 Phase 2 — Sources
 
@@ -524,7 +526,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E1.1 | Catalogue de configuration | — | faible | ☑ |
 | E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
 | E1.3 | Catalogue des fichiers | — | faible | ☑ |
-| E1.4 | Une E/S JSON | E0.1 | faible | ☐ |
+| E1.4 | Une E/S JSON | E0.1 | faible | ☑ |
 | E2.1 | Registre des sources | — | faible | ☐ |
 | E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☐ |
 | E2.3 | Lecture de même forme | E2.1 | faible | ☐ |

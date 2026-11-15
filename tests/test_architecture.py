@@ -20,7 +20,7 @@ RANG = {c: i for i, c in enumerate(RANG)}
 RANG["site"] = RANG["alertes"]          # alertes et site : même couche
 
 _PAR_COUCHE = {
-    "socle": "cotes cotes.config cotes.depot cotes.depot.catalogue cotes.temps cotes.delai cotes.connexion cotes.securite cotes.echecs cotes.memoire "
+    "socle": "cotes cotes.config cotes.depot cotes.depot.catalogue cotes.depot.json_io cotes.temps cotes.delai cotes.connexion cotes.securite cotes.echecs cotes.memoire "
              "cotes.historiques cotes.stockage cotes.fraicheur cotes.protection cotes.surveillance cotes.derive",
     "vocabulaire": "cotes.pulsescore cotes.marches cotes.joueurs cotes.inconnus cotes.marge cotes.correspondance "
                    "cotes.liens",
@@ -55,7 +55,7 @@ _PAR_COUCHE = {
 }
 COUCHES = {m: c for c, noms in _PAR_COUCHE.items() for m in noms.split()}
 
-# Violations relevées le 15/11/2026 (23). À faire baisser, jamais monter.
+# Violations relevées le 15/11/2026 : 23 ; 21 après E1.4. À faire baisser, jamais monter.
 EXCEPTIONS = {
     # sources -> domaine : prix des bourses convertis par comparaison.reference_echange ; résultats -> bilans
     ("cotes.smarkets", "cotes.comparaison"),
@@ -79,8 +79,6 @@ EXCEPTIONS = {
     # scripts qui s'importent entre eux
     ("scripts.cycle", "scripts.site_web"),
     ("scripts.empreinte_site", "scripts.site_web"),
-    ("scripts.envoyer_notifications", "scripts.cycle"),
-    ("scripts.envoyes_secours", "scripts.cycle"),
     ("scripts.envoyes_secours", "scripts.envoyer_notifications"),
     ("scripts.site_web", "scripts.comparer_strategies"),
     ("scripts.verifier_strategie_jules_v2", "scripts.comparer_strategies"),
