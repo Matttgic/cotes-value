@@ -439,6 +439,9 @@ Toutes les étapes de cette phase sont des **déplacements** : même code, même
 - Faire : `main()` lit les arguments, crée le `Contexte` et appelle `collecter`, `analyser`, `prendre`, `regler`,
   `sauvegarder`, puis le site. Moins de 60 lignes.
 - Test : contrôle standard, E0.1, E0.2, test de E0.3 (exceptions en baisse).
+- Fait le 15/11/2026 : `main()` fait 49 lignes ; `scripts/cycle.py` passe de 1 198 à ~140 lignes (arguments,
+  enchaînement, noms gardés pour les tests). Étape `regler(ctx, mode)` ajoutée. Empreinte identique ; 21 exceptions
+  (l'import du site par `cycle.py` reste, il disparaîtra avec E5.4 et E6.1).
 
 ### 4.6 Phase 4 — Stratégies
 
@@ -559,7 +562,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E3.3 | Étape analyse | E3.1 | moyen | ☑ |
 | E3.4 | Étape prise | E3.1 | moyen | ☑ |
 | E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☑ |
-| E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☐ |
+| E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☑ |
 | E4.1 | Registre des stratégies | — | faible | ☐ |
 | E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☐ |
 | E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☐ |

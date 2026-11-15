@@ -223,6 +223,12 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
     return regler
 
 
+def regler(ctx: Contexte, mode_reglement: str) -> bool:
+    """Étape règlement du cycle complet : règle ``ctx.paris`` si c'est le moment (``mode_reglement``)."""
+    ctx.regle = effectuer_reglement(ctx.paris, ctx.donnees, ctx.maintenant, ctx.journal, mode_reglement)
+    return ctx.regle
+
+
 def regler_seul(ctx: Contexte, mode_reglement: str) -> bool:
     """Cycle indépendant : aucune collecte ni placement de paris. Écrit paris.json et etat.json ; le site est
     construit par l'appelant."""
