@@ -98,6 +98,10 @@ VARIABLES: dict[str, Variable] = {
     "ACTIONS_ID_TOKEN_REQUEST_URL": _secret("GitHub Actions : jeton OIDC (Supabase)"),
     "ACTIONS_ID_TOKEN_REQUEST_TOKEN": _secret("GitHub Actions : jeton OIDC (Supabase)"),
     "PYTHONHASHSEED": Variable("", str, "empreinte du site : relancée avec 0"),
+    # relance de la chaîne (scripts/relancer.py) : début du cycle, et variables données par GitHub Actions
+    "DEBUT": Variable("", int, "relance : début du cycle (secondes epoch) ; vide : maintenant"),
+    "GITHUB_RUN_ID": Variable("", str, "relance : lancement en cours (donné par GitHub Actions)"),
+    "GITHUB_REF_NAME": Variable("", str, "relance : branche du lancement (donnée par GitHub Actions)"),
 }
 
 
