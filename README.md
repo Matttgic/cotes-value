@@ -217,9 +217,10 @@ les meilleurs matchs, part du meilleur match), valeur (CLV par match) /25, régu
 
 ### Stratégies recommandées
 
-En haut de **Stratégies** : les **Recommandées**, liste stable revue tous les 7 jours (≥ 50 matchs, borne basse du
-ROI positive, ROI positif sans les meilleurs matchs, aucun match au-delà de 25 % du gain, CLV par match positive, pas
-de doublon ; une recommandée ne sort que si elle échoue un critère ou est dépassée de 5 points), chacune avec sa date
+En haut de **Stratégies** : les **Recommandées**, liste stable revue tous les 7 jours (critères version 2 du
+16/11/2026 : ≥ 50 matchs, clôture Pinnacle connue pour ≥ 50 % des paris, CLV Pinnacle positive après correction de
+Holm sur toutes les stratégies, rendement pas nettement sous la CLV, ROI positif, pas de doublon ; classées par borne
+basse de la CLV ; une recommandée ne sort que si elle échoue un critère ou est dépassée de 0,5 point), chacune avec sa date
 d'entrée et son résultat depuis. Puis les **Fusions**, stratégies à part aux membres figés : Fusion 1 réunit les trois
 recommandées du 8/11/2026 (un pari par match, suivie depuis le 8/11/2026 à 9 h) ; à chaque révision qui change la
 liste, une nouvelle fusion (Fusion 2, 3…) est créée automatiquement avec les recommandées du jour. [Critères, choix et limites](docs/recommandees.md).
