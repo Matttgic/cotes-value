@@ -569,6 +569,19 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 **E8.1 — Mesurer le coût du stockage** (aucun code)
 - Faire : sur un clone complet de `donnees` : `git count-objects -vH`, taille ajoutée par jour, croissance de
   `paris.json` par semaine, durée du push par cycle (journaux Actions). Noter les chiffres ici.
+- Mesuré le 15/11/2026 (clone complet de `donnees`, journaux Actions) :
+  - historique : **408 Mio** (pack), 80 589 objets, 4 961 commits depuis le 30/10/2026 (début de l'historique
+    actuel), soit environ **25 Mio de plus par jour** ; 310 commits par jour ;
+  - arbre courant : 236 Mo (`references/` 100 Mo, `cotes/` 70 Mo, `opportunites/` 52 Mo, racine 15 Mo) ; il pesait
+    78 Mo le 31/10 et 126 Mo le 12/11 ;
+  - ajout par jour (fichier du jour complet) : `references/` 18 à 33 Mo depuis le 12/11, `cotes/` 2 à 9 Mo,
+    `opportunites/` 0,3 à 0,7 Mo, `releves/` et `correspondances/` < 0,1 Mo ;
+  - `paris.json` : 9,0 Mo (31/10), 10,3 Mo (4/11), 11,9 Mo (8/11), 11,8 Mo (12/11), 12,3 Mo (15/11) : l'archivage à
+    30 jours le stabilise vers 12 Mo ;
+  - durée par cycle : récupération des données 4 s, enregistrement (commit + push) 5 s.
+  - Conclusion : le poste à surveiller est `references/` (≈ 30 Mo par jour, réécrit à chaque cycle dans le fichier du
+    jour), pas `paris.json`. E8.2 n'apporte presque rien ; l'archivage mensuel (`archivage-donnees.yml`) devrait
+    inclure `references/` avant que la branche n'approche 1 Go (environ un mois au rythme actuel).
 
 **E8.2 — `paris.json` allégé** (décision à prendre après E8.1)
 - Faire : archiver les paris réglés après N jours au lieu de 30 (`stockage.archiver`). Avant : vérifier avec le
@@ -616,7 +629,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E6.5 | Calendrier vérifié | E1.1 | faible | ☑ |
 | E7.1 | Études dans `etudes/` | — | faible | ☐ |
 | E7.2 | Une couche par dossier | E0.3, phases 1 à 6 | moyen | ☐ |
-| E8.1 | Mesure du stockage | — | aucun | ☐ |
+| E8.1 | Mesure du stockage | — | aucun | ☑ |
 | E8.2 | `paris.json` allégé | E1.3, E8.1, décision | moyen | ☐ |
 | E8.3 | Deux caches au lieu de trois | — | faible | ☐ |
 
