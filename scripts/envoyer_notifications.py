@@ -117,8 +117,10 @@ def _ligne_pinnacle(a: dict) -> list[str]:
     return [f"Pinnacle {verdict} : {'+' if e > 0 else ''}{_fr(100 * e, 1)} %{ancien}"]
 
 
-def message_ntfy(a: dict) -> tuple[str, str]:
-    """(titre, corps) en texte brut ; l'heure du match est celle de Paris (« mar. 20/10 20h00 »)."""
+def message_ntfy(a: dict, mises: int = 1, defaut: float = 10.0) -> tuple[str, str]:
+    """(titre, corps) en texte brut ; l'heure du match est celle de Paris (« mar. 20/10 20h00 »).
+    ``mises`` > 1 (même pari pris par plusieurs stratégies cochées) : mise totale = mise unitaire × nombre, comme
+    web/suivi.js ; sans mise connue, ``defaut`` (10 € à la bankroll des bilans) par stratégie."""
     try:
         d = datetime.fromisoformat(str(a.get("debut")).replace("Z", "+00:00")).astimezone(ZoneInfo("Europe/Paris"))
         heure = f'{JOURS[d.weekday()]} {d:%d/%m} {d:%H}h{d:%M}'
@@ -132,10 +134,19 @@ def message_ntfy(a: dict) -> tuple[str, str]:
     if isinstance(age, (int, float)) and age > 300:          # match lointain, lu à son rythme : on le dit
         lignes.append(f"Prix relevé il y a {round(age / 60)} min")
     lignes += _ligne_pinnacle(a)
-    kelly = a.get("mise_kelly")
-    if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
-        lignes.append(f"Mise Kelly ¼ : {mise_arrondie(kelly)} €")
+    lignes += _lignes_mise(a.get("mise_kelly"), mises, defaut)
     return f'{a.get("bookmaker") or "—"} – {_sport(a.get("sport"))}', "\n".join(lignes)
+
+
+def _lignes_mise(kelly, mises: int, defaut: float) -> list[str]:
+    """Ligne de mise ; affichage seul (ni la ligne MacroDroid ni les gains n'en dépendent)."""
+    connue = isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0
+    if not (isinstance(mises, int) and mises > 1):
+        return [f"Mise Kelly ¼ : {mise_arrondie(kelly)} €"] if connue else []
+    u = mise_arrondie(kelly if connue else defaut)
+    if u is None:
+        return []
+    return [f"Mise totale{' Kelly ¼' if connue else ''} : {u * mises} € ({mises} × {u} €)"]
 
 
 def _entete_utf8(texte: str) -> str:
@@ -308,6 +319,7 @@ def alertes_pushover(flux: dict, paris: list[dict], envoyes: dict, choisies: set
         cles, noms = a.get("strategies") or [], a.get("labels") or []
         if len(cles) == len(noms):          # seules les stratégies cochées sont nommées (une mise chacune)
             a = {**a, "labels": [n for k, n in zip(cles, noms) if k in choisies]}
+        a = {**a, "mises": max(1, len(set(cles) & choisies))}     # une mise par stratégie cochée
         out.append(a)
     return out
 
@@ -364,7 +376,8 @@ def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> d
     kelly = a.get("mise_kelly")
     if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
         a = {**a, "mise_kelly": round(kelly * _bankroll(env) / BANKROLL_REFERENCE, 2)}
-    titre, corps = message_ntfy(a)
+    mises = a.get("mises") if isinstance(a.get("mises"), int) and not isinstance(a.get("mises"), bool) else 1
+    titre, corps = message_ntfy(a, mises, 10.0 * _bankroll(env) / BANKROLL_REFERENCE)
     methode = ligne_methode_claude(a, env)
     if methode:
         corps = corps + "\n" + methode

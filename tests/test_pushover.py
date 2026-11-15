@@ -232,3 +232,18 @@ def test_mise_arrondie_a_l_euro_superieur():
     from cotes.recap_jouables import mise_arrondie
     assert [mise_arrondie(x) for x in (8.74, 9.01, 9.0, 0.3, 20)] == [9, 10, 9, 1, 20]
     assert mise_arrondie(0) is None and mise_arrondie(None) is None
+
+
+def test_meme_pari_pour_plusieurs_strategies_cochees_affiche_la_mise_totale():
+    flux = {"alertes": [alerte(strategies=("eden", "labo:PIN-1.3-2-e2-h36", "autre"),
+                               labels=["Eden", "Labo", "Autre"], mise_kelly=8.74)]}
+    a = E.alertes_pushover(flux, [], {}, {"eden", "labo:PIN-1.3-2-e2-h36"}, NOW)[0]
+    assert a["mises"] == 2
+    m = E.message_pushover(a, ENV, NOW)["message"]
+    assert "Mise totale Kelly ¼ : 18 € (2 × 9 €)" in m and "STAKE:9|" in m      # MacroDroid : mise unitaire
+    seul = E.message_pushover({**a, "mises": 1}, ENV, NOW)["message"]
+    assert "Mise Kelly ¼ : 9 €" in seul and "totale" not in seul
+    sans = E.message_pushover({**a, "mise_kelly": None, "mises": 3}, ENV, NOW)["message"]
+    assert "Mise totale : 30 € (3 × 10 €)" in sans                              # 10 € par défaut, comme suivi.js
+    assert "Mise totale : 60 € (3 × 20 €)" in E.message_pushover(
+        {**a, "mise_kelly": None, "mises": 3}, {**ENV, "PUSHOVER_BANKROLL": "2000"}, NOW)["message"]
