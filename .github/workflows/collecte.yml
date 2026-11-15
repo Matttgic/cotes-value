@@ -136,7 +136,7 @@ jobs:
           # DraftKings, référence seulement (matchs NBA, NHL, NFL, MLB et props NBA, NHL ; aucun pari). off coupe les appels.
           SOURCE_DRAFTKINGS: ${{ vars.SOURCE_DRAFTKINGS || 'direct' }}
         # On sauvegarde d'abord les prises, puis on alerte AVANT les résultats et le HTML.
-        run: python scripts/cycle.py --reglement non --sans-site --donnees donnees --site site
+        run: python -m cotes cycle --reglement non --sans-site --donnees donnees --site site
 
       # Non bloquante (continue-on-error), mais visible : le script annonce l'échec (::warning::) et l'ajoute à
       # etat.json › echecs_recents (page Santé) ; l'étape suivante l'annonce aussi s'il s'est arrêté avant.
@@ -157,7 +157,7 @@ jobs:
           PUSHOVER_PRIORITY: ${{ vars.PUSHOVER_PRIORITY || '0' }}
           # Mise Kelly ¼ des alertes ramenée à ta bankroll
           PUSHOVER_BANKROLL: ${{ vars.PUSHOVER_BANKROLL || '1000' }}
-        run: python scripts/envoyer_notifications.py --donnees donnees --flux notifications-rapides.json
+        run: python -m cotes alertes --donnees donnees --flux notifications-rapides.json
 
       - name: Signaler un échec des alertes Chrome
         if: steps.alertes_chrome.outcome == 'failure'
@@ -190,7 +190,7 @@ jobs:
           # Alerte Pushover si une stratégie échoue plusieurs constructions du site de suite (cotes/protection.py).
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
-        run: python scripts/cycle.py --seulement-reglement --reglement auto --donnees donnees --site site
+        run: python -m cotes reglement --reglement auto --donnees donnees --site site
 
       # Un seul commit et un seul push par cycle (collecte, alertes, règlement), même si une étape a échoué.
       # Les caches sortis de la branche ne sont jamais ajoutés ; au premier cycle, ils sont retirés de l'index
