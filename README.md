@@ -30,6 +30,11 @@ par lui) est arrêté depuis le 18/10/2026. `cotes/pulsescore.py` ne fait plus d
 
 Les paris déjà pris contre Betfair ou Kalshi restent dans les bilans ; ces sources ne sont plus interrogées.
 
+**Ajouter un bookmaker français** : un module dans `cotes/direct/` (`collecter(sports, heures, …)` qui rend
+`(lignes, meta)`) et une entrée dans `cotes/sources/registre.py` (budget, mémoire de réserve, options de lancement).
+Le cycle le lance, le borne et le note sans autre changement ; `tests/test_registre_sources.py` fige les budgets et
+les arguments de lancement des bookmakers existants.
+
 Pinnacle a un **secours** facultatif (pinnodds, clé gratuite) quand sa lecture directe échoue ou n'a que des
 cotes trop vieilles (cache de 15 min chez Pinnacle depuis le 19/10/2026) : voir
 [docs/pinnacle-secours.md](docs/pinnacle-secours.md).

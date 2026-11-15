@@ -356,15 +356,21 @@ cette étape. »
   exclusions de `index_controle` (`Smarkets`, `Matchbook`, `Betfair`), `smarkets.hors_consensus()`,
   `matchbook.hors_consensus()` et le cas Unibet. `lire` pointe vers le `collecter` actuel.
 - Test : budgets du registre == `cycle.BUDGETS` ; mémoires == `cycle.MEMOIRES` ; exclusions identiques.
+- Fait le 15/11/2026 : 13 sources de cotes (les lecteurs de scores viendront avec E2.5). Champ `reference` en plus
+  (nom de la table dans `references`) et `hors_consensus` appelable (Smarkets dépend de `SMARKETS_DANS_DECISION`).
 
 **E2.2 — Le cycle lit le registre**
 - Faire : `BUDGETS`, `MEMOIRES` et la liste d'exclusion du contrôle de `cycle.py` deviennent des valeurs calculées
   depuis le registre (mêmes noms dans `cycle`). Test : contrôle standard, E0.2.
+- Fait le 15/11/2026. `tests/test_betfair.py` lisait le littéral `"Matchbook", "Betfair")` dans le source de
+  `main()` : il vérifie maintenant l'appel au registre et la présence de Betfair dans `hors_controle()`.
+  `tests/test_registre_sources.py` garde les anciennes valeurs recopiées.
 
 **E2.3 — Lecture de même forme pour toutes les sources**
 - Faire : ajouter `mode()` à `direct/olybet.py` et `direct/netbet.py` (alias de `mode_source`, qui reste) ; dans le
   registre, adaptateurs qui rendent `(lignes, meta)` pour Pinnacle et Polymarket (aujourd'hui une liste).
 - Test : un test par adaptateur avec `collecter` remplacé.
+- Fait le 15/11/2026 : `meta` des adaptateurs = `ok` (aucune erreur), `erreurs` (copie de `ERREURS`), `lignes`.
 
 **E2.4 — Lancement des bookmakers français en boucle**
 - Fichier : `scripts/cycle.py › collecter_prematch`.
@@ -373,6 +379,9 @@ cette étape. »
   `concurrence`, `maintenant`). Même ordre de lancement, mêmes arguments.
 - Test : `tests/test_collecte_parallele.py`, `tests/test_budgets_cycle.py`, E0.2. Risque moyen.
 - Fini quand : ajouter une source française = un module + une entrée de registre (le noter dans le README).
+- Fait le 15/11/2026 : champs `module`, `avec_maintenant`, `concurrence`, `sports_test` ; `registre.ordre_de_lancement()`
+  garde l'ordre PMU, Winamax, Betclic, OlyBet, NetBet. Unibet (radar) reste lancé à part ; la réception des lectures
+  n'a pas changé. `tests/test_registre_sources.py` fige les arguments de chaque lancement (modes complet et test).
 
 **E2.5 — Erreurs des lecteurs de scores sans liste globale** (facultatif, un module par commit)
 - Faire : `lire()` rend aussi ses erreurs (nouvelle fonction ou tuple) ; la liste `ERREURS` reste remplie pour les
@@ -527,10 +536,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
 | E1.3 | Catalogue des fichiers | — | faible | ☑ |
 | E1.4 | Une E/S JSON | E0.1 | faible | ☑ |
-| E2.1 | Registre des sources | — | faible | ☐ |
-| E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☐ |
-| E2.3 | Lecture de même forme | E2.1 | faible | ☐ |
-| E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☐ |
+| E2.1 | Registre des sources | — | faible | ☑ |
+| E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☑ |
+| E2.3 | Lecture de même forme | E2.1 | faible | ☑ |
+| E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☑ |
 | E2.5 | Erreurs sans liste globale | — | faible | ☐ |
 | E3.1 | Contexte, règlement seul | E0.2 | moyen | ☐ |
 | E3.2 | Étape sauvegarde | E3.1 | moyen | ☐ |

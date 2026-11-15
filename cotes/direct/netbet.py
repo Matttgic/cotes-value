@@ -63,6 +63,11 @@ def mode_source() -> str:
     return valeur if valeur in MODES else "direct"
 
 
+def mode() -> str:
+    """Même nom que les autres lecteurs (cotes/sources/registre.py) ; `mode_source` reste."""
+    return mode_source()
+
+
 def _pause(secondes: float) -> None:
     if secondes > 0:
         time.sleep(secondes)
