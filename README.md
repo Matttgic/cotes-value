@@ -399,6 +399,10 @@ sur le test du 17–19 octobre. Cela ne démontre pas une rentabilité future.
 `scripts/audit_bilans.py`.
 [Protocole de validation](docs/protocole.md) (15/11/2026) : hypothèse, règles figées, nombre de paris, critère d'arrêt
 et test fixés avant les paris pour chaque stratégie ; suivi automatique dans le Bilan (`cotes/protocole.py`).
+Page **Décision** du site (`web/decision.js`, chiffres de `cotes/decision.py`) : trois questions par jour (l'avantage
+est-il prouvé, quoi jouer, quoi couper), chaque réponse renvoyant au chiffre mesuré qui la justifie. « Prouvé » vient
+du protocole seul ; « jouer » et « couper » appliquent les règles du verdict de avantage-reel.md à la CLV contre la
+clôture Pinnacle, par bookmaker et par référence, recalculée à chaque construction.
 [Stratégie de mises](docs/strategie-mises.md) (14/11/2026) : segments à couper, stratégie figée choisie sur une période
 et validée sur l'autre, Kelly fractionné simulé contre la mise fixe par `scripts/strategie_mises.py`.
 [Cote juste](docs/cote-juste.md) (14/11/2026) : méthodes de retrait de la marge et pondérations du consensus

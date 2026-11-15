@@ -18,6 +18,7 @@
   <p class="aide mode-mise-note" id="mode-mise-note" role="status"></p>
   <nav id="onglets" aria-label="Navigation principale">
     <button data-o="accueil"><span>Accueil</span></button>
+    <button data-o="decision"><span>Décision</span></button>
     <button data-o="paris"><span>Paris<span class="nb" id="nb-paris"></span></span></button>
     <button data-o="bilan"><span>Bilan</span></button>
     <button data-o="notifications"><span>Notifs</span></button>
@@ -42,6 +43,11 @@
       <section class="acc-courbe"><h3 class="bu-titre">Gain cumulé <small id="acc-courbe-mise"></small></h3><div id="acc-courbe"></div></section>
       <section class="acc-derniers"><h3 class="bu-titre">Derniers résultats <small>paris uniques réglés</small></h3><div id="acc-derniers"></div></section>
     </div>
+  </section>
+  <section class="onglet" id="o-decision">
+    <div class="page-tete"><div><p class="surtitre">Chaque jour, trois questions</p><h2>Décision</h2>
+      <p class="sous-texte">L'avantage est-il prouvé, quoi jouer aujourd'hui, quoi couper. Chaque réponse mène au chiffre mesuré qui la justifie.</p></div></div>
+    <div id="dec-contenu"></div>
   </section>
   <section class="onglet" id="o-bilan">
     <div class="page-tete"><div><h2>Bilan</h2></div></div>
@@ -400,7 +406,7 @@ function montrerVueBilan(v) {
   if (v === "strategies") requestAnimationFrame(() => rendreStrategies());
   else requestAnimationFrame(() => rendreCourbe());
 }
-// Quatre onglets : « À jouer » rejoint Paris, la saisie à la main rejoint Santé, Analyses et Segments restent sous Bilan.
+// Cinq onglets (Décision : web/decision.js) : « À jouer » rejoint Paris, la saisie à la main rejoint Santé, Analyses et Segments restent sous Bilan.
 const GROUPES = {jouer:"paris", regler:"controle", strategies:"bilan", mes:"bilan", segments:"bilan", analyses:"bilan"};
 function ouvrir(o) {
   // « #strategies » ouvre la vue Stratégies du bilan ; « #bilan », les paris uniques.
@@ -419,6 +425,7 @@ function ouvrir(o) {
   if (page === "bilan") montrerVueBilan(vueBilan);
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
   if (page === "accueil") rendreAccueil();
+  if (page === "decision") rendreDecision();
 }
 document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
   const hash = b.dataset.bilan === "uniques" ? "bilan" : b.dataset.bilan;
@@ -1878,7 +1885,7 @@ const depart = ancreDepart.page || lire("onglet") || "accueil";
 __NOTIFICATIONS_JS__
 __PUSHOVER_JS__
 __VOYANT_JS__
-const ONGLETS = ["accueil","jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
+const ONGLETS = ["accueil","decision","jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
 ouvrir(ONGLETS.includes(depart) ? depart : "accueil");
 window.addEventListener("hashchange", () => {
   const a = lireAncre();
@@ -1894,6 +1901,7 @@ window.addEventListener("hashchange", () => {
 
 __ANALYSES_JS__
 __ACCUEIL_JS__
+__DECISION_JS__
 function rendreTout() {
   rendreAccueil(); rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSegments(); rendreStrategies(); rendreAnalyses();
   adapterTableaux();

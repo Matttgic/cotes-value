@@ -809,3 +809,41 @@ tr.en-pause td{opacity:.7}
   .paris-resume{display:grid!important;grid-template-columns:1fr 1fr;gap:4px 12px}
   .bilan-onglets button{font-size:13px}
 }
+
+/* Décision (web/decision.js) : trois questions, chaque réponse mène à son chiffre dans « Les chiffres ». */
+.dec-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dec-question{border-top:1px solid var(--texte);padding-top:14px;margin-bottom:34px}
+.dec-question .bu-titre{margin-top:0}.dec-question .bu-titre>small:first-child{border:1px solid currentColor;padding:1px 7px}
+.dec-reponse{font-size:16px;line-height:1.5;margin:0 0 10px;max-width:78ch}
+.dec-reponse strong{font:400 30px/1.1 var(--serif);letter-spacing:-.015em;margin-right:8px}
+.dec-liste{list-style:none;margin:0 0 10px;padding:0;font-size:14px;line-height:1.55}
+.dec-liste li{padding:10px 0;border-top:1px solid var(--ligne)}.dec-liste .badge{margin-right:6px;background:transparent}
+.dec-preuve{display:inline-block;min-height:0;margin:3px 6px 3px 0;padding:3px 8px;border:1px solid var(--ligne);background:transparent;color:var(--texte);
+  font:400 11.5px var(--mono);letter-spacing:.01em;text-align:left;white-space:normal;cursor:pointer;vertical-align:baseline}
+.dec-preuve:hover,.dec-preuve:focus-visible{border-color:var(--texte);background:var(--accent-f)}
+.dec-chiffre{font:400 11.5px var(--mono);color:var(--doux)}
+.dec-groupe{border-top:1px solid var(--texte);padding-top:12px;margin-bottom:22px}
+.dec-groupe-tete{margin:0 0 6px;font-size:15px}.dec-groupe-tete .badge{background:transparent;margin-right:6px}.dec-preuves{margin:0 0 6px}
+.dec-groupe .mode-emploi{margin:0;border-top:1px solid var(--ligne)}
+.dec-table{border-top:1px solid var(--texte)}
+.dec-ligne{display:grid;grid-template-columns:minmax(0,1.5fr) 64px minmax(0,1fr) minmax(0,1.1fr) 72px 96px;gap:10px;align-items:start;
+  padding:10px 0;border-top:1px solid var(--ligne);font-size:13.5px;font-variant-numeric:tabular-nums;scroll-margin-top:90px}
+.dec-ligne:first-child{border-top:0}.dec-ligne>:not(:first-child){text-align:right}
+.dec-ligne>span:first-child{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.dec-ligne small{display:block;font:400 11px var(--mono);color:var(--doux);font-weight:400}
+.dec-ligne.bu-entete{padding:8px 0;background:transparent}.dec-ligne.bu-entete>span:first-child{font-weight:400}
+.dec-ligne-texte{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}.dec-ligne-texte>.dec-chiffre{text-align:left!important}
+.dec-etat{font:400 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--doux)}
+.dec-etat.jouer{color:var(--vert)}.dec-etat.couper{color:var(--rouge)}.dec-etat.surveiller{color:var(--texte)}
+.dec-vise{outline:2px solid var(--signal);outline-offset:4px}.dec-ligne:focus{outline:2px solid var(--signal);outline-offset:4px}
+@media(max-width:760px){
+  .dec-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .dec-kpis .acc-kpi{padding:12px 8px 14px;border-top:0!important;border-left:1px solid var(--ligne)}.dec-kpis .acc-kpi:first-child{border-left:0;padding-left:0}
+  .dec-reponse{font-size:15px}.dec-reponse strong{display:block;font-size:28px;margin:0 0 4px}
+  /* Les chiffres : une carte par ligne, l'intitulé de chaque colonne devant sa valeur. */
+  .dec-ligne.bu-entete{display:none}
+  .dec-ligne{grid-template-columns:1fr 1fr;gap:6px 12px}
+  .dec-ligne>span:first-child{grid-column:1}.dec-ligne>.dec-etat{grid-column:2;grid-row:1;align-self:start}
+  .dec-ligne>[data-t]{text-align:left}.dec-ligne>[data-t]::before{content:attr(data-t);display:block;font:400 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--doux)}
+  .dec-ligne-texte{grid-template-columns:1fr}
+}

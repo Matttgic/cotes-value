@@ -819,6 +819,9 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     from cotes import protection
     durees_strategies = protection.durees()         # avant les modes supplémentaires, qui recalculent les mêmes
     protocole_publie = calculer("protocole", lambda: suivi_protocole(paris, donnees, echecs_strategies), dict)
+    # Page Décision (cotes/decision.py, web/decision.js) : ROI et CLV Pinnacle par bookmaker et par référence.
+    from cotes import decision
+    decision_publiee = calculer("décision", lambda: decision.construire(paris, datetime.now(timezone.utc)), dict)
     blocs_mises: dict[str, dict] = {}
     for mode in MODES_BILAN:
         if mode in MODES_INTEGRES:
@@ -856,7 +859,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
                            if mode in MODES_INTEGRES or mode in blocs_mises],
             "mode_mise_defaut": MODE_DEFAUT,
             "doublons": doublons, "pauses": pauses_publiees,
-            "protocole": protocole_publie,
+            "protocole": protocole_publie, "decision": decision_publiee,
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": {k: v for k, v in notifications_mod.NOMS.items()
                                                                            if k not in libres},
@@ -923,6 +926,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     html = html.replace("__HORAIRES_JS__", (web / "horaires.js").read_text(encoding="utf-8"))
     html = html.replace("__ANALYSES_JS__", (web / "analyses.js").read_text(encoding="utf-8"))
     html = html.replace("__ACCUEIL_JS__", (web / "accueil.js").read_text(encoding="utf-8"))
+    html = html.replace("__DECISION_JS__", (web / "decision.js").read_text(encoding="utf-8"))
     html = html.replace("__SUIVI_JS__", (web / "suivi.js").read_text(encoding="utf-8"))
     html = html.replace("__NOTIFICATIONS_JS__", (web / "notifications.js").read_text(encoding="utf-8"))
     html = html.replace("__PUSHOVER_JS__", (web / "pushover.js").read_text(encoding="utf-8"))
