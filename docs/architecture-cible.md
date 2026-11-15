@@ -398,6 +398,10 @@ Toutes les étapes de cette phase sont des **déplacements** : même code, même
   `if args.seulement_reglement:` dans `pipeline/reglement.py`. `cycle.py` garde ces noms par import ; les tests qui
   remplacent `cycle.effectuer_reglement` ou `cycle.REGLEMENT_MINUTES` visent le nouveau module.
 - Test : `tests/test_cycle_reglement.py`, contrôle standard.
+- Fait le 15/11/2026 : `regler_seul(ctx, mode)` ; le site et l'affichage restent dans `main()` (`cotes/` n'importe
+  pas `scripts/`). Déplacés aussi, car le chemin règlement en a besoin : `etape`, `signaler`, `charger_paris`,
+  `retirer_obsoletes` et `FICHIERS_OBSOLETES` (`cotes/pipeline/outils.py`). `tests/test_fichiers_obsoletes.py` exclut
+  désormais le fichier qui écrit la liste au lieu de `cycle.py`.
 
 **E3.2 — Étape sauvegarde**
 - Faire : le bloc « 5. sauvegarde » de `main()` (archives, liens, `paris.json`, obsolètes, contrôle, opportunités,
@@ -541,7 +545,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E2.3 | Lecture de même forme | E2.1 | faible | ☑ |
 | E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☑ |
 | E2.5 | Erreurs sans liste globale | — | faible | ☐ |
-| E3.1 | Contexte, règlement seul | E0.2 | moyen | ☐ |
+| E3.1 | Contexte, règlement seul | E0.2 | moyen | ☑ |
 | E3.2 | Étape sauvegarde | E3.1 | moyen | ☐ |
 | E3.3 | Étape analyse | E3.1 | moyen | ☐ |
 | E3.4 | Étape prise | E3.1 | moyen | ☐ |

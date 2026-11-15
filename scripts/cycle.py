@@ -52,27 +52,20 @@ from cotes.fraicheur import resume_lignes  # noqa: E402
 from cotes.temps import instant_utc  # noqa: E402
 from cotes.depot.json_io import lire_json, ecrire_json  # noqa: E402,F401  (noms gardés sur le module)
 from cotes.sources import registre as registre_sources  # noqa: E402
+from cotes.pipeline.contexte import Contexte  # noqa: E402
+from cotes.pipeline import reglement as pipeline_reglement  # noqa: E402
+# déplacés dans cotes/pipeline/ (E3.1) ; noms gardés sur le module
+from cotes.pipeline.outils import (etape, signaler, TEMOIN_ABANDONNE, FICHIERS_OBSOLETES,  # noqa: E402,F401
+                                   retirer_obsoletes, charger_paris)
+from cotes.pipeline.reglement import (REGLEMENT_MINUTES, reglement_echu,  # noqa: E402,F401
+                                      conserver_journal_reglement, _regler_props, effectuer_reglement)
 
 HORIZON_H = 36
 # Budgets durs : une source au-delà est sautée, le cycle de 5 min continue (cotes/sources/registre.py).
 BUDGETS = registre_sources.budgets()
 SMARKETS_FRAIS_MIN = 15
 _journal_lock = threading.Lock()
-# minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
-REGLEMENT_MINUTES = float(os.environ.get("REGLEMENT_MINUTES", "55"))
 
-
-def etape(nom: str, journal: dict, fonction, *args, **kwargs):
-    """Exécute une étape ; une source en panne n'arrête pas le cycle (l'erreur est notée)."""
-    t = time.time()
-    try:
-        r = fonction(*args, **kwargs)
-        journal["etapes"][nom] = {"secondes": round(time.time() - t, 1), "ok": True}
-        return r
-    except Exception as e:                                       # noqa: BLE001
-        journal["etapes"][nom] = {"secondes": round(time.time() - t, 1), "ok": False, "erreur": repr(e)[:300]}
-        traceback.print_exc()
-        return None
 
 
 def etape_bornee(nom: str, journal: dict, budget: float, fonction, *args, **kwargs):
@@ -233,13 +226,6 @@ def _appliquer_bourse(module, cle: str, sports: set, heures: float, maintenant: 
             journal["etapes"][cle]["shadow"] = True
         return []
     return lignes
-
-
-def signaler(journal: dict, nom: str, erreurs: list[str]) -> None:
-    """Une étape qui a perdu des lectures (HTTP 500, coupure…) est marquée dégradée, pas « ok » muette :
-    sinon « aucune source » pour un pari ne dit pas qu'une source était en panne."""
-    if erreurs and nom in journal["etapes"]:
-        journal["etapes"][nom] |= {"degrade": True, "erreurs": erreurs[:10]}
 
 
 def noter_lecture(journal: dict, nom: str, meta: dict) -> None:
@@ -661,248 +647,6 @@ def enregistrer_controle(donnees: Path, etat_controle: dict, maintenant: datetim
     return True
 
 
-def reglement_echu(etat: dict, maintenant: datetime, mode: str) -> bool:
-    """Le cron et la collecte partagent le même délai et le même verrou de données.
-
-    Une date absente ou invalide ne doit pas arrêter le règlement indéfiniment.
-    Une petite dérive d'horloge reste tolérée ; une date très future est invalide.
-    """
-    if mode != "auto":
-        return mode == "oui"
-    try:
-        dernier = datetime.fromisoformat(str(etat.get("dernier_reglement")).replace("Z", "+00:00"))
-        if dernier.tzinfo is None or dernier > maintenant + timedelta(minutes=5):
-            return True
-        return maintenant - dernier >= timedelta(minutes=REGLEMENT_MINUTES)
-    except (TypeError, ValueError, OverflowError):
-        return True
-
-
-def conserver_journal_reglement(etat: dict, journal: dict, effectue: bool) -> None:
-    """Un cycle sans règlement conserve le dernier diagnostic réel affiché sur le site."""
-    if effectue:
-        etat["dernier_reglement"] = journal["debut"]
-        etat["dernier_cycle_reglement"] = dict(journal)
-
-
-TEMOIN_ABANDONNE = "Pinnacle brut"
-
-# Fichiers de « donnees » que plus aucun code ne lit ni n'écrit : caches d'API-Sports (plus lu depuis le 15/10/2026)
-# et de PulseScore (arrêté le 18/10), rythme de l'ancien mode « shadow », rapports de bascule PulseScore -> lecture
-# directe, et trois instantanés de paris des 5-6/10 (essais abandonnés, 5 Mo, absents des bilans). Retirés à chaque
-# sauvegarde (rien s'ils sont déjà absents) ; l'historique de la branche les garde.
-FICHIERS_OBSOLETES = ("apisports.json", "rythme_sources.json", "pulsescore_attentes.json",
-                      "betclic_comparaison.json", "pmu_comparaison.json", "unibet_comparaison.json",
-                      "winamax_comparaison.json", "docs/live_papier.json", "paris_avant_controle.json",
-                      "paris_netbet_international.json", "paris_seuils_cumules.json")
-
-
-def retirer_obsoletes(donnees: Path, journal: dict) -> None:
-    """Supprime les fichiers de ``FICHIERS_OBSOLETES`` présents ; jamais bloquant."""
-    retires = []
-    for nom in FICHIERS_OBSOLETES:
-        try:
-            (donnees / nom).unlink()
-            retires.append(nom)
-        except OSError:          # absent (cas normal) ou non supprimable : rien à faire
-            pass
-    if retires:
-        journal["obsoletes_retires"] = retires
-
-
-def charger_paris(donnees: Path, journal: dict) -> list[dict]:
-    """paris.json sans le témoin « Pinnacle brut », abandonné : il ne servait qu'à mesurer ce que change le retrait
-    de la marge (ROI −12,6 % contre −12,8 % avec la marge retirée) et pesait 80 % du fichier. Retiré à la lecture,
-    donc sous le verrou de la branche « donnees » ; l'historique reste dans les commits."""
-    paris, retires = stockage.retirer_reference(lire_json(donnees / "paris.json", []), TEMOIN_ABANDONNE)
-    if retires:
-        journal["temoin_pinnacle_brut_retires"] = retires
-    return paris
-
-
-def _regler_props(donnees: Path, enregistrements: list, maintenant: datetime) -> dict:
-    """Feuilles ESPN des props fictifs encore ouverts. Aucun appel s'il n'y a rien à régler."""
-    from cotes import props_papier
-    from cotes.resultats import _espn_json, lire_espn
-    doc = props_papier.lire(donnees)
-    ouverts = [p for p in doc.get("paris") or [] if p.get("statut") == "en_cours"
-               and (props_papier._heure(p.get("debut")) or maintenant) <= maintenant]
-    if not ouverts:
-        return {"regles": 0, "feuilles": 0}
-    matchs = props_papier.matchs_espn(enregistrements)
-    # Relire ESPN pour chaque sport dont un prop ouvert n'a pas son match dans ce qui est déjà lu. Avant le
-    # 11/11/2026, un sport déjà présent (matchs du jour) n'était jamais relu : un prop de la veille ne retrouvait
-    # plus son match et restait en attente (Cooper Flagg, Darius Acuff).
-    orphelins = [p for p in ouverts if props_papier._match_espn(p, matchs) is None]
-    for sport in sorted({p.get("sport") for p in orphelins if p.get("sport")}):
-        depuis = min((props_papier._heure(p.get("debut")) for p in orphelins if p.get("sport") == sport
-                      and props_papier._heure(p.get("debut"))), default=maintenant)
-        matchs += props_papier.matchs_espn(lire_espn(sport, depuis - timedelta(hours=12), maintenant))
-    ids = props_papier.feuilles_a_lire(doc, matchs, maintenant)
-    sport_de = {str(m.get("espn_id")): m.get("sport") for m in matchs}
-    feuilles = props_papier.charger_feuilles([(i, sport_de.get(i)) for i in ids if sport_de.get(i)], _espn_json)
-    n = props_papier.regler(doc, matchs, feuilles, maintenant)
-    props_papier.ecrire(donnees, doc)
-    return {"regles": n, "feuilles": len(feuilles)}
-
-
-def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dict, mode_reglement: str) -> bool:
-    # Le règlement ne lit pas Smarkets : les cotes de l'échange ne servent pas à solder un pari.
-    # 4. règlement : ESPN, LiveScore, Flashscore, NHL et les secours, plus les résultats
-    #    saisis à la main. Environ une fois par heure, depuis le cron ou la collecte : voir REGLEMENT_MINUTES.
-    etat_avant = lire_json(donnees / "etat.json", {})
-    dernier_reglement = etat_avant.get("dernier_reglement")
-    regler = reglement_echu(etat_avant, maintenant, mode_reglement)
-    journal["reglement"] = regler
-    if regler:
-        resultats_mod.reinitialiser_ignores()
-        ouverts_avant = {id(p) for p in paris if p.get("statut") in ("en_cours", "a_regler")}
-        manuels = lire_json(donnees / "resultats_manuels.json", {})
-        # Les corrections vérifiées sont disponibles sans nouvelle requête réseau.
-        reglement.appliquer(paris, {}, manuels, maintenant)
-        enregistrements = []
-        for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
-            n = len(resultats_mod.ERREURS_ESPN)
-            enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
-                                     sport, depuis, datetime.now(timezone.utc)) or []
-            signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
-        # LiveScore : gratuit, sans clé (football, hockey, basket, tennis)
-        for sport, depuis in livescore.a_lire(paris, maintenant).items():
-            n = len(livescore.ERREURS)
-            enregistrements += etape(f"resultats_livescore_{sport}", journal, livescore.lire, sport,
-                                     livescore.jours_a_lire(depuis, maintenant)) or []
-            signaler(journal, f"resultats_livescore_{sport}", livescore.ERREURS[n:])
-        nhl = etape("resultats_nhl_officiel", journal, resultats_nhl.collecter, paris, maintenant)
-        if nhl:
-            enregistrements += nhl[0]
-            signaler(journal, "resultats_nhl_officiel", nhl[1])
-        resultats = {}
-        for p in paris:
-            if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats:
-                r = resultats_mod.consensus(p, enregistrements, maintenant)
-                if r:
-                    resultats[p["match_id"]] = r
-        # Flashscore : secours gratuit pour ce qu'aucune source n'a validé, et seule source du volley, du handball
-        # et du rugby sans PulseScore (une source seule ne règle qu'après 24 h : cotes/resultats.py)
-        restants = [p for p in paris if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats]
-        for sport, jours in flashscore.jours_a_lire(restants, maintenant).items():
-            n = len(flashscore.ERREURS)
-            enregistrements += etape(f"resultats_flashscore_{sport}", journal, flashscore.lire, sport, jours,
-                                     maintenant) or []
-            signaler(journal, f"resultats_flashscore_{sport}", flashscore.ERREURS[n:])
-        # 365Scores : deuxième avis gratuit pour le basket, le volley, le handball et le rugby (score final seul).
-        # Deux sources d'accord règlent tout de suite ; en désaccord, le pari attend une saisie à la main.
-        for sport, jours in scores365.jours_a_lire(restants, maintenant).items():
-            n = len(scores365.ERREURS)
-            enregistrements += etape(f"resultats_365scores_{sport}", journal, scores365.lire, sport, jours,
-                                     maintenant) or []
-            signaler(journal, f"resultats_365scores_{sport}", scores365.ERREURS[n:])
-        for p in restants:
-            if p["match_id"] not in resultats:
-                r = resultats_mod.consensus(p, enregistrements, maintenant)
-                if r:
-                    resultats[p["match_id"]] = r
-        # TheSportsDB : secours gratuit (clé publique), match par match, pour ce qu'aucune source n'a validé.
-        # Seul le score final : une source seule ne règle qu'après 24 h, jamais au hockey (cotes/resultats.py).
-        restants_tsdb = [p for p in paris if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats]
-        if restants_tsdb:
-            cache_ts = lire_json(donnees / "thesportsdb.json", {})
-            n = len(thesportsdb.ERREURS)
-            enregistrements += etape("resultats_thesportsdb", journal, thesportsdb.collecter,
-                                     restants_tsdb, cache_ts, datetime.now(timezone.utc)) or []
-            ecrire_json(donnees / "thesportsdb.json", cache_ts)
-            signaler(journal, "resultats_thesportsdb", thesportsdb.ERREURS[n:])
-            journal["thesportsdb"] = dict(thesportsdb.RESUME)
-            for p in restants_tsdb:
-                if p["match_id"] not in resultats:
-                    r = resultats_mod.consensus(p, enregistrements, maintenant)
-                    if r:
-                        resultats[p["match_id"]] = r
-        # mi-temps ESPN pour les paris qui en ont besoin (mi-temps/fin, 1re ou 2e mi-temps)
-        for p in paris:
-            r = resultats.get(p["match_id"])
-            if r and p["statut"] in ("en_cours", "a_regler") and (
-                    p["periode"] in reglement.SOUS_PERIODES or p["marche"] == "HALF_TIME_FULL_TIME"):
-                resultats[p["match_id"]] = resultats_mod.completer_periodes(p, r, enregistrements)
-        # Secours The Odds API uniquement pour les résultats encore manquants.
-        # Les quatre comptes partagent le cache, jamais quatre voix au consensus.
-        cles_odds = [os.environ.get(f"THE_ODDS_API_KEY_{i}", "").strip() for i in range(1, 5)]
-        journal["theodds"] = {"cles_configurees": sum(bool(c) for c in set(cles_odds))}
-        if any(cles_odds):
-            cache_odds = lire_json(donnees / "theodds.json", {})
-            secours = etape("resultats_theodds", journal, theodds.collecter,
-                           paris, resultats, enregistrements, cles_odds, cache_odds, datetime.now(timezone.utc))
-            ecrire_json(donnees / "theodds.json", cache_odds)
-            if secours:
-                resultats.update(secours[0])
-                journal["theodds"] = secours[1]
-                signaler(journal, "resultats_theodds", secours[1]["erreurs"])
-        # Scores gratuits Prop-Line : secours indépendant des clés The Odds API,
-        # sans compter ses données ESPN comme une voix supplémentaire au consensus.
-        cle_prop = os.environ.get("PROPLINE_API_KEY", "").strip()
-        journal["propline"] = {"configure": bool(cle_prop)}
-        if cle_prop:
-            cache_prop = lire_json(donnees / "propline.json", {})
-            secours = etape("resultats_propline", journal, propline.collecter,
-                           paris, resultats, enregistrements, cle_prop, cache_prop, datetime.now(timezone.utc))
-            ecrire_json(donnees / "propline.json", cache_prop)
-            if secours:
-                resultats.update(secours[0])
-                journal["propline"] = secours[1]
-                signaler(journal, "resultats_propline", secours[1]["erreurs"])
-        # Même match chez un autre bookmaker, déjà validé (ce cycle ou avant) : son score règle aussi ces paris.
-        freres = resultats_mod.par_freres(paris, resultats, maintenant)
-        resultats.update(freres)
-        journal["resultats"] = {"enregistrements": len(enregistrements), "matchs_valides": len(resultats),
-                                "par_match_frere": len(freres)}
-        # matchs reportés (vus « à venir » chez ESPN à une date plus tardive) : ils restent en cours
-        reportes = {p["match_id"]: d for p in paris
-                    if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats
-                    and (d := resultats_mod.reporte(p, enregistrements))}
-        journal["resultats"]["reportes"] = len(reportes)
-        reglement.appliquer(paris, resultats, manuels, maintenant, reportes)
-        # pourquoi les paris « à régler » ne se règlent pas (pour le diagnostic)
-        vus = set()
-        journal["resultats"]["non_regles"] = [
-            resultats_mod.diagnostic(p, enregistrements, maintenant) for p in paris
-            if p["statut"] == "a_regler" and p["match_id"] not in vus and not vus.add(p["match_id"])]
-        attente = [p for p in paris if p["statut"] == "a_regler"]
-        journal["resultats"]["paris_en_attente"] = len(attente)
-        journal["resultats"]["paris_regles"] = sum(id(p) in ouverts_avant and p.get("statut") in reglement.GAIN for p in paris)
-        # Même regroupement que le compteur « À régler » du site : une sélection
-        # commune aux références n'est comptée qu'une fois.
-        selections = {tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur"))
-                      for p in attente}
-        journal["resultats"]["selections_en_attente"] = len(selections)
-        journal["resultats"]["ignores"] = list(resultats_mod.RESULTATS_IGNORES)
-        journal["resultats"]["ignores_limite"] = resultats_mod.IGNORES_MAX
-        journal["resultats"]["paris_avec_alertes"] = sum(bool(p.get("alertes")) for p in paris
-                                                         if p.get("statut") in ("en_cours", "a_regler"))
-        # Quelles sources ont réglé les paris de ce cycle
-        sources_reglees: dict = {}
-        for p in paris:
-            if id(p) in ouverts_avant and p.get("statut") in reglement.GAIN:
-                for src in (p.get("preuve_reglement") or {}).get("sources") or ["saisie manuelle"]:
-                    sources_reglees[src] = sources_reglees.get(src, 0) + 1
-        journal["resultats"]["sources_reglement"] = sources_reglees
-        # Même match réglé avec deux scores différents chez deux bookmakers : à vérifier à la main
-        incoherences = resultats_mod.incoherences_freres(paris)
-        journal["resultats"]["incoherences_freres"] = len(incoherences)
-        journal["props_reglement"] = _regler_props(donnees, enregistrements, maintenant)
-        # Rien ne règle ces matchs : la liste est prête à être complétée à la main
-        ecrire_json(donnees / "resultats_a_saisir.json",
-                    {"genere": maintenant.isoformat(timespec="seconds"),
-                     "aide": "Copier `modele` dans resultats_manuels.json sous chaque clé de `match_ids`, y remplir le score.",
-                     "matchs": resultats_mod.a_saisir(paris, enregistrements, maintenant),
-                     "aide_incoherences": "Même match, deux scores : vérifier, puis écrire le bon statut (gagne, perdu, "
-                                          "rembourse…) sous l'identifiant de chaque pari faux dans resultats_manuels.json.",
-                     "incoherences": incoherences})
-    else:
-        journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
-
-    return regler
-
-
 def redecider(registre: list, maintenant: datetime, journal: dict, redecider_ouverts) -> None:
     """Redécision des paris ouverts. Jamais bloquante ; un échec est annoncé et noté (cotes/echecs.py)."""
     try:
@@ -942,21 +686,10 @@ def main() -> int:
     journal = {"debut": maintenant.isoformat(timespec="seconds"), "mode": args.mode, "etapes": {}}
 
     if args.seulement_reglement:
-        # Cycle indépendant : aucune collecte ni placement de paris.
-        paris = charger_paris(donnees, journal)
-        manuels = lire_json(donnees / "resultats_manuels.json", {})
-        paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
-        journal["mode"] = "reglement"
-        regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)
-        paris = stockage.archiver(donnees, paris, maintenant)
-        liens.completer_liens(paris)
-        ecrire_json(donnees / "paris.json", paris)
-        retirer_obsoletes(donnees, journal)
-        etat = lire_json(donnees / "etat.json", {})
-        journal["fin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        conserver_journal_reglement(etat, journal, regler)
-        echecs.fusionner(etat, journal.get("echecs", []), maintenant)
-        ecrire_json(donnees / "etat.json", etat)
+        # Cycle indépendant : aucune collecte ni placement de paris (cotes/pipeline/reglement.py).
+        ctx = Contexte(maintenant=maintenant, mode=args.mode, donnees=donnees,
+                       reprise=Path(args.reprise) if args.reprise else None, journal=journal)
+        pipeline_reglement.regler_seul(ctx, args.reglement)
         if not args.sans_site:          # serveur en direct : le site est construit par site.yml
             from site_web import construire
             construire(donnees, Path(args.site))

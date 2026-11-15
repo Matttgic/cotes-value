@@ -23,6 +23,7 @@ def test_aucun_fichier_obsolete_n_est_encore_utilise():
     from pathlib import Path
     racine = Path(__file__).resolve().parent.parent
     code = "\n".join(p.read_text(encoding="utf-8") for d in ("cotes", "scripts", "web")
-                     for p in (racine / d).rglob("*") if p.suffix in (".py", ".js") and p.name != "cycle.py")
+                     for p in (racine / d).rglob("*") if p.suffix in (".py", ".js")
+                     and p.relative_to(racine).as_posix() != "cotes/pipeline/outils.py")   # où la liste est écrite
     for nom in cycle.FICHIERS_OBSOLETES:
         assert Path(nom).name not in code, nom
