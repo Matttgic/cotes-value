@@ -10,12 +10,12 @@ import json
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from .convergence import STRATEGIES, cle_selection, paris_convergence
+from .convergence import cle_selection, paris_convergence
 from .laboratoire import DEBUT_SUIVI, REGLES, heure, selectionner
 from .liens import lien_info
 from .simulation import REFERENCES, premiers_par_selection
 from .strategie_qwen import QWEN
-from .strategies_prudentes import VARIANTES
+from .strategies import registre as registre_strategies
 
 API = "https://tapotyftgyacbnjmeovn.supabase.co/functions/v1/cv-notifications"
 AGE_PRIX_MAX_MINUTES = 5
@@ -34,15 +34,6 @@ def age_prix_max(o: dict, debut: datetime, recue: datetime) -> timedelta:
     return timedelta(minutes=table.get(o.get("bookmaker"), AGE_PRIX_MAX_MINUTES))
 
 
-def _noms_labo() -> dict[str, str]:
-    """« labo:PIN-1.3-2-e2-h36 » -> « Pinnacle 2 » : même numérotation que la page Stratégies."""
-    numeros, noms = {}, {}
-    for r in REGLES:
-        numeros[r.reference] = numeros.get(r.reference, 0) + 1
-        noms["labo:" + r.id] = f"{r.reference} {numeros[r.reference]}"
-    return noms
-
-
 def _bornes(x: float) -> str:
     return f"{x:.2f}".replace(".", ",")
 
@@ -53,8 +44,7 @@ BASES = {"base_uniques": "Uniques", **{"base_" + ref.lower(): ref for ref in REF
 NOMS_BASES = {k: "Base · paris uniques" if ref == "Uniques" else "Base · " + ref for k, ref in BASES.items()}
 # Ordre des cases : les sept stratégies de base, la convergence juste après (elle était la 42e et dernière du groupe,
 # introuvable), puis les variantes, les règles et les bases.
-NOMS = {**{cle: nom for cle, _, nom, _, _ in STRATEGIES}, "convergence": "Convergence ≥ 2",
-        **{v["cle"]: v["court"] for v in VARIANTES}, **_noms_labo(), **NOMS_BASES}
+NOMS = {**{s.cle: s.court for s in registre_strategies.toutes()}, **NOMS_BASES}   # cotes/strategies/registre.py
 DETAILS = {**{"labo:" + r.id: f"Cotes {_bornes(r.cote_min)}–{_bornes(r.cote_max)} · edge ≥ {100*r.edge_min:g} % · "
                               f"≤ {r.avance_max_h} h avant le match" for r in REGLES},
            **{k: ("Une mise par cote française, toutes références" if ref == "Uniques"

@@ -243,6 +243,22 @@ notes et avis ne changent pas. Les deux choix restent sur l'appareil. Mêmes par
 les blocs. Le choix est mémorisé. Seule l'étude figée du 14/10 (règles du laboratoire, `docs/comparaison-strategies.json`)
 reste en mises fixes.
 
+### Ajouter une stratégie
+
+1. **Un fichier** `cotes/strategie_x.py` : le dictionnaire de la règle (`cle`, `nom`, `court`, `debut`, `version`,
+   `mise`, `regles`) et son sélecteur décoré par `@figer_selecteur("x")` (`cotes/decisions.py`), qui fige chaque
+   décision à la prise.
+2. **Son entrée** : l'ajouter à `VARIANTES` et calculer sa sélection dans `selections_prudentes`
+   (`cotes/strategies_prudentes.py`, comme Claude · PMU régulier). Le registre `cotes/strategies/registre.py` la
+   reprend tout seul (cases des notifications, sélections du site) ; une nouvelle famille s'y déclare avec sa doc
+   (`DOCS_FAMILLES`).
+3. **Sa doc** `docs/strategie-x.md` : règles, date de lancement, ce que le rejeu ne prouve pas.
+4. **Son inscription au protocole**, avant toute prise :
+   `python scripts/protocole.py --inscrire x --donnees donnees` (`docs/protocole.md`).
+
+Les cinq fichiers sous empreinte (`strategie_jules_v2.py`, `strategie_commune.py`, `strategie_jules.py`,
+`correspondance.py`, `decisions.py`) ne se modifient pas ; une règle lancée ne change plus (`tests/test_protocole.py`).
+
 ### Laboratoire de comparaison
 
 **Stratégies** affiche les 36 règles, Claude et ChatGPT V1 dans un tableau triable

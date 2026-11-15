@@ -72,6 +72,11 @@ def test_selections_calculees_une_fois_par_comparateur(monkeypatch):
         return appeler
     for nom in ("paris_strategie","paris_chatgpt","paris_gemini","paris_m3"):
         monkeypatch.setattr(site_web,nom,selector(nom))
+    # sélections officielles lues dans le registre des stratégies depuis E4.2 : mêmes sélecteurs que le site
+    from types import SimpleNamespace
+    bases=[SimpleNamespace(ligne=s.ligne,selectionner=getattr(site_web,"paris_"+s.cle))
+           for s in site_web.registre_strategies.par_famille("base")]
+    monkeypatch.setattr(site_web,"registre_strategies",SimpleNamespace(par_famille=lambda famille:bases))
     rows=[pari(str(i),"2026-10-14T18:10:00Z","2026-10-15T12:00:00Z","en_cours") for i in range(12)]
     labo={"releve":"2026-10-14T10:09:28Z","resultats":[],"comparateurs":{
         nom:{} for nom in ("Claude (rejeu)","ChatGPT v1 (rejeu)","Gemini Argon v1 (rejeu)","M3 (rejeu)")}}

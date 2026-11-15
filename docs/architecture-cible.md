@@ -455,18 +455,30 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 - Test : les clés du registre contiennent `protocole.definitions()` et celles que `site_web.navigation_strategies`
   affiche sur le jeu témoin (`tests/fixtures/protocole_temoin.json.gz`) ; pas de clé en double ; `figee=True` pour
   les stratégies des 5 fichiers figés.
+- Fait le 15/11/2026 : 90 stratégies (7 bases, Convergence, 58 variantes en 6 familles, 24 règles du laboratoire).
+  Champ `ligne` en plus (libellé du laboratoire et de la navigation). Le test rejoue la navigation du site sur le
+  témoin et compare des sélections du registre à celles des sélecteurs d'origine.
 
 **E4.2 — Le site lit le registre**
 - Faire : dans `site_web.py`, là où le même traitement est répété pour chaque stratégie importée une à une,
   parcourir le registre. Test : empreinte identique.
+- Fait le 15/11/2026 : les deux dictionnaires `officiels` (navigation et laboratoire) parcourent les bases du registre.
+  Les sélecteurs du registre sont relus dans leur module à chaque appel. `test_navigation_strategies.py` remplace le
+  registre du site par les sélecteurs du site (mêmes comptes d'appels attendus). Empreinte identique.
 
 **E4.3 — Notifications, ordres et protocole lisent le registre** (un module par commit)
 - Test : empreinte identique, `tests/test_notifications.py`, `tests/test_ordres.py`, `tests/test_protocole.py`.
+- Fait le 15/11/2026 pour les notifications : `NOMS` vient du registre (champ `court` ajouté, numérotation du
+  laboratoire déplacée), même ordre et mêmes noms (test). `ordres.py` n'énumère aucune stratégie : rien à changer.
+  `protocole.py` non modifié : `definitions()` est l'entrée scellée de l'empreinte et ses règles du laboratoire
+  partent de `DEBUT_SUIVI`, pas du début des sélecteurs du registre ; le test de E4.1 vérifie déjà la concordance.
 
 **E4.4 — Fiche « Ajouter une stratégie »**
 - Faire : section du README : un fichier `strategie_x.py`, une entrée de registre, une doc `docs/strategie-x.md`,
   l'inscription au protocole (`scripts/protocole.py --inscrire`). Test : un test vérifie que chaque famille du
   registre a sa doc.
+- Fait le 15/11/2026 : `registre.DOCS_FAMILLES` ; nouvelle doc `docs/strategie-convergence.md` (seule famille sans
+  doc). L'« entrée de registre » est l'ajout à `VARIANTES` et à `selections_prudentes`, que le registre reprend.
 
 ### 4.7 Phase 5 — Alertes et site
 
@@ -563,10 +575,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E3.4 | Étape prise | E3.1 | moyen | ☑ |
 | E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☑ |
 | E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☑ |
-| E4.1 | Registre des stratégies | — | faible | ☐ |
-| E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☐ |
-| E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☐ |
-| E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☐ |
+| E4.1 | Registre des stratégies | — | faible | ☑ |
+| E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☑ |
+| E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☑ |
+| E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☑ |
 | E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☐ |
 | E5.2 | `_construire` en quatre | E0.1 | moyen | ☐ |
 | E5.3 | Heure du site injectée | E5.2 | faible | ☐ |
