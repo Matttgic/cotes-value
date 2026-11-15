@@ -85,3 +85,46 @@ def test_mode_alias_de_mode_source(monkeypatch, module, variable):
     for valeur in ("", "off", "direct", "inconnu"):
         monkeypatch.setenv(variable, valeur)
         assert module.mode() == module.mode_source()
+
+
+ARGS_15_11 = {   # appels lancer(...) de collecter_prematch avant E2.4 : (sports, heures), options
+    "pmu_direct": ("tous", {"reserve", "concurrence"}),
+    "winamax_direct": ("tous", {"maintenant"}),
+    "betclic_direct": ("tous", {"maintenant", "reserve"}),
+    "olybet": ("football", set()),
+    "netbet": ("football", {"reserve"}),
+}
+
+
+@pytest.mark.parametrize("mode,heures", [("complet", 36), ("test", 12)])
+def test_lancement_des_bookmakers_identique(monkeypatch, mode, heures):
+    from datetime import datetime, timezone
+    appels = {}
+
+    def enregistreur(nom):
+        def collecter(sports, h, **options):
+            appels[nom] = (set(sports), h, options)
+            return [], {"ok": True, "erreurs": [], "requetes": 0}
+        return collecter
+
+    for s in registre.francais():
+        monkeypatch.setattr(s.module, "collecter", enregistreur(s.nom))
+    for variable in ("SOURCE_OLYBET", "SOURCE_NETBET"):
+        monkeypatch.setenv(variable, "direct")
+    for variable in ("SOURCE_FANDUEL", "SOURCE_DRAFTKINGS"):
+        monkeypatch.setenv(variable, "off")
+    debut = "2026-10-17T12:00:00Z"
+    refs = [{"sport": s, "debut": debut, "bookmaker": "pinnacle", "match_id": s, "marche": "VAINQUEUR"}
+            for s in ("football", "tennis")]
+    monkeypatch.setattr(cycle.pinnacle, "collecter", lambda *a, **k: refs)
+    monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a, **k: [])
+    monkeypatch.setattr(cycle, "harmoniser_pinnacle", lambda x: x)
+    monkeypatch.setattr(cycle.pinnacle_secours, "disponible", lambda: False)
+    cycle.collecter_prematch(mode, datetime(2026, 10, 17, 6, tzinfo=timezone.utc), {"etapes": {}})
+    for nom, (sports, options) in ARGS_15_11.items():
+        attendus = {"football"} if sports == "football" and mode == "test" else {"football", "tennis"}
+        assert appels[nom][0] == attendus and appels[nom][1] == heures, nom
+        assert set(appels[nom][2]) == options, nom
+    assert appels["pmu_direct"][2]["concurrence"] == 2
+    assert set(appels["unibet_direct"][2]) == {"maintenant", "concurrence", "radar", "reserve"}
+    assert [s.nom for s in registre.ordre_de_lancement()] == list(ARGS_15_11)

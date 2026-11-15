@@ -52,25 +52,33 @@ class Source:
     hors_consensus: Callable[[], frozenset[str]] | None = None
     dans_controle: bool = True                # False : table hors du contrôle de conformité des intitulés
     attend_radar: bool = False                # True : part après Pinnacle (radar du cycle)
+    # lancement par le cycle (scripts/cycle.py › collecter_prematch), bookmakers français :
+    module: ModuleType | None = None          # reçoit l'échéance du budget (module._echeance)
+    avec_maintenant: bool = False             # collecter(..., maintenant=…)
+    concurrence: int | None = None            # collecter(..., concurrence=n)
+    sports_test: frozenset[str] | None = None  # mode test : sports lus restreints à ceux-ci
 
 
 def _source(nom, role, budget, module, fonction="collecter", **kw) -> Source:
-    return Source(nom, role, budget, _appel(module, fonction), **kw)
+    return Source(nom, role, budget, _appel(module, fonction), module=module, **kw)
 
 
 SOURCES: tuple[Source, ...] = (
     Source("pinnacle", "reference", 45, _en_lignes_meta(pinnacle), reference="Pinnacle"),
     Source("polymarket", "reference", 30, _en_lignes_meta(polymarket), reference="Polymarket"),
-    # PMU, Winamax, Unibet, Betclic, OlyBet, NetBet : bookmakers français, lus en direct
-    _source("pmu_direct", "francais", 75, pmu, memoire="pmu"),
-    _source("winamax_direct", "francais", 80, winamax),       # 25 filtres depuis le 25/10 : ~70 s
+    # Bookmakers français, lus en direct, lancés dans cet ordre (sauf Unibet, qui attend le radar Pinnacle).
+    # Ajouter un bookmaker : un module de cotes/direct/ et une entrée ici ; `memoire` donne aussi `reserve=`.
+    _source("pmu_direct", "francais", 75, pmu, memoire="pmu", concurrence=2),
+    _source("winamax_direct", "francais", 80, winamax, avec_maintenant=True),   # 25 filtres depuis le 25/10 : ~70 s
     # coupé par le budget dans la moitié des cycles les 23-24/10 (médiane 72 s)
-    _source("unibet_direct", "francais", 80, unibet, memoire="unibet", attend_radar=True),
-    _source("olybet", "francais", 40, olybet, mode=_appel(olybet, "mode")),
+    _source("unibet_direct", "francais", 80, unibet, memoire="unibet", attend_radar=True, avec_maintenant=True,
+            concurrence=3),
+    _source("olybet", "francais", 40, olybet, mode=_appel(olybet, "mode"), sports_test=frozenset({"football"})),
     # coupé par son budget à chaque cycle jusqu'au 2/11 (lecture tournante incomplète) ; lu en parallèle, et le cycle
     # attend déjà Winamax (~60 s) et Unibet (~75 s après le départ) : 55 s ne rallongent pas la collecte
-    _source("netbet", "francais", 55, netbet, mode=_appel(netbet, "mode"), memoire="netbet"),
-    _source("betclic_direct", "francais", 80, betclic, memoire="betclic"),
+    _source("netbet", "francais", 55, netbet, mode=_appel(netbet, "mode"), memoire="netbet",
+            sports_test=frozenset({"football"})),
+    _source("betclic_direct", "francais", 80, betclic, memoire="betclic", avec_maintenant=True),
     # bourses : leur table de paris, hors du contrôle des intitulés
     _source("smarkets", "bourse", 60, smarkets,
             mode=lambda: "direct" if smarkets.collecte_active() else "off", reference="Smarkets",
@@ -100,6 +108,14 @@ def par_role(role: str) -> list[Source]:
 
 def francais() -> list[Source]:
     return par_role("francais")
+
+
+def ordre_de_lancement() -> list[Source]:
+    """Bookmakers français lancés dès le départ, dans l'ordre historique du cycle : PMU, Winamax, Betclic, puis les
+    lecteurs qui ont un mode (OlyBet, NetBet). Unibet (radar) part plus tard."""
+    sans_mode = [s for s in francais() if not s.attend_radar and s.mode is _toujours_direct]
+    avec_mode = [s for s in francais() if not s.attend_radar and s.mode is not _toujours_direct]
+    return sans_mode + avec_mode
 
 
 def budgets() -> dict[str, float]:

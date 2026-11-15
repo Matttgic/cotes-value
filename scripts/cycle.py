@@ -428,23 +428,19 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
                    None, heures_directes, maintenant=maintenant)
 
         def lancer_francais(sports_fr):
-            """PMU, Winamax, Betclic, OlyBet et NetBet : seul Unibet dépend du radar Pinnacle du cycle."""
-            lancer("pmu_direct", pmu_direct, BUDGETS["pmu_direct"], pmu_direct.collecter,
-                   sports_fr, heures_directes, reserve=_reserve("pmu"), concurrence=2)
-            lancer("winamax_direct", winamax_direct, BUDGETS["winamax_direct"],
-                   winamax_direct.collecter, sports_fr, heures_directes, maintenant=maintenant)
-            lancer("betclic_direct", betclic_direct, BUDGETS["betclic_direct"],
-                   betclic_direct.collecter, sports_fr, heures_directes, maintenant=maintenant,
-                   reserve=_reserve("betclic"))
-            if source_oly == "direct":
-                sports_oly = sports_fr & {"football"} if mode == "test" else sports_fr
-                lancer("olybet", olybet_direct, BUDGETS["olybet"], olybet_direct.collecter,
-                       sports_oly, 12 if mode == "test" else HORIZON_H)
-            if source_net == "direct":
-                sports_net = sports_fr & {"football"} if mode == "test" else sports_fr
-                # Lecture tournante : la mémoire du passage précédent dit quelles pages relire (cotes/direct/netbet.py).
-                lancer("netbet", netbet_direct, BUDGETS["netbet"], netbet_direct.collecter,
-                       sports_net, 12 if mode == "test" else HORIZON_H, reserve=_reserve("netbet"))
+            """Bookmakers français du registre (cotes/sources/registre.py) : seul Unibet dépend du radar Pinnacle."""
+            for s in registre_sources.ordre_de_lancement():
+                if s.mode() != "direct":
+                    continue
+                sports_s = sports_fr & s.sports_test if mode == "test" and s.sports_test is not None else sports_fr
+                options = {}
+                if s.avec_maintenant:
+                    options["maintenant"] = maintenant
+                if s.memoire:
+                    options["reserve"] = _reserve(s.memoire)
+                if s.concurrence:
+                    options["concurrence"] = s.concurrence
+                lancer(s.nom, s.module, BUDGETS[s.nom], s.module.collecter, sports_s, heures_directes, **options)
 
         precedents = sports_precedents(reprise_chemin, maintenant)
         if precedents:
