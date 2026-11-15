@@ -96,4 +96,20 @@ test('chaque réponse renvoie à un chiffre présent dans « Les chiffres »',()
   const sans=c.htmlDecision({decision:DEC,protocole:protocole({b:{cle:'b',nom:'B',statut:'en_cours',n:300,mi:150,mesures:0}})},fiches,MAINTENANT);
   assert.match(sans,/<strong class="">Non\.<\/strong>/);assert.doesNotMatch(sans,/Avantage prouvé<\/span>/);
   assert.match(c.htmlDecision({},[],MAINTENANT),/indisponibles/);
+  assert.match(html,/A-t-elle marché \?<\/b> Jamais appliquée/);
+});
+test('quoi jouer : bilan de la règle rejouée, chiffres présents dans « Les chiffres »',()=>{
+  const c=contexte();
+  const b=(plus)=>({regles:1095,matchs:667,gain:145.4,roi:1.33,roi_ic:[-6.59,9.25],clv:1.35,clv_ic:[0.56,2.14],clv_n:931,couverture:85,...plus});
+  const rejeu={debut:'2026-10-18',jours:27,retenus:b(),ecartes:b({regles:1851,roi:0.68,roi_ic:[-6.76,8.12],clv:-0.31,clv_ic:[-1.53,0.91],clv_n:879})};
+  const html=c.htmlDecision({decision:{...DEC,rejeu},protocole:protocole()},[pari('ok')],MAINTENANT);
+  assert.match(html,/A-t-elle marché \? Pas encore tranché\./);
+  assert.match(html,/depuis le 18\/10\/2026.*1\s095 paris retenus, 27 jours/s);
+  assert.match(html,/Ses paris battent bien la clôture Pinnacle/);
+  assert.match(html,/ROI \+1,3 % \[-6,6 ; \+9,3\] · 1\s095 réglés/);
+  assert.match(html,/les 1\s851 autres paris uniques des mêmes jours/);
+  for (const id of ['rejeu:retenus','rejeu:ecartes']) assert.ok(html.includes(`id="${c.decAncre(id)}"`),id);
+  assert.match(html,/dec-etat attendre">Non tranché/);
+  const gagnante=c.htmlDecision({decision:{...DEC,rejeu:{...rejeu,retenus:b({roi_ic:[0.5,9]})}},protocole:protocole()},[],MAINTENANT);
+  assert.match(gagnante,/Oui, elle a gagné\./);assert.match(gagnante,/dec-etat jouer">Gagnante/);
 });

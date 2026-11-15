@@ -164,17 +164,83 @@ def _publier(x: dict) -> dict:
     return out
 
 
-def construire(paris: list[dict], maintenant: datetime) -> dict:
-    """Bloc publié dans le site (``D.decision``) : règles appliquées et lignes mesurées, avec leur décision."""
-    from .evenements import identites
-    liens = identites(paris)
-    match_de = lambda p: liens.get(id(p), ("ligne", p.get("id")))  # noqa: E731
-    clvs = clv_pinnacle(paris)
+def evaluer(paris: list[dict], match_de, clvs: dict[int, float]) -> tuple[list[dict], dict]:
+    """Lignes mesurées, corrigées et décidées sur ``paris`` ; nombre de tests par mesure."""
     resultats = [mesurer(l, match_de, clvs) for l in lignes_a_mesurer(paris)]
     tests = corriger(resultats)
     for x in resultats:
         x["decision"], x["raison"] = decider(x)
+    return resultats, tests
+
+
+def _bilan(paris: list[dict], match_de, clvs: dict[int, float]) -> dict:
+    """ROI et CLV Pinnacle d'un groupe de paris réglés, intervalles à 95 % par match (comme une ligne de la page)."""
+    out = {"regles": len(paris), "matchs": 0, "gain": 0.0, "roi": None, "roi_ic": None, "roi_p": None,
+           "clv": None, "clv_ic": None, "clv_n": 0, "couverture": None}
+    if not paris:
+        return out
+    matchs = [match_de(p) for p in paris]
+    roi = mesure([(p.get("gain") or 0.0) / p["mise"] for p in paris], matchs)
+    avec = [(clvs[id(p)], k) for p, k in zip(paris, matchs) if id(p) in clvs]
+    out.update(matchs=roi["matchs"], gain=round(sum(p.get("gain") or 0.0 for p in paris), 2), roi=round(roi["moyenne"], 2),
+               clv_n=len(avec), couverture=round(100 * len(avec) / len(paris), 1))
+    if roi["ic"]:
+        out.update(roi_ic=[round(v, 2) for v in roi["ic"]], roi_p=roi["p_pos"] if roi["moyenne"] > 0 else roi["p_neg"])
+    if avec:
+        clv = mesure([c for c, _ in avec], [k for _, k in avec])
+        out["clv"] = round(clv["moyenne"], 2)
+        if clv["ic"]:
+            out["clv_ic"] = [round(v, 2) for v in clv["ic"]]
+    return out
+
+
+def rejouer(paris: list[dict], match_de, clvs: dict[int, float]) -> dict:
+    """« Quoi jouer » rejoué jour par jour, sans regard vers l'avenir : chaque jour (UTC), les décisions sont refaites
+    avec les seuls paris réglés avant minuit, puis appliquées aux paris uniques détectés ce jour-là. Retenus : bookmaker
+    ET référence « jouer » (la règle de la page, hors stratégies validées par le protocole). Écartés : les autres paris
+    uniques des jours où la règle retenait au moins un bookmaker et une référence, pour comparer à période égale."""
+    from collections import defaultdict
+    from datetime import time, timezone
+
+    from .laboratoire import heure, regles_avant
+    from .reglement import GAIN
+    from .simulation import premiers_par_selection
+    uniques = premiers_par_selection(paris)
+    par_jour = defaultdict(list)
+    for p in paris:
+        t = heure(p.get("detecte"))
+        if id(p) in uniques and t and p.get("statut") in GAIN and p.get("mise"):
+            par_jour[t.astimezone(timezone.utc).date()].append(p)
+    retenus, ecartes, jours, premier = [], [], 0, None
+    for jour in sorted(par_jour):
+        passe = regles_avant(paris, datetime.combine(jour, time(), tzinfo=timezone.utc))
+        if not passe:
+            continue
+        jouables = {x["id"] for x in evaluer(passe, match_de, clvs)[0] if x["decision"] == JOUER}
+        if not any(i.startswith("bookmaker:") for i in jouables) or not any(i.startswith("reference:") for i in jouables):
+            continue
+        pris = [p for p in par_jour[jour]
+                if "bookmaker:" + str(p.get("bookmaker")) in jouables and "reference:" + str(p.get("reference")) in jouables]
+        if pris:
+            jours += 1
+            premier = premier or jour.isoformat()
+        retenus += pris
+        ids = {id(p) for p in pris}
+        ecartes += [p for p in par_jour[jour] if id(p) not in ids]
+    return {"debut": premier, "jours": jours, "retenus": _bilan(retenus, match_de, clvs),
+            "ecartes": _bilan(ecartes, match_de, clvs)}
+
+
+def construire(paris: list[dict], maintenant: datetime) -> dict:
+    """Bloc publié dans le site (``D.decision``) : règles appliquées et lignes mesurées, avec leur décision, et le
+    bilan de la règle « Quoi jouer » rejouée sans regard vers l'avenir (``rejouer``)."""
+    from .evenements import identites
+    liens = identites(paris)
+    match_de = lambda p: liens.get(id(p), ("ligne", p.get("id")))  # noqa: E731
+    clvs = clv_pinnacle(paris)
+    resultats, tests = evaluer(paris, match_de, clvs)
     return {"calcule_le": maintenant.isoformat(timespec="seconds"),
             "regles": {"alpha": ALPHA, "min_paris": MIN_PARIS, "min_matchs": MIN_MATCHS, "min_clv": MIN_CLV,
                        "part_pinnacle_min": PART_PINNACLE_MIN, "tests_roi": tests["roi"], "tests_clv": tests["clv"]},
-            "lignes": [_publier(x) for x in resultats]}
+            "lignes": [_publier(x) for x in resultats],
+            "rejeu": rejouer(paris, match_de, clvs)}
