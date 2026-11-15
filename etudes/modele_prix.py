@@ -1,11 +1,11 @@
 """Modèle de prix indépendant des bookmakers (football) et mesure contre Pinnacle. Lecture seule.
 
 Usage :
-    python scripts/modele_prix.py regler  --football DOSSIER --football-plus DOSSIER2
-    python scripts/modele_prix.py mesurer --football DOSSIER --football-plus DOSSIER2 [--tirages 2000]
+    python etudes/modele_prix.py regler  --football DOSSIER --football-plus DOSSIER2
+    python etudes/modele_prix.py mesurer --football DOSSIER --football-plus DOSSIER2 [--tirages 2000]
 
 ``--football`` : fichiers de football-data.co.uk nommés ``SAISON-DIVISION.csv`` (22 divisions, les mêmes que
-scripts/cote_juste.py). ``--football-plus`` : fichiers ``PAYS.csv`` des 16 ligues supplémentaires du même site
+etudes/cote_juste.py). ``--football-plus`` : fichiers ``PAYS.csv`` des 16 ligues supplémentaires du même site
 (``new/ARG.csv``, etc.). Demande numpy. Même graine, mêmes données : mêmes chiffres. Sortie en Markdown ; les
 conclusions sont dans docs/modele-prix.md.
 
@@ -37,7 +37,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.cote_juste import (brier, erreur_pente, intervalle, log_loss, pente_calibration,  # noqa: E402
+from etudes.cote_juste import (brier, erreur_pente, intervalle, log_loss, pente_calibration,  # noqa: E402
                                 retirer_marge, tableau)
 
 GRAINE = 20261115

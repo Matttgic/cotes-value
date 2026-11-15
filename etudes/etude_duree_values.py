@@ -14,8 +14,8 @@ Deux questions que la cote juste des références ne tranche pas :
 L'historique ne garde que les changements (cotes/historiques.py), pour PMU, Unibet, Betclic et NetBet, depuis
 le 30/10/2026. Paris uniques (une cote française comptée une fois), détectés avant le match. Lecture seule.
 
-    python scripts/etude_duree_values.py --donnees donnees            # tableau par bookmaker
-    python scripts/etude_duree_values.py --donnees donnees --json     # mêmes chiffres en JSON
+    python etudes/etude_duree_values.py --donnees donnees            # tableau par bookmaker
+    python etudes/etude_duree_values.py --donnees donnees --json     # mêmes chiffres en JSON
 """
 from __future__ import annotations
 

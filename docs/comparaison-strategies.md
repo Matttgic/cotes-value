@@ -20,7 +20,7 @@ localement avant le calcul comparatif (commit `42160ef`). Il ne s’agit pas d�
 préenregistrement public : des agrégats de cet historique avaient déjà été vus.
 Le [notebook exécuté](../notebooks/comparaison-strategies.ipynb), le
 [relevé JSON complet](comparaison-strategies.json) et le
-[calcul reproductible](../scripts/comparer_strategies.py) accompagnent le résultat.
+[calcul reproductible](../etudes/comparer_strategies.py) accompagnent le résultat.
 
 ## Source et audit
 
@@ -142,7 +142,7 @@ simulation ; aucune estimation de revenu mensuel ou de ROI futur n’est étayé
 
 ```sh
 git worktree add --detach ../cotes-value-releve 56bed648894f383f04fb42f677ee9223d29c2abe
-python scripts/comparer_strategies.py --donnees ../cotes-value-releve --sortie /tmp/comparaison.json
+python etudes/comparer_strategies.py --donnees ../cotes-value-releve --sortie /tmp/comparaison.json
 python -m pytest -q
 ```
 

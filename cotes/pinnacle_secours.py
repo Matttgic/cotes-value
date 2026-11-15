@@ -11,7 +11,7 @@ Les lignes ont le même format que ``pinnacle.collecter`` (``source`` « pinnacl
 Prudence :
 - seuls les marchés sans ambiguïté sont repris : résultat, vainqueur et totaux (période et sport selon
   ``pinnacle.PERIODES``). Les handicaps et les totaux par équipe ne le sont qu'avec
-  ``PINNODDS_HANDICAPS=oui``, après comparaison avec la lecture directe (scripts/comparer_secours_pinnacle.py) ;
+  ``PINNODDS_HANDICAPS=oui``, après comparaison avec la lecture directe (etudes/comparer_secours_pinnacle.py) ;
 - pinnodds retient sa grille quand ses données sont périmées (``X-Data-Status: stale``) : le secours
   ne renvoie alors rien, jamais de vieilles cotes ;
 - l'offre gratuite plafonne à 100 requêtes par jour : ``PINNODDS_LIMITE_JOUR`` (90 par défaut) et

@@ -561,6 +561,8 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 **E7.1 — Études dans `etudes/`**
 - Faire : déplacer les 15 scripts d'étude ; corriger `from scripts import strategie_mises` et les imports des tests.
   Test : contrôle standard.
+- Fait le 15/11/2026 : 12 scripts déplacés (`git mv`), références mises à jour dans le code, les tests, le README et
+  `docs/`. Les sondes (`sonde_*.py`, lancées par des workflows) restent dans `scripts/`.
 
 **E7.2 — Une couche par dossier** (un dossier par PR, jamais les 5 fichiers figés)
 - Faire : `git mv` des modules d'une couche vers son dossier, ancien chemin gardé par un module qui réimporte ;
@@ -627,7 +629,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☑ |
 | E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☑ |
 | E6.5 | Calendrier vérifié | E1.1 | faible | ☑ |
-| E7.1 | Études dans `etudes/` | — | faible | ☐ |
+| E7.1 | Études dans `etudes/` | — | faible | ☑ |
 | E7.2 | Une couche par dossier | E0.3, phases 1 à 6 | moyen | ☐ |
 | E8.1 | Mesure du stockage | — | aucun | ☑ |
 | E8.2 | `paris.json` allégé | E1.3, E8.1, décision | moyen | ☐ |

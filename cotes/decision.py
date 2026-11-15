@@ -8,7 +8,7 @@ familles de lignes seulement (décision 5 du document : tester moins de lignes) 
 - chaque référence, sur tous ses paris.
 
 Mesure : CLV contre la clôture Pinnacle sans marge (décision 1), le ROI en garde-fou. Paris des bilans du site : cote
-≤ plafond, mise fixe. Le match est l'unité de hasard. Différence avec ``scripts/avantage_reel.py`` : intervalles et
+≤ plafond, mise fixe. Le match est l'unité de hasard. Différence avec ``etudes/avantage_reel.py`` : intervalles et
 p-valeurs par un test de Student par match (celui du protocole, sans numpy) et non par bootstrap ; à cote ≤ 5 les gains
 sont assez peu asymétriques pour cela.
 

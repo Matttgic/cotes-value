@@ -1,6 +1,6 @@
 """Compare le secours pinnodds à la lecture directe de Pinnacle (à lancer quand les deux répondent).
 
-    PINNODDS_API_KEY=... PINNODDS_HANDICAPS=oui python scripts/comparer_secours_pinnacle.py [football tennis ...]
+    PINNODDS_API_KEY=... PINNODDS_HANDICAPS=oui python etudes/comparer_secours_pinnacle.py [football tennis ...]
 
 Sans conséquence sur les données : aucune écriture, et le budget journalier du secours n'est pas touché.
 Une couverture élevée et plus de 99 % de cotes à ±1 % valident le secours ; sinon, ne pas l'activer.

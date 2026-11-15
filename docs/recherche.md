@@ -1,7 +1,7 @@
 # Recherche : prédire la clôture Pinnacle, autres références
 
 Fait le 14/11/2026 sur la branche `donnees` (commit `9951a30`, 23:06 UTC) et sur 7 saisons de football-data.co.uk.
-Tous les chiffres de la partie 1 sortent de `python scripts/recherche_cloture.py --donnees <dossier> --football <dossier>`
+Tous les chiffres de la partie 1 sortent de `python etudes/recherche_cloture.py --donnees <dossier> --football <dossier>`
 (lecture seule, 40 secondes, graine fixe). Suite de [avantage-reel.md](avantage-reel.md) et de
 [duree-values.md](duree-values.md). Rien n'est changé dans la détection.
 
@@ -242,7 +242,7 @@ mkdir fd && for s in 1920 2021 2122 2223 2324 2425 2526; do for d in E0 E1 E2 E3
 ```
 
 ```bash
-python scripts/recherche_cloture.py --donnees donnees --football fd
+python etudes/recherche_cloture.py --donnees donnees --football fd
 ```
 
 Demande numpy (`requirements-dev.txt`) et le clone complet de `donnees` (391 Mo). Les données changent toutes les

@@ -1,10 +1,10 @@
 """Durer : ce que coûte un profil de paris discret (limitation des comptes). Lecture seule.
 
-Usage : python scripts/durer.py --donnees CHEMIN [--tirages 10000] [--json FICHIER] [--markdown FICHIER]
+Usage : python etudes/durer.py --donnees CHEMIN [--tirages 10000] [--json FICHIER] [--markdown FICHIER]
 CHEMIN = branche « donnees » extraite. Demande numpy. Environ deux minutes. Même graine, mêmes données : mêmes
 chiffres. Conclusions : docs/durer.md.
 
-Méthode : celle de scripts/strategie_mises.py (paris uniques réglés, cote ≤ plafond du site, bootstrap par match,
+Méthode : celle de etudes/strategie_mises.py (paris uniques réglés, cote ≤ plafond du site, bootstrap par match,
 périodes A et B, stratégie figée recalculée par la même règle). Le profil discret est une suite de règles tirées de ce
 qui est publié sur le repérage des comptes (docs/durer.md, partie 1), fixées avant de regarder leur résultat :
 marchés principaux, sports grand public, pari pris près du match, pas d'écart énorme, peu de paris par jour et par
@@ -24,7 +24,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cotes import simulation, stockage  # noqa: E402
-from scripts import strategie_mises as sm  # noqa: E402
+from etudes import strategie_mises as sm  # noqa: E402
 
 GRAINE = 20261114
 MARCHES_PRINCIPAUX = {"RESULTAT_1N2", "VAINQUEUR", "TOTAL", "HANDICAP"}
@@ -165,7 +165,7 @@ PERIODES = (("tout", "toute la période"), ("B", "période B"))
 def texte(r: dict) -> str:
     exclus = ", ".join(f"{d} : {s}" for d, s in r["exclus"])
     out = ["# Durer : tableaux du profil discret", "",
-           "Produit par `python scripts/durer.py --donnees <dossier> --markdown docs/durer-tableaux.md`. Lecture : "
+           "Produit par `python etudes/durer.py --donnees <dossier> --markdown docs/durer-tableaux.md`. Lecture : "
            "[durer.md](durer.md).", "",
            f"{r['paris']} paris uniques réglés, détectés du {r['du'][:10]} au {r['au'][:10]}. Segments écartés par la "
            f"stratégie figée : {exclus}. « Avantage gardé » : paris × CLV Pinnacle moyenne, rapporté à la base du "

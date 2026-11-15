@@ -1,13 +1,13 @@
 """Stratégie de mises : segments qui perdent, stratégie figée (choisie sur une période, validée sur l'autre) et
 mise de Kelly fractionnée simulée contre la mise fixe. Lecture seule.
 
-Usage : python scripts/strategie_mises.py --donnees CHEMIN [--tirages 10000] [--trajectoires 2000] [--json FICHIER]
+Usage : python etudes/strategie_mises.py --donnees CHEMIN [--tirages 10000] [--trajectoires 2000] [--json FICHIER]
         [--markdown FICHIER]
 CHEMIN = branche « donnees » extraite (scripts/cloner_donnees.sh suffit). Demande numpy (requirements-dev.txt).
 Environ une minute. Même graine, mêmes données : mêmes chiffres. Conclusions : docs/strategie-mises.md.
 
 Méthode, dans l'ordre où elle a été fixée :
-- paris uniques réglés ; l'unité de hasard est le match (bootstrap par match, scripts/avantage_reel.py) ;
+- paris uniques réglés ; l'unité de hasard est le match (bootstrap par match, etudes/avantage_reel.py) ;
 - période de choix (A) : matchs dont la première détection est avant COUPURE ; période de validation (B) : les autres.
   Tout ce qui est choisi (segments écartés, modèle d'avantage, corrélation) l'est sur A, par une règle mécanique ;
 - règle d'exclusion : parmi les cotes ≤ plafond du site, un segment est écarté si sa CLV contre la clôture Pinnacle
@@ -40,7 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cotes import reglement, simulation, stockage  # noqa: E402
 from cotes.evenements import identites  # noqa: E402
-from scripts.avantage_reel import cloture_pinnacle, grappes, heure, rapport  # noqa: E402
+from etudes.avantage_reel import cloture_pinnacle, grappes, heure, rapport  # noqa: E402
 
 REGLES = tuple(reglement.GAIN)
 COUPURE = "2026-10-26T00:00"        # A : première détection du match avant cette heure UTC ; B : après
@@ -601,7 +601,7 @@ def _modele(m: dict, avantages: dict, titre: str) -> list[str]:
 def markdown(r: dict) -> str:
     p = f"{r['plafond']:g}"
     out = ["# Stratégie de mises : tableaux complets", "",
-           f"Produit par `scripts/strategie_mises.py` sur le commit `{r['commit_donnees']}` de `donnees`, graine {r['graine']}, "
+           f"Produit par `etudes/strategie_mises.py` sur le commit `{r['commit_donnees']}` de `donnees`, graine {r['graine']}, "
            f"{r['tirages']} tirages. {r['paris']} paris uniques réglés du {r['du']} au {r['au']}. "
            f"A : matchs détectés avant le {r['coupure'][:10]} ({r['periodes']['A']['paris']} paris, {r['periodes']['A']['matchs']} "
            f"matchs) ; B : les autres ({r['periodes']['B']['paris']} paris, {r['periodes']['B']['matchs']} matchs). "

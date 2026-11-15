@@ -1,6 +1,6 @@
 """Comparaison rétrospective figée, sans API, paris réels ou réoptimisation.
 
-python scripts/comparer_strategies.py --donnees ../cotes-value-data-v2 --sortie docs/comparaison-strategies.json
+python etudes/comparer_strategies.py --donnees ../cotes-value-data-v2 --sortie docs/comparaison-strategies.json
 """
 from __future__ import annotations
 

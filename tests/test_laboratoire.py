@@ -103,7 +103,7 @@ def test_suivi_futur_exclut_ancien_et_futur_et_ne_modifie_pas_source():
 
 
 def test_audit_bloque_incoherence_et_geres_dates_invalides():
-    from scripts.comparer_strategies import comparer
+    from etudes.comparer_strategies import comparer
     with pytest.raises(ValueError, match="Audit bloquant"):
         comparer([pari(gain=99)], "2026-10-14T10:00:00Z")
     assert audit([pari(detecte="invalide")])["dates_reglement_invalides"] == ["a"]
@@ -127,7 +127,7 @@ def test_gains_pertes_et_net_excluent_les_attentes():
 
 
 def test_ensemble_inclut_reglements_tardifs_sans_changer_decision():
-    from scripts.comparer_strategies import comparer
+    from etudes.comparer_strategies import comparer
     p = pari(regle_le="2026-10-11T01:00:00Z")
     r = comparer([p], "2026-10-14T10:09:28Z")
     x = next(r for r in r["resultats"] if r["regle"]["id"] == "PIN-1.5-3-e2-h36")

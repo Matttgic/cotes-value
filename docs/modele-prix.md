@@ -1,7 +1,7 @@
 # Modèle de prix indépendant des bookmakers
 
 Fait le 15/11/2026. Football seulement : 174 333 matchs de football-data.co.uk (38 ligues, du 02/03/2012 au
-09/11/2026), avec le score et les cotes de clôture Pinnacle. Tous les chiffres sortent de `scripts/modele_prix.py`
+09/11/2026), avec le score et les cotes de clôture Pinnacle. Tous les chiffres sortent de `etudes/modele_prix.py`
 (lecture seule, graine fixe) ; tous les tableaux : [modele-prix-tableaux.md](modele-prix-tableaux.md). Suite de
 [avantage-reel.md](avantage-reel.md) et [cote-juste.md](cote-juste.md).
 
@@ -256,13 +256,13 @@ mkdir -p football-plus && for p in ARG AUT BRA CHN DNK FIN IRL JPN MEX NOR POL R
 Mesure (2 minutes, 4 processus) :
 
 ```bash
-python scripts/modele_prix.py mesurer --football football --football-plus football-plus
+python etudes/modele_prix.py mesurer --football football --football-plus football-plus
 ```
 
 Réglage, sur les matchs d'avant le 01/07/2019 (3 minutes) :
 
 ```bash
-python scripts/modele_prix.py regler --football football --football-plus football-plus
+python etudes/modele_prix.py regler --football football --football-plus football-plus
 ```
 
 Demande numpy (`requirements-dev.txt`). Les fichiers du site sont complétés deux fois par semaine : les chiffres de

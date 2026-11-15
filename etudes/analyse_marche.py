@@ -3,10 +3,10 @@
 Lecture seule de la branche « donnees ». Chaque jour terminé est résumé une fois dans le cache (par défaut
 ``<donnees>/analyse_marche/``) ; les deux derniers jours sont recalculés à chaque appel.
 
-    python scripts/analyse_marche.py --donnees donnees                         # tableaux
-    python scripts/analyse_marche.py --donnees donnees --par b,tranche         # opportunités par bookmaker et délai
-    python scripts/analyse_marche.py --donnees donnees --par-meneurs sport     # paires de bookmakers par sport
-    python scripts/analyse_marche.py --donnees donnees --json                  # mêmes chiffres en JSON
+    python etudes/analyse_marche.py --donnees donnees                         # tableaux
+    python etudes/analyse_marche.py --donnees donnees --par b,tranche         # opportunités par bookmaker et délai
+    python etudes/analyse_marche.py --donnees donnees --par-meneurs sport     # paires de bookmakers par sport
+    python etudes/analyse_marche.py --donnees donnees --json                  # mêmes chiffres en JSON
 
 Segments possibles : b (bookmaker), ref (référence), sport, ligue, marche, periode, cause, tranche (délai avant
 le match), pariable ; pour les meneurs : sport, ligue, marche, periode, tranche.

@@ -50,9 +50,9 @@ _PAR_COUCHE = {
                "scripts.serveur_actif scripts.protocole scripts.verifier_secrets scripts.verifier_strategie_jules "
                "scripts.verifier_strategie_jules_v2 scripts.archiver_donnees_brutes scripts.sonde_betfair "
                "scripts.sonde_sources_us scripts.sonde_unibet scripts.empreinte_site",
-    "etudes": "scripts.analyse_chatgpt scripts.analyse_marche scripts.audit_bilans scripts.avantage_reel "
-              "scripts.comparer_secours_pinnacle scripts.comparer_strategies scripts.cote_juste scripts.durer "
-              "scripts.etude_duree_values scripts.modele_prix scripts.recherche_cloture scripts.strategie_mises",
+    "etudes": "etudes etudes.analyse_chatgpt etudes.analyse_marche etudes.audit_bilans etudes.avantage_reel "
+              "etudes.comparer_secours_pinnacle etudes.comparer_strategies etudes.cote_juste etudes.durer "
+              "etudes.etude_duree_values etudes.modele_prix etudes.recherche_cloture etudes.strategie_mises",
 }
 COUCHES = {m: c for c, noms in _PAR_COUCHE.items() for m in noms.split()}
 
@@ -87,7 +87,8 @@ NOMS_NUS = {"site_web": "scripts.site_web"}
 
 def modules() -> dict[str, Path]:
     out = {}
-    fichiers = list((RACINE / "cotes").rglob("*.py")) + list((RACINE / "scripts").glob("*.py"))
+    fichiers = (list((RACINE / "cotes").rglob("*.py")) + list((RACINE / "scripts").glob("*.py"))
+                + list((RACINE / "etudes").glob("*.py")))
     for f in sorted(fichiers):
         if "__pycache__" in f.parts:
             continue

@@ -1,7 +1,7 @@
 # Durée de vie des values, « CLV maison » et origine de la value
 
 Étude du 11/11/2026 sur l'historique des cotes françaises (`donnees/cotes/`, depuis le 30/10/2026 : PMU, Betclic,
-Unibet, NetBet). Script : `python scripts/etude_duree_values.py --donnees donnees`. Paris uniques détectés du 30/10
+Unibet, NetBet). Script : `python etudes/etude_duree_values.py --donnees donnees`. Paris uniques détectés du 30/10
 au 10/11, cote ≤ 5, ni score exact ni mi-temps/fin : 744 paris dont l'historique retrouve la cote prise (449 sans
 historique exploitable).
 

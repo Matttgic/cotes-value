@@ -1,6 +1,6 @@
 # Cote juste : tableaux complets
 
-Sortie de `scripts/cote_juste.py` du 14/11/2026 (2 000 tirages, graine fixe). Football : 330 fichiers de
+Sortie de `etudes/cote_juste.py` du 14/11/2026 (2 000 tirages, graine fixe). Football : 330 fichiers de
 football-data.co.uk, 22 divisions, saisons 2012/13 à 2026/27. Données du site : branche `donnees`, commit `f13913e`
 (14/11/2026, 11:38 UTC). Lecture et conclusions : [cote-juste.md](cote-juste.md).
 

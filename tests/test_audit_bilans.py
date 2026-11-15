@@ -6,7 +6,7 @@ import pytest
 
 from cotes import reglement
 from cotes.reglement import appliquer, gain, regler, scores_par_periode
-from scripts.audit_bilans import erreur_type, regler_independant, roi
+from etudes.audit_bilans import erreur_type, regler_independant, roi
 
 T = datetime(2026, 10, 10, 20, 0, tzinfo=timezone.utc)
 

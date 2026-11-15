@@ -1,7 +1,7 @@
 # Durer : limitation des comptes et robustesse des sources
 
 Fait le 14/11/2026. Partie 1 sur la branche `donnees` (commit `f4324c4`, 17:45 UTC) : 5 050 paris uniques réglés
-du 05/10 au 14/11, chiffres de `python scripts/durer.py --donnees <dossier>` (lecture seule, deux minutes, graine
+du 05/10 au 14/11, chiffres de `python etudes/durer.py --donnees <dossier>` (lecture seule, deux minutes, graine
 fixe). Tous les tableaux : [durer-tableaux.md](durer-tableaux.md). Suite de
 [strategie-mises.md](strategie-mises.md), dont la stratégie figée sert de base.
 

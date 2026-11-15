@@ -16,5 +16,5 @@ Chaque jour terminé est résumé une fois et gardé en cache (cache.py) : le pa
 - meneurs.py : entre deux bookmakers français, lequel bouge en premier sur la même sélection.
 
 segments.py agrège les résumés par segment (sport, marché, délai avant le match…), avec la taille de chaque
-échantillon. Point d'entrée : ``python scripts/analyse_marche.py --donnees donnees``.
+échantillon. Point d'entrée : ``python etudes/analyse_marche.py --donnees donnees``.
 """
