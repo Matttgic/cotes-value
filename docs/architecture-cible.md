@@ -336,6 +336,8 @@ cette étape. »
 - Test : chaque littéral `"….json"`, `"….json.gz"` ou `"….jsonl.gz"` utilisé avec `donnees /`, `memoire.lire` ou
   `memoire.ecrire` est au catalogue ; aucun `FICHIERS_OBSOLETES` n'y est ; aucune entrée du catalogue n'est morte.
 - Fini quand : tests verts ; tableau copié dans `docs/donnees.md`.
+- Fait le 15/11/2026 : 45 entrées (27 chaudes, 6 froides, 7 mémoire, 3 reprise, 2 envoyes). Les chemins dont le nom
+  est une variable (`f"{nom}.json"`, `dossier / f"{jour}…"`) ne sont pas vérifiés par le test.
 
 **E1.4 — Une E/S JSON pour le cycle, le site et les alertes**
 - Fichiers : nouveau `cotes/depot/json_io.py` ; `scripts/cycle.py`, `scripts/envoyer_notifications.py`.
@@ -521,7 +523,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E0.3 | Test d'architecture | — | faible | ☑ |
 | E1.1 | Catalogue de configuration | — | faible | ☑ |
 | E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
-| E1.3 | Catalogue des fichiers | — | faible | ☐ |
+| E1.3 | Catalogue des fichiers | — | faible | ☑ |
 | E1.4 | Une E/S JSON | E0.1 | faible | ☐ |
 | E2.1 | Registre des sources | — | faible | ☐ |
 | E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☐ |
