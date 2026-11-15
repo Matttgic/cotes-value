@@ -120,9 +120,29 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
                               "version": VERSION}}
         if o.get("reference_reprise"):
             p["preuve_prise"]["reference_reprise"] = True
+        # Écart « minimum » (Polymarket lu au prix d'achat, « avance ou gagne » comparé à la victoire) : la cote juste
+        # est une borne, pas une estimation. Le pari le dit, pour que les bilans ne le lisent pas comme un écart exact.
+        if o.get("ecart_minimum") or o.get("prix_prudent"):
+            p["ecart_minimum"] = True
+        if o.get("prix_prudent"):
+            p["prix_prudent"] = True
+            if _nombre_fini(o.get("proba_milieu")) and 0 < o["proba_milieu"] < 1:
+                p["proba_milieu"] = o["proba_milieu"]
         paris.append(p)
         nouveaux.append(p)
     return nouveaux
+
+
+def proba_attendue(p: dict) -> float:
+    """Probabilité de gain attendue d'un pari, pour comparer les gagnés aux attendus.
+
+    ``1 / cote_juste``, sauf pour un pari pris au prix d'achat de Polymarket : sa cote juste est une borne basse de
+    la probabilité, et le milieu du carnet (``proba_milieu``) en est la meilleure estimation. Un « avance ou gagne »
+    n'a que la borne (probabilité de la simple victoire) : le segment est alors marqué ``probabilites_minorees``."""
+    milieu = p.get("proba_milieu")
+    if p.get("prix_prudent") and _nombre_fini(milieu) and 0 < milieu < 1:
+        return milieu
+    return 1 / p["cote_juste"]
 
 
 def _age_s(lecture, decision) -> int | None:
@@ -235,14 +255,20 @@ def clv_finale(p: dict) -> float | None:
     return p["clv"] if 0 < (debut - t).total_seconds() <= CLOTURE_MAX_MIN * 60 else None
 
 
-def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], maintenant: datetime | None = None):
+def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], maintenant: datetime | None = None,
+                   prudentes: set[tuple] | None = None):
     """Intègre une lecture pré-match prouvée, même traitée après le coup d’envoi.
 
     Avant le départ, la lecture doit dater de moins de FRAICHEUR_CLOTURE_MIN minutes.
     Après le départ, sa date source doit toujours prouver t < début ; le filtre
     de clôture à 30 min reste appliqué par clv_finale(). `cloture_lue` est l'heure de lecture de la
-    référence (et non celle du traitement)."""
+    référence (et non celle du traitement).
+
+    ``prudentes`` : les (match français, clé, référence) dont la cote juste de clôture est lue au prix d'achat
+    (``comparaison.cotes_justes_depuis``). La CLV d'un tel pari, comme celle d'un « avance ou gagne » (clôture de la
+    simple victoire), est un minimum : ``clv_minimum`` le note. Une clôture relue au milieu du carnet l'efface."""
     maintenant = maintenant or datetime.now(timezone.utc)
+    from .comparaison import MARCHES_MINORES
     for p in paris:
         if p["statut"] != "en_cours":
             continue
@@ -253,8 +279,8 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], mai
         if not debut.tzinfo:
             continue
         from .comparaison import cles_reference      # « a X d'avance ou gagne » : clôture de la victoire
-        proba, lue = next((justes[(p["match_id"], c)][p["reference"]] for c in cles_reference(p)
-                           if p["reference"] in justes.get((p["match_id"], c), {})), (None, None))
+        cle_lue = next((c for c in cles_reference(p) if p["reference"] in justes.get((p["match_id"], c), {})), None)
+        proba, lue = justes[(p["match_id"], cle_lue)][p["reference"]] if cle_lue is not None else (None, None)
         t = _heure(lue)
         if not proba or not t or t.tzinfo is None or t >= debut:
             continue
@@ -267,6 +293,10 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], mai
         p["cote_juste_cloture"] = round(1 / proba, 4)
         p["clv"] = round(p["cote"] * proba - 1, 4)
         p["cloture_lue"] = t.isoformat(timespec="seconds")
+        if p.get("marche") in MARCHES_MINORES or (p["match_id"], cle_lue, p["reference"]) in (prudentes or ()):
+            p["clv_minimum"] = True
+        else:
+            p.pop("clv_minimum", None)
 
 
 # tranches de cote (bornes basses exclues, hautes incluses)
@@ -440,17 +470,25 @@ def moyennes_ecarts(paris: list[dict]) -> dict:
     specs = (("Polymarket", "ecart_polymarket"), ("Smarkets", "ecart_smarkets"))
     out = {}
     for nom, champ in specs:
-        valeurs = []
+        valeurs, minimums = [], 0
         for p in paris:
             if id(p) not in uniques or p.get("statut") not in REGLES:
                 continue
             valeur = p.get(champ)
             if valeur is None and p.get("reference") == nom:
                 valeur = p.get("ecart")
-            if _nombre_fini(valeur):
-                valeurs.append(valeur)
+            if not _nombre_fini(valeur):
+                continue
+            # Un écart « minimum » pris contre cette référence est une borne (prix d'achat) : compté à part, il ne
+            # tire pas la moyenne des écarts exacts vers le bas.
+            if p.get("ecart_minimum") and p.get("reference") == nom:
+                minimums += 1
+                continue
+            valeurs.append(valeur)
         out[nom] = {"moyenne": round(sum(valeurs) / len(valeurs), 4) if valeurs else None,
                     "n": len(valeurs)}
+        if minimums:
+            out[nom]["minimums"] = minimums
     return out
 
 
@@ -644,7 +682,7 @@ def segments(paris: list[dict]) -> list[dict]:
         if len(rows) < SEGMENT_MIN or contenu in vus:
             continue
         vus.add(contenu)
-        probas = [1 / p["cote_juste"] for p in rows]
+        probas = [proba_attendue(p) for p in rows]
         gagnes = sum(p["statut"] in ("gagne", "demi_gagne") for p in rows)
         attendus = sum(probas)
         sd = sum(q * (1 - q) for q in probas) ** 0.5 or 1
@@ -661,6 +699,8 @@ def segments(paris: list[dict]) -> list[dict]:
             limites.append("reglements_non_binaires")
         if min(attendus, sum(1-q for q in probas)) < 5:
             limites.append("attendus_extremes")
+        if any(p.get("ecart_minimum") and not p.get("proba_milieu") for p in rows):
+            limites.append("probabilites_minorees")
         out.append({**dict(cle_seg), "n": len(rows), "gagnes": gagnes, "attendus": round(attendus, 1),
                     "evenements": evenements, "sigma_fiable": not limites, "sigma_limites": limites,
                     "ecart_sigma": round((gagnes - attendus) / sd, 2), "gains": round(gains, 2),

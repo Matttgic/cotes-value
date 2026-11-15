@@ -98,6 +98,7 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    publique (`web/vitrine.html`, deux chiffres Kelly ¼ recalculés à chaque publication) est publiée à part, en
    `vitrine.html`, sans lien depuis l'interface ni bouton de connexion : l'interface reste la page d'accueil.
    La page Santé garde un journal des incidents des dernières 24 heures (`sante_incidents.json`, écrit à chaque cycle par `cotes/surveillance.py`) : pannes, lectures dégradées et refus 403/429 qui durent au moins 3 cycles, avec début, durée et nombre de cycles. Le dépassement de budget n'en fait pas partie.
+   Une source lue sans erreur mais plus comme d'habitude (volume divisé par deux, marché disparu, marchés non reconnus en hausse, cotes figées) passe aussi en alerte, avec un message Pushover (`cotes/derive.py`, [docs/durer.md](docs/durer.md)).
 
 ### Deux stratégies suivies séparément
 
@@ -351,7 +352,7 @@ suivent les scans et ne garantissent pas que la cote reste disponible.
 - `cotes/AAAA-MM-JJ.jsonl.gz` (depuis le 30/10/2026) : historique des cotes PMU, Unibet, Betclic et NetBet,
   en ajout seul : seules les cotes nouvelles ou changées d'un cycle à l'autre, champs réduits
   (`t` heure de lecture, `b` bookmaker, `m` match, `k` marché|période|ligne|issue[|joueur], `c` cote), plus une
-  ligne de description (équipes, ligue, début) à la première apparition d'un match (cotes/historique_cotes.py) ;
+  ligne de description (équipes, ligue, début) à la première apparition d'un match (cotes/historiques.py) ;
 - `controle.json` : contrôle des intitulés, JSON compact publié au plus une fois par heure (champ `publie`) ;
   la version de chaque cycle reste dans la mémoire de travail.
 
@@ -396,6 +397,14 @@ sur le test du 17–19 octobre. Cela ne démontre pas une rentabilité future.
 [Configuration, secrets et publication](SECURITY.md).
 [Audit de la justesse des bilans](docs/audit-bilans.md) (13/11/2026) : biais, règlement, chiffres refaits par
 `scripts/audit_bilans.py`.
+[Protocole de validation](docs/protocole.md) (15/11/2026) : hypothèse, règles figées, nombre de paris, critère d'arrêt
+et test fixés avant les paris pour chaque stratégie ; suivi automatique dans le Bilan (`cotes/protocole.py`).
+[Stratégie de mises](docs/strategie-mises.md) (14/11/2026) : segments à couper, stratégie figée choisie sur une période
+et validée sur l'autre, Kelly fractionné simulé contre la mise fixe par `scripts/strategie_mises.py`.
+[Cote juste](docs/cote-juste.md) (14/11/2026) : méthodes de retrait de la marge et pondérations du consensus
+mesurées par `scripts/cote_juste.py` ; aucun changement retenu.
+[Recherche](docs/recherche.md) (14/11/2026) : la clôture Pinnacle est-elle prévisible (tests hors échantillon par
+`scripts/recherche_cloture.py`), parier tôt ou attendre, autres références vérifiées.
 Le retrait complet de la valeur guest Pinnacle reste conditionné à une configuration de remplacement validée. La revue détaillée de cinq moteurs de sélection reste ouverte ; les rapports ne certifient pas une rentabilité future.
 
 ## Règlement

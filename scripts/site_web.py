@@ -32,7 +32,7 @@ from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REG
 from cotes.mises import (METHODES as METHODES_MISE, MODE_DEFAUT, MODES_BILAN, MODES_INTEGRES,  # noqa: E402
                          comparer as comparer_mises, mise_du_mode)
 from cotes.securite import json_public
-from cotes.protection import calculer, proteger_strategies  # noqa: E402
+from cotes.protection import calculer, mettre_a_jour_pannes, proteger_strategies  # noqa: E402
 from cotes.analyste import SEUILS as SEUILS_AVIS, alleger_avis, annoter_avis, reference_avis  # noqa: E402
 from cotes import notifications as notifications_mod  # noqa: E402
 from cotes import ordres as ordres_mod  # noqa: E402
@@ -570,6 +570,24 @@ def evaluer_pauses(donnees: Path, lignes: list[dict], paris: list[dict], mainten
     return pauses.mettre_a_jour(donnees, lignes, cle_de, clvs_de, exemptes, maintenant)
 
 
+def suivi_protocole(paris: list[dict], donnees: Path, echecs: dict | None = None) -> dict:
+    """Protocole de validation (cotes/protocole.py, docs/protocole.md) : état de chaque stratégie, à mises fixes.
+    Les empreintes des règles sont recalculées sur le jeu témoin, dans un mémo à part (mêmes identifiants que les
+    vrais paris, contenu différent). Une stratégie en erreur à cette construction (``echecs``, cotes/protection.py)
+    garde son état précédent ; en erreur sur le témoin seulement, son empreinte n'est pas vérifiée cette fois."""
+    from cotes import protocole
+    from cotes.memo import memoriser_selections
+    echecs = echecs if echecs is not None else {}
+    en_erreur = set(echecs)
+    with memoriser_selections():
+        actuelles = protocole.empreintes_actuelles()
+    for nom in set(echecs) - en_erreur if actuelles else ():
+        actuelles.pop(nom, None)
+        actuelles.pop("labo:" + nom, None)
+    return protocole.suivre(paris, protocole.selections_officielles(paris), donnees, datetime.now(timezone.utc),
+                            actuelles, indisponibles=en_erreur | {"labo:" + nom for nom in en_erreur})
+
+
 def construire(donnees: Path, sortie: Path) -> Path:
     """Site complet. Les sélections de la vue à mises fixes servent aussi à la vue Kelly (cotes/memo.py).
     Chaque stratégie est isolée (cotes/protection.py) : une erreur la vide sans arrêter le site."""
@@ -764,10 +782,10 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     doublons = recommandees.pop("doublons", [])
     pauses_publiees = recommandees.pop("pauses", {})
     # Classement vivant : notes du jour gardées dans « donnees », progression depuis la veille et sur 7 jours.
-    from cotes import historique_notes
+    from cotes import notation
     instant_notes = datetime.now(timezone.utc)
-    notes_reperes = historique_notes.reperes(historique_notes.mettre_a_jour(
-        donnees, historique_notes.notes_du_laboratoire(laboratoire), instant_notes), instant_notes)
+    notes_reperes = notation.reperes(notation.historiser(
+        donnees, notation.notes_du_laboratoire(laboratoire), instant_notes), instant_notes)
     retenus = selections(paris)
     retenus.update(selections_prudentes(paris, bases=retenus))
     actuelles = valider_actuelles(actuelles, paris, retenus)
@@ -800,6 +818,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     # par la page seulement quand on le choisit. Un mode en erreur est retiré du menu, le site continue.
     from cotes import protection
     durees_strategies = protection.durees()         # avant les modes supplémentaires, qui recalculent les mêmes
+    protocole_publie = calculer("protocole", lambda: suivi_protocole(paris, donnees, echecs_strategies), dict)
     blocs_mises: dict[str, dict] = {}
     for mode in MODES_BILAN:
         if mode in MODES_INTEGRES:
@@ -837,6 +856,7 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
                            if mode in MODES_INTEGRES or mode in blocs_mises],
             "mode_mise_defaut": MODE_DEFAUT,
             "doublons": doublons, "pauses": pauses_publiees,
+            "protocole": protocole_publie,
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": {k: v for k, v in notifications_mod.NOMS.items()
                                                                            if k not in libres},
@@ -883,10 +903,9 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
             "incoherences_reglement": [x for x in (_lire(donnees / "resultats_a_saisir.json", {}) or {}).get("incoherences") or []
                                        if isinstance(x, dict)][:20]}
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
-    # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/pannes.py).
-    from cotes import pannes
+    # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/protection.py).
     data["durees_strategies"] = durees_strategies
-    data["pannes_strategies"] = pannes.mettre_a_jour(donnees, echecs_strategies or {}, datetime.now(timezone.utc))
+    data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, datetime.now(timezone.utc))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
         echecs.fusionner(etat, list(echecs_strategies.values()), datetime.now(timezone.utc))

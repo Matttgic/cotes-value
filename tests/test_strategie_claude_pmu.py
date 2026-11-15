@@ -1,4 +1,4 @@
-from cotes.strategie_claude_pmu import CLAUDE_PMU
+from cotes.strategie_claude_signal import CLAUDE_PMU
 from cotes.strategie_claude_signal import motif_refus_claude_signal, selection_claude_signal
 
 

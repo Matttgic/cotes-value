@@ -32,6 +32,7 @@ SEUIL_REFUS = round(3 * _facteur_cadence())      # cycles de suite avant qu'un r
 SEUIL_CYCLES = round(2 * _facteur_cadence())     # cycles de suite avant d'alerter
 RAPPEL = timedelta(hours=3)         # une panne qui dure est rappelée
 SURVEILLEES_DEGRADE = {"pinnacle", "winamax_direct", "betclic_direct", "unibet_direct", "pmu_direct", "olybet"}
+DERIVE = "dérive : "               # préfixe posé par cotes/derive.py (même valeur que derive.PREFIXE)
 BENINS = ("budget", "HTTP 403", "HTTP 429")   # lecture partielle prévue, refus avec reprise ou quota : pas une alerte
 
 
@@ -48,9 +49,12 @@ def problemes(etapes: dict) -> dict[str, tuple[str, str]]:
         if not v.get("ok"):
             erreurs = v.get("erreurs") or [v.get("erreur") or "arrêtée"]
             out[nom] = ("panne", str(erreurs[0])[:80])
-        elif v.get("degrade") and nom in SURVEILLEES_DEGRADE:
+        elif v.get("degrade"):
             erreurs = [str(e) for e in (v.get("erreurs") or [])]
-            if erreurs and not all(any(b in e for b in BENINS) for e in erreurs):
+            derive = [e for e in erreurs if e.startswith(DERIVE)]     # cotes/derive.py : toutes les sources
+            if derive:
+                out[nom] = ("alerte", derive[0][:80])
+            elif nom in SURVEILLEES_DEGRADE and erreurs and not all(any(b in e for b in BENINS) for e in erreurs):
                 out[nom] = ("alerte", erreurs[0][:80])
     return out
 

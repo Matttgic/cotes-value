@@ -22,7 +22,7 @@ ce relevé.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import timezone
 
 from .correspondance import normaliser
 from .decisions import figer_selecteur
@@ -32,6 +32,7 @@ from .strategie_commune import (
     ligne_non_quart,
     nombre_fini as _nombre,
 )
+from .temps import instant as _heure
 
 EDEN = {
     "nom": "Eden",
@@ -57,14 +58,6 @@ EDEN = {
     "ressemblance_min": 0.85,
     "mise": 10.0,
 }
-
-
-def _heure(value) -> datetime | None:
-    try:
-        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        return dt if dt.tzinfo is not None else None
-    except (TypeError, ValueError):
-        return None
 
 
 def _issue_valide(marche, issue) -> bool:

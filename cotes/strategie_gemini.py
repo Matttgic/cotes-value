@@ -19,11 +19,12 @@ from __future__ import annotations
 from .decisions import figer_selecteur
 
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import timezone
 from math import isfinite
 from zoneinfo import ZoneInfo
 
 from .correspondance import normaliser
+from .temps import instant as _heure
 
 PARIS = ZoneInfo("Europe/Paris")
 
@@ -52,14 +53,6 @@ GEMINI = {
     "paris_max_jour": 8,
     "mise": 10.0,
 }
-
-
-def _heure(value) -> datetime | None:
-    try:
-        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        return dt if dt.tzinfo is not None else None
-    except (TypeError, ValueError):
-        return None
 
 
 def _nombre(value) -> float | None:

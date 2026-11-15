@@ -9,6 +9,9 @@ validation Qwen, envoi des alertes Chrome) : leur erreur était avalée par un `
   les ``MAX_LISTE`` derniers échecs des ``GARDE`` derniers jours, compteur cumulé ``total`` ;
 - la page Santé du site (ligne « Erreurs non bloquantes »), qui lit ``etat.json``.
 
+``alerter_pushover`` envoie les alertes d'exploitation (stratégie en panne, source qui dérive) : un message Pushover
+si ``PUSHOVER_APP_TOKEN`` et ``PUSHOVER_USER_KEY`` sont remplis.
+
 Le message est court et ne contient jamais de secret : valeurs des variables d'environnement sensibles
 masquées, paramètres d'URL et identifiants dans les URL retirés. Ce module ne lève jamais.
 """
@@ -20,8 +23,11 @@ import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 CLE = "echecs_recents"
+PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
 MAX_LISTE = 30
 GARDE = timedelta(days=7)
 LONGUEUR = 160
@@ -124,4 +130,19 @@ def enregistrer(donnees: Path, etape: str, erreur, maintenant: datetime | None =
         os.replace(tmp, chemin)
         return True
     except Exception:  # noqa: BLE001 - un état illisible n'est jamais écrasé ; le cycle le signalera
+        return False
+
+
+def alerter_pushover(titre: str, message: str, env=None, ouvrir=urlopen) -> bool:
+    """Un message Pushover (1 000 caractères au plus). Faux si rien n'est parti : pas de clé, message vide, échec."""
+    env = os.environ if env is None else env
+    jeton, cle = env.get("PUSHOVER_APP_TOKEN", "").strip(), env.get("PUSHOVER_USER_KEY", "").strip()
+    if not message or not jeton or not cle:
+        return False
+    corps = {"token": jeton, "user": cle, "title": titre, "message": message[:1000]}
+    try:
+        with ouvrir(Request(PUSHOVER_URL, data=urlencode(corps).encode(), method="POST",
+                            headers={"User-Agent": "cotes-value"}), timeout=10) as r:
+            return 200 <= getattr(r, "status", 200) < 300
+    except Exception:  # noqa: BLE001
         return False

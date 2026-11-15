@@ -87,8 +87,16 @@ def test_handicap_hockey_prolongation_sans_effet():
                 "selections": [sel("HOME", "A", 2.0, ligne), sel("AWAY", "B", 1.8, ligne)]}
     # ±1,5 : la prolongation ne donne qu'un but d'écart, même règlement -> comparable à Pinnacle (match entier)
     assert {l["periode"] for l in traduire(ev([hc(-1.5)]), "winamax", "hockey", "t")} == {"MATCH"}
-    # ±0,5 : la prolongation change tout -> règle du bookmaker (Winamax : temps réglementaire)
-    assert {l["periode"] for l in traduire(ev([hc(-0.5)]), "winamax", "hockey", "t")} == {"TEMPS_REG"}
+    # ±0,5 : la prolongation change tout -> règle du bookmaker (PMU : temps réglementaire)
+    assert {l["periode"] for l in traduire(ev([hc(-0.5)]), "pmu", "hockey", "t")} == {"TEMPS_REG"}
+    # Winamax : son handicap ±0,5 a les cotes de son vainqueur prolongation incluse (archive des 12-14/11/2026 :
+    # 1,90 / 1,60 sur Björklöven – Örebro pour les deux marchés, 1N2 des 60 minutes à 2,50 / 3,65 / 2,05)
+    assert {l["periode"] for l in traduire(ev([hc(-0.5)]), "winamax", "hockey", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([hc(0.5)]), "winamax", "hockey", "t")} == {"MATCH"}
+    assert {l["periode"] for l in traduire(ev([hc(-1.0)]), "winamax", "hockey", "t")} == {"TEMPS_REG"}
+    tr = {"canonicalMarket": "ASIAN_HANDICAP", "period": "FULL_TIME", "rawName": "Handicap (temps réglementaire)",
+          "selections": [sel("HOME", "A", 2.0, -0.5), sel("AWAY", "B", 1.8, -0.5)]}
+    assert {l["periode"] for l in traduire(ev([tr]), "winamax", "hockey", "t")} == {"TEMPS_REG"}
 
 
 def test_pinnacle_specials():

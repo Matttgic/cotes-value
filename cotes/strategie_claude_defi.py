@@ -12,10 +12,9 @@ qui est connu à l'instant de la détection. Mêmes correspondances avec l'expor
 """
 from __future__ import annotations
 
-from .decisions import figer_selecteur
 from .laboratoire import heure
 from .strategie_commune import nombre_fini, preuve_de
-from .strategie_gemini_defi import cle_cote, ecart_pct, groupe_marche
+from .strategie_gemini_defi import ecart_pct, groupe_marche, premieres_par_cote, selecteur_sans_rejeu
 
 DEBUT = "2026-11-02T01:00:00+00:00"
 AUTEUR = "Claude"
@@ -137,30 +136,11 @@ def selection_claude_defi(paris: list[dict], c: dict, depart: str) -> set[int]:
     """Première détection qui passe la règle, par cote française, à partir de ``depart``, dans l'ordre
     d'arrivée (à la même seconde, ordre du registre). Une détection refusée ne consomme pas la cote.
     Aucun plafond par match ni par jour."""
-    t0 = heure(depart)
-    if t0 is None:
-        return set()
-    candidats = sorted((p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) >= t0
-                        and motif_refus_claude_defi(p, c) is None), key=lambda p: heure(p["detecte"]))
-    retenus, vues = set(), set()
-    for p in candidats:
-        cle = cle_cote(p)
-        if cle not in vues:
-            vues.add(cle)
-            retenus.add(id(p))
-    return retenus
+    return {id(p) for p in premieres_par_cote(paris, lambda p: motif_refus_claude_defi(p, c), depart)}
 
 
 def _selecteur(c: dict):
-    @figer_selecteur(c["cle"])
-    def selectionner(paris, depuis=None):
-        # Pas de rejeu : seul le suivi depuis la mise en service compte.
-        if depuis is not None:
-            return set()
-        return selection_claude_defi(paris, c, c["debut"])
-    selectionner.__name__ = selectionner.__qualname__ = "paris_" + c["cle"]
-    selectionner.__doc__ = c["nom"] + " (figée au lancement, " + c["debut"] + ")."
-    return selectionner
+    return selecteur_sans_rejeu(c, lambda paris: selection_claude_defi(paris, c, c["debut"]))
 
 
 paris_claude_defi_1 = _selecteur(CLAUDE_DEFI_1)

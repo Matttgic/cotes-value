@@ -22,20 +22,13 @@ import os
 from datetime import datetime
 from math import sqrt
 from pathlib import Path
+from .temps import instant as _date
 
 FICHIER = "pauses.json"
 MIN_REGLES = 200
 MIN_CLV = 100
 Z95 = 1.645
 _ACTIVES: dict[str, datetime] = {}
-
-
-def _date(valeur) -> datetime | None:
-    try:
-        d = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return d if d.tzinfo else None
 
 
 def _lire(donnees) -> dict:
@@ -54,6 +47,11 @@ def charger(source) -> dict[str, datetime]:
         debut = _date((p or {}).get("depuis"))
         if debut is not None:
             _ACTIVES[cle] = debut
+    return dict(_ACTIVES)
+
+
+def actives() -> dict[str, datetime]:
+    """Pauses en vigueur ({clé: début}), telles que ``charger`` les a lues."""
     return dict(_ACTIVES)
 
 

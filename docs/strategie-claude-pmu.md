@@ -1,6 +1,6 @@
 # Claude · PMU régulier
 
-Stratégie de Claude, figée le 13/11/2026, suivie dès le **13/11/2026 à 02:00 UTC** (`cotes/strategie_claude_pmu.py`).
+Stratégie de Claude, figée le 13/11/2026, suivie dès le **13/11/2026 à 02:00 UTC** (`cotes/strategie_claude_signal.py`).
 
 ## Règle
 

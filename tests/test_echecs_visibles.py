@@ -1,4 +1,4 @@
-"""Échecs non bloquants rendus visibles (cotes/echecs.py) et ajouts gzip atomiques (cotes/ecriture.py)."""
+"""Échecs non bloquants rendus visibles (cotes/echecs.py) et ajouts gzip atomiques (cotes/historiques.py)."""
 import gzip
 import io
 import json
@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from cotes import echecs, historique_cotes
-from cotes.ecriture import ajouter_gzip
+from cotes import echecs, historiques
+from cotes.historiques import ajouter_gzip
 from scripts import cycle
 
 NOW = datetime(2026, 10, 30, 12, 0, tzinfo=timezone.utc)
@@ -100,7 +100,7 @@ def test_historique_des_cotes_en_echec_est_note(tmp_path, monkeypatch, capsys):
 
     def casse(*a, **k):
         raise OSError("disque plein")
-    monkeypatch.setattr(historique_cotes, "ajouter", casse)
+    monkeypatch.setattr(historiques, "ajouter_cotes", casse)
     journal = {"etapes": {}}
     _, _, lignes = cycle.collecter_prematch("complet", NOW, journal, tmp_path / "donnees")
     assert len(lignes) == 1                                      # la collecte continue
@@ -178,11 +178,11 @@ def test_ajout_gzip_interrompu_laisse_l_ancien_fichier_intact(tmp_path, monkeypa
         def copie_partielle(src, dst):
             Path(dst).write_bytes(Path(src).read_bytes()[:10])
             casse()
-        monkeypatch.setattr("cotes.ecriture.shutil.copyfile", copie_partielle)
+        monkeypatch.setattr("cotes.historiques.shutil.copyfile", copie_partielle)
     elif panne == "synchronisation":           # tué après l'écriture du nouveau membre, avant le remplacement
-        monkeypatch.setattr("cotes.ecriture.os.fsync", casse)
+        monkeypatch.setattr("cotes.historiques.os.fsync", casse)
     else:
-        monkeypatch.setattr("cotes.ecriture.os.replace", casse)
+        monkeypatch.setattr("cotes.historiques.os.replace", casse)
     with pytest.raises(KeyboardInterrupt):
         ajouter_gzip(f, '{"b":2}\n' * 1000)
     assert f.read_bytes() == avant and _lire(f) == '{"a":1}\n'
@@ -193,7 +193,7 @@ def test_historique_cotes_reste_lisible_apres_plusieurs_ajouts(tmp_path):
     from tests.test_stockage_memoire import ligne
     h1 = {"unibet": {"lignes": [ligne()]}}
     h2 = {"unibet": {"lignes": [ligne(cote=2.1)]}}
-    assert historique_cotes.ajouter(tmp_path, {}, h1, NOW) == 2
-    assert historique_cotes.ajouter(tmp_path, historique_cotes.index(h1), h2, NOW) == 1
+    assert historiques.ajouter_cotes(tmp_path, {}, h1, NOW) == 2
+    assert historiques.ajouter_cotes(tmp_path, historiques.index_cotes(h1), h2, NOW) == 1
     lignes = [json.loads(x) for x in _lire(tmp_path / "cotes" / "2026-10-30.jsonl.gz").splitlines()]
     assert [x.get("c") for x in lignes] == [None, 2.0, 2.1]

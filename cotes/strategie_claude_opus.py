@@ -21,10 +21,9 @@ de clôture. Pas de rejeu : seul le suivi depuis DEBUT compte.
 """
 from __future__ import annotations
 
-from .decisions import figer_selecteur
 from .laboratoire import heure
 from .strategie_commune import nombre_fini, preuve_de
-from .strategie_gemini_defi import cle_cote, ecart_pct, groupe_marche
+from .strategie_gemini_defi import ecart_pct, groupe_marche, premieres_par_cote, selecteur_sans_rejeu
 
 DEBUT = "2026-11-03T00:00:00+00:00"
 
@@ -99,29 +98,11 @@ def motif_refus_claude_opus(p: dict, c: dict = CLAUDE_OPUS_SOLIDE) -> str | None
 def selection_claude_opus(paris: list[dict], c: dict = CLAUDE_OPUS_SOLIDE, depart: str | None = None) -> set[int]:
     """Première détection qui passe la règle, par cote française, à partir du lancement, dans l'ordre d'arrivée
     (même seconde : ordre du registre). Une détection refusée ne consomme pas la cote."""
-    t0 = heure(depart or c["debut"])
-    if t0 is None:
-        return set()
-    candidats = sorted((p for p in paris if heure(p.get("detecte")) and heure(p["detecte"]) >= t0
-                        and motif_refus_claude_opus(p, c) is None), key=lambda p: heure(p["detecte"]))
-    retenus, vues = set(), set()
-    for p in candidats:
-        cle = cle_cote(p)
-        if cle not in vues:
-            vues.add(cle)
-            retenus.add(id(p))
-    return retenus
+    return {id(p) for p in premieres_par_cote(paris, lambda p: motif_refus_claude_opus(p, c), depart or c["debut"])}
 
 
 def _selecteur(c: dict):
-    @figer_selecteur(c["cle"])
-    def selectionner(paris, depuis=None):
-        if depuis is not None:            # pas de rejeu : seul le suivi depuis le lancement compte
-            return set()
-        return selection_claude_opus(paris, c)
-    selectionner.__name__ = selectionner.__qualname__ = "paris_" + c["cle"]
-    selectionner.__doc__ = c["nom"] + " (figée au lancement, " + c["debut"] + "). Pas de rejeu."
-    return selectionner
+    return selecteur_sans_rejeu(c, lambda paris: selection_claude_opus(paris, c), " Pas de rejeu.")
 
 
 SELECTEURS = {c["cle"]: _selecteur(c) for c in CLAUDE_OPUS}

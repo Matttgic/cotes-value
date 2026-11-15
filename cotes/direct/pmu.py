@@ -57,9 +57,12 @@ _ISSUES = {
     "OT_CROSS_OR_TWO": "DRAW_AWAY",
 }
 # « Match » chez Kambi couvre aussi le premier but, le race-to et la manche :
-# ces intitulés ne sont pas le résultat du match.
+# ces intitulés ne sont pas le résultat du match. « Dernière équipe à marquer » (rugby) et « To score Goal 2 »
+# (handball : qui marque le 2e but) étaient pris pour le vainqueur : 35 sélections du 22/10 au 14/11/2026, avec de
+# faux écarts de 25 à 63 % (Füchse Berlin à 1,66 pour une cote juste de 1,02).
 _PAS_RESULTAT = re.compile(
     r"first goal|premier but|first team to score|premi[eè]re [eé]quipe|"
+    r"\bto score\b|[àa] marquer|last team|derni[eè]re [eé]quipe|"
     r"first to|premier [aà]|race to|"
     r"touchdown|"
     r"\bframes?\b|\bmanches?\b|"

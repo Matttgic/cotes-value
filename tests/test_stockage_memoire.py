@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from cotes import historique_cotes, memoire
+from cotes import historiques, memoire
 from scripts import cycle
 
 NOW = datetime(2026, 10, 30, 12, 0, tzinfo=timezone.utc)
@@ -119,19 +119,19 @@ def test_aucune_ligne_ecrite_si_rien_ne_change(tmp_path, monkeypatch):
     cycle.collecter_prematch("complet", plus_tard, journal, donnees)
     assert _jour(donnees).read_bytes() == avant
     assert journal["historique_cotes"] == {"lignes": 0}
-    assert historique_cotes.ajouter(donnees, {}, {}, NOW) == 0
+    assert historiques.ajouter_cotes(donnees, {}, {}, NOW) == 0
 
 
 def test_selection_en_double_ne_compte_pas_comme_un_changement(tmp_path):
     horizon = {"unibet": {"lignes": [ligne(cote=2.0), ligne(cote=2.1)]}}     # même sélection, deux lignes
-    assert historique_cotes.changements(historique_cotes.index(horizon), horizon) == []
-    assert historique_cotes.ajouter(tmp_path, historique_cotes.index(horizon), horizon, NOW) == 0
+    assert historiques.changements_cotes(historiques.index_cotes(horizon), horizon) == []
+    assert historiques.ajouter_cotes(tmp_path, historiques.index_cotes(horizon), horizon, NOW) == 0
     assert not (tmp_path / "cotes").exists()
 
 
 def test_historique_jour_utc_et_joueur_dans_la_cle(tmp_path):
     tard = datetime(2026, 10, 30, 23, 30, tzinfo=timezone(timedelta(hours=-2)))   # 31/10 01:30 UTC
-    n = historique_cotes.ajouter(tmp_path, {}, {"pmu": {"lignes": [ligne(joueur="Mbappé", marche="BUTEUR")]}}, tard)
+    n = historiques.ajouter_cotes(tmp_path, {}, {"pmu": {"lignes": [ligne(joueur="Mbappé", marche="BUTEUR")]}}, tard)
     assert n == 2
     with gzip.open(tmp_path / "cotes" / "2026-10-31.jsonl.gz", "rt", encoding="utf-8") as f:
         assert json.loads(f.readlines()[1])["k"] == "BUTEUR|MATCH||DOM|Mbappé"

@@ -23,6 +23,7 @@ from cotes.direct.horizon import fusionner
 from cotes.joueurs import depuis_titre_et_issues, est_titre_joueur
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
+from cotes.temps import instant as _instant
 
 ACCUEIL = "https://www.netbet.fr"
 # chemin -> sport interne. Ski, biathlon, moto, voile, sport auto : hors liste.
@@ -726,14 +727,6 @@ def _traduire(bruts: list[dict], maintenant: datetime, heures: float) -> tuple[l
         }
         lignes += traduire(ev, "netbet", event["sport"], moment)
     return lignes, matchs
-
-
-def _instant(valeur) -> datetime | None:
-    try:
-        t = datetime.fromisoformat(str(valeur).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return None
-    return t if t.tzinfo else None
 
 
 def _collecter_rotation(client: Client, voulu: list[str], heures: float, maintenant: datetime,

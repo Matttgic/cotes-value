@@ -10,7 +10,7 @@ Le règlement des paris (lecture des résultats : environ 6 minutes, 220 requêt
 heure (REGLEMENT_MINUTES, 55 par défaut) : les cotes, elles, sont lues à chaque cycle.
 
 Données (branche « donnees ») : paris.json, etat.json, opportunites/AAAA-MM-JJ.jsonl, cotes/AAAA-MM-JJ.jsonl.gz,
-references/, releves/ et correspondances/ (cotes/historique_references.py),
+references/, releves/ et correspondances/ (cotes/historiques.py),
 resultats_manuels.json (règlements faits à la main ; « supprime » retire un pari). Site : dossier site/.
 Mémoire de travail (cache Actions, MEMOIRE_CHEMIN) : horizon_direct, caches de secours, contrôle (cotes/memoire.py).
 """
@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from cotes import (flashscore, livescore, comparaison, controle, pinnacle, polymarket, reglement,  # noqa: E402
-                   scores365, simulation, smarkets, stockage, inconnus)
+                   scores365, simulation, smarkets, stockage, inconnus, derive)
 from cotes.direct import betclic as betclic_direct  # noqa: E402
 from cotes.direct import netbet as netbet_direct  # noqa: E402
 from cotes.direct import olybet as olybet_direct  # noqa: E402
@@ -44,9 +44,8 @@ from cotes import resultats as resultats_mod  # noqa: E402
 from cotes import theodds, resultats_nhl, propline, pinnacle_secours, thesportsdb  # noqa: E402
 from cotes import liens  # noqa: E402
 from cotes import reprise  # noqa: E402
-from cotes import historique_cotes, historique_references, memoire  # noqa: E402
+from cotes import historiques, memoire  # noqa: E402
 from cotes import echecs  # noqa: E402
-from cotes.ecriture import ajouter_gzip  # noqa: E402
 from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 from cotes.fraicheur import resume_lignes  # noqa: E402
@@ -416,7 +415,7 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
     horizon = memoire.lire(donnees, "horizon_direct", {}) if donnees else {}
     if not isinstance(horizon, dict):
         horizon = {}
-    cotes_avant = historique_cotes.index(horizon) if donnees else {}
+    cotes_avant = historiques.index_cotes(horizon) if donnees else {}
 
     def _reserve(nom: str) -> dict:
         bloc = horizon.get(nom)
@@ -655,7 +654,7 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         horizon = {k: horizon[k] for k in gardes if k in horizon}
         memoire.ecrire(donnees, "horizon_direct", horizon)
         try:            # historique en ajout seul : jamais bloquant pour la collecte
-            journal["historique_cotes"] = {"lignes": historique_cotes.ajouter(donnees, cotes_avant, horizon,
+            journal["historique_cotes"] = {"lignes": historiques.ajouter_cotes(donnees, cotes_avant, horizon,
                                                                                maintenant)}
         except Exception as e:  # noqa: BLE001
             journal["historique_cotes"] = {"erreur": echecs.noter(journal, "historique_cotes", e, maintenant)}
@@ -1053,6 +1052,18 @@ def main() -> int:
         # Référence sharp attendue par les stratégies (Pinnacle, Betfair, Polymarket) et le Consensus, comme
         # avant la fin du flux Orbit. Hors du contrôle de conformité des intitulés, comme les autres bourses.
         references["Betfair"] = bf_lignes
+    # Dérive des sources (cotes/derive.py) : volume anormal, marchés disparus ou non reconnus, cotes figées.
+    # Une anomalie marque l'étape dégradée (page Santé, journal d'incidents) et alerte ; aucun pari n'est bloqué.
+    if args.mode == "complet":
+        par_source = {"pinnacle": pin, "polymarket": poly, "smarkets": sm_lignes, "matchbook": mb_lignes}
+        for l in francais:
+            par_source.setdefault(l.get("bookmaker"), []).append(l)
+        journal["derive"] = derive.mettre_a_jour(
+            donnees, derive.mesures_du_cycle(journal["etapes"], par_source, releve), maintenant)
+        for nom, textes in journal["derive"].pop("etapes", {}).items():
+            if nom in journal["etapes"]:
+                journal["etapes"][nom] |= {"degrade": True, "erreurs": (
+                    textes + list(journal["etapes"][nom].get("erreurs") or []))[:10]}
     # Matchbook a sa table de paris (mêmes seuils que Pinnacle). Il reste hors
     # de la moyenne : le Consensus et le désaccord des tables déjà en place
     # ne changent pas, donc les stratégies figées non plus.
@@ -1064,7 +1075,7 @@ def main() -> int:
     #    pas une nouvelle mesure de conformité.
     index = etape("association", journal, comparaison.indexer, francais, references) or {}
     try:            # historique des références, relevé des sources et rapprochements : jamais bloquant
-        journal["historique_references"] = historique_references.enregistrer(donnees, francais, references, index,
+        journal["historique_references"] = historiques.enregistrer(donnees, francais, references, index,
                                                                               maintenant)
     except Exception as e:  # noqa: BLE001
         journal["historique_references"] = {"erreur": echecs.noter(journal, "historique_references", e, maintenant)}
@@ -1134,9 +1145,10 @@ def main() -> int:
     redecider(registre, maintenant, journal, redecider_ouverts)
     suivre_qwen(donnees, registre, opportunites, maintenant, journal)
     simulation.suivre_prix(paris, francais)
+    prudentes: set[tuple] = set()     # clôtures lues au prix d'achat de Polymarket : CLV minimale
     justes = etape("cotes_cloture", journal, comparaison.cotes_justes_depuis, index,
-                   hors_consensus=hors) or {}
-    simulation.suivre_cloture(paris, justes)      # heure réelle : un match peut commencer pendant le cycle
+                   hors_consensus=hors, prudentes=prudentes) or {}
+    simulation.suivre_cloture(paris, justes, prudentes=prudentes)      # heure réelle : un match peut commencer pendant le cycle
 
     # La collecte reprend le règlement si le workflow horaire a été retardé.
     regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)
@@ -1152,7 +1164,7 @@ def main() -> int:
         jour = donnees / "opportunites" / f"{maintenant:%Y-%m-%d}.jsonl.gz"
         jour.parent.mkdir(parents=True, exist_ok=True)
         # Ajout atomique (copie + nouveau membre gzip + os.replace) : un job tué ne tronque jamais le fichier.
-        ajouter_gzip(jour, "".join(json.dumps(o, ensure_ascii=False) + "\n" for o in opportunites))
+        historiques.ajouter_gzip(jour, "".join(json.dumps(o, ensure_ascii=False) + "\n" for o in opportunites))
     etat = lire_json(donnees / "etat.json", {})
     journal.update({
         "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),

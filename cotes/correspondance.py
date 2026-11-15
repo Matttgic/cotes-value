@@ -45,12 +45,13 @@ PAYS = {
 MOTS = {"cordoue": "cordoba", "barbade": "barbados", "bermudes": "bermuda", "valence": "valencia",
         "barcelone": "barcelona", "bologne": "bologna", "salonique": "thessaloniki", "athenes": "athens",
         "verone": "verona", "naples": "napoli", "turin": "torino", "rome": "roma", "seville": "sevilla",
-        "lisbonne": "lisbon", "moscou": "moscow", "geneve": "geneva", "munich": "munchen", "ste": "saint",
+        "lisbonne": "lisbon", "moscou": "moscow", "varsovie": "warsaw", "cracovie": "krakow", "geneve": "geneva", "munich": "munchen", "ste": "saint",
         "st": "saint", "lucie": "lucia", "cologne": "koln", "mayence": "mainz", "brunswick": "braunschweig"}
 VIDES = {"fc", "cf", "sc", "ac", "afc", "cd", "ca", "club", "de", "del", "la", "le", "les", "the", "sk", "fk",
          "bk", "ud", "sd", "rc", "cs", "ss", "ssc", "calcio", "un", "1907", "1909", "y", "et", "and", "vb"}
 FEMININ = re.compile(r"\((f|w|wom|women|fem|feminin)\)|\b(women|womens|wom|feminin|feminine|femmes|ladies)\b|\s(f|w)\.?$")
 JEUNES = re.compile(r"^(u\d{2}|ii|b|reserves?|youth)$")
+RESERVE = {"ii": "b"}
 
 
 def normaliser(nom: str | None) -> tuple[tuple[str, ...], bool, frozenset]:
@@ -79,7 +80,10 @@ def _normaliser(nom: str) -> tuple[tuple[str, ...], bool, frozenset]:
     s = s.replace("&", " and ").replace("'", " ")
     s = re.sub(r"[^a-z0-9 ]+", " ", s)
     mots = s.split()
-    jeunes = frozenset(m for m in mots if JEUNES.match(m))
+    # « B » et « II » désignent la même équipe réserve (Pinnacle écrit « II ») : un seul marqueur. Sinon « Real Sociedad B »
+    # (Betclic) et « Real Sociedad II » (Pinnacle) passaient pour deux catégories contradictoires (ressemblance 0)
+    # et n'étaient plus associés (cas réels des 10 et 17/10/2026, aussi Porto B, Benfica B, Sporting B, Celta B).
+    jeunes = frozenset(RESERVE.get(m, m) for m in mots if JEUNES.match(m))
     mots = ["b" if m == "bini" else m for m in mots if not JEUNES.match(m)]
     s = " ".join(mots)
     sans_vides = " ".join(m for m in mots if m not in VIDES)
@@ -180,7 +184,7 @@ def matchs_de(lignes: list[dict]) -> dict[str, dict]:
     out = {}
     for l in lignes:
         ligue = l.get("ligue") if l.get("source") == "pinnacle" else None
-        out.setdefault(l["match_id"], {"match_id": l["match_id"], "sport": l["sport"],
+        out.setdefault(l["match_id"], {"match_id": l["match_id"], "sport": l["sport"], "source": l.get("source"),
                                        "domicile": avec_marqueurs_ligue(l["domicile"], ligue),
                                        "exterieur": avec_marqueurs_ligue(l["exterieur"], ligue),
                                        "debut": _heure(l["debut"]),
@@ -190,21 +194,36 @@ def matchs_de(lignes: list[dict]) -> dict[str, dict]:
 
 
 def _ordre(paire: tuple) -> tuple:
-    """Clé de choix de l'ordre : la moins bonne des deux ressemblances, puis leur somme, puis l'ordre direct."""
+    """Clé de choix de l'ordre : le nombre de noms identiques (≥ 0,99), puis la moins bonne des deux ressemblances,
+    puis leur somme, puis l'ordre direct.
+
+    Un nom identique prime : sinon le nom de la ville seul (« Sydney », « Tokyo », « Cali »), commun aux deux
+    équipes, fait gagner l'ordre croisé (cas réels des 14-16/10/2026 : Sydney FC – West. Sydney, Tokyo Verdy –
+    FC Tokyo, associés à l'envers et CLV fausse). La règle ne valait d'abord que pour les « derbys » (deux noms
+    ressemblants à 0,75) : « America de Cali – Deportivo Cali » (0,62) y échappait et a été associé à l'envers à
+    « América de Cali – AD Cali » de Polymarket le 08/11/2026 (0,63 / 0,62 croisé contre 1,0 / 0,57 direct)."""
     (s1, s2), inverse = paire
-    return min(s1, s2), s1 + s2, not inverse
+    return (s1 >= 0.99) + (s2 >= 0.99), min(s1, s2), s1 + s2, not inverse
 
 
-def _ordre_derby(paire: tuple) -> tuple:
-    """Sur un derby, un nom identique (≥ 0,99) prime : sinon le nom de la ville seul (« Sydney », « Tokyo »),
-    inclus dans les deux noms d'équipe, fait gagner l'ordre croisé à 0,9 / 0,9 (cas réels des 14-16/10/2026 :
-    Sydney FC – West. Sydney, Tokyo Verdy – FC Tokyo, associés à l'envers et CLV fausse)."""
-    (s1, s2), _ = paire
-    return (s1 >= 0.99) + (s2 >= 0.99), *_ordre(paire)
+# Sports individuels : un nom de joueur n'est ni tronqué ni allongé d'un sponsor. Un seul joueur reconnu ne suffit pas.
+INDIVIDUELS = {"tennis", "tennis_de_table", "badminton", "snooker", "flechettes", "mma", "boxe", "golf"}
+SOLIDE = 0.75
+
+
+def _double(nom: str | None) -> bool:
+    """Paire de double (« A. Kucmova / A. Laboutkova », « Kucmova & Laboutkova »)."""
+    return bool(re.search(r"/|&", nom or ""))
+
+
+def _bookmaker(match: dict) -> str:
+    return str(match.get("source") or str(match.get("match_id") or "").split("|")[0])
 
 
 def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[str, tuple[str, bool, float]]:
-    """Pour chaque match français : (match de référence, inversé ?, score) quand un match correspond."""
+    """Pour chaque match français : (match de référence, inversé ?, score) quand un match correspond.
+
+    Un match de référence ne sert qu'à un seul match par bookmaker (voir ``_exclusifs``)."""
     index: dict[tuple[str, int], list[dict]] = {}
     for r in matchs_ref.values():
         if r["debut"]:
@@ -212,12 +231,11 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
     # ±3 h couvre le tennis (180 min). Une heure approximative (300 min) garde ±6 h.
     portee = 6 if any(r.get("approx") for r in matchs_ref.values()) else 3
     res = {}
-    derby_ref: dict[str, bool] = {}              # le caractère « derby » d'un match de référence ne dépend que de ses noms
     for mid, f in matchs_fr.items():
         if not f["debut"]:
             continue
         h = int(f["debut"].timestamp() // 3600)
-        derby_fr = ressemblance(f["domicile"], f["exterieur"]) >= 0.75
+        individuel = f["sport"] in INDIVIDUELS
         meilleur = None
         # Tolérance la plus large possible pour ce match (voir plus bas) : deux instants à Δ minutes d'écart tombent dans
         # des tranches horaires distantes d'au plus ⌈Δ/60⌉. Aller plus loin ne trouverait que des candidats rejetés.
@@ -227,32 +245,40 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
                 ecart = abs((r["debut"] - f["debut"]).total_seconds()) / 60
                 if ecart > (300 if r["approx"] else 180 if f["sport"] == "tennis" else 90):
                     continue                  # au-delà de la plus large tolérance ci-dessous : inutile de comparer les noms
+                # Simple contre double : la joueuse commune ne fait pas le même match (cas réel du 04/11/2026, OlyBet :
+                # « W. Falkowska – M. Rajeshwaran Revathi » associé au double « … / M. Rajeshwaran Revathi » de Pinnacle)
+                if individuel and (_double(f["domicile"]) or _double(f["exterieur"])) != (
+                        _double(r["domicile"]) or _double(r["exterieur"])):
+                    continue
                 # les deux ordres sont toujours essayés : un bookmaker peut inverser domicile et extérieur
                 # (Islanders – Rangers chez NetBet, Rangers – Islanders chez Pinnacle) et deux équipes de la
                 # même ville se ressemblent assez (0,82) pour que l'ordre direct passe à tort
                 paires = [((ressemblance(f["domicile"], r["domicile"]), ressemblance(f["exterieur"], r["exterieur"])), False),
                           ((ressemblance(f["domicile"], r["exterieur"]), ressemblance(f["exterieur"], r["domicile"])), True)]
-                derby = derby_fr
-                if not derby:
-                    derby = derby_ref.get(r["match_id"])
-                    if derby is None:
-                        derby = derby_ref[r["match_id"]] = ressemblance(r["domicile"], r["exterieur"]) >= 0.75
-                (s1, s2), inverse = max(paires, key=_ordre_derby if derby else _ordre)
+                (s1, s2), inverse = max(paires, key=_ordre)
                 score = min(s1, s2)
                 # tolérance sur l'heure : 20 min ; plus large si les deux noms sont très proches
                 # (heures approximatives : Kalshi, ordre de passage au tennis, erreurs d'horaire)
                 limite = 300 if r["approx"] else (180 if f["sport"] == "tennis" else 90) if score >= 0.85 else 20
                 if ecart > limite:
                     continue
-                if score < 0.75 and not (score >= 0.6 and ecart <= 5):
+                # Deux noms seulement approchants (0,6 à 0,75) à la même heure : il faut qu'un des deux soit solide.
+                # Sinon des mots communs sans valeur (« County », « City », « JK ») ou des lettres voisines suffisent
+                # (cas réels : Derby County – Stoke City associé à Newport County – York City le 17/10/2026, Pärnu JK
+                # Vaprus – Nõmme Kalju à Harju JK Laagri – Nõmme United le 13/10, Odense – Silkeborg à Viborg – Horsens
+                # le 01/11).
+                if score < 0.75 and not (score >= 0.6 and ecart <= 5 and max(s1, s2) >= SOLIDE):
                     # une équipe identique, même heure, l'autre approchante (noms tronqués ou sponsors).
                     # « Identique » à 0,9 seulement si le nom du bookmaker n'a pas de mot en plus : « Carrick
                     # Rangers » n'est pas « Rangers », « Aris Limassol » n'est pas « Aris » (cas réels du
-                    # 10/10/2026 : Dungannon – Carrick Rangers associé à Rangers – Kilmarnock)
+                    # 10/10/2026 : Dungannon – Carrick Rangers associé à Rangers – Kilmarnock).
+                    # Jamais pour un sport individuel : un seul joueur reconnu, c'est un autre match (cas réel du
+                    # 21/10/2026 : Onclin – Struff associé à Blockx – Struff).
                     fr_fort, ref_fort = ((f["domicile"], r["exterieur" if inverse else "domicile"]) if s1 >= s2
                                          else (f["exterieur"], r["domicile" if inverse else "exterieur"]))
                     inclus = set(normaliser(fr_fort)[0]) <= set(normaliser(ref_fort)[0])
-                    if max(s1, s2) >= 0.9 and score >= 0.3 and ecart <= 10 and (max(s1, s2) >= 0.99 or inclus or score >= 0.45):
+                    if (not individuel and max(s1, s2) >= 0.9 and score >= 0.3 and ecart <= 10
+                            and (max(s1, s2) >= 0.99 or inclus or score >= 0.45)):
                         score = 0.7
                     else:
                         continue
@@ -260,5 +286,28 @@ def associer(matchs_fr: dict[str, dict], matchs_ref: dict[str, dict]) -> dict[st
                 if meilleur is None or (score, -ecart) > (meilleur[2], -meilleur[3]):
                     meilleur = (r["match_id"], inverse, score, ecart)
         if meilleur:
-            res[mid] = meilleur[:3]
-    return res
+            res[mid] = meilleur
+    return {mid: m[:3] for mid, m in _exclusifs(res, matchs_fr).items()}
+
+
+def _exclusifs(res: dict[str, tuple], matchs_fr: dict[str, dict]) -> dict[str, tuple]:
+    """Un match de référence pour un seul match d'un même bookmaker : le mieux noté le garde, les autres sont retirés.
+
+    Deux matchs différents d'un bookmaker ne peuvent pas être le même match de référence. Le perdant est presque
+    toujours un sosie accepté par une règle souple quand son vrai match manque chez la référence (cas réels :
+    Betclic, 13/10/2026, « Pärnu JK Vaprus – Nõmme Kalju » à 0,6 et « Harju JK Laagri – FC Nõmme United » à 1,0 sur
+    le même match Pinnacle 1637810025 ; « FC Tokyo – Kashiwa Reysol » sur « Yokohama F. Marinos – Tokyo Verdy » de
+    Smarkets le 21/10, 74 paris). Un bookmaker peut lister deux fois le même match : à score égal, ou dès 0,9 (les
+    deux noms concordent), l'association est gardée."""
+    par_ref: dict[tuple, list[str]] = {}
+    for mid, m in res.items():
+        par_ref.setdefault((_bookmaker(matchs_fr[mid]), m[0]), []).append(mid)
+    out = dict(res)
+    for mids in par_ref.values():
+        if len(mids) < 2:
+            continue
+        gagnant = max(res[mid][2] for mid in mids)
+        for mid in mids:
+            if res[mid][2] < min(gagnant, 0.9):
+                del out[mid]
+    return out

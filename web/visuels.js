@@ -71,6 +71,41 @@ function etiquetteAvis(avis) {
   const c=avis && AVIS_COURTS[avis.verdict];
   return c?` <small class="avis-mini ${c[1]}" title="Avis d'analyste : ${e(avis.verdict)}">${c[0]}</small>`:'';
 }
+// Protocole de validation (cotes/protocole.py, docs/protocole.md) : règles fixées à l'avance, deux lectures seulement.
+// L'état est calculé une fois, à mises fixes : il ne dépend ni du mode de mise ni des dates affichées.
+const PROTOCOLE_COURTS={succes:['Validée','pos'],echec:['Non validée','neg'],rompu:['Protocole rompu','neg'],hors_protocole:['Hors protocole','doux']};
+function ligneProtocole(id) {
+  return ((typeof D!=='undefined' && D.protocole && D.protocole.lignes) || {})[id];
+}
+function etiquetteProtocole(id) {
+  const l=ligneProtocole(id);
+  if(!l) return '';
+  const c=PROTOCOLE_COURTS[l.statut] || ['Protocole '+Math.min(100,Math.floor(100*l.mesures/l.n))+' %','doux'];
+  return ` <small class="avis-mini ${c[1]}" title="Protocole de validation${l.motif?' : '+e(l.motif):''}">${c[0]}</small>`;
+}
+function panneauProtocole(r) {
+  const l=ligneProtocole(r.id);
+  if(!l) return '';
+  const R=D.protocole.regles||{}, jour=d=>d?d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4):'—';
+  const nb=(x,d=2)=>x==null?'—':(x>0?'+':'')+Number(x).toFixed(d).replace('.',',')+' %';
+  const pv=p=>p==null?'—':p<0.0001?'&lt; 0,01 %':(100*p).toFixed(p<0.01?3:1).replace('.',',')+' %';
+  const titres={en_cours:'En cours',succes:'Validée',echec:'Non validée',rompu:'Protocole rompu',hors_protocole:'Hors protocole'};
+  const ton=l.statut==='succes'?'pos':l.statut==='en_cours'||l.statut==='hors_protocole'?'':'neg';
+  const entete='<aside class="avis-analyste protocole" aria-label="Protocole de validation"><p class="avis-kicker">Protocole de validation'
+    +(l.n?'<span class="avis-compte">'+e(Math.min(l.mesures,l.n))+' / '+e(l.n)+' paris mesurés</span>':'')+'</p>'
+    +'<p class="avis-verdict '+ton+'">'+titres[l.statut]+'</p>'+(l.motif?'<p class="avis-sens">'+e(l.motif.charAt(0).toUpperCase()+l.motif.slice(1))+'.</p>':'');
+  if(!l.n) return entete+'<p class="aide">Aucune conclusion tant que la stratégie n\'est pas inscrite (docs/protocole.md).</p></aside>';
+  const lue=x=>'CLV Pinnacle '+nb(x.clv)+' sur '+e(x.n)+' paris ('+e(x.matchs)+' matchs), p '+(x.p!=null&&x.p<0.0001?'':'= ')+pv(x.p)+' · clôture connue pour '+nb(x.couverture,0).replace('+','')+' des réglés · ROI '+nb(x.roi,1);
+  const mi=l.mi_parcours?(l.mi_parcours.motif?'échec · ':'passé · ')+lue(l.mi_parcours):'à '+e(l.mi)+' paris mesurés, pas encore atteint';
+  const fin=l.finale?(l.finale.n?lue(l.finale):'arrêt le '+jour(l.finale.le))
+    :'à '+e(l.n)+' paris mesurés, au plus tard le '+jour(l.echeance)+(l.fin_estimee?' · au rythme actuel : '+(/^\d/.test(l.fin_estimee)?'vers le '+jour(l.fin_estimee):e(l.fin_estimee)):'');
+  return entete+'<ul class="avis-raisons"><li><b>Paris comptés</b> : détectés depuis le '+jour(l.debut)+', réglés, clôture Pinnacle connue'
+    +(l.regles?' ('+e(l.mesures)+' sur '+e(l.regles)+' réglés)':'')+'.</li><li><b>Mi-parcours</b> : '+mi+'.</li><li><b>Lecture finale</b> : '+fin+'.</li></ul>'
+    +'<details class="avis-details"><summary>Règles du protocole</summary><p class="aide">Validée si, à la lecture finale, la CLV moyenne contre la clôture Pinnacle est positive avec p &lt; '
+    +pv(R.alpha)+', si cette clôture est connue pour au moins la moitié des paris réglés, sur au moins '+e(R.matchs_min)+' matchs, et si le rendement n\'est pas nettement sous la CLV. '
+    +'Non validée sinon, ou dès la mi-parcours si la CLV moyenne est négative. Aucun verdict entre les deux lectures ; une lecture faite n\'est jamais recalculée. '
+    +'Changer une règle de la stratégie arrête son protocole. Version '+e(l.version)+' · scellé du registre '+e(R.scelle)+'.</p></details></aside>';
+}
 function panneauAnalyste(r) {
   const avis=r && r.stats && r.stats.avis;
   if(!avis || !avis.verdict) {
@@ -240,14 +275,14 @@ function miseMoyenne(s) {
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}${etiquetteAvis(s.avis)}</span>${pastillesMedailles(r.medailles)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="badge-pause neg">⏸</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}${etiquetteAvis(s.avis)}${etiquetteProtocole(r.id)}</span>${pastillesMedailles(r.medailles)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="badge-pause neg">⏸</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><h3>${e(r.nom)}</h3></div>
     <button class="btn secondaire" data-strategie="${e(r.id)}" aria-label="Voir les paris de ${e(r.nom)}">Les paris <span aria-hidden="true">↗</span></button></div>
     <p class="strategie-regle">${e(r.detail)}</p>${typeof etiquettesStrategie==='function'?etiquettesStrategie(r):''}
     <div class="strategie-apercu"><div><span class="libelle-gain">Gain net simulé</span><strong class="${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</strong></div>${s.note?`<div><span class="libelle-gain">Note</span><strong class="${s.note.total>=70?'pos':s.note.total<40?'neg':''}">${s.note.total}/100</strong><small>${s.note.provisoire?'provisoire · ':''}${typeof sousNotes==='function'?sousNotes(s.note):''}</small>${typeof evolutionNote==='function'?evolutionNote(r.id,s.note.total):''}</div>`:''}</div>
-    <div class="strategie-lecture"><div class="strategie-trajectoire">${grandeCourbe(points,couleur)}<span>Gain cumulé par date de règlement · pointillés : gain attendu si les cotes justes sont exactes · zone grisée : marge du hasard (8 fois sur 10)</span></div>${panneauAnalyste(r)}</div>
+    <div class="strategie-lecture"><div class="strategie-trajectoire">${grandeCourbe(points,couleur)}<span>Gain cumulé par date de règlement · pointillés : gain attendu si les cotes justes sont exactes · zone grisée : marge du hasard (8 fois sur 10)</span></div>${panneauAnalyste(r)}${panneauProtocole(r)}</div>
     <dl class="strat-chiffres">
       <div><dt>ROI</dt><dd class="${signe(s.roi)}">${pp(s.roi)}</dd><small>${r.reussite==null?'—':r.reussite.toFixed(1).replace('.',',')+' %'} de réussite</small></div>
       <div><dt>CLV moyenne</dt><dd class="${signe(s.clv)}">${pp(s.clv)}</dd>${couvertureCLV(s)}<small>Par match <b class="${signe(s.clv_evenement)}">${pp(s.clv_evenement)}</b> · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"} mesurés</small></div>
