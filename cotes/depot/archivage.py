@@ -1,4 +1,5 @@
-"""Archivage mensuel des données brutes (cotes/ et opportunites/) hors de git, en release GitHub.
+"""Archivage mensuel des données brutes (cotes/, opportunites/ et les anciens jours de references/, releves/,
+correspondances/) hors de la branche, en release GitHub. L'historique git, lui, garde ces fichiers.
 
 Les fichiers quotidiens ``cotes/AAAA-MM-JJ.jsonl.gz`` et ``opportunites/AAAA-MM-JJ.jsonl.gz`` font l'essentiel de la
 branche « donnees » (87 des 101 Mo le 11/11/2026) et ne servent pas aux bilans du site (paris.json et

@@ -47,7 +47,9 @@ Références, relevés et correspondances — ajoutés le 12/11/2026 pour l'anal
 Avant, les références n'avaient aucun historique : on ne les retrouvait que dans ``opportunites/``, seulement
 quand l'écart dépassait 2 %. Trois fichiers par jour UTC, membres gzip ajoutés de façon atomique comme ``cotes/`` :
 
-``references/AAAA-MM-JJ.jsonl.gz`` — même format que ``cotes/``, une ligne par cote
+``references/AAAA-MM-JJ.jsonl.gz`` (dans la mémoire de travail depuis le 15/11/2026, puis en release GitHub
+``references-AAAA-MM`` une fois le jour terminé : ``python -m cotes references --telecharger``) — même format que
+``cotes/``, une ligne par cote
 juste nouvelle ou changée (arrondie au millième), plus la description de chaque match nouveau :
 
     {"t": heure de lecture, "b": référence, "m": match_id, "k": "marché|période|ligne|issue[|joueur]",
@@ -99,10 +101,31 @@ def _nombre(x) -> float | None:
     return float(x)
 
 
+# Dossiers tenus hors de la branche « donnees » depuis le 15/11/2026 : le fichier du jour vit dans la mémoire de
+# travail (MEMOIRE_CHEMIN), chaque jour UTC terminé part en release GitHub (cotes/depot/references.py). references/
+# faisait l'essentiel de la croissance de l'historique git (≈ 30 Mo par jour). Sans MEMOIRE_CHEMIN (poste local,
+# tests), la mémoire est le dossier des données : rien ne change.
+DOSSIERS_EN_MEMOIRE = ("references",)
+
+
+def chemin_du_jour(donnees: Path, dossier: str, maintenant: datetime) -> Path:
+    nom = f"{maintenant.astimezone(timezone.utc):%Y-%m-%d}.jsonl.gz"
+    if dossier not in DOSSIERS_EN_MEMOIRE:
+        return Path(donnees) / dossier / nom
+    jour = memoire.dossier(donnees) / dossier / nom
+    ancien = Path(donnees) / dossier / nom
+    # Premier passage après la bascule (ou mémoire restaurée d'avant) : le début du jour, encore dans la branche,
+    # rejoint la mémoire ; la branche enregistre son retrait.
+    if ancien != jour and ancien.exists() and not jour.exists():
+        jour.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(ancien, jour)
+    return jour
+
+
 def _ecrire(donnees: Path, dossier: str, lignes: list[dict], maintenant: datetime) -> int:
     if not lignes:
         return 0
-    jour = Path(donnees) / dossier / f"{maintenant.astimezone(timezone.utc):%Y-%m-%d}.jsonl.gz"
+    jour = chemin_du_jour(donnees, dossier, maintenant)
     jour.parent.mkdir(parents=True, exist_ok=True)
     # Un job tué pendant l'écriture ne tronque jamais le fichier du jour (ajouter_gzip).
     ajouter_gzip(jour, "".join(json.dumps(x, ensure_ascii=False, separators=(",", ":")) + "\n" for x in lignes))

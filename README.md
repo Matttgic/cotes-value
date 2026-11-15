@@ -376,6 +376,10 @@ suivent les scans et ne garantissent pas que la cote reste disponible.
   ligne de description (équipes, ligue, début) à la première apparition d'un match (cotes/historiques.py) ;
 - `controle.json` : contrôle des intitulés, JSON compact publié au plus une fois par heure (champ `publie`) ;
   la version de chaque cycle reste dans la mémoire de travail.
+- `references/` (historique des cotes justes des références, depuis le 12/11/2026) : **hors de la branche** depuis
+  le 15/11/2026. Le jour en cours est dans la mémoire de travail ; chaque jour UTC terminé part dans la release
+  GitHub `references-AAAA-MM` (vérifiée avant d'être retirée de la mémoire). Pour une étude :
+  `python -m cotes references --telecharger donnees/references` (`--mois AAAA-MM` pour un seul mois).
 
 Mémoire de travail, hors de la branche (gzip, cache GitHub Actions `memoire-`, comme `reprise/`) :
 `horizon_direct`, `pinnacle_secours_cache`, `smarkets_cache` et `controle` (cotes/memoire.py). Absente (premier

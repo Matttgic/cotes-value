@@ -5,6 +5,7 @@
     python -m cotes alertes [options]      # alertes Chrome, Pushover et webhook (scripts/envoyer_notifications.py)
     python -m cotes site [options]         # site depuis les données enregistrées, sans collecter
     python -m cotes archiver [options]     # archive mensuelle des données brutes (scripts/archiver_donnees_brutes.py)
+    python -m cotes references [options]   # historique des références en release (cotes/depot/references.py)
 
 Chaque commande garde les options du script qu'elle remplace (`python -m cotes <commande> --help`).
 """
@@ -20,6 +21,7 @@ COMMANDES = {
     "alertes": ("cotes.alertes.envoi", "main", []),
     "site": ("cotes.site.construction", "main", []),
     "archiver": ("cotes.depot.archivage", "main", []),
+    "references": ("cotes.depot.references", "main", []),
 }
 AIDE = {
     "cycle": "collecte, comparaison, paris, règlement si échu, site",
@@ -27,6 +29,7 @@ AIDE = {
     "alertes": "alertes Chrome, Pushover et webhook",
     "site": "site depuis les données enregistrées, sans collecter",
     "archiver": "archive mensuelle des données brutes",
+    "references": "historique des références : publier les jours terminés, ou les télécharger",
 }
 
 

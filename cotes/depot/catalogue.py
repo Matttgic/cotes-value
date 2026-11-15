@@ -82,7 +82,9 @@ FICHIERS: dict[str, Fichier] = {
     # --- froid : un fichier par jour UTC en ajout seul, archives
     "cotes/*.jsonl.gz": Fichier("froid", _JSONL_GZ, ["cotes/historiques.py"], ["études"],
                                 "permanent ; mois passés aussi en release (archivage-donnees.yml)"),
-    "references/*.jsonl.gz": Fichier("froid", _JSONL_GZ, ["cotes/historiques.py"], ["études"], "permanent"),
+    "references/*.jsonl.gz": Fichier("froid", _JSONL_GZ, ["cotes/historiques.py"], ["études"],
+                                     "jours du 12 au 15/11/2026 seulement (ensuite en mémoire puis en release) ; "
+                                     "archivage mensuel"),
     "releves/*.jsonl.gz": Fichier("froid", _JSONL_GZ, ["cotes/historiques.py"], ["études"], "permanent"),
     "correspondances/*.jsonl.gz": Fichier("froid", _JSONL_GZ, ["cotes/historiques.py"], ["études"], "permanent"),
     "opportunites/*.jsonl.gz": Fichier("froid", _JSONL_GZ, [_CYCLE],
@@ -102,6 +104,10 @@ FICHIERS: dict[str, Fichier] = {
                                                      ["cotes/historiques.py"], "dernières cotes de référence écrites"),
     "memoire/historique_correspondances.json.gz": Fichier("memoire", _MEMOIRE, ["cotes/historiques.py"],
                                                           ["cotes/historiques.py"], "derniers rapprochements écrits"),
+    "memoire/references/*.jsonl.gz": Fichier("memoire", _JSONL_GZ, ["cotes/historiques.py"],
+                                             ["cotes/depot/references.py"],
+                                             "jour UTC en cours ; jour terminé publié en release « references-AAAA-MM » "
+                                             "(python -m cotes references), puis retiré"),
     # --- reprise (cache Actions reprise/, REPRISE_CHEMIN)
     "reprise/derniere_lecture.json.gz": Fichier("reprise", "json gzip (reprise.ecrire)", ["cotes/reprise.py"],
                                                 ["cotes/reprise.py"], "dernier bon passage de chaque sport"),

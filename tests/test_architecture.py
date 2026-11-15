@@ -20,7 +20,7 @@ RANG = {c: i for i, c in enumerate(RANG)}
 RANG["site"] = RANG["alertes"]          # alertes et site : même couche
 
 _PAR_COUCHE = {
-    "socle": "cotes cotes.config cotes.depot cotes.depot.catalogue cotes.depot.json_io cotes.depot.archivage cotes.temps cotes.delai cotes.connexion cotes.securite cotes.echecs cotes.memoire "
+    "socle": "cotes cotes.config cotes.depot cotes.depot.catalogue cotes.depot.json_io cotes.depot.archivage cotes.depot.references cotes.temps cotes.delai cotes.connexion cotes.securite cotes.echecs cotes.memoire "
              "cotes.historiques cotes.stockage cotes.fraicheur cotes.protection cotes.surveillance cotes.derive",
     "vocabulaire": "cotes.pulsescore cotes.marches cotes.joueurs cotes.inconnus cotes.marge cotes.correspondance "
                    "cotes.liens",

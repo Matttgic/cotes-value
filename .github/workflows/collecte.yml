@@ -217,6 +217,18 @@ jobs:
           done
           exit 1
 
+      # references/ hors de la branche (15/11/2026) : le fichier du jour vit dans memoire/ ; chaque jour UTC terminé
+      # part dans la release « references-AAAA-MM », contrôlé, puis quitte memoire/ (sauvée juste après). En échec :
+      # le jour reste en mémoire et repart au passage suivant (cotes/depot/references.py).
+      - name: Publier les références des jours terminés
+        if: always() && steps.enregistrer.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPOT: ${{ github.repository }}
+          MEMOIRE_CHEMIN: memoire
+        run: python -m cotes references --publier --donnees donnees
+
       # Signal de vie Healthchecks (secret HC_PING_URL, facultatif) : seulement si le cycle et le push ont réussi.
       # Le même check reçoit le signal du serveur en direct ; il alerte quand plus personne ne collecte.
       - name: Signal de vie (Healthchecks)

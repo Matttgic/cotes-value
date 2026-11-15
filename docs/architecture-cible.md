@@ -589,6 +589,9 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
   - Conclusion : le poste à surveiller est `references/` (≈ 30 Mo par jour, réécrit à chaque cycle dans le fichier du
     jour), pas `paris.json`. E8.2 n'apporte presque rien ; l'archivage mensuel (`archivage-donnees.yml`) devrait
     inclure `references/` avant que la branche n'approche 1 Go (environ un mois au rythme actuel).
+  - Correction : `references/` était déjà dans l'archivage mensuel, mais archiver retire les fichiers de l'arbre, pas
+    de l'historique. Décision du 15/11/2026 : `references/` sort de la branche (jour en cours en mémoire, jour
+    terminé en release `references-AAAA-MM`, `cotes/depot/references.py`). L'historique déjà écrit (408 Mio) reste.
 
 **E8.2 — `paris.json` allégé** (décision à prendre après E8.1)
 - Faire : archiver les paris réglés après N jours au lieu de 30 (`stockage.archiver`). Avant : vérifier avec le
