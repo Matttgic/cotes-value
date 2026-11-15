@@ -320,6 +320,10 @@ cette étape. »
   `${{ vars.NOM || 'x' }}` des workflows a `x` égal au défaut du catalogue ; (c) les noms de `.env.example` et
   `serveur/env.exemple` sont déclarés.
 - Fini quand : tests verts. Un défaut qui ne concorde pas n'est **pas** corrigé ici : le lister dans la PR.
+- Fait le 15/11/2026 : 62 variables (`python -m cotes.config` imprime le tableau). Défaut effectif du code (ex.
+  `PINBOOK_SPORTS` vide = `football,tennis,basket`). Trois écarts YAML ≠ code, gardés dans
+  `tests/test_config.py › ECARTS_CONNUS` : `SMARKETS_COLLECTE` (`oui` / `non`), `SOURCE_FANDUEL` et
+  `SOURCE_DRAFTKINGS` (`direct` / `off`).
 
 **E1.2 — Les modules lisent `config.lire`** (facultatif, un module par commit)
 - Remplacer `os.environ.get("X", "d")` par `config.lire("X")` sans changer le défaut. Test : tests du module.
@@ -332,6 +336,8 @@ cette étape. »
 - Test : chaque littéral `"….json"`, `"….json.gz"` ou `"….jsonl.gz"` utilisé avec `donnees /`, `memoire.lire` ou
   `memoire.ecrire` est au catalogue ; aucun `FICHIERS_OBSOLETES` n'y est ; aucune entrée du catalogue n'est morte.
 - Fini quand : tests verts ; tableau copié dans `docs/donnees.md`.
+- Fait le 15/11/2026 : 45 entrées (27 chaudes, 6 froides, 7 mémoire, 3 reprise, 2 envoyes). Les chemins dont le nom
+  est une variable (`f"{nom}.json"`, `dossier / f"{jour}…"`) ne sont pas vérifiés par le test.
 
 **E1.4 — Une E/S JSON pour le cycle, le site et les alertes**
 - Fichiers : nouveau `cotes/depot/json_io.py` ; `scripts/cycle.py`, `scripts/envoyer_notifications.py`.
@@ -339,6 +345,8 @@ cette étape. »
   importe (les noms restent sur le module) ; remplacer les deux `from scripts.cycle import ecrire_json` de
   `envoyer_notifications.py`. Ne pas toucher aux autres écritures.
 - Test : contrôle standard, empreinte identique, une exception de moins dans E0.3.
+- Fait le 15/11/2026 : cinq imports remplacés (quatre dans `envoyer_notifications.py`, un dans `envoyes_secours.py`) ;
+  21 exceptions (deux de moins). Empreinte identique (17 fichiers, `donnees` au commit `715ed0c`).
 
 ### 4.4 Phase 2 — Sources
 
@@ -515,10 +523,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E0.1 | Empreinte du site | — | faible | ☑ |
 | E0.2 | Cycle à blanc | — | faible | ☑ |
 | E0.3 | Test d'architecture | — | faible | ☑ |
-| E1.1 | Catalogue de configuration | — | faible | ☐ |
+| E1.1 | Catalogue de configuration | — | faible | ☑ |
 | E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
-| E1.3 | Catalogue des fichiers | — | faible | ☐ |
-| E1.4 | Une E/S JSON | E0.1 | faible | ☐ |
+| E1.3 | Catalogue des fichiers | — | faible | ☑ |
+| E1.4 | Une E/S JSON | E0.1 | faible | ☑ |
 | E2.1 | Registre des sources | — | faible | ☐ |
 | E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☐ |
 | E2.3 | Lecture de même forme | E2.1 | faible | ☐ |

@@ -213,7 +213,7 @@ def poster_webhook(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.m
 
 def webhook_pinnacle2(donnees: Path, flux: dict, paris: list[dict] | None = None) -> dict:
     """Envoie les nouvelles alertes Pinnacle 2 et mémorise leurs id. Toute erreur est journalisée, jamais levée."""
-    from scripts.cycle import ecrire_json
+    from cotes.depot.json_io import ecrire_json
     try:
         chemin = donnees / ENVOYES
         try:
@@ -424,7 +424,7 @@ def poster_pushover(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.
 
 def pushover(donnees: Path, flux: dict, env=None, paris: list[dict] | None = None) -> dict:
     """Envoie les nouvelles alertes des stratégies cochées et mémorise leurs id. Jamais de levée."""
-    from scripts.cycle import ecrire_json
+    from cotes.depot.json_io import ecrire_json
     env = os.environ if env is None else env
     try:
         actif = bool(env.get("PUSHOVER_APP_TOKEN", "").strip() and env.get("PUSHOVER_USER_KEY", "").strip())
@@ -464,7 +464,7 @@ def recap_pushover(donnees: Path, paris: list[dict], envoyes: dict, env, mainten
     """Récapitulatif « encore jouables » (cotes/recap_jouables.py), une fois par jour à ``PUSHOVER_RECAP_HEURE``.
     Jamais de levée ; l'état (dernier jour, dernière heure) est dans ``pushover_recap.json``."""
     from cotes import recap_jouables as R
-    from scripts.cycle import ecrire_json
+    from cotes.depot.json_io import ecrire_json
     try:
         heure = R.heure_recap(env)
         if heure is None:
@@ -500,7 +500,7 @@ def recap_pushover(donnees: Path, paris: list[dict], envoyes: dict, env, mainten
 
 
 def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
-    from scripts.cycle import ecrire_json
+    from cotes.depot.json_io import ecrire_json
     retenues: list = []
     try:
         paris = lire_paris(donnees)                 # une seule lecture pour les trois usages

@@ -50,6 +50,7 @@ from cotes.delai import Echeance  # noqa: E402
 from cotes.marches import harmoniser_pinnacle  # noqa: E402
 from cotes.fraicheur import resume_lignes  # noqa: E402
 from cotes.temps import instant_utc  # noqa: E402
+from cotes.depot.json_io import lire_json, ecrire_json  # noqa: E402,F401  (noms gardés sur le module)
 
 HORIZON_H = 36
 # Budgets durs : une source au-delà est sautée, le cycle de 5 min continue.
@@ -74,27 +75,6 @@ SMARKETS_FRAIS_MIN = 15
 _journal_lock = threading.Lock()
 # minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
 REGLEMENT_MINUTES = float(os.environ.get("REGLEMENT_MINUTES", "55"))
-
-
-def lire_json(chemin: Path, defaut):
-    """Contenu d'un fichier de données, ou `defaut` s'il n'existe pas encore. Un fichier illisible arrête le
-    cycle (erreur JSON) : le traiter comme vide écraserait, par exemple, tous les paris à la sauvegarde."""
-    try:
-        texte = chemin.read_text(encoding="utf-8")
-    except FileNotFoundError:
-        return defaut
-    return json.loads(texte)
-
-
-def ecrire_json(chemin: Path, donnees, compact: bool = False) -> None:
-    """Écriture atomique : un cycle interrompu ne laisse jamais un fichier à moitié écrit.
-    ``compact`` : sans indentation ni espaces (fichiers lourds réécrits souvent, comme controle.json)."""
-    chemin.parent.mkdir(parents=True, exist_ok=True)
-    tmp = chemin.with_name(chemin.name + ".tmp")
-    texte = (json.dumps(donnees, ensure_ascii=False, separators=(",", ":")) if compact
-             else json.dumps(donnees, ensure_ascii=False, indent=1))
-    tmp.write_text(texte, encoding="utf-8")
-    os.replace(tmp, chemin)
 
 
 def etape(nom: str, journal: dict, fonction, *args, **kwargs):
