@@ -540,9 +540,12 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 **E6.3 — Les workflows appellent le point d'entrée** (un workflow par commit : `site.yml`, `reglement.yml`,
 `collecte.yml`, `surveillance-collecte.yml`)
 - Test : `tests/test_robustesse_workflow.py` ; après fusion, un lancement manuel en mode `test`.
+- Fait le 15/11/2026 : `site.yml`, `reglement.yml`, `collecte.yml` (cycle, alertes, règlement) et
+  `archivage-donnees.yml`, un commit chacun. `surveillance-collecte.yml` n'appelle que la relance (E6.2).
 
 **E6.4 — Le serveur appelle le point d'entrée**
 - Fichier : `scripts/serveur_direct.py` (`un_cycle`, `publier`). Test : `tests/test_serveur_direct.py`.
+- Fait le 15/11/2026 : `python -m cotes cycle`, `alertes` et `reglement` (test des trois commandes).
 
 **E6.5 — Calendrier vérifié**
 - Faire : `TACHES` dans `cotes/config.py` (nom, workflow, cron) ; un test compare aux lignes `cron:` des workflows
@@ -604,8 +607,8 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☑ |
 | E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☑ |
 | E6.2 | Relance en Python | — | élevé | ☐ |
-| E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☐ |
-| E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☐ |
+| E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☑ |
+| E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☑ |
 | E6.5 | Calendrier vérifié | E1.1 | faible | ☑ |
 | E7.1 | Études dans `etudes/` | — | faible | ☐ |
 | E7.2 | Une couche par dossier | E0.3, phases 1 à 6 | moyen | ☐ |
