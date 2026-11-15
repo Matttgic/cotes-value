@@ -303,6 +303,10 @@ cette étape. »
   n'existe plus (la retirer).
 - Fini quand : test vert ; le nombre d'exceptions est noté dans la PR. Chaque étape suivante doit le faire baisser
   ou le laisser égal.
+- Fait le 15/11/2026 : **23 exceptions**. Couche « vocabulaire » ajoutée entre socle et sources (`pulsescore`,
+  `marches`, `joueurs`, `inconnus`, `marge`, `correspondance`, `liens`) : les lecteurs traduisent en lisant. Les
+  modules d'exploitation sans dépendance (`echecs`, `protection`, `surveillance`, `derive`…) sont au socle. Un script
+  d'exploitation qui importe un autre script compte comme violation (les études en sont exemptes).
 
 ### 4.3 Phase 1 — Socle
 
@@ -510,7 +514,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 |---|---|---|---|---|
 | E0.1 | Empreinte du site | — | faible | ☑ |
 | E0.2 | Cycle à blanc | — | faible | ☑ |
-| E0.3 | Test d'architecture | — | faible | ☐ |
+| E0.3 | Test d'architecture | — | faible | ☑ |
 | E1.1 | Catalogue de configuration | — | faible | ☐ |
 | E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
 | E1.3 | Catalogue des fichiers | — | faible | ☐ |
