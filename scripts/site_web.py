@@ -616,6 +616,15 @@ def archive_hors_plafond(paris: list[dict]) -> list[dict]:
 
 
 def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = None) -> Path:
+    """Lecture des données, calcul des blocs, rendu des pages, écriture du site (E5.2 : quatre étapes)."""
+    entrees = charger_entrees(donnees)
+    blocs = calculer_blocs(entrees, donnees, echecs_strategies)
+    pages = rendre_pages(blocs)
+    return ecrire_site(sortie, pages)
+
+
+def charger_entrees(donnees: Path) -> dict:
+    """Paris (hors plafond à part), journal des alertes, état, opportunités actuelles et contrôle des intitulés."""
     charger_fusions(donnees)          # fusions automatiques déjà créées (recommandees.json)
     from cotes import pauses
     pauses.charger(donnees)           # stratégies en pause (pauses.json) : plus de nouveaux paris
@@ -650,6 +659,16 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
                if (g.get("maj") or "") >= recent]
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
+    return {"paris": paris, "hors_plafond": hors_plafond, "journal_alertes": journal_alertes, "etat": etat,
+            "actuelles": actuelles, "controle": controle}
+
+
+def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None = None) -> dict:
+    """Bilans, laboratoire (mises fixes, Kelly et autres modes), recommandées, notes, protocole, décision : le
+    dictionnaire publié dans la page. Écrit aussi les états du site dans « donnees » (notes, recommandées, protocole,
+    pannes des stratégies)."""
+    paris, hors_plafond, journal_alertes = entrees["paris"], entrees["hors_plafond"], entrees["journal_alertes"]
+    etat, actuelles, controle = entrees["etat"], entrees["actuelles"], entrees["controle"]
     liste, _, valeurs = selection_paris(paris)
     def _laboratoire(paris, complet=True):
         """Laboratoire des stratégies pour un jeu de paris (mises fixes ou autre mode de mise). ``complet`` faux :
@@ -893,11 +912,18 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
         echecs.fusionner(etat, list(echecs_strategies.values()), datetime.now(timezone.utc))
+    return {"data": data, "actuelles": actuelles, "paris": paris, "retenus": retenus, "hors_plafond": hors_plafond,
+            "blocs_mises": blocs_mises}
+
+
+def rendre_pages(blocs: dict) -> dict:
+    """Contenu de chaque fichier du site, tout calculé avant d'écrire (le site existant n'est remplacé qu'après)."""
+    data, actuelles, paris, retenus = blocs["data"], blocs["actuelles"], blocs["paris"], blocs["retenus"]
+    hors_plafond, blocs_mises = blocs["hors_plafond"], blocs["blocs_mises"]
     donnees_json = json_public(data)
     flux_alertes = notifications_mod.flux(actuelles, paris, retenus)
     alertes_json = json_public(flux_alertes)
     ordres_json = json_public(ordres_mod.construire(flux_alertes, actuelles))
-    sortie.mkdir(parents=True, exist_ok=True)
     web = Path(__file__).resolve().parent.parent / "web"
     html = MODELE
     html = html.replace("__INTERFACE_CSS__", (web / "interface.css").read_text(encoding="utf-8"))
@@ -923,23 +949,32 @@ def _construire(donnees: Path, sortie: Path, echecs_strategies: dict | None = No
     for ref in ("Uniques", "Toutes"):
         gain = sum(b["gains"] for k, b in data["kelly"]["bilan"].items() if k.endswith("|" + ref))
         vitrine = vitrine.replace(f"__GAIN_{ref.upper()}_KELLY__", montant_vitrine(gain))
-    (sortie / "index.html").write_text(html, encoding="utf-8")
-    (sortie / "vitrine.html").write_text(vitrine, encoding="utf-8")
+    return {"index.html": html, "vitrine.html": vitrine,
+            "hors_plafond.json": json.dumps(archive_hors_plafond(hors_plafond), ensure_ascii=False),
+            "version.json": json.dumps({"version": version}),
+            "mises": {mode: json_public(bloc) for mode, bloc in blocs_mises.items()},
+            "sw.js": (web / "sw.js").read_text(encoding="utf-8"),
+            "notifications.json": alertes_json, "ordres.json": ordres_json, ".nojekyll": ""}
+
+
+def ecrire_site(sortie: Path, pages: dict) -> Path:
+    """Écrit les pages rendues dans le dossier du site ; les modes de mise retirés du menu sont effacés."""
+    sortie.mkdir(parents=True, exist_ok=True)
+    web = Path(__file__).resolve().parent.parent / "web"
+    (sortie / "index.html").write_text(pages["index.html"], encoding="utf-8")
+    (sortie / "vitrine.html").write_text(pages["vitrine.html"], encoding="utf-8")
     (sortie / "polices").mkdir(exist_ok=True)
     for police in (web / "polices").glob("*.woff2"):
         (sortie / "polices" / police.name).write_bytes(police.read_bytes())
-    (sortie / "hors_plafond.json").write_text(json.dumps(archive_hors_plafond(hors_plafond), ensure_ascii=False),
-                                              encoding="utf-8")
-    (sortie / "version.json").write_text(json.dumps({"version": version}), encoding="utf-8")
+    (sortie / "hors_plafond.json").write_text(pages["hors_plafond.json"], encoding="utf-8")
+    (sortie / "version.json").write_text(pages["version.json"], encoding="utf-8")
     (sortie / "mises").mkdir(exist_ok=True)
     for ancien in (sortie / "mises").glob("*.json"):          # un mode retiré du menu ne reste pas publié
         ancien.unlink()
-    for mode, bloc in blocs_mises.items():
-        (sortie / "mises" / f"{mode}.json").write_text(json_public(bloc), encoding="utf-8")
-    (sortie / "sw.js").write_text((web / "sw.js").read_text(encoding="utf-8"), encoding="utf-8")
-    (sortie / "notifications.json").write_text(alertes_json, encoding="utf-8")
-    (sortie / "ordres.json").write_text(ordres_json, encoding="utf-8")
-    (sortie / ".nojekyll").write_text("", encoding="utf-8")
+    for mode, texte in pages["mises"].items():
+        (sortie / "mises" / f"{mode}.json").write_text(texte, encoding="utf-8")
+    for nom in ("sw.js", "notifications.json", "ordres.json", ".nojekyll"):
+        (sortie / nom).write_text(pages[nom], encoding="utf-8")
     return sortie / "index.html"
 
 

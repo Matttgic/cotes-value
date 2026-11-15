@@ -494,6 +494,8 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 **E5.2 — `_construire` en quatre fonctions** (même fichier)
 - Faire : `charger_entrees(donnees)`, `calculer_blocs(entrees, maintenant)`, `rendre_pages(blocs)`,
   `ecrire_site(sortie, pages)`. Déplacement pur. Test : empreinte identique, `tests/test_site*.py`.
+- Fait le 15/11/2026 : `calculer_blocs(entrees, donnees, echecs_strategies)` (l'heure viendra avec E5.3 ; les états
+  du site écrits dans « donnees » restent à leur place dans le calcul). Empreinte identique.
 
 **E5.3 — Heure du site injectée**
 - Faire : `construire(donnees, sortie, maintenant=None)` transmet l'heure aux 5 appels `datetime.now` de
@@ -583,7 +585,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☑ |
 | E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☑ |
 | E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☑ |
-| E5.2 | `_construire` en quatre | E0.1 | moyen | ☐ |
+| E5.2 | `_construire` en quatre | E0.1 | moyen | ☑ |
 | E5.3 | Heure du site injectée | E5.2 | faible | ☐ |
 | E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☐ |
 | E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☐ |
