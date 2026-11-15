@@ -57,7 +57,7 @@ nano /etc/cotes-value.env
 - `GITHUB_TOKEN` : le jeton de l'étape 2.
 - Les autres lignes : les mêmes valeurs que les secrets GitHub du même nom. GitHub ne permet pas de relire un
   secret : reprends-les à la source (tableau de bord Pushover, comptes des API).
-- `PUSHOVER_BANKROLL` : ta bankroll, pour la ligne MacroDroid (docs/pari-rapide-android.md).
+- `PUSHOVER_BANKROLL` : ta bankroll, pour la mise Kelly ¼ des alertes.
 - `PUSHOVER_STRATEGIES` : laisse vide. Le serveur suit les cases du bloc « Alertes Pushover » du site (page
   Notifications) ; enregistre-les là une fois avec ton code personnel.
 - `HC_PING_URL` (facultatif) : l'adresse de ping d'un check Healthchecks, la même que le secret GitHub

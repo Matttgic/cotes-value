@@ -139,7 +139,7 @@ def message_ntfy(a: dict, mises: int = 1, defaut: float = 10.0) -> tuple[str, st
 
 
 def _lignes_mise(kelly, mises: int, defaut: float) -> list[str]:
-    """Ligne de mise ; affichage seul (ni la ligne MacroDroid ni les gains n'en dépendent)."""
+    """Ligne de mise ; affichage seul (les gains n'en dépendent pas)."""
     connue = isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0
     if not (isinstance(mises, int) and mises > 1):
         return [f"Mise Kelly ¼ : {mise_arrondie(kelly)} €"] if connue else []
@@ -336,20 +336,6 @@ def _bankroll(env) -> float:
     return b if 10 <= b <= 1_000_000 else BANKROLL_REFERENCE
 
 
-def ligne_macro(a: dict, mise: float | None) -> str:
-    """Ligne lue par MacroDroid (docs/pari-rapide-android.md) : « STAKE:8|MIN:1.85|URL:https://… ».
-    Mise arrondie à l'euro supérieur (8,74 -> 9), au moins 1 € ; vide sans mise ou sans lien direct."""
-    lien = a.get("lien")
-    if (not isinstance(mise, (int, float)) or isinstance(mise, bool) or mise <= 0 or a.get("lien_repli")
-            or not isinstance(lien, str) or not lien.startswith("https://") or len(lien) > 500):
-        return ""
-    stake = mise_arrondie(mise)
-    champs = [f"STAKE:{stake}"]
-    if isinstance(a.get("cote_min"), (int, float)) and not isinstance(a.get("cote_min"), bool):
-        champs.append(f"MIN:{a['cote_min']:.2f}")
-    return "|".join(champs + [f"URL:{lien}"])
-
-
 METHODE_CLAUDE = "claude_humain"
 METHODE_ECART_MIN = 1.03          # on ne joue plus si l'écart est tombé sous 3 %
 METHODE_MISE = 0.01               # 1 % de la bankroll
@@ -370,7 +356,7 @@ def ligne_methode_claude(a: dict, env) -> str:
 
 def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> dict:
     """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable). Mise Kelly ¼ ramenée à
-    ``PUSHOVER_BANKROLL`` ; ligne MacroDroid (STAKE|MIN|URL) avant les stratégies, sauf ``PUSHOVER_LIGNE_MACRO=non``."""
+    ``PUSHOVER_BANKROLL``."""
     env = os.environ if env is None else env
     maintenant = maintenant or datetime.now(timezone.utc)
     kelly = a.get("mise_kelly")
@@ -383,9 +369,6 @@ def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> d
         corps = corps + "\n" + methode
     noms = [str(x) for x in (a.get("labels") or [])]
     ligne = f"\n{len(noms)} stratégie{'s' if len(noms) > 1 else ''} : {', '.join(noms)}" if noms else ""
-    macro = ligne_macro(a, a.get("mise_kelly")) if str(env.get("PUSHOVER_LIGNE_MACRO", "oui")).lower() != "non" else ""
-    if macro:
-        ligne = "\n" + macro + ligne
     champs = {"title": titre[:250], "message": (corps[:1000 - len(ligne)] + ligne)[:1000]}
     lien = a.get("lien")
     if isinstance(lien, str) and lien.startswith("https://") and len(lien) <= 500:
