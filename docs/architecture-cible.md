@@ -320,6 +320,10 @@ cette étape. »
   `${{ vars.NOM || 'x' }}` des workflows a `x` égal au défaut du catalogue ; (c) les noms de `.env.example` et
   `serveur/env.exemple` sont déclarés.
 - Fini quand : tests verts. Un défaut qui ne concorde pas n'est **pas** corrigé ici : le lister dans la PR.
+- Fait le 15/11/2026 : 62 variables (`python -m cotes.config` imprime le tableau). Défaut effectif du code (ex.
+  `PINBOOK_SPORTS` vide = `football,tennis,basket`). Trois écarts YAML ≠ code, gardés dans
+  `tests/test_config.py › ECARTS_CONNUS` : `SMARKETS_COLLECTE` (`oui` / `non`), `SOURCE_FANDUEL` et
+  `SOURCE_DRAFTKINGS` (`direct` / `off`).
 
 **E1.2 — Les modules lisent `config.lire`** (facultatif, un module par commit)
 - Remplacer `os.environ.get("X", "d")` par `config.lire("X")` sans changer le défaut. Test : tests du module.
@@ -515,7 +519,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E0.1 | Empreinte du site | — | faible | ☑ |
 | E0.2 | Cycle à blanc | — | faible | ☑ |
 | E0.3 | Test d'architecture | — | faible | ☑ |
-| E1.1 | Catalogue de configuration | — | faible | ☐ |
+| E1.1 | Catalogue de configuration | — | faible | ☑ |
 | E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
 | E1.3 | Catalogue des fichiers | — | faible | ☐ |
 | E1.4 | Une E/S JSON | E0.1 | faible | ☐ |
