@@ -487,6 +487,9 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
   `message_ntfy`, `alertes_pushover`, `alertes_webhook`, `_lignes_mise`…) dans `cotes/alertes/pushover.py`,
   `webhook.py`, `chrome.py` ; le script les réimporte (les tests importent toujours `scripts.envoyer_notifications`).
 - Test : `tests/test_pushover.py`, `tests/test_notifications.py`, `tests/test_recap_jouables.py`.
+- Fait le 15/11/2026 : `webhook.py` (charge utile, texte ntfy et mise en forme commune, alertes Pinnacle 2),
+  `pushover.py` (stratégies cochées, alertes, champs du message), `chrome.py` (`lire_paris`, `preparer`). Le script
+  garde l'envoi, la lecture des choix et la journalisation (587 → ~330 lignes). Aucun test modifié.
 
 **E5.2 — `_construire` en quatre fonctions** (même fichier)
 - Faire : `charger_entrees(donnees)`, `calculer_blocs(entrees, maintenant)`, `rendre_pages(blocs)`,
@@ -579,7 +582,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☑ |
 | E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☑ |
 | E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☑ |
-| E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☐ |
+| E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☑ |
 | E5.2 | `_construire` en quatre | E0.1 | moyen | ☐ |
 | E5.3 | Heure du site injectée | E5.2 | faible | ☐ |
 | E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☐ |

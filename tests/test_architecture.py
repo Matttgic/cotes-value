@@ -42,7 +42,8 @@ _PAR_COUCHE = {
     "bilans": "cotes.analyste cotes.notation cotes.recommandations cotes.protocole cotes.decision cotes.evenements "
               "cotes.analyse_marche cotes.analyse_marche.cache cotes.analyse_marche.lecture "
               "cotes.analyse_marche.meneurs cotes.analyse_marche.opportunites cotes.analyse_marche.segments",
-    "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables",
+    "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables cotes.alertes cotes.alertes.webhook "
+               "cotes.alertes.pushover cotes.alertes.chrome",
     "site": "scripts.site_web",
     "cycle": "cotes.pipeline cotes.pipeline.contexte cotes.pipeline.outils cotes.pipeline.reglement cotes.pipeline.sauvegarde cotes.pipeline.analyse cotes.pipeline.prise cotes.pipeline.collecte",
     "scripts": "scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "

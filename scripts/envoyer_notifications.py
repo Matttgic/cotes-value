@@ -6,22 +6,27 @@ Une panne de notification ne doit pas interrompre la collecte ni le règlement.
 from __future__ import annotations
 
 import argparse
-import base64
 import json
-import math
 import os
 import sys
 import time
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlparse
-from zoneinfo import ZoneInfo
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cotes.notifications import API, NOMS, PIN2  # noqa: E402
-from cotes.recap_jouables import mise_arrondie  # noqa: E402
+from cotes.notifications import API, NOMS, PIN2  # noqa: E402,F401  (PIN2 : lu par les tests)
+from cotes.recap_jouables import mise_arrondie  # noqa: E402,F401
+# fonctions sans réseau déplacées dans cotes/alertes/ (E5.1) ; noms gardés sur le module
+from cotes.alertes.webhook import (CHAMPS_WEBHOOK, charge_utile, est_ntfy, _fr, _min_affichee,  # noqa: E402,F401
+                                   SPORTS, JOURS, _sport, _ligne_pinnacle, message_ntfy, _lignes_mise, _entete_utf8,
+                                   alertes_webhook)
+from cotes.alertes.pushover import (PUSHOVER_TTL_MAX_S, strategies_pushover, alertes_pushover,  # noqa: E402,F401
+                                    BANKROLL_REFERENCE, _bankroll, METHODE_CLAUDE, METHODE_ECART_MIN, METHODE_MISE,
+                                    ligne_methode_claude, message_pushover)
+from cotes.alertes.chrome import lire_paris, preparer  # noqa: E402,F401
 
 WEBHOOK_TIMEOUT_S = 5            # par requête
 WEBHOOK_BUDGET_S = 25            # pour tout le passage : ne jamais retarder le scan ni les alertes Chrome
@@ -30,140 +35,6 @@ ENVOYES = "webhook_envoyes.json"
 PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
 PUSHOVER_ENVOYES = "pushover_envoyes.json"
 PUSHOVER_BUDGET_S = 20           # pour tout le passage
-PUSHOVER_TTL_MAX_S = 86400       # le message reste sur le téléphone jusqu'au coup d'envoi, 24 h au plus (1 h le faisait disparaître avant lecture)
-CHAMPS_WEBHOOK = ("id", "match", "ligue", "debut", "marche", "selection", "bookmaker", "cote", "cote_min",
-                  "cote_juste", "cote_pinnacle", "ecart", "recheck")
-
-
-def lire_paris(donnees: Path) -> list[dict]:
-    """``paris.json`` tel qu'écrit par le cycle. Lu une seule fois par passage (8 Mo) : la sélection, Pushover et
-    le webhook ne font que lire ces objets, aucun ne les modifie."""
-    return json.loads((donnees / "paris.json").read_text())
-
-
-def preparer(donnees: Path, maintenant: datetime | None = None, retenues: list | None = None,
-             paris_bruts: list[dict] | None = None) -> dict:
-    """Même sélection que le site, sans attendre sa génération ni les résultats."""
-    from cotes import stockage
-    from cotes.convergence import selections
-    from cotes.strategies_prudentes import selections_prudentes
-    from cotes.notifications import flux, selections_bases, selections_labo
-    from cotes.strategie_recommandee import charger_fusions
-    charger_fusions(donnees)          # fusions automatiques (Fusion 2, 3…) créées par les révisions
-    from cotes import pauses
-    pauses.charger(donnees)           # stratégies en pause (pauses.json) : plus de nouveaux paris
-    paris = stockage.fusionner_paris(lire_paris(donnees) if paris_bruts is None else paris_bruts,
-                                     stockage.lire_archives(donnees))
-    actuelles = json.loads((donnees / "opportunites_actuelles.json").read_text())
-    retenus = selections(paris)
-    retenus.update(selections_prudentes(paris, bases=retenus))
-    retenus.update(selections_labo(paris))
-    retenus.update(selections_bases(paris))         # bases du Bilan : sans effet sur les votes de convergence
-    return flux(actuelles, paris, retenus, maintenant, retenues=retenues)
-
-
-def charge_utile(a: dict) -> dict:
-    """Corps JSON d'une alerte : champs convenus, début du match en UTC."""
-    out = {k: a.get(k) for k in CHAMPS_WEBHOOK}
-    try:
-        d = datetime.fromisoformat(str(a.get("debut")).replace("Z", "+00:00"))
-        out["debut"] = d.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-    except ValueError:
-        pass
-    out["recheck"] = bool(a.get("recheck"))
-    return out
-
-
-def est_ntfy(url: str) -> bool:
-    """ntfy.sh (ou un sous-domaine) : le corps est du texte, pas du JSON."""
-    h = (urlparse(url).hostname or "").lower()
-    return h == "ntfy.sh" or h.endswith(".ntfy.sh")
-
-
-def _fr(x, decimales: int) -> str:
-    return f"{x:.{decimales}f}".replace(".", ",") if isinstance(x, (int, float)) and not isinstance(x, bool) else "—"
-
-
-def _min_affichee(x) -> str:
-    """Cote minimale arrondie au centième supérieur : le bookmaker affiche 2 décimales, jamais sous le seuil."""
-    if not isinstance(x, (int, float)) or isinstance(x, bool):
-        return "—"
-    return _fr(math.ceil(round(x * 100, 6)) / 100, 2)
-
-
-SPORTS = {"football": "Football", "basket": "Basket", "hockey": "Hockey", "tennis": "Tennis",
-          "handball": "Handball", "volley": "Volley", "rugby": "Rugby", "rugby_league": "Rugby à XIII",
-          "baseball": "Baseball", "tennis_de_table": "Tennis de table", "football_americain": "Football américain",
-          "football_australien": "Football australien", "mma": "MMA", "boxe": "Boxe", "snooker": "Snooker",
-          "badminton": "Badminton", "golf": "Golf", "cyclisme": "Cyclisme"}
-JOURS = ("lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim.")
-
-
-def _sport(s) -> str:
-    s = str(s or "").strip()
-    return SPORTS.get(s.lower(), s.replace("_", " ").capitalize() or "—")
-
-
-def _ligne_pinnacle(a: dict) -> list[str]:
-    """Confirmation par Pinnacle : l'alerte part dès que la référence qui décide (Polymarket, Matchbook…) la valide,
-    Pinnacle dit si lui aussi voit l'écart. Rien d'écrit pour une alerte sans cette mesure (anciennes alertes)."""
-    if "pinnacle_ecart" not in a:
-        return []
-    e, age = a.get("pinnacle_ecart"), a.get("pinnacle_age_s")
-    if not isinstance(e, (int, float)) or isinstance(e, bool):
-        return ["Pinnacle : pas de prix récent pour confirmer"]
-    verdict = "confirme" if e >= 0.02 else "écart faible" if e >= 0 else "contredit"
-    ancien = f" (prix de {round(age / 60)} min)" if isinstance(age, (int, float)) and age >= 120 else ""
-    return [f"Pinnacle {verdict} : {'+' if e > 0 else ''}{_fr(100 * e, 1)} %{ancien}"]
-
-
-def message_ntfy(a: dict, mises: int = 1, defaut: float = 10.0) -> tuple[str, str]:
-    """(titre, corps) en texte brut ; l'heure du match est celle de Paris (« mar. 20/10 20h00 »).
-    ``mises`` > 1 (même pari pris par plusieurs stratégies cochées) : mise totale = mise unitaire × nombre, comme
-    web/suivi.js ; sans mise connue, ``defaut`` (10 € à la bankroll des bilans) par stratégie."""
-    try:
-        d = datetime.fromisoformat(str(a.get("debut")).replace("Z", "+00:00")).astimezone(ZoneInfo("Europe/Paris"))
-        heure = f'{JOURS[d.weekday()]} {d:%d/%m} {d:%H}h{d:%M}'
-    except ValueError:
-        heure = "heure inconnue"
-    dom, ext = a.get("domicile"), a.get("exterieur")
-    match = f"{dom} – {ext}" if dom and ext else str(a.get("match") or "")
-    pari = str(a.get("selection") or a.get("pari") or "").split("\n")[0]
-    lignes = [match, f'{pari} @ {_fr(a.get("cote"), 2)} (min {_min_affichee(a.get("cote_min"))})', heure]
-    age = a.get("age_prix_secondes")
-    if isinstance(age, (int, float)) and age > 300:          # match lointain, lu à son rythme : on le dit
-        lignes.append(f"Prix relevé il y a {round(age / 60)} min")
-    lignes += _ligne_pinnacle(a)
-    lignes += _lignes_mise(a.get("mise_kelly"), mises, defaut)
-    return f'{a.get("bookmaker") or "—"} – {_sport(a.get("sport"))}', "\n".join(lignes)
-
-
-def _lignes_mise(kelly, mises: int, defaut: float) -> list[str]:
-    """Ligne de mise ; affichage seul (les gains n'en dépendent pas)."""
-    connue = isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0
-    if not (isinstance(mises, int) and mises > 1):
-        return [f"Mise Kelly ¼ : {mise_arrondie(kelly)} €"] if connue else []
-    u = mise_arrondie(kelly if connue else defaut)
-    if u is None:
-        return []
-    return [f"Mise totale{' Kelly ¼' if connue else ''} : {u * mises} € ({mises} × {u} €)"]
-
-
-def _entete_utf8(texte: str) -> str:
-    """En-tête HTTP non latin-1 (tiret demi-cadratin) : encodage RFC 2047, lu par ntfy."""
-    return "=?UTF-8?B?" + base64.b64encode(texte.encode()).decode() + "?="
-
-
-def alertes_webhook(flux: dict, paris: list[dict], envoyes: dict, maintenant: datetime | None = None) -> list[dict]:
-    """Alertes Pinnacle 2 pas encore envoyées, quel que soit le bookmaker : celles du scan, puis les paris
-    re-décidés (même s'ils datent)."""
-    from cotes.notifications import alertes_recheck
-    vues, out = set(envoyes), []
-    for a in [x for x in flux.get("alertes", []) if PIN2 in x.get("strategies", [])] + alertes_recheck(paris, PIN2, maintenant):
-        if a["id"] not in vues:
-            vues.add(a["id"])
-            out.append(a)
-    return out
 
 
 def poster_webhook(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.monotonic) -> dict:
@@ -238,14 +109,6 @@ def webhook_pinnacle2(donnees: Path, flux: dict, paris: list[dict] | None = None
         return {"actif": False, "envoyees": 0, "echecs": 0, "erreurs": [type(e).__name__]}
 
 
-def strategies_pushover(env=None) -> tuple[set[str], list[str]]:
-    """(stratégies cochées, clés inconnues) d'après ``PUSHOVER_STRATEGIES`` : clés séparées par des virgules ou
-    des espaces. Liste vide : aucune alerte Pushover. Les clés s'obtiennent avec ``--strategies``."""
-    env = os.environ if env is None else env
-    voulues = [x for x in env.get("PUSHOVER_STRATEGIES", "").replace(",", " ").split() if x]
-    return {x for x in voulues if x in NOMS}, sorted({x for x in voulues if x not in NOMS})
-
-
 ORIGINE_SITE = "https://matttgic.github.io"
 
 
@@ -300,93 +163,6 @@ def choix_pushover(env=None, ouvrir=urlopen) -> tuple[set[str], list[str], str]:
     if cles is None:
         return set(), [], "site indisponible"
     return {c for c in cles if c in NOMS}, [], "site"
-
-
-def alertes_pushover(flux: dict, paris: list[dict], envoyes: dict, choisies: set[str],
-                     maintenant: datetime | None = None, amorcage: bool = False) -> list[dict]:
-    """Alertes des stratégies cochées pas encore envoyées, les plus récentes d'abord. ``amorcage`` (premier passage,
-    aucun fichier d'envois) : les re-décisions anciennes sont seulement mémorisées, pour ne pas inonder le téléphone."""
-    from cotes.notifications import alertes_recheck
-    vues, out = set(envoyes), []
-    rechecks = alertes_recheck(paris, PIN2, maintenant) if PIN2 in choisies else []
-    for a in [x for x in flux.get("alertes", []) if set(x.get("strategies", [])) & choisies] + rechecks:
-        if a["id"] in vues:
-            continue
-        vues.add(a["id"])
-        if amorcage and a.get("recheck"):
-            envoyes[a["id"]] = ""             # mémorisé sans envoi
-            continue
-        cles, noms = a.get("strategies") or [], a.get("labels") or []
-        if len(cles) == len(noms):          # seules les stratégies cochées sont nommées (une mise chacune)
-            a = {**a, "labels": [n for k, n in zip(cles, noms) if k in choisies]}
-        a = {**a, "mises": max(1, len(set(cles) & choisies))}     # une mise par stratégie cochée
-        out.append(a)
-    return out
-
-
-BANKROLL_REFERENCE = 1000.0      # bankroll fictive de mise_kelly (cotes/simulation.py)
-
-
-def _bankroll(env) -> float:
-    """``PUSHOVER_BANKROLL`` en euros (défaut 1 000, la bankroll des bilans) ; valeur absurde : défaut."""
-    try:
-        b = float(str(env.get("PUSHOVER_BANKROLL", "") or BANKROLL_REFERENCE).replace(",", "."))
-    except ValueError:
-        return BANKROLL_REFERENCE
-    return b if 10 <= b <= 1_000_000 else BANKROLL_REFERENCE
-
-
-METHODE_CLAUDE = "claude_humain"
-METHODE_ECART_MIN = 1.03          # on ne joue plus si l'écart est tombé sous 3 %
-METHODE_MISE = 0.01               # 1 % de la bankroll
-
-
-def ligne_methode_claude(a: dict, env) -> str:
-    """Alerte de « Claude · Méthode humaine » : la cote minimale à jouer (écart 3 %) et la mise (1 % de
-    ``PUSHOVER_BANKROLL``), déjà calculées. Vide pour les autres stratégies."""
-    if METHODE_CLAUDE not in (a.get("strategies") or []):
-        return ""
-    juste = a.get("cote_juste")
-    if not isinstance(juste, (int, float)) or isinstance(juste, bool) or juste <= 1:
-        return ""
-    cote_min = math.ceil(round(juste * METHODE_ECART_MIN * 100, 6)) / 100
-    mise = mise_arrondie(_bankroll(env) * METHODE_MISE)
-    return f"Méthode Claude : jouer si cote ≥ {_fr(cote_min, 2)} · mise {mise} €"
-
-
-def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> dict:
-    """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable). Mise Kelly ¼ ramenée à
-    ``PUSHOVER_BANKROLL``."""
-    env = os.environ if env is None else env
-    maintenant = maintenant or datetime.now(timezone.utc)
-    kelly = a.get("mise_kelly")
-    if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
-        a = {**a, "mise_kelly": round(kelly * _bankroll(env) / BANKROLL_REFERENCE, 2)}
-    mises = a.get("mises") if isinstance(a.get("mises"), int) and not isinstance(a.get("mises"), bool) else 1
-    titre, corps = message_ntfy(a, mises, 10.0 * _bankroll(env) / BANKROLL_REFERENCE)
-    methode = ligne_methode_claude(a, env)
-    if methode:
-        corps = corps + "\n" + methode
-    noms = [str(x) for x in (a.get("labels") or [])]
-    ligne = f"\n{len(noms)} stratégie{'s' if len(noms) > 1 else ''} : {', '.join(noms)}" if noms else ""
-    champs = {"title": titre[:250], "message": (corps[:1000 - len(ligne)] + ligne)[:1000]}
-    lien = a.get("lien")
-    if isinstance(lien, str) and lien.startswith("https://") and len(lien) <= 500:
-        champs["url"] = lien
-        chez = a.get('bookmaker') or 'le bookmaker'
-        champs["url_title"] = (f"Page du sport chez {chez} (match à chercher)" if a.get("lien_repli")
-                               else f"Ouvrir le match chez {chez}")[:100]
-    try:
-        reste = (datetime.fromisoformat(str(a.get("debut")).replace("Z", "+00:00")) - maintenant).total_seconds()
-        champs["ttl"] = int(max(60, min(PUSHOVER_TTL_MAX_S, reste)))
-    except ValueError:
-        pass
-    try:                         # 0 (défaut) respecte les heures calmes ; 1 les ignore. 2 (accusé) est refusé.
-        priorite = int(env.get("PUSHOVER_PRIORITY", "0") or 0)
-    except ValueError:
-        priorite = 0
-    champs["priority"] = priorite if priorite in (-1, 0, 1) else 0
-    return champs
 
 
 def poster_pushover(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.monotonic) -> dict:
