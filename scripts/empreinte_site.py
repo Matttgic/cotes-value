@@ -3,8 +3,8 @@
     python scripts/empreinte_site.py --donnees DOSSIER --sortie avant.json      # avant le changement
     python scripts/empreinte_site.py --donnees DOSSIER --comparer avant.json    # après : code 1 si différent
 
-Le dossier donné n'est jamais modifié : la construction tourne sur une copie, à heure figée (``--maintenant``),
-chronomètres à 0, avec ``PYTHONHASHSEED=0``, sans réseau, sans mémoire externe (``MEMOIRE_CHEMIN``) ni envoi Pushover ou webhook.
+Le dossier donné n'est jamais modifié : la construction tourne sur une copie, à l'heure donnée (``--maintenant``,
+passée à ``construire``), chronomètres à 0, avec ``PYTHONHASHSEED=0``, sans réseau, sans mémoire externe (``MEMOIRE_CHEMIN``) ni envoi Pushover ou webhook.
 L'empreinte est le sha256 de chaque fichier produit dans le site et de chaque fichier de la copie que la
 construction a créé ou modifié (``donnees/…``). Voir docs/architecture-cible.md, étape E0.1.
 """
@@ -42,33 +42,6 @@ def _empreintes(dossier: Path) -> dict[str, str]:
             if f.is_file() and ".git" not in f.relative_to(dossier).parts}
 
 
-class _MetaFige(type):
-    """``isinstance(x, datetime)`` reste vrai pour les vraies dates quand ``datetime`` est remplacé."""
-
-    def __instancecheck__(cls, obj):
-        return isinstance(obj, _dt.datetime)
-
-    def __subclasscheck__(cls, sous):
-        return issubclass(sous, _dt.datetime)
-
-
-def classe_figee(instant: _dt.datetime) -> type:
-    class DatetimeFige(_dt.datetime, metaclass=_MetaFige):
-        @classmethod
-        def now(cls, tz=None):
-            return instant.astimezone(tz) if tz is not None else instant.astimezone().replace(tzinfo=None)
-
-        @classmethod
-        def utcnow(cls):
-            return instant.astimezone(_dt.timezone.utc).replace(tzinfo=None)
-
-        @classmethod
-        def today(cls):
-            return cls.now()
-
-    return DatetimeFige
-
-
 def importer_tout() -> list[str]:
     """Charge tous les modules de ``cotes`` avant de figer l'heure : un import tardif garderait la vraie heure."""
     if str(RACINE) not in sys.path:
@@ -84,14 +57,11 @@ def importer_tout() -> list[str]:
 
 
 @contextlib.contextmanager
-def heure_figee(instant: _dt.datetime):
-    """Remplace ``datetime``, ``time.time`` et les chronomètres (et leurs alias) dans les modules du projet.
-
-    Les chronomètres rendent toujours 0 : les durées mesurées (``protection.py``, publiées sur la page Santé)
-    valent 0 au lieu de varier d'une construction à l'autre. Tout est remis en place à la sortie.
-    """
-    substituts = {id(_dt.datetime): classe_figee(instant), id(time.time): lambda: instant.timestamp(),
-                  id(time.perf_counter): lambda: 0.0, id(time.monotonic): lambda: 0.0}
+def chronometres_figes():
+    """Remplace les chronomètres (et leurs alias) des modules du projet par 0 : les durées mesurées
+    (``protection.py``, publiées sur la page Santé) ne varient plus d'une construction à l'autre. L'heure, elle, est
+    passée à ``construire`` (E5.3). Tout est remis en place à la sortie."""
+    substituts = {id(time.perf_counter): lambda: 0.0, id(time.monotonic): lambda: 0.0}
     remplaces = []
     for nom, module in list(sys.modules.items()):
         if module is None or not nom.startswith(PREFIXES_MODULES):
@@ -131,13 +101,13 @@ def empreinte(donnees: Path, maintenant: str = MAINTENANT_DEFAUT) -> dict:
     if instant.tzinfo is None:
         raise ValueError("--maintenant doit porter un fuseau (ex. +00:00)")
     ignores = importer_tout()
-    from scripts.site_web import construire
+    from cotes.site.construction import construire
     with tempfile.TemporaryDirectory(prefix="empreinte-site-") as tmp:
         copie, site = Path(tmp) / "donnees", Path(tmp) / "site"
         shutil.copytree(donnees, copie, ignore=shutil.ignore_patterns(".git"))
         avant = _empreintes(copie)
-        with sans_reseau_ni_envoi(), heure_figee(instant) as remplaces:
-            construire(copie, site)
+        with sans_reseau_ni_envoi(), chronometres_figes() as remplaces:
+            construire(copie, site, instant)
         apres = _empreintes(copie)
         fichiers = {f"site/{k}": v for k, v in _empreintes(site).items()}
         fichiers |= {f"donnees/{k}": v for k, v in apres.items() if avant.get(k) != v}

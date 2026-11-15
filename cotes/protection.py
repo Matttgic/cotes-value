@@ -29,21 +29,23 @@ FICHIER_PANNES = "pannes_strategies.json"
 SEUIL_PANNES = 6
 
 _ECHECS: dict[str, dict] | None = None
+_HEURE: datetime | None = None          # heure donnée à la construction du site (empreinte, tests) ; sinon l'heure réelle
 # Temps propre de chaque stratégie (secondes, sans celui des stratégies qu'elle appelle), page Santé.
 _DUREES: dict[str, float] = {}
 _PILE: list[float] = []
 
 
 @contextmanager
-def proteger_strategies():
-    """Active la protection ; rend le dictionnaire des échecs {nom: {"quand", "etape", "message"}}."""
-    global _ECHECS
-    precedent, _ECHECS = _ECHECS, {}
+def proteger_strategies(maintenant: datetime | None = None):
+    """Active la protection ; rend le dictionnaire des échecs {nom: {"quand", "etape", "message"}}. ``maintenant`` :
+    heure notée sur les échecs (heure réelle si absente)."""
+    global _ECHECS, _HEURE
+    (precedent, heure_precedente), _ECHECS, _HEURE = (_ECHECS, _HEURE), {}, maintenant
     _DUREES.clear()
     try:
         yield _ECHECS
     finally:
-        _ECHECS = precedent
+        _ECHECS, _HEURE = precedent, heure_precedente
 
 
 def calculer(nom: str, calcul, vide=set):
@@ -58,7 +60,7 @@ def calculer(nom: str, calcul, vide=set):
     except Exception as e:  # noqa: BLE001 - une stratégie en erreur ne doit pas arrêter le site
         if nom not in registre:
             message = echecs.message_court(e)
-            registre[nom] = {"quand": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            registre[nom] = {"quand": (_HEURE or datetime.now(timezone.utc)).isoformat(timespec="seconds"),
                              "etape": f"stratégie {nom}", "message": message}
             echecs.annoter(f"stratégie {nom}", message)
         return vide()

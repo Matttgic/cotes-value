@@ -335,3 +335,15 @@ def suivi_futur(paris: list[dict], depuis: str, maintenant: str | None = None) -
         out.append({"id": r.id, **resume(selection, cutoff, incertitude=False, depuis=depuis),
                     "ids_recents": [p["id"] for p in selection[-30:]]})
     return out
+
+
+def claude_rejouee(paris: list[dict]) -> list[dict]:
+    """Règles existantes, date de lancement remplacée par le début de l'étude.
+
+    Dédoublonnage original par sélection/bookmaker, pas un seul pari par match.
+    Comparateur descriptif : ne participe jamais au classement des 36 règles.
+    """
+    from cotes.simulation import paris_strategie
+
+    selection = paris_strategie(paris, depuis=DEBUT_ETUDE)
+    return [p for p in paris if id(p) in selection]

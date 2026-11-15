@@ -487,19 +487,33 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
   `message_ntfy`, `alertes_pushover`, `alertes_webhook`, `_lignes_mise`…) dans `cotes/alertes/pushover.py`,
   `webhook.py`, `chrome.py` ; le script les réimporte (les tests importent toujours `scripts.envoyer_notifications`).
 - Test : `tests/test_pushover.py`, `tests/test_notifications.py`, `tests/test_recap_jouables.py`.
+- Fait le 15/11/2026 : `webhook.py` (charge utile, texte ntfy et mise en forme commune, alertes Pinnacle 2),
+  `pushover.py` (stratégies cochées, alertes, champs du message), `chrome.py` (`lire_paris`, `preparer`). Le script
+  garde l'envoi, la lecture des choix et la journalisation (587 → 363 lignes). Aucun test modifié.
 
 **E5.2 — `_construire` en quatre fonctions** (même fichier)
 - Faire : `charger_entrees(donnees)`, `calculer_blocs(entrees, maintenant)`, `rendre_pages(blocs)`,
   `ecrire_site(sortie, pages)`. Déplacement pur. Test : empreinte identique, `tests/test_site*.py`.
+- Fait le 15/11/2026 : `calculer_blocs(entrees, donnees, echecs_strategies)` (l'heure viendra avec E5.3 ; les états
+  du site écrits dans « donnees » restent à leur place dans le calcul). Empreinte identique.
 
 **E5.3 — Heure du site injectée**
 - Faire : `construire(donnees, sortie, maintenant=None)` transmet l'heure aux 5 appels `datetime.now` de
   `site_web.py` et aux fonctions qui l'acceptent déjà. Puis `scripts/empreinte_site.py` passe l'heure au lieu de la
   figer par remplacement. Test : empreinte identique.
+- Fait le 15/11/2026 : `construire(donnees, sortie, maintenant=None)` ; l'heure va aux bilans, aux recommandées, au
+  protocole, à la décision, aux notifications, aux ordres et aux échecs notés par `cotes/protection.py`
+  (`proteger_strategies(maintenant)`). Sans heure donnée, chaque lecture reste l'heure réelle, comme avant.
+  `scripts/empreinte_site.py` ne remplace plus `datetime` (seulement les chronomètres) : empreinte identique, deux fois.
 
 **E5.4 — Site dans `cotes/site/`**
 - Faire : le calcul et le rendu vont dans `cotes/site/` ; `scripts/site_web.py` garde `construire` et les noms
   importés par les tests. `site.yml` : ajouter `cotes/site/**` aux chemins surveillés. Test : empreinte identique.
+- Fait le 15/11/2026 : `git mv` vers `cotes/site/construction.py` ; `scripts/site_web.py` (13 lignes) renvoie ce
+  module (`sys.modules[__name__] = construction`), donc `import site_web`, `from scripts import site_web` et les
+  remplacements des tests visent le code qui tourne, sans toucher aux tests. `claude_rejouee` passe dans
+  `cotes/laboratoire.py` (le site n'importe plus `scripts/`). Test d'architecture : 18 exceptions (trois de moins).
+  Empreinte identique.
 
 ### 4.8 Phase 6 — Tâches planifiées
 
@@ -579,10 +593,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☑ |
 | E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☑ |
 | E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☑ |
-| E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☐ |
-| E5.2 | `_construire` en quatre | E0.1 | moyen | ☐ |
-| E5.3 | Heure du site injectée | E5.2 | faible | ☐ |
-| E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☐ |
+| E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☑ |
+| E5.2 | `_construire` en quatre | E0.1 | moyen | ☑ |
+| E5.3 | Heure du site injectée | E5.2 | faible | ☑ |
+| E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☑ |
 | E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☐ |
 | E6.2 | Relance en Python | — | élevé | ☐ |
 | E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☐ |

@@ -42,8 +42,9 @@ _PAR_COUCHE = {
     "bilans": "cotes.analyste cotes.notation cotes.recommandations cotes.protocole cotes.decision cotes.evenements "
               "cotes.analyse_marche cotes.analyse_marche.cache cotes.analyse_marche.lecture "
               "cotes.analyse_marche.meneurs cotes.analyse_marche.opportunites cotes.analyse_marche.segments",
-    "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables",
-    "site": "scripts.site_web",
+    "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables cotes.alertes cotes.alertes.webhook "
+               "cotes.alertes.pushover cotes.alertes.chrome",
+    "site": "scripts.site_web cotes.site cotes.site.construction",
     "cycle": "cotes.pipeline cotes.pipeline.contexte cotes.pipeline.outils cotes.pipeline.reglement cotes.pipeline.sauvegarde cotes.pipeline.analyse cotes.pipeline.prise cotes.pipeline.collecte",
     "scripts": "scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "
                "scripts.serveur_actif scripts.protocole scripts.verifier_secrets scripts.verifier_strategie_jules "
@@ -55,7 +56,7 @@ _PAR_COUCHE = {
 }
 COUCHES = {m: c for c, noms in _PAR_COUCHE.items() for m in noms.split()}
 
-# Violations relevées le 15/11/2026 : 23 ; 21 après E1.4. À faire baisser, jamais monter.
+# Violations relevées le 15/11/2026 : 23 ; 21 après E1.4 ; 18 après E5.4. À faire baisser, jamais monter.
 EXCEPTIONS = {
     # sources -> domaine : prix des bourses convertis par comparaison.reference_echange ; résultats -> bilans
     ("cotes.smarkets", "cotes.comparaison"),
@@ -78,10 +79,7 @@ EXCEPTIONS = {
     ("cotes.strategie_gemini_defi", "cotes.evenements"),
     # scripts qui s'importent entre eux
     ("scripts.cycle", "scripts.site_web"),
-    ("scripts.empreinte_site", "scripts.site_web"),
     ("scripts.envoyes_secours", "scripts.envoyer_notifications"),
-    ("scripts.site_web", "scripts.comparer_strategies"),
-    ("scripts.verifier_strategie_jules_v2", "scripts.comparer_strategies"),
 }
 
 # importés par sys.path (scripts/ ajouté au chemin) : `from site_web import construire`
