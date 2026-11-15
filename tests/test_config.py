@@ -117,3 +117,29 @@ def test_tableau_markdown_sans_secret():
     tableau = config.markdown()
     assert "`PINNACLE_API_KEY` | (secret)" in tableau
     assert tableau.count("\n") == len(config.VARIABLES) + 1
+
+
+def _crons_des_workflows() -> dict[str, list[str]]:
+    out = {}
+    for f in sorted((RACINE / ".github" / "workflows").glob("*.yml")):
+        crons = re.findall(r'^\s*-\s*cron:\s*"([^"]+)"', f.read_text(encoding="utf-8"), re.M)
+        if crons:
+            out[f.name] = crons
+    return out
+
+
+def test_calendrier_identique_aux_workflows():
+    attendu = {}
+    for t in config.TACHES.values():
+        attendu.setdefault(t.workflow, []).append(t.cron)
+    assert _crons_des_workflows() == attendu
+
+
+def test_calendrier_identique_au_tableau_de_la_doc():
+    """Tableau 1.4 de docs/architecture-cible.md : chaque tâche planifiée y figure avec son cron."""
+    doc = (RACINE / "docs" / "architecture-cible.md").read_text(encoding="utf-8")
+    tableau = doc[doc.index("### 1.4 Tâches planifiées"):doc.index("### 1.5")]
+    for t in config.TACHES.values():
+        ligne = next((l for l in tableau.splitlines() if f"`{t.workflow}`" in l), None)
+        assert ligne is not None, t.workflow
+        assert f"`{t.cron}`" in ligne, (t.workflow, t.cron)

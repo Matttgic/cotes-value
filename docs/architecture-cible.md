@@ -547,6 +547,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 **E6.5 — Calendrier vérifié**
 - Faire : `TACHES` dans `cotes/config.py` (nom, workflow, cron) ; un test compare aux lignes `cron:` des workflows
   et au tableau 1.4 de ce document.
+- Fait le 15/11/2026 : 4 tâches (`collecte`, `reglement`, `surveillance`, `archivage`), tests dans `tests/test_config.py`.
 
 ### 4.9 Phase 7 et 8 — Rangement et stockage (facultatif, à décider)
 
@@ -605,7 +606,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E6.2 | Relance en Python | — | élevé | ☐ |
 | E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☐ |
 | E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☐ |
-| E6.5 | Calendrier vérifié | E1.1 | faible | ☐ |
+| E6.5 | Calendrier vérifié | E1.1 | faible | ☑ |
 | E7.1 | Études dans `etudes/` | — | faible | ☐ |
 | E7.2 | Une couche par dossier | E0.3, phases 1 à 6 | moyen | ☐ |
 | E8.1 | Mesure du stockage | — | aucun | ☐ |

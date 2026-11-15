@@ -101,6 +101,24 @@ VARIABLES: dict[str, Variable] = {
 }
 
 
+@dataclass(frozen=True)
+class Tache:
+    workflow: str            # fichier de .github/workflows/
+    cron: str                # ligne `cron:` (UTC)
+    role: str
+
+
+# Calendrier des tâches planifiées (docs/architecture-cible.md, tableau 1.4) : `tests/test_config.py` vérifie que les
+# lignes `cron:` des workflows et le tableau du document y correspondent (E6.5).
+TACHES: dict[str, Tache] = {
+    "collecte": Tache("collecte.yml", "7 * * * *", "redémarre la chaîne de collecte (qui se relance seule toutes les "
+                                                   "5 minutes)"),
+    "reglement": Tache("reglement.yml", "27 * * * *", "règlement horaire, sauf serveur actif"),
+    "surveillance": Tache("surveillance-collecte.yml", "17,47 * * * *", "relance la chaîne arrêtée"),
+    "archivage": Tache("archivage-donnees.yml", "17 3 5 * *", "release mensuelle des données brutes"),
+}
+
+
 def lire(nom: str, environ: Mapping[str, str] | None = None):
     """Valeur typée de `nom`, ou son défaut si elle est absente, vide ou illisible. Nom inconnu : KeyError."""
     v = VARIABLES[nom]
