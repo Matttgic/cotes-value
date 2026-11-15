@@ -327,6 +327,8 @@ cette étape. »
 
 **E1.2 — Les modules lisent `config.lire`** (facultatif, un module par commit)
 - Remplacer `os.environ.get("X", "d")` par `config.lire("X")` sans changer le défaut. Test : tests du module.
+- Reporté le 15/11/2026 (facultatif) : chaque module interprète sa variable à sa façon (`oui`, `off`, `non`…) ; le
+  catalogue et son test (E1.1) couvrent déjà les défauts. À faire module par module si l'un d'eux est retouché.
 
 **E1.3 — Catalogue des fichiers de `donnees`**
 - Fichiers : nouveau `cotes/depot/__init__.py`, `cotes/depot/catalogue.py`, `tests/test_catalogue.py`.
@@ -386,6 +388,7 @@ cette étape. »
 **E2.5 — Erreurs des lecteurs de scores sans liste globale** (facultatif, un module par commit)
 - Faire : `lire()` rend aussi ses erreurs (nouvelle fonction ou tuple) ; la liste `ERREURS` reste remplie pour les
   appelants actuels, puis disparaît quand plus rien ne la lit.
+- Reporté le 15/11/2026 (facultatif) : change la forme rendue par 8 lecteurs de scores pour un gain de propreté.
 
 ### 4.5 Phase 3 — Cycle découpé
 
@@ -608,14 +611,14 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E0.2 | Cycle à blanc | — | faible | ☑ |
 | E0.3 | Test d'architecture | — | faible | ☑ |
 | E1.1 | Catalogue de configuration | — | faible | ☑ |
-| E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
+| E1.2 | Modules sur `config.lire` | E1.1 | faible | ✗ reporté |
 | E1.3 | Catalogue des fichiers | — | faible | ☑ |
 | E1.4 | Une E/S JSON | E0.1 | faible | ☑ |
 | E2.1 | Registre des sources | — | faible | ☑ |
 | E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☑ |
 | E2.3 | Lecture de même forme | E2.1 | faible | ☑ |
 | E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☑ |
-| E2.5 | Erreurs sans liste globale | — | faible | ☐ |
+| E2.5 | Erreurs sans liste globale | — | faible | ✗ reporté |
 | E3.1 | Contexte, règlement seul | E0.2 | moyen | ☑ |
 | E3.2 | Étape sauvegarde | E3.1 | moyen | ☑ |
 | E3.3 | Étape analyse | E3.1 | moyen | ☑ |
