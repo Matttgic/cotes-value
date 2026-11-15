@@ -523,6 +523,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 - Faire : `python -m cotes cycle|reglement|alertes|site|archiver` avec les mêmes options que les scripts actuels ;
   chaque commande appelle la fonction de `cotes/` correspondante. Les scripts restent des enveloppes.
 - Test : chaque commande appelle la bonne fonction (remplacée dans le test) ; `--help` les liste.
+- Fait le 15/11/2026 : `cycle` et `reglement` → `cotes/pipeline/cycle.py` (arguments et enchaînement sortis de
+  `scripts/cycle.py`, qui garde le site par `site_web` pour les tests) ; `alertes` → `cotes/alertes/envoi.py` et
+  `archiver` → `cotes/depot/archivage.py` (`git mv`, scripts en enveloppes qui renvoient le module) ; `site` →
+  `cotes/site/construction.py › main`. 17 exceptions d'architecture.
 
 **E6.2 — Relance de la chaîne en Python**
 - Fichiers : nouveau `scripts/relancer.py` ; `collecte.yml` (job `relancer`) ; `tests/test_robustesse_workflow.py`.
@@ -597,7 +601,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E5.2 | `_construire` en quatre | E0.1 | moyen | ☑ |
 | E5.3 | Heure du site injectée | E5.2 | faible | ☑ |
 | E5.4 | Site dans `cotes/site/` | E5.2 | moyen | ☑ |
-| E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☐ |
+| E6.1 | Point d'entrée unique | E3.6, E5.1, E5.4 | faible | ☑ |
 | E6.2 | Relance en Python | — | élevé | ☐ |
 | E6.3 | Workflows sur le point d'entrée | E6.1 | moyen | ☐ |
 | E6.4 | Serveur sur le point d'entrée | E6.1 | moyen | ☐ |

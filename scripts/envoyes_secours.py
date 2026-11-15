@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from scripts.envoyer_notifications import ENVOYES, PUSHOVER_ENVOYES  # noqa: E402
+from cotes.alertes.envoi import ENVOYES, PUSHOVER_ENVOYES  # noqa: E402
 
 FICHIERS = (PUSHOVER_ENVOYES, ENVOYES)
 

@@ -203,7 +203,7 @@ def test_cycle_betfair_lance_au_depart_et_hors_controle():
     assert 'references["Betfair"] = bf_lignes' in src
     # association et contrôle dans l'étape analyse depuis E3.3 (cotes/pipeline/analyse.py), après la collecte
     analyse = inspect.getsource(cycle.analyser)
-    main = inspect.getsource(cycle.main)
+    main = inspect.getsource(cycle.pipeline_cycle.executer)   # enchaînement de main() depuis E6.1
     assert main.index("collecter(ctx)") < main.index("analyser(ctx)")
     assert "comparaison.indexer" in analyse
     # pas dans le contrôle de conformité (liste du registre des sources depuis E2.2)

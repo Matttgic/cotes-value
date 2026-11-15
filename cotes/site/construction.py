@@ -4,6 +4,7 @@ Déplacé de scripts/site_web.py (E5.4), qui renvoie ce module : `from scripts.s
 `import site_web` donnent les mêmes fonctions."""
 from __future__ import annotations
 
+import argparse
 import json
 import hashlib
 from datetime import datetime, timedelta, timezone
@@ -1000,3 +1001,15 @@ def montant_vitrine(gain: float) -> str:
 
 # Gabarit de la page (HTML, CSS et JavaScript, environ 1 800 lignes) : web/modele.html, rempli par construire().
 MODELE = (RACINE / "web" / "modele.html").read_text(encoding="utf-8")
+
+
+def main(argv: list[str] | None = None) -> int:
+    """`python -m cotes site` : construit le site depuis les données enregistrées, sans collecter (site.yml)."""
+    a = argparse.ArgumentParser(prog="site", description="Construit le site depuis les données enregistrées.")
+    a.add_argument("--donnees", type=Path, default=Path("donnees"))
+    a.add_argument("--sortie", type=Path, default=Path("site"))
+    a.add_argument("--maintenant", type=datetime.fromisoformat, default=None,
+                   help="heure de la construction (ISO, avec fuseau) ; défaut : l'heure réelle")
+    args = a.parse_args(argv)
+    print(construire(args.donnees, args.sortie, args.maintenant))
+    return 0
