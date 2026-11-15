@@ -79,9 +79,33 @@ def test_lignes_mesurees_sur_des_paris_bookmakers_sur_les_uniques_references_sur
     assert bloc["regles"]["tests_roi"] == 2 * 5 and bloc["regles"]["tests_clv"] == 2 * 5
 
 
+def _regle(p, heures=2):
+    """Pari réglé ``heures`` après le début de son match."""
+    return {**p, "regle_le": (datetime.fromisoformat(p["debut"]) + timedelta(hours=heures)).isoformat()}
+
+
+def test_quoi_jouer_rejoue_sans_regard_vers_l_avenir():
+    # 400 paris PMU / Pinnacle gagnants (ROI +20 %), 400 OlyBet / Betfair perdants, un toutes les heures sur ~17 jours.
+    pmu = [_regle(_pari(i, 0.03 + 0.02 * (i % 3 - 1), gagne=i % 5 < 3)) for i in range(400)]
+    oly = [_regle(_pari(i, -0.04, bookmaker="OlyBet", reference="Betfair", gagne=i % 5 < 2)) for i in range(400)]
+    r = decision.construire(pmu + oly, DEBUT + timedelta(days=30))["rejeu"]
+    # Le premier jour, rien n'est encore réglé : la règle ne retient rien avant d'avoir assez de paris passés.
+    assert r["debut"] > DEBUT.date().isoformat()
+    # Retenus : seulement PMU / Pinnacle, détectés après le jour où PMU est devenu jouable ; jamais OlyBet.
+    assert 0 < r["retenus"]["regles"] < 400 and r["retenus"]["roi"] > 0 and r["retenus"]["roi_ic"][0] > 0
+    assert r["retenus"]["clv"] == pytest.approx(3.0, abs=0.1) and r["retenus"]["couverture"] == 100.0
+    # Écartés : les OlyBet des mêmes jours, perdants.
+    assert r["ecartes"]["roi"] < 0 and r["ecartes"]["regles"] >= r["retenus"]["regles"] - 30
+    # Un pari réglé après minuit ne sert pas le jour même : réglés deux jours plus tard, la règle démarre plus tard.
+    tard = decision.construire([_regle(p, 48) for p in pmu + oly], DEBUT + timedelta(days=30))["rejeu"]
+    assert tard["debut"] > r["debut"] and tard["retenus"]["regles"] < r["retenus"]["regles"]
+
+
 def test_sans_pari_la_page_a_quand_meme_sa_ligne_sans_decision():
     bloc = decision.construire([], DEBUT)
     assert [(l["id"], l["regles"], l["decision"]) for l in bloc["lignes"]] == [("ensemble", 0, ATTENDRE)]
+    assert bloc["rejeu"] == {"debut": None, "jours": 0, "retenus": decision._bilan([], None, {}),
+                             "ecartes": decision._bilan([], None, {})}
 
 
 def test_le_site_publie_les_chiffres_et_la_page(tmp_path):

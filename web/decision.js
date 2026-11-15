@@ -121,6 +121,33 @@ function decHtmlEcartes(liste, raison) {
 }
 function decNomStrategie(id, noms) { return (noms && noms.get(id)) || id; }
 
+// La règle « Quoi jouer » a-t-elle marché ? Bilan rejoué sans regard vers l'avenir (cotes/decision.py, ``rejouer``).
+function decVerdictRejeu(b) {
+  return !b || !b.roi_ic ? {cls: 'attendre', mot: 'Non tranché'} : b.roi_ic[0] > 0 ? {cls: 'jouer', mot: 'Gagnante'}
+    : b.roi_ic[1] < 0 ? {cls: 'couper', mot: 'Perdante'} : {cls: 'attendre', mot: 'Non tranché'};
+}
+function decLignesRejeu(R) {
+  if (!R || !R.retenus || !R.retenus.regles) return [];
+  return [{id: 'rejeu:retenus', nom: 'Règle « Quoi jouer », rejouée', raison: `paris retenus · ${decPluriel(R.jours, 'jour')} depuis le ${decJour(R.debut)}`, ...R.retenus},
+    {id: 'rejeu:ecartes', nom: 'Paris uniques écartés, mêmes jours', raison: 'pour comparer', ...R.ecartes}];
+}
+function decHtmlRejeu(R) {
+  const [r, x] = decLignesRejeu(R);
+  if (!r) return `<p class="aide"><b>A-t-elle marché ?</b> Jamais appliquée : aucun jour n'a encore eu un bookmaker et une référence jouables avec les seuls paris réglés avant lui.</p>`;
+  const v = decVerdictRejeu(r);
+  const titre = {jouer: 'Oui, elle a gagné.', couper: 'Non, elle a perdu.', attendre: 'Pas encore tranché.'}[v.cls];
+  const roi = v.cls === 'jouer' ? "L'intervalle du ROI est au-dessus de zéro."
+    : v.cls === 'couper' ? "L'intervalle du ROI est sous zéro."
+    : "L'intervalle du ROI contient zéro : trop peu de paris pour savoir si elle rapporte.";
+  const clv = !r.clv_ic ? '' : r.clv_ic[0] > 0 ? ' Ses paris battent bien la clôture Pinnacle.'
+    : r.clv_ic[1] < 0 ? ' Ses paris perdent contre la clôture Pinnacle.' : ' Sa CLV Pinnacle ne se distingue pas de zéro.';
+  const preuves = l => decPreuve(l.id, decRoi(l)) + (l.clv != null ? ' ' + decPreuve(l.id, decClv(l)) : '');
+  return `<div class="dec-bilan"><p class="dec-reponse"><strong class="${v.cls === 'jouer' ? 'pos' : v.cls === 'couper' ? 'neg' : ''}">A-t-elle marché ? ${titre}</strong>
+Rejouée chaque jour depuis le ${decJour(R.debut)}, avec les seuls paris réglés avant ce jour : ${decPluriel(r.regles, 'pari retenu', 'paris retenus')}, ${decPluriel(R.jours, 'jour')}.
+${roi}${clv}</p><p class="dec-preuves">${preuves(r)}</p>
+<p class="aide">Pour comparer, les ${decPluriel(x.regles, 'autre pari unique', 'autres paris uniques')} des mêmes jours : ${preuves(x)}</p></div>`;
+}
+
 // Page entière. ``noms`` : identifiant de stratégie → nom affiché (classement du Bilan), pour les pauses et les doublons.
 function htmlDecision(D, fiches, maintenant = Date.now(), noms = null) {
   const DEC = D.decision || {}, lignes = DEC.lignes || [], R = DEC.regles || {};
@@ -164,6 +191,7 @@ ${J.jouer.length ? `Sur ${decPluriel(J.ouverts, 'pari ouvert', 'paris ouverts')}
     : 'Aucun pari ouvert dont le match n’a pas commencé.'}</p>
 <p class="aide">Retenu : une mise par cote, match pas commencé, ${A.prouve ? 'pris par une stratégie validée, ou ' : ''}bookmaker et référence « jouables » dans Les chiffres${jouables.length
     ? ` (${jouables.map(l => e(l.nom)).join(', ')})` : ' (aucune ligne aujourd’hui)'}. ${A.prouve ? '' : 'Avantage probable, pas prouvé : '}la CLV contre la clôture Pinnacle est le seul chiffre qui prédit le rendement.</p>
+${decHtmlRejeu(DEC.rejeu)}
 <div class="dec-paris">${decHtmlJouer(J.jouer)}</div>
 ${J.coupes.length + J.attente.length ? `<details class="mode-emploi"><summary>Non retenus (${J.coupes.length + J.attente.length})</summary><ul class="dec-liste">
 ${decHtmlEcartes(J.coupes, () => 'à couper')}${decHtmlEcartes(J.attente, l => l.raison || 'non tranché')}</ul></details>` : ''}</section>`;
@@ -193,8 +221,10 @@ ${nCoupes ? 'Mesurées comme perdantes, ou déjà arrêtées par leurs propres r
 <ul class="dec-liste">${items.join('')}${proche}${doublons}</ul></section>`;
 
   // --- Les chiffres : une ligne par mesure citée plus haut.
-  const etat = l => `<span class="dec-etat ${l.decision}">${e(decEtat(l.decision))}</span>`;
-  const mesurees = lignes.map(l => `<div class="dec-ligne" id="${decAncre(l.id)}" tabindex="-1"><span>${e(l.nom)}<small>${e(l.raison || '')}</small></span>
+  const etat = l => l.verdict ? `<span class="dec-etat ${l.verdict.cls}">${e(l.verdict.mot)}</span>`
+    : `<span class="dec-etat ${l.decision}">${e(decEtat(l.decision))}</span>`;
+  const rejeu = decLignesRejeu(DEC.rejeu).map((l, i) => ({...l, verdict: i ? {cls: '', mot: '—'} : decVerdictRejeu(l)}));
+  const mesurees = [...lignes, ...rejeu].map(l => `<div class="dec-ligne" id="${decAncre(l.id)}" tabindex="-1"><span>${e(l.nom)}<small>${e(l.raison || '')}</small></span>
 <span data-t="Réglés">${decNb(l.regles)}</span>
 <span data-t="ROI" class="${signe(l.roi)}">${decPct(l.roi, 1)}<small>${l.roi_ic ? decIc(l.roi_ic, 1) : 'non testé'}</small></span>
 <span data-t="CLV Pinnacle" class="${signe(l.clv)}">${decPct(l.clv)}<small>${l.clv_ic ? decIc(l.clv_ic) : l.clv == null ? '' : 'non testée'}</small></span>
@@ -211,6 +241,7 @@ ${nCoupes ? 'Mesurées comme perdantes, ou déjà arrêtées par leurs propres r
 <p class="aide">Paris des bilans (cote ≤ 5, mise fixe), tout l'historique ; bookmakers sur les paris uniques, références sur tous leurs paris. Intervalles à 95 % par match.
 <b>Jouable</b> : ROI positif et CLV Pinnacle positive après correction de Holm, mesurée sur au moins ${Math.round(100 * (R.part_pinnacle_min ?? .5))} % des paris réglés, rendement compatible avec la CLV.
 <b>À couper</b> : ROI négatif, avec le ROI ou la CLV Pinnacle sous zéro après correction de Benjamini-Hochberg. <b>À surveiller</b> : intervalle du ROI sous zéro, ou CLV négative, sans les deux.
+<b>Règle rejouée</b> : chaque jour, les décisions sont refaites avec les seuls paris réglés avant minuit (UTC), puis appliquées aux paris uniques détectés ce jour-là ; elle n'est pas corrigée, c'est un seul test.
 Correction sur ${R.tests_roi ?? '—'} tests pour le ROI et ${R.tests_clv ?? '—'} pour la CLV (chaque ligne, dans les deux sens). Règles : docs/avantage-reel.md ; « prouvé » : docs/protocole.md.</p></section>`;
 }
 

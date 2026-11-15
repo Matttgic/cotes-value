@@ -427,7 +427,9 @@ et test fixés avant les paris pour chaque stratégie ; suivi automatique dans l
 Page **Décision** du site (`web/decision.js`, chiffres de `cotes/decision.py`) : trois questions par jour (l'avantage
 est-il prouvé, quoi jouer, quoi couper), chaque réponse renvoyant au chiffre mesuré qui la justifie. « Prouvé » vient
 du protocole seul ; « jouer » et « couper » appliquent les règles du verdict de avantage-reel.md à la CLV contre la
-clôture Pinnacle, par bookmaker et par référence, recalculée à chaque construction.
+clôture Pinnacle, par bookmaker et par référence, recalculée à chaque construction. La règle « quoi jouer » y est
+aussi rejouée jour par jour sans regard vers l'avenir (décisions refaites avec les seuls paris réglés avant chaque
+jour) : ROI et CLV des paris qu'elle aurait retenus, comparés aux autres paris uniques des mêmes jours.
 [Stratégie de mises](docs/strategie-mises.md) (14/11/2026) : segments à couper, stratégie figée choisie sur une période
 et validée sur l'autre, Kelly fractionné simulé contre la mise fixe par `etudes/strategie_mises.py`.
 [Cote juste](docs/cote-juste.md) (14/11/2026) : méthodes de retrait de la marge et pondérations du consensus
