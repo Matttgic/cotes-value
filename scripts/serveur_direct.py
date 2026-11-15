@@ -246,6 +246,9 @@ def publier(donnees: Path, env: dict, jeton: str, branche: str, cycles: int, viv
     if not enregistrer(donnees, f"Serveur {datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%SZ}"):
         journal("push de « donnees » en échec : nouvel essai au prochain enregistrement")
         return False
+    # Jours terminés de references/ (mémoire de travail) en release, comme sur GitHub (cotes/depot/references.py).
+    executer([py, "-m", "cotes", "references", "--publier", "--donnees", str(donnees)], timeout=300,
+             env={**env, "GH_TOKEN": jeton, "DEPOT": DEPOT})
     if vivant:
         signaler_vie()
     declencher_site(jeton, branche)

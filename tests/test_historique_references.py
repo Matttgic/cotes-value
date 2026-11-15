@@ -31,7 +31,7 @@ def test_references_ecrites_seulement_au_changement(tmp_path, monkeypatch):
     plus_tard = NOW + timedelta(minutes=5)
     refs = {"Pinnacle": [pin(t=plus_tard), pin("EXT", 0.31, t=plus_tard)]}
     assert H.ajouter_references(tmp_path, refs, plus_tard) == 1
-    hist = lire(tmp_path, "references")
+    hist = lire(tmp_path / "memoire", "references")      # jour en cours dans la mémoire depuis le 15/11/2026
     assert hist[0] == {"t": lu(NOW), "b": "Pinnacle", "m": 111, "sport": "football", "ligue": "L1", "dom": "Lens",
                        "ext": "Lille", "debut": "2026-11-12T20:00:00Z"}
     assert hist[-1] == {"t": lu(plus_tard), "b": "Pinnacle", "m": 111, "k": "RESULTAT_1N2|MATCH||EXT",
@@ -44,7 +44,7 @@ def test_retrait_seulement_si_le_match_est_relu(tmp_path, monkeypatch):
     plus_tard = NOW + timedelta(minutes=5)
     # match 111 relu sans EXT -> retrait ; match 222 absent du cycle -> rien (absence inconnue)
     assert H.ajouter_references(tmp_path, {"Pinnacle": [pin(t=plus_tard)]}, plus_tard) == 1
-    assert lire(tmp_path, "references")[-1] == {"t": lu(plus_tard), "b": "Pinnacle", "m": 111,
+    assert lire(tmp_path / "memoire", "references")[-1] == {"t": lu(plus_tard), "b": "Pinnacle", "m": 111,
                                                 "k": "RESULTAT_1N2|MATCH||EXT", "c": None}
     # reprise d'une lecture ancienne (référence en panne) : pas fraîche, pas de retrait
     encore = plus_tard + timedelta(minutes=5)

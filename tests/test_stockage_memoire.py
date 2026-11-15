@@ -178,7 +178,7 @@ def test_workflow_memoire_en_cache_et_un_seul_commit():
     s = (Path(__file__).resolve().parents[1] / ".github/workflows/collecte.yml").read_text(encoding="utf-8")
     assert "path: memoire" in s and "restore-keys: memoire-" in s
     assert "key: memoire-${{ github.run_id }}-${{ github.run_attempt }}" in s
-    assert s.count("MEMOIRE_CHEMIN: memoire") == 2
+    assert s.count("MEMOIRE_CHEMIN: memoire") == 3      # cycle, règlement, publication des références
     assert s.count("git commit") == 1 and s.count("git push -q origin donnees") == 1
     assert "git rm -q --cached --ignore-unmatch horizon_direct.json pinnacle_secours_cache.json smarkets_cache.json" in s
     assert s.index("git rm -q --cached") < s.index("git add -A")

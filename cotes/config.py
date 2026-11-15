@@ -92,7 +92,8 @@ VARIABLES: dict[str, Variable] = {
     "PUBLICATION_S": Variable("300", float, "serveur : secondes entre deux push"),
     "DEPOT": Variable("Matttgic/cotes-value", str, "serveur : dépôt GitHub"),
     "BRANCHE_CODE": Variable("", str, "serveur : branche du code ; vide : branche courante"),
-    "GITHUB_TOKEN": _secret("jeton GitHub (serveur : push et appel de site.yml)"),
+    "GITHUB_TOKEN": _secret("jeton GitHub (serveur : push, appel de site.yml, releases des références)"),
+    "GH_TOKEN": _secret("jeton GitHub des workflows (gh, releases des références)"),
     "HC_PING_URL": _secret("battement Healthchecks"),
     # GitHub Actions et outils
     "ACTIONS_ID_TOKEN_REQUEST_URL": _secret("GitHub Actions : jeton OIDC (Supabase)"),

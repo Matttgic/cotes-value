@@ -6,6 +6,10 @@ Tableau produit par `python -m cotes.depot.catalogue --markdown` (source : `cote
 Zones : **chaud** (racine de la branche, réécrit), **froid** (branche, ajout seul ou archives), **memoire** (cache
 Actions `memoire/`, sauvé après un push réussi), **reprise** et **envoyes** (caches Actions toujours sauvés).
 
+Depuis le 15/11/2026, `references/` n'est plus dans la branche : le jour en cours est dans `memoire/references/`,
+chaque jour terminé dans la release GitHub `references-AAAA-MM`. Pour une étude :
+`python -m cotes references --telecharger donnees/references` (option `--mois AAAA-MM`).
+
 | Fichier | Zone | Format | Écrit par | Lu par | Rétention |
 |---|---|---|---|---|---|
 | `paris.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/site_web.py, scripts/envoyer_notifications.py, cotes/recap_jouables.py, études | paris réglés depuis moins de 30 jours (stockage.archiver) |
@@ -36,7 +40,7 @@ Actions `memoire/`, sauvé après un push réussi), **reprise** et **envoyes** (
 | `pannes_strategies.json` | chaud | json compact (separators=(',', ':')), UTF-8 | cotes/protection.py | cotes/protection.py | échecs consécutifs par stratégie |
 | `serveur_direct.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/serveur_direct.py | scripts/serveur_actif.py, scripts/envoyer_notifications.py, cotes/direct/betfair.py | battement du serveur en direct |
 | `cotes/*.jsonl.gz` | froid | jsonl gzip, ajout par membre gzip niveau 9 (historiques.ajouter_gzip) | cotes/historiques.py | études | permanent ; mois passés aussi en release (archivage-donnees.yml) |
-| `references/*.jsonl.gz` | froid | jsonl gzip, ajout par membre gzip niveau 9 (historiques.ajouter_gzip) | cotes/historiques.py | études | permanent |
+| `references/*.jsonl.gz` | froid | jsonl gzip, ajout par membre gzip niveau 9 (historiques.ajouter_gzip) | cotes/historiques.py | études | jours du 12 au 15/11/2026 seulement (ensuite en mémoire puis en release) ; archivage mensuel |
 | `releves/*.jsonl.gz` | froid | jsonl gzip, ajout par membre gzip niveau 9 (historiques.ajouter_gzip) | cotes/historiques.py | études | permanent |
 | `correspondances/*.jsonl.gz` | froid | jsonl gzip, ajout par membre gzip niveau 9 (historiques.ajouter_gzip) | cotes/historiques.py | études | permanent |
 | `opportunites/*.jsonl.gz` | froid | jsonl gzip, ajout par membre gzip niveau 9 (historiques.ajouter_gzip) | scripts/cycle.py | cotes/recap_jouables.py, cotes/analyse_marche/lecture.py, études | permanent ; mois passés aussi en release |
@@ -48,6 +52,7 @@ Actions `memoire/`, sauvé après un push réussi), **reprise** et **envoyes** (
 | `memoire/derive_sources.json.gz` | memoire | json compact gzip niveau 5, mtime 0 (memoire.ecrire) | cotes/derive.py | cotes/derive.py | réécrit à chaque passage |
 | `memoire/historique_references.json.gz` | memoire | json compact gzip niveau 5, mtime 0 (memoire.ecrire) | cotes/historiques.py | cotes/historiques.py | dernières cotes de référence écrites |
 | `memoire/historique_correspondances.json.gz` | memoire | json compact gzip niveau 5, mtime 0 (memoire.ecrire) | cotes/historiques.py | cotes/historiques.py | derniers rapprochements écrits |
+| `memoire/references/*.jsonl.gz` | memoire | jsonl gzip, ajout par membre gzip niveau 9 (historiques.ajouter_gzip) | cotes/historiques.py | cotes/depot/references.py | jour UTC en cours ; jour terminé publié en release « references-AAAA-MM » (python -m cotes references), puis retiré |
 | `reprise/derniere_lecture.json.gz` | reprise | json gzip (reprise.ecrire) | cotes/reprise.py | cotes/reprise.py | dernier bon passage de chaque sport |
 | `reprise/sports_cycle.json` | reprise | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py | sports vus depuis 2 heures |
 | `reprise/ancres_mouvement.json.gz` | reprise | json gzip (mouvement.ecrire) | cotes/mouvement.py | cotes/mouvement.py | cote juste de départ de chaque sélection |
