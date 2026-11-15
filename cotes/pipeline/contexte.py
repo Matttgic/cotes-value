@@ -13,3 +13,17 @@ class Contexte:
     donnees: Path
     reprise: Path | None = None                # dernier bon état des références (cache Actions)
     journal: dict = field(default_factory=dict)  # sortie du cycle : etat.json › dernier_cycle
+    # collecte
+    pinnacle: list = field(default_factory=list)
+    polymarket: list = field(default_factory=list)
+    francais: list = field(default_factory=list)
+    smarkets: list = field(default_factory=list)
+    matchbook: list = field(default_factory=list)
+    betfair: list = field(default_factory=list)
+    # analyse
+    etat_controle: dict = field(default_factory=dict)
+    opportunites: list = field(default_factory=list)
+    # prise et règlement
+    paris: list = field(default_factory=list)
+    nouveaux: list = field(default_factory=list)
+    regle: bool = False                        # le règlement a eu lieu à ce cycle

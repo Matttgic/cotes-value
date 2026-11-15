@@ -54,6 +54,8 @@ from cotes.depot.json_io import lire_json, ecrire_json  # noqa: E402,F401  (noms
 from cotes.sources import registre as registre_sources  # noqa: E402
 from cotes.pipeline.contexte import Contexte  # noqa: E402
 from cotes.pipeline import reglement as pipeline_reglement  # noqa: E402
+from cotes.pipeline.sauvegarde import (sauvegarder, CONTROLE_PUBLICATION_MIN, _derniere_mesure,  # noqa: E402,F401
+                                       lire_controle, enregistrer_controle)
 # déplacés dans cotes/pipeline/ (E3.1) ; noms gardés sur le module
 from cotes.pipeline.outils import (etape, signaler, TEMOIN_ABANDONNE, FICHIERS_OBSOLETES,  # noqa: E402,F401
                                    retirer_obsoletes, charger_paris)
@@ -608,45 +610,6 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
     return pin, poly, lignes
 
 
-# controle.json (3 Mo) n'est publié dans « donnees » qu'une fois par heure ; la version de chaque cycle vit
-# dans la mémoire (controle.json.gz). Mémoire perdue : on repart de la dernière publication (moins d'une heure).
-CONTROLE_PUBLICATION_MIN = float(os.environ.get("CONTROLE_PUBLICATION_MIN", "55"))
-
-
-def _derniere_mesure(doc) -> datetime | None:
-    groupes = doc.get("groupes") if isinstance(doc, dict) else None
-    moments = [_instant(g.get("maj")) for g in groupes.values() if isinstance(g, dict)] if isinstance(groupes, dict) else []
-    moments = [m for m in moments if m is not None]
-    return max(moments) if moments else None
-
-
-def lire_controle(donnees: Path) -> dict:
-    """État cumulé du contrôle : la mémoire du cycle précédent, ou la publication horaire si elle est plus
-    récente (mémoire absente ou restaurée d'un vieux cache). Publication illisible : erreur, comme avant."""
-    publie = lire_json(donnees / "controle.json", {})
-    publie = publie if isinstance(publie, dict) else {}
-    doc = memoire.lire(donnees, "controle", None, ancien_aussi=False)
-    if not isinstance(doc, dict) or (_derniere_mesure(publie) or datetime.min.replace(tzinfo=timezone.utc)) > (
-            _derniere_mesure(doc) or datetime.min.replace(tzinfo=timezone.utc)):
-        doc = publie
-    doc.pop("publie", None)
-    return doc
-
-
-def enregistrer_controle(donnees: Path, etat_controle: dict, maintenant: datetime) -> bool:
-    """Mémoire à chaque cycle ; copie compacte dans « donnees » si la dernière date d'au moins 55 min."""
-    memoire.ecrire(donnees, "controle", etat_controle, retirer_ancien=False)
-    publie = donnees / "controle.json"
-    try:
-        derniere = _instant(json.loads(publie.read_text(encoding="utf-8")).get("publie"))
-    except (OSError, ValueError, AttributeError):
-        derniere = None
-    if derniere is not None and timedelta(0) <= maintenant - derniere < timedelta(minutes=CONTROLE_PUBLICATION_MIN):
-        return False
-    ecrire_json(publie, {**etat_controle, "publie": maintenant.isoformat(timespec="seconds")}, compact=True)
-    return True
-
-
 def redecider(registre: list, maintenant: datetime, journal: dict, redecider_ouverts) -> None:
     """Redécision des paris ouverts. Jamais bloquante ; un échec est annoncé et noté (cotes/echecs.py)."""
     try:
@@ -847,37 +810,13 @@ def main() -> int:
     # La collecte reprend le règlement si le workflow horaire a été retardé.
     regler = effectuer_reglement(paris, donnees, maintenant, journal, args.reglement)
 
-    # 5. sauvegarde
-    paris = stockage.archiver(donnees, paris, maintenant)      # réglés depuis plus de 30 jours -> archives
-    liens.completer_liens(paris)                              # lien direct vers le match chez le bookmaker
-    ecrire_json(donnees / "paris.json", paris)
-    retirer_obsoletes(donnees, journal)
-    journal["controle_publie"] = enregistrer_controle(donnees, etat_controle, maintenant)
-    ecrire_json(donnees / "opportunites_actuelles.json", sorted(opportunites, key=lambda o: -o["ecart"]))
-    if opportunites:
-        jour = donnees / "opportunites" / f"{maintenant:%Y-%m-%d}.jsonl.gz"
-        jour.parent.mkdir(parents=True, exist_ok=True)
-        # Ajout atomique (copie + nouveau membre gzip + os.replace) : un job tué ne tronque jamais le fichier.
-        historiques.ajouter_gzip(jour, "".join(json.dumps(o, ensure_ascii=False) + "\n" for o in opportunites))
-    etat = lire_json(donnees / "etat.json", {})
-    journal.update({
-        "fin": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "cotes": {"francaises": len(francais), "pinnacle": len(pin), "polymarket": len(poly),
-                  "smarkets": len(sm_lignes), "matchbook": len(mb_lignes),
-                  "betfair": len(bf_lignes)},
-        "matchs_francais": len({l["match_id"] for l in francais}),
-        "opportunites": sum(not o.get("suspect") for o in opportunites),
-        "opportunites_suspectes": sum(bool(o.get("suspect")) for o in opportunites),
-        "nouveaux_paris": len(nouveaux)})
-    etat.update({"dernier_cycle": journal})
-    echecs.fusionner(etat, journal.get("echecs", []), maintenant)
-    conserver_journal_reglement(etat, journal, regler)
-    historique = etat.get("historique", [])[-200:] + [{k: journal[k] for k in ("debut", "mode", "opportunites",
-                                                                                "nouveaux_paris")}]
-    etat["historique"] = historique
-    ecrire_json(donnees / "etat.json", etat)
-    from cotes import surveillance                                      # noqa: E402
-    journal["surveillance"] = surveillance.surveiller(donnees, journal.get("etapes", {}))
+    # 5. sauvegarde (cotes/pipeline/sauvegarde.py)
+    ctx = Contexte(maintenant=maintenant, mode=args.mode, donnees=donnees,
+                   reprise=Path(args.reprise) if args.reprise else None, journal=journal,
+                   pinnacle=pin, polymarket=poly, francais=francais, smarkets=sm_lignes, matchbook=mb_lignes,
+                   betfair=bf_lignes, etat_controle=etat_controle, opportunites=opportunites, paris=paris,
+                   nouveaux=nouveaux, regle=regler)
+    sauvegarder(ctx)
 
     # 6. site
     if not args.sans_site:

@@ -6,12 +6,11 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from cotes import (echecs, flashscore, liens, livescore, propline, reglement, resultats_nhl, scores365, stockage,
-                   theodds, thesportsdb)
+from cotes import flashscore, livescore, propline, reglement, resultats_nhl, scores365, theodds, thesportsdb
 from cotes import resultats as resultats_mod
 from cotes.depot.json_io import ecrire_json, lire_json
 from cotes.pipeline.contexte import Contexte
-from cotes.pipeline.outils import charger_paris, etape, retirer_obsoletes, signaler
+from cotes.pipeline.outils import charger_paris, etape, signaler
 
 # minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
 REGLEMENT_MINUTES = float(os.environ.get("REGLEMENT_MINUTES", "55"))
@@ -227,19 +226,12 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
 def regler_seul(ctx: Contexte, mode_reglement: str) -> bool:
     """Cycle indépendant : aucune collecte ni placement de paris. Écrit paris.json et etat.json ; le site est
     construit par l'appelant."""
+    from cotes.pipeline.sauvegarde import sauvegarder
     donnees, maintenant, journal = ctx.donnees, ctx.maintenant, ctx.journal
     paris = charger_paris(donnees, journal)
     manuels = lire_json(donnees / "resultats_manuels.json", {})
-    paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
+    ctx.paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
     journal["mode"] = "reglement"
-    regler = effectuer_reglement(paris, donnees, maintenant, journal, mode_reglement)
-    paris = stockage.archiver(donnees, paris, maintenant)
-    liens.completer_liens(paris)
-    ecrire_json(donnees / "paris.json", paris)
-    retirer_obsoletes(donnees, journal)
-    etat = lire_json(donnees / "etat.json", {})
-    journal["fin"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    conserver_journal_reglement(etat, journal, regler)
-    echecs.fusionner(etat, journal.get("echecs", []), maintenant)
-    ecrire_json(donnees / "etat.json", etat)
-    return regler
+    ctx.regle = effectuer_reglement(ctx.paris, donnees, maintenant, journal, mode_reglement)
+    sauvegarder(ctx, reglement_seul=True)
+    return ctx.regle

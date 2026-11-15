@@ -408,6 +408,8 @@ Toutes les étapes de cette phase sont des **déplacements** : même code, même
   `etat.json`, surveillance) devient `pipeline/sauvegarde.py › sauvegarder(ctx)`. Le chemin règlement appelle la même
   fonction avec un drapeau pour sa partie commune, dans le même ordre.
 - Test : E0.2, `tests/test_cycle_reglement.py`.
+- Fait le 15/11/2026 : `sauvegarder(ctx, reglement_seul=False)` ; `lire_controle`, `enregistrer_controle` et
+  `CONTROLE_PUBLICATION_MIN` déplacés avec (`cotes/pipeline/sauvegarde.py`), noms gardés sur `cycle`.
 
 **E3.3 — Étape analyse**
 - Faire : association → historique des références → contrôle → comparaison → props → mouvement → écarts d'affichage
@@ -546,7 +548,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☑ |
 | E2.5 | Erreurs sans liste globale | — | faible | ☐ |
 | E3.1 | Contexte, règlement seul | E0.2 | moyen | ☑ |
-| E3.2 | Étape sauvegarde | E3.1 | moyen | ☐ |
+| E3.2 | Étape sauvegarde | E3.1 | moyen | ☑ |
 | E3.3 | Étape analyse | E3.1 | moyen | ☐ |
 | E3.4 | Étape prise | E3.1 | moyen | ☐ |
 | E3.5 | Étape collecte | E2.4, E3.1 | moyen | ☐ |

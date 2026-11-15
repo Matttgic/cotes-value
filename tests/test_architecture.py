@@ -44,7 +44,7 @@ _PAR_COUCHE = {
               "cotes.analyse_marche.meneurs cotes.analyse_marche.opportunites cotes.analyse_marche.segments",
     "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables",
     "site": "scripts.site_web",
-    "cycle": "cotes.pipeline cotes.pipeline.contexte cotes.pipeline.outils cotes.pipeline.reglement",
+    "cycle": "cotes.pipeline cotes.pipeline.contexte cotes.pipeline.outils cotes.pipeline.reglement cotes.pipeline.sauvegarde",
     "scripts": "scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "
                "scripts.serveur_actif scripts.protocole scripts.verifier_secrets scripts.verifier_strategie_jules "
                "scripts.verifier_strategie_jules_v2 scripts.archiver_donnees_brutes scripts.sonde_betfair "
