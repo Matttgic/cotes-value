@@ -31,6 +31,7 @@ class Strategie:
     selectionner: Callable[[list[dict]], set[int]]
     figee: bool
     ligne: str
+    court: str                                # nom court (cases des notifications, page Stratégies)
 
 
 def _a_l_appel(f: Callable) -> Callable:
@@ -60,13 +61,13 @@ def _bases():
     for cle, _famille_vote, libelle, ligne, selecteur in STRATEGIES:
         r = regles[cle]
         yield Strategie(cle, libelle, "base", r.get("version"), r.get("debut"), _a_l_appel(selecteur),
-                        modules[cle] in FICHIERS_FIGES, ligne)
+                        modules[cle] in FICHIERS_FIGES, ligne, libelle)
 
 
 def _convergence():
     from cotes.convergence import CONVERGENCE, paris_convergence
     yield Strategie("convergence", CONVERGENCE["nom"], "convergence", CONVERGENCE.get("version"),
-                    CONVERGENCE["debut"], _a_l_appel(paris_convergence), False, CONVERGENCE["nom"])
+                    CONVERGENCE["debut"], _a_l_appel(paris_convergence), False, CONVERGENCE["nom"], CONVERGENCE["nom"])
 
 
 def _famille_variante(cle: str) -> str:
@@ -84,15 +85,18 @@ def _variantes():
         def selectionner(paris, cle=v["cle"]):
             return selections_prudentes(paris).get(cle, set())
         yield Strategie(v["cle"], v["nom"], _famille_variante(v["cle"]), v.get("version"), v.get("debut"),
-                        selectionner, False, v["nom"])
+                        selectionner, False, v["nom"], v["court"])
 
 
 def _laboratoire():
     from cotes.laboratoire import DEBUT_ETUDE, REGLES, selectionner as selectionner_regle
+    numeros: dict[str, int] = {}
     for r in REGLES:
         def selectionner(paris, r=r):
             return {id(p) for p in selectionner_regle(paris, r)}
-        yield Strategie("labo:" + r.id, r.nom, "labo", "1", DEBUT_ETUDE, selectionner, False, r.id)
+        numeros[r.reference] = numeros.get(r.reference, 0) + 1     # « Pinnacle 2 » : numérotation de la page
+        yield Strategie("labo:" + r.id, r.nom, "labo", "1", DEBUT_ETUDE, selectionner, False, r.id,
+                        f"{r.reference} {numeros[r.reference]}")
 
 
 @lru_cache(maxsize=1)

@@ -63,3 +63,18 @@ def test_regle_du_laboratoire(temoin):
     from cotes.laboratoire import REGLES, selectionner
     r = REGLES[0]
     assert registre.strategie("labo:" + r.id).selectionner(temoin) == {id(p) for p in selectionner(temoin, r)}
+
+
+def test_noms_des_notifications_identiques():
+    """Cases des notifications (cotes/notifications.py › NOMS) : même ordre et mêmes noms qu'avant E4.3."""
+    from cotes import notifications
+    from cotes.convergence import STRATEGIES
+    from cotes.laboratoire import REGLES
+    from cotes.strategies_prudentes import VARIANTES
+    numeros, labo = {}, {}
+    for r in REGLES:
+        numeros[r.reference] = numeros.get(r.reference, 0) + 1
+        labo["labo:" + r.id] = f"{r.reference} {numeros[r.reference]}"
+    avant = {**{cle: nom for cle, _, nom, _, _ in STRATEGIES}, "convergence": "Convergence ≥ 2",
+             **{v["cle"]: v["court"] for v in VARIANTES}, **labo, **notifications.NOMS_BASES}
+    assert list(notifications.NOMS.items()) == list(avant.items())

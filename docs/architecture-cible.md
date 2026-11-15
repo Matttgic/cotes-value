@@ -468,6 +468,10 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 
 **E4.3 — Notifications, ordres et protocole lisent le registre** (un module par commit)
 - Test : empreinte identique, `tests/test_notifications.py`, `tests/test_ordres.py`, `tests/test_protocole.py`.
+- Fait le 15/11/2026 pour les notifications : `NOMS` vient du registre (champ `court` ajouté, numérotation du
+  laboratoire déplacée), même ordre et mêmes noms (test). `ordres.py` n'énumère aucune stratégie : rien à changer.
+  `protocole.py` non modifié : `definitions()` est l'entrée scellée de l'empreinte et ses règles du laboratoire
+  partent de `DEBUT_SUIVI`, pas du début des sélecteurs du registre ; le test de E4.1 vérifie déjà la concordance.
 
 **E4.4 — Fiche « Ajouter une stratégie »**
 - Faire : section du README : un fichier `strategie_x.py`, une entrée de registre, une doc `docs/strategie-x.md`,
@@ -571,7 +575,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E3.6 | `main()` enchaîne | E3.2 à E3.5 | faible | ☑ |
 | E4.1 | Registre des stratégies | — | faible | ☑ |
 | E4.2 | Site sur le registre | E4.1, E0.1 | moyen | ☑ |
-| E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☐ |
+| E4.3 | Alertes, ordres, protocole sur le registre | E4.1, E0.1 | moyen | ☑ |
 | E4.4 | Fiche « Ajouter une stratégie » | E4.1 | faible | ☐ |
 | E5.1 | Alertes dans `cotes/alertes/` | E1.4 | faible | ☐ |
 | E5.2 | `_construire` en quatre | E0.1 | moyen | ☐ |
