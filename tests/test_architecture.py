@@ -24,7 +24,7 @@ _PAR_COUCHE = {
              "cotes.historiques cotes.stockage cotes.fraicheur cotes.protection cotes.surveillance cotes.derive",
     "vocabulaire": "cotes.pulsescore cotes.marches cotes.joueurs cotes.inconnus cotes.marge cotes.correspondance "
                    "cotes.liens",
-    "sources": "cotes.pinnacle cotes.pinnacle_secours cotes.polymarket cotes.polymarket_flux cotes.smarkets "
+    "sources": "cotes.sources cotes.sources.registre cotes.pinnacle cotes.pinnacle_secours cotes.polymarket cotes.polymarket_flux cotes.smarkets "
                "cotes.reprise cotes.resultats cotes.livescore cotes.flashscore cotes.scores365 cotes.resultats_nhl "
                "cotes.theodds cotes.propline cotes.thesportsdb cotes.sources_resultats cotes.direct "
                "cotes.direct.betclic cotes.direct.betfair cotes.direct.draftkings cotes.direct.fanduel "

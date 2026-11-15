@@ -356,6 +356,8 @@ cette étape. »
   exclusions de `index_controle` (`Smarkets`, `Matchbook`, `Betfair`), `smarkets.hors_consensus()`,
   `matchbook.hors_consensus()` et le cas Unibet. `lire` pointe vers le `collecter` actuel.
 - Test : budgets du registre == `cycle.BUDGETS` ; mémoires == `cycle.MEMOIRES` ; exclusions identiques.
+- Fait le 15/11/2026 : 13 sources de cotes (les lecteurs de scores viendront avec E2.5). Champ `reference` en plus
+  (nom de la table dans `references`) et `hors_consensus` appelable (Smarkets dépend de `SMARKETS_DANS_DECISION`).
 
 **E2.2 — Le cycle lit le registre**
 - Faire : `BUDGETS`, `MEMOIRES` et la liste d'exclusion du contrôle de `cycle.py` deviennent des valeurs calculées
@@ -527,7 +529,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E1.2 | Modules sur `config.lire` | E1.1 | faible | ☐ |
 | E1.3 | Catalogue des fichiers | — | faible | ☑ |
 | E1.4 | Une E/S JSON | E0.1 | faible | ☑ |
-| E2.1 | Registre des sources | — | faible | ☐ |
+| E2.1 | Registre des sources | — | faible | ☑ |
 | E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☐ |
 | E2.3 | Lecture de même forme | E2.1 | faible | ☐ |
 | E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☐ |
