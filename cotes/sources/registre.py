@@ -53,8 +53,11 @@ SOURCES: tuple[Source, ...] = (
     # PMU, Winamax, Unibet, Betclic, OlyBet, NetBet : bookmakers français, lus en direct
     _source("pmu_direct", "francais", 75, pmu, memoire="pmu"),
     _source("winamax_direct", "francais", 80, winamax),       # 25 filtres depuis le 25/10 : ~70 s
+    # coupé par le budget dans la moitié des cycles les 23-24/10 (médiane 72 s)
     _source("unibet_direct", "francais", 80, unibet, memoire="unibet", attend_radar=True),
     _source("olybet", "francais", 40, olybet, mode=_appel(olybet, "mode_source")),
+    # coupé par son budget à chaque cycle jusqu'au 2/11 (lecture tournante incomplète) ; lu en parallèle, et le cycle
+    # attend déjà Winamax (~60 s) et Unibet (~75 s après le départ) : 55 s ne rallongent pas la collecte
     _source("netbet", "francais", 55, netbet, mode=_appel(netbet, "mode_source"), memoire="netbet"),
     _source("betclic_direct", "francais", 80, betclic, memoire="betclic"),
     # bourses : leur table de paris, hors du contrôle des intitulés
@@ -63,10 +66,13 @@ SOURCES: tuple[Source, ...] = (
             hors_consensus=_appel(smarkets, "hors_consensus"), dans_controle=False),
     _source("matchbook", "bourse", 25, matchbook, mode=_appel(matchbook, "mode"), reference="Matchbook",
             hors_consensus=_appel(matchbook, "hors_consensus"), dans_controle=False),
+    # catalogue relu toutes les 10 min (~50 appels) ; sinon prix seuls, 30 appels au plus
     _source("betfair", "bourse", 45, betfair, mode=_appel(betfair, "mode"), reference="Betfair",
             dans_controle=False),
     # références des props (et des matchs US pour DraftKings) : ni cotes françaises ni paris
+    # 4 ligues puis 7 sous-catégories de props, 0,1 à 0,3 s par appel ; SOURCE_DRAFTKINGS=off coupe
     _source("draftkings", "reference_props", 20, draftkings, mode=_appel(draftkings, "mode")),
+    # liste NBA/NHL puis onglets de props ; coupé par SOURCE_FANDUEL=off
     _source("fanduel", "reference_props", 40, fanduel, mode=_appel(fanduel, "mode")),
 )
 

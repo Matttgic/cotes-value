@@ -1,7 +1,4 @@
 """Registre des sources (cotes/sources/registre.py, E2.1) : mêmes valeurs que scripts/cycle.py."""
-import ast
-from pathlib import Path
-
 import pytest
 
 from cotes import smarkets
@@ -9,28 +6,25 @@ from cotes.direct import matchbook, winamax
 from cotes.sources import registre
 from scripts import cycle
 
-RACINE = Path(__file__).resolve().parent.parent
+
+# Valeurs de scripts/cyc.py avant E2.2 (BUDGETS, MEMOIRES, exclusions de index_controle), recopiées ici
+BUDGETS_15_11 = {"pinnacle": 45, "polymarket": 30, "pmu_direct": 75, "winamax_direct": 80, "unibet_direct": 80,
+                 "olybet": 40, "netbet": 55, "betclic_direct": 80, "smarkets": 60, "matchbook": 25, "betfair": 45,
+                 "draftkings": 20, "fanduel": 40}
+MEMOIRES_15_11 = {"pmu_direct": "pmu", "unibet_direct": "unibet", "betclic_direct": "betclic", "netbet": "netbet"}
 
 
 def test_budgets_identiques_au_cycle():
-    assert registre.budgets() == cycle.BUDGETS
+    assert registre.budgets() == cycle.BUDGETS == BUDGETS_15_11
+    assert list(cycle.BUDGETS) == list(BUDGETS_15_11)
 
 
 def test_memoires_identiques_au_cycle():
-    assert registre.memoires() == cycle.MEMOIRES
-
-
-def _exclusions_du_controle() -> set[str]:
-    """Littéraux de `index_controle = {… if n not in (…)}` dans cycle.py."""
-    arbre = ast.parse((RACINE / "scripts" / "cycle.py").read_text(encoding="utf-8"))
-    for n in ast.walk(arbre):
-        if isinstance(n, ast.Assign) and any(isinstance(c, ast.Name) and c.id == "index_controle" for c in n.targets):
-            return {c.value for c in ast.walk(n.value) if isinstance(c, ast.Constant) and isinstance(c.value, str)}
-    raise AssertionError("index_controle introuvable")
+    assert registre.memoires() == cycle.MEMOIRES == MEMOIRES_15_11
 
 
 def test_exclusions_du_controle_identiques():
-    assert registre.hors_controle() == _exclusions_du_controle()
+    assert registre.hors_controle() == {"Smarkets", "Matchbook", "Betfair"}
 
 
 @pytest.mark.parametrize("drapeau", ["", "oui"])

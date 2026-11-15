@@ -51,26 +51,11 @@ from cotes.marches import harmoniser_pinnacle  # noqa: E402
 from cotes.fraicheur import resume_lignes  # noqa: E402
 from cotes.temps import instant_utc  # noqa: E402
 from cotes.depot.json_io import lire_json, ecrire_json  # noqa: E402,F401  (noms gardés sur le module)
+from cotes.sources import registre as registre_sources  # noqa: E402
 
 HORIZON_H = 36
-# Budgets durs : une source au-delà est sautée, le cycle de 5 min continue.
-BUDGETS = {
-    "pinnacle": 45,
-    "polymarket": 30,
-    "pmu_direct": 75,
-    "winamax_direct": 80,       # 25 filtres depuis le 25/10 (handicaps, totaux par équipe, mi-temps) : ~70 s
-    "unibet_direct": 80,        # coupé par le budget dans la moitié des cycles les 23-24/10 (médiane 72 s)
-    "olybet": 40,
-    # coupé par son budget à chaque cycle jusqu'au 2/11 (lecture tournante incomplète) ; lu en parallèle, et le cycle
-    # attend déjà Winamax (~60 s) et Unibet (~75 s après le départ) : 55 s ne rallongent pas la collecte
-    "netbet": 55,
-    "betclic_direct": 80,
-    "smarkets": 60,
-    "matchbook": 25,
-    "betfair": 45,          # catalogue relu toutes les 10 min (~50 appels) ; sinon prix seuls, 30 appels au plus
-    "draftkings": 20,       # 4 ligues puis 7 sous-catégories de props, 0,1 à 0,3 s par appel ; SOURCE_DRAFTKINGS=off coupe
-    "fanduel": 40,          # liste NBA/NHL puis onglets de props ; coupé par SOURCE_FANDUEL=off
-}
+# Budgets durs : une source au-delà est sautée, le cycle de 5 min continue (cotes/sources/registre.py).
+BUDGETS = registre_sources.budgets()
 SMARKETS_FRAIS_MIN = 15
 _journal_lock = threading.Lock()
 # minutes minimum entre deux règlements (le cycle de 5 min ne lit les résultats qu'une fois par heure)
@@ -284,7 +269,7 @@ def _radar_depuis(lignes) -> list[dict]:
 
 
 # source du cycle -> clé de sa mémoire dans horizon_direct (cotes/memoire.py, hors branche « donnees »)
-MEMOIRES = {"pmu_direct": "pmu", "unibet_direct": "unibet", "betclic_direct": "betclic", "netbet": "netbet"}
+MEMOIRES = registre_sources.memoires()
 AGE_REPLI_MIN = 30
 
 
@@ -1059,7 +1044,7 @@ def main() -> int:
                                                                               maintenant)
     except Exception as e:  # noqa: BLE001
         journal["historique_references"] = {"erreur": echecs.noter(journal, "historique_references", e, maintenant)}
-    index_controle = {n: v for n, v in index.items() if n not in ("Smarkets", "Matchbook", "Betfair")}
+    index_controle = {n: v for n, v in index.items() if n not in registre_sources.hors_controle()}
     mesures = controle.mesurer(francais, index_controle)
     etat_controle = controle.mettre_a_jour(lire_controle(donnees), mesures, journal["debut"])
     suspects = controle.matchs_suspects(mesures)

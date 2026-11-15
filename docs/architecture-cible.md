@@ -362,6 +362,9 @@ cette étape. »
 **E2.2 — Le cycle lit le registre**
 - Faire : `BUDGETS`, `MEMOIRES` et la liste d'exclusion du contrôle de `cycle.py` deviennent des valeurs calculées
   depuis le registre (mêmes noms dans `cycle`). Test : contrôle standard, E0.2.
+- Fait le 15/11/2026. `tests/test_betfair.py` lisait le littéral `"Matchbook", "Betfair")` dans le source de
+  `main()` : il vérifie maintenant l'appel au registre et la présence de Betfair dans `hors_controle()`.
+  `tests/test_registre_sources.py` garde les anciennes valeurs recopiées.
 
 **E2.3 — Lecture de même forme pour toutes les sources**
 - Faire : ajouter `mode()` à `direct/olybet.py` et `direct/netbet.py` (alias de `mode_source`, qui reste) ; dans le
@@ -530,7 +533,7 @@ Les règles ne changent pas : `tests/test_protocole.py` doit rester vert à chaq
 | E1.3 | Catalogue des fichiers | — | faible | ☑ |
 | E1.4 | Une E/S JSON | E0.1 | faible | ☑ |
 | E2.1 | Registre des sources | — | faible | ☑ |
-| E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☐ |
+| E2.2 | Cycle sur le registre | E2.1, E0.2 | faible | ☑ |
 | E2.3 | Lecture de même forme | E2.1 | faible | ☐ |
 | E2.4 | Boucle des bookmakers | E2.2, E2.3 | moyen | ☐ |
 | E2.5 | Erreurs sans liste globale | — | faible | ☐ |
