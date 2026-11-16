@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from cotes import flashscore, livescore, propline, reglement, resultats_nhl, scores365, theodds, thesportsdb
+from cotes import euria, flashscore, livescore, propline, reglement, resultats_nhl, scores365, theodds, thesportsdb
 from cotes import resultats as resultats_mod
 from cotes.depot.json_io import ecrire_json, lire_json
 from cotes.pipeline.contexte import Contexte
@@ -66,6 +66,41 @@ def _regler_props(donnees: Path, enregistrements: list, maintenant: datetime) ->
     return {"regles": n, "feuilles": len(feuilles)}
 
 
+def regler_episode(e: dict, resultat: dict) -> bool:
+    """Règle un milieu avec le résultat validé de son match (cotes/resultats.py › consensus) : chaque pari est réglé
+    comme un pari simulé, aux cotes et mises de la première lecture. Rend True si l'épisode est réglé."""
+    if resultat.get("annule"):
+        e.update(resultat_100=0.0, tombe=False, statuts=["rembourse", "rembourse"], score=None)
+        return True
+    scores = reglement.scores_par_periode(e.get("sport") or "", tuple(resultat["score"]),
+                                  [tuple(x) for x in resultat.get("periodes") or []], resultat.get("libelles") or [])
+    statuts = []
+    for issue, ligne in zip(e["issues"], e["lignes"]):
+        st = reglement.regler({"sport": e.get("sport"), "marche": e.get("marche"), "periode": e.get("periode"),
+                       "issue": issue, "ligne": ligne}, scores)
+        if st is None:
+            return False
+        statuts.append(st)
+    e["statuts"] = statuts
+    e["resultat_100"] = round(sum(reglement.gain(st, mise, cote) for st, mise, cote in zip(statuts, e["mises_100"], e["cotes"])), 2)
+    e["tombe"] = all(st == "gagne" for st in statuts)
+    e["score"] = list(scores.get(e.get("periode")) or resultat["score"])
+    return True
+
+
+def _regler_milieux(donnees: Path, doc: dict, milieux: list[dict], enregistrements: list, maintenant: datetime) -> dict:
+    """Règle les milieux de la page Euria dont le match a un résultat validé et réécrit ``euria.json``."""
+    par_id = {e.get("id"): e for e in doc.get("episodes_milieux") or [] if isinstance(e, dict)}
+    regles = 0
+    for p in milieux:
+        r = resultats_mod.consensus(p, enregistrements, maintenant)
+        if r and par_id.get(p["id"]) is not None and regler_episode(par_id[p["id"]], r):
+            regles += 1
+    if regles:
+        ecrire_json(donnees / "euria.json", doc, compact=True)
+    return {"a_regler": len(milieux), "regles": regles}
+
+
 def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dict, mode_reglement: str) -> bool:
     # Le règlement ne lit pas Smarkets : les cotes de l'échange ne servent pas à solder un pari.
     # 4. règlement : ESPN, LiveScore, Flashscore, NHL et les secours, plus les résultats
@@ -78,16 +113,21 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
         resultats_mod.reinitialiser_ignores()
         ouverts_avant = {id(p) for p in paris if p.get("statut") in ("en_cours", "a_regler")}
         manuels = lire_json(donnees / "resultats_manuels.json", {})
+        # milieux de la page Euria à régler pour son bilan : leurs matchs sont lus avec ceux des paris
+        doc_euria = lire_json(donnees / "euria.json", {})
+        if not isinstance(doc_euria, dict):
+            doc_euria = {}
+        milieux = euria.a_regler([e for e in doc_euria.get("episodes_milieux") or [] if isinstance(e, dict)], maintenant)
         # Les corrections vérifiées sont disponibles sans nouvelle requête réseau.
         reglement.appliquer(paris, {}, manuels, maintenant)
         enregistrements = []
-        for sport, depuis in resultats_mod.a_lire(paris, maintenant).items():
+        for sport, depuis in resultats_mod.a_lire(paris + milieux, maintenant).items():
             n = len(resultats_mod.ERREURS_ESPN)
             enregistrements += etape(f"resultats_espn_{sport}", journal, resultats_mod.lire_espn,
                                      sport, depuis, datetime.now(timezone.utc)) or []
             signaler(journal, f"resultats_espn_{sport}", resultats_mod.ERREURS_ESPN[n:])
         # LiveScore : gratuit, sans clé (football, hockey, basket, tennis)
-        for sport, depuis in livescore.a_lire(paris, maintenant).items():
+        for sport, depuis in livescore.a_lire(paris + milieux, maintenant).items():
             n = len(livescore.ERREURS)
             enregistrements += etape(f"resultats_livescore_{sport}", journal, livescore.lire, sport,
                                      livescore.jours_a_lire(depuis, maintenant)) or []
@@ -105,14 +145,14 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
         # Flashscore : secours gratuit pour ce qu'aucune source n'a validé, et seule source du volley, du handball
         # et du rugby sans PulseScore (une source seule ne règle qu'après 24 h : cotes/resultats.py)
         restants = [p for p in paris if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats]
-        for sport, jours in flashscore.jours_a_lire(restants, maintenant).items():
+        for sport, jours in flashscore.jours_a_lire(restants + milieux, maintenant).items():
             n = len(flashscore.ERREURS)
             enregistrements += etape(f"resultats_flashscore_{sport}", journal, flashscore.lire, sport, jours,
                                      maintenant) or []
             signaler(journal, f"resultats_flashscore_{sport}", flashscore.ERREURS[n:])
         # 365Scores : deuxième avis gratuit pour le basket, le volley, le handball et le rugby (score final seul).
         # Deux sources d'accord règlent tout de suite ; en désaccord, le pari attend une saisie à la main.
-        for sport, jours in scores365.jours_a_lire(restants, maintenant).items():
+        for sport, jours in scores365.jours_a_lire(restants + milieux, maintenant).items():
             n = len(scores365.ERREURS)
             enregistrements += etape(f"resultats_365scores_{sport}", journal, scores365.lire, sport, jours,
                                      maintenant) or []
@@ -122,6 +162,9 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
                 r = resultats_mod.consensus(p, enregistrements, maintenant)
                 if r:
                     resultats[p["match_id"]] = r
+        if milieux:
+            journal["euria_reglement"] = etape("euria_reglement", journal, _regler_milieux, donnees, doc_euria,
+                                               milieux, enregistrements, maintenant)
         # TheSportsDB : secours gratuit (clé publique), match par match, pour ce qu'aucune source n'a validé.
         # Seul le score final : une source seule ne règle qu'après 24 h, jamais au hockey (cotes/resultats.py).
         restants_tsdb = [p for p in paris if p["statut"] in ("en_cours", "a_regler") and p["match_id"] not in resultats]
