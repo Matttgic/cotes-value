@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-16T08:57:25+00:00",
+  "debut": "2026-11-16T09:02:08+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,19 +9,19 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 2.2,
+    "secondes": 2.4,
     "ok": true
    },
    "draftkings": {
-    "secondes": 2.3,
+    "secondes": 3.0,
     "ok": true
    },
    "olybet": {
-    "secondes": 5.5,
+    "secondes": 5.7,
     "ok": true
    },
    "polymarket": {
-    "secondes": 9.1,
+    "secondes": 11.9,
     "ok": true,
     "degrade": true,
     "erreurs": [
@@ -30,41 +30,38 @@
     ]
    },
    "pinnacle": {
-    "secondes": 9.7,
+    "secondes": 15.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
+     "sport 28 matchups : HTTP 403",
+     "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
     ]
    },
    "fanduel": {
-    "secondes": 11.6,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 29.0,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 23.8,
+    "secondes": 18.8,
     "ok": true
    },
    "betclic_direct": {
-    "secondes": 35.6,
+    "secondes": 24.1,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 28.7,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 25.8,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 47.5,
+    "secondes": 52.5,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.7,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "HTTP 503",
-     "budget"
-    ]
+    "secondes": 52.5,
+    "ok": true
    },
    "smarkets": {
     "secondes": 0.0,
@@ -72,11 +69,11 @@
     "cache": true
    },
    "association": {
-    "secondes": 2.1,
+    "secondes": 2.2,
     "ok": true
    },
    "comparaison": {
-    "secondes": 0.9,
+    "secondes": 1.0,
     "ok": true
    },
    "cotes_cloture": {
@@ -106,25 +103,25 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 142,
-   "lignes": 5067
+   "lignes": 5110
   },
   "matchbook_fraicheur": {
-   "lignes": 5067,
-   "source_connue": 5065,
+   "lignes": 5110,
+   "source_connue": 5104,
    "source_inconnue": 0,
-   "source_invalide": 2,
+   "source_invalide": 6,
    "mouvement_min_s": 0,
-   "mouvement_max_s": 144529,
-   "reception": "2026-11-16T08:57:25+00:00"
+   "mouvement_max_s": 144812,
+   "reception": "2026-11-16T09:02:08+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 759,
-   "age_min_s": 56,
-   "lignes": 80919,
-   "lignes_perimees": 34,
+   "age_max_s": 866,
+   "age_min_s": 110,
+   "lignes": 80806,
+   "lignes_perimees": 472,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -134,12 +131,13 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 8,
+    "head_200": 2,
+    "choisi_fixe": 2,
     "head_403": 2,
     "ortho_refusee": 2,
-    "choisi_autre": 3,
-    "choisi_fixe": 2,
-    "sport_vide": 6
+    "sport_vide": 6,
+    "reprise_403": 2,
+    "matchups_sans_speciaux": 1
    }
   },
   "polymarket_flux": {
@@ -167,7 +165,9 @@
     "volley"
    ],
    "nouveaux_au_cycle_suivant": [],
-   "plus_chez_les_references": []
+   "plus_chez_les_references": [
+    "snooker"
+   ]
   },
   "betclic_proches": {
    "proches": 0,
@@ -178,105 +178,137 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 5,
    "comparaisons": [
     {
-     "match": "Macédoine du Nord – Slovénie",
+     "match": "Grèce U21 – Islande U21",
      "source": "Pinnacle",
-     "cote_olybet": 6.3,
-     "cote_reference": 7.27,
-     "ecart_relatif": 0.1334,
+     "cote_olybet": 1.66,
+     "cote_reference": 1.746,
+     "ecart_relatif": 0.0494,
      "aberrant": false
     },
     {
-     "match": "Macédoine du Nord – Slovénie",
-     "source": "PMU",
-     "cote_olybet": 6.3,
-     "cote_reference": 5.75,
-     "ecart_relatif": 0.0957,
-     "aberrant": false
-    },
-    {
-     "match": "Kazakhstan – Slovaquie",
+     "match": "Gibraltar – Malte",
      "source": "Pinnacle",
-     "cote_olybet": 3.95,
-     "cote_reference": 4.41,
-     "ecart_relatif": 0.1043,
+     "cote_olybet": 6.7,
+     "cote_reference": 7.67,
+     "ecart_relatif": 0.1265,
      "aberrant": false
     },
     {
-     "match": "Kazakhstan – Slovaquie",
+     "match": "Gibraltar – Malte",
      "source": "PMU",
-     "cote_olybet": 3.95,
-     "cote_reference": 3.8,
-     "ecart_relatif": 0.0395,
+     "cote_olybet": 6.7,
+     "cote_reference": 7.0,
+     "ecart_relatif": 0.0429,
      "aberrant": false
     },
     {
-     "match": "Pays de Galles – Portugal",
+     "match": "Suisse – Écosse",
      "source": "Pinnacle",
-     "cote_olybet": 5.7,
-     "cote_reference": 6.7,
-     "ecart_relatif": 0.1493,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.741,
+     "ecart_relatif": 0.0636,
      "aberrant": false
     },
     {
-     "match": "Pays de Galles – Portugal",
+     "match": "Suisse – Écosse",
      "source": "PMU",
-     "cote_olybet": 5.7,
-     "cote_reference": 6.75,
-     "ecart_relatif": 0.1556,
-     "aberrant": true
-    },
-    {
-     "match": "Danemark – Norvège",
-     "source": "Pinnacle",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.41,
-     "ecart_relatif": 0.0747,
-     "aberrant": false
-    },
-    {
-     "match": "Danemark – Norvège",
-     "source": "PMU",
-     "cote_olybet": 2.23,
-     "cote_reference": 2.25,
-     "ecart_relatif": 0.0089,
-     "aberrant": false
-    },
-    {
-     "match": "Hongrie – Irlande du Nord",
-     "source": "Pinnacle",
-     "cote_olybet": 1.81,
-     "cote_reference": 1.926,
-     "ecart_relatif": 0.0602,
-     "aberrant": false
-    },
-    {
-     "match": "Hongrie – Irlande du Nord",
-     "source": "PMU",
-     "cote_olybet": 1.81,
-     "cote_reference": 1.79,
-     "ecart_relatif": 0.0112,
+     "cote_olybet": 1.63,
+     "cote_reference": 1.65,
+     "ecart_relatif": 0.0121,
      "aberrant": false
     }
    ],
-   "aberrants": [
-    {
-     "match": "Pays de Galles – Portugal",
-     "source": "PMU",
-     "cote_olybet": 5.7,
-     "cote_reference": 6.75,
-     "ecart_relatif": 0.1556,
-     "aberrant": true
-    }
-   ]
+   "aberrants": []
   },
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 0,
-   "comparaisons": [],
+   "examines": 10,
+   "comparaisons": [
+    {
+     "match": "Îles Féroé – Moldavie",
+     "source": "Pinnacle",
+     "cote_netbet": 1.65,
+     "cote_reference": 1.758,
+     "ecart_relatif": 0.0612,
+     "aberrant": false
+    },
+    {
+     "match": "Îles Féroé – Moldavie",
+     "source": "PMU",
+     "cote_netbet": 1.65,
+     "cote_reference": 1.67,
+     "ecart_relatif": 0.012,
+     "aberrant": false
+    },
+    {
+     "match": "Kazakhstan – Slovaquie",
+     "source": "Pinnacle",
+     "cote_netbet": 3.9,
+     "cote_reference": 4.41,
+     "ecart_relatif": 0.1156,
+     "aberrant": false
+    },
+    {
+     "match": "Kazakhstan – Slovaquie",
+     "source": "PMU",
+     "cote_netbet": 3.9,
+     "cote_reference": 3.8,
+     "ecart_relatif": 0.0263,
+     "aberrant": false
+    },
+    {
+     "match": "Estonie – Bulgarie",
+     "source": "Pinnacle",
+     "cote_netbet": 1.87,
+     "cote_reference": 2.01,
+     "ecart_relatif": 0.0697,
+     "aberrant": false
+    },
+    {
+     "match": "Estonie – Bulgarie",
+     "source": "PMU",
+     "cote_netbet": 1.87,
+     "cote_reference": 1.86,
+     "ecart_relatif": 0.0054,
+     "aberrant": false
+    },
+    {
+     "match": "Islande – Luxembourg",
+     "source": "Pinnacle",
+     "cote_netbet": 1.16,
+     "cote_reference": 1.22,
+     "ecart_relatif": 0.049,
+     "aberrant": false
+    },
+    {
+     "match": "Islande – Luxembourg",
+     "source": "PMU",
+     "cote_netbet": 1.16,
+     "cote_reference": 1.16,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Lituanie – Liechtenstein",
+     "source": "Pinnacle",
+     "cote_netbet": 1.05,
+     "cote_reference": 1.114,
+     "ecart_relatif": 0.0573,
+     "aberrant": false
+    },
+    {
+     "match": "Lituanie – Liechtenstein",
+     "source": "PMU",
+     "cote_netbet": 1.05,
+     "cote_reference": 1.04,
+     "ecart_relatif": 0.0096,
+     "aberrant": false
+    }
+   ],
    "aberrants": []
   },
   "fanduel": {
@@ -345,23 +377,23 @@
    "reference_seule": true
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-16T08:57:26+00:00",
-   "pinnacle_derniere_lecture": "2026-11-16T08:57:30+00:00",
+   "pinnacle_premiere_lecture": "2026-11-16T09:02:09+00:00",
+   "pinnacle_derniere_lecture": "2026-11-16T09:02:16+00:00",
    "books_premiere_lecture": "2026-11-16T06:10:54+00:00",
-   "books_derniere_lecture": "2026-11-16T08:57:25+00:00",
-   "ecart_enveloppe_secondes": 9996.0
+   "books_derniere_lecture": "2026-11-16T09:02:11+00:00",
+   "ecart_enveloppe_secondes": 10282.0
   },
   "historique_cotes": {
-   "lignes": 1900
+   "lignes": 3652
   },
   "marches_inconnus": {
-   "betclic": 2045,
-   "pmu": 894
+   "betclic": 397,
+   "pmu": 897
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 9.2
+   "age_min": 13.9
   },
   "smarkets_dans_decision": false,
   "derive": {
@@ -379,15 +411,15 @@
    "alerte_envoyee": false
   },
   "historique_references": {
-   "references": 3183,
+   "references": 5970,
    "releves": 1,
-   "correspondances": 0
+   "correspondances": 12
   },
   "controle": {
    "conforme": 569,
    "a_verifier": 12,
    "non_conforme": 8,
-   "mesures": 11763,
+   "mesures": 12525,
    "matchs_suspects": 0
   },
   "props_joueurs": {
@@ -411,8 +443,8 @@
   },
   "mouvement": {
    "actif": true,
-   "ancres": 26988,
-   "mesures": 15983,
+   "ancres": 30032,
+   "mesures": 20962,
    "annotees": 3,
    "figees": 3
   },
@@ -420,18 +452,16 @@
    "surebets": 0,
    "suspects": 0,
    "verifies": 0,
-   "familles": 4909
+   "familles": 5169
   },
   "boosts": {
    "lus": 10,
    "evalues": 1,
    "par_bookmaker": {
-    "Unibet": 3,
-    "Winamax": 7
+    "Winamax": 7,
+    "Unibet": 3
    },
-   "erreurs": {
-    "NetBet": "PageInattendue : HTTP 503 sur https://www.netbet.fr/super-cotes"
-   }
+   "erreurs": {}
   },
   "redecision": {
    "ajoutees": 0
@@ -444,30 +474,24 @@
   "reglement": false,
   "resultats": {
    "saute": true,
-   "dernier_reglement": "2026-11-16T08:02:30+00:00"
+   "dernier_reglement": "2026-11-16T08:58:37+00:00"
   },
-  "controle_publie": true,
-  "fin": "2026-11-16T08:58:31+00:00",
+  "controle_publie": false,
+  "fin": "2026-11-16T09:03:14+00:00",
   "cotes": {
-   "francaises": 43032,
-   "pinnacle": 80919,
-   "polymarket": 11455,
+   "francaises": 44867,
+   "pinnacle": 80806,
+   "polymarket": 11520,
    "smarkets": 3989,
-   "matchbook": 5067,
+   "matchbook": 5110,
    "betfair": 0
   },
-  "matchs_francais": 630,
+  "matchs_francais": 724,
   "opportunites": 1,
   "opportunites_suspectes": 3,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-15T17:28:22+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 2
-  },
   {
    "debut": "2026-11-15T17:33:00+00:00",
    "mode": "complet",
@@ -1664,6 +1688,12 @@
   },
   {
    "debut": "2026-11-16T08:57:25+00:00",
+   "mode": "complet",
+   "opportunites": 1,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-16T09:02:08+00:00",
    "mode": "complet",
    "opportunites": 1,
    "nouveaux_paris": 0
