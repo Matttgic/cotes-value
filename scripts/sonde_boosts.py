@@ -308,7 +308,33 @@ def acces() -> None:
         print(f"[accès OlyBet] échec {type(e).__name__} {str(e)[:120]}")
 
 
+def pmu() -> None:
+    """Super Cotes PMU : pages publiques de pmu.fr (liens « boost » ou « super cote ») et offre Kambi publique."""
+    from curl_cffi.requests import Session
+    s = Session(impersonate="chrome")
+    entetes = {"Accept-Language": "fr-FR,fr;q=0.9"}
+    vus: set[str] = set()
+    pages = ["https://www.pmu.fr/sport/", "https://www.pmu.fr/sport/cotes-boostees", "https://www.pmu.fr/sport/super-cotes"]
+    for url in pages[:8]:
+        if url in vus:
+            continue
+        vus.add(url)
+        try:
+            r = s.get(url, headers=entetes, timeout=25)
+            texte = r.text or ""
+            liens = sorted(set(re.findall(r'href="([^"]*(?:boost|super-?cote|promo)[^"]*)"', texte, re.I)))[:12]
+            kambi = sorted(set(re.findall(r'https://[\w.-]*kambi[\w.-]*/[^"\s]{0,120}', texte)))[:5]
+            print(f"[pmu] {url} : HTTP {r.status_code} · {len(texte)} car. · boost/super cote "
+                  f"{len(re.findall(r'(?i)boost|super ?cote', texte))} fois · liens {liens} · kambi {kambi}")
+            for l in liens:
+                if l.startswith("/"):
+                    pages.append("https://www.pmu.fr" + l)
+        except Exception as e:  # noqa: BLE001
+            print(f"[pmu] {url} : échec {type(e).__name__} {str(e)[:120]}")
+
+
 def main() -> int:
+    pmu()
     acces()
     installer()
     installer_specifiques()
