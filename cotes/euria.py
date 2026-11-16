@@ -25,7 +25,8 @@ freebet joué chez B, les autres issues couvertes aux meilleures cotes français
     pari remboursé si perdant : gain garanti / mise = cote − 1 − (cote − 0,75) × S   (remboursement compté 75 %)
 
 Les ``CONVERSIONS_PAR_BOOK`` meilleures de chaque calcul, un pari par match, sont publiées ; la page refait les mises
-pour le montant saisi.
+pour le montant saisi. Un marché dont les cotes feraient un surebet suspect (règles de cotes/surebets.py) ou dont les
+probabilités justes ne font pas 1 est écarté (``marche_credible``).
 """
 from __future__ import annotations
 
@@ -145,6 +146,15 @@ def _couvertures(familles: dict, fam: tuple, issue: str, attendues: tuple) -> li
     return out
 
 
+def marche_credible(jambes: list[dict]) -> bool:
+    """Mêmes règles que les surebets : un marché dont les cotes feraient un gros surebet est presque toujours mal lu
+    (relevé du 16/11/2026 : « Grèce U21 – Islande U21 » chez Unibet, « U21 » pris pour un handicap de +21, cotes
+    20 / 17 / 6,7) ; quand toutes les jambes ont une cote juste, leurs probabilités doivent faire 1."""
+    if SB.suspicion(jambes, SB.rendement([j["cote"] for j in jambes])):
+        return False
+    return not SB.verifie(jambes) or abs(sum(j["proba_juste"] for j in jambes) - 1) <= SB.TOLERANCE_PARTITION
+
+
 def conversions(familles: dict, matchs: dict, maintenant: datetime, par_book: int = CONVERSIONS_PAR_BOOK,
                 valeur: float = VALEUR_REMBOURSEMENT) -> dict[str, list[dict]]:
     """Bookmaker -> meilleurs paris pour convertir un freebet ou un pari remboursé si perdant chez lui."""
@@ -161,7 +171,10 @@ def conversions(familles: dict, matchs: dict, maintenant: datetime, par_book: in
             if not options:
                 continue
             for book, jambe in _par_bookmaker(issues[issue]).items():
-                couverture = min(options, key=lambda o: sum(1 / j["cote"] for j in o))
+                valables = [o for o in options if marche_credible([jambe, *o])]
+                if not valables:
+                    continue
+                couverture = min(valables, key=lambda o: sum(1 / j["cote"] for j in o))
                 s = sum(1 / j["cote"] for j in couverture)
                 c = jambe["cote"]
                 tous.setdefault(book, []).append({
