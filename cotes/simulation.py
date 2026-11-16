@@ -243,6 +243,18 @@ def mise_kelly(p: dict) -> float:
     return round(min(KELLY_BANKROLL * KELLY_FRACTION * plein, KELLY_BANKROLL * KELLY_PLAFOND), 2)
 
 
+def clv_pinnacle_propre(p: dict) -> float | None:
+    """CLV d'un pari réglé contre la clôture Pinnacle enregistrée sur le pari lui-même (``suivre_cloture``), avec la
+    même fenêtre que ``clv_finale`` ; None si elle n'a pas été lue (paris d'avant le 16/11/2026 notamment)."""
+    juste = p.get("cote_juste_cloture_pinnacle")
+    if not juste or p.get("statut") in ("en_cours", "a_regler"):
+        return None
+    t, debut = _heure(p.get("cloture_pinnacle_lue")), _heure(p.get("debut"))
+    if not t or not debut or t.tzinfo is None or debut.tzinfo is None:
+        return None
+    return p["cote"] / juste - 1 if 0 < (debut - t).total_seconds() <= CLOTURE_MAX_MIN * 60 else None
+
+
 def clv_finale(p: dict) -> float | None:
     """CLV du pari si elle est mesurée près du coup d'envoi et que le match est joué (pari réglé), sinon None.
     Pour les paris d'avant le 7/10/2026, `cloture_lue` est l'heure du cycle (à quelques minutes près celle
@@ -268,7 +280,23 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], mai
     (``comparaison.cotes_justes_depuis``). La CLV d'un tel pari, comme celle d'un « avance ou gagne » (clôture de la
     simple victoire), est un minimum : ``clv_minimum`` le note. Une clôture relue au milieu du carnet l'efface."""
     maintenant = maintenant or datetime.now(timezone.utc)
-    from .comparaison import MARCHES_MINORES
+    from .comparaison import MARCHES_MINORES, cles_reference   # « a X d'avance ou gagne » : clôture de la victoire
+
+    def lecture(p, ref, debut, deja):
+        """(proba, heure, clé) de la nouvelle lecture pré-match de ``ref`` pour ``p``, ou None."""
+        cle_lue = next((c for c in cles_reference(p) if ref in justes.get((p["match_id"], c), {})), None)
+        proba, lue = justes[(p["match_id"], cle_lue)][ref] if cle_lue is not None else (None, None)
+        t = _heure(lue)
+        if not proba or not t or t.tzinfo is None or t >= debut:
+            return None
+        age = (maintenant - t).total_seconds()
+        if age < -TOLERANCE_HORLOGE_S or (maintenant < debut and age > FRAICHEUR_CLOTURE_MIN * 60):      # périmée, ou dans le futur
+            return None
+        avant = _heure(deja)
+        if avant and avant.tzinfo and t <= avant:        # uniquement une nouvelle observation
+            return None
+        return proba, t, cle_lue
+
     for p in paris:
         if p["statut"] != "en_cours":
             continue
@@ -278,25 +306,23 @@ def suivre_cloture(paris: list[dict], justes: dict[tuple, dict[str, tuple]], mai
             continue
         if not debut.tzinfo:
             continue
-        from .comparaison import cles_reference      # « a X d'avance ou gagne » : clôture de la victoire
-        cle_lue = next((c for c in cles_reference(p) if p["reference"] in justes.get((p["match_id"], c), {})), None)
-        proba, lue = justes[(p["match_id"], cle_lue)][p["reference"]] if cle_lue is not None else (None, None)
-        t = _heure(lue)
-        if not proba or not t or t.tzinfo is None or t >= debut:
-            continue
-        age = (maintenant - t).total_seconds()
-        if age < -TOLERANCE_HORLOGE_S or (maintenant < debut and age > FRAICHEUR_CLOTURE_MIN * 60):      # périmée, ou dans le futur
-            continue
-        avant = _heure(p.get("cloture_lue"))
-        if avant and avant.tzinfo and t <= avant:        # uniquement une nouvelle observation
-            continue
-        p["cote_juste_cloture"] = round(1 / proba, 4)
-        p["clv"] = round(p["cote"] * proba - 1, 4)
-        p["cloture_lue"] = t.isoformat(timespec="seconds")
-        if p.get("marche") in MARCHES_MINORES or (p["match_id"], cle_lue, p["reference"]) in (prudentes or ()):
-            p["clv_minimum"] = True
-        else:
-            p.pop("clv_minimum", None)
+        lu = lecture(p, p["reference"], debut, p.get("cloture_lue"))
+        if lu:
+            proba, t, cle_lue = lu
+            p["cote_juste_cloture"] = round(1 / proba, 4)
+            p["clv"] = round(p["cote"] * proba - 1, 4)
+            p["cloture_lue"] = t.isoformat(timespec="seconds")
+            if p.get("marche") in MARCHES_MINORES or (p["match_id"], cle_lue, p["reference"]) in (prudentes or ()):
+                p["clv_minimum"] = True
+            else:
+                p.pop("clv_minimum", None)
+        # Clôture Pinnacle de tout pari, quelle que soit sa référence : la mesure commune des bilans et du protocole
+        # (docs/avantage-reel.md, décision 2). Une mesure, pas une règle : aucune sélection n'en dépend.
+        if p["reference"] != "Pinnacle":
+            lu = lecture(p, "Pinnacle", debut, p.get("cloture_pinnacle_lue"))
+            if lu:
+                p["cote_juste_cloture_pinnacle"] = round(1 / lu[0], 4)
+                p["cloture_pinnacle_lue"] = lu[1].isoformat(timespec="seconds")
 
 
 # tranches de cote (bornes basses exclues, hautes incluses)

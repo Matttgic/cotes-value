@@ -302,9 +302,14 @@ par la règle ci-dessus, plus exigeante sur la CLV. C'est une grille de lecture,
 
 1. Juger les stratégies sur la CLV contre la clôture Pinnacle, pas sur le ROI ni sur la CLV des autres références.
 2. Enregistrer la clôture Pinnacle de chaque pari, quelle que soit sa référence : elle manque à 41 % des réglés.
+   **Fait le 16/11/2026** : `suivre_cloture` (cotes/simulation.py) garde aussi `cote_juste_cloture_pinnacle` et
+   `cloture_pinnacle_lue` quand Pinnacle cote le match ; `clv_pinnacle` (cotes/protocole.py) s'en sert en dernier
+   recours. Seulement pour les paris encore ouverts à cette date : les anciens ne peuvent pas être relus.
 3. Ne promouvoir aucune règle sur son ROI actuel, en particulier les règles Polymarket « ≤ 36 h ».
 4. Regarder de près la référence Kalshi (191 paris, −28,4 %) et OlyBet avant d'en reprendre des paris.
-5. Tester moins de lignes : chaque stratégie ajoutée durcit la correction pour toutes les autres.
+5. Tester moins de lignes : chaque stratégie ajoutée durcit la correction pour toutes les autres. **Appliqué aux
+   recommandées le 16/11/2026** : une stratégie qui partage au moins 80 % de ses paris avec une plus fournie n'entre
+   pas dans la correction (50 lignes testées, 29 dans la correction). Le protocole, lui, a un seuil fixe (200 places).
 
 ## Reproduire
 

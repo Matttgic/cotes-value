@@ -39,10 +39,13 @@ def test_preuves_mesurees_sur_les_paris_de_chaque_strategie_et_corrigees():
     neutres = [pari(1000 + i, 0.02 * (i % 3 - 1), i % 2 == 0) for i in range(120)]
     lignes = [{"id": "A", "stats": {}, "ensemble": {p["id"] for p in bons}},
               {"id": "B", "stats": {}, "ensemble": {p["id"] for p in neutres}},
-              {"id": "base:X", "stats": {}, "ensemble": {p["id"] for p in bons}, "base": True}]
+              {"id": "base:X", "stats": {}, "ensemble": {p["id"] for p in bons}, "base": True},
+              {"id": "A bis", "stats": {}, "ensemble": {p["id"] for p in bons[:100]}}]     # doublon de A
     mesurer_preuves(lignes, bons + neutres)
-    a, b = lignes[0]["stats"]["preuve"], lignes[1]["stats"]["preuve"]
+    a, b, d = lignes[0]["stats"]["preuve"], lignes[1]["stats"]["preuve"], lignes[3]["stats"]["preuve"]
     assert (a["matchs"], a["couverture"], a["testees"]) == (120, 100.0, 2) and "preuve" not in lignes[2]["stats"]
+    # Le doublon est mesuré mais n'entre pas dans la correction : il ne durcit pas le seuil des autres.
+    assert d["doublon_de"] == "A" and d["p"] is None and raisons_refus(lignes[3]["stats"])[0].startswith("doublon de A")
     assert a["clv_ic"][0] > 0 and a["p"] < 0.001 and raisons_refus(lignes[0]["stats"]) == []
     assert b["p"] > 0.05 and "CLV Pinnacle non prouvée après correction" in raisons_refus(lignes[1]["stats"])
 

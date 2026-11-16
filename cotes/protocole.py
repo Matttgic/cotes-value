@@ -145,10 +145,11 @@ def selections_officielles(paris: list[dict]) -> dict[str, set[int]]:
 
 def clv_pinnacle(paris: list[dict]) -> dict[int, float]:
     """CLV des paris réglés contre la clôture Pinnacle : celle du pari si Pinnacle est sa référence, sinon celle du
-    même pari (même bookmaker, match, marché, issue) repéré aussi par Pinnacle, recalculée à la cote du pari."""
+    même pari (même bookmaker, match, marché, issue) repéré aussi par Pinnacle, recalculée à la cote du pari, sinon
+    la clôture Pinnacle lue sur le pari lui-même (``cote_juste_cloture_pinnacle``, enregistrée depuis le 16/11/2026)."""
     from .convergence import cle_selection
     from .reglement import GAIN
-    from .simulation import clv_finale
+    from .simulation import clv_finale, clv_pinnacle_propre
     juste: dict[tuple, tuple[str, float]] = {}
     for p in paris:
         if p.get("reference") == "Pinnacle" and clv_finale(p) is not None and p.get("match_id"):
@@ -165,6 +166,8 @@ def clv_pinnacle(paris: list[dict]) -> dict[int, float]:
                 out[id(p)] = c
         elif p.get("match_id") and cle_selection(p) in juste:
             out[id(p)] = p["cote"] / juste[cle_selection(p)][1] - 1
+        elif (c := clv_pinnacle_propre(p)) is not None:       # clôture Pinnacle lue sur le pari (depuis le 16/11/2026)
+            out[id(p)] = c
     return out
 
 

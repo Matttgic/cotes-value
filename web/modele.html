@@ -1633,23 +1633,32 @@ function celluleNote(n, id) {
   return `<b class="note-strategie ${ton}">${n.total}</b>${n.provisoire ? "<small>provisoire (&lt; 50 matchs)</small>" : ""}`
     + `<small title="Rentabilité prudente /25 · Robustesse /20 · Valeur /25 · Régularité /15 · Solidité /15">${sousNotes(n)}</small>` + evolutionNote(id, n.total);
 }
-// Fiabilité du résultat (note /100, mesures par match) : intervalle à 80 % du ROI, symétrique autour du ROI.
-function fiabilite(n) {
-  const m = n?.mesures || {}, roi = m.roi, bb = m.roi_borne_basse_80;
-  if (!n || n.matchs < 50 || roi == null || bb == null)
-    return {ton: "doux", texte: "Trop tôt pour juger", detail: `${n?.matchs ?? "moins de 10"} matchs réglés, il en faut 50`};
-  const h = roi - bb;
-  if (bb > 0) return {ton: "pos", texte: "Gain fiable", detail: "ROI positif même dans le cas prudent (8 fois sur 10)"};
-  if (roi + h < 0) return {ton: "neg", texte: "Perte fiable", detail: "ROI négatif même dans le cas favorable (8 fois sur 10)"};
-  const besoin = Math.abs(roi) >= 0.5 ? Math.ceil(n.matchs * (h / Math.abs(roi)) ** 2) - n.matchs : null;
-  return {ton: "", texte: "Pas concluant", detail: "peut encore venir de la chance" + (besoin > 0 ? ` · environ ${besoin} matchs de plus pour trancher` : "")};
+// Fiabilité d'une stratégie : sa CLV contre la clôture Pinnacle, mesurée par match et corrigée pour le nombre de
+// stratégies comparées (cotes/recommandations.py › mesurer_preuves), comme les recommandées et la page Décision.
+// Le ROI seul ne tranche pas à quelques centaines de paris (docs/avantage-reel.md).
+function fiabilite(P) {
+  const v = x => (x > 0 ? "+" : "") + Number(x).toFixed(2).replace(".", ",") + " %";
+  const ic = P?.clv_ic ? ` [${v(P.clv_ic[0])} ; ${v(P.clv_ic[1])}]` : "";
+  if (!P || !P.regles || P.matchs < 50)
+    return {ton: "doux", texte: "Trop tôt pour juger", detail: `${P?.matchs ?? 0} matchs réglés, il en faut 50`};
+  if (P.couverture < 50)
+    return {ton: "doux", texte: "Clôture Pinnacle trop rare", detail: `connue pour ${String(P.couverture).replace(".", ",")} % des paris seulement`};
+  if (!P.teste) return {ton: "doux", texte: "Trop tôt pour juger", detail: "trop peu de clôtures Pinnacle mesurées"};
+  if (P.doublon_de || P.p == null)
+    return {ton: "doux", texte: "Doublon", detail: `au moins 80 % de paris communs avec ${P.doublon_de || "une autre"} : jugée avec elle`};
+  if (P.clv > 0 && P.p < 0.05) return P.ecart_haut < 0
+    ? {ton: "neg", texte: "Bat la clôture mais perd", detail: `CLV Pinnacle ${v(P.clv)}${ic}, rendement nettement en dessous`}
+    : {ton: "pos", texte: "Bat la clôture", detail: `CLV Pinnacle ${v(P.clv)}${ic}, tient après correction`};
+  if (P.clv_ic[1] < 0) return {ton: "neg", texte: "Sous la clôture", detail: `CLV Pinnacle ${v(P.clv)}${ic}`};
+  return {ton: "", texte: "Pas concluant", detail: `CLV Pinnacle ${v(P.clv)}${ic} : peut encore venir du hasard`};
 }
 // Pause automatique (cotes/pauses.py) et fiabilité, sous le nom de chaque stratégie.
 function etiquettesStrategie(r) {
   const p = (D.pauses?.liste || {})[r.id], j = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "";
   const pause = p ? `<small class="badge-pause neg" title="CLV par pari ${p.clv} % (au mieux ${p.clv_haute} %) · par match ${p.clv_match} %">⏸ En pause depuis le ${j(p.depuis)} : perd contre la clôture</small>` : "";
   if (datesStratActives() || !r.stats?.regles) return pause;
-  const f = fiabilite(r.stats.note);
+  if (r.id.startsWith("base:") || r.id.startsWith("Fusion ")) return pause;      // ni bases ni fusions : pas mesurées
+  const f = fiabilite(preuveDe(r.id));
   return pause + `<small class="fiabilite ${f.ton}">${e(f.texte)} · ${e(f.detail)}</small>`;
 }
 // Preuve d'une stratégie (cotes/recommandations.py › mesurer_preuves) : CLV Pinnacle par match, corrigée, et ROI à
