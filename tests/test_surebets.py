@@ -194,3 +194,24 @@ def test_bilan():
     assert (b["n"], b["gain_100"], b["un_pour_cent"]) == (2, 2.8, 1)
     assert b["par_bookmakers"][0]["cle"] == "Betclic + Winamax"
     assert S.bilan([], T)["n"] == 0
+
+
+def test_etape_du_cycle_ecrit_surebets_json(tmp_path):
+    import json
+    from cotes.pipeline.analyse import surebets_du_cycle
+    fr = [_l("Winamax", 1, "VAINQUEUR", "DOM", 2.10), _l("Betclic", 2, "VAINQUEUR", "EXT", 2.10)]
+    idx = _index(("winamax|1", _ref(V)), ("betclic|2", _ref(V)))
+    journal = {}
+    r = surebets_du_cycle(tmp_path, fr, idx, None, journal, maintenant=T)
+    assert r == {"surebets": 1, "suspects": 0, "verifies": 1, "familles": 1}
+    doc = json.loads((tmp_path / "surebets.json").read_text())
+    assert len(doc["actuels"]) == 1 and len(doc["episodes"]) == 1
+    r = surebets_du_cycle(tmp_path, None, idx, None, journal, maintenant=T)       # entrée invalide : noté, pas levé
+    assert "erreur" in r and journal["echecs"][0]["etape"] == "surebets"
+
+
+def test_non_verifie_trop_beau_est_suspect():
+    fr = [_l("Winamax", 1, "VAINQUEUR", "DOM", 2.25), _l("Betclic", 2, "VAINQUEUR", "EXT", 2.25)]
+    idx = _index(("winamax|1", _ref(V)), ("betclic|2", _ref({("VAINQUEUR", "MATCH", None, "DOM"): 0.5})))
+    out, _ = S.detecter(fr, idx, T)
+    assert out[0]["verifie"] is False and out[0]["suspect"] == "trop beau sans cote juste pour vérifier"

@@ -160,7 +160,8 @@ def choix_pushover(env=None, ouvrir=urlopen) -> tuple[set[str], list[str], str]:
     cles = strategies_du_site(env, ouvrir)
     if cles is None:
         return set(), [], "site indisponible"
-    return {c for c in cles if c in NOMS}, [], "site"
+    from cotes.alertes.promos import SPECIALES
+    return {c for c in cles if c in NOMS or c in SPECIALES}, [], "site"
 
 
 def poster_pushover(alertes: list[dict], env=None, ouvrir=urlopen, horloge=time.monotonic) -> dict:
@@ -221,6 +222,8 @@ def pushover(donnees: Path, flux: dict, env=None, paris: list[dict] | None = Non
         recents = {k: v for k, v in envoyes.items() if isinstance(v, str) and (v >= limite or v == "")}
         paris = lire_paris(donnees) if paris is None else paris
         a_envoyer = alertes_pushover(flux, paris, recents, choisies, maintenant, amorcage)
+        from cotes.alertes import promos                  # surebets et cotes boostées, cases à part
+        a_envoyer += promos.alertes(donnees, recents, choisies, maintenant)
         bilan = poster_pushover(a_envoyer, env) if a_envoyer else {"envoyees": [], "echecs": 0, "erreurs": []}
         for pid in bilan["envoyees"]:
             recents[pid] = maintenant.isoformat(timespec="seconds")

@@ -27,7 +27,8 @@ Garde-fous (un gros surebet est presque toujours une erreur de lecture ou un pri
   le surebet est « vérifié ». Sans cote juste pour une jambe (ligne que la référence ne propose pas), il reste
   affiché mais « non vérifié » : à contrôler avant de miser ;
 - intitulé contrôlé conforme et match bien associé (cotes/controle.py) ;
-- rendement au-delà de ``RENDEMENT_SUSPECT`` : gardé, mais marqué suspect (jamais d'alerte).
+- rendement au-delà de ``RENDEMENT_SUSPECT`` (``RENDEMENT_SUSPECT_NON_VERIFIE`` sans cote juste) : gardé, mais marqué
+  suspect (jamais suivi ni envoyé en alerte).
 Une cote qui échoue un garde-fou est retirée avant le choix de la meilleure cote de son issue : le surebet gardé est
 le meilleur qui reste valable.
 
@@ -58,6 +59,9 @@ AGE_MAX_LOINTAIN = {"PMU": timedelta(minutes=25), "Unibet": timedelta(minutes=32
 ECART_JUSTE_BAS = -0.30
 TOLERANCE_PARTITION = 0.03
 RENDEMENT_SUSPECT = 0.15
+# Sans cote juste pour contrôler, au-delà de 5 % c'est presque toujours une erreur de lecture : rejeu des 13-14/11/2026,
+# huit « surebets » de 9 à 12 % sur les handicaps d'un même match de basket (Winamax contre Betclic), aucun vérifiable.
+RENDEMENT_SUSPECT_NON_VERIFIE = 0.05
 SEUIL_ALERTE = 0.01
 TOTAL = 100.0
 MEILLEURES = 3                     # cotes gardées par issue pour chercher une combinaison à deux bookmakers
@@ -295,7 +299,8 @@ def _surebet(fam: tuple, combo: list[dict], match: dict, maintenant: datetime, c
             "bookmakers": sorted({j["bookmaker"] for j in combo}),
             "verifie": verifie(combo), "somme_inverses": round(sum(1 / c for c in cotes), 5), "rendement": round(r, 5),
             "gain_100": rep["gain_min"], "mise_100": rep["mise_totale"], "lu_premier": lus[0], "lu_dernier": lus[-1],
-            "suspect": "rendement trop grand" if r > RENDEMENT_SUSPECT else None}
+            "suspect": "rendement trop grand" if r > RENDEMENT_SUSPECT else
+            "trop beau sans cote juste pour vérifier" if r > RENDEMENT_SUSPECT_NON_VERIFIE and not verifie(combo) else None}
 
 
 def detecter(francais: list[dict], index: dict, maintenant: datetime,

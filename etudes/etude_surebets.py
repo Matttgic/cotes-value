@@ -165,6 +165,8 @@ def resume(episodes: list[dict]) -> dict:
             "tranches_verifies": Counter(tranche(e["rendement_initial"]) for e in verifies),
             "gain_100": round(sum(e["gain_100"] for e in episodes), 2),
             "gain_100_un_pour_cent": round(sum(e["gain_100"] for e in episodes if e["rendement_initial"] >= 0.01), 2),
+            "gain_100_verifies": round(sum(e["gain_100"] for e in verifies), 2),
+            "par_jour": dict(Counter(e["premier"][:10] for e in episodes)),
             "bookmakers": Counter(" + ".join(e["bookmakers"]) for e in episodes).most_common(10),
             "sports": Counter(e.get("sport") for e in episodes).most_common(8),
             "marches": marche.most_common(10), "duree": duree}

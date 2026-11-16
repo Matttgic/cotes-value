@@ -6,7 +6,9 @@
   const etat=document.getElementById('pushover-etat');
   if(!zone) return;
   const api=D.notifications.api, cleCode='cv-pushover-v1';
-  const noms=D.notifications.strategies, details=D.notifications.details||{};
+  // Surebets et cotes boostées (cotes/alertes/promos.py) : deux cases à part, en tête de liste.
+  const speciales=D.notifications.speciales||{};
+  const noms={...speciales,...D.notifications.strategies}, details=D.notifications.details||{};
   // Bilan prospectif de chaque règle du laboratoire (mises de 10 €), comme sur la page Stratégies.
   const futur=new Map((D.laboratoire?.futur||[]).map(r=>['labo:'+r.id,r]));
   for(const [k,nom] of Object.entries(D.notifications.comparateurs||{})) {
@@ -50,12 +52,12 @@
     const clesReco=new Set([...recos].map(id=>(typeof D!=='undefined' && D.variantes && D.variantes[id] && D.variantes[id].cle) || 'labo:'+id));
     const estReco=k=>clesReco.has(k);
     const proposee=k=>!k.startsWith('base_') || futur.has(k) || choisies.has(k);
-    const groupes=[['Recommandées',k=>estReco(k)],['Comparateurs',k=>!estReco(k) && !k.startsWith('labo:') && !k.startsWith('base_')],['Règles Pinnacle',k=>!estReco(k) && k.startsWith('labo:PIN-')],
+    const groupes=[['Surebets et boosts',k=>k in speciales],['Recommandées',k=>estReco(k)],['Comparateurs',k=>!(k in speciales) && !estReco(k) && !k.startsWith('labo:') && !k.startsWith('base_')],['Règles Pinnacle',k=>!estReco(k) && k.startsWith('labo:PIN-')],
       ['Règles Polymarket',k=>!estReco(k) && k.startsWith('labo:POL-')],['Bases du bilan',k=>k.startsWith('base_')]]
       .map(([titre,f])=>[titre,Object.entries(noms).filter(([k])=>f(k) && proposee(k))]).filter(([,l])=>l.length);
     zone.innerHTML='<legend>Stratégies envoyées sur Pushover</legend>'+groupes.map(([titre,l],i)=>{
       const n=l.filter(([k])=>choisies.has(k)).length;
-      return `<details class="notif-groupe"${titre==='Recommandées'||n?' open':''}><summary>${e(titre)} <small>${n?n+' suivie'+(n>1?'s':''):l.length+' au choix'}</small></summary>${l.map(ligne).join('')}</details>`;
+      return `<details class="notif-groupe"${titre==='Recommandées'||titre==='Surebets et boosts'||n?' open':''}><summary>${e(titre)} <small>${n?n+' suivie'+(n>1?'s':''):l.length+' au choix'}</small></summary>${l.map(ligne).join('')}</details>`;
     }).join('');
     code.placeholder=memorise?'Code mémorisé sur cet appareil':'Choisis un code personnel (8 caractères au moins)';
   }

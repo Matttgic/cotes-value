@@ -1,10 +1,12 @@
 """Sonde des cotes boostées : où et sous quelle forme chaque bookmaker français les publie. Rien n'est écrit.
 
-Lance chaque lecteur direct (football, tennis, basket) avec un budget et note tout ce qu'il reçoit qui parle de
-« boost » ou de « super cote » : documents JSON (HTTP et WebSocket, via ``json.loads``) et réponses brutes (gRPC
-Betclic, pages NetBet). Pour chaque trouvaille : le chemin dans le document et un extrait borné. Plus quelques
-adresses candidates (groupes Kambi de PMU, sport 100000 de Winamax). À lancer là où tourne la collecte
-(workflow « Sonde cotes boostées »).
+Note tout ce que les lecteurs directs reçoivent qui parle de « boost » ou de « super cote » : documents JSON (HTTP et
+WebSocket, via ``json.loads``) et réponses brutes (trames gRPC Betclic, pages NetBet), avec le chemin dans le document
+et un extrait borné. Liste aussi tous les boosts Winamax (route ``sport:100000``) et les événements « Cotes Boostées »
+d'Unibet. À lancer là où tourne la collecte (Actions → « Sonde cotes boostées » → Run workflow).
+
+Résultats du 16/11/2026 (docs/boosts.md) : Winamax publie ses boosts sur ``sport:100000`` (cote d'avant et mise
+maximale comprises) ; rien chez Unibet, Betclic, PMU, NetBet et OlyBet dans ce que la collecte lit.
 """
 from __future__ import annotations
 

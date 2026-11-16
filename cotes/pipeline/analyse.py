@@ -1,9 +1,13 @@
 """Analyse du cycle (déplacée de scripts/cycle.py, E3.3) : association des matchs, historique des références,
-contrôle des intitulés, comparaison, props, mouvement de la cote juste et écarts d'affichage."""
+contrôle des intitulés, comparaison, props, mouvement de la cote juste, écarts d'affichage et surebets."""
 from __future__ import annotations
 
-from cotes import comparaison, controle, echecs, historiques
-from cotes.depot.json_io import ecrire_json
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+
+from cotes import boosts, comparaison, controle, echecs, historiques, surebets
+from cotes.depot.json_io import ecrire_json, lire_json
 from cotes.pipeline.contexte import Contexte
 from cotes.pipeline.outils import etape
 from cotes.pipeline.sauvegarde import lire_controle
@@ -77,4 +81,44 @@ def analyser(ctx: Contexte) -> None:
     comparaison.annoter_ecarts(opportunites, francais, references_ecarts,
                                index={n: index[n] for n in references_ecarts
                                       if n in index and references.get(n) is references_ecarts[n]})
+    # Surebets entre bookmakers français : mêmes cotes, même association, même contrôle des intitulés.
+    journal["surebets"] = surebets_du_cycle(donnees, francais, index, (etat_controle, suspects), journal)
+    # Cotes boostées Winamax comparées à la cote juste (cycle complet seulement : une demande réseau de plus).
+    if ctx.mode == "complet" and os.environ.get("SOURCE_BOOSTS", "direct").strip().lower() != "off":
+        journal["boosts"] = boosts_du_cycle(donnees, francais, index, journal)
     ctx.index, ctx.etat_controle, ctx.opportunites = index, etat_controle, opportunites
+
+
+def surebets_du_cycle(donnees: Path, francais: list[dict], index: dict, controle_du_cycle: tuple[dict, dict],
+                      journal: dict, maintenant: datetime | None = None) -> dict:
+    """Détecte les surebets du cycle, met à jour leurs épisodes et écrit ``surebets.json``. Jamais bloquant.
+
+    Heure de détection : l'heure réelle (les cotes françaises sont lues après le début du cycle)."""
+    try:
+        maintenant = maintenant or datetime.now(timezone.utc)
+        actuels, bilan = surebets.detecter(francais, index, maintenant, controle_du_cycle)
+        etat = surebets.suivre(lire_json(donnees / "surebets.json", {}), actuels, maintenant)
+        ecrire_json(donnees / "surebets.json", surebets.publier(actuels, etat, maintenant, bilan), compact=True)
+        return {"surebets": bilan["surebets"], "suspects": bilan["suspects"],
+                "verifies": sum(bool(s.get("verifie")) for s in actuels if not s.get("suspect")),
+                "familles": bilan["familles"]}
+    except Exception as e:  # noqa: BLE001 - un surebet ne doit jamais arrêter le cycle
+        return {"erreur": echecs.noter(journal, "surebets", e, maintenant)}
+
+
+def boosts_du_cycle(donnees: Path, francais: list[dict], index: dict, journal: dict,
+                    lire=None, maintenant: datetime | None = None) -> dict:
+    """Lit les boosts Winamax, les évalue, met à jour leurs épisodes et écrit ``boosts.json``. Jamais bloquant.
+    ``lire`` remplace la lecture réseau (tests)."""
+    try:
+        from cotes.delai import Echeance
+        from cotes.direct import winamax
+        maintenant = maintenant or datetime.now(timezone.utc)
+        lus, erreurs = (lire or (lambda: winamax.lire_boosts(echeance=Echeance(20), maintenant=maintenant)))()
+        actuels = boosts.evaluer(lus, francais, index, maintenant)
+        etat = boosts.suivre(lire_json(donnees / "boosts.json", {}), actuels, maintenant)
+        bilan = {"lus": len(lus), "evalues": sum(b.get("value") is not None for b in actuels), "erreurs": erreurs[:5]}
+        ecrire_json(donnees / "boosts.json", boosts.publier(actuels, etat, maintenant, bilan), compact=True)
+        return bilan
+    except Exception as e:  # noqa: BLE001 - un boost ne doit jamais arrêter le cycle
+        return {"erreur": echecs.noter(journal, "boosts", e, maintenant)}

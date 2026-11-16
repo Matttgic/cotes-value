@@ -42,6 +42,9 @@ from cotes.analyste import SEUILS as SEUILS_AVIS, alleger_avis, annoter_avis, re
 from cotes import notifications as notifications_mod  # noqa: E402
 from cotes import ordres as ordres_mod  # noqa: E402
 from cotes import inconnus as inconnus_mod  # noqa: E402
+from cotes import surebets as surebets_mod  # noqa: E402
+from cotes import boosts as boosts_mod  # noqa: E402
+from cotes.alertes import promos as promos_mod  # noqa: E402
 
 
 # Les variantes sont des comparateurs supplémentaires, jamais des votes de base.
@@ -65,6 +68,33 @@ def _instant(texte):
     except ValueError:
         return None
     return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+
+
+def _a_venir(x: dict, maintenant: datetime) -> bool:
+    debut = _instant(x.get("debut"))
+    return debut is None or debut > maintenant
+
+
+def surebets_publies(doc: dict, maintenant: datetime) -> dict:
+    """Page Boosts › Surebets : ceux du dernier relevé (matchs pas commencés), bilans sur 7 et 30 jours, 30 derniers
+    épisodes (cotes/surebets.py)."""
+    doc = doc if isinstance(doc, dict) else {}
+    episodes = [x for x in doc.get("episodes") or [] if isinstance(x, dict) and x.get("premier")]
+    return {"maj": doc.get("maj"), "actuels": [x for x in doc.get("actuels") or []
+                                               if isinstance(x, dict) and _a_venir(x, maintenant)][:30],
+            "bilan": {str(j): surebets_mod.bilan(episodes, maintenant, j) for j in (7, 30)},
+            "episodes": sorted(episodes, key=lambda x: x["premier"], reverse=True)[:30],
+            "seuil_alerte": surebets_mod.SEUIL_ALERTE}
+
+
+def boosts_publies(doc: dict, maintenant: datetime) -> dict:
+    """Page Boosts › Cotes boostées : celles du dernier relevé (matchs pas commencés) et bilans (cotes/boosts.py)."""
+    doc = doc if isinstance(doc, dict) else {}
+    episodes = [x for x in doc.get("episodes") or [] if isinstance(x, dict) and x.get("premier")]
+    return {"maj": doc.get("maj"), "actuels": [x for x in doc.get("actuels") or []
+                                               if isinstance(x, dict) and _a_venir(x, maintenant)][:60],
+            "bilan": {str(j): boosts_mod.bilan(episodes, maintenant, j) for j in (7, 30)},
+            "seuil_alerte": boosts_mod.SEUIL_ALERTE}
 
 
 def rapidite_alertes(historique: list[dict], cycles_alertes: list[dict]) -> dict:
@@ -674,7 +704,8 @@ def charger_entrees(donnees: Path) -> dict:
     controle = {"groupes": sorted(groupes, key=lambda g: (-(g["n"] or 0))), "matchs": ctl.get("matchs_suspects", [])}
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     return {"paris": paris, "hors_plafond": hors_plafond, "journal_alertes": journal_alertes, "etat": etat,
-            "actuelles": actuelles, "controle": controle}
+            "actuelles": actuelles, "controle": controle,
+            "surebets": _lire(donnees / "surebets.json", {}), "boosts": _lire(donnees / "boosts.json", {})}
 
 
 def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None = None,
@@ -878,7 +909,8 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": {k: v for k, v in notifications_mod.NOMS.items()
                                                                            if k not in libres},
-                              "details": notifications_mod.DETAILS,
+                              "details": {**notifications_mod.DETAILS, **promos_mod.DETAILS},
+                              "speciales": promos_mod.SPECIALES,
                               "comparateurs": {**{cle: nom for cle, _, _, nom, _ in STRATEGIES},
                                                **{v["cle"]: v["nom"] for v in VARIANTES},
                                                "convergence": CONVERGENCE["nom"]}},
@@ -923,6 +955,8 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     # Tous les contenus sont vérifiés avant de remplacer le site existant.
     # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/protection.py).
     data["durees_strategies"] = durees_strategies
+    data["surebets"] = surebets_publies(entrees.get("surebets"), _maintenant(instant))
+    data["boosts"] = boosts_publies(entrees.get("boosts"), _maintenant(instant))
     data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, _maintenant(instant))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
@@ -954,6 +988,7 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     html = html.replace("__PUSHOVER_JS__", (web / "pushover.js").read_text(encoding="utf-8"))
     html = html.replace("__VOYANT_JS__", (web / "voyant.js").read_text(encoding="utf-8"))
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
+    html = html.replace("__BOOSTS_JS__", (web / "boosts.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
     version = hashlib.sha256(html.replace("__DONNEES__", donnees_json, 1).encode("utf-8")).hexdigest()
     html = html.replace("__VERSION_SITE__", version)
