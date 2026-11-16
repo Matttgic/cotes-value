@@ -266,7 +266,50 @@ def candidats() -> None:
     client.fermer()
 
 
+def acces() -> None:
+    """Pages de boosts des autres bookmakers lues sans proxy (empreinte Chrome) : code HTTP, taille, marqueurs.
+    Les lecteurs du dépôt cotes-boostees passent par une IP française payante ; on vérifie ce qui répond sans."""
+    from curl_cffi.requests import Session
+    s = Session(impersonate="chrome")
+    entetes = {"Accept-Language": "fr-FR,fr;q=0.9"}
+    for nom, url, marqueur in (("NetBet", "https://www.netbet.fr/super-cotes", "__NUXT__"),
+                               ("Genybet", "https://sport.genybet.fr/super-cotes", "__NUXT__"),
+                               ("Unibet", "https://www.unibet.fr/cotes-boostees", "BoostedBets")):
+        try:
+            r = s.get(url, headers=entetes, timeout=25)
+            texte = r.text or ""
+            print(f"[accès {nom}] HTTP {r.status_code} · {len(texte)} car. · {marqueur} {'oui' if marqueur in texte else 'non'}"
+                  f" · « super cote » {len(re.findall(r'(?i)super ?cote|boost', texte))} fois")
+        except Exception as e:  # noqa: BLE001
+            print(f"[accès {nom}] échec {type(e).__name__} {str(e)[:120]}")
+    try:
+        corps = {"clientContext": {"language": "FR", "ipAddress": "0.0.0.0"},
+                 "contentId": {"type": "headline", "id": "1355/20/boostedOddCard"}}
+        r = s.post("https://velsv-bson-ssb-pr.betsson.fr/services/content/get", json=corps, timeout=25,
+                   headers={**entetes, "Origin": "https://www.betsson.fr", "Referer": "https://www.betsson.fr/",
+                            "Accept": "application/json"})
+        print(f"[accès Betsson] HTTP {r.status_code} · {len(r.text or '')} car. · {(r.text or '')[:160]!r}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[accès Betsson] échec {type(e).__name__} {str(e)[:120]}")
+    try:
+        ws = s.ws_connect("wss://eu-swarm-reverse.betconstruct.com/", headers={"Origin": "https://sports.olybet.fr"},
+                          timeout=25)
+        for rid, (cmd, params) in enumerate((("request_session", {"site_id": 18769041, "language": "fra", "source": 42}),
+                                             ("get_boosted_selections", {})), 1):
+            ws.send_str(json.dumps({"command": cmd, "params": params, "rid": str(rid)}))
+            for _ in range(20):
+                m = json.loads(ws.recv_str())
+                if m.get("rid") == str(rid):
+                    break
+            details = ((m.get("data") or {}).get("details") or {}) if cmd == "get_boosted_selections" else {}
+            print(f"[accès OlyBet] {cmd} : code {m.get('code')} · {len(details)} matchs boostés")
+        ws.close()
+    except Exception as e:  # noqa: BLE001
+        print(f"[accès OlyBet] échec {type(e).__name__} {str(e)[:120]}")
+
+
 def main() -> int:
+    acces()
     installer()
     installer_specifiques()
     from cotes.direct import betclic, unibet
