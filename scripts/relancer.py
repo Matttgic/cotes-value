@@ -6,8 +6,8 @@ Reprend exactement l'ancien script bash du job :
 - serveur « en direct » actif (``scripts/serveur_actif.py``) : il tient la collecte, pas de relance ;
 - workflow de collecte non actif : pas de relance ;
 - un lancement plus récent que celui-ci (``GITHUB_RUN_ID``) existe : il continue la chaîne ;
-- sinon ``gh workflow run collecte.yml``, puis contrôle que le cycle suivant démarre (``startup_failure`` : jusqu'à
-  3 relances) ;
+- sinon ``gh workflow run collecte.yml``, puis contrôle que le cycle suivant démarre (``startup_failure``, ou
+  « queued » sans aucun job depuis ``FANTOME_MINUTES`` : jusqu'à 3 relances) ;
 - erreurs de l'API : HTTP 422 ou workflow désactivé → arrêt propre (0) ; autre 4xx → échec (1) ; 5xx ou réseau
   (aucun code HTTP) → jusqu'à 6 essais espacés de 20 s × n.
 
@@ -59,6 +59,49 @@ def serveur_actif(depot: str) -> bool:
     return r.stdout.strip() == "oui"
 
 
+FANTOME_MINUTES = 3          # un cycle « queued » sans job après ce délai est un fantôme
+
+
+def etat_dernier(depot: str, cree: str) -> tuple[str, str, str]:
+    """(identifiant, statut, conclusion) du lancement le plus récent après ``cree`` ; statut « inconnu » sinon."""
+    retour, sortie, _ = gh("run", "list", "--repo", depot, "--workflow", "collecte.yml", "--limit", "5", "--json",
+                           "databaseId,createdAt,conclusion,status", "--jq",
+                           f'[.[] | select(.createdAt > "{cree}")][0] | "\\(.databaseId) \\(.status) \\(.conclusion)"')
+    morceaux = sortie.split() if retour == 0 else []
+    if len(morceaux) < 2:
+        return "", "inconnu", ""
+    return morceaux[0], morceaux[1], morceaux[2] if len(morceaux) > 2 else ""
+
+
+def sans_job(depot: str, ident: str) -> bool:
+    retour, nombre, _ = gh("api", f"repos/{depot}/actions/runs/{ident}/jobs", "--jq", ".total_count")
+    return retour == 0 and nombre == "0"
+
+
+def verifier_demarrage(depot: str, ref: str, mode: str, cree: str) -> int:
+    relances, attente = 0, 0
+    while True:
+        dormir(60)
+        attente += 1
+        ident, statut, conclusion = etat_dernier(depot, cree)
+        if conclusion == "startup_failure":
+            motif = "a échoué au démarrage"
+        elif statut == "queued" and ident and sans_job(depot, ident):
+            if attente < FANTOME_MINUTES:
+                continue
+            motif = f"reste dans la file sans job depuis {attente} min (fantôme GitHub)"
+        else:
+            print(f"Cycle suivant démarré ({conclusion or statut}).")
+            return 0
+        if relances == 3:
+            print(f"::error::Le cycle suivant {motif} malgré 3 relances.")
+            return 1
+        relances += 1
+        print(f"::warning title=Relance::Le cycle suivant {motif} : nouvelle relance ({relances}/3).")
+        lancer(depot, ref, mode)
+        attente = 0
+
+
 def relancer(environ=None) -> int:
     env = os.environ if environ is None else environ
     depot, run_id = env["DEPOT"], env.get("GITHUB_RUN_ID", "")
@@ -104,21 +147,10 @@ def relancer(environ=None) -> int:
             retour, _, erreur = lancer(depot, ref, mode)
             if retour == 0:
                 print("Cycle suivant lancé.")
-                # Garde-fou (11/11/2026) : un lancement peut échouer au démarrage (« startup_failure », incident
-                # GitHub) ; on vérifie que le cycle suivant démarre vraiment, et on le relance jusqu'à 3 fois sinon.
-                for verif in range(1, 4):
-                    dormir(60)
-                    retour, dernier, _ = gh("run", "list", "--repo", depot, "--workflow", "collecte.yml", "--limit",
-                                            "5", "--json", "createdAt,conclusion,status", "--jq",
-                                            f'[.[] | select(.createdAt > "{cree}")][0] | (.conclusion // .status)')
-                    dernier = dernier if retour == 0 else "inconnu"
-                    if dernier != "startup_failure":
-                        print(f"Cycle suivant démarré ({dernier}).")
-                        return 0
-                    print(f"::warning title=Relance::Le cycle suivant a échoué au démarrage : nouvelle relance ({verif}/3).")
-                    lancer(depot, ref, mode)
-                print("::error::Le cycle suivant échoue au démarrage malgré 3 relances.")
-                return 1
+                # Garde-fous : un lancement peut échouer au démarrage (« startup_failure », 11/11/2026) ou rester
+                # « queued » sans aucun job, fantôme que GitHub ne démarre ni n'annule jamais (16/11/2026, chaîne
+                # arrêtée). On vérifie chaque minute que le cycle suivant démarre ; sinon jusqu'à 3 relances.
+                return verifier_demarrage(depot, ref, mode, cree)
             code = classer(erreur)
         for ligne in erreur.splitlines()[:5]:
             print("  " + ligne)

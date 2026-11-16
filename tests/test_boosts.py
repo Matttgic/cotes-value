@@ -190,3 +190,23 @@ def test_pari_a_long_terme_non_evalue():
              "libelle": "Fred VanVleet fait 6 passes ou + (moyenne)", "cote": 2.1, "cote_avant": 1.8, "lu": ISO,
              "long_terme": True}
     assert B.evaluer([boost], [], {}, T)[0]["statut"] == "pari à long terme"
+
+
+def test_verdict_jouer_ou_passer():
+    assert B.verdict({"value": 0.04}) == ("jouer", None) and B.verdict({"value": -0.01}) == ("passer", None)
+    # Sans cote juste : +29,3 % de hausse → seuil 22,66 %, très au-dessus de la marge habituelle (6 % + 5 %).
+    assert B.verdict({"libelle": "Lyon gagne", "pari": "Lyon", "value": None, "marge_seuil": 0.2266}) == ("jouer", 0.06)
+    assert B.verdict({"libelle": "Lyon gagne", "pari": "Lyon", "value": None, "marge_seuil": 0.08})[0] == "passer"
+    # Combiné de trois sélections : marge attendue ≈ 16,9 %, il faut au moins ≈ 21,9 %.
+    combo = {"libelle": "Lyon gagne, Paris gagne et Lens gagne", "value": None}
+    assert B.verdict({**combo, "marge_seuil": 0.2})[0] == "passer"
+    assert B.verdict({**combo, "marge_seuil": 0.23}) == ("jouer", pytest.approx(0.1694, abs=1e-4))
+    assert B.verdict({"value": None, "marge_seuil": None}) == ("passer", None)
+
+
+def test_evaluer_donne_un_verdict_a_chaque_boost():
+    boost = {"id": "c", "bookmaker": "Winamax", "domicile": "Carlos Alcaraz", "exterieur": "Frances Tiafoe",
+             "debut": "2026-11-16T13:00:00+00:00", "libelle": "Alcaraz gagne et plus de 22,5 jeux",
+             "cote": 2.9, "cote_avant": 2.5, "lu": ISO}
+    b = B.evaluer([boost], [_ligne("VAINQUEUR", "DOM", 1.2)], {}, T)[0]
+    assert b["verdict"] == "passer" and b["marge_attendue"] == pytest.approx(0.1164, abs=1e-4)   # seuil 13,8 %

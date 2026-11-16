@@ -20,6 +20,11 @@ Combinés (« … et … ») et intitulés non reconnus n'ont pas de cote juste.
 cote d'avant − 1) et la marge sous laquelle le boost serait rentable si la cote d'avant était la cote juste diminuée
 de la marge de Winamax (1 − cote d'avant / cote boostée) : un repère, pas une mesure.
 
+Verdict (``verdict``) : « jouer » ou « passer », affiché sur chaque boost. Avec une cote juste : jouer si la value est
+positive. Sans cote juste mais avec la cote d'avant : jouer si la marge seuil dépasse la marge habituelle d'un
+bookmaker français (``MARGE_HABITUELLE`` par sélection, cumulée sur les sélections d'un combiné) d'au moins
+``MARGE_SECURITE`` ; sinon, ou sans cote d'avant, passer (impossible à juger).
+
 Suivi (``suivre``) : un épisode par boost, de sa première lecture à la dernière. « Gain espéré » = mise maximale
 (10 € si inconnue) × value, sur les boosts qui ont une cote juste : une espérance, pas un résultat (les boosts ne sont
 pas encore réglés).
@@ -57,6 +62,8 @@ from .marches import cle, inverser
 from .surebets import pivots
 
 SEUIL_ALERTE = 0.03
+MARGE_HABITUELLE = 0.06      # marge d'un bookmaker français sur une sélection (5 à 7 % sur les grands marchés)
+MARGE_SECURITE = 0.05        # écart exigé au-delà de la marge habituelle quand la cote juste manque
 TOLERANCE_COTE_AVANT = 0.011
 ECART_COTE_AVANT_MAX = 0.08       # cote habituelle à plus de 8 % de la cote d'avant : pas le même pari
 ASSOCIATION_MIN = 0.75
@@ -290,6 +297,23 @@ def libelle(pari: dict, match: dict) -> str:
                          "sport": match.get("sport")})
 
 
+def selections(r: dict) -> int:
+    """Nombre de sélections du boost : 1 s'il est traduit en pari standard, sinon les « , » et « et » de l'intitulé."""
+    if r.get("pari"):
+        return 1
+    return len([x for x in re.split(r",(?!\d)| et ", normaliser(r.get("libelle"))) if x.strip()]) or 1
+
+
+def verdict(r: dict) -> tuple[str, float | None]:
+    """(« jouer » ou « passer », marge habituelle attendue sur ce boost quand la cote juste manque)."""
+    if r.get("value") is not None:
+        return ("jouer" if r["value"] > 0 else "passer"), None
+    if r.get("marge_seuil") is None:
+        return "passer", None
+    attendue = round(1 - (1 - MARGE_HABITUELLE) ** selections(r), 4)
+    return ("jouer" if r["marge_seuil"] >= attendue + MARGE_SECURITE else "passer"), attendue
+
+
 def evaluer(boosts: list[dict], francais: list[dict], index: dict, maintenant: datetime) -> list[dict]:
     """Chaque boost avec son match, son pari standard, sa cote juste et sa value quand elles sont connues."""
     matchs, piv = matchs_francais(francais), pivots(index)
@@ -340,6 +364,8 @@ def evaluer(boosts: list[dict], francais: list[dict], index: dict, maintenant: d
         else:
             r["statut"] = "sans cote juste"
         out.append(r)
+    for r in out:
+        r["verdict"], r["marge_attendue"] = verdict(r)
     out.sort(key=lambda x: (x.get("value") is None, -(x.get("value") or 0), -(x.get("hausse") or 0)))
     return out
 
