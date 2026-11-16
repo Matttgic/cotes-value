@@ -1,6 +1,7 @@
-// Page Boosts : surebets entre bookmakers français (gain garanti sur le papier) et cotes boostées Winamax comparées
-// à la cote juste. Lecture seule de D.surebets et D.boosts (cotes/surebets.py, cotes/boosts.py) : rien n'est recalculé
-// sauf la répartition des mises pour la somme choisie (même règle que surebets.repartir).
+// Page Boosts : surebets entre bookmakers français (gain garanti sur le papier), boosts couverts (boost à sa mise
+// maximale + couverture des autres issues) et cotes boostées comparées à la cote juste. Lecture seule de D.surebets et
+// D.boosts (cotes/surebets.py, cotes/boosts.py) : rien n'est recalculé sauf la répartition des mises des surebets pour
+// la somme choisie (même règle que surebets.repartir).
 const SB_CLE_TOTAL = 'cv-surebet-total';
 let sbTotal = (() => { const v = Number(lire(SB_CLE_TOTAL)); return v >= 10 && v <= 100000 ? v : 100; })();
 const fr2 = x => Number(x).toFixed(2).replace('.', ',');
@@ -76,6 +77,50 @@ Par bookmakers (7 j) : ${(b.par_bookmakers || []).slice(0, 5).map(x => `${e(x.cl
     : '<p class="aide">Aucun épisode pour l’instant.</p>';
 }
 
+function carteCouvert(c) {
+  const jambes = c.jambes.map(j => {
+    const p = {bookmaker: j.bookmaker, lien: j.lien, lien_repli: j.lien_repli, statut: 'en_cours'};
+    return `<div class="sb-jambe"><span class="acc-book">${e(j.bookmaker)}${j.boost ? ' · boost' : ''}</span><b>${e(j.boost ? (j.libelle_bookmaker || j.pari) : j.pari)}</b>`
+      + `<span class="sb-cote">${cote(j.cote)}${j.cote_juste ? `<small> juste ${cote(j.cote_juste)}</small>` : ''}</span>`
+      + `<span class="sb-mise">${euros(j.mise)}</span>${boutonBookmaker(p, true)}</div>`;
+  }).join('');
+  const verif = c.verifie ? '<span class="badge">vérifié par la cote juste</span>'
+    : '<span class="badge sb-alerte">non vérifié : contrôle que le boost et la couverture portent sur le même pari</span>';
+  return `<article class="sb-carte${c.suspect ? ' sb-suspect' : ''}">
+<div class="sb-tete"><span class="acc-meta">${e(nomSport(c.sport))}${c.ligue ? ' · ' + e(c.ligue) : ''}</span>
+<b>${e(c.match)}</b><span>${e(c.pari || '')} · ${horairePari(c)}</span></div>
+<div class="sb-gain"><strong class="pos">+${fr2(100 * c.rendement)} %</strong>${verif}${c.suspect ? `<span class="badge sb-alerte">${e(c.suspect)}</span>` : ''}</div>
+<div class="sb-jambes">${jambes}</div>
+<p class="sb-retour">Boost misé ${euros(c.mise_boost)} ${c.mise_max ? '(mise max)' : '(mise max inconnue)'} · ${euros(c.mise_totale)} en tout · gain d'au moins
+<b class="${signe(c.gain)}">${c.gain >= 0 ? '+' : ''}${euros(c.gain)}</b> quoi qu'il arrive. Mise d'abord le boost, puis la couverture. Cotes relevées à ${hm(c.detecte)} : vérifie-les avant de miser.</p>
+</article>`;
+}
+
+function rendreCouverts() {
+  const B = D.boosts || {}, zone = document.getElementById('bc-actuels');
+  if (!zone) return;
+  document.getElementById('bc-maj').textContent = B.maj ? 'relevé de ' + hm(B.maj) : 'aucun relevé';
+  const tous = B.couverts || [], actuels = tous.filter(c => !c.suspect), suspects = tous.filter(c => c.suspect);
+  zone.innerHTML = actuels.length ? actuels.map(carteCouvert).join('')
+    : '<p class="vide">Aucun boost couvrable au dernier relevé : il faut un boost plus gros que la marge des autres issues.</p>';
+  document.getElementById('bc-suspects').innerHTML = suspects.length
+    ? `<details class="mode-emploi"><summary>Écartés au dernier relevé (${suspects.length})</summary>${suspects.map(carteCouvert).join('')}</details>` : '';
+  const b = (B.bilan_couverts || {})['7'] || {}, b30 = (B.bilan_couverts || {})['30'] || {};
+  document.getElementById('bc-bilan').innerHTML = b.n ? kpis([
+    ['Boosts couverts (7 j)', String(b.n), '', `${b.verifies} vérifiés`],
+    ['Rendement médian', '+' + fr2(100 * b.rendement_median) + ' %', 'pos', 'à la première lecture'],
+    ['Gain si tous pris', (b.gain >= 0 ? '+' : '') + fr2(b.gain) + ' €', signe(b.gain), 'boost à sa mise max'],
+    ['Mise engagée', fr2(b.mise) + ' €', '', 'boost et couvertures']
+  ]) + `<p class="aide">Sur 30 jours : ${b30.n || 0} boosts couverts, ${fr2(b30.gain || 0)} € garantis s’ils avaient tous été pris.</p>`
+    : '<p class="aide">Pas encore de boost couvert sur 7 jours.</p>';
+  const eps = (B.episodes_couverts || []).slice(0, 20);
+  document.getElementById('bc-episodes').innerHTML = eps.length ? eps.map(x =>
+    `<div class="sb-episode"><span class="acc-meta">${e(quand(x.premier))} · ${x.cycles} relevé${x.cycles > 1 ? 's' : ''}</span>`
+    + `<b>${e(x.match)}</b><span>${e(x.libelle || x.pari || '')} · ${e((x.bookmakers || []).join(' + '))}</span>`
+    + `<span class="pos">+${fr2(100 * x.rendement_initial)} % · +${fr2(x.gain_initial)} €${x.verifie ? '' : ' · non vérifié'}</span></div>`).join('')
+    : '<p class="aide">Aucun épisode pour l’instant.</p>';
+}
+
 function carteBoost(b) {
   const p = {bookmaker: b.bookmaker, lien: b.lien, statut: 'en_cours'};
   const value = b.value != null
@@ -115,5 +160,6 @@ function rendreBoosts() {
     });
   }
   rendreSurebets();
+  rendreCouverts();
   rendreBoostsListe();
 }

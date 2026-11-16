@@ -54,15 +54,43 @@ Sans cote juste : la **hausse** (cote boostée / cote d'avant − 1) et la **mar
 boostée : le boost est rentable si la marge du bookmaker sur la cote d'avant était plus petite). Un repère, pas une
 mesure.
 
+## Boosts couverts (gain garanti)
+
+Ajouté le 16/11/2026 (`couverts` dans `cotes/boosts.py`). Un boost traduit en pari d'un marché que les surebets savent
+couvrir sans remboursement possible (1N2, vainqueur, double chance, les deux équipes marquent, handicaps et totaux à
+demi-ligne) est joué à sa **mise maximale** (10 € si inconnue) ; chaque autre issue est couverte à la meilleure cote
+française du cycle pour le même retour. Pour un boost 1N2, la couverture est soit le nul et l'autre équipe, soit la
+double chance qui les réunit, la moins chère des deux. Si
+
+    1/cote boostée + Σ 1/cote de couverture < 1
+
+le gain est le même quel que soit le résultat : mise du boost × cote boostée × (1 − cette somme), aux arrondis près
+(couvertures arrondies aux 10 centimes, au mieux pour le pire résultat). Exemple des tests : Lens boosté de 1,95 à
+2,30 chez Winamax, nul à 3,60 chez Betclic, Lille à 4,50 chez Unibet : 10 € + 6,40 € + 5,10 €, **+1,45 € quoi qu'il
+arrive**. Les cotes habituelles du même bookmaker peuvent couvrir son propre boost.
+
+Couvertures : mêmes cotes et mêmes garde-fous que les surebets (`surebets.candidates` : lues depuis moins de 10 min,
+pas plus de 15 % au-dessus de leur cote juste, intitulés contrôlés, match bien associé). **Vérifié** : le boost et
+chaque couverture ont une cote juste chez la référence et ces probabilités font 1 à 3 % près ; si toutes en ont une et
+qu'elles ne font pas 1, la couverture est écartée (pas le même marché). **Suspect** (affiché à part, ni suivi ni
+envoyé) : rendement au-delà de 50 %, ou de 5 % sans vérification.
+
+Garanti sur le papier seulement : la couverture peut bouger avant d'être jouée. Mise d'abord le boost (il peut
+disparaître), puis la couverture tout de suite.
+
 ## Suivi, fichiers et alertes
 
-`donnees/boosts.json` (JSON compact, réécrit à chaque cycle complet ; le journal donne le nombre lu par bookmaker et
-les erreurs) : boosts du cycle évalués, épisodes des 30
+`donnees/boosts.json` (JSON compact, réécrit à chaque cycle complet ; le journal donne le nombre lu par bookmaker, le
+nombre de boosts couverts et les erreurs) : boosts du cycle évalués, épisodes des 30
 derniers jours (première et dernière lecture, cote et value à la première lecture). Bilan sur 7 et 30 jours : nombre,
 part évaluée, part en value, value médiane, **gain espéré** (mise maximale × value des boosts en value).
+Boosts couverts : `couverts` (ceux du cycle) et `episodes_couverts` (un par boost et couverture : rendement, gain et
+mise à la première lecture). Bilan : nombre, vérifiés, **gain garanti s'ils avaient tous été pris**, mise engagée.
 
 Case **Cotes boostées** du bloc « Alertes Pushover » : un message par boost dont la value atteint
-`BOOST_SEUIL_ALERTE` (3 % par défaut). `SOURCE_BOOSTS=off` coupe la lecture.
+`BOOST_SEUIL_ALERTE` (3 % par défaut). Un boost couvert dont le rendement atteint `SUREBET_SEUIL_ALERTE` (1 %) part une
+fois, si la case Surebets ou Cotes boostées est cochée, avec les mises de chaque jambe ; il remplace l'alerte de value
+du même boost. `SOURCE_BOOSTS=off` coupe la lecture.
 
 ## Limites et suite
 

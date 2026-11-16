@@ -88,12 +88,18 @@ def surebets_publies(doc: dict, maintenant: datetime) -> dict:
 
 
 def boosts_publies(doc: dict, maintenant: datetime) -> dict:
-    """Page Boosts › Cotes boostées : celles du dernier relevé (matchs pas commencés) et bilans (cotes/boosts.py)."""
+    """Page Boosts › Cotes boostées et boosts couverts : ceux du dernier relevé (matchs pas commencés) et bilans
+    (cotes/boosts.py)."""
     doc = doc if isinstance(doc, dict) else {}
     episodes = [x for x in doc.get("episodes") or [] if isinstance(x, dict) and x.get("premier")]
+    couverts = [x for x in doc.get("episodes_couverts") or [] if isinstance(x, dict) and x.get("premier")]
     return {"maj": doc.get("maj"), "actuels": [x for x in doc.get("actuels") or []
                                                if isinstance(x, dict) and _a_venir(x, maintenant)][:60],
             "bilan": {str(j): boosts_mod.bilan(episodes, maintenant, j) for j in (7, 30)},
+            "couverts": [x for x in doc.get("couverts") or []
+                         if isinstance(x, dict) and x.get("jambes") and _a_venir(x, maintenant)][:20],
+            "bilan_couverts": {str(j): boosts_mod.bilan_couverts(couverts, maintenant, j) for j in (7, 30)},
+            "episodes_couverts": sorted(couverts, key=lambda x: x["premier"], reverse=True)[:20],
             "seuil_alerte": boosts_mod.SEUIL_ALERTE}
 
 

@@ -85,7 +85,7 @@ def analyser(ctx: Contexte) -> None:
     journal["surebets"] = surebets_du_cycle(donnees, francais, index, (etat_controle, suspects), journal)
     # Cotes boostées comparées à la cote juste (cycle complet seulement : quelques demandes réseau de plus).
     if ctx.mode == "complet" and os.environ.get("SOURCE_BOOSTS", "direct").strip().lower() != "off":
-        journal["boosts"] = boosts_du_cycle(donnees, francais, index, journal)
+        journal["boosts"] = boosts_du_cycle(donnees, francais, index, journal, controle=(etat_controle, suspects))
     ctx.index, ctx.etat_controle, ctx.opportunites = index, etat_controle, opportunites
 
 
@@ -107,22 +107,25 @@ def surebets_du_cycle(donnees: Path, francais: list[dict], index: dict, controle
 
 
 def boosts_du_cycle(donnees: Path, francais: list[dict], index: dict, journal: dict,
-                    lire=None, maintenant: datetime | None = None) -> dict:
-    """Lit les boosts (Winamax, Unibet, NetBet, OlyBet), les évalue, met à jour leurs épisodes et écrit ``boosts.json``.
-    Jamais bloquant.
-    ``lire`` remplace la lecture réseau (tests)."""
+                    lire=None, maintenant: datetime | None = None, controle: tuple[dict, dict] | None = None) -> dict:
+    """Lit les boosts (Winamax, Unibet, NetBet, OlyBet), les évalue, cherche ceux qu'on peut couvrir pour un gain
+    garanti, met à jour leurs épisodes et écrit ``boosts.json``. Jamais bloquant.
+    ``lire`` remplace la lecture réseau (tests) ; ``controle`` : contrôle des intitulés du cycle (couvertures)."""
     try:
         from cotes.direct import boosts_sites
         maintenant = maintenant or datetime.now(timezone.utc)
         lus, erreurs = (lire or (lambda: boosts_sites.lire_tous(maintenant)))()
         actuels = boosts.evaluer(lus, francais, index, maintenant)
-        etat = boosts.suivre(lire_json(donnees / "boosts.json", {}), actuels, maintenant)
+        precedent = lire_json(donnees / "boosts.json", {})
+        etat = boosts.suivre(precedent, actuels, maintenant)
+        couverts = boosts.couverts(actuels, francais, index, maintenant, controle)
+        etat["episodes_couverts"] = boosts.suivre_couverts(precedent, couverts, maintenant)
         par_book: dict[str, int] = {}
         for b in lus:
             par_book[b.get("bookmaker")] = par_book.get(b.get("bookmaker"), 0) + 1
         bilan = {"lus": len(lus), "evalues": sum(b.get("value") is not None for b in actuels),
-                 "par_bookmaker": par_book, "erreurs": erreurs}
-        ecrire_json(donnees / "boosts.json", boosts.publier(actuels, etat, maintenant, bilan), compact=True)
+                 "couverts": sum(not c.get("suspect") for c in couverts), "par_bookmaker": par_book, "erreurs": erreurs}
+        ecrire_json(donnees / "boosts.json", boosts.publier(actuels, etat, maintenant, bilan, couverts), compact=True)
         return bilan
     except Exception as e:  # noqa: BLE001 - un boost ne doit jamais arrêter le cycle
         return {"erreur": echecs.noter(journal, "boosts", e, maintenant)}

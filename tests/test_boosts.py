@@ -164,7 +164,7 @@ def test_etape_du_cycle_ecrit_boosts_json(tmp_path):
     idx = _index({("JEUX_HANDICAP", "MATCH", -5.5, "DOM"): 0.38})
     journal = {}
     r = boosts_du_cycle(tmp_path, fr, idx, journal, lire=lambda: (winamax.boosts_depuis(DOC, ISO), []), maintenant=T)
-    assert r == {"lus": 2, "evalues": 1, "par_bookmaker": {"Winamax": 2}, "erreurs": []}
+    assert r == {"lus": 2, "evalues": 1, "couverts": 0, "par_bookmaker": {"Winamax": 2}, "erreurs": []}
     import json
     doc = json.loads((tmp_path / "boosts.json").read_text())
     assert len(doc["actuels"]) == 2 and len(doc["episodes"]) == 2

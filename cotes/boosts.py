@@ -23,19 +23,37 @@ de la marge de Winamax (1 − cote d'avant / cote boostée) : un repère, pas un
 Suivi (``suivre``) : un épisode par boost, de sa première lecture à la dernière. « Gain espéré » = mise maximale
 (10 € si inconnue) × value, sur les boosts qui ont une cote juste : une espérance, pas un résultat (les boosts ne sont
 pas encore réglés).
+
+Boosts couverts (``couverts``) : un boost traduit en pari standard d'un marché que les surebets savent couvrir (1N2,
+vainqueur, double chance, les deux équipes marquent, handicaps et totaux à demi-ligne), joué à sa mise maximale, et
+chaque autre issue couverte à la meilleure cote française du cycle (mêmes cotes, mêmes garde-fous que
+cotes/surebets.py › ``candidates``) pour le même retour. Si 1/cote boostée + Σ 1/cote de couverture < 1, le gain est
+le même quel que soit le résultat :
+
+    gain = mise du boost × cote boostée × (1 − Σ 1/cote) (aux arrondis des mises près)
+
+« Vérifié » : le boost et chaque couverture ont une cote juste chez la référence du match et ces probabilités font 1
+(``TOLERANCE_PARTITION`` près) ; si toutes en ont une et qu'elles ne font pas 1, la couverture est écartée (pas le même
+marché). Suspect, affiché mais jamais suivi ni envoyé : rendement au-delà de ``RENDEMENT_COUVERT_SUSPECT``, ou de
+``RENDEMENT_SUSPECT_NON_VERIFIE`` sans vérification. Garanti sur le papier seulement : la couverture peut bouger
+avant d'être jouée.
 """
 from __future__ import annotations
 
+import hashlib
+import math
 import re
 import unicodedata
 from datetime import datetime, timedelta
+from itertools import product
 from statistics import median
 
 from . import controle as CT
+from . import surebets as SB
 from .comparaison import libelle_pari
 from .correspondance import ressemblance
 from .joueurs import stat_canonique
-from .marches import cle
+from .marches import cle, inverser
 from .surebets import pivots
 
 SEUIL_ALERTE = 0.03
@@ -46,6 +64,8 @@ HEURE_MAX = timedelta(minutes=90)
 MISE_DEFAUT = 10.0
 GARDER_JOURS = 30
 EPISODES_MAX = 1500
+PAS_COUVERTURE = 0.1              # mises de couverture arrondies aux 10 centimes
+RENDEMENT_COUVERT_SUSPECT = 0.5   # vérifié ou non, au-delà : presque sûrement une erreur de lecture ou de traduction
 
 # Période par défaut chez Winamax quand l'intitulé n'en dit rien (cotes/pulsescore.py › REGLE_PAR_DEFAUT), puis l'autre.
 PERIODES = {"hockey": ("TEMPS_REG", "MATCH"), "basket": ("MATCH", "TEMPS_REG"),
@@ -324,6 +344,137 @@ def evaluer(boosts: list[dict], francais: list[dict], index: dict, maintenant: d
     return out
 
 
+# --------------------------------------------------------------------------- boosts couverts
+
+def complements(marche: str, ligne, issue: str) -> list[list[tuple[str, object, str]]]:
+    """Façons de couvrir tous les autres résultats d'un pari standard : listes de (marché, ligne, issue), même période.
+    Vide si le marché ne se couvre pas sans remboursement possible (score exact, mi-temps/fin, joueur, ligne entière)."""
+    if marche in SB.TROIS_ISSUES:
+        issues = SB.TROIS_ISSUES[marche]
+        if issue not in issues:
+            return []
+        out = [[(marche, ligne, i) for i in issues if i != issue]]
+        if marche == "RESULTAT_1N2":                       # ou la double chance qui couvre les deux autres
+            out.append([("DOUBLE_CHANCE", None, {"DOM": "DRAW_AWAY", "EXT": "HOME_DRAW", "NUL": "HOME_AWAY"}[issue])])
+        return out
+    if marche in SB.DEUX_ISSUES or (marche in SB.DEMI_LIGNE and SB.demi_ligne(ligne)):
+        issues = SB.DEUX_ISSUES.get(marche) or SB.DEMI_LIGNE[marche]
+        return [[(marche, ligne, i) for i in issues if i != issue]] if issue in issues else []
+    if marche == "DOUBLE_CHANCE":
+        reste = dict(SB.CROISES).get(issue)
+        return [[("RESULTAT_1N2", None, reste)]] if reste else []
+    return []
+
+
+def mises_couverture(cote_boost: float, mise_boost: float, cotes: list[float], pas: float = PAS_COUVERTURE) -> dict:
+    """Boost misé ``mise_boost`` ; chaque couverture reçoit mise × cote boostée / sa cote, arrondie à ``pas`` près
+    (plancher ou plafond, au mieux pour le pire résultat). Rend {"mises" (boost d'abord), "mise_totale", "gain_min",
+    "gain_max"} en euros."""
+    retour = mise_boost * cote_boost
+    meilleur = None
+    for choix in product(*[(math.floor(retour / c / pas + 1e-9) * pas, math.ceil(retour / c / pas - 1e-9) * pas)
+                           for c in cotes]):
+        mises = [round(mise_boost, 2), *(round(m, 2) for m in choix)]
+        if min(mises) <= 0:
+            continue
+        total = sum(mises)
+        retours = [m * c for m, c in zip(mises, [cote_boost, *cotes])]
+        cle_tri = (round(min(retours) - total, 6), -total)
+        if meilleur is None or cle_tri > meilleur[0]:
+            meilleur = (cle_tri, mises, total, retours)
+    if meilleur is None:                                   # couvertures sous le pas : sans arrondi
+        mises = [round(mise_boost, 2), *(round(retour / c, 2) for c in cotes)]
+        total, retours = sum(mises), [m * c for m, c in zip(mises, [cote_boost, *cotes])]
+    else:
+        _, mises, total, retours = meilleur
+    return {"mises": mises, "mise_totale": round(total, 2), "gain_min": round(min(retours) - total, 2),
+            "gain_max": round(max(retours) - total, 2)}
+
+
+def suspicion_couvert(jambes: list[dict], r: float) -> str | None:
+    """Pourquoi un boost couvert n'est pas crédible (None : il l'est)."""
+    if r > RENDEMENT_COUVERT_SUSPECT:
+        return "rendement trop grand"
+    if r > SB.RENDEMENT_SUSPECT_NON_VERIFIE and not SB.verifie(jambes):
+        return "trop beau sans cote juste pour vérifier"
+    return None
+
+
+def _jambe_boost(b: dict, issue: str) -> dict:
+    return {"bookmaker": b.get("bookmaker"), "issue": issue, "pari": b.get("pari"), "libelle_bookmaker": b.get("libelle"),
+            "cote": float(b["cote"]), "lu": b.get("lu"), "proba_juste": b.get("proba_juste"),
+            "cote_juste": b.get("cote_juste"), "ecart": b.get("value"), "lien": b.get("lien"), "lien_repli": False,
+            "boost": True}
+
+
+def _couvert(b: dict, jambes: list[dict], reference: str, maintenant: datetime) -> dict:
+    jambes = [dict(j) for j in jambes]
+    cotes = [j["cote"] for j in jambes]
+    mise_max = b.get("mise_max")
+    connue = isinstance(mise_max, (int, float)) and not isinstance(mise_max, bool) and mise_max > 0
+    rep = mises_couverture(cotes[0], float(mise_max) if connue else MISE_DEFAUT, cotes[1:])
+    for j, m in zip(jambes, rep["mises"]):
+        j["mise"] = m
+    r = SB.rendement(cotes)
+    cle_c = "|".join([str(b.get("id")), *(f'{j["bookmaker"]}:{j["issue"]}' for j in jambes[1:])])
+    return {"id": hashlib.sha1(cle_c.encode()).hexdigest()[:16], "cle": cle_c, "boost_id": b.get("id"),
+            "detecte": maintenant.isoformat(timespec="seconds"), "bookmaker": b.get("bookmaker"),
+            "libelle": b.get("libelle"), "pari": b.get("pari"), "domicile": b.get("domicile"),
+            "exterieur": b.get("exterieur"), "match": f'{b.get("domicile")} – {b.get("exterieur")}',
+            "debut": b.get("debut"), "sport": b.get("sport"), "ligue": b.get("ligue"), "reference": reference,
+            "cote": b.get("cote"), "cote_avant": b.get("cote_avant"), "mise_max": mise_max if connue else None,
+            "value": b.get("value"), "jambes": jambes, "bookmakers": sorted({j["bookmaker"] for j in jambes}),
+            "verifie": SB.verifie(jambes), "somme_inverses": round(sum(1 / c for c in cotes), 5),
+            "rendement": round(r, 5), "mise_boost": rep["mises"][0], "mise_totale": rep["mise_totale"],
+            "gain": rep["gain_min"], "gain_max": rep["gain_max"], "suspect": suspicion_couvert(jambes, r)}
+
+
+def couverts(evalues: list[dict], francais: list[dict], index: dict, maintenant: datetime,
+             controle: tuple[dict, dict] | None = None) -> list[dict]:
+    """Boosts du cycle (``evaluer``) qui, couverts aux meilleures cotes françaises des autres issues, gagnent quoi
+    qu'il arrive ; du plus rentable au moins rentable, un par boost."""
+    a_couvrir = []
+    for b in evalues:
+        c = b.get("cote")
+        if not b.get("marche") or not b.get("match_id") or isinstance(c, bool) or not isinstance(c, (int, float)) \
+                or not c > 1:
+            continue
+        a_couvrir.append(b)
+    if not a_couvrir:
+        return []
+    familles = SB.candidates(francais, index, maintenant, controle)[0]
+    piv = pivots(index)
+    out = []
+    for b in a_couvrir:
+        p = piv.get(b["match_id"])
+        if p is None:
+            continue
+        nom, mid_ref, inverse = p
+        pari = {"marche": b["marche"], "periode": b.get("periode"), "ligne": b.get("ligne"), "issue": b.get("issue"),
+                "domicile": b.get("domicile"), "exterieur": b.get("exterieur")}
+        pc = inverser(pari) if inverse else pari              # dans le sens de la référence, comme les familles
+        ligne = None if pc["ligne"] is None else round(float(pc["ligne"]), 2)
+        boost = _jambe_boost(b, pc["issue"])
+        meilleur = None
+        for option in complements(pc["marche"], ligne, pc["issue"]):
+            listes = [SB._meilleures((familles.get((nom, mid_ref, m, pc["periode"], l)) or {}).get(i) or [])
+                      for m, l, i in option]
+            if not all(listes):
+                continue
+            for combo in product(*listes):
+                jambes = [boost, *combo]
+                ok = SB.verifie(jambes)
+                if ok and abs(sum(j["proba_juste"] for j in jambes) - 1) > SB.TOLERANCE_PARTITION:
+                    continue                                   # pas le même marché : on n'y croit pas
+                cle_tri = (round(SB.rendement([j["cote"] for j in jambes]), 6), ok)
+                if meilleur is None or cle_tri > meilleur[0]:
+                    meilleur = (cle_tri, jambes)
+        if meilleur and meilleur[0][0] > 0:
+            out.append(_couvert(b, meilleur[1], nom, maintenant))
+    out.sort(key=lambda x: -x["rendement"])
+    return out
+
+
 # --------------------------------------------------------------------------- suivi
 
 CHAMPS = ("bookmaker", "libelle", "domicile", "exterieur", "debut", "sport", "cote", "cote_avant", "mise_max",
@@ -366,7 +517,49 @@ def bilan(episodes: list[dict], maintenant: datetime, jours: int = 7) -> dict:
             "hausse_mediane": round(median(hausses), 4) if hausses else None}
 
 
-def publier(actuels: list[dict], etat: dict, maintenant: datetime, journal: dict | None = None) -> dict:
-    """Document ``donnees/boosts.json`` : boosts du cycle, épisodes suivis, journal du cycle."""
+def suivre_couverts(etat: dict | None, actuels: list[dict], maintenant: datetime) -> list[dict]:
+    """Un épisode par boost couvert (même boost, mêmes couvertures) : première et dernière lecture, rendement et gain
+    à la première lecture. Les suspects ne sont pas suivis."""
+    episodes = {e["cle"]: e for e in ((etat or {}).get("episodes_couverts") or [])
+                if isinstance(e, dict) and e.get("cle")}
+    t = maintenant.isoformat(timespec="seconds")
+    for c in actuels:
+        if c.get("suspect"):
+            continue
+        e = episodes.get(c["cle"])
+        if e is None:
+            e = episodes[c["cle"]] = {
+                "cle": c["cle"], "id": c["id"], "premier": t, "cycles": 0,
+                **{k: c.get(k) for k in ("bookmaker", "libelle", "match", "debut", "sport", "pari", "bookmakers")},
+                "rendement_initial": c["rendement"], "gain_initial": c["gain"], "mise_initiale": c["mise_totale"],
+                "verifie": bool(c.get("verifie")), "rendement_max": c["rendement"],
+                "jambes": [{k: j.get(k) for k in ("bookmaker", "issue", "pari", "cote", "cote_juste", "mise", "boost")}
+                           for j in c["jambes"]]}
+        e["dernier"], e["cycles"] = t, e["cycles"] + 1
+        e["rendement_dernier"] = c["rendement"]
+        e["rendement_max"] = max(e.get("rendement_max") or 0, c["rendement"])
+    limite = maintenant - timedelta(days=GARDER_JOURS)
+    garde = sorted((e for e in episodes.values() if (_t(e.get("dernier")) or maintenant) >= limite),
+                   key=lambda e: e.get("premier") or "")
+    return garde[-EPISODES_MAX:]
+
+
+def bilan_couverts(episodes: list[dict], maintenant: datetime, jours: int = 7) -> dict:
+    """Boosts couverts vus sur ``jours`` jours : nombre, vérifiés, gain garanti s'ils avaient tous été pris à la
+    première lecture (boost à sa mise maximale), mise engagée, rendement médian."""
+    es = [e for e in episodes if (maintenant - (_t(e.get("premier")) or maintenant)) <= timedelta(days=jours)]
+    if not es:
+        return {"jours": jours, "n": 0}
+    return {"jours": jours, "n": len(es), "verifies": sum(bool(e.get("verifie")) for e in es),
+            "gain": round(sum(e.get("gain_initial") or 0 for e in es), 2),
+            "mise": round(sum(e.get("mise_initiale") or 0 for e in es), 2),
+            "rendement_median": round(median(e["rendement_initial"] for e in es), 4)}
+
+
+def publier(actuels: list[dict], etat: dict, maintenant: datetime, journal: dict | None = None,
+            couverts_du_cycle: list[dict] | None = None) -> dict:
+    """Document ``donnees/boosts.json`` : boosts du cycle, épisodes suivis, boosts couverts du cycle et leurs
+    épisodes, journal du cycle."""
     return {"maj": maintenant.isoformat(timespec="seconds"), "actuels": actuels, "journal": journal or {},
-            "episodes": etat.get("episodes", [])}
+            "episodes": etat.get("episodes", []), "couverts": couverts_du_cycle or [],
+            "episodes_couverts": etat.get("episodes_couverts", [])}

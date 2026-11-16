@@ -118,7 +118,12 @@ et Betsson refusent les IP non françaises) sont traduits en pari standard quand
 juste : value = cote boostée × probabilité juste − 1. Sinon, la hausse et la marge seuil. Mesuré par cotes-boostees
 sur 979 boosts réglés : tous les jouer rapporte −6,6 %. [Méthode et limites](docs/boosts.md).
 
-Les deux ont leur case dans « Alertes Pushover » (onglet Notifs) : surebet dès 1 %, boost dès 3 % de value.
+**Boosts couverts** : un boost joué à sa mise maximale et couvert sur les autres issues aux meilleures cotes
+françaises ; si 1/cote boostée + Σ 1/cote de couverture < 1, gain garanti quel que soit le résultat (mêmes garde-fous
+que les surebets). [Méthode](docs/boosts.md#boosts-couverts-gain-garanti).
+
+Les deux ont leur case dans « Alertes Pushover » (onglet Notifs) : surebet dès 1 %, boost dès 3 % de value ; un boost
+couvert dès 1 %, avec l'une ou l'autre case.
 
 ### Deux stratégies suivies séparément
 
