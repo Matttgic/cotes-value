@@ -176,3 +176,17 @@ def test_le_site_publie_euria_json(tmp_path):
     construire(tmp_path, tmp_path / "site", T + timedelta(minutes=5))
     d = json.loads((tmp_path / "site" / "euria.json").read_text())
     assert len(d["milieux"]) == 1 and set(d["conversions"]) == {"Betclic", "Winamax"} and d["maj"] == ISO
+
+
+def test_marche_mal_lu_ecarte_des_conversions():
+    """Relevé du 16/11 : « Grèce U21 – Islande U21 » chez Unibet, « U21 » lu comme un handicap de +21 ; cotes
+    20 / 17 / 6,7 (somme des 1/cote 0,26 : faux surebet de 287 %), sans cote juste. Rien n'est proposé."""
+    kw = dict(dom="Grèce U21", ext="Islande U21", sport="football")
+    fr = [_l("Unibet", 7, "HANDICAP_3", i, c, ligne=21, **kw) for i, c in (("DOM", 6.7), ("NUL", 17.0), ("EXT", 20.0))]
+    idx = {"Pinnacle": {"unibet|7": _ref({_cle("RESULTAT_1N2", None, "DOM"): 0.5}, mid=99)}}
+    assert E.conversions(*_calcul(fr, idx), T) == {}
+    # probabilités justes qui ne font pas 1 (48 + 28 + 40 %) : marché incohérent, écarté aussi
+    assert not E.marche_credible([{"cote": 2.0, "proba_juste": 0.48}, {"cote": 3.5, "proba_juste": 0.28},
+                                  {"cote": 2.6, "proba_juste": 0.40}])
+    assert E.marche_credible([{"cote": 1.95, "proba_juste": 0.48}, {"cote": 3.4, "proba_juste": 0.28},
+                              {"cote": 3.9, "proba_juste": 0.24}])
