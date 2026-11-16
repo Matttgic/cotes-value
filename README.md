@@ -98,12 +98,26 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    « Règlement » plus bas), selon le
    règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
-7. **Site** (`scripts/site_web.py`, gabarit `web/modele.html`) publié sur GitHub Pages, en quatre onglets : Paris, Bilan, Notifications, Santé.
+7. **Site** (`scripts/site_web.py`, gabarit `web/modele.html`) publié sur GitHub Pages, en six onglets : Accueil, Décision, Paris, Boosts, Bilan, Notifs (Santé depuis l'en-tête).
    Polices OFL en WOFF2 dans `web/polices/`. La vitrine
    publique (`web/vitrine.html`, deux chiffres Kelly ¼ recalculés à chaque publication) est publiée à part, en
    `vitrine.html`, sans lien depuis l'interface ni bouton de connexion : l'interface reste la page d'accueil.
    La page Santé garde un journal des incidents des dernières 24 heures (`sante_incidents.json`, écrit à chaque cycle par `cotes/surveillance.py`) : pannes, lectures dégradées et refus 403/429 qui durent au moins 3 cycles, avec début, durée et nombre de cycles. Le dépassement de budget n'en fait pas partie.
    Une source lue sans erreur mais plus comme d'habitude (volume divisé par deux, marché disparu, marchés non reconnus en hausse, cotes figées) passe aussi en alerte, avec un message Pushover (`cotes/derive.py`, [docs/durer.md](docs/durer.md)).
+
+### Surebets et cotes boostées (onglet Boosts)
+
+**Surebets** : à chaque cycle, la meilleure cote française de chaque issue d'un même marché ; si Σ 1/cote < 1, les
+mises réparties gagnent quoi qu'il arrive. Mêmes matchs que la comparaison (rencontre de référence commune), marchés
+sans remboursement possible, cotes récentes, « vérifié » quand chaque cote a sa cote juste chez la référence.
+Rejeu des 13-14/11 : 30 surebets en deux jours (9 vérifiés, tous sous 2 %), la moitié vus un seul relevé.
+[Méthode, chiffres et limites](docs/surebets.md).
+
+**Cotes boostées** : les boosts Winamax (seul bookmaker qui les publie dans ce que la collecte lit, sonde du 16/11) sont
+traduits en pari standard quand c'est possible et comparés à la cote juste : value = cote boostée × probabilité juste
+− 1. Sinon, la hausse et la marge seuil. [Méthode et limites](docs/boosts.md).
+
+Les deux ont leur case dans « Alertes Pushover » (onglet Notifs) : surebet dès 1 %, boost dès 3 % de value.
 
 ### Deux stratégies suivies séparément
 

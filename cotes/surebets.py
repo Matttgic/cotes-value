@@ -22,7 +22,7 @@ Garde-fous (un gros surebet est presque toujours une erreur de lecture ou un pri
 - chaque cote lue depuis moins de ``AGE_MAX`` à l'heure du cycle (``AGE_MAX_LOINTAIN`` pour un match à plus de 6 h
   chez les bookmakers qui le relisent par tranches) ;
 - une cote qui a sa cote juste chez la référence du match (lue au même moment, règle de la comparaison) doit en être
-  proche (``ECART_JUSTE_BAS`` à ``comparaison.ECART_SUSPECT``). Quand toutes les jambes en ont une, leurs
+  proche (``ECART_JUSTE_BAS`` à ``ECART_JAMBE_MAX``). Quand toutes les jambes en ont une, leurs
   probabilités justes doivent faire 1 à ``TOLERANCE_PARTITION`` près (les issues couvrent bien tous les résultats) et
   le surebet est « vérifié ». Sans cote juste pour une jambe (ligne que la référence ne propose pas), il reste
   affiché mais « non vérifié » : à contrôler avant de miser ;
@@ -46,7 +46,7 @@ from itertools import product
 from statistics import median
 
 from . import controle as CT
-from .comparaison import ECART_SUSPECT, ECART_SUSPECT_GROSSES, hors_perimetre_anj, libelle_pari
+from .comparaison import hors_perimetre_anj, libelle_pari
 from .liens import lien_info
 from .marches import cle, inverser
 
@@ -62,6 +62,10 @@ RENDEMENT_SUSPECT = 0.15
 # Sans cote juste pour contrôler, au-delà de 5 % c'est presque toujours une erreur de lecture : rejeu des 13-14/11/2026,
 # huit « surebets » de 9 à 12 % sur les handicaps d'un même match de basket (Winamax contre Betclic), aucun vérifiable.
 RENDEMENT_SUSPECT_NON_VERIFIE = 0.05
+# Une cote payée plus de 15 % au-dessus de sa cote juste : erreur de lecture ou erreur manifeste (pari annulé), elle
+# n'entre dans aucun surebet. Rejeu des 13-14/11 : « Chypre – Norvège », Betclic +4,5 à 2,05 pour une cote juste de
+# 1,66 (+23 %), faux surebet « vérifié » de 11,6 %. (La comparaison, elle, tolère 25 % : comparaison.ECART_SUSPECT.)
+ECART_JAMBE_MAX = 0.15
 SEUIL_ALERTE = 0.01
 TOTAL = 100.0
 MEILLEURES = 3                     # cotes gardées par issue pour chercher une combinaison à deux bookmakers
@@ -165,7 +169,7 @@ def _raison(l: dict, juste: dict | None, maintenant: datetime, controle) -> str 
         return "cote ancienne"
     if juste_utilisable(l, juste):
         ecart = c * juste["proba_juste"] - 1
-        if not ECART_JUSTE_BAS <= ecart <= (ECART_SUSPECT if c <= 10 else ECART_SUSPECT_GROSSES):
+        if not ECART_JUSTE_BAS <= ecart <= ECART_JAMBE_MAX:
             return "loin de la cote juste"
     if controle:
         r = CT.raison(l, *controle)
@@ -299,8 +303,16 @@ def _surebet(fam: tuple, combo: list[dict], match: dict, maintenant: datetime, c
             "bookmakers": sorted({j["bookmaker"] for j in combo}),
             "verifie": verifie(combo), "somme_inverses": round(sum(1 / c for c in cotes), 5), "rendement": round(r, 5),
             "gain_100": rep["gain_min"], "mise_100": rep["mise_totale"], "lu_premier": lus[0], "lu_dernier": lus[-1],
-            "suspect": "rendement trop grand" if r > RENDEMENT_SUSPECT else
-            "trop beau sans cote juste pour vérifier" if r > RENDEMENT_SUSPECT_NON_VERIFIE and not verifie(combo) else None}
+            "suspect": suspicion(combo, r)}
+
+
+def suspicion(combo: list[dict], r: float) -> str | None:
+    """Pourquoi un surebet n'est pas crédible (None : il l'est)."""
+    if r > RENDEMENT_SUSPECT:
+        return "rendement trop grand"
+    if r > RENDEMENT_SUSPECT_NON_VERIFIE and not verifie(combo):
+        return "trop beau sans cote juste pour vérifier"
+    return None
 
 
 def detecter(francais: list[dict], index: dict, maintenant: datetime,

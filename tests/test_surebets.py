@@ -78,6 +78,7 @@ def test_match_relie_a_l_envers_est_retourne():
     ({"collecte": (T - timedelta(minutes=12)).isoformat()}, "cote ancienne"),
     ({"debut": (T - timedelta(minutes=1)).isoformat()}, "commencé"),
     ({"cote": 2.9}, "loin de la cote juste"),
+    ({"cote": 2.32}, "loin de la cote juste"),            # +16 % : au-delà de ECART_JAMBE_MAX
 ])
 def test_garde_fous_d_une_jambe(modif, raison):
     fr = [_l("Winamax", 1, "VAINQUEUR", "DOM", 2.10), {**_l("Betclic", 2, "VAINQUEUR", "EXT", 2.10), **modif}]
@@ -162,9 +163,10 @@ def test_controle_des_intitules():
 
 
 def test_rendement_trop_grand_suspect():
-    v = {("VAINQUEUR", "MATCH", None, "DOM"): 0.6, ("VAINQUEUR", "MATCH", None, "EXT"): 0.4}
-    fr = [_l("Winamax", 1, "VAINQUEUR", "DOM", 2.0), _l("Betclic", 2, "VAINQUEUR", "EXT", 2.9)]
-    out, _ = S.detecter(fr, _index(("winamax|1", _ref(v)), ("betclic|2", _ref(v))), T)
+    """Sans cote juste pour l'une des jambes, rien ne borne les cotes : au-delà de 15 %, suspect."""
+    fr = [_l("Winamax", 1, "VAINQUEUR", "DOM", 2.4), _l("Betclic", 2, "VAINQUEUR", "EXT", 2.4)]
+    autre = _ref({("TOTAL", "MATCH", 22.5, "PLUS"): 0.5})          # la rencontre est connue, pas ce marché
+    out, _ = S.detecter(fr, _index(("winamax|1", autre), ("betclic|2", autre)), T)
     assert len(out) == 1 and out[0]["rendement"] > S.RENDEMENT_SUSPECT and out[0]["suspect"] == "rendement trop grand"
 
 
@@ -215,3 +217,15 @@ def test_non_verifie_trop_beau_est_suspect():
     idx = _index(("winamax|1", _ref(V)), ("betclic|2", _ref({("VAINQUEUR", "MATCH", None, "DOM"): 0.5})))
     out, _ = S.detecter(fr, idx, T)
     assert out[0]["verifie"] is False and out[0]["suspect"] == "trop beau sans cote juste pour vérifier"
+
+
+def test_jambe_loin_au_dessus_de_sa_cote_juste_ecartee():
+    """Cas du rejeu : une cote 23 % au-dessus de sa cote juste faisait un faux surebet « vérifié » ; elle est écartée et
+    la meilleure combinaison restante (PMU) est gardée."""
+    v = {("VAINQUEUR", "MATCH", None, "DOM"): 0.4, ("VAINQUEUR", "MATCH", None, "EXT"): 0.6}
+    fr = [_l("Winamax", 1, "VAINQUEUR", "DOM", 2.62), _l("Betclic", 2, "VAINQUEUR", "EXT", 2.05),
+          _l("PMU", 3, "VAINQUEUR", "EXT", 1.68)]
+    idx = _index(("winamax|1", _ref(v)), ("betclic|2", _ref(v)), ("pmu|3", _ref(v)))
+    out, journal = S.detecter(fr, idx, T)
+    assert journal["exclues"]["loin de la cote juste"] == 1
+    assert [j["bookmaker"] for j in out[0]["jambes"]] == ["Winamax", "PMU"] and out[0]["suspect"] is None
