@@ -17,9 +17,11 @@ PUSHOVER_TTL_MAX_S = 86400       # le message reste sur le téléphone jusqu'au 
 def strategies_pushover(env=None) -> tuple[set[str], list[str]]:
     """(stratégies cochées, clés inconnues) d'après ``PUSHOVER_STRATEGIES`` : clés séparées par des virgules ou
     des espaces. Liste vide : aucune alerte Pushover. Les clés s'obtiennent avec ``--strategies``."""
+    from cotes.alertes.promos import SPECIALES
     env = os.environ if env is None else env
     voulues = [x for x in env.get("PUSHOVER_STRATEGIES", "").replace(",", " ").split() if x]
-    return {x for x in voulues if x in NOMS}, sorted({x for x in voulues if x not in NOMS})
+    connues = set(NOMS) | set(SPECIALES)
+    return {x for x in voulues if x in connues}, sorted({x for x in voulues if x not in connues})
 
 
 def alertes_pushover(flux: dict, paris: list[dict], envoyes: dict, choisies: set[str],
@@ -83,6 +85,18 @@ def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> d
     ``PUSHOVER_BANKROLL``."""
     env = os.environ if env is None else env
     maintenant = maintenant or datetime.now(timezone.utc)
+    if a.get("type") in ("surebet", "boost"):           # cotes/alertes/promos.py
+        from cotes.alertes import promos
+        champs = promos.message_surebet(a, _bankroll(env)) if a["type"] == "surebet" else promos.message_boost(a)
+        duree = promos.ttl(a, maintenant)
+        if duree:
+            champs["ttl"] = duree
+        try:
+            priorite = int(env.get("PUSHOVER_PRIORITY", "0") or 0)
+        except ValueError:
+            priorite = 0
+        champs["priority"] = priorite if priorite in (-1, 0, 1) else 0
+        return champs
     kelly = a.get("mise_kelly")
     if isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0:
         a = {**a, "mise_kelly": round(kelly * _bankroll(env) / BANKROLL_REFERENCE, 2)}

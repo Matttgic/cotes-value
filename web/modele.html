@@ -20,6 +20,7 @@
     <button data-o="accueil"><span>Accueil</span></button>
     <button data-o="decision"><span>Décision</span></button>
     <button data-o="paris"><span>Paris<span class="nb" id="nb-paris"></span></span></button>
+    <button data-o="boosts"><span>Boosts<span class="nb" id="nb-boosts"></span></span></button>
     <button data-o="bilan"><span>Bilan</span></button>
     <button data-o="notifications"><span>Notifs</span></button>
   </nav>
@@ -245,6 +246,26 @@
     <div id="liste-paris"></div>
     <div style="text-align:center"><button class="btn" id="plus" style="display:none">Afficher plus</button></div>
   </section>
+  <section class="onglet" id="o-boosts">
+    <div class="page-tete"><div><p class="surtitre">Gain garanti ou cote dopée</p><h2>Boosts et surebets</h2>
+      <p class="sous-texte">Surebets : des cotes de bookmakers différents qui, jouées ensemble, gagnent quoi qu’il arrive. Cotes boostées : les promotions Winamax comparées à la cote juste.</p></div></div>
+    <h3 class="bu-titre">Surebets <small id="sb-maj"></small></h3>
+    <p class="aide sb-reglage"><label for="sb-total">Somme à répartir</label> <input id="sb-total" class="champ sb-total" type="number" inputmode="numeric" min="10" max="100000" step="10" value="100"> €</p>
+    <div id="sb-actuels"></div>
+    <div id="sb-suspects"></div>
+    <div id="sb-bilan"></div>
+    <details class="mode-emploi"><summary>Derniers surebets</summary><div id="sb-episodes"></div></details>
+    <details class="mode-emploi"><summary>Comment c’est calculé</summary>
+      <p>Même match chez plusieurs bookmakers (relié par la même rencontre Pinnacle), même marché : on prend la meilleure cote de chaque issue. Si la somme des 1/cote est sous 1, chaque issue reçoit une mise proportionnelle à 1/cote et le retour est le même quel que soit le résultat. Marchés sans remboursement possible seulement : 1N2, vainqueur, les deux équipes marquent, handicaps et totaux à demi-ligne, double chance contre l’issue restante.</p>
+      <p>Garde-fous : deux bookmakers au moins, cotes lues depuis moins de 10 minutes (25 à 39 minutes pour un match lointain chez PMU, Unibet, Betclic), intitulés contrôlés conformes. « Vérifié » : chaque cote a sa cote juste chez la référence et les probabilités justes couvrent bien tous les résultats. « Non vérifié » : la référence ne propose pas la ligne, vérifie toi-même que les paris portent sur le même marché (période, prolongation).</p>
+      <p>Garanti sur le papier seulement : la cote peut bouger avant ta deuxième mise, la mise peut être plafonnée, et les comptes qui jouent les surebets finissent limités. Les cotes affichées sont celles du dernier relevé.</p></details>
+    <h3 class="bu-titre">Cotes boostées <small id="bo-maj"></small></h3>
+    <div id="bo-actuels"></div>
+    <div id="bo-bilan"></div>
+    <details class="mode-emploi"><summary>Comment c’est calculé</summary>
+      <p>Les boosts Winamax (« Cote boostée, mise max 20 € ») sont lus à chaque relevé. Quand l’intitulé est un pari standard (victoire, handicap « gagne par au moins N d’écart », mi-temps/fin, total, les deux équipes marquent, but ou points d’un joueur), il est relié au même pari chez Winamax et à sa cote juste chez la référence du match : value = cote boostée × probabilité juste − 1.</p>
+      <p>Combinés et intitulés non reconnus : pas de cote juste. La hausse (cote boostée / cote d’avant) et la marge sous laquelle le boost serait rentable sont un repère, pas une mesure. Les autres bookmakers ne publient pas leurs boosts dans ce que la collecte lit (sonde du 16/11/2026). Les boosts ne sont pas encore réglés : le « gain espéré » est une espérance.</p></details>
+  </section>
   <section class="onglet" id="o-analyses" aria-label="Analyses">
     <div class="page-tete"><div><p class="surtitre">Données et tendances</p><h2>Analyses</h2><p class="sous-texte">Résultats, volume et qualité des cotes.</p></div><span class="periode-badge" id="analyse-periode-badge">Suivi prospectif</span></div>
     <div class="analyse-filtres">
@@ -412,6 +433,7 @@ function ouvrir(o) {
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
   if (page === "accueil") rendreAccueil();
   if (page === "decision") rendreDecision();
+  if (page === "boosts") rendreBoosts();
 }
 document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
   const hash = b.dataset.bilan === "uniques" ? "bilan" : b.dataset.bilan;
@@ -1895,7 +1917,10 @@ const depart = ancreDepart.page || lire("onglet") || "accueil";
 __NOTIFICATIONS_JS__
 __PUSHOVER_JS__
 __VOYANT_JS__
-const ONGLETS = ["accueil","decision","jouer","bilan","strategies","mes","segments","paris","notifications","regler","controle","analyses"];
+__BOOSTS_JS__
+{ const nb = (D.surebets?.actuels || []).filter(s => !s.suspect).length + (D.boosts?.actuels || []).filter(b => b.value > 0).length;
+  document.getElementById("nb-boosts").textContent = nb || ""; }
+const ONGLETS = ["accueil","decision","jouer","bilan","strategies","mes","segments","paris","boosts","notifications","regler","controle","analyses"];
 ouvrir(ONGLETS.includes(depart) ? depart : "accueil");
 window.addEventListener("hashchange", () => {
   const a = lireAncre();

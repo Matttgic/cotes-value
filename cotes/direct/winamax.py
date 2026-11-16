@@ -685,6 +685,65 @@ def collecter(sports: set[str] | None = None, heures: float = 36, transport=None
             client.fermer()
 
 
+# --------------------------------------------------------------------------- cotes boostées
+# Sonde du 16/11/2026 : la route ``sport:100000`` porte les « Cotes boostées », un faux match par boost (titre
+# « Cote Boostée : A - B », ``isOutright``), un pari « Cote boostée (mise max 20 €) » avec ``previousOdd`` (la cote
+# avant le boost) et une issue au libellé libre (« Carlos Alcaraz gagne par au moins 6 jeux d'écart »).
+SPORT_BOOSTS = 100000
+_TITRE_BOOST = re.compile(r"^\s*cotes?\s+boost[ée]es?\s*:\s*", re.I)
+_MISE_MAX = re.compile(r"mise\s+max(?:imale)?\.?\s*:?\s*(\d+(?:[.,]\d+)?)\s*(?:€|eur)", re.I)
+
+
+def boosts_depuis(doc: dict | None, moment: str) -> list[dict]:
+    """Une ligne par issue boostée du document ``sport:100000`` (matchs pas encore commencés, issues ouvertes)."""
+    if not isinstance(doc, dict):
+        return []
+    matchs, paris = doc.get("matches") or {}, doc.get("bets") or {}
+    issues, cotes = doc.get("outcomes") or {}, doc.get("odds") or {}
+    if not all(isinstance(x, dict) for x in (matchs, paris, issues, cotes)):
+        return []
+    out = []
+    for bet in paris.values():
+        if not isinstance(bet, dict) or bet.get("available") is False:
+            continue
+        m = matchs.get(str(bet.get("matchId"))) or {}
+        if not isinstance(m, dict) or m.get("available") is False or m.get("status") not in (None, "PREMATCH"):
+            continue
+        dom, _, ext = _TITRE_BOOST.sub("", str(m.get("title") or "")).partition(" - ")
+        mise = _MISE_MAX.search(str(bet.get("betTitle") or bet.get("betTypeName") or ""))
+        avant, debut = _nombre(bet.get("previousOdd")), _heure_unix(m.get("matchStart"))
+        for oid in bet.get("outcomes") or []:
+            o, cote = issues.get(str(oid)) or {}, _nombre(cotes.get(str(oid)))
+            if not isinstance(o, dict) or o.get("available") is False or not cote or cote <= 1 or not o.get("label"):
+                continue
+            out.append({"bookmaker": "Winamax", "id": f"winamax|{bet.get('betId')}|{oid}",
+                        "match_boost": m.get("matchId"), "domicile": dom.strip() or None,
+                        "exterieur": ext.strip() or None, "debut": debut.isoformat() if debut else None,
+                        "libelle": str(o["label"]).strip(), "cote": cote,
+                        "cote_avant": avant if avant and avant > 1 else None,
+                        "mise_max": float(mise.group(1).replace(",", ".")) if mise else None,
+                        "titre": str(bet.get("betTitle") or ""), "lu": moment,
+                        "lien": f"https://www.winamax.fr/paris-sportifs/match/{m.get('matchId')}"})
+    return out
+
+
+def lire_boosts(transport=None, echeance=None, maintenant: datetime | None = None) -> tuple[list[dict], list[str]]:
+    """(boosts du moment, erreurs) : une seule demande sur un socket à part, jamais de levée."""
+    maintenant = maintenant or datetime.now(timezone.utc)
+    propre = transport is None
+    client = transport or Socket()
+    if hasattr(client, "echeance"):
+        client.echeance = echeance
+    try:
+        doc = client.demander(f"sport:{SPORT_BOOSTS}")
+        return boosts_depuis(doc, maintenant.isoformat(timespec="seconds")), list(client.erreurs)
+    except Exception as e:  # noqa: BLE001 - un boost ne doit jamais arrêter le cycle
+        return [], [f"boosts : {type(e).__name__}"]
+    finally:
+        if propre and hasattr(client, "fermer"):
+            client.fermer()
+
+
 def _heure(valeur):
     return instant_utc(valeur)
 
