@@ -1701,15 +1701,17 @@ function rendreRecommandees(rows) {
   const fusions = [R.fusion && {...R.fusion, n: 1}, ...(R.fusions || [])].filter(Boolean).sort((x, y) => y.n - x.n);
   const carteFusion = F => {
     const r = parId.get(F.nom), s = r?.stats, rejeu = F.n === 1 ? (miseMode === "fixe" ? F.rejeu : miseMode === "kelly" ? F.rejeu_kelly : blocMise(miseMode)?.fusion_rejeu)?.stats : null;
-    return `<article class="reco-carte reco-fusion"><div class="reco-tete"><span class="reco-rang">Suivie depuis le ${e(quand(F.debut))}</span>${bouton(r)}</div>
-      <h3>${e(F.n === 1 ? F.nom : `${F.nom} · recommandées du ${jour(F.date || F.debut.slice(0, 10))}`)}</h3><p class="reco-detail">${e(F.regles)}.</p>
+    // Repliée : le titre et le résultat ; le détail (membres, rejeu) s'ouvre d'un appui.
+    return `<details class="reco-carte reco-fusion"><summary><h3>${e(F.n === 1 ? F.nom : `${F.nom} · recommandées du ${jour(F.date || F.debut.slice(0, 10))}`)}</h3>
+      <span class="reco-chiffres">${resultat(s || null)}</span></summary>
+      <div class="reco-tete"><span class="reco-rang">Suivie depuis le ${e(quand(F.debut))}</span>${bouton(r)}</div>
+      <p class="reco-detail">${e(F.regles)}.</p>
       <ul class="reco-membres">${(F.membres || []).map(id => `<li>${e(nomComplet(id))} <small>(${statut(id)})</small></li>`).join("")}</ul>
-      <p class="reco-chiffres">Depuis son lancement : ${resultat(s || null)}</p>
-      ${rejeu ? `<p class="reco-preuves">Rejeu indicatif depuis le 14/10 (optimiste : membres choisis après coup) : ${rejeu.regles} matchs · ROI ${p1(rejeu.roi)} · gain ${eur(rejeu.gain)}${rejeu.note ? ` · note ${rejeu.note.total}/100` : ""}</p>` : ""}</article>`;
+      ${rejeu ? `<p class="reco-preuves">Rejeu indicatif depuis le 14/10 (optimiste : membres choisis après coup) : ${rejeu.regles} matchs · ROI ${p1(rejeu.roi)} · gain ${eur(rejeu.gain)}${rejeu.note ? ` · note ${rejeu.note.total}/100` : ""}</p>` : ""}</details>`;
   };
   const fusion = fusions.length ? `<h2 class="sous-titre">Fusions · membres figés</h2>
-      <p class="aide">Chaque fusion réunit les recommandées d'un jour, un seul pari par match, et ne change jamais de membres. Quand une révision change la liste des recommandées,
-      une nouvelle fusion est créée automatiquement (Fusion 2, 3…), suivie à partir de sa création ; les anciennes continuent leur suivi.</p>
+      <details class="mode-emploi"><summary>Comment elles marchent</summary><p class="aide">Chaque fusion réunit les recommandées d'un jour, un seul pari par match, et ne change jamais de membres. Quand une révision change la liste des recommandées,
+      une nouvelle fusion est créée automatiquement (Fusion 2, 3…), suivie à partir de sa création ; les anciennes continuent leur suivi. Appuyez sur une fusion pour voir ses membres.</p></details>
       <div class="reco-grille">${fusions.map(carteFusion).join("")}</div>` : "";
   zone.innerHTML = `<h2 class="sous-titre">Recommandées</h2>
     <details class="mode-emploi"><summary>Comment elles sont choisies</summary><p class="aide">Liste revue tous les ${C.revision_jours ?? 7} jours (dernière révision le ${jour(R.derniere_revision)}, prochaine le ${jour(R.prochaine_revision)}) ; entre deux révisions, elle ne bouge pas.
