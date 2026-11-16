@@ -27,7 +27,8 @@ bookmaker français (``MARGE_HABITUELLE`` par sélection, cumulée sur les séle
 
 Suivi (``suivre``) : un épisode par boost, de sa première lecture à la dernière. « Gain espéré » = mise maximale
 (10 € si inconnue) × value, sur les boosts qui ont une cote juste : une espérance, pas un résultat (les boosts ne sont
-pas encore réglés).
+pas encore réglés). « À jouer » : boosts dont le verdict à la première lecture est « jouer », avec ou sans cote
+juste ; ceux sans cote juste restent hors du gain espéré.
 
 Boosts couverts (``couverts``) : un boost traduit en pari standard d'un marché que les surebets savent couvrir (1N2,
 vainqueur, double chance, les deux équipes marquent, handicaps et totaux à demi-ligne), joué à sa mise maximale, et
@@ -515,11 +516,15 @@ def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime) -> dict
         e = episodes.get(b["id"])
         if e is None:
             e = episodes[b["id"]] = {"id": b["id"], "premier": t, "cycles": 0, **{k: b.get(k) for k in CHAMPS},
-                                     "value_initiale": b.get("value"), "cote_juste_initiale": b.get("cote_juste")}
+                                     "value_initiale": b.get("value"), "cote_juste_initiale": b.get("cote_juste"),
+                                     "verdict_initial": b.get("verdict")}
         e["dernier"], e["cycles"] = t, e["cycles"] + 1
         e["cote_derniere"], e["value_derniere"], e["statut"] = b.get("cote"), b.get("value"), b.get("statut")
         if e.get("value_initiale") is None and b.get("value") is not None:     # cote juste arrivée plus tard
             e["value_initiale"], e["cote_juste_initiale"] = b["value"], b.get("cote_juste")
+            e["verdict_initial"] = b.get("verdict")
+        if e.get("verdict_initial") is None and b.get("verdict"):
+            e["verdict_initial"] = b["verdict"]
         for k in ("pari", "marche", "periode", "ligne", "issue", "joueur", "match_id", "sport"):
             if e.get(k) is None and b.get(k) is not None:
                 e[k] = b[k]
@@ -529,12 +534,23 @@ def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime) -> dict
     return {"episodes": garde[-EPISODES_MAX:]}
 
 
+def _verdict_episode(e: dict) -> str | None:
+    """Verdict à la première lecture ; épisodes d'avant le verdict : déduit de la value quand elle est connue."""
+    if e.get("verdict_initial"):
+        return e["verdict_initial"]
+    v = e.get("value_initiale")
+    return None if v is None else ("jouer" if v > 0 else "passer")
+
+
 def bilan(episodes: list[dict], maintenant: datetime, jours: int = 7) -> dict:
-    """Boosts vus sur ``jours`` jours : combien ont une cote juste, leur value, le gain espéré à la mise maximale."""
+    """Boosts vus sur ``jours`` jours : combien ont une cote juste, leur value, combien sont à jouer, le gain espéré à
+    la mise maximale (seulement ceux qui ont une cote juste : sans elle, pas d'espérance mesurable)."""
     es = [e for e in episodes if (maintenant - (_t(e.get("premier")) or maintenant)) <= timedelta(days=jours)]
     evalues = [e for e in es if e.get("value_initiale") is not None]
     hausses = [e["cote"] / e["cote_avant"] - 1 for e in es if e.get("cote_avant")]
+    jouer = [e for e in es if _verdict_episode(e) == "jouer"]
     return {"jours": jours, "n": len(es), "evalues": len(evalues),
+            "jouer": len(jouer), "jouer_sans_juste": sum(e.get("value_initiale") is None for e in jouer),
             "positifs": sum(e["value_initiale"] > 0 for e in evalues),
             "value_mediane": round(median(e["value_initiale"] for e in evalues), 4) if evalues else None,
             "gain_espere": round(sum((e.get("mise_max") or MISE_DEFAUT) * e["value_initiale"] for e in evalues), 2),
