@@ -6,6 +6,7 @@ import pytest
 
 from cotes import euria as E
 from cotes import surebets as SB
+from cotes.pipeline import reglement as PR
 
 T = datetime(2026, 11, 16, 12, 0, tzinfo=timezone.utc)
 ISO = T.isoformat(timespec="seconds")
@@ -190,3 +191,50 @@ def test_marche_mal_lu_ecarte_des_conversions():
                                   {"cote": 2.6, "proba_juste": 0.40}])
     assert E.marche_credible([{"cote": 1.95, "proba_juste": 0.48}, {"cote": 3.4, "proba_juste": 0.28},
                               {"cote": 3.9, "proba_juste": 0.24}])
+
+
+def test_milieux_regles_pour_le_bilan():
+    """Après le match : chaque pari du milieu est réglé aux cotes de la première lecture, le bilan compare le résultat
+    à l'espérance. 212 points : milieu tombé ; 220 : hors du milieu."""
+    calcul = {"milieux": E.milieux(*_calcul(TOTAUX, _index(J_TOTAUX, J_TOTAUX)), T), "conversions": {}}
+    eps = E.suivre({}, calcul["milieux"], T)
+    assert E.a_regler(eps, T) == []                                                    # pas encore commencé
+    apres = T + timedelta(hours=6)
+    (p,) = E.a_regler(eps, apres)
+    assert (p["domicile"], p["exterieur"], p["sport"], p["statut"]) == ("Lakers", "Celtics", "basket", "en_cours")
+    e = eps[0]
+    assert PR.regler_episode(e, {"score": (110, 102), "periodes": [], "libelles": []})
+    assert e["tombe"] and e["statuts"] == ["gagne", "gagne"] and e["resultat_100"] == pytest.approx(97.47, abs=0.02)
+    assert E.a_regler(eps, apres) == []
+    autre = {**e, "id": "b", "cle": "b"}
+    for k in ("resultat_100", "tombe", "statuts", "score"):
+        autre.pop(k)
+    assert PR.regler_episode(autre, {"score": (120, 100), "periodes": [], "libelles": []})
+    assert not autre["tombe"] and autre["resultat_100"] == pytest.approx(-1.27, abs=0.02)
+    b = E.bilan_regle([e, autre], apres)
+    assert b["n"] == 2 and b["tombes"] == 1 and b["tombes_attendus"] == pytest.approx(0.16)
+    assert b["resultat"] == pytest.approx(96.2, abs=0.05) and b["esperance"] == pytest.approx(13.26, abs=0.02)
+    d = E.publie(E.publier(calcul, [e, autre], apres), None, None, apres)
+    assert d["bilan_regle"]["tout"]["n"] == 2 and len(d["regles"]) == 2 and d["regles"][0]["score"] == [110, 102]
+
+
+def test_ancien_milieu_sans_issues_pas_reglable():
+    calcul = {"milieux": E.milieux(*_calcul(TOTAUX, _index(J_TOTAUX, J_TOTAUX)), T)}
+    e = E.suivre({}, calcul["milieux"], T)[0]
+    e.pop("issues")
+    assert E.a_regler([e], T + timedelta(hours=6)) == []
+
+
+def test_reglement_du_cycle_regle_les_milieux(tmp_path):
+    """Étape règlement : le score validé par deux sources règle le milieu et réécrit euria.json."""
+    from cotes import resultats as RES
+    calcul = {"milieux": E.milieux(*_calcul(TOTAUX, _index(J_TOTAUX, J_TOTAUX)), T), "conversions": {}}
+    doc = E.publier(calcul, E.suivre({}, calcul["milieux"], T), T)
+    apres = T + timedelta(hours=6)
+    milieux = E.a_regler(doc["episodes_milieux"], apres)
+    enr = [{"source": s, "sport": "basket", "domicile": "Lakers", "exterieur": "Celtics", "debut": DEBUT,
+            "score": (110, 102), "periodes": [], "libelles": [], "corners": None} for s in ("espn", "livescore")]
+    assert RES.consensus(milieux[0], enr, apres)
+    assert PR._regler_milieux(tmp_path, doc, milieux, enr, apres) == {"a_regler": 1, "regles": 1}
+    lu = json.loads((tmp_path / "euria.json").read_text())
+    assert lu["episodes_milieux"][0]["tombe"] is True

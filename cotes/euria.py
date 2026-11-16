@@ -43,8 +43,9 @@ MILIEUX_MAX = 40
 CONVERSIONS_PAR_BOOK = 8
 VALEUR_REMBOURSEMENT = 0.75
 SEUIL_ALERTE_MILIEU = 0.02
-GARDER_JOURS = 21
+GARDER_JOURS = 60
 EPISODES_MAX = 2000
+REGLES_PUBLIES = 60
 UNITES = {"football": "buts", "hockey": "buts", "handball": "buts", "basket": "points", "football_americain": "points",
           "rugby": "points", "volley": "points"}
 
@@ -222,7 +223,11 @@ def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime) -> list
                 **{k: m.get(k) for k in ("sport", "ligue", "match", "debut", "marche", "periode", "de", "a", "unite")},
                 "esperance_initiale": m["esperance_100"], "p_milieu_initiale": m["p_milieu"],
                 "bookmakers": sorted({j["bookmaker"] for j in m["jambes"]}),
-                "cotes": [j["cote"] for j in m["jambes"]], "lignes": [j["ligne"] for j in m["jambes"]]}
+                "cotes": [j["cote"] for j in m["jambes"]], "lignes": [j["ligne"] for j in m["jambes"]],
+                # pour le règlement (bilan) : équipes dans le sens de la référence, issues, mises et résultats prévus
+                "domicile": m.get("domicile"), "exterieur": m.get("exterieur"),
+                "issues": [j["issue"] for j in m["jambes"]], "mises_100": m["mises_100"],
+                "milieu_100": m["milieu_100"], "hors_100": m["hors_100"]}
         e["dernier"], e["cycles"] = t, e["cycles"] + 1
         e["esperance_derniere"] = m["esperance_100"]
     limite = maintenant - timedelta(days=GARDER_JOURS)
@@ -240,6 +245,40 @@ def bilan(episodes: list[dict], maintenant: datetime, jours: int = 7) -> dict:
     return {"jours": jours, "n": len(es), "esperance": round(sum(e["esperance_initiale"] for e in es), 2),
             "esperance_mediane": round(median(e["esperance_initiale"] for e in es), 2),
             "p_milieu_mediane": round(median(e["p_milieu_initiale"] for e in es), 4)}
+
+
+# --------------------------------------------------------------------------- règlement des milieux (bilan)
+
+def a_regler(episodes: list[dict], maintenant: datetime) -> list[dict]:
+    """Milieux commencés et pas encore réglés, au format d'un pari (cotes/reglement.py, cotes/resultats.py) pour
+    retrouver le score du match. Les épisodes d'avant l'ajout des issues et des équipes ne sont pas réglables."""
+    out = []
+    for e in episodes:
+        debut = _t(e.get("debut"))
+        if "resultat_100" in e or not e.get("issues") or not e.get("domicile") or not e.get("exterieur") \
+                or debut is None or debut > maintenant:
+            continue
+        out.append({"id": e["id"], "match_id": f"euria|{e['id']}", "sport": e.get("sport"), "ligue": e.get("ligue"),
+                    "domicile": e["domicile"], "exterieur": e["exterieur"], "debut": e["debut"],
+                    "marche": e.get("marche"), "periode": e.get("periode"), "statut": "en_cours"})
+    return out
+
+
+def bilan_regle(episodes: list[dict], maintenant: datetime, jours: int | None = None) -> dict:
+    """Milieux réglés (matchs des ``jours`` derniers jours, ou tous) : ce qu'ils auraient rapporté pour 100 € par
+    milieu, comparé à ce qu'ils promettaient (espérance) ; nombre de milieux tombés contre le nombre attendu."""
+    es = [e for e in episodes if "resultat_100" in e
+          and (jours is None or maintenant - (_t(e.get("debut")) or maintenant) <= timedelta(days=jours))]
+    n = len(es)
+    out = {"jours": jours, "n": n,
+           "en_attente": sum(1 for e in episodes if "resultat_100" not in e and e.get("issues")
+                             and (_t(e.get("debut")) or maintenant) <= maintenant)}
+    if not n:
+        return out
+    return {**out, "resultat": round(sum(e["resultat_100"] for e in es), 2),
+            "esperance": round(sum(e["esperance_initiale"] for e in es), 2),
+            "tombes": sum(1 for e in es if e.get("tombe")),
+            "tombes_attendus": round(sum(e["p_milieu_initiale"] for e in es), 2)}
 
 
 def publier(calcul: dict, episodes: list[dict], maintenant: datetime) -> dict:
@@ -265,4 +304,10 @@ def publie(doc: dict | None, surebets_publies: dict | None, boosts_publies: dict
             "milieux": [m for m in doc.get("milieux") or [] if isinstance(m, dict) and _a_venir(m, maintenant)],
             "conversions": {b: liste for b, liste in sorted(conv.items()) if liste},
             "bilan_milieux": {str(j): bilan(episodes, maintenant, j) for j in (7, 30)},
+            "bilan_regle": {str(j or "tout"): bilan_regle(episodes, maintenant, j) for j in (7, 30, None)},
+            "regles": [{k: e.get(k) for k in ("id", "sport", "ligue", "match", "domicile", "exterieur", "debut",
+                                                "marche", "periode", "de", "a", "unite", "bookmakers", "esperance_initiale", "p_milieu_initiale",
+                                                "resultat_100", "tombe", "score")}
+                       for e in sorted((e for e in episodes if "resultat_100" in e),
+                                       key=lambda e: e.get("debut") or "", reverse=True)[:REGLES_PUBLIES]],
             "autres": {"surebets": len(sb), "boosts_couverts": len(bc)}}
