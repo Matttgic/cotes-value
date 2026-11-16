@@ -97,7 +97,7 @@ def installer() -> None:
     def send(self, req, **kw):
         r = envoyer(self, req, **kw)
         try:
-            if "json" not in (r.headers.get("content-type") or ""):
+            if not kw.get("stream") and "json" not in (r.headers.get("content-type") or ""):
                 octets(ETAT["source"], r.content)
         except Exception:  # noqa: BLE001
             pass
@@ -118,6 +118,91 @@ def installer() -> None:
         Session.request = request
     except ImportError:
         print("curl_cffi absent")
+
+
+UNIBET_BOOSTS: list[str] = []
+UNIBET_CLIENTS: list = []
+
+
+def unibet_boosts(items: dict) -> None:
+    """Événements « Cotes Boostées » d'une page Unibet, avec leurs marchés et issues."""
+    from cotes.direct import unibet
+    for k, ev in items.items():
+        if not (isinstance(k, str) and k.startswith("e") and isinstance(ev, dict) and unibet._boost(ev)):
+            continue
+        if len(UNIBET_BOOSTS) >= 6:
+            return
+        marches = {mk: m for mk, m in items.items() if isinstance(m, dict) and str(mk).startswith("m")
+                   and m.get("parent") == k}
+        issues = [o for o in items.values() if isinstance(o, dict) and o.get("parent") in marches]
+        UNIBET_BOOSTS.append(f"{_court(ev, 900)}\n      marchés {_court(marches, 1200)}\n      issues {_court(issues, 1200)}")
+
+
+def installer_specifiques() -> None:
+    from cotes.direct import betclic, unibet
+    poster = betclic.Client.poster
+
+    def poster_sonde(self, methode, charge):
+        trame = poster(self, methode, charge)
+        ETAT.setdefault("methodes", Counter())[methode] += 1
+        if trame:
+            octets("betclic:trames", trame)
+        return trame
+    betclic.Client.poster = poster_sonde
+    lire = unibet.Client.get
+
+    def get_sonde(self, chemin, params=None, session=None, espacer=None):
+        if self not in UNIBET_CLIENTS:
+            UNIBET_CLIENTS.append(self)
+        doc = lire(self, chemin, params, session=session, espacer=espacer)
+        if isinstance(doc, dict) and isinstance(doc.get("items"), dict):
+            unibet_boosts(doc["items"])
+        return doc
+    unibet.Client.get = get_sonde
+
+
+def unibet_rubrique() -> None:
+    """La rubrique « Cotes Boostées » (chemin 58245556 vu le 16/11) lue directement."""
+    if not UNIBET_CLIENTS:
+        print("[unibet rubrique] pas de client")
+        return
+    client = UNIBET_CLIENTS[0]
+    from cotes.delai import Echeance
+    client.echeance = Echeance(30)
+    for noeud in ("p58245556", "p58410983"):
+        doc = client.get(f"next/50/{noeud}", {"lineId": "1", "originId": "3", "breakdownEventsIntoDays": "true",
+                                             "showPromotions": "true"})
+        items = doc.get("items") if isinstance(doc, dict) and isinstance(doc.get("items"), dict) else {}
+        print(f"[unibet rubrique {noeud}] {len(items)} éléments : "
+              + ", ".join(f"{k}:{(v or {}).get('desc') or (v or {}).get('a')}" for k, v in list(items.items())[:12]))
+        evs = [k for k in items if str(k).startswith("e")]
+        for k in evs[:3]:
+            ev = items[k]
+            marches = {mk: m for mk, m in items.items() if str(mk).startswith("m") and isinstance(m, dict)
+                       and m.get("parent") == k}
+            issues = [o for o in items.values() if isinstance(o, dict) and o.get("parent") in marches]
+            print(f"  ÉVÉNEMENT {_court(ev, 900)}\n  MARCHÉS {_court(marches, 1500)}\n  ISSUES {_court(issues, 1500)}")
+
+
+def winamax_liste() -> None:
+    from cotes.delai import Echeance
+    from cotes.direct import winamax
+    client = winamax.Socket()
+    client.echeance = Echeance(40)
+    ETAT["source"] = "winamax:liste"
+    doc = client.demander("sport:100000")
+    client.fermer()
+    if not isinstance(doc, dict):
+        print(f"[winamax liste] rien {client.erreurs}")
+        return
+    odds = doc.get("odds") or {}
+    outs = doc.get("outcomes") or {}
+    for bet in list((doc.get("bets") or {}).values())[:40]:
+        m = (doc.get("matches") or {}).get(str(bet.get("matchId"))) or {}
+        libelles = [f'{(outs.get(str(o)) or {}).get("label")} @ {odds.get(str(o))}' for o in bet.get("outcomes") or []]
+        print(f'  WINAMAX {m.get("title")} | début {m.get("matchStart")} | cat {m.get("categoryId")} tour '
+              f'{m.get("tournamentId")} | {bet.get("betTitle")} | avant {bet.get("previousOdd")} | {libelles} '
+              f'| marketId {bet.get("marketId")} betType {bet.get("betType")}')
 
 
 def lancer(nom: str, module, budget: float, **kwargs) -> None:
@@ -181,15 +266,16 @@ def candidats() -> None:
 
 def main() -> int:
     installer()
-    from cotes.direct import betclic, netbet, olybet, pmu, unibet, winamax
+    installer_specifiques()
+    from cotes.direct import betclic, unibet
     print(f"Sonde des cotes boostées, {datetime.now(timezone.utc).isoformat(timespec='seconds')}")
-    candidats()
-    lancer("winamax", winamax, 80)
-    lancer("pmu", pmu, 70)
-    lancer("betclic", betclic, 70)
-    lancer("unibet", unibet, 75)
-    lancer("netbet", netbet, 55)
-    lancer("olybet", olybet, 40)
+    winamax_liste()
+    lancer("unibet", unibet, 90)
+    for b in UNIBET_BOOSTS:
+        print(f"  UNIBET BOOST {b}")
+    unibet_rubrique()
+    lancer("betclic", betclic, 90)
+    print(f"[betclic] méthodes : {dict(ETAT.get('methodes') or {})}")
     for source in sorted(set(DOCS) | set(CHEMINS) | set(BRUTS)):
         print(f"\n=== {source} : {DOCS[source]} documents JSON, {sum(CHEMINS[source].values())} mentions")
         for chemin, n in CHEMINS[source].most_common(12):

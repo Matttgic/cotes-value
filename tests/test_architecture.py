@@ -30,7 +30,7 @@ _PAR_COUCHE = {
                "cotes.direct.betclic cotes.direct.betfair cotes.direct.draftkings cotes.direct.fanduel "
                "cotes.direct.horizon cotes.direct.matchbook cotes.direct.netbet cotes.direct.olybet "
                "cotes.direct.pmu cotes.direct.unibet cotes.direct.winamax",
-    "domaine": "cotes.controle cotes.comparaison cotes.mouvement cotes.props",
+    "domaine": "cotes.controle cotes.comparaison cotes.mouvement cotes.props cotes.surebets",
     "paris": "cotes.simulation cotes.reglement cotes.mises cotes.props_papier",
     "strategies": "cotes.strategies cotes.strategies.registre cotes.decisions cotes.convergence cotes.laboratoire cotes.memo cotes.pauses "
                   "cotes.strategies_prudentes cotes.strategie_recommandee cotes.strategie_chatgpt "
@@ -50,7 +50,7 @@ _PAR_COUCHE = {
                "scripts.serveur_actif scripts.protocole scripts.verifier_secrets scripts.verifier_strategie_jules "
                "scripts.verifier_strategie_jules_v2 scripts.archiver_donnees_brutes scripts.sonde_betfair "
                "scripts.sonde_sources_us scripts.sonde_unibet scripts.sonde_boosts scripts.empreinte_site",
-    "etudes": "etudes etudes.erreurs_systematiques etudes.analyse_chatgpt etudes.analyse_marche etudes.audit_bilans etudes.avantage_reel "
+    "etudes": "etudes etudes.etude_surebets etudes.erreurs_systematiques etudes.analyse_chatgpt etudes.analyse_marche etudes.audit_bilans etudes.avantage_reel "
               "etudes.comparer_secours_pinnacle etudes.comparer_strategies etudes.cote_juste etudes.durer "
               "etudes.etude_duree_values etudes.modele_prix etudes.recherche_cloture etudes.strategie_mises",
 }
