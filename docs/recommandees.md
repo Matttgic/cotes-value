@@ -61,6 +61,15 @@ Student), une stratégie est **candidate** si :
 | Rendement pas nettement sous la CLV | écart (rendement − CLV) : borne haute à 95 % ≥ 0 | Écarte les stratégies qui battent la clôture mais perdent quand même (Claude Défi 5) |
 | ROI | > 0 | Garde-fou, comme « jouer » dans la page Décision |
 
+**Doublons hors correction** : une stratégie qui partage au moins 80 % de ses paris avec une stratégie plus fournie
+(en nombre de paris, jamais en résultat) est mesurée mais n'entre pas dans la correction de Holm : elle n'est pas
+candidate (« doublon de … »). Moins de lignes testées, seuil moins dur pour les autres (avantage-reel.md, décision 5).
+
+**Badge de chaque stratégie** (fiche, page Stratégies) : même mesure. « Bat la clôture » (CLV Pinnacle positive
+après correction), « Bat la clôture mais perd », « Sous la clôture » (intervalle sous zéro), « Pas concluant »,
+« Doublon », « Clôture Pinnacle trop rare » ou « Trop tôt pour juger ». Il remplace l'ancien badge « Gain fiable »,
+fondé sur le ROI à 80 % sans correction.
+
 Classement : **borne basse à 95 % de la CLV Pinnacle** (le cas prudent). Une candidate remplace la plus faible si sa
 borne basse la dépasse d'au moins 0,5 point. Une candidate qui partage plus de 60 % de ses paris avec une recommandée
 est écartée comme doublon (paris communs / paris de la plus petite des deux). Trois recommandées au plus. Les bases du

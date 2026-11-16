@@ -236,6 +236,32 @@ def test_clv_heure_future_refusee_et_jamais_de_retour_en_arriere():
     assert pari["cloture_lue"] == "2026-10-07T17:45:00+00:00"
 
 
+def test_cloture_pinnacle_enregistree_sur_tout_pari_et_comptee_dans_la_clv_pinnacle():
+    # docs/avantage-reel.md, décision 2 : un pari Polymarket garde aussi la clôture Pinnacle du même match.
+    from datetime import datetime, timezone
+    from cotes.marches import cle
+    from cotes.protocole import clv_pinnacle
+    from cotes.simulation import suivre_cloture
+    pari = {"statut": "en_cours", "debut": "2026-11-16T18:00:00+00:00", "match_id": "m", "reference": "Polymarket",
+            "cote": 2.2, "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None, "issue": "DOM", "joueur": None,
+            "bookmaker": "PMU", "mise": 10.0}
+    k = ("m", cle(pari))
+    a = datetime(2026, 11, 16, 17, 50, tzinfo=timezone.utc)
+    suivre_cloture([pari], {k: {"Polymarket": (0.50, "2026-11-16T17:46:00+00:00"),
+                                "Pinnacle": (0.50, "2026-11-16T17:45:00+00:00")}}, a)
+    assert pari["clv"] == 0.1 and pari["cote_juste_cloture_pinnacle"] == 2.0
+    assert pari["cloture_pinnacle_lue"] == "2026-11-16T17:45:00+00:00"
+    # Sans lecture Polymarket, la clôture Pinnacle est quand même relue ; une lecture plus ancienne ne remplace rien.
+    suivre_cloture([pari], {k: {"Pinnacle": (0.55, "2026-11-16T17:48:00+00:00")}}, a)
+    suivre_cloture([pari], {k: {"Pinnacle": (0.40, "2026-11-16T17:47:00+00:00")}}, a)
+    assert pari["cote_juste_cloture_pinnacle"] == 1.8182 and pari["clv"] == 0.1
+    assert clv_pinnacle([pari]) == {}                                          # pas encore réglé
+    pari.update(statut="gagne", gain=12.0)
+    assert round(clv_pinnacle([pari])[id(pari)], 4) == round(2.2 / 1.8182 - 1, 4)
+    loin = {**pari, "cloture_pinnacle_lue": "2026-11-16T17:00:00+00:00"}     # hors des 30 min : pas comptée
+    assert clv_pinnacle([loin]) == {}
+
+
 def test_clv_du_bilan_seulement_pres_du_coup_d_envoi():
     # revue externe (R3) : une CLV relevée 1 h avant le match reste sur le pari mais pas dans la moyenne
     from cotes.simulation import bilan, clv_finale

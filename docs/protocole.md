@@ -193,7 +193,9 @@ d'une fusion automatique (Fusion 2, 3…) tant qu'elle n'est pas inscrite.
 - **18 stratégies échoueront sur la clôture, quel que soit leur résultat**, si rien ne change : Grok 1, 4, 5, 8 et
   10, Claude Défi 6 et les 12 règles Polymarket ont une clôture Pinnacle connue pour moins de la moitié de leurs
   paris (14 % à 43 %). Pour les juger, il faut enregistrer la clôture Pinnacle de chaque pari, quelle que soit sa
-  référence (avantage-reel.md, décision 2). Ce n'est pas fait.
+  référence (avantage-reel.md, décision 2). **Fait le 16/11/2026** (une mesure, pas une règle : § 2) : leurs paris
+  ouverts depuis cette date gardent la clôture Pinnacle quand Pinnacle cote le match. Leur couverture ne monte que si
+  Pinnacle cote ces matchs.
 - **23 stratégies n'atteignent pas leur nombre en un an** au rythme actuel : ces 18, et Qwen, Grok 3, Gemini
   Défi 3, Claude Défi 3 et Pinnacle · 1.3–2 · ≥ 5 % · ≤ 12 h.
 - **Les recommandées, les notes sur 100 et les avis d'analyste ne changent pas** : ils décrivent le passé avec leurs

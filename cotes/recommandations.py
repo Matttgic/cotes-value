@@ -68,6 +68,8 @@ def raisons_refus(stats: dict | None) -> list[str]:
         out.append("clôture Pinnacle connue pour moins de la moitié des paris")
     if not p["teste"]:
         out.append("trop peu de clôtures Pinnacle mesurées")
+    elif p.get("doublon_de"):
+        out.append(f"doublon de {p['doublon_de']} (au moins {round(100 * DOUBLON_MIN)} % de paris communs), non testée")
     else:
         if p["clv"] <= 0 or p["p"] >= ALPHA:
             out.append("CLV Pinnacle non prouvée après correction")
@@ -109,12 +111,24 @@ def mesurer_preuves(lignes: list[dict], paris: list[dict]) -> bool:
                   "teste": x["clv_teste"], "clv_ic": None, "p": None, "ecart_haut": None}
         if x["clv_teste"]:
             preuve.update(clv_ic=[r(v) for v in x["clv_ic"]], ecart_haut=r(x["ecart_ic"][1]))
-            testees.append((preuve, x["clv_p_pos"]))
         l["stats"]["preuve"] = preuve
-    for (preuve, _), p in zip(testees, holm([p for _, p in testees])):
+        if x["clv_teste"]:
+            testees.append((l, preuve, x["clv_p_pos"]))
+    # Tester moins de lignes (docs/avantage-reel.md, décision 5) : une stratégie qui partage au moins ``DOUBLON_MIN``
+    # de ses paris avec une autre plus fournie n'entre pas dans la correction. Choix sur le nombre de paris, jamais
+    # sur un résultat.
+    gardees = []
+    for l, preuve, p in sorted(testees, key=lambda t: (-len(t[0].get("ensemble") or ()), str(t[0]["id"]))):
+        proche = next((g for g, _, _ in gardees if recouvrement(l.get("ensemble") or set(), g.get("ensemble") or set())
+                       >= DOUBLON_MIN), None)
+        if proche is not None:
+            preuve["doublon_de"] = proche["id"]
+        else:
+            gardees.append((l, preuve, p))
+    for (_, preuve, _), p in zip(gardees, holm([p for _, _, p in gardees])):
         preuve["p"] = round(p, 5)
-    for preuve, _ in testees:
-        preuve["testees"] = len(testees)
+    for _, preuve, _ in testees:
+        preuve["testees"] = len(gardees)
     return True
 
 
