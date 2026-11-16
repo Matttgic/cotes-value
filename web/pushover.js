@@ -44,13 +44,18 @@
   function dessiner() {
     const ligne=([k,v])=>`<label class="notif-choix"><span>${e(v)}${details[k]?`<small>${e(details[k])}</small>`:''}${bilan(k)}</span><input type="checkbox" role="switch" class="interrupteur" value="${e(k)}" ${choisies.has(k)?'checked':''}></label>`;
     // Une base sans aucun pari depuis le 14/10 n'est pas proposée, sauf si elle est déjà cochée.
+    // Les recommandées de la semaine d'abord, ouvertes ; les autres groupes restent repliés tant que rien n'y est coché.
+    const recos=new Set(((typeof D!=='undefined' && D.recommandees && D.recommandees.actuelles) || []).map(x=>x.id));
+    // Clé de notification d'une recommandée : « labo:ID » pour une règle, la clé de la variante (D.variantes) sinon.
+    const clesReco=new Set([...recos].map(id=>(typeof D!=='undefined' && D.variantes && D.variantes[id] && D.variantes[id].cle) || 'labo:'+id));
+    const estReco=k=>clesReco.has(k);
     const proposee=k=>!k.startsWith('base_') || futur.has(k) || choisies.has(k);
-    const groupes=[['Comparateurs',k=>!k.startsWith('labo:') && !k.startsWith('base_')],['Règles Pinnacle',k=>k.startsWith('labo:PIN-')],
-      ['Règles Polymarket',k=>k.startsWith('labo:POL-')],['Bases du bilan',k=>k.startsWith('base_')]]
+    const groupes=[['Recommandées',k=>estReco(k)],['Comparateurs',k=>!estReco(k) && !k.startsWith('labo:') && !k.startsWith('base_')],['Règles Pinnacle',k=>!estReco(k) && k.startsWith('labo:PIN-')],
+      ['Règles Polymarket',k=>!estReco(k) && k.startsWith('labo:POL-')],['Bases du bilan',k=>k.startsWith('base_')]]
       .map(([titre,f])=>[titre,Object.entries(noms).filter(([k])=>f(k) && proposee(k))]).filter(([,l])=>l.length);
     zone.innerHTML='<legend>Stratégies envoyées sur Pushover</legend>'+groupes.map(([titre,l],i)=>{
       const n=l.filter(([k])=>choisies.has(k)).length;
-      return `<details class="notif-groupe"${i===0||n?' open':''}><summary>${e(titre)} <small>${n?n+' suivie'+(n>1?'s':''):l.length+' au choix'}</small></summary>${l.map(ligne).join('')}</details>`;
+      return `<details class="notif-groupe"${titre==='Recommandées'||n?' open':''}><summary>${e(titre)} <small>${n?n+' suivie'+(n>1?'s':''):l.length+' au choix'}</small></summary>${l.map(ligne).join('')}</details>`;
     }).join('');
     code.placeholder=memorise?'Code mémorisé sur cet appareil':'Choisis un code personnel (8 caractères au moins)';
   }
