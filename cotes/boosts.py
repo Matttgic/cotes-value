@@ -1,16 +1,17 @@
 """Cotes boostées : les promotions des bookmakers français comparées à la cote juste des références.
 
-Lecture : Winamax seulement (route ``sport:100000`` du socket, ``cotes/direct/winamax.py`` › ``lire_boosts``). La sonde
-du 16/11/2026 (``scripts/sonde_boosts.py``) n'a trouvé aucun boost dans ce que la collecte lit chez Unibet, Betclic,
-PMU, NetBet et OlyBet. Un boost Winamax : un intitulé libre (« Carlos Alcaraz gagne par au moins 6 jeux d'écart »),
-la cote boostée, la cote d'avant (``previousOdd``) et la mise maximale (« mise max 20 € »).
+Lecture (``cotes/direct/boosts_sites.py`` › ``lire_tous``) : Winamax (route ``sport:100000`` du socket), Unibet (page
+« cotes boostées »), NetBet (« Super Cotes ») et OlyBet (API swarm), lecteurs repris du dépôt cotes-boostees ; Genybet
+et Betsson refusent les IP non françaises. Un boost : un intitulé libre (« Carlos Alcaraz gagne par au moins 6 jeux
+d'écart »), la cote boostée, la cote d'avant quand le bookmaker la publie (Winamax, Unibet) et la mise maximale.
 
 Évaluation. L'intitulé est traduit en pari standard quand il en est un (``traduire``) : victoire, match nul, double
 chance, handicap (« gagne par au moins N jeux / buts / points d'écart »), mi-temps/fin (« gagne à la mi-temps et à
 la fin du match »), total (« plus de 2,5 buts »), total d'une équipe, les deux équipes marquent, but ou total de
-points d'un joueur. Le match est celui de Winamax (mêmes équipes, début à 90 minutes près). Quand plusieurs périodes
-sont possibles (hockey : temps réglementaire par défaut chez Winamax), on retient celle dont la cote Winamax habituelle
-vaut la cote d'avant le boost (« vérifié »). La cote juste vient de la référence du match (Pinnacle d'abord, même
+points d'un joueur. Le match est celui du même bookmaker (mêmes équipes, début à 90 minutes près), sinon celui d'un
+autre bookmaker. Quand plusieurs périodes sont possibles (hockey : temps réglementaire par défaut chez Winamax), on
+retient celle dont la cote habituelle du bookmaker vaut la cote d'avant le boost (« vérifié ») ; sans cote d'avant, la
+première qui a une cote juste. La cote juste vient de la référence du match (Pinnacle d'abord, même
 association que la comparaison), lue au même moment :
 
     value = cote boostée × probabilité juste − 1
@@ -88,9 +89,13 @@ def _paris(marche: str, ligne, issue: str, sport, joueur=None) -> list[dict]:
     return [{"marche": marche, "periode": p, "ligne": ligne, "issue": issue, "joueur": joueur} for p in _periodes(sport)]
 
 
+_VS = re.compile(r"\s*\((?:vs\.?|v|contre)\s+[^)]+\)")
+
+
 def traduire(libelle: str, domicile: str | None, exterieur: str | None, sport: str | None) -> list[dict]:
     """Paris standard que l'intitulé peut désigner, du plus probable au moins probable ; vide si combiné ou inconnu."""
-    t = normaliser(libelle)
+    t = normaliser(_VS.sub("", str(libelle or "")))          # « Lille (vs Arsenal) marque… » : l'adversaire en trop
+    t = re.sub(r"^(?:cote boostee|super cote|boost)\s*:\s*", "", t).replace("les 2 equipes", "les deux equipes")
     m = re.fullmatch(rf"(?P<s>.+?) (?:gagne|mene) a la mi-temps et (?:gagne )?a la fin du match", t)
     if m:
         camp = _camp(m["s"], domicile, exterieur)
@@ -134,8 +139,16 @@ def traduire(libelle: str, domicile: str | None, exterieur: str | None, sport: s
     m = re.fullmatch(rf"au moins {_N} {_U} dans le match", t)
     if m and float(_nombre(m["n"])).is_integer():
         return _paris(UNITES.get(m["u"], "") + "TOTAL", _nombre(m["n"]) - 0.5, "PLUS", sport)
-    # « X marque … » : une équipe (total de l'équipe) ou un joueur (pari joueur)
-    m = re.fullmatch(r"(?P<s>.+?) marque (?:au moins un but|au moins 1 but|un but|a tout moment)", t)
+    # « Le PSG gagne 1-0 », « Score exact 2-1 » : score exact, dans le sens domicile-extérieur
+    m = re.fullmatch(r"(?P<s>.+?) (?:gagne|s'impose|l'emporte) (?P<a>\d{1,2}) ?[-–] ?(?P<b>\d{1,2})", t)
+    if m and int(m["a"]) > int(m["b"]):
+        camp = _camp(m["s"], domicile, exterieur)
+        score = f'{m["a"]}-{m["b"]}' if camp == "DOM" else f'{m["b"]}-{m["a"]}'
+        return [{"marche": "CORRECT_SCORE", "periode": "MATCH", "ligne": None, "issue": score, "joueur": None}] \
+            if camp else []
+    # « X marque … » : une équipe (total de l'équipe) ou un joueur (pari joueur) ; « X buteur »
+    m = (re.fullmatch(r"(?P<s>.+?) marque (?:au moins un but|au moins 1 but|un but|a tout moment)", t)
+         or re.fullmatch(r"(?P<s>.+?) (?:buteur|marque)(?: dans le match)?", t))
     if m:
         return _marque(m["s"], 0.5, "PLUS", "buts", domicile, exterieur, sport)
     m = re.fullmatch(rf"(?P<s>.+?) marque (?P<sens>plus|moins) de {_N} (?P<stat>buts?|points?|rebonds?|passes(?: decisives)?)", t)
@@ -166,15 +179,20 @@ def _t(s) -> datetime | None:
     return CT._lue(s)
 
 
-def matchs_winamax(francais: list[dict]) -> dict[str, dict]:
-    """Matchs Winamax du cycle : équipes, début, sport et cotes par clé de pari."""
+# Nom du bookmaker du boost -> ``source`` de ses lignes dans la collecte (cotes/pulsescore.py › NOMS).
+SOURCES = {"Winamax": "Winamax", "Unibet": "Unibet", "NetBet": "NetBet", "OlyBet": "OlyBet"}
+
+
+def matchs_francais(francais: list[dict]) -> dict[str, dict]:
+    """Matchs français du cycle : bookmaker, équipes, début, sport et cotes par clé de pari."""
     out: dict[str, dict] = {}
     for l in francais:
-        if l.get("source") != "Winamax" or not l.get("match_id"):
+        if not l.get("match_id"):
             continue
-        m = out.setdefault(l["match_id"], {"match_id": l["match_id"], "domicile": l.get("domicile"),
-                                           "exterieur": l.get("exterieur"), "debut": l.get("debut"),
-                                           "sport": l.get("sport"), "ligue": l.get("ligue"), "lignes": {}})
+        m = out.setdefault(l["match_id"], {"match_id": l["match_id"], "source": l.get("source"),
+                                           "domicile": l.get("domicile"), "exterieur": l.get("exterieur"),
+                                           "debut": l.get("debut"), "sport": l.get("sport"), "ligue": l.get("ligue"),
+                                           "lignes": {}})
         try:
             m["lignes"][cle(l)] = l
         except (KeyError, TypeError, ValueError):
@@ -182,18 +200,29 @@ def matchs_winamax(francais: list[dict]) -> dict[str, dict]:
     return out
 
 
+def matchs_winamax(francais: list[dict]) -> dict[str, dict]:
+    """Matchs Winamax du cycle (compatibilité)."""
+    return {k: m for k, m in matchs_francais(francais).items() if m["source"] == "Winamax"}
+
+
 def associer(boost: dict, matchs: dict[str, dict]) -> dict | None:
-    """Le match Winamax du boost : mêmes équipes (dans cet ordre), début à 90 minutes près."""
+    """Le match du boost : d'abord chez le même bookmaker (mêmes équipes, dans cet ordre), sinon chez un autre (ordre
+    indifférent : seule la cote juste de la référence sert alors) ; début à 90 minutes près."""
     debut = _t(boost.get("debut"))
+    if debut is None or not boost.get("domicile") or not boost.get("exterieur"):
+        return None
+    source = SOURCES.get(boost.get("bookmaker"))
     meilleur = None
     for m in matchs.values():
         d = _t(m.get("debut"))
-        if debut is None or d is None or abs(d - debut) > HEURE_MAX:
+        if d is None or abs(d - debut) > HEURE_MAX:
             continue
-        score = min(ressemblance(boost.get("domicile"), m.get("domicile")),
-                    ressemblance(boost.get("exterieur"), m.get("exterieur")))
-        if score >= ASSOCIATION_MIN and (meilleur is None or score > meilleur[0]):
-            meilleur = (score, m)
+        direct = min(ressemblance(boost["domicile"], m.get("domicile")), ressemblance(boost["exterieur"], m.get("exterieur")))
+        meme = m.get("source") == source
+        score = direct if meme else max(direct, min(ressemblance(boost["domicile"], m.get("exterieur")),
+                                                    ressemblance(boost["exterieur"], m.get("domicile"))))
+        if score >= ASSOCIATION_MIN and (meilleur is None or (meme, score) > meilleur[0]):
+            meilleur = ((meme, score), m)
     return meilleur[1] if meilleur else None
 
 
@@ -204,19 +233,27 @@ def _cle(p: dict):
         return None
 
 
-def choisir(candidats: list[dict], lignes: dict, cote_avant: float | None) -> tuple[dict | None, dict | None]:
-    """(pari retenu, sa cote Winamax habituelle) : d'abord celui dont la cote habituelle vaut la cote d'avant, puis
-    celui qui en est proche (8 %), sinon le premier candidat (sans cote habituelle retrouvée)."""
-    avec = [(c, lignes.get(_cle(c))) for c in candidats]
-    if cote_avant:
+def choisir(candidats: list[dict], lignes: dict, cote_avant: float | None,
+            justes: dict | None = None) -> tuple[dict | None, dict | None]:
+    """(pari retenu, sa cote habituelle chez le bookmaker du boost).
+
+    Avec la cote d'avant et les cotes du même bookmaker : celui dont la cote habituelle vaut la cote d'avant, puis celui
+    qui en est proche (8 %) ; s'il n'existe qu'à une tout autre cote, ce n'est pas lui. Sinon (cote d'avant inconnue,
+    match lu chez un autre bookmaker) : le premier candidat qui a une cote juste chez la référence (``justes``), à
+    défaut le premier."""
+    if cote_avant and lignes:
+        avec = [(c, lignes.get(_cle(c))) for c in candidats]
         for c, l in avec:
             if l and abs(l["cote"] - cote_avant) <= TOLERANCE_COTE_AVANT:
                 return c, l
         for c, l in avec:
             if l and abs(l["cote"] / cote_avant - 1) <= ECART_COTE_AVANT_MAX:
                 return c, l
-    if any(l for _, l in avec):          # le pari existe chez Winamax à une tout autre cote : ce n'est pas lui
-        return None, None
+        if any(l for _, l in avec):
+            return None, None
+    for c in candidats:
+        if justes and _cle(c) in justes:
+            return c, None
     return (candidats[0], None) if candidats else (None, None)
 
 
@@ -235,7 +272,7 @@ def libelle(pari: dict, match: dict) -> str:
 
 def evaluer(boosts: list[dict], francais: list[dict], index: dict, maintenant: datetime) -> list[dict]:
     """Chaque boost avec son match, son pari standard, sa cote juste et sa value quand elles sont connues."""
-    matchs, piv = matchs_winamax(francais), pivots(index)
+    matchs, piv = matchs_francais(francais), pivots(index)
     out = []
     for b in boosts:
         r = dict(b)
@@ -247,9 +284,13 @@ def evaluer(boosts: list[dict], francais: list[dict], index: dict, maintenant: d
         debut = _t(b.get("debut"))
         if debut is not None and debut <= maintenant:
             continue                                         # match commencé : boost terminé
+        if b.get("long_terme"):
+            r["statut"] = "pari à long terme"
+            out.append(r)
+            continue
         m = associer(b, matchs)
         if m is None:
-            r["statut"] = "match introuvable chez Winamax"
+            r["statut"] = "match introuvable"
             out.append(r)
             continue
         r.update(match_id=m["match_id"], sport=m["sport"], ligue=m["ligue"])
@@ -258,7 +299,10 @@ def evaluer(boosts: list[dict], francais: list[dict], index: dict, maintenant: d
             r["statut"] = "combiné ou intitulé non traduit"
             out.append(r)
             continue
-        pari, habituelle = choisir(candidats, m["lignes"], avant)
+        p = piv.get(m["match_id"])
+        justes = (index.get(p[0]) or {}).get(m["match_id"], {}) if p else {}
+        meme = m.get("source") == SOURCES.get(b.get("bookmaker"))
+        pari, habituelle = choisir(candidats, m["lignes"] if meme else {}, avant, justes)
         if pari is None:
             r["statut"] = "pari standard introuvable"
             out.append(r)
@@ -267,8 +311,7 @@ def evaluer(boosts: list[dict], francais: list[dict], index: dict, maintenant: d
         r["pari"] = libelle(pari, m)
         r["cote_habituelle"] = habituelle["cote"] if habituelle else None
         r["verifie"] = habituelle is not None
-        p = piv.get(m["match_id"])
-        juste = (index.get(p[0]) or {}).get(m["match_id"], {}).get(_cle(pari)) if p else None
+        juste = justes.get(_cle(pari)) if justes else None
         if juste and not juste.get("prix_prudent") and 0 < (juste.get("proba_juste") or 0) < 1 \
                 and CT.contemporaines({"collecte": b.get("lu")}, juste):
             q = juste["proba_juste"]

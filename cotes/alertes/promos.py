@@ -18,7 +18,7 @@ from cotes.alertes.webhook import JOURS, _fr
 from cotes.surebets import repartir
 from cotes.temps import instant_utc
 
-SPECIALES = {"surebets": "Surebets (gain garanti sur le papier)", "boosts": "Cotes boostées Winamax en value"}
+SPECIALES = {"surebets": "Surebets (gain garanti sur le papier)", "boosts": "Cotes boostées en value"}
 DETAILS = {"surebets": "Rendement ≥ 1 % · mises réparties sur 10 % de la bankroll Pushover",
            "boosts": "Value ≥ 3 % contre la cote juste · mise maximale du boost"}
 FRAICHEUR = timedelta(minutes=12)

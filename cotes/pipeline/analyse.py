@@ -83,7 +83,7 @@ def analyser(ctx: Contexte) -> None:
                                       if n in index and references.get(n) is references_ecarts[n]})
     # Surebets entre bookmakers français : mêmes cotes, même association, même contrôle des intitulés.
     journal["surebets"] = surebets_du_cycle(donnees, francais, index, (etat_controle, suspects), journal)
-    # Cotes boostées Winamax comparées à la cote juste (cycle complet seulement : une demande réseau de plus).
+    # Cotes boostées comparées à la cote juste (cycle complet seulement : quelques demandes réseau de plus).
     if ctx.mode == "complet" and os.environ.get("SOURCE_BOOSTS", "direct").strip().lower() != "off":
         journal["boosts"] = boosts_du_cycle(donnees, francais, index, journal)
     ctx.index, ctx.etat_controle, ctx.opportunites = index, etat_controle, opportunites
@@ -108,16 +108,20 @@ def surebets_du_cycle(donnees: Path, francais: list[dict], index: dict, controle
 
 def boosts_du_cycle(donnees: Path, francais: list[dict], index: dict, journal: dict,
                     lire=None, maintenant: datetime | None = None) -> dict:
-    """Lit les boosts Winamax, les évalue, met à jour leurs épisodes et écrit ``boosts.json``. Jamais bloquant.
+    """Lit les boosts (Winamax, Unibet, NetBet, OlyBet), les évalue, met à jour leurs épisodes et écrit ``boosts.json``.
+    Jamais bloquant.
     ``lire`` remplace la lecture réseau (tests)."""
     try:
-        from cotes.delai import Echeance
-        from cotes.direct import winamax
+        from cotes.direct import boosts_sites
         maintenant = maintenant or datetime.now(timezone.utc)
-        lus, erreurs = (lire or (lambda: winamax.lire_boosts(echeance=Echeance(20), maintenant=maintenant)))()
+        lus, erreurs = (lire or (lambda: boosts_sites.lire_tous(maintenant)))()
         actuels = boosts.evaluer(lus, francais, index, maintenant)
         etat = boosts.suivre(lire_json(donnees / "boosts.json", {}), actuels, maintenant)
-        bilan = {"lus": len(lus), "evalues": sum(b.get("value") is not None for b in actuels), "erreurs": erreurs[:5]}
+        par_book: dict[str, int] = {}
+        for b in lus:
+            par_book[b.get("bookmaker")] = par_book.get(b.get("bookmaker"), 0) + 1
+        bilan = {"lus": len(lus), "evalues": sum(b.get("value") is not None for b in actuels),
+                 "par_bookmaker": par_book, "erreurs": erreurs}
         ecrire_json(donnees / "boosts.json", boosts.publier(actuels, etat, maintenant, bilan), compact=True)
         return bilan
     except Exception as e:  # noqa: BLE001 - un boost ne doit jamais arrêter le cycle
