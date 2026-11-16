@@ -67,7 +67,7 @@
       <h3 class="bu-titre">Gain cumulé <small>sur la période · pointillés : attendu · zone grisée : marge du hasard</small></h3>
       <div class="bu-courbe" id="bu-courbe"></div>
       <h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div>
-      <p class="aide">★ meilleur ROI parmi les lignes de 50 paris ou plus.</p>
+      <p class="aide">« Meilleur ROI » : parmi les lignes de 50 paris ou plus.</p>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
       <h3 class="bu-titre">Par référence</h3>
@@ -84,7 +84,7 @@
       <details class="mode-emploi"><summary>Quelle méthode de mise aurait été la meilleure ? 18 méthodes sur les mêmes paris</summary>
       <p class="aide">Paris réglés du suivi depuis le 14/10 (ou depuis le lancement de la stratégie), tous misés au moment de leur détection avec
       une bankroll de départ de 1 000 €. Le solde et la série de résultats ne comptent que les paris déjà réglés à cet instant. Simulation :
-      rien n'est appliqué. <b>★</b> plus gros gain, <b>◆</b> meilleur gain par euro de baisse (la plus forte baisse du gain cumulé), 20 paris
+      rien n'est appliqué. « Plus gros gain », « Meilleur rendement » : meilleur gain par euro de baisse (la plus forte baisse du gain cumulé), 20 paris
       au moins. Avec peu de paris, la chance domine : ne choisis pas avant 150 paris réglés.</p>
       <label class="aide">Sélection <select id="mises-selection"></select></label>
       <div class="tableau"><table id="essai-mises"></table></div></details>
@@ -594,7 +594,7 @@ function rendreMises() {
   const pct1 = x => x == null ? "—" : (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",") + " %";
   table.innerHTML = `<tr><th>Méthode</th><th>Mise moy.</th><th>Gain<small>ROI</small></th><th>Plus forte baisse</th><th>Solde<small>minimum</small></th></tr>` +
     cles.map(k => { const r = S[k], m = M.methodes[k]; if (!r.paris) return "";
-      const pastille = (k === etoile ? " ★" : "") + (k === rendement ? " ◆" : "");
+      const pastille = (k === etoile ? ' <small class="avis-mini">Plus gros gain</small>' : "") + (k === rendement ? ' <small class="avis-mini">Meilleur rendement</small>' : "");
       return `<tr><td><b>${e(m.nom)}${pastille}</b><small>${e(m.regle)}</small></td><td>${eurC(r.mise_moyenne)}<small>max ${eurC(r.mise_max)}</small></td>
 <td class="${signe(r.gain)}">${eurC(r.gain)}<small class="roi ${signe(r.gain)}">${pct1(r.roi)}</small></td><td>${eurC(-r.baisse)}</td>
 <td class="${r.solde_min <= 0 ? "neg" : ""}">${eurC(r.solde_min)}<small>final ${eurC(r.solde)}</small></td></tr>`; }).join("");
@@ -1043,7 +1043,7 @@ function tableBU(groupes) {
   const eligibles = lignes.filter(r => r.n >= 50);
   const meilleur = eligibles.length ? eligibles.reduce((a,b) => b.roi > a.roi ? b : a) : null;
   return `<div class="bu-ligne bu-entete"><span></span><span>Paris</span><span>Réuss.</span><span>Net</span><span>ROI</span></div>` +
-    lignes.map(r => `<div class="bu-ligne"><span>${e(r.nom)}${r===meilleur ? ' <b class="bu-etoile" title="Meilleur ROI, 50 paris ou plus">★</b>' : ""}</span>
+    lignes.map(r => `<div class="bu-ligne"><span>${e(r.nom)}${r===meilleur ? ' <small class="avis-mini" title="Meilleur ROI, 50 paris ou plus">Meilleur ROI</small>' : ""}</span>
 <span>${r.n}</span><span>${pctEntier(r.reussite)}</span><span class="${signe(r.net)}">${eurC(r.net)}</span><b class="${signe(r.net)}">${pct(r.roi)}</b></div>`).join("");
 }
 function rendreBilanUniques(maintenant=Date.now()) {
@@ -1098,7 +1098,7 @@ function tableReferences() {
   const eligibles = lignes.filter(r => r.regles >= 50 && r.roi != null);
   const meilleur = eligibles.length ? eligibles.reduce((a,b) => b.roi > a.roi ? b : a) : null;
   return `<div class="bu-ligne bu-entete"><span></span><span>Paris</span><span>Mise</span><span>Réuss.</span><span>Net</span><span>ROI</span></div>` +
-    lignes.map(r => `<a class="bu-ligne bu-ref" href="#paris?ref=${encodeURIComponent(r.nom)}" data-ref="${e(r.nom)}" data-n="${r.n}" data-regles="${r.regles}" data-mises="${r.mises}" data-gain="${r.gain}" data-roi="${r.roi == null ? "" : r.roi}"><span>${e(r.nom)}${r===meilleur ? ' <b class="bu-etoile" title="Meilleur ROI, 50 paris réglés ou plus">★</b>' : ""}</span>
+    lignes.map(r => `<a class="bu-ligne bu-ref" href="#paris?ref=${encodeURIComponent(r.nom)}" data-ref="${e(r.nom)}" data-n="${r.n}" data-regles="${r.regles}" data-mises="${r.mises}" data-gain="${r.gain}" data-roi="${r.roi == null ? "" : r.roi}"><span>${e(r.nom)}${r===meilleur ? ' <small class="avis-mini" title="Meilleur ROI, 50 paris réglés ou plus">Meilleur ROI</small>' : ""}</span>
 <span>${r.n}</span><span>${miseListe(r.mises)}</span><span>${pctEntier(r.reussite)}</span><span class="${signe(r.gain)}">${eur(r.gain)}</span><b class="${signe(r.gain)}">${pct(r.roi)}</b></a>`).join("");
 }
 function voirReference(nom) {
@@ -1655,7 +1655,7 @@ function fiabilite(P) {
 // Pause automatique (cotes/pauses.py) et fiabilité, sous le nom de chaque stratégie.
 function etiquettesStrategie(r) {
   const p = (D.pauses?.liste || {})[r.id], j = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "";
-  const pause = p ? `<small class="badge-pause neg" title="CLV par pari ${p.clv} % (au mieux ${p.clv_haute} %) · par match ${p.clv_match} %">⏸ En pause depuis le ${j(p.depuis)} : perd contre la clôture</small>` : "";
+  const pause = p ? `<small class="badge-pause neg" title="CLV par pari ${p.clv} % (au mieux ${p.clv_haute} %) · par match ${p.clv_match} %">En pause depuis le ${j(p.depuis)} : perd contre la clôture</small>` : "";
   if (datesStratActives() || !r.stats?.regles) return pause;
   if (r.id.startsWith("base:") || r.id.startsWith("Fusion ")) return pause;      // ni bases ni fusions : pas mesurées
   const f = fiabilite(preuveDe(r.id));
@@ -1811,7 +1811,7 @@ function rendreStrategies() {
   }
   // Courbe de chaque stratégie (règles, comparateurs, bases du Bilan) : [instant, réel, attendu, écart type].
   const courbeDe = courbeStrategie;
-  attribuerMedailles(rows);       // ★ € ☘ ◎ : meilleur ROI, gain, réussite et CLV (50 paris réglés minimum)
+  attribuerMedailles(rows);       // étiquettes : meilleur ROI, gain, réussite et CLV (50 paris réglés minimum)
   attribuerValeur(rows);          // rang moyen ROI + CLV, calculé sur toutes les stratégies avant le filtre
   const ref = document.getElementById("strategies-ref").value;
   if (ref) rows = rows.filter(r => r.reference === ref);

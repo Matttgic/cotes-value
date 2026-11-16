@@ -82,7 +82,8 @@ test('les pastilles « meilleur » : une gagnante par critère, 50 paris réglé
   assert.deepEqual(par.A,['roi']);assert.deepEqual(par.B,['gain','reussite']);assert.deepEqual(par.D,['clv']);
   assert.deepEqual(par.C,[]);                       // 20 paris seulement : jamais en tête, même avec 90 % de ROI
   const html=fn('pastillesMedailles')(['roi','gain','reussite','clv']);
-  assert.equal((html.match(/class="medaille"/g)||[]).length,4);assert.ok(html.includes('50 paris réglés minimum'));
+  assert.equal((html.match(/class="avis-mini medaille"/g)||[]).length,4);assert.ok(html.includes('50 paris réglés minimum'));
+  assert.ok(html.includes('>Meilleur ROI<') && !html.includes('<svg'));      // une étiquette texte, plus de pictogramme
   assert.equal(fn('pastillesMedailles')([]),'');assert.equal(fn('pastillesMedailles')(undefined),'');
 });
 
