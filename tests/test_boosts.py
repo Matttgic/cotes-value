@@ -147,14 +147,16 @@ def test_pari_habituel_a_une_tout_autre_cote():
 
 def test_suivi_et_bilan():
     a = {"id": "x", "libelle": "L", "cote": 2.8, "cote_avant": 2.5, "mise_max": 20.0, "value": 0.064, "cote_juste": 2.63,
-         "statut": "évalué"}
-    b = {"id": "y", "libelle": "M", "cote": 3.0, "cote_avant": 2.5, "mise_max": None, "value": None, "statut": "sans"}
+         "statut": "évalué", "verdict": "jouer"}
+    b = {"id": "y", "libelle": "M", "cote": 3.0, "cote_avant": 2.5, "mise_max": None, "value": None, "statut": "sans",
+         "verdict": "jouer"}
     etat = B.suivre({}, [a, b], T)
     etat = B.suivre(etat, [{**a, "value": 0.05}], T + timedelta(minutes=5))
     e = next(x for x in etat["episodes"] if x["id"] == "x")
     assert (e["cycles"], e["value_initiale"], e["value_derniere"]) == (2, 0.064, 0.05)
     bl = B.bilan(etat["episodes"], T + timedelta(hours=1))
     assert (bl["n"], bl["evalues"], bl["positifs"], bl["gain_espere"]) == (2, 1, 1, 1.28)
+    assert (bl["jouer"], bl["jouer_sans_juste"]) == (2, 1)            # le « jouer » sans cote juste hors gain espéré
     assert B.suivre(etat, [], T + timedelta(days=B.GARDER_JOURS + 1))["episodes"] == []
 
 
@@ -210,3 +212,19 @@ def test_evaluer_donne_un_verdict_a_chaque_boost():
              "cote": 2.9, "cote_avant": 2.5, "lu": ISO}
     b = B.evaluer([boost], [_ligne("VAINQUEUR", "DOM", 1.2)], {}, T)[0]
     assert b["verdict"] == "passer" and b["marge_attendue"] == pytest.approx(0.1164, abs=1e-4)   # seuil 13,8 %
+
+
+def test_bilan_compte_les_verdicts_et_les_anciens_episodes():
+    eps = [{"id": "a", "premier": ISO, "value_initiale": 0.03},                       # avant le verdict : déduit
+           {"id": "b", "premier": ISO, "value_initiale": -0.02},
+           {"id": "c", "premier": ISO, "value_initiale": None, "verdict_initial": "passer"},
+           {"id": "d", "premier": ISO, "value_initiale": None}]                       # ancien, sans cote juste : ignoré
+    bl = B.bilan(eps, T + timedelta(hours=1))
+    assert (bl["n"], bl["jouer"], bl["jouer_sans_juste"]) == (4, 1, 0)
+
+
+def test_le_verdict_suit_la_cote_juste_arrivee_plus_tard():
+    b = {"id": "z", "libelle": "L", "cote": 2.0, "cote_avant": 1.9, "value": None, "verdict": "passer"}
+    etat = B.suivre({}, [b], T)
+    etat = B.suivre(etat, [{**b, "value": 0.04, "verdict": "jouer"}], T + timedelta(minutes=5))
+    assert etat["episodes"][0]["verdict_initial"] == "jouer"

@@ -144,9 +144,11 @@ function rendreBoostsListe() {
   const b = (B.bilan || {})['7'] || {};
   document.getElementById('bo-bilan').innerHTML = b.n ? kpis([
     ['Boosts (7 j)', String(b.n), '', `${b.evalues} avec une cote juste`],
-    ['En value', `${b.positifs}/${b.evalues}`, b.positifs ? 'pos' : '', 'value positive à la première lecture'],
+    b.jouer != null
+      ? ['À jouer', `${b.jouer}/${b.n}`, b.jouer ? 'pos' : '', `${b.positifs} en value · ${b.jouer_sans_juste} sans cote juste`]
+      : ['En value', `${b.positifs}/${b.evalues}`, b.positifs ? 'pos' : '', 'value positive à la première lecture'],
     ['Value médiane', b.value_mediane == null ? '—' : pct(b.value_mediane), signe(b.value_mediane), 'boosts évalués'],
-    ['Gain espéré', (b.gain_espere_positifs >= 0 ? '+' : '') + fr2(b.gain_espere_positifs) + ' €', signe(b.gain_espere_positifs), 'boosts en value, à la mise max']
+    ['Gain espéré', (b.gain_espere_positifs >= 0 ? '+' : '') + fr2(b.gain_espere_positifs) + ' €', signe(b.gain_espere_positifs), 'boosts en value, à la mise max (hors « jouer » sans cote juste)']
   ]) : '<p class="aide">Pas encore de boost suivi sur 7 jours.</p>';
 }
 
