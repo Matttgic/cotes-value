@@ -21,9 +21,11 @@ from cotes.alertes.webhook import JOURS, _fr
 from cotes.surebets import repartir
 from cotes.temps import instant_utc
 
-SPECIALES = {"surebets": "Surebets (gain garanti sur le papier)", "boosts": "Cotes boostées en value"}
+SPECIALES = {"surebets": "Surebets (gain garanti sur le papier)", "boosts": "Cotes boostées en value",
+             "milieux": "Milieux en value (page Euria)"}
 DETAILS = {"surebets": "Rendement ≥ 1 % · mises réparties sur 10 % de la bankroll Pushover · et boosts couverts",
-           "boosts": "Value ≥ 3 % contre la cote juste · mise maximale du boost · et boosts couverts"}
+           "boosts": "Value ≥ 3 % contre la cote juste · mise maximale du boost · et boosts couverts",
+           "milieux": "Espérance ≥ 2 % de la mise · mises réparties sur 10 % de la bankroll Pushover"}
 FRAICHEUR = timedelta(minutes=12)
 PARIS = ZoneInfo("Europe/Paris")
 TTL_MAX_S = 86400
@@ -103,8 +105,28 @@ def alertes_couverts(doc: dict, envoyes: dict, maintenant: datetime, seuil: floa
             and c.get("jambes") and _a_venir(c, maintenant) and f'couvert:{c.get("cle")}' not in envoyes]
 
 
+def alertes_milieux(doc: dict, envoyes: dict, maintenant: datetime, seuil: float | None = None) -> list[dict]:
+    """Milieux du dernier relevé (cotes/euria.py) dont l'espérance atteint ``MILIEU_SEUIL_ALERTE`` (2 % de la mise),
+    une fois par épisode."""
+    minimum = _seuil(os.environ.get("MILIEU_SEUIL_ALERTE"), 0.02) if seuil is None else seuil
+    if not _frais(doc, maintenant):
+        return []
+    premiers = {e.get("cle"): str(e.get("premier") or "") for e in doc.get("episodes_milieux") or [] if isinstance(e, dict)}
+    out = []
+    for m in doc.get("milieux") or []:
+        if not isinstance(m, dict) or (m.get("esperance_100") or 0) < 100 * minimum or not _a_venir(m, maintenant) \
+                or len(m.get("jambes") or []) != 2:
+            continue
+        ident = f'milieu:{m.get("cle")}|{premiers.get(m.get("cle"), "")}'
+        if ident not in envoyes:
+            out.append({**m, "type": "milieu", "id": ident})
+    return out
+
+
 def alertes(donnees: Path, envoyes: dict, choisies: set[str], maintenant: datetime) -> list[dict]:
     out = []
+    if "milieux" in choisies:
+        out += alertes_milieux(_lire(donnees / "euria.json"), envoyes, maintenant)
     if "surebets" in choisies:
         out += alertes_surebets(_lire(donnees / "surebets.json"), envoyes, maintenant)
     if "surebets" in choisies or "boosts" in choisies:
@@ -174,6 +196,27 @@ def message_couvert(c: dict) -> dict:
               "message": "\n".join(lignes)[:1000]}
     boost = next((j for j in c["jambes"] if j.get("boost")), c["jambes"][0])
     _lien(champs, boost.get("lien"), boost.get("bookmaker") or "le bookmaker")
+    return champs
+
+
+def message_milieu(m: dict, bankroll: float) -> dict:
+    """Titre, corps et lien Pushover d'un milieu : les deux mises, le résultat dans et hors du milieu, l'espérance."""
+    total = max(10.0, round(bankroll / 10))
+    k = total / 100
+    (a, b), (m1, m2) = m["jambes"], m["mises_100"]
+    zone = (f'écart {m.get("de")} à {m.get("a")}' if m.get("ecart") else f'{m.get("de")} à {m.get("a")}') \
+        + (f' {m["unite"]}' if m.get("unite") else "")
+    lignes = [f'{_heure(m.get("debut"))}',
+              f'{a.get("bookmaker")} : {a.get("pari")} {_fr(a.get("cote"), 2)} → {_fr(m1 * k, 0)} €',
+              f'{b.get("bookmaker")} : {b.get("pari")} {_fr(b.get("cote"), 2)} → {_fr(m2 * k, 0)} €',
+              f'Milieu ({zone}) : {"+" if m["milieu_100"] >= 0 else ""}{_fr(m["milieu_100"] * k, 2)} € ; '
+              f'sinon {"+" if m["hors_100"] >= 0 else ""}{_fr(m["hors_100"] * k, 2)} €.',
+              f'Chance du milieu {_fr(100 * m["p_milieu"], 1)} % ({m.get("reference")}) · espérance '
+              f'+{_fr(m["esperance_100"] * k, 2)} € pour {_fr(total, 0)} €.']
+    champs = {"title": f'Milieu +{_fr(m["esperance_100"], 1)} % · {m.get("match")}'[:250],
+              "message": "\n".join(lignes)[:1000]}
+    premiere = next((j for j in m["jambes"] if j.get("lien") and not j.get("lien_repli")), a)
+    _lien(champs, premiere.get("lien"), premiere.get("bookmaker") or "le bookmaker")
     return champs
 
 

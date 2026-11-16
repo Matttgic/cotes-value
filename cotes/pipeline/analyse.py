@@ -86,6 +86,8 @@ def analyser(ctx: Contexte) -> None:
     # Cotes boostées comparées à la cote juste (cycle complet seulement : quelques demandes réseau de plus).
     if ctx.mode == "complet" and os.environ.get("SOURCE_BOOSTS", "direct").strip().lower() != "off":
         journal["boosts"] = boosts_du_cycle(donnees, francais, index, journal, controle=(etat_controle, suspects))
+    # Page Euria : milieux en value et meilleures conversions de freebets (cotes/euria.py).
+    journal["euria"] = euria_du_cycle(donnees, francais, index, (etat_controle, suspects), journal)
     ctx.index, ctx.etat_controle, ctx.opportunites = index, etat_controle, opportunites
 
 
@@ -104,6 +106,21 @@ def surebets_du_cycle(donnees: Path, francais: list[dict], index: dict, controle
                 "familles": bilan["familles"]}
     except Exception as e:  # noqa: BLE001 - un surebet ne doit jamais arrêter le cycle
         return {"erreur": echecs.noter(journal, "surebets", e, maintenant)}
+
+
+def euria_du_cycle(donnees: Path, francais: list[dict], index: dict, controle_du_cycle: tuple[dict, dict] | None,
+                   journal: dict, maintenant: datetime | None = None) -> dict:
+    """Milieux et conversions de freebets du cycle, écrits dans ``euria.json`` (page Euria). Jamais bloquant."""
+    try:
+        from cotes import euria
+        maintenant = maintenant or datetime.now(timezone.utc)
+        calcul = euria.calculer(francais, index, maintenant, controle_du_cycle)
+        episodes = euria.suivre(lire_json(donnees / "euria.json", {}), calcul["milieux"], maintenant)
+        ecrire_json(donnees / "euria.json", euria.publier(calcul, episodes, maintenant), compact=True)
+        return {"milieux": len(calcul["milieux"]),
+                "conversions": sum(len(x) for x in calcul["conversions"].values())}
+    except Exception as e:  # noqa: BLE001 - la page Euria ne doit jamais arrêter le cycle
+        return {"erreur": echecs.noter(journal, "euria", e, maintenant)}
 
 
 def boosts_du_cycle(donnees: Path, francais: list[dict], index: dict, journal: dict,

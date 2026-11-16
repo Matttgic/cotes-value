@@ -711,7 +711,8 @@ def charger_entrees(donnees: Path) -> dict:
     # page légère sur mobile : liste limitée aux fiches récentes ; le bilan est calculé sur tous les paris
     return {"paris": paris, "hors_plafond": hors_plafond, "journal_alertes": journal_alertes, "etat": etat,
             "actuelles": actuelles, "controle": controle,
-            "surebets": _lire(donnees / "surebets.json", {}), "boosts": _lire(donnees / "boosts.json", {})}
+            "surebets": _lire(donnees / "surebets.json", {}), "boosts": _lire(donnees / "boosts.json", {}),
+            "euria": _lire(donnees / "euria.json", {})}
 
 
 def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None = None,
@@ -967,8 +968,11 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
         echecs.fusionner(etat, list(echecs_strategies.values()), _maintenant(instant))
+    # Page Euria (autre dépôt, même origine) : fichier à part, hors de index.html (cotes/euria.py).
+    from cotes import euria as euria_mod
+    euria = euria_mod.publie(entrees.get("euria"), data["surebets"], data["boosts"], _maintenant(instant))
     return {"data": data, "actuelles": actuelles, "paris": paris, "retenus": retenus, "hors_plafond": hors_plafond,
-            "blocs_mises": blocs_mises}
+            "blocs_mises": blocs_mises, "euria": euria}
 
 
 def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
@@ -1010,7 +1014,8 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
             "version.json": json.dumps({"version": version}),
             "mises": {mode: json_public(bloc) for mode, bloc in blocs_mises.items()},
             "sw.js": (web / "sw.js").read_text(encoding="utf-8"),
-            "notifications.json": alertes_json, "ordres.json": ordres_json, ".nojekyll": ""}
+            "notifications.json": alertes_json, "ordres.json": ordres_json, ".nojekyll": "",
+            "euria.json": json.dumps(blocs.get("euria") or {}, ensure_ascii=False, separators=(",", ":"))}
 
 
 def ecrire_site(sortie: Path, pages: dict) -> Path:
@@ -1031,6 +1036,8 @@ def ecrire_site(sortie: Path, pages: dict) -> Path:
         (sortie / "mises" / f"{mode}.json").write_text(texte, encoding="utf-8")
     for nom in ("sw.js", "notifications.json", "ordres.json", ".nojekyll"):
         (sortie / nom).write_text(pages[nom], encoding="utf-8")
+    if "euria.json" in pages:                                 # lu par la page Euria (cotes/euria.py)
+        (sortie / "euria.json").write_text(pages["euria.json"], encoding="utf-8")
     return sortie / "index.html"
 
 

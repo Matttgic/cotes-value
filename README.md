@@ -125,6 +125,16 @@ que les surebets). [Méthode](docs/boosts.md#boosts-couverts-gain-garanti).
 Les deux ont leur case dans « Alertes Pushover » (onglet Notifs) : surebet dès 1 %, boost dès 3 % de value ; un boost
 couvert dès 1 %, avec l'une ou l'autre case.
 
+### Page Euria (milieux et freebets en direct)
+
+À chaque cycle, `cotes/euria.py` cherche avec les mêmes cotes et garde-fous que les surebets : les **milieux en value**
+(« Plus de L1 » et « Moins de L2 », ou deux handicaps, dont l'espérance est positive d'après les cotes justes de la
+référence aux deux lignes : P(milieu) = p1 + p2 − 1, espérance = somme de celles des deux paris) et, pour chaque
+bookmaker, les meilleurs paris pour **convertir un freebet** ou un « pari remboursé si perdant » en gain garanti.
+`donnees/euria.json` garde aussi les épisodes des milieux ; le site publie `euria.json` (à venir seulement), lu par la
+page Euria (dépôt Euria, même origine matttgic.github.io). Case **Milieux en value** dans « Alertes Pushover » :
+espérance d'au moins `MILIEU_SEUIL_ALERTE` (2 %) de la mise, une fois par milieu.
+
 ### Deux stratégies suivies séparément
 
 **Bilan → Stratégie** conserve la stratégie de Claude du 11/10.
