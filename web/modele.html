@@ -66,40 +66,29 @@
       <h3 class="bu-titre">Gain cumulé <small>sur la période · pointillés : attendu · zone grisée : marge du hasard</small></h3>
       <div class="bu-courbe" id="bu-courbe"></div>
       <h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div>
-      <p class="aide">« Meilleur ROI » : parmi les lignes de 50 paris ou plus.</p>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
       <h3 class="bu-titre">Par référence</h3>
-      <p class="aide">Paris uniques, toute la période : première détection de chaque cote française, réglés et en cours.
-      Les boutons 7 j et 30 j ne changent pas ce tableau. Une ligne ouvre la liste Paris déjà filtrée sur cette référence :
-      même nombre, même mise, même gain et même ROI.</p>
+      <p class="aide">Toute la période. Touche une ligne pour voir ses paris.</p>
       <div class="bu-table" id="bu-reference"></div>
-      <h3 class="bu-titre">Essais en cours <small>à comparer, rien n'est appliqué · ouvrir une ligne pour le détail</small></h3>
+      <details class="mode-emploi bilan-essais"><summary>Essais en cours <small>mises, combinaisons, indicateurs · rien n'est appliqué</small></summary>
       <details class="mode-emploi"><summary>Mise Kelly ¼ contre 10 € fixes, rejouée sur tout l'historique</summary>
-      <p class="aide">Mêmes paris, seule la mise change : 1 000 € × ¼ × écart / (cote − 1), plafonnée à 2 % (20 €), bankroll fixe.
-      Gain = gain réel × mise Kelly / mise fixe, sur les paris réglés. Une simulation de taille de mise, pas une sélection.
-      Les lignes par bookmaker additionnent toutes les simulations de cette référence. Le tableau « Par référence », au-dessus, est le bilan des paris uniques.</p>
+      <p class="aide">Exemple : écart 5 %, cote 2,00 → mise Kelly ¼ = 1 000 € × ¼ × 5 % = 12,50 € (20 € au plus). Mêmes paris, seule la mise change.</p>
       <div class="tableau"><table id="essai-kelly"></table></div></details>
       <details class="mode-emploi"><summary>Quelle méthode de mise aurait été la meilleure ? 18 méthodes sur les mêmes paris</summary>
-      <p class="aide">Paris réglés du suivi depuis le 14/10 (ou depuis le lancement de la stratégie), tous misés au moment de leur détection avec
-      une bankroll de départ de 1 000 €. Le solde et la série de résultats ne comptent que les paris déjà réglés à cet instant. Simulation :
-      rien n'est appliqué. « Plus gros gain », « Meilleur rendement » : meilleur gain par euro de baisse (la plus forte baisse du gain cumulé), 20 paris
-      au moins. Avec peu de paris, la chance domine : ne choisis pas avant 150 paris réglés.</p>
+      <p class="aide">Mêmes paris, 18 façons de miser, 1 000 € au départ. « Meilleur rendement » : le plus de gain par euro perdu au pire moment
+      (exemple : +300 € après une baisse de 100 € = 3). Avant 150 paris réglés, c'est surtout de la chance.</p>
       <label class="aide">Sélection <select id="mises-selection"></select></label>
       <div class="tableau"><table id="essai-mises"></table></div></details>
       <details class="mode-emploi"><summary>Le meilleur compromis : stratégie × méthode de mise</summary>
-      <p class="aide">Toutes les combinaisons de stratégies et de méthodes de mise, classées. 50 paris au moins par combinaison. <b>Attention</b> :
-      en testant des centaines de combinaisons, la première est souvent la plus chanceuse, pas la meilleure. Une combinaison est solide seulement
-      si elle reste en tête sur les nouveaux paris : suis-la quelques semaines avant de la retenir.</p>
+      <p class="aide"><b>Attention</b> : sur des centaines de combinaisons, la première est souvent la plus chanceuse. Suis-la quelques semaines avant d'y croire.</p>
       <label class="aide">Classer par <select id="combos-critere"><option value="rendement">Gain par euro de baisse</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="baisse">Plus faible baisse (gain positif)</option></select></label>
       <div class="tableau"><table id="essai-combos"></table></div></details>
       <details class="mode-emploi"><summary>TRJ, liquidité Pinnacle, mouvement de cote : ROI et CLV par tranche</summary>
-      <p class="aide">Paris uniques. <b>Marge Pinnacle</b> : indicateur de liquidité, disponible aussi sur les anciens paris à 2 issues
-      (retrouvée à partir de la cote et de la cote juste, « estimée »). <b>TRJ</b> du bookmaker français, <b>limite de mise
-      Pinnacle</b> et <b>mouvement de cote</b> : mesurés à l'enregistrement, donc seulement sur les paris pris depuis leur ajout.
-      Les tranches de quelques dizaines de paris ne prouvent rien.</p>
+      <p class="aide">Exemple : « mouvement de cote » range les paris selon que Pinnacle baissait ou montait sa cote juste avant. Chaque indicateur
+      ne compte que depuis son ajout ; quelques dizaines de paris ne prouvent rien.</p>
       <div id="bilan-plafond"></div>
-      <div id="bilan-filtres"></div></details>
+      <div id="bilan-filtres"></div></details></details>
       <p class="bilan-liens"><button type="button" class="btn secondaire" data-aller="analyses">Analyses et graphiques ›</button>
         <button type="button" class="btn secondaire" data-aller="segments">Segments ›</button></p>
       <details class="mode-emploi bilan-avance"><summary>Bilan détaillé : références, CLV et courbe</summary>
@@ -115,8 +104,7 @@
       <h2 class="sous-titre">Par tranche de cote</h2>
       <div class="tableau"><table id="bilan-tranches"></table></div>
       <details class="mode-emploi"><summary>Profil horaire des détections</summary>
-      <p class="aide">Heure de Paris de la première détection de chaque cote française (paris uniques). Les barres montrent
-      quand les erreurs de cote apparaissent chez chaque bookmaker ; la plage de 3 h la plus chargée est indiquée.</p>
+      <p class="aide">À quelle heure les erreurs de cote apparaissent, bookmaker par bookmaker (heure de Paris).</p>
       <div id="bilan-horaire"></div></details>
       <details class="aide" style="margin-top:12px"><summary>Comment lire ces tableaux</summary>
       <p>10 € par pari. <b>Gain</b> et <b>ROI</b> : sur les paris réglés. Sous le nombre de paris : les gagnés et le
@@ -282,10 +270,9 @@
     <p class="aide" id="pushover-etat" role="status" aria-live="polite">Chargement du choix…</p>
     <label class="notif-filtre"><input type="checkbox" data-filtre="pushover-strategies"> Activées seulement</label>
     <fieldset class="carte" id="pushover-strategies"><legend>Stratégies envoyées sur Pushover</legend></fieldset>
-    <p class="aide">Chaque règle affiche son bilan depuis le 14/10 : paris réglés, réussite, gain net (mise de 10 € par pari) et ROI.</p>
     <p><label class="aide" for="pushover-code">Code personnel</label>
       <input type="password" id="pushover-code" class="champ" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="pushover-aide"></p>
-    <p class="aide" id="pushover-aide">Le premier enregistrement définit ce code ; il protège ton choix, personne d’autre ne peut le modifier. Il est mémorisé sur cet appareil, à resaisir sur un autre.</p>
+    <p class="aide" id="pushover-aide">Choisis-le à ton premier enregistrement : lui seul permet de modifier ton choix. À resaisir sur un autre appareil.</p>
     <p><button class="btn" id="pushover-sauver">Enregistrer pour Pushover</button></p>
     <p class="aide" id="pushover-message" role="status" aria-live="polite"></p>
     <h3 class="bu-titre">Notifications Chrome (facultatif)</h3>
@@ -297,7 +284,7 @@
     </div>
     <h3 class="bu-titre">Rapidité des alertes</h3>
     <div class="bu-table notif-rapidite" id="notif-rapidite"></div>
-    <p class="aide">Chiffres réels des derniers relevés. Pendant un trou entre deux relevés, aucune opportunité n’est vue : c’est la cause des alertes ratées, pas l’envoi.</p>
+    <p class="aide">Exemple : relevé à 14 h 00, le suivant à 14 h 20 ; une value apparue à 14 h 05 et disparue à 14 h 15 n'est jamais vue.</p>
     <h3 class="bu-titre">Me prévenir pour</h3>
     <label class="notif-filtre"><input type="checkbox" data-filtre="notif-strategies"> Activées seulement</label>
     <fieldset class="carte" id="notif-strategies"><legend>Stratégies à suivre</legend></fieldset>
@@ -305,7 +292,7 @@
     <p class="aide" id="notif-message" role="status" aria-live="polite"></p>
     <h3 class="bu-titre">Dernières alertes</h3>
     <div class="bu-table" id="notif-dernieres"></div>
-    <p class="aide">Une seule alerte si plusieurs stratégies retiennent le même pari au même prix. Les prix de plus de 5 minutes sont écartés ; vérifie la cote, elle peut changer avant ton clic.</p>
+    <p class="aide">Un pari pris par trois stratégies = une seule alerte. Vérifie la cote avant de miser : elle a pu bouger.</p>
     <details class="mode-emploi"><summary>Délais et derniers envois</summary><div id="notif-diagnostic"></div><p class="aide">Une réponse du service Push ne confirme pas la réception sur le téléphone. Chrome, le réseau et l’économie de batterie peuvent retarder l’affichage. L’heure de réception API ne certifie pas l’heure de mise à jour interne du fournisseur.</p></details>
     <details class="aide"><summary>Si tu ne reçois rien</summary>
       <p>Utilise Chrome sur Android et autorise les notifications du site et de Chrome dans les paramètres du téléphone.
@@ -389,7 +376,7 @@ const dc = (D.etat||{}).dernier_cycle || {};
 document.getElementById("maj").textContent = dc.debut ? "mis à jour " + quand(dc.debut) + (dc.mode==="test" ? " · test" : "") : "pas encore de données";
 { const h = D.hors_plafond, z = document.getElementById("bilan-hors-plafond");
   if (z && h && h.paris) { z.hidden = false;
-    z.innerHTML = `Les paris à cote supérieure à ${h.plafond} (${h.paris}, dont ${h.regles} réglés, ${eur(h.gain)} en mises de ${eurosNets(h.mises)} €) sont retirés des bilans et gardés en <a href="hors_plafond.json">archive</a>.`; } }
+    z.innerHTML = `Cotes au-dessus de ${h.plafond} exclues (${h.paris} paris, ${eur(h.gain)}) · <a href="hors_plafond.json">archive</a>`; } }
 document.getElementById("fraicheur")?.setAttribute("title", "Santé du système · " + document.getElementById("maj").textContent);
 // Le bilan a deux vues : les paris uniques et les stratégies (ancienne page Stratégies).
 let vueBilan = "uniques";
@@ -955,7 +942,7 @@ function rendreParis() {
     Object.entries(f).every(([k,v]) => passeFiltre(p, k, v))),triHoraire);
   parisFiltres = L;
   document.getElementById("paris-resume").innerHTML = resumeParis(L);
-  document.getElementById("paris-compte").textContent = `${L.length} prise(s)${f.reference ? " · " + f.reference + " · paris uniques" : ""} · ${Math.min(limite,L.length)} affichées · export des ${L.length} prises filtrées.`;
+  document.getElementById("paris-compte").textContent = `${Math.min(limite,L.length).toLocaleString("fr-FR")} sur ${L.length.toLocaleString("fr-FR")} paris${f.reference ? " · " + f.reference + " · paris uniques" : ""}`;
   const banner = document.getElementById("paris-strategie-banner");
   const plus = document.getElementById("plus");
   banner.hidden = !strategieChoisie;
@@ -1066,7 +1053,7 @@ function rendreBilanUniques(maintenant=Date.now()) {
   document.getElementById("bu-kpis").innerHTML = [["Gain net",eur(s.net),signe(s.net)],["ROI",pct(s.roi),signe(s.net)],
     ["Réussite",pctEntier(s.reussite),""]].map(([t,v,c]) => `<div><span>${t}</span><b class="${c}">${v}</b></div>`).join("");
   document.getElementById("bu-note").textContent =
-    `${s.n} paris réglés · mise ${Math.round(enBankroll(s.mises)).toLocaleString("fr-FR")} € · ${nomMise()} · chaque cote française comptée une fois`;
+    `${s.n} paris réglés · ${Math.round(enBankroll(s.mises)).toLocaleString("fr-FR")} € misés · ${nomMise()}`;
   // Les cotes de plus de 10 sont de la loterie (quelques gains sur des dizaines de paris) : leur résultat est montré à part.
   const petites = statsBU(L.filter(p => !(p.cote > 10))), grosses = statsBU(L.filter(p => p.cote > 10));
   const resume = (t, x) => x.n ? `${t} : ${x.n} paris, ${eur(x.net)}, ROI ${pct(x.roi)}` : "";
