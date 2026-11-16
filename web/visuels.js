@@ -61,11 +61,13 @@ function classerParNote(rows) {
     return cn || a.i-b.i;
   }).map(x=>x.r);
 }
-// Verdict de l'analyste en un mot, dans la ligne de la stratégie : lisible sans ouvrir la fiche.
-const AVIS_COURTS={'Fiable':['Fiable','pos'],'Prometteur mais pas prouvé':['Prometteur',''],'Chance ou yo-yo':['Chance','neg'],'Trop tôt pour juger':['Trop tôt','doux']};
-function etiquetteAvis(avis) {
-  const c=avis && AVIS_COURTS[avis.verdict];
-  return c?` <small class="avis-mini ${c[1]}" title="Avis d'analyste : ${e(avis.verdict)}">${c[0]}</small>`:'';
+// Verdict unique d'une stratégie, dans sa ligne : la CLV Pinnacle corrigée (fiabilite, web/modele.html). La note /100
+// et l'avis d'analyste restent dans la fiche.
+const VERDICTS_COURTS={'Trop tôt pour juger':'Trop tôt','Clôture Pinnacle trop rare':'Clôture rare'};
+function etiquetteVerdict(id) {
+  if(typeof fiabilite!=='function' || typeof preuveDe!=='function' || /^(base:|Fusion )/.test(id)) return '';
+  const f=fiabilite(preuveDe(id));
+  return ` <small class="avis-mini ${f.ton}" title="${e(f.texte+' · '+f.detail)}">${e(VERDICTS_COURTS[f.texte] || f.texte)}</small>`;
 }
 // Protocole de validation (cotes/protocole.py, docs/protocole.md) : règles fixées à l'avance, deux lectures seulement.
 // L'état est calculé une fois, à mises fixes : il ne dépend ni du mode de mise ni des dates affichées.
@@ -269,7 +271,7 @@ function miseMoyenne(s) {
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}${etiquetteAvis(s.avis)}${etiquetteProtocole(r.id)}${pastillesMedailles(r.medailles)}</span>${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="avis-mini neg">En pause</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${etiquetteVerdict(r.id)}${etiquetteProtocole(r.id)}${pastillesMedailles(r.medailles)}</span>${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="avis-mini neg">En pause</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><h3>${e(r.nom)}</h3></div>

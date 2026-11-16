@@ -49,5 +49,5 @@ def test_reglements_incoherents_publies_pour_la_page_sante(tmp_path):
     d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
     assert d["incoherences_reglement"] == inc
     assert 'id="sante-incoherences"' in html and 'id="strategies-avis"' in html
-    assert '<option value="bons" selected>' in html                           # « Fiables et prometteuses » par défaut
+    assert '<option value="" selected>Toutes</option><option value="Bat la clôture">' in html   # verdict CLV, tout par défaut
     assert not re.search(r'<details class="mode-emploi" open><summary>(Mise Kelly|Quelle méthode|Le meilleur compromis|TRJ)', html)

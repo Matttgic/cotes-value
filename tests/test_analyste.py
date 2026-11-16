@@ -344,7 +344,8 @@ def test_tri_javascript_identique_au_python():
     assert rendu.returncode == 0, rendu.stderr
     assert json.loads(rendu.stdout) == [l["id"] for l in trier_par_note(lignes)]
     accueil = (RACINE / "web/accueil.js").read_text(encoding="utf-8")
-    assert "classerParNote" in accueil and "classerParValeur" not in accueil
+    # L'accueil montre les recommandées (CLV Pinnacle corrigée), plus un classement par note ni par valeur.
+    assert "recommandees" in accueil and "classerParNote" not in accueil and "classerParValeur" not in accueil
 
 
 def test_construire_attache_l_avis_sans_rien_selectionner(tmp_path):

@@ -40,10 +40,12 @@ def test_preuves_mesurees_sur_les_paris_de_chaque_strategie_et_corrigees():
     lignes = [{"id": "A", "stats": {}, "ensemble": {p["id"] for p in bons}},
               {"id": "B", "stats": {}, "ensemble": {p["id"] for p in neutres}},
               {"id": "base:X", "stats": {}, "ensemble": {p["id"] for p in bons}, "base": True},
-              {"id": "A bis", "stats": {}, "ensemble": {p["id"] for p in bons[:100]}}]     # doublon de A
+              {"id": "A bis", "stats": {}, "ensemble": {p["id"] for p in bons[:100]}},    # doublon de A (100 / 120)
+              {"id": "A stricte", "stats": {}, "ensemble": {p["id"] for p in bons[:60]}}]   # incluse, mais une autre règle
     mesurer_preuves(lignes, bons + neutres)
     a, b, d = lignes[0]["stats"]["preuve"], lignes[1]["stats"]["preuve"], lignes[3]["stats"]["preuve"]
-    assert (a["matchs"], a["couverture"], a["testees"]) == (120, 100.0, 2) and "preuve" not in lignes[2]["stats"]
+    assert (a["matchs"], a["couverture"], a["testees"]) == (120, 100.0, 3) and "preuve" not in lignes[2]["stats"]
+    assert "doublon_de" not in lignes[4]["stats"]["preuve"] and lignes[4]["stats"]["preuve"]["p"] is not None
     # Le doublon est mesuré mais n'entre pas dans la correction : il ne durcit pas le seuil des autres.
     assert d["doublon_de"] == "A" and d["p"] is None and raisons_refus(lignes[3]["stats"])[0].startswith("doublon de A")
     assert a["clv_ic"][0] > 0 and a["p"] < 0.001 and raisons_refus(lignes[0]["stats"]) == []
