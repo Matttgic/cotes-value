@@ -125,12 +125,13 @@ function carteBoost(b) {
   const p = {bookmaker: b.bookmaker, lien: b.lien, statut: 'en_cours'};
   const value = b.value != null
     ? `<i class="acc-ecart">${pct(b.value)}</i><small class="acc-ref">juste ${cote(b.cote_juste)} (${e(b.reference)})</small>`
-    : `<small class="acc-ref">${b.hausse != null ? `hausse ${pct(b.hausse)} · rentable si la marge d’origine est sous ${fr2(100 * b.marge_seuil)} %` : 'sans cote juste'}</small>`;
+    : `<small class="acc-ref">${b.hausse != null ? `hausse ${pct(b.hausse)} · gagnant si la marge d’origine est sous ${fr2(100 * b.marge_seuil)} %${b.marge_attendue != null ? ` (habituelle ≈ ${fr2(100 * b.marge_attendue)} %)` : ''}` : 'sans cote juste ni cote d’avant'}</small>`;
+  const verdict = b.verdict ? `<span class="badge verdict ${b.verdict}">${b.verdict === 'jouer' ? 'Jouer' : 'Passer'}</span>` : '';
   const detail = b.pari ? `${e(b.pari)}${b.verifie ? '' : ' (cote habituelle non retrouvée)'}` : e(b.statut || '');
   return `<article class="acc-pari"><div class="acc-pari-texte"><span class="acc-meta">${b.sport ? e(nomSport(b.sport)) + ' · ' : ''}${e(b.domicile)} – ${e(b.exterieur)}</span>
 <b>${e(b.libelle)}</b><span>${detail}</span><span class="pari-debut">Match ${horairePari(b)}</span></div>
 <div class="acc-pari-prix"><span class="acc-book">${e(b.bookmaker)}${b.mise_max ? ' · mise max ' + euros(b.mise_max) : ''}</span>
-<b class="acc-cote">${cote(b.cote)}</b><small class="acc-ref">avant ${cote(b.cote_avant)}</small>${value}${boutonBookmaker(p, true)}</div></article>`;
+${verdict}<b class="acc-cote">${cote(b.cote)}</b><small class="acc-ref">avant ${cote(b.cote_avant)}</small>${value}${boutonBookmaker(p, true)}</div></article>`;
 }
 
 function rendreBoostsListe() {

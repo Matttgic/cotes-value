@@ -39,8 +39,20 @@ jobs:
             exit 0
           fi
           executions=$(gh run list --repo "$DEPOT" --workflow collecte.yml \
-            --limit 30 --json createdAt,status,conclusion)
-          actives=$(jq '[.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested")] | length' <<<"$executions")
+            --limit 30 --json databaseId,createdAt,status,conclusion)
+          # Un lancement « queued » sans aucun job depuis 10 min est un fantôme GitHub (16/11/2026 : jamais démarré,
+          # impossible à annuler) : il ne compte pas comme une collecte active.
+          maintenant=$(date -u +%s)
+          actives=0
+          while read -r id statut cree; do
+            [ -n "$id" ] || continue
+            if [ "$statut" = queued ] && [ $((maintenant - $(date -u -d "$cree" +%s))) -gt 600 ] \
+               && [ "$(gh api "repos/$DEPOT/actions/runs/$id/jobs" --jq .total_count)" = 0 ]; then
+              echo "Lancement $id dans la file sans job depuis plus de 10 min : fantôme ignoré."
+              continue
+            fi
+            actives=$((actives + 1))
+          done < <(jq -r '.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending" or .status == "requested") | "\(.databaseId) \(.status) \(.createdAt)"' <<<"$executions")
           if [ "$actives" -gt 0 ]; then
             echo "Collecte en cours ou dans la file : aucune relance."
             exit 0
@@ -48,7 +60,6 @@ jobs:
 
           derniere=$(jq -r '[.[].createdAt] | max // empty' <<<"$executions")
           if [ -n "$derniere" ]; then
-            maintenant=$(date -u +%s)
             lancement=$(date -u -d "$derniere" +%s)
             age=$((maintenant - lancement))
             if [ "$age" -lt 900 ]; then

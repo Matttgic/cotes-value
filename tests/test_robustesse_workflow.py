@@ -299,7 +299,7 @@ case "$1 $2" in
   "api repos/test/repo/actions/runs/42") echo "2026-10-30T00:00:00Z";;
   "run list")
     n=$(cat {compteur} 2>/dev/null || echo 0); echo $((n+1)) > {compteur}
-    case $n in 0) echo 0;; 1) echo startup_failure;; *) echo in_progress;; esac;;
+    case $n in 0) echo 0;; 1) echo "7 completed startup_failure";; *) echo "8 in_progress";; esac;;
   "workflow run") exit 0;;
 esac
 """)
@@ -313,6 +313,35 @@ esac
                        env=env, capture_output=True, text=True, cwd=RACINE)
     appels = journal.read_text().splitlines()
     assert r.returncode == 0 and "Cycle suivant démarré (in_progress)" in r.stdout
+    assert sum(a.startswith("workflow run") for a in appels) == 2          # lancement + une relance
+
+
+def test_relance_reprend_un_cycle_fantome_sans_job(tmp_path):
+    """Incident du 16/11/2026 : le cycle relancé reste « queued » sans aucun job, ni démarré ni annulable."""
+    journal, compteur = tmp_path / "appels", tmp_path / "n"
+    gh = tmp_path / "gh"
+    gh.write_text(f"""#!/bin/bash
+echo "$*" >> {journal}
+case "$1 $2" in
+  "api repos/test/repo/actions/workflows/collecte.yml") echo active;;
+  "api repos/test/repo/actions/runs/42") echo "2026-10-30T00:00:00Z";;
+  "api repos/test/repo/actions/runs/7/jobs") echo 0;;
+  "run list")
+    n=$(cat {compteur} 2>/dev/null || echo 0); echo $((n+1)) > {compteur}
+    case $n in 0) echo 0;; 1|2|3) echo "7 queued";; *) echo "8 in_progress";; esac;;
+  "workflow run") exit 0;;
+esac
+""")
+    gh.chmod(0o755)
+    sleep = tmp_path / "sleep"
+    sleep.write_text("#!/bin/sh\nexit 0\n")
+    sleep.chmod(0o755)
+    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "DEPOT": "test/repo", "DEBUT": "0",
+           **ENV_RELANCE}
+    r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script_relance()],
+                       env=env, capture_output=True, text=True, cwd=RACINE)
+    appels = journal.read_text().splitlines()
+    assert r.returncode == 0 and "fantôme GitHub" in r.stdout and "Cycle suivant démarré (in_progress)" in r.stdout
     assert sum(a.startswith("workflow run") for a in appels) == 2          # lancement + une relance
 
 
