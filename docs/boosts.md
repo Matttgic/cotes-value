@@ -1,43 +1,63 @@
 # Cotes boostées
 
-Ajouté le 16/11/2026. Code : `cotes/direct/winamax.py` (`lire_boosts`, `boosts_depuis`), `cotes/boosts.py`
+Ajouté le 16/11/2026. Code : `cotes/direct/winamax.py` (`lire_boosts`, `boosts_depuis`), `cotes/direct/boosts_sites.py`
+(Unibet, NetBet, OlyBet, `lire_tous`), `cotes/boosts.py`
 (traduction des intitulés, value, suivi), `cotes/pipeline/analyse.py` (`boosts_du_cycle`), `web/boosts.js` (onglet
 **Boosts**), `cotes/alertes/promos.py` (Pushover). Sonde : `scripts/sonde_boosts.py` (Actions → « Sonde cotes
 boostées »).
 
-## Où sont les boosts (sonde du 16/11/2026)
+## Où sont les boosts (sondes du 16/11/2026)
 
-| Bookmaker | Constat |
-|---|---|
-| Winamax | Route `sport:100000` du socket : un faux match par boost (« Cote Boostée : A - B »), un pari « Cote boostée (mise max 20 €) » avec `previousOdd` (cote d'avant), une issue au libellé libre. **Lu à chaque cycle complet.** |
-| Unibet | Une rubrique « Cotes Boostées » existe (chemins `p58245556`…), vide dans les pages de sports lues par la collecte ; les `promos` des pages sont des combinés boostés. Non lu. |
-| Betclic, PMU, NetBet, OlyBet | Aucun boost dans ce que la collecte lit (trames gRPC Betclic, offre Kambi de PMU, pages NetBet, Swarm OlyBet). |
+Les lecteurs Unibet, NetBet et OlyBet viennent du dépôt **cotes-boostees** (fork du 16/11), qui les lisait par un
+proxy français payant. Depuis GitHub, sans proxy (`scripts/sonde_boosts.py`) :
 
-Exemples relevés le 16/11 : « Carlos Alcaraz gagne par au moins 6 jeux d'écart » 2,80 (au lieu de 2,50),
-« Allemagne gagne à la mi-temps et à la fin du match » 2,70 (2,45), « États-Unis (F) gagne par au moins 3 buts
-d'écart » 2,75 (2,50), « Jack Eichel marque au moins un but » 2,60 (2,40). Mise maximale : 20 €.
+| Bookmaker | Accès sans proxy | Lecture (`cotes/direct/boosts_sites.py`, `cotes/direct/winamax.py`) |
+|---|---|---|
+| Winamax | oui | route `sport:100000` du socket : cote d'avant (`previousOdd`) et mise max (« mise max 20 € ») |
+| Unibet | oui (page 200) | page /cotes-boostees (état « serverApp-state ») et page de chaque paquet ; « (2,50 -> 2,75 / Mise max 25€) » |
+| NetBet | oui (page 200) | page /super-cotes (état Nuxt, même lecteur que la collecte) ; cote d'avant non publiée, mise max 10 € |
+| OlyBet | oui (API swarm) | `get_boosted_selections` puis `get` ; cote d'avant non publiée, gain net plafonné à 25 € |
+| Genybet, Betsson | **non** (403, IP non française) | non lus |
+| Betclic, PMU | — | aucun boost dans ce que la collecte lit (PMU : boosts visibles seulement connecté) |
+
+Les paris de saison (« 26/27 », « playoffs »…) sont gardés mais pas évalués (« pari à long terme »).
+
+Exemples : Winamax « Carlos Alcaraz gagne par au moins 6 jeux d'écart » 2,80 (au lieu de 2,50) ; Unibet « Montauban
+gagne et Johnny Matthews marque au moins 1 essai » 2,75 (2,50) ; NetBet « Lille (vs Arsenal) marque au moins 1 but »
+2,10 ; OlyBet « Paris SG gagne et les 2 équipes marquent » 4,50.
+
+## Ce que l'historique de cotes-boostees a déjà mesuré
+
+`analyses/conseil-initial.json` du dépôt cotes-boostees (8/11/2026) : **979 boosts réglés** (Winamax, Unibet,
+OlyBet, Genybet, NetBet, Betsson, du 10/10 au 8/11) : 305 gagnés pour 322 attendus d'après leurs cotes, **ROI −6,6 %**
+en les jouant tous. Seule sélection positive, jugée à l'aveugle (chaque boost avec les seuls résultats antérieurs) :
+« prendre » les types de pari qui ont réussi au moins 5 % au-dessus de leur cote sur 30 boosts réglés, +13,9 % sur
+140 paris (−4,8 % pour « éviter », −15,9 % pour « neutre »). Un boost n'est donc pas rentable par nature : c'est la
+value contre la cote juste qui compte.
 
 ## Value d'un boost
 
-1. **Match** : le match Winamax habituel aux mêmes équipes, début à 90 minutes près.
+1. **Match** : le match du même bookmaker aux mêmes équipes, sinon celui d'un autre (ordre des équipes indifférent),
+   début à 90 minutes près.
 2. **Pari standard** (`traduire`) : victoire, match nul, double chance, handicap (« gagne par au moins N jeux / buts /
    points d'écart » = handicap −(N − 0,5)), mi-temps/fin, total, total d'une équipe, les deux équipes marquent, but ou
    total de points d'un joueur. Combinés (« … et … ») et intitulés inconnus : pas de traduction.
 3. **Période** : quand plusieurs sont possibles (hockey : temps réglementaire par défaut chez Winamax), celle dont la
-   cote Winamax habituelle vaut la cote d'avant le boost (« vérifié »), à 8 % près. Un pari qui existe chez Winamax à une
-   tout autre cote n'est pas retenu.
+   cote habituelle du bookmaker vaut la cote d'avant le boost (« vérifié »), à 8 % près ; un pari qui existe chez lui à
+   une tout autre cote n'est pas retenu. Sans cote d'avant : la première période qui a une cote juste.
 4. **Cote juste** : celle de la référence du match (Pinnacle d'abord), lue au même moment, même association que la
    comparaison :
 
        value = cote boostée × probabilité juste − 1
 
 Sans cote juste : la **hausse** (cote boostée / cote d'avant − 1) et la **marge seuil** (1 − cote d'avant / cote
-boostée : le boost est rentable si la marge de Winamax sur la cote d'avant était plus petite). Un repère, pas une
+boostée : le boost est rentable si la marge du bookmaker sur la cote d'avant était plus petite). Un repère, pas une
 mesure.
 
 ## Suivi, fichiers et alertes
 
-`donnees/boosts.json` (JSON compact, réécrit à chaque cycle complet) : boosts du cycle évalués, épisodes des 30
+`donnees/boosts.json` (JSON compact, réécrit à chaque cycle complet ; le journal donne le nombre lu par bookmaker et
+les erreurs) : boosts du cycle évalués, épisodes des 30
 derniers jours (première et dernière lecture, cote et value à la première lecture). Bilan sur 7 et 30 jours : nombre,
 part évaluée, part en value, value médiane, **gain espéré** (mise maximale × value des boosts en value).
 
@@ -49,5 +69,6 @@ Case **Cotes boostées** du bloc « Alertes Pushover » : un message par boost d
 - Les boosts ne sont pas encore **réglés** : le gain espéré est une espérance, pas un résultat. Suite : régler les boosts
   traduits avec les scores déjà récupérés pour les paris (`cotes/reglement.py`).
 - Les boosts sur des joueurs n'ont une cote juste que si la référence cote le même joueur (props NBA/NHL de Pinnacle).
-- Unibet : à lire sur sa page « cotes boostées » quand un boost y est publié (relancer la sonde à une heure de forte
-  offre, en soirée).
+- Genybet et Betsson : il faudrait une IP française (proxy payant, comme cotes-boostees) ; non lus.
+- Combinés d'un même match (« X gagne et les deux équipes marquent ») : pas de cote juste. cotes-boostees les évalue
+  avec Matchbook (« résultat + total ») ; à reprendre si utile.

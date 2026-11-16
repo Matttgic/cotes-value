@@ -113,9 +113,10 @@ sans remboursement possible, cotes récentes, « vérifié » quand chaque cote 
 Rejeu des 13-14/11 : 30 surebets en deux jours (9 vérifiés, tous sous 2 %), la moitié vus un seul relevé.
 [Méthode, chiffres et limites](docs/surebets.md).
 
-**Cotes boostées** : les boosts Winamax (seul bookmaker qui les publie dans ce que la collecte lit, sonde du 16/11) sont
-traduits en pari standard quand c'est possible et comparés à la cote juste : value = cote boostée × probabilité juste
-− 1. Sinon, la hausse et la marge seuil. [Méthode et limites](docs/boosts.md).
+**Cotes boostées** : les boosts de Winamax, Unibet, NetBet et OlyBet (lecteurs repris du dépôt cotes-boostees ; Genybet
+et Betsson refusent les IP non françaises) sont traduits en pari standard quand c'est possible et comparés à la cote
+juste : value = cote boostée × probabilité juste − 1. Sinon, la hausse et la marge seuil. Mesuré par cotes-boostees
+sur 979 boosts réglés : tous les jouer rapporte −6,6 %. [Méthode et limites](docs/boosts.md).
 
 Les deux ont leur case dans « Alertes Pushover » (onglet Notifs) : surebet dès 1 %, boost dès 3 % de value.
 

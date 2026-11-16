@@ -66,6 +66,12 @@ def test_lecture_reseau_jamais_bloquante():
     ("Lens ou match nul", "Lens", "Lille", "football", ("DOUBLE_CHANCE", "MATCH", None, "HOME_DRAW", None)),
     ("Les deux équipes marquent", "Lens", "Lille", "football", ("BOTH_TEAMS_TO_SCORE", "MATCH", None, "YES", None)),
     ("Lille marque plus de 1,5 buts", "Lens", "Lille", "football", ("TOTAL_EXT", "MATCH", 1.5, "PLUS", None)),
+    # formulations réelles relevées par le dépôt cotes-boostees (Genybet, Betsson, OlyBet, octobre 2026)
+    ("Lille (vs Arsenal) marque au moins 1 but", "Lille", "Arsenal", "football", ("TOTAL_DOM", "MATCH", 0.5, "PLUS", None)),
+    ("Barcola Buteur", "LASK Linz", "Liverpool", "football", ("JOUEUR:Goals", "MATCH", 0.5, "PLUS", "Barcola")),
+    ("Le PSG gagne 1-0", "Manchester City", "PSG", "football", ("CORRECT_SCORE", "MATCH", None, "0-1", None)),
+    ("Monaco gagne 3-0", "Monaco", "CSKA Sofia", "football", ("CORRECT_SCORE", "MATCH", None, "3-0", None)),
+    ("Les 2 équipes marquent", "Arsenal", "Lille", "football", ("BOTH_TEAMS_TO_SCORE", "MATCH", None, "YES", None)),
 ])
 def test_traduction_des_intitules(libelle, dom, ext, sport, attendu):
     c = B.traduire(libelle, dom, ext, sport)[0]
@@ -73,7 +79,9 @@ def test_traduction_des_intitules(libelle, dom, ext, sport, attendu):
 
 
 @pytest.mark.parametrize("libelle", ["Arsenal gagne et les deux équipes marquent", "Plus de 2 buts dans le match",
-                                     "Inconnu gagne", "Kane marque un doublé", "Arsenal gagne & Saka marque"])
+                                     "Inconnu gagne", "Kane marque un doublé", "Arsenal gagne & Saka marque",
+                                     "Paris SG gagne et les 2 équipes marquent", "Pavel Sulc Décisif",
+                                     "Real Madrid to win and Vinicius to score"])
 def test_combines_et_intitules_inconnus(libelle):
     assert B.traduire(libelle, "Arsenal", "Chelsea", "football") == []
 
@@ -124,7 +132,7 @@ def test_combine_sans_cote_juste_garde_la_hausse():
 def test_match_introuvable_et_match_commence():
     boost = {"id": "d", "bookmaker": "Winamax", "domicile": "Rafael Nadal", "exterieur": "Roger Federer",
              "debut": "2026-11-16T13:00:00+00:00", "libelle": "Nadal gagne", "cote": 2.0, "cote_avant": 1.8, "lu": ISO}
-    assert B.evaluer([boost], [_ligne("VAINQUEUR", "DOM", 1.2)], {}, T)[0]["statut"] == "match introuvable chez Winamax"
+    assert B.evaluer([boost], [_ligne("VAINQUEUR", "DOM", 1.2)], {}, T)[0]["statut"] == "match introuvable"
     passe = {**boost, "debut": (T - timedelta(minutes=5)).isoformat()}
     assert B.evaluer([passe], [], {}, T) == []
 
@@ -156,9 +164,29 @@ def test_etape_du_cycle_ecrit_boosts_json(tmp_path):
     idx = _index({("JEUX_HANDICAP", "MATCH", -5.5, "DOM"): 0.38})
     journal = {}
     r = boosts_du_cycle(tmp_path, fr, idx, journal, lire=lambda: (winamax.boosts_depuis(DOC, ISO), []), maintenant=T)
-    assert r == {"lus": 2, "evalues": 1, "erreurs": []}
+    assert r == {"lus": 2, "evalues": 1, "par_bookmaker": {"Winamax": 2}, "erreurs": []}
     import json
     doc = json.loads((tmp_path / "boosts.json").read_text())
     assert len(doc["actuels"]) == 2 and len(doc["episodes"]) == 2
     r = boosts_du_cycle(tmp_path, fr, idx, journal, lire=lambda: 1 / 0, maintenant=T)
     assert "erreur" in r and journal["echecs"][0]["etape"] == "boosts"
+
+
+def test_boost_d_un_autre_bookmaker_relie_a_un_match_retourne():
+    """Boost NetBet « Lille (vs Arsenal) » sans cote d'avant ; seul Winamax a le match, écrit Arsenal – Lille : la
+    cote juste vient de la référence de ce match, l'équipe est retrouvée par son nom."""
+    boost = {"id": "netbet|1|2", "bookmaker": "NetBet", "domicile": "Lille", "exterieur": "Arsenal", "debut": DEBUT,
+             "libelle": "Lille (vs Arsenal) marque au moins 1 but", "cote": 2.1, "cote_avant": None, "lu": ISO}
+    kw = dict(dom="Arsenal", ext="Lille", sport="football", mid="winamax|5")
+    fr = [{**_ligne("TOTAL_EXT", "PLUS", 1.62, ligne=0.5, **kw), "debut": DEBUT}]
+    idx = _index({("TOTAL_EXT", "MATCH", 0.5, "PLUS"): 0.55}, mid="winamax|5")
+    b = B.evaluer([boost], fr, idx, T)[0]
+    assert (b["match_id"], b["marche"], b["issue"], b["verifie"]) == ("winamax|5", "TOTAL_EXT", "PLUS", False)
+    assert b["value"] == pytest.approx(2.1 * 0.55 - 1) and b["statut"] == "évalué"
+
+
+def test_pari_a_long_terme_non_evalue():
+    boost = {"id": "u", "bookmaker": "Unibet", "domicile": "HOU Rockets", "exterieur": "X", "debut": DEBUT,
+             "libelle": "Fred VanVleet fait 6 passes ou + (moyenne)", "cote": 2.1, "cote_avant": 1.8, "lu": ISO,
+             "long_terme": True}
+    assert B.evaluer([boost], [], {}, T)[0]["statut"] == "pari à long terme"
