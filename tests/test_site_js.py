@@ -152,8 +152,8 @@ def test_js_bilan_paris_uniques_tranches_etoile_et_periode():
 const h=id=>document.getElementById(id).innerHTML;
 assert.equal(document.getElementById("bu-note").textContent.split(" ")[0],"51");
 assert.ok(h("bu-ecart").includes("A · 2 à 3 %") && h("bu-ecart").includes("B · 3 à 4 %") && !h("bu-ecart").includes("C · 4"));
-assert.equal((h("bu-ecart").match(/★/g)||[]).length,1);
-assert.ok(h("bu-ecart").indexOf("★")<h("bu-ecart").indexOf("B · 3"));
+assert.equal((h("bu-ecart").match(/>Meilleur ROI</g)||[]).length,1);
+assert.ok(h("bu-ecart").indexOf(">Meilleur ROI<")<h("bu-ecart").indexOf("B · 3"));
 assert.ok(h("bu-cote").includes("1,51 – 2,00") && !h("bu-cote").includes("1,01 – 1,50"));
 assert.ok(h("bu-sport").includes("tennis") || h("bu-sport").includes("Tennis"));
 assert.ok(h("bu-kpis").includes(">55<"));

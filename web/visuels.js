@@ -1,17 +1,13 @@
 // Petits visuels locaux : uniquement les valeurs observées, jamais une projection.
 const nomsSports={football:'Football',basket:'Basket',tennis:'Tennis',hockey:'Hockey',volley:'Volley',handball:'Handball',rugby:'Rugby',football_americain:'Foot US',baseball:'Baseball'};
-// Pastilles « meilleur » d'une stratégie : ROI (étoile), gain net (euro), réussite (trèfle), CLV (cible).
+// Étiquettes « meilleur » d'une stratégie : ROI, gain net, réussite, CLV (texte, comme les autres étiquettes).
 // Une seule gagnante par critère, parmi les stratégies d'au moins 50 paris réglés sur la période affichée.
 const MEDAILLES_MIN_PARIS=50;
 const MEDAILLES=[
-  {cle:'roi',nom:'Meilleur ROI',valeur:r=>r.stats.roi,
-    dessin:'<path d="M8 1.4l1.9 4.2 4.5.5-3.4 3 1 4.5L8 11.4l-4 2.2 1-4.5-3.4-3 4.5-.5z" fill="currentColor"/>'},
-  {cle:'gain',nom:'Meilleur gain net',valeur:r=>r.stats.gain,
-    dessin:'<circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.4"/><text x="8" y="11.2" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">€</text>'},
-  {cle:'reussite',nom:'Meilleure réussite',valeur:r=>r.reussite,
-    dessin:'<g fill="currentColor"><circle cx="8" cy="4.3" r="2.9"/><circle cx="4.3" cy="8" r="2.9"/><circle cx="11.7" cy="8" r="2.9"/><circle cx="8" cy="11.7" r="2.9"/></g><path d="M8 11.5c0 2-.8 3-2.4 3.6" fill="none" stroke="currentColor" stroke-width="1.4"/>'},
-  {cle:'clv',nom:'Meilleure CLV',valeur:r=>r.stats.clv,
-    dessin:'<g fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.4"/><circle cx="8" cy="8" r="3.2"/></g><circle cx="8" cy="8" r="1" fill="currentColor"/>'}
+  {cle:'roi',nom:'Meilleur ROI',valeur:r=>r.stats.roi},
+  {cle:'gain',nom:'Meilleur gain net',valeur:r=>r.stats.gain},
+  {cle:'reussite',nom:'Meilleure réussite',valeur:r=>r.reussite},
+  {cle:'clv',nom:'Meilleure CLV',valeur:r=>r.stats.clv}
 ];
 function attribuerMedailles(rows) {
   for(const r of rows) r.medailles=[];
@@ -169,10 +165,8 @@ function panneauAnalyste(r) {
     +lignes.map(([k,v])=>'<dt>'+e(k)+'</dt><dd>'+e(v)+'</dd>').join('')+'</dl></details>'+lecture+'</aside>';
 }
 function pastillesMedailles(cles) {
-  const pastilles=MEDAILLES.filter(m=>(cles || []).includes(m.cle)).map(m=>{
-    const titre=`${m.nom} (${MEDAILLES_MIN_PARIS} paris réglés minimum)`;
-    return `<span class="medaille" role="img" aria-label="${titre}" title="${titre}"><svg viewBox="0 0 16 16" aria-hidden="true">${m.dessin}</svg></span>`;
-  });
+  const pastilles=MEDAILLES.filter(m=>(cles || []).includes(m.cle)).map(m=>
+    `<small class="avis-mini medaille" title="${m.nom} (${MEDAILLES_MIN_PARIS} paris réglés minimum)">${m.nom}</small>`);
   return pastilles.length ? `<span class="medailles">${pastilles.join('')}</span>` : '';
 }
 // Ligne témoin des courbes : le gain attendu si les cotes justes sont exactes (mise × (cote / cote juste − 1), cumulé),
@@ -275,7 +269,7 @@ function miseMoyenne(s) {
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}${etiquetteAvis(s.avis)}${etiquetteProtocole(r.id)}</span>${pastillesMedailles(r.medailles)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="badge-pause neg">⏸</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${s.note?` <b class="note-mini" title="Note /100">${s.note.total}</b>`:''}${etiquetteAvis(s.avis)}${etiquetteProtocole(r.id)}${pastillesMedailles(r.medailles)}</span>${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="avis-mini neg">En pause</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><h3>${e(r.nom)}</h3></div>
