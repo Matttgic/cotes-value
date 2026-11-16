@@ -248,7 +248,7 @@
   </section>
   <section class="onglet" id="o-boosts">
     <div class="page-tete"><div><p class="surtitre">Gain garanti ou cote dopée</p><h2>Boosts et surebets</h2>
-      <p class="sous-texte">Surebets : des cotes de bookmakers différents qui, jouées ensemble, gagnent quoi qu’il arrive. Cotes boostées : les promotions de Winamax, Unibet, NetBet et OlyBet comparées à la cote juste.</p></div></div>
+      <p class="sous-texte">Surebets : des cotes de bookmakers différents qui, jouées ensemble, gagnent quoi qu’il arrive. Boosts couverts : un boost assez gros pour gagner quoi qu’il arrive en couvrant les autres issues. Cotes boostées : les promotions de Winamax, Unibet, NetBet et OlyBet comparées à la cote juste.</p></div></div>
     <h3 class="bu-titre">Surebets <small id="sb-maj"></small></h3>
     <p class="aide sb-reglage"><label for="sb-total">Somme à répartir</label> <input id="sb-total" class="champ sb-total" type="number" inputmode="numeric" min="10" max="100000" step="10" value="100"> €</p>
     <div id="sb-actuels"></div>
@@ -259,6 +259,15 @@
       <p>Même match chez plusieurs bookmakers (relié par la même rencontre Pinnacle), même marché : on prend la meilleure cote de chaque issue. Si la somme des 1/cote est sous 1, chaque issue reçoit une mise proportionnelle à 1/cote et le retour est le même quel que soit le résultat. Marchés sans remboursement possible seulement : 1N2, vainqueur, les deux équipes marquent, handicaps et totaux à demi-ligne, double chance contre l’issue restante.</p>
       <p>Garde-fous : deux bookmakers au moins, cotes lues depuis moins de 10 minutes (25 à 39 minutes pour un match lointain chez PMU, Unibet, Betclic), intitulés contrôlés conformes. « Vérifié » : chaque cote a sa cote juste chez la référence et les probabilités justes couvrent bien tous les résultats. « Non vérifié » : la référence ne propose pas la ligne, vérifie toi-même que les paris portent sur le même marché (période, prolongation).</p>
       <p>Garanti sur le papier seulement : la cote peut bouger avant ta deuxième mise, la mise peut être plafonnée, et les comptes qui jouent les surebets finissent limités. Les cotes affichées sont celles du dernier relevé.</p></details>
+    <h3 class="bu-titre">Boosts couverts <small id="bc-maj"></small></h3>
+    <div id="bc-actuels"></div>
+    <div id="bc-suspects"></div>
+    <div id="bc-bilan"></div>
+    <details class="mode-emploi"><summary>Derniers boosts couverts</summary><div id="bc-episodes"></div></details>
+    <details class="mode-emploi"><summary>Comment c’est calculé</summary>
+      <p>Un boost traduit en pari standard (1N2, vainqueur, double chance, les deux équipes marquent, handicap ou total à demi-ligne) est joué à sa mise maximale ; chaque autre issue est couverte à la meilleure cote française du relevé, pour le même retour. Si 1/cote boostée + la somme des 1/cote de couverture est sous 1, le gain est le même quel que soit le résultat : mise du boost × cote boostée × (1 − cette somme), aux arrondis près.</p>
+      <p>Couvertures : mêmes cotes et mêmes garde-fous que les surebets (lues depuis moins de 10 minutes, proches de leur cote juste, intitulés contrôlés). « Vérifié » : le boost et chaque couverture ont une cote juste chez la référence et couvrent bien tous les résultats. Mise maximale inconnue : 10 € sur le boost.</p>
+      <p>Garanti sur le papier seulement : la couverture peut bouger avant d’être jouée. Mise d’abord le boost (il peut disparaître), puis la couverture tout de suite.</p></details>
     <h3 class="bu-titre">Cotes boostées <small id="bo-maj"></small></h3>
     <div id="bo-actuels"></div>
     <div id="bo-bilan"></div>

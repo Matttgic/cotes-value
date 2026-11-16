@@ -5,6 +5,9 @@ une fois par épisode (même match, même marché, cotes/surebets.py › ``suivr
 ``SUREBET_SEUIL_ALERTE`` (1 % par défaut) ; une cote boostée part une fois, quand sa value contre la cote juste
 atteint ``BOOST_SEUIL_ALERTE`` (3 %). Jamais un surebet suspect, jamais un match commencé, jamais un relevé de plus de
 ``FRAICHEUR`` (le prix a pu partir). Mises d'un surebet : 10 % de ``PUSHOVER_BANKROLL`` répartis (100 € par défaut).
+Un boost couvert (cotes/boosts.py › ``couverts`` : gain garanti, boost à sa mise maximale) part une fois, dès que son
+rendement atteint ``SUREBET_SEUIL_ALERTE``, si l'une des deux cases est cochée ; il remplace alors l'alerte de value
+du même boost.
 """
 from __future__ import annotations
 
@@ -19,8 +22,8 @@ from cotes.surebets import repartir
 from cotes.temps import instant_utc
 
 SPECIALES = {"surebets": "Surebets (gain garanti sur le papier)", "boosts": "Cotes boostées en value"}
-DETAILS = {"surebets": "Rendement ≥ 1 % · mises réparties sur 10 % de la bankroll Pushover",
-           "boosts": "Value ≥ 3 % contre la cote juste · mise maximale du boost"}
+DETAILS = {"surebets": "Rendement ≥ 1 % · mises réparties sur 10 % de la bankroll Pushover · et boosts couverts",
+           "boosts": "Value ≥ 3 % contre la cote juste · mise maximale du boost · et boosts couverts"}
 FRAICHEUR = timedelta(minutes=12)
 PARIS = ZoneInfo("Europe/Paris")
 TTL_MAX_S = 86400
@@ -90,12 +93,30 @@ def alertes_boosts(doc: dict, envoyes: dict, maintenant: datetime, seuil: float 
             and _a_venir(b, maintenant) and f'boost:{b.get("id")}' not in envoyes]
 
 
+def alertes_couverts(doc: dict, envoyes: dict, maintenant: datetime, seuil: float | None = None) -> list[dict]:
+    """Boosts couverts du dernier relevé (gain garanti), une seule fois chacun."""
+    minimum = _seuil(os.environ.get("SUREBET_SEUIL_ALERTE"), 0.01) if seuil is None else seuil
+    if not _frais(doc, maintenant):
+        return []
+    return [{**c, "type": "couvert", "id": f'couvert:{c.get("cle")}'} for c in doc.get("couverts") or []
+            if isinstance(c, dict) and not c.get("suspect") and (c.get("rendement") or 0) >= minimum
+            and c.get("jambes") and _a_venir(c, maintenant) and f'couvert:{c.get("cle")}' not in envoyes]
+
+
 def alertes(donnees: Path, envoyes: dict, choisies: set[str], maintenant: datetime) -> list[dict]:
     out = []
     if "surebets" in choisies:
         out += alertes_surebets(_lire(donnees / "surebets.json"), envoyes, maintenant)
-    if "boosts" in choisies:
-        out += alertes_boosts(_lire(donnees / "boosts.json"), envoyes, maintenant)
+    if "surebets" in choisies or "boosts" in choisies:
+        doc = _lire(donnees / "boosts.json")
+        couverts = alertes_couverts(doc, envoyes, maintenant)
+        out += couverts
+        if "boosts" in choisies:                 # le boost couvert remplace l'alerte de value du même boost
+            maintenant_couverts = {str(c.get("boost_id")) for c in couverts}
+            envoyes_couverts = [k for k in envoyes if k.startswith("couvert:")]
+            out += [a for a in alertes_boosts(doc, envoyes, maintenant)
+                    if a["id"][6:] not in maintenant_couverts
+                    and not any(k.startswith(f'couvert:{a["id"][6:]}|') for k in envoyes_couverts)]
     return out
 
 
@@ -134,6 +155,25 @@ def message_boost(b: dict) -> dict:
     champs = {"title": f'Boost +{_fr(100 * b["value"], 1)} % · {b.get("domicile")} – {b.get("exterieur")}'[:250],
               "message": "\n".join(lignes)[:1000]}
     _lien(champs, b.get("lien"), b.get("bookmaker") or "le bookmaker")
+    return champs
+
+
+def message_couvert(c: dict) -> dict:
+    """Titre, corps et lien Pushover d'un boost couvert : le boost à sa mise maximale, chaque couverture, le gain."""
+    lignes = [f'{c.get("libelle")} · {_heure(c.get("debut"))}']
+    for j in c["jambes"]:
+        quoi = f'boost {_fr(j.get("cote"), 2)}' if j.get("boost") else f'{j.get("pari")} {_fr(j.get("cote"), 2)}'
+        lignes.append(f'{j.get("bookmaker")} : {quoi} → {_fr(j.get("mise"), 2)} €')
+    gain = c.get("gain") or 0
+    lignes.append(f'Gain d\'au moins {"+" if gain >= 0 else ""}{_fr(gain, 2)} € pour {_fr(c.get("mise_totale"), 2)} € '
+                  f'misés, quoi qu\'il arrive' + ("." if c.get("mise_max") else " (mise max inconnue : 10 € sur le boost)."))
+    lignes.append("Vérifié par la cote juste." if c.get("verifie")
+                  else "Non vérifié : contrôle que le boost et la couverture portent sur le même pari.")
+    lignes.append("Mise d'abord le boost, puis la couverture.")
+    champs = {"title": f'Boost couvert +{_fr(100 * c["rendement"], 1)} % · {c.get("match")}'[:250],
+              "message": "\n".join(lignes)[:1000]}
+    boost = next((j for j in c["jambes"] if j.get("boost")), c["jambes"][0])
+    _lien(champs, boost.get("lien"), boost.get("bookmaker") or "le bookmaker")
     return champs
 
 
