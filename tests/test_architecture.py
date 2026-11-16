@@ -30,7 +30,7 @@ _PAR_COUCHE = {
                "cotes.direct.betclic cotes.direct.betfair cotes.direct.draftkings cotes.direct.fanduel "
                "cotes.direct.horizon cotes.direct.matchbook cotes.direct.netbet cotes.direct.olybet "
                "cotes.direct.pmu cotes.direct.unibet cotes.direct.winamax cotes.direct.boosts_sites",
-    "domaine": "cotes.controle cotes.comparaison cotes.mouvement cotes.props cotes.surebets cotes.boosts",
+    "domaine": "cotes.controle cotes.comparaison cotes.mouvement cotes.props cotes.surebets cotes.boosts cotes.euria",
     "paris": "cotes.simulation cotes.reglement cotes.mises cotes.props_papier",
     "strategies": "cotes.strategies cotes.strategies.registre cotes.decisions cotes.convergence cotes.laboratoire cotes.memo cotes.pauses "
                   "cotes.strategies_prudentes cotes.strategie_recommandee cotes.strategie_chatgpt "

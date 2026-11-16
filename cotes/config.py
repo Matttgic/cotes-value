@@ -68,6 +68,7 @@ VARIABLES: dict[str, Variable] = {
     "SOURCE_BOOSTS": Variable("direct", str, "Cotes boostées Winamax (cotes/boosts.py) : direct ou off"),
     "SUREBET_SEUIL_ALERTE": Variable("0.01", float, "Rendement minimal d'un surebet envoyé sur Pushover"),
     "BOOST_SEUIL_ALERTE": Variable("0.03", float, "Value minimale d'une cote boostée envoyée sur Pushover"),
+    "MILIEU_SEUIL_ALERTE": Variable("0.02", float, "Espérance minimale d'un milieu (part de la mise) envoyé sur Pushover"),
     "BETFAIR_AK": _secret("clé d'application Betfair"),
     "PROPLINE_API_KEY": _secret("résultats des props joueurs (PropLine)"),
     "THESPORTSDB_API_KEY": _secret("résultats de secours (TheSportsDB)"),

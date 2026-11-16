@@ -20,6 +20,7 @@ chaque jour terminé dans la release GitHub `references-AAAA-MM`. Pour une étud
 | `props_joueurs.json` | chaud | json compact, UTF-8 (ecrire_json compact) | scripts/cycle.py | scripts/site_web.py | réécrit à chaque passage |
 | `surebets.json` | chaud | json compact (separators=(',', ':')), UTF-8 | scripts/cycle.py | scripts/site_web.py, scripts/envoyer_notifications.py, scripts/cycle.py | surebets du cycle ; épisodes des 21 derniers jours (2 500 au plus) |
 | `boosts.json` | chaud | json compact (separators=(',', ':')), UTF-8 | scripts/cycle.py | scripts/site_web.py, scripts/envoyer_notifications.py, scripts/cycle.py | boosts du cycle ; épisodes des 30 derniers jours (1 500 au plus) |
+| `euria.json` | chaud | json compact (separators=(',', ':')), UTF-8 | scripts/cycle.py | scripts/site_web.py, scripts/envoyer_notifications.py, scripts/cycle.py | page Euria : milieux et conversions de freebets du cycle ; épisodes des milieux (21 jours) |
 | `props_papier.json` | chaud | json compact (separators=(',', ':')), UTF-8 | cotes/props_papier.py | scripts/cycle.py, scripts/site_web.py | réécrit à chaque passage |
 | `persistance_qwen.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py | réécrit à chaque passage |
 | `resultats_manuels.json` | chaud | json écrit à la main | à la main | scripts/cycle.py, études | permanent ; « supprime » retire un pari |

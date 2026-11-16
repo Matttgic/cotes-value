@@ -85,9 +85,10 @@ def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> d
     ``PUSHOVER_BANKROLL``."""
     env = os.environ if env is None else env
     maintenant = maintenant or datetime.now(timezone.utc)
-    if a.get("type") in ("surebet", "boost", "couvert"):           # cotes/alertes/promos.py
+    if a.get("type") in ("surebet", "boost", "couvert", "milieu"):           # cotes/alertes/promos.py
         from cotes.alertes import promos
         champs = (promos.message_surebet(a, _bankroll(env)) if a["type"] == "surebet"
+                  else promos.message_milieu(a, _bankroll(env)) if a["type"] == "milieu"
                   else promos.message_couvert(a) if a["type"] == "couvert" else promos.message_boost(a))
         duree = promos.ttl(a, maintenant)
         if duree:
