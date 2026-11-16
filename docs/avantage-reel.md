@@ -308,8 +308,8 @@ par la règle ci-dessus, plus exigeante sur la CLV. C'est une grille de lecture,
 3. Ne promouvoir aucune règle sur son ROI actuel, en particulier les règles Polymarket « ≤ 36 h ».
 4. Regarder de près la référence Kalshi (191 paris, −28,4 %) et OlyBet avant d'en reprendre des paris.
 5. Tester moins de lignes : chaque stratégie ajoutée durcit la correction pour toutes les autres. **Appliqué aux
-   recommandées le 16/11/2026** : une stratégie qui partage au moins 80 % de ses paris avec une plus fournie n'entre
-   pas dans la correction (50 lignes testées, 29 dans la correction). Le protocole, lui, a un seuil fixe (200 places).
+   recommandées le 16/11/2026** : deux stratégies qui prennent presque les mêmes paris (80 % des paris de la plus
+   fournie) ne comptent qu'une fois dans la correction. Le protocole, lui, a un seuil fixe (200 places).
 
 ## Reproduire
 

@@ -1,4 +1,5 @@
-// Accueil : chiffres du moment, paris en cours, classement des stratégies par la note /100, gain cumulé, derniers résultats.
+// Accueil, façon Une de journal : la date, un titre (combien de paris à jouer), un exemple concret, les chiffres,
+// les paris à jouer (règle de la page Décision), les recommandées, le gain cumulé et les derniers résultats.
 // Lecture seule des données déjà chargées : aucune sélection, aucun règlement n'est modifié.
 function ligneAccueilPari(p) {
   const ref=(typeof REF_COURTE!=='undefined' && REF_COURTE[p.reference]!==undefined ? REF_COURTE[p.reference] : (p.reference || '')+' ');
@@ -19,43 +20,53 @@ function bilanEnMise(ps, kelly) {
   return {net: Math.round(net * 100) / 100, roi: mises ? net / mises : null};
 }
 function nomMiseAccueil(mode) { return typeof nomMise === 'function' ? nomMise(mode) : mode === 'fixe' ? '10 € fixes' : 'Kelly ¼'; }
+// Le chapô : un exemple chiffré plutôt qu'une explication.
+function chapoAccueil(jouer, enCours) {
+  const x=jouer[0] && jouer[0].p;
+  if(!x) return `${enCours} paris en cours, aucun ne passe la règle du jour : leur bookmaker ou leur référence ne bat pas encore la clôture Pinnacle.`;
+  return `Exemple : ${e(x.bookmaker)} paie <b>${cote(x.cote)}</b> sur « ${e(x.pari)} » (${e(x.domicile)} – ${e(x.exterieur)}). `
+    +`${e(x.reference)} estime le juste prix à <b>${cote(x.cote_juste)}</b> : on est payé ${pct(x.ecart)} de plus que ce que le pari vaut.`;
+}
+function carteRecommandee(x, i, noms) {
+  const P=typeof preuveDe==='function' ? preuveDe(x.id) : null, d=x.depuis_entree || {};
+  const clv=P && P.clv!=null ? `<span class="${signe(P.clv)}">CLV Pinnacle ${pct(P.clv/100)}</span> · ${P.matchs} matchs` : 'pas encore mesurée';
+  const depuis=d.regles ? `depuis le ${x.depuis.slice(8,10)}/${x.depuis.slice(5,7)} : ${d.regles} réglés, <span class="${signe(d.gain)}">${eur(d.gain)}</span>`
+    : `depuis le ${x.depuis.slice(8,10)}/${x.depuis.slice(5,7)} : rien de réglé`;
+  return `<div class="acc-rang"><span class="acc-num">${i+1}.</span><span class="acc-rang-nom"><b>${e(noms.get(x.id) || x.id)}</b>
+<small class="acc-rang-detail">${clv}<br>${depuis}</small></span></div>`;
+}
 function rendreAccueil() {
   const cible=document.getElementById('acc-kpis');if(!cible) return;
-  const heure=Number(new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',hourCycle:'h23'}).format(new Date()));
-  document.getElementById('acc-titre').textContent=(heure>=5 && heure<18 ? 'Bonjour' : 'Bonsoir')+' Matthieu';
+  const maintenant=new Date();
+  const jour=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(maintenant);
+  const heure=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).format(maintenant).replace(':',' h ');
+  document.getElementById('une-date').textContent=`${jour} · édition de ${heure}`;
   const mise=nomMiseAccueil(miseMode);
   // Premier chiffre : les cotes de 10 au plus. Au-delà, c'est de la loterie (quelques gains sur des centaines de
-  // paris) qui masquait tout le reste ; le total toutes cotes reste écrit dessous.
-  const toutes=fiches.filter(p=>p.unique_bilan && p.gain!=null),sToutes=statsBU(toutes);
-  const reglees=toutes.filter(p=>!(p.cote>10)),s=statsBU(reglees);
+  // paris) qui masquait tout le reste.
+  const reglees=fiches.filter(p=>p.unique_bilan && p.gain!=null && !(p.cote>10)),s=statsBU(reglees);
   const enCours=fiches.filter(p=>p.statut==='en_cours' && !p.a_regler);
-  // L'autre mise reste visible : en 10 € fixes, les grosses cotes perdantes pèsent autant que les petites ;
-  // en Kelly ¼, la mise suit l'écart et la cote. Les deux lectures se complètent.
-  // Repère affiché à côté : les mises fixes, ou Kelly ¼ quand on regarde déjà les mises fixes.
   const autreKelly=miseMode==='fixe', autre=bilanEnMise(reglees,autreKelly), nomAutre=nomMiseAccueil(autreKelly ? 'kelly' : 'fixe');
   cible.innerHTML=[
-    [`Gain net · cotes ≤ 10 · ${mise}`,eurC(s.net),signe(s.net),`${s.n} paris uniques réglés · en ${nomAutre} : ${eurC(autre.net)} · toutes cotes : ${eurC(sToutes.net)}`],
-    ['ROI · cotes ≤ 10',pct(s.roi),signe(s.net),`Gain net / mises réglées · en ${nomAutre} : ${pct(autre.roi)} · toutes cotes : ${pct(sToutes.roi)}`],
-    ['Réussite',pctEntier(s.reussite),'','Gagnés et demi-gagnés / réglés'],
-    ['En cours',String(enCours.length),'','Paris pas encore réglés']
+    ['Gain net',eurC(s.net),signe(s.net),`${s.n} paris réglés · ${mise}`],
+    ['ROI',pct(s.roi),signe(s.net),`en ${nomAutre} : ${pct(autre.roi)}`],
+    ['Réussite',pctEntier(s.reussite),'','paris gagnés'],
+    ['En cours',String(enCours.length),'','pas encore réglés']
   ].map(([t,v,c,d])=>`<div class="acc-kpi"><p>${e(t)}</p><strong class="${c}">${e(v)}</strong><span>${e(d)}</span></div>`).join('');
-  // Values du moment : les cinq dernières prises encore en cours.
-  document.getElementById('acc-values-n').textContent=`${enCours.length} en cours`;
-  document.getElementById('acc-values').innerHTML=enCours.length ? enCours.slice(0,5).map(ligneAccueilPari).join('')
-    : '<p class="aide">Aucun pari en cours pour le moment.</p>';
-  // Classement par la note /100 déjà publiée (classerParNote) : meilleure d'abord, sans note en dernier.
-  // À égalité : plus de paris réglés, puis le nom. Les pastilles restent les meilleurs critères (50 réglés).
-  const rows=lignesStrategies('futur');attribuerMedailles(rows);
-  const top=classerParNote(rows).slice(0,5);
-  document.getElementById('acc-top5-mise').textContent=`note /100 · ${mise}`;
-  document.getElementById('acc-top5').innerHTML=top.length ? top.map((r,i)=>{
-    const note=r.stats&&r.stats.note&&typeof r.stats.note.total==='number'?r.stats.note.total:null;
-    const ton=note==null?'':note>=70?'pos':note<40?'neg':'';
-    return `<div class="acc-rang"><span class="acc-num">${i+1}.</span>
-<span class="acc-rang-nom"><b>${e(r.nomCourt || r.nom)}</b>${pastillesMedailles(r.medailles)}<small class="acc-rang-detail"><span class="${ton}">${note==null?'Sans note':'Note '+note+'/100'}</span> · ${r.stats.regles} réglés · <span class="${signe(r.stats.roi)}">ROI ${pct(r.stats.roi/100)}</span></small></span>
-<span class="acc-rang-gain ${ton}">${note==null?'—':String(note)}</span></div>`;
-  }).join('')
-    : '<p class="aide">Pas encore de stratégie à classer.</p>';
+  // À jouer : la règle de la page Décision (bookmaker ET référence qui battent la clôture Pinnacle).
+  const jouer=typeof decisionParis==='function' ? decisionParis(fiches, D.decision, D.protocole).jouer : [];
+  document.getElementById('acc-titre').textContent=jouer.length ? `${jouer.length} pari${jouer.length>1?'s':''} à jouer` : 'Rien à jouer pour l\'instant';
+  document.getElementById('une-chapo').innerHTML=chapoAccueil(jouer, enCours.length);
+  document.getElementById('acc-values-n').textContent=jouer.length ? `${jouer.length} sur ${enCours.length} en cours` : '';
+  document.getElementById('acc-values').innerHTML=jouer.length ? jouer.slice(0,5).map(x=>ligneAccueilPari(x.p)).join('')
+    + (jouer.length>5 ? `<p class="aide">Et ${jouer.length-5} autres dans l'onglet Décision.</p>` : '')
+    : '<p class="aide">Aucun pari ne passe la règle du jour.</p>';
+  document.getElementById('acc-tous').textContent=`Les ${enCours.length} paris en cours →`;
+  // Recommandées (cotes/recommandations.py) : la liste de la semaine, avec leur preuve et leur résultat depuis l'entrée.
+  const noms=new Map(lignesStrategies('futur').map(r=>[r.id, r.nomCourt || r.nom]));
+  const recos=(D.recommandees && D.recommandees.actuelles) || [];
+  document.getElementById('acc-top5').innerHTML=recos.length ? recos.map((x,i)=>carteRecommandee(x,i,noms)).join('')
+    : '<p class="aide">Aucune stratégie ne bat encore la clôture de façon prouvée.</p>';
   // Gain cumulé des paris uniques (même courbe que le Bilan, tracée en marches), avec la ligne témoin : gain attendu
   // cumulé et marge du hasard (variance cumulée de chaque pari, 5e colonne).
   let total=0,attendu=0,variance=0;

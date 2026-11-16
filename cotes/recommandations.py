@@ -114,13 +114,14 @@ def mesurer_preuves(lignes: list[dict], paris: list[dict]) -> bool:
         l["stats"]["preuve"] = preuve
         if x["clv_teste"]:
             testees.append((l, preuve, x["clv_p_pos"]))
-    # Tester moins de lignes (docs/avantage-reel.md, décision 5) : une stratégie qui partage au moins ``DOUBLON_MIN``
-    # de ses paris avec une autre plus fournie n'entre pas dans la correction. Choix sur le nombre de paris, jamais
-    # sur un résultat.
+    # Tester moins de lignes (docs/avantage-reel.md, décision 5) : deux stratégies qui prennent presque les mêmes paris
+    # (au moins ``DOUBLON_MIN`` des paris de la plus fournie sont communs) ne comptent qu'une fois dans la correction ;
+    # la plus fournie reste. Une règle plus stricte, incluse dans une plus large mais bien plus petite, n'est pas un
+    # doublon : c'est une autre hypothèse. Choix sur le nombre de paris, jamais sur un résultat.
     gardees = []
     for l, preuve, p in sorted(testees, key=lambda t: (-len(t[0].get("ensemble") or ()), str(t[0]["id"]))):
-        proche = next((g for g, _, _ in gardees if recouvrement(l.get("ensemble") or set(), g.get("ensemble") or set())
-                       >= DOUBLON_MIN), None)
+        proche = next((g for g, _, _ in gardees if presque_identiques(l.get("ensemble") or set(), g.get("ensemble") or set())),
+                      None)
         if proche is not None:
             preuve["doublon_de"] = proche["id"]
         else:
@@ -134,6 +135,11 @@ def mesurer_preuves(lignes: list[dict], paris: list[dict]) -> bool:
 
 def recouvrement(a: set, b: set) -> float:
     return len(a & b) / min(len(a), len(b)) if a and b else 0.0
+
+
+def presque_identiques(a: set, b: set) -> bool:
+    """Au moins ``DOUBLON_MIN`` des paris de la plus fournie des deux sont communs."""
+    return bool(a and b) and len(a & b) / max(len(a), len(b)) >= DOUBLON_MIN
 
 
 def recommander(lignes: list[dict], maximum: int = MAXIMUM) -> dict:

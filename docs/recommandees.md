@@ -61,9 +61,10 @@ Student), une stratégie est **candidate** si :
 | Rendement pas nettement sous la CLV | écart (rendement − CLV) : borne haute à 95 % ≥ 0 | Écarte les stratégies qui battent la clôture mais perdent quand même (Claude Défi 5) |
 | ROI | > 0 | Garde-fou, comme « jouer » dans la page Décision |
 
-**Doublons hors correction** : une stratégie qui partage au moins 80 % de ses paris avec une stratégie plus fournie
-(en nombre de paris, jamais en résultat) est mesurée mais n'entre pas dans la correction de Holm : elle n'est pas
-candidate (« doublon de … »). Moins de lignes testées, seuil moins dur pour les autres (avantage-reel.md, décision 5).
+**Doublons hors correction** : quand deux stratégies prennent presque les mêmes paris (au moins 80 % des paris de la
+plus fournie sont communs), seule la plus fournie (en nombre de paris, jamais en résultat) entre dans la correction de
+Holm ; l'autre n'est pas candidate (« doublon de … »). Une règle plus stricte incluse dans une plus large (écart ≥ 5 %
+dans écart ≥ 2 %) n'est pas un doublon. Moins de lignes testées, seuil moins dur pour les autres (avantage-reel.md, décision 5).
 
 **Badge de chaque stratégie** (fiche, page Stratégies) : même mesure. « Bat la clôture » (CLV Pinnacle positive
 après correction), « Bat la clôture mais perd », « Sous la clôture » (intervalle sous zéro), « Pas concluant »,

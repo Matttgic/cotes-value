@@ -28,18 +28,17 @@
   <div class="message-reseau" id="hors-ligne" role="status" hidden>Connexion indisponible. Le dernier relevé reste consultable.</div>
   <noscript><p class="vide">Active JavaScript dans Chrome pour afficher les paris et les stratégies.</p></noscript>
   <section class="onglet" id="o-accueil">
-    <div class="page-tete"><div><h2 id="acc-titre">Accueil</h2></div></div>
+    <header class="une-tete"><p class="une-date" id="une-date"></p><h2 id="acc-titre">Cotes Value</h2>
+      <p class="une-chapo" id="une-chapo"></p></header>
     <div class="acc-kpis" id="acc-kpis"></div>
     <div class="acc-grille">
-      <section class="acc-values"><h3 class="bu-titre">Values du moment <small id="acc-values-n"></small></h3>
+      <section class="acc-values"><h3 class="bu-titre">À jouer <small id="acc-values-n"></small></h3>
         <div id="acc-values"></div>
-        <p><button type="button" class="acc-lien" data-aller="paris">Voir tous les paris, filtres avancés et export CSV →</button></p></section>
-      <section class="acc-top5"><h3 class="bu-titre">Classement des stratégies <small id="acc-top5-mise"></small></h3>
+        <p class="acc-liens"><button type="button" class="acc-lien" data-aller="decision">Pourquoi ceux-là →</button>
+        <button type="button" class="acc-lien" data-aller="paris" id="acc-tous">Tous les paris en cours →</button></p></section>
+      <section class="acc-top5"><h3 class="bu-titre">Recommandées <small>revues chaque semaine</small></h3>
         <div id="acc-top5"></div>
-        <p class="aide acc-legende">Les cinq premières par la <b>note /100</b> déjà calculée (la même que la page Stratégies),
-        de la meilleure à la moins bonne. À note égale : plus de paris réglés, puis le nom. Sans note (moins de 10 matchs
-        réglés) : en dernier. Pastilles, 50 paris réglés minimum : étoile = meilleur ROI, cercle € = meilleur gain net, trèfle = meilleure réussite, cible = meilleure CLV.</p>
-        <p><button type="button" class="acc-lien" data-aller="strategies">Classement complet →</button></p></section>
+        <p class="acc-liens"><button type="button" class="acc-lien" data-aller="strategies">Toutes les stratégies →</button></p></section>
       <section class="acc-courbe"><h3 class="bu-titre">Gain cumulé <small id="acc-courbe-mise"></small></h3><div id="acc-courbe"></div></section>
       <section class="acc-derniers"><h3 class="bu-titre">Derniers résultats <small>paris uniques réglés</small></h3><div id="acc-derniers"></div></section>
     </div>
@@ -169,10 +168,10 @@
       <div class="filtres filtres-strategies">
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
-        <div class="champ"><label for="strategies-avis">Avis d'analyste</label>
-        <select id="strategies-avis"><option value="bons" selected>Fiables et prometteuses</option><option value="">Tous les avis</option><option value="Fiable">Fiable</option><option value="Prometteur mais pas prouvé">Prometteur</option><option value="Chance ou yo-yo">Chance ou yo-yo</option><option value="Trop tôt pour juger">Trop tôt pour juger</option></select></div>
+        <div class="champ"><label for="strategies-avis">Verdict</label>
+        <select id="strategies-avis"><option value="" selected>Toutes</option><option value="Bat la clôture">Bat la clôture</option><option value="Pas concluant">Pas concluant</option><option value="Sous la clôture">Sous la clôture</option><option value="Trop tôt pour juger">Trop tôt</option></select></div>
         <div class="champ"><label for="strategies-tri">Classer par</label>
-        <select id="strategies-tri"><option value="note" selected>Note /100 (par match, robustesse)</option><option value="progression">Progression de la note (7 jours)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
+        <select id="strategies-tri"><option value="preuve" selected>Preuve (CLV Pinnacle, cas prudent)</option><option value="note">Note /100 (par match, robustesse)</option><option value="progression">Progression de la note (7 jours)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
       <p class="aide" id="strategies-total"></p>
       <details class="mode-emploi"><summary>Comment la note /100 est calculée</summary><p class="aide">Elle compte les
@@ -1719,16 +1718,14 @@ function rendreRecommandees(rows) {
       ${rejeu ? `<p class="reco-preuves">Rejeu indicatif depuis le 14/10 (optimiste : membres choisis après coup) : ${rejeu.regles} matchs · ROI ${p1(rejeu.roi)} · gain ${eur(rejeu.gain)}${rejeu.note ? ` · note ${rejeu.note.total}/100` : ""}</p>` : ""}</details>`;
   };
   const fusion = fusions.length ? `<h2 class="sous-titre">Fusions · membres figés</h2>
-      <details class="mode-emploi"><summary>Comment elles marchent</summary><p class="aide">Chaque fusion réunit les recommandées d'un jour, un seul pari par match, et ne change jamais de membres. Quand une révision change la liste des recommandées,
-      une nouvelle fusion est créée automatiquement (Fusion 2, 3…), suivie à partir de sa création ; les anciennes continuent leur suivi. Appuyez sur une fusion pour voir ses membres.</p></details>
+      <details class="mode-emploi"><summary>Comment elles marchent</summary><p class="aide">Exemple : Fusion 2 joue ensemble les trois recommandées du 16/11.
+      Si deux d'entre elles prennent le même match, un seul pari compte. Ses membres ne changent plus ; à chaque nouvelle liste, une Fusion 3 naît.</p></details>
       <div class="reco-grille">${fusions.map(carteFusion).join("")}</div>` : "";
   zone.innerHTML = `<h2 class="sous-titre">Recommandées</h2>
-    <details class="mode-emploi"><summary>Comment elles sont choisies</summary><p class="aide">Liste revue tous les ${C.revision_jours ?? 7} jours (dernière révision le ${jour(R.derniere_revision)}, prochaine le ${jour(R.prochaine_revision)}) ; entre deux révisions, elle ne bouge pas.
-    Une stratégie entre si, sur tout son suivi, elle bat la clôture Pinnacle de façon prouvée : au moins ${C.min_matchs ?? 50} matchs réglés, clôture Pinnacle connue pour au moins ${C.part_pinnacle_min ?? 50} % de ses paris,
-    CLV Pinnacle positive après correction pour le nombre de stratégies comparées (p &lt; ${Math.round(100 * (C.alpha ?? .05))} %), rendement pas nettement sous la CLV, ROI positif,
-    et moins de ${Math.round(100 * (C.recouvrement_max ?? .6))} % de paris communs avec une autre recommandée. Classement : la CLV Pinnacle dans le cas prudent (borne basse à 95 %).
-    Elle sort si elle ne remplit plus ces critères, ou si une candidate la dépasse d'au moins ${String(C.ecart_remplacement ?? .5).replace(".", ",")} point dans le cas prudent.
-    Ce sont les mesures de l'onglet Décision ; seul le protocole de validation, fixé à l'avance, peut dire qu'un avantage est prouvé. Aucun gain futur garanti.</p></details>
+    <details class="mode-emploi"><summary>Comment elles sont choisies</summary><p class="aide">Exemple : on prend PMU à <b>2,10</b> ; juste avant le match,
+    Pinnacle estime le pari à <b>2,00</b>. On a battu la clôture de 5 %. Une stratégie entre quand ses paris font ça en moyenne, sur au moins
+    ${C.min_matchs ?? 50} matchs, et que ça tient même en comptant large le hasard. Trois au plus, revues tous les ${C.revision_jours ?? 7} jours
+    (prochaine le ${jour(R.prochaine_revision)}).</p></details>
     ${cartes.length ? `<div class="reco-grille">${cartes.join("")}</div>` : '<div class="vide">Aucune stratégie ne remplit encore les critères.</div>'}
     ${anciennes.length ? `<details class="mode-emploi"><summary>Anciennes recommandées (${anciennes.length})</summary><ul class="reco-anciennes">${anciennes.join("")}</ul></details>` : ""}
     ${fusion}${pausesEtDoublons(nom)}`;
@@ -1815,16 +1812,16 @@ function rendreStrategies() {
   attribuerValeur(rows);          // rang moyen ROI + CLV, calculé sur toutes les stratégies avant le filtre
   const ref = document.getElementById("strategies-ref").value;
   if (ref) rows = rows.filter(r => r.reference === ref);
-  // Avis d'analyste : par défaut, seulement ce qui mérite d'être lu (« Fiable » ou « Prometteur »).
+  // Verdict unique : la CLV Pinnacle corrigée (fiabilite), le même que les recommandées et la page Décision.
   const avisChoisi = document.getElementById("strategies-avis")?.value || "", avantAvis = rows.length;
-  const verdictDe = r => (r.avisSuivi || r.stats?.avis)?.verdict;
-  if (avisChoisi === "bons") rows = rows.filter(r => ["Fiable", "Prometteur mais pas prouvé"].includes(verdictDe(r)));
-  else if (avisChoisi) rows = rows.filter(r => verdictDe(r) === avisChoisi);
+  if (avisChoisi) rows = rows.filter(r => fiabilite(preuveDe(r.id)).texte === avisChoisi);
   // Avec des dates, la note /100 (sur tout le suivi) n'est pas recalculée : son classement devient le gain net.
   const triChoisi = document.getElementById("strategies-tri").value;
   const tri = datesStratActives() && ["note", "progression"].includes(triChoisi) ? "gain" : triChoisi;
   rows.sort((a,b) => {
     if (tri === "nom") return a.nom.localeCompare(b.nom,"fr") || a.id.localeCompare(b.id);
+    if (tri === "preuve") { const f = r => preuveDe(r.id)?.clv_ic?.[0] ?? -1e9, bat = r => fiabilite(preuveDe(r.id)).texte === "Bat la clôture" ? 0 : 1;
+      return bat(a) - bat(b) || f(b) - f(a) || (b.stats?.regles ?? 0) - (a.stats?.regles ?? 0) || a.id.localeCompare(b.id); }
     if (tri === "valeur") return (a.valeur ?? Infinity) - (b.valeur ?? Infinity) || (b.stats?.clv ?? -Infinity) - (a.stats?.clv ?? -Infinity) || a.id.localeCompare(b.id);
     if (tri === "progression") return (progressionNote(b) ?? -1e9) - (progressionNote(a) ?? -1e9) || (b.stats?.note?.total ?? -1) - (a.stats?.note?.total ?? -1) || a.id.localeCompare(b.id);
     if (tri === "note") return (b.stats?.note?.total ?? -1) - (a.stats?.note?.total ?? -1) || (b.stats?.regles ?? 0) - (a.stats?.regles ?? 0) || a.id.localeCompare(b.id);
@@ -1833,7 +1830,7 @@ function rendreStrategies() {
   });
   rendreDatesStrategies();
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
-  document.getElementById("strategies-total").textContent = `${rows.length} stratégies${rows.length < avantAvis ? " sur " + avantAvis + " (filtre « Avis d'analyste »)" : ""} · ${reglees.length} avec des règlements · résultats non cumulables.`;
+  document.getElementById("strategies-total").textContent = `${rows.length} stratégies${rows.length < avantAvis ? " sur " + avantAvis + " (filtre « Verdict »)" : ""} · ${reglees.length} avec des règlements · résultats non cumulables.`;
   document.getElementById("strategies-quoi").textContent = "Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h, Eden le 19/10 à 20 h (Paris), puis chaque nouvelle stratégie à son lancement. Les décisions sont figées ; les paris en attente ne sont pas comptés comme perdus. Avec des dates : seuls les paris détectés ces jours-là comptent, et la note /100 n'est pas recalculée." +
     ` ${(L.resultats || []).length} règles, ${Object.keys(L.comparateurs || {}).length} comparateurs et ${Object.keys(L.bases_futur || {}).length} bases du Bilan ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Note<small>/100</small></th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
@@ -1895,9 +1892,9 @@ document.getElementById("strategies-ref").onchange = rendreStrategies;
 {
   const menuAvis = document.getElementById("strategies-avis");
   if (menuAvis) {
-    const garde = lire("cv-strategies-avis-v1");
+    const garde = lire("cv-strategies-verdict-v1");
     if (garde != null && [...menuAvis.options].some(o => o.value === garde)) menuAvis.value = garde;
-    menuAvis.onchange = () => { ecrire("cv-strategies-avis-v1", menuAvis.value); rendreStrategies(); };
+    menuAvis.onchange = () => { ecrire("cv-strategies-verdict-v1", menuAvis.value); rendreStrategies(); };
   }
 }
 document.getElementById("strategies-tri").onchange = rendreStrategies;
@@ -1932,7 +1929,7 @@ function rendreTout() {
   rendreAccueil(); rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSegments(); rendreStrategies(); rendreAnalyses();
   adapterTableaux();
 }
-// Texte sous le menu : la règle du mode, la bankroll, et ce qui ne change pas.
+// Texte sous le menu : un message ponctuel seulement ; la règle du mode, la bankroll et ce qui ne change pas sont au survol.
 function noteMise(message) {
   const note = document.getElementById("mode-mise-note");
   if (!note) return;
@@ -1940,8 +1937,9 @@ function noteMise(message) {
   const regle = miseMode === "fixe" ? `${eurosNets(10)} € par pari (1 % de la bankroll)` : info.regle;
   note.classList?.toggle("message", Boolean(message));       // sur mobile, seule une information ponctuelle s'affiche
   const menuMise = document.getElementById("mode-mise");
-  if (menuMise && !message) menuMise.title = `${regle} · mêmes paris dans tous les modes, seule la mise change`;
-  note.textContent = message || `${regle} · bankroll de départ ${BANKROLL.toLocaleString("fr-FR")} € · mêmes paris dans tous les modes, seule la mise change.`;
+  if (menuMise && !message) menuMise.title = `${regle} · bankroll de départ ${BANKROLL.toLocaleString("fr-FR")} € · mêmes paris dans tous les modes, seule la mise change`;
+  // En-tête sobre : la règle du mode reste au survol du menu ; seule une information ponctuelle s'écrit dessous.
+  note.textContent = message || "";
 }
 async function chargerMise(mode) {
   const info = infoMise(mode);
