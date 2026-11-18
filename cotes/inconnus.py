@@ -17,7 +17,9 @@ from datetime import datetime, timedelta
 _releve: Counter = Counter()
 _verrou = threading.Lock()
 GARDE = timedelta(days=7)        # libellé plus vu depuis : oublié
-MAX_PAR_BOOK = 200
+# Betclic et PMU dépassaient 200 libellés distincts par cycle (18/11/2026) : le fichier tournait, chaque libellé
+# évincé revenait avec un « premier » neuf et passait pour « nouveau » (141 faux nouveaux chez Betclic).
+MAX_PAR_BOOK = 1000
 NOUVEAU = timedelta(hours=24)
 _CHIFFRES = re.compile(r"[+-]?\d+(?:[.,]\d+)?")
 
@@ -62,7 +64,10 @@ def fusionner(ancien: dict, releve: dict, maintenant: datetime) -> dict:
             if maintenant - vu <= GARDE:
                 gardes[lib] = v
         if gardes:
-            plus_vus = sorted(gardes.items(), key=lambda kv: (kv[1]["dernier"], kv[1].get("n", 0)), reverse=True)
+            # Plafond atteint : les plus récemment vus d'abord, puis, à égalité, les plus anciennement connus. Un libellé
+            # déjà suivi n'est pas remplacé par un inconnu du même cycle (sinon il reviendrait plus tard comme « nouveau »).
+            plus_vus = sorted(gardes.items(), key=lambda kv: (kv[1].get("premier") or "", -kv[1].get("n", 0)))
+            plus_vus.sort(key=lambda kv: kv[1]["dernier"], reverse=True)
             out[book] = dict(plus_vus[:MAX_PAR_BOOK])
     return out
 
