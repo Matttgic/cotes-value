@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-18T15:22:41+00:00",
+  "debut": "2026-11-18T15:27:23+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,11 +9,11 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 2.4,
+    "secondes": 2.9,
     "ok": true
    },
    "draftkings": {
-    "secondes": 3.2,
+    "secondes": 3.4,
     "ok": true
    },
    "olybet": {
@@ -21,46 +21,47 @@
     "ok": true
    },
    "polymarket": {
-    "secondes": 8.2,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "1N2 incomplet ou issues dupliquées : référence rejetée"
-    ]
-   },
-   "fanduel": {
-    "secondes": 16.7,
+    "secondes": 9.8,
     "ok": true
    },
    "pinnacle": {
-    "secondes": 24.9,
+    "secondes": 22.2,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 28 matchups : HTTP 403",
+     "sport 17 markets/straight : HTTP 403",
      "sport 45 matchups : HTTP 403",
      "marché rejeté : cotes ou issues incohérentes"
-    ]
+    ],
+    "reprise": 122
    },
-   "betclic_direct": {
-    "secondes": 41.8,
+   "fanduel": {
+    "secondes": 25.0,
     "ok": true
    },
    "pmu_direct": {
-    "secondes": 43.7,
-    "ok": true
-   },
-   "netbet": {
-    "secondes": 52.3,
+    "secondes": 46.5,
     "ok": true
    },
    "unibet_direct": {
-    "secondes": 34.9,
+    "secondes": 23.0,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 48.1,
+    "ok": true
+   },
+   "netbet": {
+    "secondes": 52.0,
     "ok": true
    },
    "winamax_direct": {
-    "secondes": 65.2,
-    "ok": true
+    "secondes": 76.0,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "smarkets": {
     "secondes": 0.0,
@@ -76,7 +77,7 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.3,
+    "secondes": 0.4,
     "ok": true
    }
   },
@@ -102,25 +103,25 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 97,
-   "lignes": 2951
+   "lignes": 2997
   },
   "matchbook_fraicheur": {
-   "lignes": 2951,
-   "source_connue": 2926,
+   "lignes": 2997,
+   "source_connue": 2997,
    "source_inconnue": 0,
-   "source_invalide": 25,
+   "source_invalide": 0,
    "mouvement_min_s": 0,
-   "mouvement_max_s": 7452,
-   "reception": "2026-11-18T15:22:41+00:00"
+   "mouvement_max_s": 7734,
+   "reception": "2026-11-18T15:27:23+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 874,
-   "age_min_s": 19,
-   "lignes": 108074,
-   "lignes_perimees": 1570,
+   "age_max_s": 660,
+   "age_min_s": 21,
+   "lignes": 108139,
+   "lignes_perimees": 2250,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -130,16 +131,14 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 51,
-    "choisi_autre": 1,
-    "head_403": 5,
-    "complement": 6,
-    "complement_marches": 622,
+    "head_200": 58,
+    "choisi_fixe": 5,
+    "head_403": 4,
+    "complement": 5,
+    "complement_marches": 391,
     "ortho_refusee": 2,
-    "choisi_fixe": 1,
-    "reprise_403": 2,
-    "matchups_sans_speciaux": 1,
-    "sport_vide": 4
+    "sport_vide": 4,
+    "reprise_403": 2
    }
   },
   "polymarket_flux": {
@@ -147,7 +146,10 @@
    "utilises": 0
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Pinnacle": {
+    "golf": 122
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -180,38 +182,54 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 4,
+   "examines": 6,
    "comparaisons": [
     {
-     "match": "BK Häcken (F) – Manchester City (F)",
+     "match": "Cruzeiro – Palmeiras",
      "source": "Pinnacle",
-     "cote_olybet": 6.7,
-     "cote_reference": 7.69,
-     "ecart_relatif": 0.1287,
+     "cote_olybet": 2.49,
+     "cote_reference": 2.7,
+     "ecart_relatif": 0.0778,
      "aberrant": false
     },
     {
-     "match": "BK Häcken (F) – Manchester City (F)",
+     "match": "Cruzeiro – Palmeiras",
      "source": "PMU",
-     "cote_olybet": 6.7,
-     "cote_reference": 7.5,
-     "ecart_relatif": 0.1067,
+     "cote_olybet": 2.49,
+     "cote_reference": 2.6,
+     "ecart_relatif": 0.0423,
      "aberrant": false
     },
     {
-     "match": "Real Madrid (F) – Inter Milan (Wom)",
-     "source": "PMU",
-     "cote_olybet": 1.16,
-     "cote_reference": 1.13,
-     "ecart_relatif": 0.0265,
+     "match": "Vasco De Gama – Internacional",
+     "source": "Pinnacle",
+     "cote_olybet": 1.57,
+     "cote_reference": 1.645,
+     "ecart_relatif": 0.0457,
      "aberrant": false
     },
     {
-     "match": "Paris FC (F) – HB Køge (F)",
+     "match": "Vasco De Gama – Internacional",
      "source": "PMU",
-     "cote_olybet": 1.61,
-     "cote_reference": 1.5,
-     "ecart_relatif": 0.0733,
+     "cote_olybet": 1.57,
+     "cote_reference": 1.63,
+     "ecart_relatif": 0.0368,
+     "aberrant": false
+    },
+    {
+     "match": "Sao Paulo FC – Fluminense",
+     "source": "Pinnacle",
+     "cote_olybet": 2.27,
+     "cote_reference": 2.42,
+     "ecart_relatif": 0.062,
+     "aberrant": false
+    },
+    {
+     "match": "Sao Paulo FC – Fluminense",
+     "source": "PMU",
+     "cote_olybet": 2.27,
+     "cote_reference": 2.25,
+     "ecart_relatif": 0.0089,
      "aberrant": false
     }
    ],
@@ -220,46 +238,14 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 6,
+   "examines": 3,
    "comparaisons": [
-    {
-     "match": "Orlando City – Cincinnati",
-     "source": "Pinnacle",
-     "cote_netbet": 2.22,
-     "cote_reference": 2.49,
-     "ecart_relatif": 0.1084,
-     "aberrant": false
-    },
-    {
-     "match": "Orlando City – Cincinnati",
-     "source": "PMU",
-     "cote_netbet": 2.22,
-     "cote_reference": 2.12,
-     "ecart_relatif": 0.0472,
-     "aberrant": false
-    },
-    {
-     "match": "Seattle Sounders – Real Salt Lake",
-     "source": "Pinnacle",
-     "cote_netbet": 1.81,
-     "cote_reference": 1.917,
-     "ecart_relatif": 0.056,
-     "aberrant": false
-    },
-    {
-     "match": "Seattle Sounders – Real Salt Lake",
-     "source": "PMU",
-     "cote_netbet": 1.81,
-     "cote_reference": 1.78,
-     "ecart_relatif": 0.0169,
-     "aberrant": false
-    },
     {
      "match": "Austria Vienna – Bayern Munich",
      "source": "Pinnacle",
      "cote_netbet": 17.0,
-     "cote_reference": 17.17,
-     "ecart_relatif": 0.0099,
+     "cote_reference": 16.99,
+     "ecart_relatif": 0.0006,
      "aberrant": false
     },
     {
@@ -268,6 +254,14 @@
      "cote_netbet": 1.55,
      "cote_reference": 1.671,
      "ecart_relatif": 0.0725,
+     "aberrant": false
+    },
+    {
+     "match": "SL Benfica – AS Rome",
+     "source": "Pinnacle",
+     "cote_netbet": 1.99,
+     "cote_reference": 2.12,
+     "ecart_relatif": 0.0613,
      "aberrant": false
     }
    ],
@@ -285,11 +279,11 @@
   "props_fanduel": {
    "fanduel": 457,
    "pinnacle": 781,
-   "rapproches": 346,
-   "non_rapproches": 111,
-   "ecart_proba_moyen": 0.00214,
-   "ecart_absolu_moyen": 0.00752,
-   "accord": 0.9075,
+   "rapproches": 345,
+   "non_rapproches": 112,
+   "ecart_proba_moyen": 0.00182,
+   "ecart_absolu_moyen": 0.00757,
+   "accord": 0.9101,
    "reference_seule": true
   },
   "draftkings": {
@@ -298,26 +292,26 @@
    "requetes": 11,
    "matchs": 16,
    "lignes": 96,
-   "props": 1274,
+   "props": 1272,
    "ignores": 0,
    "avertissements": []
   },
   "props_draftkings": {
-   "draftkings": 637,
+   "draftkings": 636,
    "pinnacle": 781,
-   "rapproches": 452,
-   "non_rapproches": 185,
-   "ecart_proba_moyen": 0.00409,
-   "ecart_absolu_moyen": 0.01301,
-   "accord": 0.8805,
+   "rapproches": 448,
+   "non_rapproches": 188,
+   "ecart_proba_moyen": 0.00388,
+   "ecart_absolu_moyen": 0.01335,
+   "accord": 0.8705,
    "reference_seule": true
   },
   "matchs_draftkings": {
    "draftkings": 48,
    "non_rapproches": 0,
    "rapproches": 48,
-   "ecart_absolu_moyen": 0.00552,
-   "ecart_proba_moyen": 0.00105,
+   "ecart_absolu_moyen": 0.00559,
+   "ecart_proba_moyen": 0.0009,
    "accord": 0.9375,
    "par_sport": {
     "basket": {
@@ -332,30 +326,30 @@
     },
     "hockey": {
      "rapproches": 9,
-     "ecart_absolu_moyen": 0.0056,
+     "ecart_absolu_moyen": 0.00597,
      "accord": 1.0
     }
    },
    "reference_seule": true
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-18T15:22:43+00:00",
-   "pinnacle_derniere_lecture": "2026-11-18T15:22:58+00:00",
+   "pinnacle_premiere_lecture": "2026-11-18T15:22:56+00:00",
+   "pinnacle_derniere_lecture": "2026-11-18T15:27:37+00:00",
    "books_premiere_lecture": "2026-11-18T14:59:27+00:00",
-   "books_derniere_lecture": "2026-11-18T15:22:45+00:00",
-   "ecart_enveloppe_secondes": 1411.0
+   "books_derniere_lecture": "2026-11-18T15:27:27+00:00",
+   "ecart_enveloppe_secondes": 1690.0
   },
   "historique_cotes": {
-   "lignes": 3993
+   "lignes": 3443
   },
   "marches_inconnus": {
-   "betclic": 1378,
-   "pmu": 847
+   "betclic": 1195,
+   "pmu": 850
   },
   "smarkets_cache": {
    "reutilise": true,
    "perime": false,
-   "age_min": 4.7
+   "age_min": 9.4
   },
   "smarkets_dans_decision": false,
   "derive": {
@@ -364,22 +358,22 @@
    "alerte_envoyee": false
   },
   "historique_references": {
-   "references": 8114,
+   "references": 7918,
    "releves": 1,
-   "correspondances": 0
+   "correspondances": 2
   },
   "controle": {
    "conforme": 421,
    "a_verifier": 8,
    "non_conforme": 3,
-   "mesures": 16544,
+   "mesures": 16503,
    "matchs_suspects": 0
   },
   "props_joueurs": {
    "pinnacle": 1562,
-   "Winamax": 5438,
+   "Winamax": 5441,
    "Unibet": 3319,
-   "rapproches": 1056,
+   "rapproches": 1052,
    "valeur": 1
   },
   "props_papier": {
@@ -396,8 +390,8 @@
   },
   "mouvement": {
    "actif": true,
-   "ancres": 63400,
-   "mesures": 57038,
+   "ancres": 60582,
+   "mesures": 55768,
    "annotees": 1,
    "figees": 1
   },
@@ -405,21 +399,21 @@
    "surebets": 0,
    "suspects": 0,
    "verifies": 0,
-   "familles": 9763
+   "familles": 9935
   },
   "boosts": {
    "lus": 10,
    "evalues": 0,
    "couverts": 0,
    "par_bookmaker": {
-    "Winamax": 8,
-    "Unibet": 2
+    "Unibet": 2,
+    "Winamax": 8
    },
    "erreurs": {}
   },
   "euria": {
    "milieux": 0,
-   "conversions": 57
+   "conversions": 58
   },
   "redecision": {
    "ajoutees": 0
@@ -435,27 +429,21 @@
    "dernier_reglement": "2026-11-18T14:47:02+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-18T15:24:09+00:00",
+  "fin": "2026-11-18T15:29:07+00:00",
   "cotes": {
-   "francaises": 75597,
-   "pinnacle": 108074,
-   "polymarket": 11487,
+   "francaises": 76319,
+   "pinnacle": 108261,
+   "polymarket": 11633,
    "smarkets": 3770,
-   "matchbook": 2951,
+   "matchbook": 2997,
    "betfair": 0
   },
-  "matchs_francais": 989,
-  "opportunites": 3,
+  "matchs_francais": 939,
+  "opportunites": 2,
   "opportunites_suspectes": 1,
-  "nouveaux_paris": 0
+  "nouveaux_paris": 2
  },
  "historique": [
-  {
-   "debut": "2026-11-17T23:54:26+00:00",
-   "mode": "complet",
-   "opportunites": 4,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-17T23:58:59+00:00",
    "mode": "complet",
@@ -1655,6 +1643,12 @@
    "mode": "complet",
    "opportunites": 3,
    "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-18T15:27:23+00:00",
+   "mode": "complet",
+   "opportunites": 2,
+   "nouveaux_paris": 2
   }
  ],
  "dernier_reglement": "2026-11-18T14:47:02+00:00",
