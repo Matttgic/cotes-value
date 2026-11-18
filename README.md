@@ -230,6 +230,12 @@ Stratégie de Claude, suivie dès le **13/11/2026 à 02:00 UTC**, figée au lanc
 Polymarket, cote 1,50–3,00, écart 2–7 %, ni score exact ni mi-temps/fin. PMU est le seul bookmaker dont la CLV par
 match reste positive sur les trois tiers du 10/10 au 12/11 (+0,7 %, 756 matchs). Choisie parmi 102 sous-ensembles :
 pas une validation. [Mesures et limites](docs/strategie-claude-pmu.md).
+
+### Claude · Drop Pinnacle
+Stratégie « dropping odds » de Claude, suivie dès le **18/11/2026 à 05:00 UTC**, figée au lancement et inscrite au
+protocole : Pinnacle seul, probabilité juste de Pinnacle en hausse d'au moins 3 % sur 10 à 60 min (cote en chute),
+cote 1,40–4,00, écart 2–10 %, tous les bookmakers sauf OlyBet. Limite : la cote Pinnacle peut avoir jusqu'à 15 min
+de retard (cache). [Règle, origine et limites](docs/strategie-claude-drop.md).
 ### Avis d'analyste
 
 Chaque fiche de stratégie porte un verdict (« Fiable », « Prometteur mais pas prouvé », « Chance ou yo-yo », « Trop
