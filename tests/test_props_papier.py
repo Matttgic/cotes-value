@@ -193,3 +193,14 @@ def test_suffixe_jr_d_un_seul_cote():
 def test_liste_sans_les_annules():
     paris = [{"joueur": "A", "statut": "annule", "debut": "2026-11-12"}, {"joueur": "B", "statut": "perdu", "debut": "2026-11-11"}]
     assert [p["joueur"] for p in P.liste_paris(paris)] == ["B"]
+
+
+def test_match_espn_doublon_et_abreviation_new_york():
+    # Même match lu au cycle puis relu pour un orphelin : compté une fois (avant le 18/11/2026, aucun prop réglé).
+    m = {"sport": "basket", "domicile": "Toronto Raptors", "exterieur": "New York Knicks",
+         "debut": "2026-11-15T23:00:00+00:00", "espn_id": "7", "final": True}
+    pari = {"sport": "basket", "domicile": "TOR Raptors", "exterieur": "NY Knicks", "debut": "2026-11-15T23:00:00+00:00"}
+    assert P._match_espn(pari, [m, dict(m)])["espn_id"] == "7"
+    # Deux matchs différents restent ambigus ; un autre surnom ne correspond pas.
+    assert P._match_espn(pari, [m, dict(m, espn_id="8")]) is None
+    assert P._match_espn(dict(pari, exterieur="NY Rangers"), [m]) is None

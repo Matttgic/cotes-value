@@ -19,6 +19,8 @@ ligne entière touchée : pari annulé. Le connecteur Polymarket ne produit pas 
 from __future__ import annotations
 
 import os
+import re
+import unicodedata
 from datetime import datetime, timezone
 
 from .correspondance import ressemblance
@@ -314,26 +316,40 @@ def joueurs_feuille(summary: dict) -> list[dict]:
     return joueurs
 
 
+def _surnom(nom: str | None) -> str:
+    sans_accents = unicodedata.normalize("NFKD", str(nom or "")).encode("ascii", "ignore").decode().lower()
+    mots = re.findall(r"[a-z0-9]+", sans_accents)
+    return mots[-1] if mots else ""
+
+
+def _meme_equipe(a: str | None, b: str | None) -> float:
+    """NBA et NHL : le surnom suffit (« NY Knicks » chez Unibet, « New York Knicks » chez ESPN : 0,75 seulement)."""
+    s = _surnom(a)
+    return max(ressemblance(a, b), 0.9 if len(s) >= 3 and s == _surnom(b) else 0.0)
+
+
 def _match_espn(pari: dict, matchs: list[dict]) -> dict | None:
     debut = _heure(pari.get("debut"))
     if debut is None:
         return None
-    trouves = []
+    # Un même match peut venir deux fois (déjà lu au cycle, puis relu pour un prop orphelin) : compté une fois.
+    # Avant le 18/11/2026, ce doublon laissait tous les props du sport « en cours » sans note.
+    trouves = {}
     for m in matchs or []:
         if m.get("sport") != pari.get("sport") or not m.get("final"):
             continue
         autre = _heure(m.get("debut"))
         if autre is None or abs((debut - autre).total_seconds()) > FENETRE_MATCH_H * 3600:
             continue
-        direct = min(ressemblance(pari.get("domicile"), m.get("domicile")),
-                     ressemblance(pari.get("exterieur"), m.get("exterieur")))
-        inverse = min(ressemblance(pari.get("domicile"), m.get("exterieur")),
-                      ressemblance(pari.get("exterieur"), m.get("domicile")))
+        direct = min(_meme_equipe(pari.get("domicile"), m.get("domicile")),
+                     _meme_equipe(pari.get("exterieur"), m.get("exterieur")))
+        inverse = min(_meme_equipe(pari.get("domicile"), m.get("exterieur")),
+                      _meme_equipe(pari.get("exterieur"), m.get("domicile")))
         if max(direct, inverse) >= 0.85:
-            trouves.append(m)
+            trouves[str(m.get("espn_id") or id(m))] = m
     if len(trouves) != 1:
         return None
-    return trouves[0]
+    return next(iter(trouves.values()))
 
 
 def _valeur(joueur: dict, sport: str, stat: str) -> float | None:
