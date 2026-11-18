@@ -59,5 +59,6 @@ chaque jour terminé dans la release GitHub `references-AAAA-MM`. Pour une étud
 | `reprise/derniere_lecture.json.gz` | reprise | json gzip (reprise.ecrire) | cotes/reprise.py | cotes/reprise.py | dernier bon passage de chaque sport |
 | `reprise/sports_cycle.json` | reprise | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py | sports vus depuis 2 heures |
 | `reprise/ancres_mouvement.json.gz` | reprise | json gzip (mouvement.ecrire) | cotes/mouvement.py | cotes/mouvement.py | cote juste de départ de chaque sélection |
+| `reprise/stats_mouvement.json.gz` | reprise | json gzip (mouvement.ecrire) | cotes/mouvement.py | cotes/mouvement.py | moyenne et variance des mouvements par marché (z-score) |
 | `envoyes/pushover_envoyes.json` | envoyes | json indent=1, UTF-8 (ensure_ascii=False) | scripts/envoyes_secours.py | scripts/envoyes_secours.py | réécrit à chaque passage |
 | `envoyes/webhook_envoyes.json` | envoyes | json indent=1, UTF-8 (ensure_ascii=False) | scripts/envoyes_secours.py | scripts/envoyes_secours.py | réécrit à chaque passage |

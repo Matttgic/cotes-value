@@ -44,3 +44,21 @@ posés à la main avant le suivi, sans les régler sur ces chiffres.
 - **Bookmaker stable** : l'étude d'origine distinguait aussi les cas où le bookmaker n'avait pas bougé depuis une
   heure. Cette mesure n'est pas enregistrée à la prise : elle n'est pas dans la règle.
 - Aucun avantage n'est démontré. Seul le protocole de validation (docs/protocole.md) permettra de conclure.
+
+## Variante z-score (Claude · Drop z-score, suivie dès le 18/11/2026 à 8 h, heure de Paris)
+
+Idée reprise du dépôt public [kaykyif/pinnacle-odds-radar](https://github.com/kaykyif/pinnacle-odds-radar)
+(`src/volatility.py`, `src/episodes.py`) : une chute de 3 % est banale sur un marché nerveux et rare sur un marché
+calme.
+
+- **Mesure** (`cotes/mouvement.py`) : pour chaque marché (type + période), moyenne et variance des mouvements non nuls
+  de toutes les cotes Pinnacle suivies, pondérées sur environ 5 000 mesures. `mouvement_z` = (mouvement − moyenne) /
+  écart-type, avec les statistiques d'avant le cycle. Pas de z sous 200 mesures. Les statistiques vivent dans le cache
+  (`reprise/stats_mouvement.json.gz`).
+- **Règle** : celle de Drop Pinnacle, plus `mouvement_z` ≥ 2. Même mise (10 € de base, puis le mode du menu « Mise des
+  bilans »), une mise par cote française.
+- **Épisode** : `mouvement_lignes` compte les lignes alternatives du même match, marché, période et issue qui ont chuté
+  d'au moins 3 % au même cycle. Enregistré dans chaque pari, **hors règle** : à étudier dans les bilans avant d'en
+  faire une variante.
+- **Comparaison** : Drop z-score est un sous-ensemble de Drop Pinnacle. Si le z apporte quelque chose, son ROI et sa CLV
+  doivent dépasser ceux de Drop sur la même période.

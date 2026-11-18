@@ -11,6 +11,7 @@ from cotes import protocole
 SCELLES = [
     (70, "94faa228f06db04aaf16e855c0a9f604ad5dc594617497357672883fdad94651"),      # gel du 15/11/2026
     (71, "6db1d503e2cbfb5612cdc37e21bbba95eab25a821d3c1307185bd65e7a5d5203"),      # Claude · Drop Pinnacle, 18/11/2026
+    (72, "11985c81ed9f91a9e5a91e47caad4b251ac1f8dcd8e2fe38405de769bd01acb4"),      # Claude · Drop z-score, 18/11/2026
 ]
 
 
