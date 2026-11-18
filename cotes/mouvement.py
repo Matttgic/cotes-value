@@ -15,8 +15,19 @@ environ 0 % ou mieux quand la cote bougeait. L'opportunité de référence Pinna
 composante, est alors marquée ``suspect = "cote Pinnacle figée"`` et ``pariable = False`` : ni pari, ni alerte.
 Les autres références (Polymarket, Matchbook…) ne sont pas touchées. Les paris déjà pris ne changent pas.
 
-Les ancres vivent dans le cache GitHub Actions, à côté de la reprise (même dossier), jamais dans la branche
-« donnees ». Absent ou illisible : aucun mouvement, le cycle continue. Ne lève jamais.
+z-score (18 novembre 2026, idée reprise de kaykyif/pinnacle-odds-radar, src/volatility.py) : une chute de 3 % ne
+pèse pas pareil sur un marché nerveux et sur un marché calme. Pour chaque marché (type + période), on tient la
+moyenne et la variance des mouvements non nuls mesurés sur toutes les cotes Pinnacle suivies, pondérées sur environ
+``Z_FENETRE`` mesures (moyenne mobile exponentielle). ``mouvement_z`` = (mouvement − moyenne) / écart-type, calculé
+avec les statistiques **d'avant** le cycle (le cycle ne se juge pas lui-même), puis le cycle les met à jour. Moins de
+``Z_MIN_MESURES`` mesures ou écart-type nul : pas de z. Les mouvements nuls (cote figée) restent hors base.
+
+Épisode (même source) : un vrai mouvement fait souvent chuter plusieurs lignes alternatives d'un coup (handicap −0,5,
+−0,75, −1…). ``mouvement_lignes`` = nombre de cotes Pinnacle du même match, marché, période et issue (lignes
+différentes) dont le mouvement atteint ``EPISODE_MIN`` ce cycle. Descriptif seulement.
+
+Les ancres et les statistiques vivent dans le cache GitHub Actions, à côté de la reprise (même dossier), jamais dans
+la branche « donnees ». Absent ou illisible : aucun mouvement (ou pas de z), le cycle continue. Ne lève jamais.
 """
 from __future__ import annotations
 
@@ -32,6 +43,10 @@ from .marches import cle
 AGE_MIN_S = 600          # en dessous, le mouvement est du bruit d'un cycle à l'autre
 AGE_MAX_S = 3600         # l'ancre est renouvelée après une heure : le mouvement porte sur 10 à 60 minutes
 FIGEE = "cote Pinnacle figée"
+Z_FENETRE = 5000         # poids des statistiques par marché : environ les 5 000 dernières mesures
+Z_MIN_MESURES = 200      # en dessous, l'écart-type n'est pas fiable : pas de z
+EPISODE_MIN = 0.03       # chute comptée dans un épisode (même seuil que Drop Pinnacle)
+STATS = "stats_mouvement.json.gz"
 
 
 def _depend_de_pinnacle(o: dict) -> bool:
@@ -90,6 +105,36 @@ def mettre_a_jour(ancres: dict, lignes: dict[str, float], maintenant: datetime) 
     return mouvements
 
 
+def _groupe(k: tuple) -> str:
+    return f"{k[0]}|{k[1]}"
+
+
+def _episode(match_id, k: tuple) -> tuple:
+    """Même match, marché, période et issue (et joueur) : seules les lignes diffèrent."""
+    return (str(match_id), k[0], k[1], *k[3:])
+
+
+def z_et_maj(stats: dict, mesures: dict[str, list[float]]) -> dict[str, tuple[float, float] | None]:
+    """Moyenne et écart-type d'avant le cycle par groupe (None si base insuffisante), puis mise à jour de `stats`
+    (modifié sur place) avec les mouvements non nuls du cycle. `stats` = {groupe: [n, moyenne, variance]}."""
+    avant: dict[str, tuple[float, float] | None] = {}
+    for g in set(stats) | set(mesures):
+        e = stats.get(g)
+        ok = isinstance(e, list) and len(e) == 3 and all(isinstance(x, (int, float)) for x in e)
+        n, moy, var = e if ok else (0, 0.0, 0.0)
+        avant[g] = (moy, var ** .5) if n >= Z_MIN_MESURES and var > 0 else None
+        for m in mesures.get(g, ()):
+            if m == 0:
+                continue
+            n += 1
+            a = max(1 / n, 1 / Z_FENETRE)
+            d = m - moy
+            moy += a * d
+            var = (1 - a) * (var + a * d * d)
+        stats[g] = [min(n, 10 ** 9), round(moy, 7), round(var, 9)]
+    return avant
+
+
 def annoter(opportunites: list[dict], index: dict, chemin: Path | None, maintenant: datetime) -> dict:
     """Ajoute `mouvement_pinnacle` et `mouvement_s` aux opportunités, écarte celles dont la cote Pinnacle de référence
     est figée (garde-fou, voir en tête du module) ; résumé pour le journal. Ne lève jamais."""
@@ -97,18 +142,36 @@ def annoter(opportunites: list[dict], index: dict, chemin: Path | None, maintena
         return {"actif": False}
     try:
         lignes: dict[str, float] = {}
+        cles: dict[str, tuple] = {}
         for mid_fr, par_cle in (index.get("Pinnacle") or {}).items():
             for k, l in par_cle.items():
                 p = l.get("proba_juste")
                 if isinstance(p, (int, float)) and 0 < p < 1:
-                    lignes[_id(mid_fr, k)] = p
+                    i = _id(mid_fr, k)
+                    lignes[i], cles[i] = p, (mid_fr, k)
         ancres = lire(chemin)
         mouvements = mettre_a_jour(ancres, lignes, maintenant)
+        mesures: dict[str, list[float]] = {}
+        episodes: dict[tuple, int] = {}
+        for i, (m, _s) in mouvements.items():
+            mid_fr, k = cles[i]
+            mesures.setdefault(_groupe(k), []).append(m)
+            if m >= EPISODE_MIN:
+                e = _episode(mid_fr, k)
+                episodes[e] = episodes.get(e, 0) + 1
+        chemin_stats = chemin.with_name(STATS)
+        stats = lire(chemin_stats)
+        avant = z_et_maj(stats, mesures)
         n = figees = 0
         for o in opportunites:
-            m = mouvements.get(_id(o.get("match_id"), cle(o)))
+            k = cle(o)
+            m = mouvements.get(_id(o.get("match_id"), k))
             if m:
                 o["mouvement_pinnacle"], o["mouvement_s"] = m
+                base = avant.get(_groupe(k))
+                if base:
+                    o["mouvement_z"] = round((m[0] - base[0]) / base[1], 2)
+                o["mouvement_lignes"] = episodes.get(_episode(o.get("match_id"), k), 0)
                 n += 1
                 if est_figee(o):
                     if not o.get("suspect"):
@@ -117,6 +180,7 @@ def annoter(opportunites: list[dict], index: dict, chemin: Path | None, maintena
                     figees += 1
         try:
             ecrire(chemin, ancres)
+            ecrire(chemin_stats, stats)
         except Exception as e:  # noqa: BLE001  une écriture ratée ne retire pas les mouvements du cycle
             return {"actif": True, "ancres": len(ancres), "annotees": n, "figees": figees,
                     "ecriture": type(e).__name__}

@@ -236,6 +236,10 @@ Stratégie « dropping odds » de Claude, suivie dès le **18/11/2026 à 05:00 U
 protocole : Pinnacle seul, probabilité juste de Pinnacle en hausse d'au moins 3 % sur 10 à 60 min (cote en chute),
 cote 1,40–4,00, écart 2–10 %, tous les bookmakers sauf OlyBet. Limite : la cote Pinnacle peut avoir jusqu'à 15 min
 de retard (cache). [Règle, origine et limites](docs/strategie-claude-drop.md).
+
+### Claude · Drop z-score
+
+Variante de Drop Pinnacle, suivie dès le 18/11/2026 à 8 h : même règle, plus une chute inhabituelle pour son marché (z-score ≥ 2 face aux mouvements Pinnacle du même type de marché). Détails : [docs/strategie-claude-drop.md](docs/strategie-claude-drop.md).
 ### Avis d'analyste
 
 Chaque fiche de stratégie porte un verdict (« Fiable », « Prometteur mais pas prouvé », « Chance ou yo-yo », « Trop

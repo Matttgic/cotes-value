@@ -120,6 +120,8 @@ FICHIERS: dict[str, Fichier] = {
     "reprise/sports_cycle.json": Fichier("reprise", _JSON, [_CYCLE], [_CYCLE], "sports vus depuis 2 heures"),
     "reprise/ancres_mouvement.json.gz": Fichier("reprise", "json gzip (mouvement.ecrire)", ["cotes/mouvement.py"],
                                                 ["cotes/mouvement.py"], "cote juste de départ de chaque sélection"),
+    "reprise/stats_mouvement.json.gz": Fichier("reprise", "json gzip (mouvement.ecrire)", ["cotes/mouvement.py"],
+                                               ["cotes/mouvement.py"], "moyenne et variance des mouvements par marché (z-score)"),
     # --- envoyes (cache Actions envoyes/) : copie de secours si le push échoue
     "envoyes/pushover_envoyes.json": Fichier("envoyes", _JSON, ["scripts/envoyes_secours.py"],
                                              ["scripts/envoyes_secours.py"]),

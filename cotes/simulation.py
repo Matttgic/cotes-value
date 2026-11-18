@@ -102,7 +102,8 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
              # filtres à tester, descriptifs : mesurés à la prise, absents des anciens paris
              "trj_bookmaker": o.get("trj_bookmaker"), "limite_pinnacle": o.get("limite_pinnacle"),
              "marge_pinnacle": o.get("marge_pinnacle"), "mouvement_pinnacle": o.get("mouvement_pinnacle"),
-             "mouvement_s": o.get("mouvement_s"),
+             "mouvement_s": o.get("mouvement_s"), "mouvement_z": o.get("mouvement_z"),
+             "mouvement_lignes": o.get("mouvement_lignes"),
              # âge réel du prix Pinnacle à la lecture (cache Cloudflare : jusqu'à ~15 min), absent des anciens paris
              "age_prix_pinnacle_s": o.get("age_prix_pinnacle_s"),
              "ecart_pinnacle": o.get("ecart_pinnacle"),
