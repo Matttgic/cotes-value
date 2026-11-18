@@ -64,6 +64,13 @@ ligue et les autres sports vieillissent ensemble, à quelques dizaines de second
 part chez Pinnacle, qui refuse (403) ou répond vide (204) : on ne peut ni choisir une copie plus jeune ni en
 créer une. Le réchauffeur de Paris ne sert plus à rien dans ce cas : il relit la même copie (HIT).
 
+Mesuré le 18/11/2026 (sonde depuis GitHub, 28 relevés de 30 s, football, basket, tennis) : les orthographes ne
+vieillissent plus ensemble. La plus jeune des orthographes « withSpecials=true » (la seule lue jusque-là) avait
+en moyenne 170–200 s ; la plus jeune de toutes, 95–136 s. Depuis, la collecte lit en plus l'orthographe
+complémentaire la plus jeune (`ORTHO_COMPLEMENT`, lignes principales ou sans paris joueurs) quand elle a au moins
+une minute d'avance, et garde, marché par marché, celui dont la `version` Pinnacle est la plus haute. Chaque cote
+garde l'âge de la copie d'où elle vient. Compteurs : `complement` et `complement_marches` dans `choix_prix`.
+
 Conséquence : chaque cycle lit des cotes de 0 à 15 minutes et, environ un cycle sur trois, toutes dépassent
 10 minutes et sont écartées. Le secours pinnodds (cotes d'âge 0) comble alors le football : au plus une
 requête toutes les 30 minutes, 48 par jour, soit environ un trou sur deux. Ajouter tennis et basket à

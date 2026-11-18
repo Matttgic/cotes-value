@@ -700,11 +700,45 @@ def test_choix_prend_l_orthographe_la_plus_fraiche(monkeypatch):
         '': Tete(200,'HIT',600)},
         {'/markets/straight?withSpecials=true': Reponse([marche_pin()], headers={'cf-cache-status':'HIT','Age':'300'})})
     out=P.collecter({29:'football'})
-    assert len(heads)==3
-    assert not any(h.endswith('/markets/straight?primaryOnly=false') for h in heads)
-    assert [g for g in gets if 'markets' in g][0].endswith('/markets/straight?withSpecials=true')
+    assert not any(h.endswith('/markets/straight?primaryOnly=false') for h in heads[:3])   # la base : spéciaux seulement
+    marches=[g for g in gets if 'markets' in g]
+    assert marches[0].endswith('/markets/straight?withSpecials=true')
+    # 18/11/2026 : ?primaryOnly=false (45 s) est lue en complément ; sans version, la base reste.
+    assert marches[1].endswith('/markets/straight?primaryOnly=false') and len(marches)==2
     assert out and all(l['age_cache_s']==300 and l['cote_perimee'] is False for l in out)
-    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['head_200']==3
+    assert P.choix_prix['choisi_autre']==1 and P.choix_prix['complement']==1
+
+
+def test_complement_plus_recent_remplace_le_marche_par_version(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {
+        '?primaryOnly=false&withSpecials=true': Tete(200,'HIT',300),
+        '?primaryOnly=true&withSpecials=false': Tete(200,'HIT',40)},
+        {'/markets/straight?primaryOnly=false&withSpecials=true':
+             Reponse([marche_pin(version=5), marche_pin(key='m2', version=3)], headers={'cf-cache-status':'HIT','Age':'300'}),
+         '/markets/straight?primaryOnly=true&withSpecials=false':
+             Reponse([marche_pin(version=6, prices=[{'designation':'home','price':120},{'designation':'away','price':-140}])],
+                     headers={'cf-cache-status':'HIT','Age':'40'})})
+    out=P.collecter({29:'football'})
+    m1=[l for l in out if l['age_cache_s']==40]
+    assert m1 and {round(l['cote'],2) for l in m1}=={2.2, round(1+100/140,2)}
+    assert [l for l in out if l['age_cache_s']==300]              # m2, absent du complément, garde la base
+    assert P.choix_prix['complement_marches']==1
+
+
+def test_pas_de_complement_sans_une_minute_d_avance(monkeypatch):
+    heads, gets = _brancher(monkeypatch, {
+        '?primaryOnly=false&withSpecials=true': Tete(200,'HIT',100),
+        '?primaryOnly=true&withSpecials=false': Tete(200,'HIT',50)},
+        {'/markets/straight?primaryOnly=false&withSpecials=true':
+             Reponse([marche_pin(version=5)], headers={'cf-cache-status':'HIT','Age':'100'})})
+    P.collecter({29:'football'})
+    assert len([g for g in gets if 'markets' in g])==1 and 'complement' not in P.choix_prix
+
+
+def test_fusion_ajoute_les_marches_absents_de_la_base():
+    a, b = marche_pin(version=2), marche_pin(key='m9', version=1)
+    sortie, venus = P.fusionner_versions([a], [marche_pin(version=1), b])
+    assert sortie == [a, b] and venus == {id(b)}
 
 
 def test_choix_garde_l_url_fixe_sans_age_exploitable(monkeypatch):
