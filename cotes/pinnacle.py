@@ -73,6 +73,14 @@ ORTHO_PRIX = ("?primaryOnly=false&withSpecials=true", "?primaryOnly=false", "?wi
               "?withSpecials=true&primaryOnly=false", "")
 choix_prix: dict[str, int] = {}
 _choix_coupe = False
+# Complément (sonde du 18/11/2026, 28 relevés de 30 s, foot/basket/tennis) : les orthographes sans spéciaux ou
+# « primaryOnly » ont leur propre horloge de cache, déphasée. La plus jeune de toutes avait en moyenne 95–136 s
+# contre 170–200 s pour la plus jeune « withSpecials=true ». Leur contenu est un sous-ensemble (lignes principales
+# ou sans paris joueurs) : on les lit en plus de la base et on garde, marché par marché, la ``version`` la plus haute.
+ORTHO_COMPLEMENT = ("?primaryOnly=true&withSpecials=false", "?withSpecials=false", "?primaryOnly=true",
+                    "?primaryOnly=false&withSpecials=false", "?primaryOnly=true&withSpecials=true", "?primaryOnly=false", "",
+                    "?withSpecials=false&primaryOnly=true")
+COMPLEMENT_GAIN_S = 60          # lire une deuxième orthographe seulement si elle a au moins une minute d'avance
 _ortho_refusees: set[str] = set()   # orthographes refusées (403) pendant ce cycle
 # 18/10/2026 : GitHub reçoit ~3 refus 403 aléatoires par cycle. Quand l'un tombe sur le football, le cycle
 # perd 80 % des cotes. Une seule reprise par requête, après une courte pause, avec un plafond par cycle.
@@ -244,6 +252,10 @@ def _compter(cle: str) -> None:
     choix_prix[cle] = choix_prix.get(cle, 0) + 1
 
 
+def _compter_n(cle: str, n: int) -> None:
+    choix_prix[cle] = choix_prix.get(cle, 0) + n
+
+
 def _choisir_chemin_prix(sid: int) -> str:
     """Orthographe des prix la plus fraîche selon un HEAD ; l'URL fixe au moindre doute.
 
@@ -302,6 +314,85 @@ def _choisir_chemin_prix(sid: int) -> str:
             break
     _compter("choisi_fixe" if meilleur == fixe else "choisi_autre")
     return meilleur
+
+
+def _choisir_complement(sid: int, age_base: int | None) -> str | None:
+    """Orthographe complémentaire plus jeune d'au moins COMPLEMENT_GAIN_S que la base (âge du GET), ou None.
+    Mêmes règles que le choix de la base : un 403 écarte l'orthographe, 401/429 coupent les HEAD du cycle."""
+    global _choix_coupe
+    if _choix_coupe or _bloque or not choix_actif() or age_base is None or age_base < COMPLEMENT_GAIN_S:
+        return None
+    meilleur, age_min = None, age_base - COMPLEMENT_GAIN_S
+    echeance = _echeance_active
+    for q in ORTHO_COMPLEMENT:
+        if q in _ortho_refusees:
+            continue
+        if echeance is not None and not echeance.ok():
+            _compter("head_budget")
+            break
+        chemin = f"/sports/{sid}/markets/straight{q}"
+        try:
+            r = _http.head(base_api() + chemin, headers=headers(),
+                           timeout=15 if echeance is None else echeance.timeout(15), allow_redirects=False)
+        except requests.RequestException:
+            _compter("head_reseau")
+            continue
+        code = getattr(r, "status_code", None)
+        _compter(f"head_{code}")
+        if code in (401, 429):
+            _choix_coupe = True
+            break
+        if code == 403:
+            _ortho_refusees.add(q)
+            continue
+        if code != 200:
+            continue
+        statut, age = _lire_statut_cache(r), _lire_age(r)
+        if statut in ("MISS", "EXPIRED", "DYNAMIC"):
+            age = 0
+        elif statut != "HIT" or age is None:
+            continue
+        if age <= age_min:
+            meilleur, age_min = chemin, age
+        if age_min < COMPLEMENT_GAIN_S:
+            break
+    return meilleur
+
+
+def _cle_marche(mk) -> tuple | None:
+    if not isinstance(mk, dict) or mk.get("key") is None or isinstance(mk.get("matchupId"), bool):
+        return None
+    return (mk.get("matchupId"), mk.get("key"))
+
+
+def fusionner_versions(base: list, complement: list) -> tuple[list, set[int]]:
+    """Marchés de la base, remplacés par ceux du complément quand leur ``version`` est plus haute, plus les
+    marchés absents de la base. Renvoie aussi les id() des marchés venus du complément."""
+    def version(mk):
+        v = mk.get("version")
+        return v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+    index = {}
+    sortie = list(base)
+    for i, mk in enumerate(sortie):
+        k = _cle_marche(mk)
+        if k is not None:
+            index[k] = i
+    venus: set[int] = set()
+    for mk in complement:
+        k = _cle_marche(mk)
+        if k is None:
+            continue
+        i = index.get(k)
+        if i is None:
+            index[k] = len(sortie)
+            sortie.append(mk)
+            venus.add(id(mk))
+            continue
+        vb, vc = version(sortie[i]), version(mk)
+        if vb is not None and vc is not None and vc > vb:
+            sortie[i] = mk
+            venus.add(id(mk))
+    return sortie, venus
 
 
 def resume_rechauffeur() -> dict:
@@ -618,6 +709,16 @@ def collecter(sports: dict | None = None, echeance=None) -> list[dict]:
             if not matchups or not marches:
                 continue
             age, perimee = _age_ligne(chemin_prix, sid, maintenant_dt)
+            venus: set[int] = set()
+            age_c = perimee_c = None
+            chemin_c = _choisir_complement(sid, _entier_age(_ages.get(chemin_prix)))
+            if chemin_c:
+                complement = _get(chemin_c, essais=1, sonde_403=True) or []
+                if complement:
+                    marches, venus = fusionner_versions(marches, complement)
+                    age_c, perimee_c = _age_ligne(chemin_c, sid, datetime.now(timezone.utc))
+                    _compter("complement")
+                    _compter_n("complement_marches", len(venus))
             par_id = {m["id"]: m for m in matchups if isinstance(m, dict)
                       and isinstance(m.get("id"), (str, int)) and not isinstance(m.get("id"), bool)}
             if len(par_id) != len(matchups):
@@ -648,7 +749,8 @@ def collecter(sports: dict | None = None, echeance=None) -> list[dict]:
                 base = {"source": "pinnacle", "sport": sport, "collecte": maintenant,
                         "collecte_debut": requete_debut, "collecte_recue": maintenant,
                         "mise_max": _nombre(maximum),
-                        "age_cache_s": age, "cote_perimee": perimee}
+                        "age_cache_s": age_c if id(mk) in venus else age,
+                        "cote_perimee": perimee_c if id(mk) in venus else perimee}
                 try:
                     if mu.get("type") == "matchup":
                         lignes += _lignes_match(mu, mk, prix, par_id, periodes, base)
