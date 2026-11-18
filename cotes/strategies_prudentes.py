@@ -26,6 +26,7 @@ from .strategie_claude_defi import CLAUDE_DEFIS, SELECTEURS as SELECTEURS_CLAUDE
 from .strategie_claude_opus import CLAUDE_OPUS, SELECTEURS as SELECTEURS_CLAUDE_OPUS
 from .strategie_claude_signal import (CLAUDE_PMU, CLAUDE_SIGNAL, SELECTEURS as SELECTEURS_CLAUDE_SIGNAL,
                                        paris_claude_pmu)
+from .strategie_claude_drop import CLAUDE_DROP, paris_claude_drop
 from .strategie_claude_humain import CLAUDE_HUMAIN, SELECTEURS as SELECTEURS_CLAUDE_HUMAIN
 from .strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, paris_fusion, selection_fusion_auto
 from .convergence import STRATEGIES, selections, votes
@@ -46,7 +47,7 @@ CONVERGENCE_3 = {
 }
 VARIANTES = (CLAUDE_PRUDENT, CONVERGENCE_3, M3_STRUCTURE, QWEN, COEUR, LIQUIDITE,
              *GROKS, *GROKS_V2, *GROKS_V3, *CONSEILS, *DEFIS, *GEMINI_DEFIS, *CLAUDE_DEFIS, *CLAUDE_OPUS,
-             *CLAUDE_SIGNAL, CLAUDE_HUMAIN, CLAUDE_PMU,
+             *CLAUDE_SIGNAL, CLAUDE_HUMAIN, CLAUDE_PMU, CLAUDE_DROP,
              RECOMMANDEE_FUSION, *FUSIONS_AUTO)
 PARIS = ZoneInfo("Europe/Paris")
 
@@ -256,11 +257,12 @@ def selections_prudentes(paris: list[dict], depuis: str | None = None,
         for c in regles:
             resultat[c["cle"]] = figee(c["cle"], lambda: selecteur(paris, c))
     # Sélecteurs déjà figés au lancement par @figer_selecteur, sans rejeu : Gemini Défi (30/10), Claude Défi (2/11),
-    # Claude Opus (3/11), Claude Signal et Méthode humaine (12/11), PMU régulier (13/11/2026).
+    # Claude Opus (3/11), Claude Signal et Méthode humaine (12/11), PMU régulier (13/11), Drop Pinnacle (18/11/2026).
     for regles, selecteurs in ((GEMINI_DEFIS, SELECTEURS_GEMINI_DEFI), (CLAUDE_DEFIS, SELECTEURS_CLAUDE_DEFI),
                                (CLAUDE_OPUS, SELECTEURS_CLAUDE_OPUS), (CLAUDE_SIGNAL, SELECTEURS_CLAUDE_SIGNAL),
                                ((CLAUDE_HUMAIN,), SELECTEURS_CLAUDE_HUMAIN),
-                               ((CLAUDE_PMU,), {CLAUDE_PMU["cle"]: paris_claude_pmu})):
+                               ((CLAUDE_PMU,), {CLAUDE_PMU["cle"]: paris_claude_pmu}),
+                               ((CLAUDE_DROP,), {CLAUDE_DROP["cle"]: paris_claude_drop})):
         for c in regles:
             resultat[c["cle"]] = selecteurs[c["cle"]](paris) if depuis is None else set()
     # Fusion 1 : membres figés le 8/11/2026, un pari par match, sans rejeu.
