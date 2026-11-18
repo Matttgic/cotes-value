@@ -36,3 +36,14 @@ def test_lecteur_note_un_marche_non_traduit():
     inconnus.vider()
     assert olybet.marche_depuis({"name": "Buteur 3e but", "type": "Inconnu"}, "football") is None
     assert inconnus.vider() == {"olybet": {"Buteur #e but": 1}}
+
+
+def test_plafond_garde_les_libelles_connus(monkeypatch):
+    # Plus de libellés que le plafond : un libellé déjà suivi n'est pas évincé, donc jamais redevenu « nouveau ».
+    monkeypatch.setattr(inconnus, "MAX_PAR_BOOK", 3)
+    vieux = (T - timedelta(days=3)).isoformat()
+    ancien = {"pmu": {k: {"n": 1, "premier": vieux, "dernier": (T - timedelta(minutes=5)).isoformat()} for k in "ABC"}}
+    f = inconnus.fusionner(ancien, {"pmu": {"A": 1, "B": 1, "C": 1, "D": 9, "E": 9}}, T)
+    assert set(f["pmu"]) == {"A", "B", "C"}
+    f = inconnus.fusionner(f, {"pmu": {"A": 1, "B": 1, "C": 1, "D": 9, "E": 9}}, T + timedelta(minutes=5))
+    assert inconnus.resume(f, T + timedelta(minutes=5))["pmu"]["n_nouveaux"] == 0
