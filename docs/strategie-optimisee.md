@@ -60,7 +60,7 @@ Depuis le 19/11/2026, la même règle (`simulation.motif_hors_regle`) s'applique
   données : ils sont dans `hors_plafond.json`, avec leur nombre par motif sous le Bilan.
 
 Effet sur les paris uniques réglés au 19/11 : **1 447 gardés, +519 €, ROI +3,6 %** ; 4 112 exclus, −3 563 €,
-ROI −8,7 % (écart < 3 % : 2 501 ; cote > 5 : 1 095 ; plus de 24 h : 609 ; Winamax : 428 ; OlyBet : 212 ; total au
+ROI −8,7 %. Motifs, sur tous les paris enregistrés (écart < 3 % : 2 501 ; cote > 5 : 1 095 ; plus de 24 h : 609 ; Winamax : 428 ; OlyBet : 212 ; total au
 basket : 158 ; volley : 75 ; un pari peut avoir plusieurs motifs, seul le premier est compté).
 
 Conséquence : les stratégies qui prenaient ces paris les perdent aussi, dans leurs bilans et à l'avenir (règles à
