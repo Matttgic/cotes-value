@@ -47,6 +47,12 @@ def _kelly_prudent(p, bankroll, serie):
     return min(BANKROLL * 0.25 * (e * 0.5) / (c - 1), 20.0)
 
 
+def _kelly_alertes(p, bankroll, serie):
+    """Mise des alertes : Kelly ⅛ sur l'avantage corrigé, 5 % au plus (simulation.mise_conseillee)."""
+    from .simulation import mise_conseillee
+    return mise_conseillee(p)
+
+
 def _kelly_sans_grosses_cotes(p, bankroll, serie):
     return _kelly(0.25, 0.02)(p, bankroll, serie) if p["cote"] <= 4 else 0.0
 
@@ -79,7 +85,8 @@ def _martingale(p, bankroll, serie):
 METHODES = {
     "fixe": ("Fixe 10 €", "10 € par pari", lambda p, b, s: 10.0),
     "kelly_8": ("Kelly ⅛", "bankroll fixe 1 000 €, plafond 2 %", _kelly(0.125, 0.02)),
-    "kelly_4": ("Kelly ¼", "bankroll fixe 1 000 €, plafond 2 % (mode actuel)", _kelly(0.25, 0.02)),
+    "kelly_alertes": ("Kelly ⅛ corrigé", "mise des alertes : ⅛ de Kelly sur l'avantage corrigé, plafond 5 %", _kelly_alertes),
+    "kelly_4": ("Kelly ¼", "bankroll fixe 1 000 €, plafond 2 % (ancienne mise de base)", _kelly(0.25, 0.02)),
     "kelly_2": ("Kelly ½", "bankroll fixe, plafond 2 %", _kelly(0.5, 0.02)),
     "kelly_1": ("Kelly complet", "bankroll fixe, plafond 5 %", _kelly(1.0, 0.05)),
     "kelly_4_p1": ("Kelly ¼ plafond 1 %", "plafond 10 €", _kelly(0.25, 0.01)),
@@ -105,7 +112,9 @@ EVOLUTIVES = {"kelly_4_evol", "pct_1", "martingale"}
 # départ (× bankroll / 1 000) sans rien recalculer. « kelly » (¼) est le mode par défaut ; lui et « fixe » sont
 # dans la page, les autres sont chargés à la demande (site/mises/<mode>.json).
 MODES_BILAN = {
-    "kelly": ("Kelly ¼", "¼ de Kelly, 2 % de la bankroll au plus par pari", "kelly_4"),
+    "kelly": ("Kelly ⅛ corrigé", "la mise des alertes : ⅛ de Kelly sur l'avantage corrigé, 5 % de la bankroll au plus "
+              "par pari", "kelly_alertes"),
+    "kelly_4": ("Kelly ¼", "¼ de Kelly, 2 % de la bankroll au plus par pari (ancienne mise de base)", "kelly_4"),
     "kelly_8": ("Kelly ⅛", "⅛ de Kelly, 2 % de la bankroll au plus par pari", "kelly_8"),
     "kelly_2": ("Kelly ½", "½ de Kelly, 2 % de la bankroll au plus par pari", "kelly_2"),
     "kelly_4_p1": ("Kelly ¼ plafonné à 1 %", "¼ de Kelly, 1 % de la bankroll au plus par pari", "kelly_4_p1"),
@@ -120,9 +129,6 @@ MODES_INTEGRES = ("fixe", "kelly")          # présents dans la page ; les autre
 def mise_du_mode(mode: str, p: dict) -> float:
     """Mise du pari dans un mode du sélecteur, pour 1 000 € de bankroll. Jamais nulle : un pari sans écart
     exploitable garde 1 € (même repli que la mise Kelly ¼ d'origine), pour rester dans les bilans."""
-    if mode == "kelly":                     # la fonction d'origine, au centime près (bilans déjà publiés)
-        from .simulation import mise_kelly
-        return mise_kelly(p) or 1.0
     if not _fini(p.get("cote")):
         return 1.0
     return round(METHODES[MODES_BILAN[mode][2]][2](p, BANKROLL, []), 2) or 1.0

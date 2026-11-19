@@ -78,8 +78,8 @@
       <div class="cache"><h3 class="bu-titre">Par référence</h3>
       <div class="bu-table" id="bu-reference"></div></div>
       <details class="mode-emploi bilan-essais cache"><summary>Essais en cours <small>mises, combinaisons, indicateurs · rien n'est appliqué</small></summary>
-      <details class="mode-emploi"><summary>Mise Kelly ¼ contre 10 € fixes, rejouée sur tout l'historique</summary>
-      <p class="aide">Exemple : écart 5 %, cote 2,00 → mise Kelly ¼ = 1 000 € × ¼ × 5 % = 12,50 € (20 € au plus). Mêmes paris, seule la mise change.</p>
+      <details class="mode-emploi"><summary>Mise Kelly ⅛ corrigé (celle des alertes) contre 10 € fixes, rejouée sur tout l'historique</summary>
+      <p class="aide">Exemple : écart 5 %, cote 2,00 → avantage corrigé 2,19 % → mise = 1 000 € × ⅛ × 2,19 % = 2,74 € (50 € au plus). Mêmes paris, seule la mise change.</p>
       <div class="tableau"><table id="essai-kelly"></table></div></details>
       <details class="mode-emploi"><summary>Quelle méthode de mise aurait été la meilleure ? 18 méthodes sur les mêmes paris</summary>
       <p class="aide">Mêmes paris, 18 façons de miser, 1 000 € au départ. « Meilleur rendement » : le plus de gain par euro perdu au pire moment
@@ -624,7 +624,7 @@ function rendreKelly() {
 <td class="${signe(t.gains)}">${eurC(t.gains)}<small class="roi ${signe(t.roi)}">${t.roi == null ? "" : pctC(t.roi)}</small></td>
 <td class="${signe(t.gains_kelly)}">${eurC(t.gains_kelly)}<small class="roi ${signe(t.roi_kelly)}">${t.roi_kelly == null ? "" : pctC(t.roi_kelly)}</small><small>${eurC(t.mises_kelly / t.regles)} par pari</small></td></tr>`;
   }).join("");
-  document.getElementById("essai-kelly").innerHTML = `<tr><th>Sélection</th><th>Réglés</th><th>${eurosNets(10)} € fixes<small>gain · ROI</small></th><th>Kelly ¼<small>gain · ROI</small></th></tr>` + lignes;
+  document.getElementById("essai-kelly").innerHTML = `<tr><th>Sélection</th><th>Réglés</th><th>${eurosNets(10)} € fixes<small>gain · ROI</small></th><th>Kelly ⅛ corrigé<small>gain · ROI</small></th></tr>` + lignes;
 }
 function rendreMises() {
   const M = D.laboratoire?.mises, choix = document.getElementById("mises-selection"), table = document.getElementById("essai-mises");
@@ -820,16 +820,16 @@ function fusionnerNavigation() {
     nav[id] = "domicile" in meta ? {...meta, mise: p.mise, gain: p.gain} : {...p, ...meta};
   }
 }
-// Modes de mise du menu (cotes/mises.py, MODES_BILAN). « fixe » et « kelly » (¼, le mode par défaut) sont dans la
+// Modes de mise du menu (cotes/mises.py, MODES_BILAN). « fixe » et « kelly » (Kelly ⅛ corrigé, la mise des alertes, mode par défaut) sont dans la
 // page ; les autres sont chargés à la demande (mises/<mode>.json) et gardés dans BLOCS_MISE.
 const MODES_MISE = (D.modes_mise || []).length ? D.modes_mise
-  : [{cle:"kelly", nom:"Kelly ¼", regle:"", integre:true}, {cle:"fixe", nom:"Fixe 1 %", regle:"", integre:true}];
+  : [{cle:"kelly", nom:"Kelly ⅛ corrigé", regle:"", integre:true}, {cle:"fixe", nom:"Fixe 1 %", regle:"", integre:true}];
 const BLOCS_MISE = {};
 const blocMise = mode => mode === "kelly" ? D.kelly : BLOCS_MISE[mode];
 const infoMise = mode => MODES_MISE.find(m => m.cle === mode);
 // Nom du mode pour les titres : « Kelly ¼ », « 10 € fixes » (1 % de la bankroll choisie).
 const nomMise = (mode = miseMode) => mode === "fixe" ? `${eurosNets(10)} € fixes` : (infoMise(mode)?.nom || mode);
-const CLE_MISE = "cv-mise-v2";      // nouvelle clé : Kelly ¼ devient le mode par défaut pour tout le monde
+const CLE_MISE = "cv-mise-v3";      // nouvelle clé : Kelly ⅛ corrigé (la mise des alertes) devient le mode par défaut pour tout le monde
 let miseMode = "fixe", miseVoulue = D.mode_mise_defaut || "kelly";
 try { const m = localStorage.getItem(CLE_MISE); if (m && infoMise(m)) miseVoulue = m; } catch {}
 if (!infoMise(miseVoulue)) miseVoulue = "fixe";

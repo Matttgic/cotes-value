@@ -10,7 +10,7 @@ def regle(pid, statut, detecte, regle_le, **kw):
 def test_toutes_les_methodes_sont_simulees_sur_un_pari_gagne():
     p = regle("a", "gagne", "2026-10-15T09:00:00Z", "2026-10-15T15:00:00Z", cote=2.0, ecart=.05)
     r = comparer([p])
-    assert set(r) == set(METHODES) and len(METHODES) == 18
+    assert set(r) == set(METHODES) and len(METHODES) == 19
     assert r["fixe"]["mise"] == 10 and r["fixe"]["gain"] == 10 and r["fixe"]["roi"] == 100
     assert r["kelly_4"]["mise"] == 12.5 and r["kelly_2"]["mise"] == 20 and r["kelly_8"]["mise"] == 6.25   # 1000 × f × 0,05 / 1
     assert r["kelly_1"]["mise"] == 50 and r["kelly_4_p1"]["mise"] == 10 and r["kelly_4_p3"]["mise"] == 12.5

@@ -284,8 +284,9 @@ d'environ moitié (score exact, mi-temps/fin et cotes classiques de 5 à 10).
 ### Mise des bilans et bankroll (tous les bilans)
 
 Le menu « Mise des bilans » (en haut du site) recalcule **tous** les gains, ROI, CLV pondérés, courbes, segments et
-tableaux des stratégies dans le mode choisi : **Kelly ¼** par défaut (plafond 2 %, `simulation.mise_kelly`), Kelly ⅛,
-Kelly ½, Kelly ¼ plafonné à 1 %, gain constant, ou mise fixe de 1 % (`cotes/mises.py`, `MODES_BILAN`). Kelly ¼ et la
+tableaux des stratégies dans le mode choisi : **Kelly ⅛ corrigé** par défaut, la mise des alertes (⅛ de Kelly sur
+l'avantage corrigé, plafond 5 %, `simulation.mise_conseillee`), Kelly ¼ (ancienne mise de base), Kelly ⅛, Kelly ½,
+Kelly ¼ plafonné à 1 %, gain constant, ou mise fixe de 1 % (`cotes/mises.py`, `MODES_BILAN`). Le mode par défaut et la
 mise fixe sont dans la page ; les autres modes sont publiés à part (`site/mises/<mode>.json`) et chargés quand on
 les choisit. La **bankroll de départ** (1 000 € par défaut) se modifie à côté du menu : la mise de chaque mode ne
 dépend que du pari, donc tous les montants sont multipliés par bankroll / 1 000, sans rien recalculer ; ROI, CLV,

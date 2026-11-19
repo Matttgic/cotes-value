@@ -11,7 +11,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import site_web  # noqa: E402
 from cotes.mises import MODE_DEFAUT, MODES_BILAN, MODES_INTEGRES, mise_du_mode  # noqa: E402
-from cotes.simulation import mise_kelly  # noqa: E402
+from cotes.simulation import mise_conseillee, mise_kelly  # noqa: E402
 
 RACINE = Path(__file__).resolve().parents[1]
 NODE = shutil.which("node")
@@ -26,18 +26,20 @@ def pari(i, statut="gagne", cote=2.0, ecart=0.04):
             "gain": 10 * (cote - 1) if statut == "gagne" else -10 if statut == "perdu" else None, "clv": None}
 
 
-def test_kelly_un_quart_est_le_mode_par_defaut_et_reste_la_mise_d_origine():
+def test_le_mode_par_defaut_est_la_mise_des_alertes():
     assert MODE_DEFAUT == "kelly" and next(iter(MODES_BILAN)) == "kelly"
     assert set(MODES_INTEGRES) == {"fixe", "kelly"}
     for cote, ecart in ((1.8, .0364), (7.0, .0774), (2.2, .0234), (1.5, .2), (3.0, .1)):
         p = {"cote": cote, "ecart": ecart}
-        assert mise_du_mode("kelly", p) == mise_kelly(p)             # au centime près, bilans déjà publiés
+        assert mise_du_mode("kelly", p) == (mise_conseillee(p) or 1.0)   # Kelly ⅛ corrigé, comme les alertes
+        assert mise_du_mode("kelly_4", p) == pytest.approx(mise_kelly(p), abs=.011)   # l'ancienne mise de base, au menu
 
 
 def test_chaque_mode_mise_selon_le_pari_seulement_et_jamais_zero():
     p = {"cote": 2.0, "ecart": .04}
     assert mise_du_mode("fixe", p) == 10.0
-    assert mise_du_mode("kelly", p) == 10.0 and mise_du_mode("kelly_8", p) == 5.0
+    assert mise_du_mode("kelly", p) == 1.26 and mise_du_mode("kelly_8", p) == 5.0
+    assert mise_du_mode("kelly_4", p) == 10.0
     assert mise_du_mode("kelly_2", p) == 20.0                        # ½ de Kelly, plafond 2 %
     assert mise_du_mode("kelly_4_p1", {"cote": 1.5, "ecart": .2}) == 10.0      # plafond 1 %
     assert mise_du_mode("gain_constant", {"cote": 3.0, "ecart": .03}) == 5.0   # 5 € × (3 − 1) = 10 € de gain
@@ -53,7 +55,7 @@ def test_paris_en_mise_garde_les_paris_et_fait_suivre_le_gain():
     assert [c["mise"] for c in copies] == [5.0, 6.25, 5.0]
     assert [c["gain"] for c in copies] == [5.0, -6.25, None]
     assert paris[0]["mise"] == 10 and paris[0]["gain"] == 10.0       # les données d'origine restent intactes
-    assert site_web.paris_en_mise_kelly(paris)[1]["mise"] == 12.5
+    assert site_web.paris_en_mise_kelly(paris)[1]["mise"] == 5.09      # Kelly ⅛ corrigé : 125 × 8,15 % / 2
 
 
 def test_le_site_publie_le_menu_et_un_fichier_par_mode_supplementaire(tmp_path):
@@ -70,8 +72,9 @@ def test_le_site_publie_le_menu_et_un_fichier_par_mode_supplementaire(tmp_path):
     assert {"bilan", "courbes", "segments", "bilan_tranches", "filtres", "laboratoire", "mises_paris"} <= set(bloc)
     assert bloc["mises_paris"] == {f"p{i}": 5.0 for i in range(6)}
     # mêmes paris, mises divisées par deux par rapport à Kelly ¼ : même ROI
-    assert bloc["bilan"]["C|Pinnacle"]["mises"] == d["kelly"]["bilan"]["C|Pinnacle"]["mises"] / 2
-    assert bloc["bilan"]["C|Pinnacle"]["roi"] == d["kelly"]["bilan"]["C|Pinnacle"]["roi"]
+    quart = json.loads((sortie / "mises" / "kelly_4.json").read_text(encoding="utf-8"))
+    assert bloc["bilan"]["C|Pinnacle"]["mises"] == quart["bilan"]["C|Pinnacle"]["mises"] / 2
+    assert bloc["bilan"]["C|Pinnacle"]["roi"] == quart["bilan"]["C|Pinnacle"]["roi"]
     # le menu et la bankroll sont dans l'en-tête, sans les deux anciens boutons
     assert 'id="mode-mise"' in html and 'id="bankroll"' in html and 'data-mise="kelly"' not in html
     # un mode retiré ne reste pas publié d'une construction à l'autre
@@ -96,8 +99,8 @@ const fiches = [{id: "p1", mise: 10, gain: 10, mise_kelly: 4}, {id: "p2", mise: 
 
 
 @pytest.mark.skipif(not NODE, reason="Node absent")
-@pytest.mark.parametrize("stock, attendu", [({}, "kelly"), ({"cv-mise-v2": "fixe"}, "fixe"),
-                                            ({"cv-mise": "fixe"}, "kelly"), ({"cv-mise-v2": "inconnu"}, "kelly")])
+@pytest.mark.parametrize("stock, attendu", [({}, "kelly"), ({"cv-mise-v3": "fixe"}, "fixe"),
+                                            ({"cv-mise-v2": "fixe"}, "kelly"), ({"cv-mise-v3": "inconnu"}, "kelly")])
 def test_js_kelly_par_defaut_et_choix_memorise(stock, attendu):
     """Sans choix mémorisé (ou avec l'ancienne clé) : Kelly ¼. Le choix fait depuis le menu est repris."""
     modele = site_web.MODELE
