@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 from .convergence import cle_selection, paris_convergence
 from .laboratoire import DEBUT_SUIVI, REGLES, heure, selectionner
 from .liens import lien_info
-from .simulation import REFERENCES, premiers_par_selection
+from .simulation import REFERENCES, cle_selection_unique, premiers_par_selection, sources_par_selection
 from .strategie_qwen import QWEN
 from .strategies import registre as registre_strategies
 
@@ -128,6 +128,11 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
                 dates = observations.setdefault((*cle_selection(p), cote), {})
                 dates[cle] = min(dates.get(cle, t), t)
     alertes, depuis_pinnacle = {}, set()
+    # Sources : références qui repèrent la même cote française, dans ce relevé ou déjà enregistrées (mise × sources).
+    sources = sources_par_selection(paris)
+    for o in actuelles:
+        if not o.get("suspect") and o.get("pariable") is not False and cle_selection_unique(o) and o.get("reference"):
+            sources.setdefault(cle_selection_unique(o), set()).add(o["reference"])
     for o in actuelles:
         debut = heure(o.get("debut"))
         recue = heure(o.get("collecte_recue") or o.get("detecte"))
@@ -162,6 +167,7 @@ def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
             "pari": (o.get("pari", "")[:180]+"\nPrix relevé "+recue.astimezone(ZoneInfo("Europe/Paris")).strftime("%d/%m %H:%M:%S")),
             "collecte_le": recue.isoformat(), "age_prix_secondes": round((maintenant-recue).total_seconds()),
             "bookmaker": o.get("bookmaker", ""), "cote": o.get("cote"),
+            "sources": sorted(sources.get(cle_selection_unique(o)) or {o.get("reference")} - {None}),
         }
     return {"generated_at": maintenant.isoformat(timespec="seconds"),
             "alertes": sorted(alertes.values(), key=lambda a: a["detecte"], reverse=True)[:100]}

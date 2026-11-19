@@ -24,7 +24,7 @@ from cotes.strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, charge
 from cotes.reglement import GAIN, taux_manuel  # noqa: E402
 from cotes.sources_resultats import ou_chercher  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
-from cotes.simulation import COTE_MAX_PRISE, motif_hors_regle  # noqa: E402
+from cotes.simulation import COTE_MAX_PRISE, SOURCES_MAX, cle_selection_unique, motif_hors_regle, sources_par_selection  # noqa: E402
 from cotes.alertes import bankroll as bankroll_auto  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
@@ -401,9 +401,11 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]], regles: dic
     Une ligne = une prise enregistrée (référence comprise), prix/date exacts.
     La CLV exportée est uniquement celle de clôture validée, comme dans le bilan.
     """
-    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence", "mise", "mise_kelly", "unique_bilan", "regles"]
+    champs = list(CHAMPS_FICHE) + ["simulation", "tranche", "strategies", "convergence", "mise", "mise_kelly", "unique_bilan", "regles",
+                                    "sources"]
     regles = regles or {}
     uniques = premiers_par_selection(paris)
+    sources = sources_par_selection(paris)
     convergents = paris_convergence(paris, retenus)
     rows = []
     for p in sorted(paris, key=lambda p: p.get("detecte") or "", reverse=True):
@@ -411,7 +413,8 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]], regles: dic
         f.update(simulation=p.get("simulation"), clv=clv_finale(p), tranche=tranche(p["cote"]) if p.get("cote") else None,
                  strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents,
                  mise=p.get("mise"), mise_kelly=mise_kelly(p) or 1.0, unique_bilan=id(p) in uniques,
-                 regles=[cle for cle in regles if id(p) in regles[cle]])      # règles Pinnacle/Polymarket (« Mes stratégies »)
+                 regles=[cle for cle in regles if id(p) in regles[cle]],      # règles Pinnacle/Polymarket (« Mes stratégies »)
+                 sources=len(sources.get(cle_selection_unique(p)) or ()) or 1)   # références qui ont repéré la cote
         rows.append([f[k] for k in champs])
     return {"champs": champs, "lignes": rows}
 
@@ -976,6 +979,7 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/protection.py).
     data["durees_strategies"] = durees_strategies
     data["surebets"] = surebets_publies(entrees.get("surebets"), _maintenant(instant))
+    data["sources_max"] = SOURCES_MAX
     data["boosts"] = boosts_publies(entrees.get("boosts"), _maintenant(instant), entrees.get("boosts_resultats"))
     data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, _maintenant(instant))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)

@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from cotes.alertes.webhook import _fr, message_ntfy
 from cotes.notifications import NOMS, PIN2
 from cotes.recap_jouables import mise_arrondie
+from cotes.simulation import facteur_sources
 
 
 PUSHOVER_TTL_MAX_S = 86400       # le message reste sur le téléphone jusqu'au coup d'envoi, 24 h au plus (1 h le faisait disparaître avant lecture)
@@ -41,7 +42,8 @@ def alertes_pushover(flux: dict, paris: list[dict], envoyes: dict, choisies: set
         cles, noms = a.get("strategies") or [], a.get("labels") or []
         if len(cles) == len(noms):          # seules les stratégies cochées sont nommées (une mise chacune)
             a = {**a, "labels": [n for k, n in zip(cles, noms) if k in choisies]}
-        a = {**a, "mises": max(1, len(set(cles) & choisies))}     # une mise par stratégie cochée
+        # Une mise par stratégie cochée ou par source (référence) qui repère la cote, SOURCES_MAX au plus.
+        a = {**a, "mises": facteur_sources(max(len(set(cles) & choisies), len(a.get("sources") or ())))}
         out.append(a)
     return out
 
