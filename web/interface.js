@@ -173,3 +173,62 @@ function initialiserInterface() {
     requestAnimationFrame(()=>rendreStrategies());
   };
 }
+
+// Animations de présentation : apparition des sections, chiffres qui défilent, signal des chiffres qui ont bougé depuis
+// la dernière visite. Rien n'est animé si l'appareil demande moins de mouvement.
+const animationsPermises=()=>!matchMedia('(prefers-reduced-motion: reduce)').matches;
+function animerApparition(section) {
+  if(!animationsPermises()) return;
+  [...section.children].filter(el=>el.offsetParent!==null).slice(0,14).forEach((el,i)=>{
+    el.classList.remove('cv-apparait');void el.offsetWidth;
+    el.style.setProperty('--cv-delai',`${i*35}ms`);el.classList.add('cv-apparait');
+    el.addEventListener('animationend',()=>el.classList.remove('cv-apparait'),{once:true});
+  });
+}
+const nombreAffiche=texte=>{
+  const m=texte.match(/-?\d+(?:[\s  ]\d{3})*(?:,\d+)?/);if(!m) return null;
+  const valeur=Number(m[0].replace(/[\s  ]/g,'').replace(',','.'));
+  return Number.isFinite(valeur) ? {brut:m[0],valeur,decimales:(m[0].split(',')[1] || '').length} : null;
+};
+function defilerChiffre(el) {
+  const texte=el.textContent,n=nombreAffiche(texte);
+  if(!n || n.valeur===0 || !animationsPermises()) return;
+  const [avant,apres]=[texte.slice(0,texte.indexOf(n.brut)),texte.slice(texte.indexOf(n.brut)+n.brut.length)];
+  const format=v=>v.toLocaleString('fr-FR',{minimumFractionDigits:n.decimales,maximumFractionDigits:n.decimales});
+  const debut=performance.now(),duree=650;
+  el.classList.add('cv-defile');
+  const etape=t=>{
+    const p=Math.min(1,(t-debut)/duree),lisse=1-Math.pow(1-p,3);
+    if(!el.isConnected) return;
+    if(p<1) {el.textContent=avant+format(n.valeur*lisse)+apres;requestAnimationFrame(etape);}
+    else {el.textContent=texte;el.classList.remove('cv-defile');}
+  };
+  requestAnimationFrame(etape);
+}
+const kpisAffiches=new Map(),kpisChanges=new Map();let kpisCompares=false;
+function animerKpis() {
+  const cible=document.getElementById('acc-kpis');if(!cible) return;
+  const mode=document.getElementById('mode-mise')?.value || '';
+  let memoire={};try{memoire=JSON.parse(localStorage.getItem('cv-kpis-v1') || '{}');}catch{}
+  for(const kpi of cible.querySelectorAll('.acc-kpi')) {
+    const titre=kpi.querySelector('p')?.textContent || '',fort=kpi.querySelector('strong');if(!fort) continue;
+    const texte=fort.textContent,cle=`${mode}|${titre}`,valeur=nombreAffiche(texte)?.valeur;
+    if(kpisAffiches.get(cle)!==texte) defilerChiffre(fort);
+    kpisAffiches.set(cle,texte);
+    if(!kpisCompares && valeur!=null && memoire[cle]!=null && memoire[cle]!==valeur)
+      kpisChanges.set(cle,titre==='En cours' ? 'neutre' : valeur>memoire[cle] ? 'hausse' : 'baisse');
+    const sens=kpisChanges.get(cle);
+    if(sens) {
+      kpi.classList.add(`cv-${sens}`);kpi.title='A changé depuis ta dernière visite';
+      if(performance.now()<6000) kpi.classList.add('cv-flash');
+    }
+    if(valeur!=null) memoire[cle]=valeur;
+  }
+  kpisCompares=true;
+  try{localStorage.setItem('cv-kpis-v1',JSON.stringify(memoire));}catch{}
+}
+new MutationObserver(mutations=>{
+  for(const m of mutations) if(m.target.classList.contains('onglet') && m.target.classList.contains('actif') && !(m.oldValue || '').split(' ').includes('actif')) animerApparition(m.target);
+}).observe(document.querySelector('main'),{subtree:true,attributes:true,attributeFilter:['class'],attributeOldValue:true});
+const kpisCible=document.getElementById('acc-kpis');
+if(kpisCible) new MutationObserver(animerKpis).observe(kpisCible,{childList:true});
