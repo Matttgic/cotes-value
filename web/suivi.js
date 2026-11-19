@@ -166,6 +166,44 @@ function rendreDatesBilan() {
   else zone.querySelectorAll('input[data-p]').forEach(i => i.value = suiviPeriode()[i.dataset.p] || '');
 }
 
+// Heures des notifications : paris pris par les stratégies `cles` sur les `jours` derniers jours (tout l'historique
+// publié, pas seulement depuis la coche), un par pari (même match, marché, ligne et issue), heure de Paris.
+function suiviHeures(prises, cles, maintenant = Date.now(), jours = 30) {
+  const debut = maintenant - jours * 86400000, vus = new Set(), heures = Array(24).fill(0);
+  const heureParis = new Intl.DateTimeFormat('en-GB', {timeZone: 'Europe/Paris', hour: '2-digit', hourCycle: 'h23'});
+  let n = 0, premier = maintenant;
+  for (const p of prises) {
+    const t = Date.parse(p.detecte);
+    if (!Number.isFinite(t) || t < debut || t > maintenant) continue;
+    const k = [...(p.strategies || []), ...(p.regles || []), ...suiviBases(p), ...(p.convergence ? ['convergence'] : [])];
+    if (!k.some(x => cles.includes(x))) continue;
+    const u = [p.match_id, p.marche, p.periode, p.ligne, p.issue, p.joueur].join('|');
+    if (vus.has(u)) continue;
+    vus.add(u);
+    heures[Number(heureParis.formatToParts(new Date(t)).find(x => x.type === 'hour').value) % 24]++;
+    n++; premier = Math.min(premier, t);
+  }
+  return {heures, n, jours: n ? Math.max(1, Math.min(jours, Math.round((maintenant - premier) / 86400000))) : 0};
+}
+const TRANCHES_HEURES = [['La nuit', 0, 8], ['Le matin', 8, 12], ["L'après-midi", 12, 18], ['Le soir', 18, 24]];
+function heuresHtml(r) {
+  if (!r.n) return '<div class="carte mes-heures"><h3 class="bu-titre">Quand arrivent les notifications ?</h3><p class="aide">Pas encore de paris pour ces stratégies sur les 30 derniers jours.</p></div>';
+  const h = r.heures, max = Math.max(...h), pc = v => Math.round(100 * v / r.n) + ' %';
+  let fort = 0, debut = 0;
+  for (let i = 0; i < 24; i++) { const t = h[i] + h[(i + 1) % 24] + h[(i + 2) % 24]; if (t > fort) { fort = t; debut = i; } }
+  const parJour = (r.n / r.jours).toLocaleString('fr-FR', {maximumFractionDigits: 1});
+  const tranches = TRANCHES_HEURES.map(([nom, a, b]) => { const v = h.slice(a, b).reduce((x, y) => x + y, 0);
+    return `<span><b>${pc(v)}</b> ${e(nom)} <small>(${a} h–${b} h)</small></span>`; }).join('');
+  const barres = h.map((v, i) => `<i title="${i} h : ${v} pari${v > 1 ? 's' : ''}" class="${(i - debut + 24) % 24 < 3 ? 'fort' : ''}" style="height:${Math.max(2, Math.round(100 * v / max))}%"></i>`).join('');
+  return `<div class="carte mes-heures"><h3 class="bu-titre">Quand arrivent les notifications ?</h3>
+  <p class="explication"><b>Environ ${parJour} par jour.</b> Le plus souvent entre <b>${debut} h et ${(debut + 3) % 24} h</b> (${pc(fort)} des notifications).
+  <b>Exemple</b> : si tu regardes ton téléphone vers ${(debut + 1) % 24} h, c'est là que tu en auras le plus.</p>
+  <div class="heures-tranches">${tranches}</div>
+  <div class="heures-barres" role="img" aria-label="Notifications par heure">${barres}</div>
+  <div class="heures-axe"><small>0 h</small><small>6 h</small><small>12 h</small><small>18 h</small><small>23 h</small></div>
+  <p class="aide">${r.n} paris sur les ${r.jours} derniers jours, heure de Paris. Calculé sur tout l'historique ${r.cles > 1 ? 'de tes ' + r.cles + ' stratégies cochées, même avant que tu les coches' : 'de cette stratégie, même avant que tu la coches'}.</p></div>`;
+}
+
 // Mes stratégies actives.
 function rendreMesStrategies() {
   const zone = document.getElementById('mes-strategies');
@@ -197,6 +235,8 @@ function rendreMesStrategies() {
   sortie.innerHTML = `<div class="puces" aria-label="Filtrer par stratégie">${puce('', 'Toutes', toutes.length)}${cles.map(k => puce(k, nomStrategie(k), nb[k])).join('')}</div>`
     + resumeHtml(suiviBilan(vues, suiviFiltre ? () => 1 : p => p.suivies.length))
     // Gain cumulé des paris suivis, avec la ligne témoin (attendu) et la marge du hasard (visuels.js).
+    + (() => { const ks = suiviFiltre ? [suiviFiltre] : cles.filter(k => { const l = etat[k]; return l.length && l[l.length - 1][1] == null; });
+      return ks.length ? heuresHtml({...suiviHeures(prisesSuivi(), ks), cles: ks.length}) : ''; })()
     + (typeof grandeCourbe === 'function' ? `<div class="carte mes-courbe">${grandeCourbe(pointsDepuisParis(vues, suiviFiltre ? () => 1 : p => p.suivies.length))}</div>` : '')
     + `<div id="mes-liste">${vues.slice(0, suiviLimite).map(p => carteSuivi(p, suiviFiltre ? 1 : p.suivies.length)).join('') || '<p class="vide">Aucun pari sur cette période.</p>'}</div>`
     + (vues.length > suiviLimite ? '<p><button type="button" class="btn secondaire" id="mes-plus">Voir plus</button></p>' : '')

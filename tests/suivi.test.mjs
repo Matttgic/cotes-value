@@ -133,3 +133,18 @@ test('Plusieurs mises : la carte affiche la mise totale, le détail en petit',()
   assert.match(f(null,3),/mise totale 30,00 €/);
   assert.match(f(12.5,2),/mise totale 25,00 €/);
 });
+
+test('Heures des notifications : un pari par sélection, heure de Paris, stratégies choisies seulement',()=>{
+  const maintenant=at('2026-11-19T20:00:00Z');
+  const p=(id,detecte,plus={})=>({id,detecte,match_id:'m'+id,marche:'VAINQUEUR',periode:'MATCH',ligne:null,issue:'DOM',reference:'Matchbook',...plus});
+  const prises=[p('a','2026-11-19T17:30:00Z'),                                   // 18 h à Paris
+    p('a2','2026-11-19T17:35:00Z',{match_id:'ma',reference:'Consensus'}),       // même sélection que « a » : comptée une fois
+    p('b','2026-11-18T07:10:00Z'),                                             // 8 h
+    p('c','2026-11-18T07:20:00Z',{reference:'Polymarket'}),                    // stratégie non choisie
+    p('d','2026-09-01T07:20:00Z')];                                            // hors des 30 jours
+  prises[1].match_id='ma'; prises[0].match_id='ma';
+  const r=c.suiviHeures(prises,['base_matchbook','base_consensus'],maintenant);
+  assert.equal(r.n,2);assert.equal(r.heures[18],1);assert.equal(r.heures[8],1);assert.equal(r.jours,2);
+  assert.match(c.heuresHtml({...r,cles:2}),/Environ 1 par jour/);
+  assert.match(c.heuresHtml({heures:Array(24).fill(0),n:0,jours:0,cles:1}),/Pas encore de paris/);
+});
