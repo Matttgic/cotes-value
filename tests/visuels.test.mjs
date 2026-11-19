@@ -162,3 +162,8 @@ test('points depuis les paris : même calcul que le serveur, poids et paris non 
   const doubles=fn('pointsDepuisParis')([{gain:12,mise:10,cote:2.2,cote_juste:2,regle_le:'2026-10-15T15:00:00Z'}],()=>2);
   assert.equal(JSON.stringify(doubles[0].slice(1)),'[24,2,22]');
 });
+
+test('paris par jour : prises divisées par les jours observés',()=>{
+  assert.match(fn('parJour')({paris:140,jours:36.4}),/≈ 3,8<\/dd><small>140 prises en 36 jours/);
+  assert.equal(fn('parJour')({paris:3,jours:0}),'');
+});

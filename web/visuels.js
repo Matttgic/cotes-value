@@ -268,6 +268,12 @@ function miseMoyenne(s) {
   const moyenne=visuelBankroll(s.mise/s.regles).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
   return `<div class="mise-moyenne"><dt>Mise moyenne</dt><dd>${moyenne} €</dd><small>${typeof nomMise==='function'?e(nomMise()):'Kelly ⅛ corrigé'} · sur ${s.regles} réglés</small></div>`;
 }
+// Rythme moyen : prises par jour d'observation (jours depuis le début du suivi ou le lancement de la stratégie).
+function parJour(s) {
+  if(!s || !Number.isFinite(s.jours) || s.jours<=0 || !Number.isFinite(s.paris)) return '';
+  const v=s.paris/s.jours, txt=v<1?v.toLocaleString('fr-FR',{maximumFractionDigits:1}):v.toLocaleString('fr-FR',{maximumFractionDigits:v<10?1:0});
+  return `<div class="par-jour"><dt>Paris par jour</dt><dd>≈ ${txt}</dd><small>${s.paris} prises en ${Math.max(1,Math.round(s.jours))} jours</small></div>`;
+}
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
@@ -283,6 +289,7 @@ function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
       <div><dt>ROI</dt><dd class="${signe(s.roi)}">${pp(s.roi)}</dd><small>${r.reussite==null?'—':r.reussite.toFixed(1).replace('.',',')+' %'} de réussite</small></div>
       <div><dt>CLV moyenne</dt><dd class="${signe(s.clv)}">${pp(s.clv)}</dd>${couvertureCLV(s)}<small>Par match <b class="${signe(s.clv_evenement)}">${pp(s.clv_evenement)}</b> · ${s.clv_evenements_n ?? 0}/${s.evenements_regles ?? "—"} mesurés</small></div>
       <div><dt>Paris réglés</dt><dd>${s.regles} <small>(${s.evenements_regles ?? "—"} matchs)</small></dd><small>${s.paris} prises · ${s.attente} en attente</small></div>
+      ${parJour(s)}
       ${miseMoyenne(s)}
     </dl>${repartitionResultats(s)}
     <details><summary>Règles et détail des résultats</summary><p>${e(r.detail)}</p>
