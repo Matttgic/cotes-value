@@ -88,10 +88,13 @@ def surebets_publies(doc: dict, maintenant: datetime) -> dict:
             "seuil_alerte": surebets_mod.SEUIL_ALERTE}
 
 
-def boosts_publies(doc: dict, maintenant: datetime) -> dict:
+def boosts_publies(doc: dict, maintenant: datetime, resultats: dict | None = None) -> dict:
     """Page Boosts › Cotes boostées et boosts couverts : ceux du dernier relevé (matchs pas commencés) et bilans
-    (cotes/boosts.py)."""
+    (cotes/boosts.py). Bilan › Boosts : boosts « jouer » à régler à la main et ceux déjà réglés
+    (``donnees/boosts_resultats.json``)."""
     doc = doc if isinstance(doc, dict) else {}
+    resultats = {k: v for k, v in (resultats or {}).items() if isinstance(v, dict)}
+    regles = sorted(resultats.values(), key=lambda r: r.get("debut") or "", reverse=True)
     episodes = [x for x in doc.get("episodes") or [] if isinstance(x, dict) and x.get("premier")]
     couverts = [x for x in doc.get("episodes_couverts") or [] if isinstance(x, dict) and x.get("premier")]
     return {"maj": doc.get("maj"), "actuels": [x for x in doc.get("actuels") or []
@@ -101,7 +104,9 @@ def boosts_publies(doc: dict, maintenant: datetime) -> dict:
                          if isinstance(x, dict) and x.get("jambes") and _a_venir(x, maintenant)][:20],
             "bilan_couverts": {str(j): boosts_mod.bilan_couverts(couverts, maintenant, j) for j in (7, 30)},
             "episodes_couverts": sorted(couverts, key=lambda x: x["premier"], reverse=True)[:20],
-            "seuil_alerte": boosts_mod.SEUIL_ALERTE}
+            "seuil_alerte": boosts_mod.SEUIL_ALERTE,
+            "a_regler": boosts_mod.boosts_a_regler(episodes, resultats, maintenant),
+            "regles": regles[:100], "bilan_regles": boosts_mod.bilan_regles(resultats)}
 
 
 def rapidite_alertes(historique: list[dict], cycles_alertes: list[dict]) -> dict:
@@ -718,6 +723,7 @@ def charger_entrees(donnees: Path) -> dict:
     return {"paris": paris, "hors_plafond": hors_plafond, "journal_alertes": journal_alertes, "etat": etat,
             "actuelles": actuelles, "controle": controle,
             "surebets": _lire(donnees / "surebets.json", {}), "boosts": _lire(donnees / "boosts.json", {}),
+            "boosts_resultats": _lire(donnees / "boosts_resultats.json", {}),
             "euria": _lire(donnees / "euria.json", {})}
 
 
@@ -970,7 +976,7 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     # Page Santé : temps de calcul de chaque stratégie et pannes qui durent (alerte Pushover, cotes/protection.py).
     data["durees_strategies"] = durees_strategies
     data["surebets"] = surebets_publies(entrees.get("surebets"), _maintenant(instant))
-    data["boosts"] = boosts_publies(entrees.get("boosts"), _maintenant(instant))
+    data["boosts"] = boosts_publies(entrees.get("boosts"), _maintenant(instant), entrees.get("boosts_resultats"))
     data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, _maintenant(instant))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs

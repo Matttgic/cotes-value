@@ -274,7 +274,7 @@ assert.ok(Math.abs(s.clv_evenement)<1e-10);
 
 
 def test_navigation_compacte_retrouve_contrat_exact_du_catalogue():
-    section=MODELE[MODELE.index('const recentes = '):MODELE.index('document.getElementById("nb-paris")')]
+    section=MODELE[MODELE.index('const recentes = '):MODELE.index('if (document.getElementById("nb-paris"))')]
     executer('''
 const assert=require('node:assert/strict');
 const D={paris:[{id:'p',trace:['preuve']}],strategies_badges:{m3_structure:'M3 Max 3'},

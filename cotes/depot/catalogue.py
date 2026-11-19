@@ -57,6 +57,8 @@ FICHIERS: dict[str, Fichier] = {
     "resultats_manuels.json": Fichier("chaud", "json écrit à la main", ["à la main"], [_CYCLE, "études"],
                                       "permanent ; « supprime » retire un pari"),
     "resultats_a_saisir.json": Fichier("chaud", _JSON, [_CYCLE], [_SITE]),
+    "boosts_resultats.json": Fichier("chaud", _JSON, ["scripts/regler_boosts.py"], [_SITE],
+                                     "permanent ; résultats des boosts saisis à la main"),
     "theodds.json": Fichier("chaud", _JSON, [_CYCLE], [_CYCLE], "budget du jour (The Odds API)"),
     "thesportsdb.json": Fichier("chaud", _JSON, [_CYCLE], [_CYCLE], "budget du jour (TheSportsDB)"),
     "propline.json": Fichier("chaud", _JSON, [_CYCLE], [_CYCLE], "budget du jour (PropLine)"),

@@ -49,7 +49,7 @@ _PAR_COUCHE = {
     "scripts": "cotes.__main__ scripts.relancer scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "
                "scripts.serveur_actif scripts.protocole scripts.verifier_secrets scripts.verifier_strategie_jules "
                "scripts.verifier_strategie_jules_v2 scripts.archiver_donnees_brutes scripts.sonde_betfair "
-               "scripts.sonde_sources_us scripts.sonde_unibet scripts.sonde_boosts scripts.empreinte_site",
+               "scripts.sonde_sources_us scripts.sonde_unibet scripts.sonde_boosts scripts.empreinte_site scripts.regler_boosts",
     "etudes": "etudes etudes.etude_surebets etudes.erreurs_systematiques etudes.analyse_chatgpt etudes.analyse_marche etudes.audit_bilans etudes.avantage_reel "
               "etudes.comparer_secours_pinnacle etudes.comparer_strategies etudes.cote_juste etudes.durer "
               "etudes.etude_duree_values etudes.modele_prix etudes.recherche_cloture etudes.strategie_mises",

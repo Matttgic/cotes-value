@@ -18,9 +18,6 @@
   <p class="aide mode-mise-note" id="mode-mise-note" role="status"></p>
   <nav id="onglets" aria-label="Navigation principale">
     <button data-o="accueil"><span>Accueil</span></button>
-    <button data-o="decision"><span>Décision</span></button>
-    <button data-o="paris"><span>Paris<span class="nb" id="nb-paris"></span></span></button>
-    <button data-o="boosts"><span>Boosts<span class="nb" id="nb-boosts"></span></span></button>
     <button data-o="bilan"><span>Bilan</span></button>
     <button data-o="notifications"><span>Notifs</span></button>
   </nav>
@@ -30,13 +27,17 @@
   <noscript><p class="vide">Active JavaScript dans Chrome pour afficher les paris et les stratégies.</p></noscript>
   <section class="onglet" id="o-accueil">
     <header class="une-tete"><p class="une-date" id="une-date"></p><h2 id="acc-titre">Cotes Value</h2>
+      <p class="explication"><b>À quoi sert cette page ?</b> À savoir quoi jouer aujourd'hui. Un pari « value », c'est un
+      pari que le bookmaker paie plus cher qu'il ne vaut : comme acheter pour 1,65 € une chose qui vaut 1,60 €. On peut
+      perdre un pari, mais sur des centaines, on gagne.</p>
       <p class="une-chapo" id="une-chapo"></p></header>
     <div class="acc-kpis" id="acc-kpis"></div>
     <div class="acc-grille">
       <section class="acc-values"><h3 class="bu-titre">À jouer <small id="acc-values-n"></small></h3>
-        <div id="acc-values"></div>
-        <p class="acc-liens"><button type="button" class="acc-lien" data-aller="decision">Pourquoi ceux-là →</button>
-        <button type="button" class="acc-lien" data-aller="paris" id="acc-tous">Tous les paris en cours →</button></p></section>
+        <div id="acc-values"></div></section>
+      <section class="acc-boosts"><h3 class="bu-titre">Boosts à jouer <small id="acc-boosts-n"></small></h3>
+        <p class="aide">Mise la mise max, pas plus : c'est le plafond du bookmaker.</p>
+        <div id="acc-boosts"></div></section>
       <section class="acc-top5"><h3 class="bu-titre">Recommandées <small>revues chaque semaine</small></h3>
         <div id="acc-top5"></div>
         <p class="acc-liens"><button type="button" class="acc-lien" data-aller="strategies">Toutes les stratégies →</button></p></section>
@@ -52,28 +53,30 @@
   <section class="onglet" id="o-bilan">
     <div class="page-tete"><div><h2>Bilan</h2></div></div>
     <div class="bilan-onglets" role="tablist" aria-label="Vue du bilan">
-      <button type="button" role="tab" id="bt-uniques" data-bilan="uniques" aria-controls="bilan-uniques">Paris uniques</button>
+      <button type="button" role="tab" id="bt-uniques" data-bilan="uniques" aria-controls="bilan-uniques">Paris</button>
       <button type="button" role="tab" id="bt-strategies" data-bilan="strategies" aria-controls="o-strategies">Stratégies</button>
       <button type="button" role="tab" id="bt-mes" data-bilan="mes" aria-controls="o-mes">Mes stratégies</button>
-      <button type="button" role="tab" id="bt-props" data-bilan="props" aria-controls="bilan-props">Props</button>
+      <button type="button" role="tab" id="bt-boosts" data-bilan="boosts" aria-controls="bilan-boosts">Boosts</button>
     </div>
     <div id="bilan-uniques" role="tabpanel" aria-labelledby="bt-uniques">
+      <p class="explication"><b>À quoi sert cette page ?</b> À voir ce que tu aurais gagné en jouant tous les paris
+      proposés. <b>Exemple</b> : « Gain net +100 € » = en jouant tout depuis le début, tu aurais 100 € de plus.
+      « ROI +5 % » = pour 100 € misés, 5 € gagnés. « Réussite 49 % » = presque un pari sur deux gagné.</p>
       <p class="aide" id="bilan-bankroll" hidden></p>
-      <p class="aide" id="bilan-hors-plafond" hidden></p>
+      <p class="aide cache" id="bilan-hors-plafond" hidden></p>
       <div class="puces bu-periodes" id="bu-periodes" aria-label="Période"></div>
       <div id="bu-dates"></div>
       <div class="bu-kpis" id="bu-kpis"></div>
       <p class="aide" id="bu-note"></p>
-      <p class="aide" id="bu-note-cotes"></p>
+      <p class="aide cache" id="bu-note-cotes"></p>
       <h3 class="bu-titre">Gain cumulé <small>sur la période · pointillés : attendu · zone grisée : marge du hasard</small></h3>
       <div class="bu-courbe" id="bu-courbe"></div>
-      <h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div>
+      <div class="cache"><h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div></div>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
-      <h3 class="bu-titre">Par référence</h3>
-      <p class="aide">Toute la période. Touche une ligne pour voir ses paris.</p>
-      <div class="bu-table" id="bu-reference"></div>
-      <details class="mode-emploi bilan-essais"><summary>Essais en cours <small>mises, combinaisons, indicateurs · rien n'est appliqué</small></summary>
+      <div class="cache"><h3 class="bu-titre">Par référence</h3>
+      <div class="bu-table" id="bu-reference"></div></div>
+      <details class="mode-emploi bilan-essais cache"><summary>Essais en cours <small>mises, combinaisons, indicateurs · rien n'est appliqué</small></summary>
       <details class="mode-emploi"><summary>Mise Kelly ¼ contre 10 € fixes, rejouée sur tout l'historique</summary>
       <p class="aide">Exemple : écart 5 %, cote 2,00 → mise Kelly ¼ = 1 000 € × ¼ × 5 % = 12,50 € (20 € au plus). Mêmes paris, seule la mise change.</p>
       <div class="tableau"><table id="essai-kelly"></table></div></details>
@@ -91,9 +94,9 @@
       ne compte que depuis son ajout ; quelques dizaines de paris ne prouvent rien.</p>
       <div id="bilan-plafond"></div>
       <div id="bilan-filtres"></div></details></details>
-      <p class="bilan-liens"><button type="button" class="btn secondaire" data-aller="analyses">Analyses et graphiques ›</button>
+      <p class="bilan-liens cache"><button type="button" class="btn secondaire" data-aller="analyses">Analyses et graphiques ›</button>
         <button type="button" class="btn secondaire" data-aller="segments">Segments ›</button></p>
-      <details class="mode-emploi bilan-avance"><summary>Bilan détaillé : références, CLV et courbe</summary>
+      <details class="mode-emploi bilan-avance cache"><summary>Bilan détaillé : références, CLV et courbe</summary>
       <div class="puces" id="puces-ref"></div>
       <details class="mode-emploi"><summary>Comprendre cette sélection</summary><p class="aide" id="bilan-quoi"></p></details>
       <details id="bilan-evolution" class="mode-emploi"><summary>Évolution du bilan</summary><div class="courbe" id="courbe"><div class="courbe-tete"><span>Gain cumulé <span id="courbe-quoi"></span></span>
@@ -134,6 +137,18 @@
       Le passé est un rejeu descriptif ; le test historique est positif, aucune rentabilité future n'est annoncée.</p></details>
       </details>
     </div>
+    <div id="bilan-boosts" role="tabpanel" aria-labelledby="bt-boosts" hidden>
+      <p class="explication"><b>À quoi sert cette page ?</b> Un boost, c'est une promo : le bookmaker paie plus cher que
+      d'habitude, avec une mise max. <b>Exemple</b> : Winamax paie 3,50 au lieu de 2,90, mise max 20 €. Gagné : tu
+      reçois 20 × 3,50 = 70 €, soit 50 € de gain. Perdu : tu perds 20 €. On joue ceux marqués « Jouer », à la mise max.</p>
+      <div class="bu-kpis" id="bb-kpis"></div>
+      <h3 class="bu-titre">À régler <small id="bb-n"></small></h3>
+      <p class="aide">Personne ne donne encore le résultat des boosts. Copie la liste, envoie-la à Claude : il cherche les
+      scores et règle chaque boost.</p>
+      <div id="bb-a-regler"></div>
+      <h3 class="bu-titre">Réglés</h3>
+      <div id="bb-regles"></div>
+    </div>
     <div id="bilan-props" role="tabpanel" aria-labelledby="bt-props" hidden>
       <div class="page-tete"><div><h2>Props</h2><p class="sous-texte">Paris fictifs NBA/NHL, 10 €, jamais notifiés. Seuil d'écart contre la cote juste Pinnacle.</p></div></div>
       <div class="bu-kpis" id="props-kpis"></div>
@@ -146,16 +161,21 @@
       <p class="aide" id="props-strategies"></p>
     </div>
     <div id="o-mes" role="tabpanel" aria-labelledby="bt-mes" hidden>
-      <div class="page-tete"><div><h2>Mes stratégies actives</h2><p class="sous-texte">Les paris des stratégies cochées dans Notifications, à partir du moment où tu les as cochées.</p></div></div>
+      <p class="explication"><b>À quoi sert cette page ?</b> À voir ce qu'ont rapporté les stratégies que tu as cochées
+      dans Notifs, depuis le jour où tu les as cochées. <b>Exemple</b> : tu coches « Pinnacle 8 » lundi ; ici, tu vois
+      ses paris depuis lundi et combien ils ont gagné.</p>
       <div id="mes-strategies"></div>
     </div>
     <div id="o-strategies" role="tabpanel" aria-labelledby="bt-strategies" hidden>
-      <div class="raccourci-analyses"><a href="#analyses">Analyses et graphiques <span aria-hidden="true">↗</span></a></div>
-      <div class="page-tete tete-strategies"><div><h2>Stratégies</h2><p class="sous-texte">Suivi simulé · 10 € par prise.</p></div><span class="periode-badge" id="strategies-contexte">Suivi prospectif</span></div>
+      <p class="explication"><b>À quoi sert cette page ?</b> À comparer des règles de choix. Une stratégie, c'est une
+      règle, par exemple « seulement les cotes de 2 à 5 repérées par Pinnacle ». On fait comme si on misait 10 € sur
+      chacun de ses paris. <b>Exemple</b> : « Pinnacle 12 · 81 réglés · +91 € » = la règle a choisi 81 paris terminés,
+      qui auraient rapporté 91 €. Les « Recommandées » sont les meilleures du moment : coche-les dans Notifs.</p>
+      <span class="periode-badge cache" id="strategies-contexte">Suivi prospectif</span>
       <section id="strategies-recommandees" class="recommandees" aria-label="Stratégies recommandées"></section>
-      <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
-      <div id="strategies-dates"></div>
-      <div class="filtres filtres-strategies">
+      <div class="puces cache" id="strategies-periodes" aria-label="Période des stratégies"></div>
+      <div id="strategies-dates" class="cache"></div>
+      <div class="filtres filtres-strategies cache">
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
         <div class="champ"><label for="strategies-avis">Verdict</label>
@@ -163,8 +183,8 @@
         <div class="champ"><label for="strategies-tri">Classer par</label>
         <select id="strategies-tri"><option value="preuve" selected>Preuve (CLV Pinnacle, cas prudent)</option><option value="note">Note /100 (par match, robustesse)</option><option value="progression">Progression de la note (7 jours)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
-      <p class="aide" id="strategies-total"></p>
-      <details class="mode-emploi"><summary>Comment la note /100 est calculée</summary><p class="aide">Elle compte les
+      <p class="aide cache" id="strategies-total"></p>
+      <details class="mode-emploi cache"><summary>Comment la note /100 est calculée</summary><p class="aide">Elle compte les
       <b>matchs</b>, pas les paris : plusieurs paris sur un même match gagnent ou perdent ensemble, ils sont réunis avant
       tout calcul. <b>Rentabilité prudente /25</b> : borne basse de l'intervalle de confiance à 80 % du ROI, calculée par
       match (de −10 % à +5 %). <b>Robustesse /20</b> : ROI une fois retirés les meilleurs matchs (5 %, au moins un ; de
@@ -173,7 +193,7 @@
       <b>Régularité /15</b> : part de jours gagnants et plus forte baisse comparée au hasard. <b>Solidité /15</b> : nombre de
       matchs réglés, durée d'observation et cote moyenne. Note à partir de 10 matchs réglés, provisoire sous 50. Elle suit
       la période et la mise choisies. Descriptive : elle ne garantit aucun gain futur.</p></details>
-      <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
+      <div class="vue-strategies-toggle cache" role="group" aria-label="Présentation des stratégies">
         <button data-vue-strategies="liste" aria-pressed="true">Comparaison</button>
         <button data-vue-strategies="graphiques" aria-pressed="false">Graphiques</button>
       </div>
@@ -181,7 +201,7 @@
       <div class="ligne-colonnes" aria-hidden="true"><span>Stratégie</span><span>Réglés</span><span>ROI</span><span>Net</span></div>
       <div id="strategies-mobile" class="strategies-mobile" aria-label="Comparaison des stratégies"></div>
       <div class="tableau comparaison-bureau" aria-label="Comparaison des stratégies"><table class="strategies-table" id="strategies-table"></table></div>
-      <details class="mode-emploi"><summary>Comment lire les chiffres</summary><p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
+      <details class="mode-emploi cache"><summary>Comment lire les chiffres</summary><p class="aide" style="margin-top:8px">10 € fictifs par pari. Réussite = gagnés / réglés (demi-gagnés inclus).
         ROI sur mises réglées. Gains et pertes : résultats nets des paris gagnants et perdants ; net = gains − pertes.
         Les mises des stratégies se recoupent : ne pas additionner les lignes. Claude peut prendre plusieurs paris par match.</p></details>
       </div>
@@ -200,7 +220,7 @@
       <p class="aide">Même période, mêmes filtres et même ordre que le tableau.</p>
       <div class="carte" id="strategies-graph" role="img" aria-label="Comparaison des gains nets des stratégies"></div>
       </div>
-      <details class="mode-emploi"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
+      <details class="mode-emploi cache"><summary>Période, règles et limites de comparaison</summary><p class="aide" id="strategies-quoi"></p></details>
     </div>
   </section>
   <section class="onglet" id="o-segments">
@@ -297,6 +317,9 @@
   </section>
   <section class="onglet" id="o-notifications">
     <div class="page-tete"><div><h2>Notifications</h2></div></div>
+    <p class="explication"><b>À quoi sert cette page ?</b> À recevoir les paris sur ton téléphone. Coche une stratégie,
+    entre ton code, appuie sur « Enregistrer ». Quand elle trouve un pari, l'appli Pushover te l'envoie.
+    <b>Exemple</b> : tu coches « Pinnacle 8 » ; tu reçois « Caen – Nîmes · Nîmes −1,5 · PMU 1,91 · mise 12 € ».</p>
     <h3 class="bu-titre">Alertes Pushover</h3>
     <p class="aide" id="pushover-etat" role="status" aria-live="polite">Chargement du choix…</p>
     <label class="notif-filtre"><input type="checkbox" data-filtre="pushover-strategies"> Activées seulement</label>
@@ -306,7 +329,7 @@
     <p class="aide" id="pushover-aide">Choisis-le à ton premier enregistrement : lui seul permet de modifier ton choix. À resaisir sur un autre appareil.</p>
     <p><button class="btn" id="pushover-sauver">Enregistrer pour Pushover</button></p>
     <p class="aide" id="pushover-message" role="status" aria-live="polite"></p>
-    <h3 class="bu-titre">Notifications Chrome (facultatif)</h3>
+    <div class="cache"><h3 class="bu-titre">Notifications Chrome (facultatif)</h3>
     <div class="carte notif-appareil">
       <p id="notif-etat" role="status" aria-live="polite">Vérification de cet appareil…</p>
       <div class="notif-boutons"><button class="btn" id="notif-activer">Activer les notifications</button>
@@ -315,12 +338,12 @@
     </div>
     <h3 class="bu-titre">Rapidité des alertes</h3>
     <div class="bu-table notif-rapidite" id="notif-rapidite"></div>
-    <p class="aide">Exemple : relevé à 14 h 00, le suivant à 14 h 20 ; une value apparue à 14 h 05 et disparue à 14 h 15 n'est jamais vue.</p>
     <h3 class="bu-titre">Me prévenir pour</h3>
     <label class="notif-filtre"><input type="checkbox" data-filtre="notif-strategies"> Activées seulement</label>
     <fieldset class="carte" id="notif-strategies"><legend>Stratégies à suivre</legend></fieldset>
     <p><button class="btn" id="notif-sauver" disabled>Enregistrer mes choix</button></p>
     <p class="aide" id="notif-message" role="status" aria-live="polite"></p>
+    </div>
     <h3 class="bu-titre">Dernières alertes</h3>
     <div class="bu-table" id="notif-dernieres"></div>
     <p class="aide">Un pari pris par trois stratégies = une seule alerte. Vérifie la cote avant de miser : elle a pu bouger.</p>
@@ -424,6 +447,8 @@ function montrerVueBilan(v) {
   document.getElementById("o-strategies").hidden = v !== "strategies";
   document.getElementById("o-mes").hidden = v !== "mes";
   document.getElementById("bilan-props").hidden = v !== "props";
+  document.getElementById("bilan-boosts").hidden = v !== "boosts";
+  if (v === "boosts") rendreBilanBoosts();
   if (v === "props") rendreProps();
   if (v === "mes") rendreMesStrategies();
   if (v === "strategies") requestAnimationFrame(() => rendreStrategies());
@@ -433,9 +458,11 @@ function montrerVueBilan(v) {
 const GROUPES = {jouer:"paris", regler:"controle", strategies:"bilan", mes:"bilan", segments:"bilan", analyses:"bilan"};
 function ouvrir(o) {
   // « #strategies » ouvre la vue Stratégies du bilan ; « #bilan », les paris uniques.
-  if (o === "strategies" || o === "mes" || o === "bilan" || o === "props") vueBilan = o === "bilan" ? "uniques" : o;
-  const page = o === "strategies" || o === "mes" || o === "props" ? "bilan" : o === "jouer" ? "paris" : o, groupe = GROUPES[page] || page;
-  const nom = page === "bilan" && vueBilan !== "uniques" ? vueBilan : page;
+  // « #bilan-boosts » : la vue Boosts du bilan (la page Boosts complète reste à « #boosts », hors du menu).
+  const vue = o === "bilan-boosts" ? "boosts" : o;
+  if (["strategies", "mes", "bilan", "props", "boosts"].includes(vue) && o !== "boosts") vueBilan = o === "bilan" ? "uniques" : vue;
+  const page = ["strategies", "mes", "props", "bilan-boosts"].includes(o) ? "bilan" : o === "jouer" ? "paris" : o, groupe = GROUPES[page] || page;
+  const nom = page === "bilan" && vueBilan !== "uniques" ? (vueBilan === "boosts" ? "bilan-boosts" : vueBilan) : page;
   document.querySelectorAll("nav button[data-o]").forEach(b => {
     b.classList.toggle("actif", b.dataset.o===groupe);
     if (b.dataset.o===groupe) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
@@ -452,7 +479,7 @@ function ouvrir(o) {
   if (page === "boosts") rendreBoosts();
 }
 document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
-  const hash = b.dataset.bilan === "uniques" ? "bilan" : b.dataset.bilan;
+  const hash = b.dataset.bilan === "uniques" ? "bilan" : b.dataset.bilan === "boosts" ? "bilan-boosts" : b.dataset.bilan;
   montrerVueBilan(b.dataset.bilan); history.replaceState(null, "", "#"+hash);
   ecrire("onglet", hash);
 });
@@ -774,7 +801,7 @@ if(D.laboratoire?.navigation?.paris) {
     if(p) D.laboratoire.navigation.paris[id]={...p,...meta};
   }
 }
-document.getElementById("nb-paris").textContent = fiches.length || "";
+if (document.getElementById("nb-paris")) document.getElementById("nb-paris").textContent = fiches.length || "";
 var CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
 var D_FIXE = Object.fromEntries(CLES_MISE.map(k => [k, D[k]]));   // « var » : lu par un rendu antérieur sans erreur
 // --- Mise fixe (10 €) ou Kelly ¼ : les blocs chiffrés du serveur (bilans, courbes, segments, laboratoire) existent
@@ -1717,10 +1744,9 @@ function rendreRecommandees(rows) {
   const C = R.criteres || {};
   const cartes = (R.actuelles || []).map(x => {
     const r = parId.get(x.id);
-    return `<article class="reco-carte"><div class="reco-tete"><span class="reco-rang">Recommandée depuis le ${jour(x.depuis)}</span>${bouton(r)}</div>
+    return `<article class="reco-carte"><div class="reco-tete"><span class="reco-rang">Recommandée depuis le ${jour(x.depuis)}</span></div>
       <h3>${e(r ? r.nom : x.id)}</h3><p class="reco-detail">${e(r ? r.detail : "")}</p>
-      <p class="reco-chiffres">Depuis son entrée : ${resultat(x.depuis_entree)}</p>
-      ${preuveReco(preuveDe(x.id))}</article>`;
+      <p class="reco-chiffres">Depuis son entrée : ${resultat(x.depuis_entree)}</p></article>`;
   });
   const anciennes = (R.anciennes || []).map(x => `<li><b>${e(nom(x.id))}</b> : recommandée du ${jour(x.depuis)} au ${jour(x.jusqua)}, sortie car ${e(x.raison)}. Pendant ce temps : ${resultat(x.pendant)}.</li>`);
   // Fusions : stratégies à part, membres figés (Fusion 1 le 8/11, puis une nouvelle à chaque révision qui change la
@@ -1747,13 +1773,13 @@ function rendreRecommandees(rows) {
       Si deux d'entre elles prennent le même match, un seul pari compte. Ses membres ne changent plus ; à chaque nouvelle liste, une Fusion 3 naît.</p></details>
       <div class="reco-grille">${fusions.map(carteFusion).join("")}</div>` : "";
   zone.innerHTML = `<h2 class="sous-titre">Recommandées</h2>
-    <details class="mode-emploi"><summary>Comment elles sont choisies</summary><p class="aide">Exemple : on prend PMU à <b>2,10</b> ; juste avant le match,
+    ${cartes.length ? `<div class="reco-grille">${cartes.join("")}</div>` : '<div class="vide">Aucune stratégie ne remplit encore les critères.</div>'}
+    <div class="cache"><details class="mode-emploi"><summary>Comment elles sont choisies</summary><p class="aide">Exemple : on prend PMU à <b>2,10</b> ; juste avant le match,
     Pinnacle estime le pari à <b>2,00</b>. On a battu la clôture de 5 %. Une stratégie entre quand ses paris font ça en moyenne, sur au moins
     ${C.min_matchs ?? 50} matchs, et que ça tient même en comptant large le hasard. Trois au plus, revues tous les ${C.revision_jours ?? 7} jours
     (prochaine le ${jour(R.prochaine_revision)}).</p></details>
-    ${cartes.length ? `<div class="reco-grille">${cartes.join("")}</div>` : '<div class="vide">Aucune stratégie ne remplit encore les critères.</div>'}
     ${anciennes.length ? `<details class="mode-emploi"><summary>Anciennes recommandées (${anciennes.length})</summary><ul class="reco-anciennes">${anciennes.join("")}</ul></details>` : ""}
-    ${fusion}${pausesEtDoublons(nom)}`;
+    ${fusion}${pausesEtDoublons(nom)}</div>`;
 }
 // Stratégies en pause (cotes/pauses.py) et doublons (cotes/recommandations.py › doublons) sous les recommandées.
 function pausesEtDoublons(nom) {
@@ -1935,9 +1961,13 @@ __PUSHOVER_JS__
 __VOYANT_JS__
 __BOOSTS_JS__
 { const nb = (D.surebets?.actuels || []).filter(s => !s.suspect).length + (D.boosts?.actuels || []).filter(b => b.value > 0).length;
-  document.getElementById("nb-boosts").textContent = nb || ""; }
-const ONGLETS = ["accueil","decision","jouer","bilan","strategies","mes","segments","paris","boosts","notifications","regler","controle","analyses"];
-ouvrir(ONGLETS.includes(depart) ? depart : "accueil");
+  const z = document.getElementById("nb-boosts"); if (z) z.textContent = nb || ""; }
+const ONGLETS = ["accueil","decision","jouer","bilan","strategies","mes","segments","paris","boosts","bilan-boosts","notifications","regler","controle","analyses"];
+// Menu réduit à Accueil, Bilan et Notifs : un ancien onglet mémorisé (Décision, Paris, Boosts…) rouvre l'accueil ou le
+// bilan des boosts ; une adresse explicite (« #paris ») reste servie.
+const DEPART_MENU = {decision: "accueil", jouer: "accueil", paris: "accueil", segments: "bilan", analyses: "bilan", boosts: "bilan-boosts"};
+const departMenu = ancreDepart.page ? depart : (DEPART_MENU[depart] || depart);
+ouvrir(ONGLETS.includes(departMenu) ? departMenu : "accueil");
 window.addEventListener("hashchange", () => {
   const a = lireAncre();
   if (!ONGLETS.includes(a.page)) return;

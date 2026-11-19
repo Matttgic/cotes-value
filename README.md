@@ -520,6 +520,9 @@ liste les matchs qu'aucune source ne règle (un match vu par plusieurs bookmaker
 ses clés dans `match_ids`), avec le modèle de saisie de `resultats_manuels.json`. Le journal du
 cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non
 officiels : ils peuvent changer sans préavis.
+**Boosts réglés à la main** : les boosts « Jouer » dont le match a commencé apparaissent dans Bilan › Boosts, avec
+un code `B-XXXXXX` et un bouton « Copier ». `python scripts/regler_boosts.py --donnees donnees B-XXXXXX=gagne:2-1 …`
+(gagne, perdu, rembourse) les écrit dans `donnees/boosts_resultats.json` : mise = mise max du boost (10 € si inconnue).
 La page Santé liste aussi les **marchés non reconnus** par bookmaker (`cotes/inconnus.py`,
 `donnees/marches_inconnus.json`) : libellés ignorés faute de traduction, chiffres remplacés par #, et ceux apparus
 depuis moins de 24 h (souvent un libellé qui a changé).

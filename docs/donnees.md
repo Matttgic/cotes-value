@@ -25,6 +25,7 @@ chaque jour terminé dans la release GitHub `references-AAAA-MM`. Pour une étud
 | `persistance_qwen.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py | réécrit à chaque passage |
 | `resultats_manuels.json` | chaud | json écrit à la main | à la main | scripts/cycle.py, études | permanent ; « supprime » retire un pari |
 | `resultats_a_saisir.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/site_web.py | réécrit à chaque passage |
+| `boosts_resultats.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/regler_boosts.py | scripts/site_web.py | permanent ; résultats des boosts saisis à la main |
 | `theodds.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py | budget du jour (The Odds API) |
 | `thesportsdb.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py | budget du jour (TheSportsDB) |
 | `propline.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py | budget du jour (PropLine) |
