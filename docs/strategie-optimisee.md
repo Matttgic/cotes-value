@@ -32,32 +32,46 @@ Volley : ROI −15,8 % [−27 ; −3], négatif sur les trois périodes. Total a
 
 ## Mise conseillée dans les notifications
 
-Depuis le 19/11, la mise des notifications (Pushover, ntfy, récapitulatif « Encore jouables ») est un **Kelly au ¼
-sur l'avantage « compté »** de l'étude du 14/11 (`mise_conseillee`). Le même jour, un premier essai au 1/16 a été
-jugé trop petit en euros et remplacé.
+Depuis le 19/11, la mise des notifications (Pushover, ntfy, récapitulatif « Encore jouables ») est un **Kelly au 1/8
+sur l'avantage « compté »** de l'étude du 14/11 (`mise_conseillee`), avec un garde-fou à 5 % de la bankroll. Le même
+jour, le 1/16 (trop petit en euros) puis le ¼ plafonné à 2 % (trop risqué) ont été essayés et remplacés.
 
-    mise = bankroll × ¼ × avantage compté / (cote − 1), plafonnée à 2 % de la bankroll
+    mise = bankroll de mise × 1/8 × avantage compté / (cote − 1), au plus 5 % de la bankroll de mise
 
 | Écart annoncé | < 3 % | 3 % | 4 % | 5 % | 7 % | ≥ 10 % |
 |---|---|---|---|---|---|---|
 | Avantage compté | 0 | +0,18 % | +1,01 % | +2,19 % | +4,64 % | +8,15 % |
 
-Entre deux points, interpolation linéaire. Exemples pour 1 000 € : cote 2,00 à 4 %, 2,52 € ; à 7 %, 11,60 € ; cote
-1,50 à 10 %, 20 € (plafond). La mise affichée est arrondie à l'euro supérieur, 1 € au moins.
+Entre deux points, interpolation linéaire. Exemples pour 1 000 € : cote 2,00 à 4 %, 1,26 € ; à 7 %, 5,80 € ; cote
+1,50 à 10 %, 20,38 €. La mise affichée est arrondie à l'euro supérieur, 1 € au moins.
 
-Rejeu sur les 1 447 paris gardés au 19/11, bankroll fixe de 1 000 € :
+**Pourquoi 1/8 sans plafond serré.** Simulation sur 3 mois (2 894 paris tirés par match parmi les 1 447 gardés,
+2 000 tirages, 1 000 € réels, bankroll mise à jour pari après pari) :
 
-| Mise | Total misé | Gain | ROI |
+| Mise | Gain médian | Perdre la moitié, avantage réel | Perdre la moitié, sans avantage |
 |---|---|---|---|
-| Fixe 10 € | 14 470 € | +519 € | +3,6 % |
-| Kelly ¼ sur l'écart brut (ancienne) | 18 271 € | +883 € | +4,8 % |
-| **Kelly ¼ sur l'avantage compté** | 9 341 € | +550 € | +5,9 % |
-| Kelly 1/16 sur l'avantage compté | 2 517 € | +161 € | +6,4 % |
+| Kelly ¼, plafond 2 % | +1 738 € | 10 % | 43 % |
+| Kelly ¼, sans plafond | +2 236 € | 10 % | 41 % |
+| Bankroll déclarée × 2 (Kelly ½) | +5 351 € | 74 % | 96 % |
+| Bankroll déclarée × 3 | +9 659 € | 99 % | 100 % |
+| **Kelly 1/8** | +862 € | **0,1 %** | **3 %** |
 
-Le plafond de 2 % coupe les gros écarts : c'est pourquoi le Kelly ¼ compté ne fait pas 4 fois le gain du 1/16.
+« Perdre la moitié » : la bankroll passe un jour sous la moitié de son plus haut. Relever le plafond ne coûte rien en
+risque ; gonfler la bankroll déclarée mène à la ruine. Plusieurs paris d'un même match se cumulent, d'où des baisses
+plus fortes que Kelly ne le laisse croire. Script : `sim_mises.py` (hors dépôt), mêmes données que l'analyse du 19/11.
 
-**Bankroll** : `PUSHOVER_BANKROLL` (variable GitHub, 1 000 € par défaut), réglée à la main. Conseil : la baisser dès
-que la bankroll réelle tombe 10 % sous la valeur déclarée, la monter par paliers de +20 % (1 000 → 1 200 → 1 440…).
+## Bankroll automatique
+
+`cotes/alertes/bankroll.py`, état dans `bankroll.json` (branche « donnees »). Le système ne voit pas les comptes chez
+les bookmakers : il suppose que **chaque alerte Pushover envoyée est jouée à la mise affichée**.
+
+1. Départ : `PUSHOVER_BANKROLL` (variable GitHub, 1 000 € par défaut).
+2. Chaque alerte envoyée est notée avec sa mise ; quand le pari est réglé, son gain (ramené à cette mise) s'ajoute à
+   la bankroll calculée. Une alerte dont le pari reste introuvable 10 jours est retirée sans gain.
+3. **Bankroll de mise** (celle des mises) : elle baisse tout de suite quand la bankroll calculée passe 10 % sous elle,
+   et monte par paliers de +20 % (1 000 → 1 200 → 1 440…).
+4. **Recaler** sur la réalité : changer `PUSHOVER_BANKROLL` (le calcul repart de ce chiffre). À faire si tu ne joues
+   pas une alerte, ou à une autre cote. `PUSHOVER_BANKROLL_AUTO=non` coupe le calcul.
 
 Ne change pas : les bilans du site gardent leur mode Kelly ¼ sur l'écart brut (`simulation.mise_kelly`), déjà publié.
 La mise ne retire pas ce qui est déjà misé sur le même match : à faire à la main si plusieurs paris tombent sur un

@@ -50,12 +50,12 @@ def test_une_mise_par_cote_et_rien_avant_le_lancement():
 
 
 def test_mise_conseillee_suit_l_etude_du_14_11():
-    # Exemples de docs/strategie-mises.md (1 000 € de bankroll), au ¼ au lieu du 1/16 : × 4
-    assert mise_conseillee({"cote": 2.0, "ecart": 0.04}) == pytest.approx(2.52)
-    assert mise_conseillee({"cote": 2.0, "ecart": 0.07}) == pytest.approx(11.6)
-    assert mise_conseillee({"cote": 1.5, "ecart": 0.10}) == 20.0                             # 40,75 € plafonné à 2 %
+    # Exemples de docs/strategie-mises.md (1 000 € de bankroll), au 1/8 au lieu du 1/16 : × 2
+    assert mise_conseillee({"cote": 2.0, "ecart": 0.04}) == pytest.approx(1.26)
+    assert mise_conseillee({"cote": 2.0, "ecart": 0.07}) == pytest.approx(5.8)
+    assert mise_conseillee({"cote": 1.5, "ecart": 0.10}) == pytest.approx(20.38)
     assert mise_conseillee({"cote": 2.0, "ecart": 0.025}) == 0.0
-    assert mise_conseillee({"cote": 1.01, "ecart": 0.30}) == 20.0                              # plafond 2 %
+    assert mise_conseillee({"cote": 1.01, "ecart": 0.30}) == 50.0                              # garde-fou 5 %
     assert avantage_compte(0.06) == pytest.approx((0.0219 + 0.0464) / 2)
     assert avantage_compte(0.20) == avantage_compte(0.10)
     # plus d'avantage compté à 10 % qu'à 3 % : la mise grandit avec l'écart

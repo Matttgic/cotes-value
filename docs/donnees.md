@@ -36,6 +36,7 @@ chaque jour terminé dans la release GitHub `references-AAAA-MM`. Pour une étud
 | `pushover_envoyes.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/envoyer_notifications.py | scripts/envoyer_notifications.py, scripts/envoyes_secours.py | dédoublonnage des alertes Pushover |
 | `webhook_envoyes.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/envoyer_notifications.py | scripts/envoyer_notifications.py, scripts/envoyes_secours.py | dédoublonnage des alertes webhook |
 | `pushover_recap.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/envoyer_notifications.py | cotes/recap_jouables.py | dernier récapitulatif envoyé |
+| `bankroll.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/envoyer_notifications.py | scripts/envoyer_notifications.py | bankroll automatique des alertes Pushover |
 | `recommandees.json` | chaud | json compact (separators=(',', ':')), UTF-8 | cotes/recommandations.py | scripts/site_web.py, cotes/strategie_recommandee.py | revue tous les 7 jours |
 | `notes_historique.json` | chaud | json compact (separators=(',', ':')), UTF-8 | cotes/notation.py | scripts/site_web.py | une note par jour (heure de Paris) |
 | `pauses.json` | chaud | json compact (separators=(',', ':')), UTF-8 | cotes/pauses.py | scripts/cycle.py, scripts/site_web.py, scripts/envoyer_notifications.py | réécrit à chaque passage |

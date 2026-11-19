@@ -83,7 +83,7 @@ def _nombre(x):
 
 def champs_valeur(o: dict) -> dict:
     """Edge, cote juste, cote Pinnacle brute, ligue, cote minimale (garde l'edge ≥ 2 % : juste × 1,02), équipes et lien."""
-    # Mise conseillée : Kelly ¼ sur l'avantage compté (corrigé) (analyse du 19/11 ; docs/strategie-optimisee.md). Les bilans
+    # Mise conseillée : Kelly 1/8 sur l'avantage compté (corrigé) (analyse du 19/11 ; docs/strategie-optimisee.md). Les bilans
     # du site gardent leur mode Kelly ¼ (simulation.mise_kelly), déjà publié.
     from .strategie_optimisee import mise_conseillee
     juste = _nombre(o.get("cote_juste"))

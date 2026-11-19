@@ -125,7 +125,7 @@ def jouables(paris: list[dict], cotes: dict[tuple, tuple[str, float]]) -> list[d
 
 
 def messages(lignes: list[dict], bankroll: float, maintenant: datetime, par_message: int = 6) -> list[dict]:
-    """Messages Pushover (HTML) : une ligne par pari, lien cliquable, mise Kelly ¼ sur l'avantage corrigé ramenée à la bankroll et
+    """Messages Pushover (HTML) : une ligne par pari, lien cliquable, mise Kelly 1/8 sur l'avantage corrigé ramenée à la bankroll et
     arrondie à l'euro supérieur."""
     from .strategie_optimisee import mise_conseillee
     out = []

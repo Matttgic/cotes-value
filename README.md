@@ -246,8 +246,8 @@ Variante de Drop Pinnacle, suivie dès le 18/11/2026 à 8 h : même règle, plus
 Suivie dès le 19/11/2026 à 18 h, issue de l'analyse de tous les paris
 ([docs/analyse-paris-19-11.md](docs/analyse-paris-19-11.md)) : cote ≤ 5, écart ≥ 3 %, sans Winamax ni OlyBet, sans
 volley ni total au basket, au plus 24 h avant le match, une mise par cote. Variante « + Polymarket » : Pinnacle
-seulement, Polymarket voit aussi un écart ≥ 5 %. Les notifications proposent depuis le même jour une mise Kelly ¼
-sur l'avantage compté (corrigé). **La même règle s'applique à la prise et à tous les bilans du site**, comme le plafond de cote
+seulement, Polymarket voit aussi un écart ≥ 5 %. Les notifications proposent depuis le même jour une mise Kelly 1/8
+sur l'avantage compté, calculée sur une bankroll automatique (`cotes/alertes/bankroll.py`). **La même règle s'applique à la prise et à tous les bilans du site**, comme le plafond de cote
 du 11/11 (`simulation.motif_hors_regle`) : les anciens paris hors règle sont archivés dans `hors_plafond.json`.
 [Règle, chiffres et limites](docs/strategie-optimisee.md).
 ### Avis d'analyste

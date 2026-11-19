@@ -224,14 +224,31 @@ def pushover(donnees: Path, flux: dict, env=None, paris: list[dict] | None = Non
         a_envoyer = alertes_pushover(flux, paris, recents, choisies, maintenant, amorcage)
         from cotes.alertes import promos                  # surebets et cotes boostées, cases à part
         a_envoyer += promos.alertes(donnees, recents, choisies, maintenant)
+        # Bankroll automatique (cotes/alertes/bankroll.py) : les mises suivent la bankroll calculée, pas le chiffre fixe.
+        from cotes.alertes import bankroll as bankroll_auto
+        etat_bk = None
+        if bankroll_auto.actif(env):
+            try:
+                etat_bk = bankroll_auto.mettre_a_jour(bankroll_auto.lire(donnees), paris, env, maintenant)
+                env = {**env, "PUSHOVER_BANKROLL": str(etat_bk["mise_sur"])}
+            except Exception:  # noqa: BLE001 - sans bankroll calculée, les mises restent sur PUSHOVER_BANKROLL
+                etat_bk = None
         bilan = poster_pushover(a_envoyer, env) if a_envoyer else {"envoyees": [], "echecs": 0, "erreurs": []}
         for pid in bilan["envoyees"]:
             recents[pid] = maintenant.isoformat(timespec="seconds")
         if bilan["envoyees"] or amorcage or len(recents) != len(envoyes):
             ecrire_json(chemin, recents)
+        if etat_bk is not None:
+            envoyees = set(bilan["envoyees"])
+            bankroll_auto.noter(etat_bk, [a for a in a_envoyer if a["id"] in envoyees], maintenant)
+            bankroll_auto.ecrire(donnees, etat_bk)
         recap = recap_pushover(donnees, paris, recents, env, maintenant)
-        return {**base, "envoyees": len(bilan["envoyees"]), "echecs": bilan["echecs"],
-                "erreurs": bilan["erreurs"], "recap": recap}
+        retour = {**base, "envoyees": len(bilan["envoyees"]), "echecs": bilan["echecs"],
+                  "erreurs": bilan["erreurs"], "recap": recap}
+        if etat_bk is not None:
+            retour["bankroll"] = {"calculee": etat_bk["bankroll"], "mise_sur": etat_bk["mise_sur"],
+                                  "ouvertes": len(etat_bk["ouvertes"])}
+        return retour
     except Exception as e:  # noqa: BLE001 - le scan ne doit jamais dépendre de Pushover
         return {"actif": False, "envoyees": 0, "echecs": 0, "erreurs": [type(e).__name__]}
 

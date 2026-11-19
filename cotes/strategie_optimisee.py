@@ -12,7 +12,7 @@ au basket (le total d'une équipe reste), détecté au plus 24 h avant le début
 inversées ; une mise par cote française (première détection qui passe la règle). La sélection ne lit jamais statut,
 gain, CLV ni cote de clôture. Pas de rejeu : seul le suivi depuis DEBUT compte.
 
-Mise conseillée (affichage seul, ``mise_conseillee``) : Kelly au ¼ sur l'avantage « compté » de l'étude du 14/11,
+Mise conseillée (affichage seul, ``mise_conseillee``) : Kelly au 1/8 sur l'avantage « compté » de l'étude du 14/11,
 c'est-à-dire l'écart annoncé rétréci selon ce que la CLV a confirmé (3 % → +0,18 %, 10 % et plus → +8,15 %).
 """
 from __future__ import annotations
@@ -45,9 +45,11 @@ OPTIMISEES = (OPTIMISEE, OPTIMISEE_POLYMARKET)
 
 # Avantage « compté » selon l'écart annoncé (docs/strategie-mises.md, partie 3) : écart en %, avantage en fraction.
 AVANTAGE_COMPTE = ((3.0, 0.0018), (4.0, 0.0101), (5.0, 0.0219), (7.0, 0.0464), (10.0, 0.0815))
-KELLY_FRACTION_CONSEIL = 1 / 4      # Kelly ¼ sur l'avantage corrigé (choix du 19/11/2026 ; 1/16 au départ)
+# Kelly 1/8 sur l'avantage corrigé, garde-fou à 5 % (19/11/2026, après 1/16 puis ¼ plafonné à 2 %) : simulation sur
+# 3 mois, risque de perdre la moitié 0,1 % si l'avantage est réel, 3 % sinon (contre 10 % et 41 % au ¼).
+KELLY_FRACTION_CONSEIL = 1 / 8
 KELLY_BANKROLL_CONSEIL = 1000.0       # même bankroll de référence que mise_kelly (rapportée à la bankroll réelle à l'envoi)
-KELLY_PLAFOND_CONSEIL = 0.02
+KELLY_PLAFOND_CONSEIL = 0.05
 
 
 def avantage_compte(ecart: float) -> float:
@@ -69,7 +71,7 @@ def avantage_compte(ecart: float) -> float:
 
 
 def mise_conseillee(p: dict) -> float:
-    """Mise Kelly au ¼ sur l'avantage compté, pour 1 000 € de bankroll, plafonnée à 2 % ; 0 si rien à miser."""
+    """Mise Kelly au 1/8 sur l'avantage compté, pour 1 000 € de bankroll, plafonnée à 5 % ; 0 si rien à miser."""
     cote = nombre_fini(p.get("cote"))
     if cote is None or cote <= 1:
         return 0.0
