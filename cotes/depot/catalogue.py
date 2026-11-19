@@ -73,6 +73,7 @@ FICHIERS: dict[str, Fichier] = {
                                     "dédoublonnage des alertes webhook"),
     "pushover_recap.json": Fichier("chaud", _JSON, [_ALERTES], ["cotes/recap_jouables.py"],
                                    "dernier récapitulatif envoyé"),
+    "bankroll.json": Fichier("chaud", _JSON, [_ALERTES], [_ALERTES], "bankroll automatique des alertes Pushover"),
     "recommandees.json": Fichier("chaud", _COMPACT, ["cotes/recommandations.py"],
                                  [_SITE, "cotes/strategie_recommandee.py"], "revue tous les 7 jours"),
     "notes_historique.json": Fichier("chaud", _COMPACT, ["cotes/notation.py"], [_SITE],
