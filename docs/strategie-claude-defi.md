@@ -169,3 +169,5 @@ Sur l'export du défi, le sélecteur retrouve 122 paris en construction et 46 en
 - **La règle a été trouvée en regardant l'historique** (le seuil de 6 h vient de la comparaison avec les paris de
   moins de 6 h) : les trois périodes ne sont pas indépendantes de ce choix. Seul le suivi à partir du 2/11 compte.
 - Le ROI d'un groupe de 50 à 120 paris à cotes moyennes est très bruité ; plusieurs paris d'un même match sont corrélés.
+
+Les Claude Défi 1, 2, 5 et la Fusion 4+5 sont retirées depuis le 19/11/2026 : voir `docs/strategies-retirees.md`.

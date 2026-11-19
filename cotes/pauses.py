@@ -28,6 +28,16 @@ FICHIER = "pauses.json"
 MIN_REGLES = 200
 MIN_CLV = 100
 Z95 = 1.645
+# Stratégies retirées à la main (19/11/2026) : perdantes même dans le meilleur cas (borne haute à 95 % du ROI par
+# match sous zéro, ou presque), alors que leur CLV paraît bonne, donc invisibles pour la pause automatique. Plus aucun
+# nouveau pari ; l'historique reste. Règles et chiffres gardés dans docs/strategies-retirees.md.
+RETIREES = {
+    "claude_defi_5": {"id": "Claude Défi 5 · Books lents, cotes courtes", "roi": -26.6, "roi_haut": -4.0, "matchs": 73},
+    "claude_fusion": {"id": "Claude Fusion · Défi 4 + Défi 5", "roi": -25.8, "roi_haut": -2.9, "matchs": 93},
+    "claude_defi_2": {"id": "Claude Défi 2 · Handicaps", "roi": -31.0, "roi_haut": -2.6, "matchs": 26},
+    "claude_defi_1": {"id": "Claude Défi 1 · Gros écart 12 h", "roi": -22.1, "roi_haut": 2.4, "matchs": 85},
+}
+RETIREES_DEPUIS = "2026-11-19T22:00:00+00:00"
 _ACTIVES: dict[str, datetime] = {}
 
 
@@ -43,6 +53,7 @@ def charger(source) -> dict[str, datetime]:
     """Active les pauses de ``pauses.json`` (``source`` : dossier « donnees » ou état déjà lu). Rend {clé: début}."""
     etat = source if isinstance(source, dict) else _lire(source)
     _ACTIVES.clear()
+    _ACTIVES.update({cle: _date(RETIREES_DEPUIS) for cle in RETIREES})
     for cle, p in (etat.get("pauses") or {}).items():
         debut = _date((p or {}).get("depuis"))
         if debut is not None:
@@ -117,6 +128,10 @@ def mettre_a_jour(donnees, lignes: list[dict], cle_de: dict[str, str], clvs_de, 
             os.replace(tmp, chemin)
         except OSError:
             pass
-    return {"liste": {p["id"]: {k: v for k, v in p.items() if k != "id"} | {"cle": cle}
-                      for cle, p in pauses.items() if isinstance(p, dict) and p.get("id")},
+    liste = {p["id"]: {k: v for k, v in p.items() if k != "id"} | {"cle": cle}
+             for cle, p in pauses.items() if isinstance(p, dict) and p.get("id")}
+    liste.update({r["id"]: {k: v for k, v in r.items() if k != "id"} | {"cle": cle, "depuis": RETIREES_DEPUIS,
+                                                                         "retiree": True}
+                  for cle, r in RETIREES.items()})
+    return {"liste": liste,
             "criteres": {"min_regles": MIN_REGLES, "min_clv": MIN_CLV}}

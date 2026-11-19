@@ -1711,7 +1711,8 @@ function fiabilite(P) {
 // Pause automatique (cotes/pauses.py) et fiabilité, sous le nom de chaque stratégie.
 function etiquettesStrategie(r) {
   const p = (D.pauses?.liste || {})[r.id], j = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "";
-  const pause = p ? `<small class="badge-pause neg" title="CLV par pari ${p.clv} % (au mieux ${p.clv_haute} %) · par match ${p.clv_match} %">En pause depuis le ${j(p.depuis)} : perd contre la clôture</small>` : "";
+  const pause = p?.retiree ? `<small class="badge-pause neg" title="ROI ${p.roi} % (au mieux ${p.roi_haut} %) sur ${p.matchs} matchs">Retirée le ${j(p.depuis)} : perdante</small>`
+    : p ? `<small class="badge-pause neg" title="CLV par pari ${p.clv} % (au mieux ${p.clv_haute} %) · par match ${p.clv_match} %">En pause depuis le ${j(p.depuis)} : perd contre la clôture</small>` : "";
   if (datesStratActives() || !r.stats?.regles) return pause;
   if (r.id.startsWith("base:") || r.id.startsWith("Fusion ")) return pause;      // ni bases ni fusions : pas mesurées
   const f = fiabilite(preuveDe(r.id));

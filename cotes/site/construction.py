@@ -35,6 +35,7 @@ from cotes.strategie_qwen import QWEN, paris_qwen  # noqa: E402
 from cotes.strategie_m3 import M3, paris_m3  # noqa: E402
 from cotes.laboratoire import (DEBUT_ETUDE, DEBUT_SUIVI, PERIODES, REGLES as REGLES_LABO,  # noqa: E402
                               attendu_et_variance, courbe, evaluer, heure, resume, selectionner, suivi_futur)
+from cotes.pauses import RETIREES  # noqa: E402
 from cotes.mises import (METHODES as METHODES_MISE, MODE_DEFAUT, MODES_BILAN, MODES_INTEGRES,  # noqa: E402
                          comparer as comparer_mises, mise_du_mode)
 from cotes.securite import json_public
@@ -930,7 +931,7 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
             "protocole": protocole_publie, "decision": decision_publiee,
             "rapidite": rapidite_alertes(etat.get("historique", []), journal_alertes.get("cycles", [])),
             "notifications": {"api": notifications_mod.API, "strategies": {k: v for k, v in notifications_mod.NOMS.items()
-                                                                           if k not in libres},
+                                                                           if k not in libres and k not in RETIREES},
                               "details": {**notifications_mod.DETAILS, **promos_mod.DETAILS},
                               "speciales": promos_mod.SPECIALES,
                               "comparateurs": {**{cle: nom for cle, _, _, nom, _ in STRATEGIES},

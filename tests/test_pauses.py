@@ -25,7 +25,7 @@ def test_mettre_a_jour_puis_filtrer(tmp_path):
     clvs = lambda _id: [-0.02] * 120 + [-0.01] * 100
     etat = pauses.mettre_a_jour(tmp_path, lignes, {"PIN-x": "labo:PIN-x", "Claude (rejeu)": "strategie"}, clvs,
                                 {"Claude (rejeu)"}, T)
-    assert set(etat["liste"]) == {"PIN-x"}
+    assert set(etat["liste"]) == {"PIN-x"} | {r["id"] for r in pauses.RETIREES.values()}
     pauses.charger(tmp_path)
     try:
         avant = {"id": "a", "detecte": "2026-11-08T11:00:00+00:00"}
@@ -73,3 +73,16 @@ def test_durees_temps_propre():
         protection.calculer("parent", lambda: protection.calculer("enfant", lambda: sum(range(10000))))
         d = protection.durees()
     assert d["strategies"] == 2 and {x["nom"] for x in d["plus_lentes"]} == {"parent", "enfant"}
+
+
+def test_strategies_retirees_sans_nouveaux_paris_et_hors_des_notifs():
+    pauses.charger({})
+    try:
+        avant = {"id": "a", "detecte": "2026-11-19T10:00:00+00:00"}
+        apres = {"id": "b", "detecte": "2026-11-20T10:00:00+00:00"}
+        for cle in pauses.RETIREES:
+            assert appliquer([avant, apres], {id(avant), id(apres)}, cle) == {id(avant)}
+        liste = pauses.mettre_a_jour("/nexiste/pas", [], {}, lambda _: [], set(), T)["liste"]
+        assert all(liste[r["id"]]["retiree"] for r in pauses.RETIREES.values())
+    finally:
+        pauses.charger({})
