@@ -6,7 +6,7 @@ def _pari_base(**kw) -> dict:
     base = {
         "id": 100,
         "reference": "Pinnacle",
-        "bookmaker": "Winamax",
+        "bookmaker": "Betclic",
         "sport": "football",
         "marche": "RESULTAT_1N2",
         "periode": "MATCH",
@@ -145,7 +145,7 @@ def test_bilans_courbes_et_cartes_jules_identiques(tmp_path, monkeypatch):
     avant = deepcopy(rows)
     assert bilan(rows)["D|JULES EDGE"]["regles"] == 2
     assert bilan(rows)["D|Toutes"]["regles"] == 2  # Pas de duplication des mises.
-    assert bilan_bookmakers(rows)["Winamax·D|JULES EDGE"]["gains"] == 0
+    assert bilan_bookmakers(rows)["Betclic·D|JULES EDGE"]["gains"] == 0
     assert bilan_tranches(rows)["1,51 – 2,00|JULES EDGE"]["regles"] == 2
     assert sum(p[1] for p in site_web.courbes(rows)["JULES EDGE"]) == 0
     assert all(p["jules"] for p in site_web.selection_paris(rows)[0])

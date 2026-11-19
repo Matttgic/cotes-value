@@ -159,6 +159,7 @@ def test_site_ne_double_pas_un_pari_archive_encore_actif(tmp_path):
     from tests.test_navigation_strategies import pari
     import re
     p=pari('repris','2026-10-01T10:00:00Z','2026-10-01T18:00:00Z','gagne')
+    p['bookmaker']='Betclic'
     p['regle_le']='2026-10-02T10:00:00Z'
     S.archiver(tmp_path,[p],NOW)
     (tmp_path/'paris.json').write_text(json.dumps([p]))

@@ -114,7 +114,7 @@ def test_tennis_abandon():
     assert regler(p("JEUX_TOTAL", "PLUS", 12.5), s) == "gagne"                 # 14 jeux : seuil dépassé
     assert regler(p("JEUX_TOTAL", "MOINS", 12.5), s) == "perdu"
     assert regler(p("JEUX_TOTAL", "PLUS", 20.5), s) == "rembourse"
-    sets = {**p("SETS_TOTAL", "PLUS", 1.5), "bookmaker": "Winamax"}
+    sets = {**p("SETS_TOTAL", "PLUS", 1.5), "bookmaker": "Betclic"}
     assert regler(sets, s) == "gagne"                                          # 2 sets certains
     assert regler({**sets, "bookmaker": "NetBet"}, s) == "rembourse"
 
@@ -170,11 +170,13 @@ def test_tranches_d_ecart_un_pari_une_fois():
     assert simulation_de(0.025, 12.0) is None and simulation_de(0.05, 12.0) is None
     maintenant = datetime(2026, 10, 17, 11, tzinfo=timezone.utc)
     o = {"reference": "Pinnacle", "detecte": maintenant.isoformat(), "lu_reference": maintenant.isoformat(),
-         "bookmaker": "Winamax", "sport": "football", "match_id": "w1",
-         "domicile": "A", "exterieur": "B", "debut": "2099-01-01T18:00:00Z", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5,
-         "issue": "PLUS", "pari": "x", "cote": 2.1, "cote_juste": 2.05, "ecart": 0.025}
+         "bookmaker": "Betclic", "sport": "football", "match_id": "w1",
+         "domicile": "A", "exterieur": "B", "debut": "2026-10-17T18:00:00Z", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5,
+         "issue": "PLUS", "pari": "x", "cote": 2.1, "cote_juste": 2.03, "ecart": 0.035}
     paris = []
-    assert [p["simulation"] for p in placer([o], paris, maintenant)] == ["A"]
+    assert placer([{**o, "ecart": 0.025}], [], maintenant) == []                 # 2 à 3 % : hors règle depuis le 19/11
+    assert placer([{**o, "debut": "2026-10-18T12:00:00Z"}], [], maintenant) == []  # plus de 24 h avant le match
+    assert [p["simulation"] for p in placer([o], paris, maintenant)] == ["B"]
     # plus tard l'écart passe à 6 % : même pari, pas repris dans D
     assert placer([{**o, "detecte": (maintenant+timedelta(minutes=1)).isoformat(), "cote": 2.2, "ecart": 0.06}],
                   paris, maintenant+timedelta(minutes=1)) == [] and len(paris) == 1
@@ -295,7 +297,7 @@ def test_trace_du_pari_de_la_prise_au_reglement():
     from cotes.reglement import appliquer
     from cotes.simulation import placer
     o = {"ecart": 0.05, "cote": 2.1, "reference": "Consensus", "match_id": "winamax|1", "detecte": "2026-10-07T10:00:00+00:00",
-         "bookmaker": "Winamax", "sport": "football", "domicile": "Lens", "exterieur": "Lille",
+         "bookmaker": "Betclic", "sport": "football", "domicile": "Lens", "exterieur": "Lille",
          "debut": "2026-10-07T18:00:00+00:00", "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM",
          "pari": "Lens", "cote_juste": 2.0, "match_id_reference": "p9", "reference_inversee": False,
          "score_association": 0.95, "composantes": {"Pinnacle": 2.01, "Betfair": 1.99},

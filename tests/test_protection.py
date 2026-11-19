@@ -63,7 +63,7 @@ def test_le_site_se_construit_malgre_une_strategie_en_erreur(tmp_path, monkeypat
     monkeypatch.setattr(strategies_prudentes, "paris_grok", _boum)
     paris = [{"id": f"p{i}", "simulation": "A", "reference": "Pinnacle", "match_id": f"m{i}", "marche": "TOTAL",
               "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "detecte": f"2026-10-01T10:{i:02d}",
-              "statut": "en_cours", "cote": 2.0, "bookmaker": "Winamax", "sport": "football", "mise": 10,
+              "statut": "en_cours", "cote": 2.0, "bookmaker": "Betclic", "sport": "football", "mise": 10,
               "gain": None, "clv": None} for i in range(3)]
     (tmp_path / "paris.json").write_text(json.dumps(paris), encoding="utf-8")
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")

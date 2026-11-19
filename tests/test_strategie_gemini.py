@@ -9,7 +9,7 @@ from cotes.strategie_gemini import GEMINI, motif_refus_gemini, paris_gemini
 
 def pari(mid="m1", **changes):
     p = {"id": mid, "match_id": "winamax|" + mid, "reference": "Pinnacle", "simulation": "D",
-         "bookmaker": "Winamax", "sport": "football", "ligue": "Ligue 1", "domicile": "Paris " + mid,
+         "bookmaker": "Betclic", "sport": "football", "ligue": "Ligue 1", "domicile": "Paris " + mid,
          "exterieur": "Lyon " + mid, "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS",
          "pari": "Plus de 2,5 buts", "detecte": "2026-10-14T18:00:00Z",
          "debut": "2026-10-14T21:00:00Z", "lu_reference": "2026-10-14T18:00:00Z",
@@ -89,7 +89,7 @@ def test_bilan_courbe_et_fiches_memes_selections(tmp_path):
     b=bilan(rows)
     assert b["D|Gemini Argon"]["regles"] == 2 and b["D|Gemini Argon"]["gains"] == 1
     assert b["D|Toutes"]["regles"] == 2
-    assert bilan_bookmakers(rows)["Winamax·D|Gemini Argon"]["gains"] == 1
+    assert bilan_bookmakers(rows)["Betclic·D|Gemini Argon"]["gains"] == 1
     assert bilan_tranches(rows)["2,01 – 3,00|Gemini Argon"]["regles"] == 2
     assert sum(p[1] for p in courbes(rows)[GEMINI["nom"]]) == 1
     assert all(p["gemini"] for p in selection_paris(rows)[0])

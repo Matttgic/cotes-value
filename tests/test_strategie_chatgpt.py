@@ -10,7 +10,7 @@ from cotes.strategie_chatgpt import CHATGPT, motif_refus, paris_chatgpt
 
 def pari(mid="m1", **changes):
     p = {"id": mid, "match_id": "winamax|" + mid, "reference": "Pinnacle", "simulation": "D",
-         "bookmaker": "Winamax", "sport": "football", "ligue": "Ligue 1", "domicile": "Paris",
+         "bookmaker": "Betclic", "sport": "football", "ligue": "Ligue 1", "domicile": "Paris",
          "exterieur": "Lyon", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS",
          "pari": "Plus de 2,5 buts", "detecte": "2026-10-14T10:00:00+00:00",
          "debut": "2026-10-14T13:00:00+00:00", "lu_reference": "2026-10-14T09:57:00+00:00",
@@ -96,7 +96,7 @@ def test_bilan_courbe_et_fiches_utilisent_exactement_les_memes_paris(tmp_path):
     b = bilan(rows)
     assert b["D|ChatGPT"]["gains"] == 1 and b["D|ChatGPT"]["regles"] == 2
     assert b["D|Toutes"]["regles"] == 2  # aucune copie de mise dans les autres vues
-    assert bilan_bookmakers(rows)["Winamax·D|ChatGPT"]["gains"] == 1
+    assert bilan_bookmakers(rows)["Betclic·D|ChatGPT"]["gains"] == 1
     assert bilan_tranches(rows)["2,01 – 3,00|ChatGPT"]["regles"] == 2
     assert sum(p[1] for p in courbes(rows)["ChatGPT"]) == 1
     assert len(selection_paris(rows, regles=0)[0]) == 2  # pas évincés par les autres simulations

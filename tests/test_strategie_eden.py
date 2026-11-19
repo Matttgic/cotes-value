@@ -10,7 +10,7 @@ from cotes.strategie_eden import EDEN, motif_refus_eden, paris_eden
 def pari(mid="m1", **changes):
     cote = 1.80
     p = {"id": mid, "match_id": "winamax|" + mid, "reference": "Pinnacle", "simulation": "C",
-         "bookmaker": "Winamax", "sport": "football", "ligue": "Ligue 1",
+         "bookmaker": "Betclic", "sport": "football", "ligue": "Ligue 1",
          "domicile": "Paris " + mid, "exterieur": "Lyon " + mid, "marche": "TOTAL",
          "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "pari": "Plus de 2,5 buts",
          "detecte": "2026-10-19T18:30:00+00:00", "debut": "2026-10-19T22:00:00+00:00",
@@ -110,7 +110,7 @@ def test_bilan_courbe_fiches_et_navigation(tmp_path, monkeypatch):
     avant = deepcopy(rows)
     b = bilan(rows)
     assert b["C|Eden"]["regles"] == 2 and b["C|Eden"]["gains"] == -2
-    assert bilan_bookmakers(rows)["Winamax·C|Eden"]["gains"] == -2
+    assert bilan_bookmakers(rows)["Betclic·C|Eden"]["gains"] == -2
     assert bilan_tranches(rows)["1,51 – 2,00|Eden"]["regles"] == 2
     assert sum(p[1] for p in site_web.courbes(rows)[EDEN["nom"]]) == -2
     assert all(p["eden"] for p in site_web.selection_paris(rows)[0])

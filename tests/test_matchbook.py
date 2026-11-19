@@ -232,7 +232,7 @@ def _ligne(mid, proba, source, domicile, exterieur):
 def _opp(cote, proba, domicile="Lille", exterieur="Lens"):
     moment = "2030-01-01T19:00:00+00:00"
     debut = "2030-01-01T20:00:00+00:00"
-    fr = [{"source": "winamax", "bookmaker": "Winamax", "sport": "football", "ligue": "L",
+    fr = [{"source": "winamax", "bookmaker": "Betclic", "sport": "football", "ligue": "L",
            "match_id": "w|" + domicile, "domicile": domicile, "exterieur": exterieur,
            "debut": debut, "collecte": moment, "marche": "VAINQUEUR", "periode": "MATCH",
            "ligne": None, "issue": "DOM", "cote": cote}]
@@ -243,7 +243,7 @@ def _opp(cote, proba, domicile="Lille", exterieur="Lens"):
 
 
 def test_seuils_2_et_5_pourcent_bilan_global():
-    """Mêmes tranches que Pinnacle : 2 % en A, 5 % en D, les deux dans « Toutes »."""
+    """Mêmes tranches que Pinnacle : 5 % en D ; 2 % n'est plus pris (règle du 19/11/2026)."""
     bas = _opp(2.10, 1.02 / 2.10, "Lille", "Lens")
     haut = _opp(2.10, 0.5, "Paris", "Lyon")
     mb2 = next(o for o in bas if o["reference"] == "Matchbook")
@@ -254,12 +254,12 @@ def test_seuils_2_et_5_pourcent_bilan_global():
     assert not any(o["reference"] == "Matchbook" and o["ecart"] >= 0.02 for o in sous)
     paris = []
     pris = placer([mb2, mb5], paris, datetime(2030, 1, 1, 19, 5, tzinfo=timezone.utc))
-    assert [p["simulation"] for p in pris] == ["D", "A"]
+    assert [p["simulation"] for p in pris] == ["D"]          # 2 % : hors règle de prise depuis le 19/11/2026
     assert {p["reference"] for p in pris} == {"Matchbook"}
     assert {p["mise"] for p in pris} == {MISE} == {10}
     resume = bilan(paris)
-    assert resume["A|Matchbook"]["paris"] == 1 and resume["D|Matchbook"]["paris"] == 1
-    assert resume["A|Toutes"]["paris"] == 1 and resume["D|Toutes"]["paris"] == 1
+    assert "A|Matchbook" not in resume and resume["D|Matchbook"]["paris"] == 1
+    assert resume["D|Toutes"]["paris"] == 1
 
 
 def test_table_separee_du_consensus():

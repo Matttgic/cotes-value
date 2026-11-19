@@ -159,10 +159,10 @@ def test_pmu_derniere_equipe_a_marquer_n_est_pas_le_vainqueur():
 # ------------------------------------------------------------------------------------------- écarts « minimum »
 
 def _opportunite(**plus):
-    return {"reference": "Polymarket", "detecte": T, "lu_reference": T, "bookmaker": "Winamax", "sport": "basket",
-            "match_id": "winamax|1", "domicile": "New Orleans Pelicans", "exterieur": "Brooklyn Nets",
+    return {"reference": "Polymarket", "detecte": T, "lu_reference": T, "bookmaker": "NetBet", "sport": "hockey",
+            "match_id": "netbet|1", "domicile": "New Orleans Pelicans", "exterieur": "Brooklyn Nets",
             "debut": "2026-11-09T01:10:00+00:00", "marche": "TOTAL", "periode": "MT1", "ligne": 110.5, "issue": "PLUS",
-            "pari": "Plus de 110,5 points", "cote": 1.62, "cote_juste": 1.587, "ecart": 0.0206, **plus}
+            "pari": "Plus de 110,5 points", "cote": 1.62, "cote_juste": 1.57, "ecart": 0.0318, **plus}
 
 
 def test_ecart_minimum_suit_le_pari():
@@ -175,7 +175,7 @@ def test_ecart_minimum_suit_le_pari():
                                     issue="DOM", reference="Pinnacle", ecart_minimum=True),
                        _opportunite(match_id="pmu|3", bookmaker="PMU")], paris, maintenant)
     par = {p["bookmaker"]: p for p in paris}
-    assert par["Winamax"]["ecart_minimum"] and par["Winamax"]["prix_prudent"] and par["Winamax"]["proba_milieu"] == 0.66
+    assert par["NetBet"]["ecart_minimum"] and par["NetBet"]["prix_prudent"] and par["NetBet"]["proba_milieu"] == 0.66
     assert par["Betclic"]["ecart_minimum"] and "prix_prudent" not in par["Betclic"]
     assert "ecart_minimum" not in par["PMU"] and "prix_prudent" not in par["PMU"]
 

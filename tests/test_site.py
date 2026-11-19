@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import site_web  # noqa: E402
 
 
-def pari(sim, match, quand, statut="en_cours", cote=2.0, bm="Winamax"):
+def pari(sim, match, quand, statut="en_cours", cote=2.0, bm="Betclic"):
     return {"id": f"{sim}{match}{quand}", "simulation": sim, "reference": "Pinnacle", "match_id": match,
             "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "detecte": quand, "statut": statut,
             "cote": cote, "bookmaker": bm, "sport": "football", "mise": 10, "gain": None, "clv": None}
@@ -21,7 +21,7 @@ def test_selection_par_fiches():
     fiches, total, valeurs = site_web.selection_paris(paris, en_cours=2, regles=1)
     # 2 en cours les plus récents (m3, m2) + le réglé le plus récent (m8) + celui à régler (m0)
     assert [f["match_id"] for f in fiches] == ["m3", "m2", "m8", "m0"] and total == 6 and fiches[3]["a_regler"]
-    assert valeurs["bookmaker"] == ["NetBet", "Winamax"] and valeurs["sims"] == ["A", "C"]  # filtres sur tout
+    assert valeurs["bookmaker"] == ["Betclic", "NetBet"] and valeurs["sims"] == ["A", "C"]  # filtres sur tout
     fiches, _, _ = site_web.selection_paris(paris)
     m1 = next(f for f in fiches if f["match_id"] == "m1")
     assert m1["sims"] == ["A", "C"] and m1["cote"] == 2.10 and m1["detecte"] == "2026-10-01T10:00"   # 1re détection
@@ -57,8 +57,8 @@ def test_gain_attendu_et_bilan_par_bookmaker():
     c = site_web.courbes([{**base, "reference": "Pinnacle"}])
     assert c["Uniques"][0][3] == 1.0                     # 10 × (2,2 / 2,0 − 1)
     b = bilan_bookmakers([{**base, "reference": "Pinnacle"}, {**base, "reference": "Pinnacle", "simulation": "X",
-                                                             "issue": "EXT", "bookmaker": "Winamax"}])
-    assert b["PMU·A|Uniques"]["regles"] == 1 and b["Winamax·X|Uniques"]["regles"] == 1
+                                                             "issue": "EXT", "bookmaker": "Betclic"}])
+    assert b["PMU·A|Uniques"]["regles"] == 1 and b["Betclic·X|Uniques"]["regles"] == 1
 
 
 def test_bilan_reel_contre_espere_selon_la_clv():

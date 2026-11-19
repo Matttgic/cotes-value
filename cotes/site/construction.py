@@ -24,7 +24,7 @@ from cotes.strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, charge
 from cotes.reglement import GAIN, taux_manuel  # noqa: E402
 from cotes.sources_resultats import ou_chercher  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
-from cotes.simulation import COTE_MAX_PRISE  # noqa: E402
+from cotes.simulation import COTE_MAX_PRISE, motif_hors_regle  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
 from cotes.strategie_jules import JULES, paris_jules  # noqa: E402
@@ -652,9 +652,14 @@ def retirer_places_libres(labo: dict) -> None:
 def resume_hors_plafond(paris: list[dict]) -> dict:
     """Paris à cote > plafond : nombre, réglés, gain en mises fixes (hors des bilans, gardés en archive)."""
     regles = [p for p in paris if p.get("statut") not in ("en_cours", "a_regler")]
+    motifs: dict[str, int] = {}
+    for p in paris:
+        m = motif_hors_regle(p) or "autre"
+        motifs[m] = motifs.get(m, 0) + 1
     return {"plafond": COTE_MAX_PRISE, "paris": len(paris), "regles": len(regles),
             "gain": round(sum(p.get("gain") or 0 for p in regles), 2),
-            "mises": round(sum(p.get("mise") or 0 for p in regles), 2)}
+            "mises": round(sum(p.get("mise") or 0 for p in regles), 2),
+            "motifs": dict(sorted(motifs.items(), key=lambda x: -x[1]))}
 
 
 def archive_hors_plafond(paris: list[dict]) -> list[dict]:
@@ -679,10 +684,10 @@ def charger_entrees(donnees: Path) -> dict:
     from cotes import pauses
     pauses.charger(donnees)           # stratégies en pause (pauses.json) : plus de nouveaux paris
     paris = fusionner_paris(_lire(donnees / "paris.json", []), lire_archives(donnees))
-    # Paris au-dessus du plafond de cote (décision du 11/11/2026) : retirés de tous les bilans du site, jamais supprimés
-    # des données ; listés dans site/hors_plafond.json (archive consultable).
-    hors_plafond = [p for p in paris if (p.get("cote") or 0) > COTE_MAX_PRISE]
-    paris = [p for p in paris if (p.get("cote") or 0) <= COTE_MAX_PRISE]
+    # Paris hors règle de prise (plafond de cote du 11/11/2026, règle du 19/11/2026 : simulation.motif_hors_regle) :
+    # retirés de tous les bilans du site, jamais supprimés des données ; listés dans site/hors_plafond.json (archive).
+    hors_plafond = [p for p in paris if motif_hors_regle(p)]
+    paris = [p for p in paris if not motif_hors_regle(p)]
     journal_alertes = _lire(donnees / "notifications_diagnostic.json", {"cycles": []})
     demandes = {a["id"]: c.get("envoi_demande_le") for c in journal_alertes.get("cycles", [])
                 for a in c.get("alertes", []) if a.get("id")}
