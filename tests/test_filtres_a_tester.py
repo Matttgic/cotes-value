@@ -114,10 +114,10 @@ def test_alerte_porte_la_mise_kelly_dans_le_texte_pushover_et_l_ordre():
     from cotes.notifications import champs_valeur
     from scripts.envoyer_notifications import message_ntfy
     champs = champs_valeur({"cote": 2.0, "ecart": .04, "cote_juste": 1.92, "pari": "x"})
-    assert champs["mise_kelly"] == 0.63               # Kelly 1/16 sur l'avantage compté (docs/strategie-mises.md : 0,63 €)
+    assert champs["mise_kelly"] == 2.52               # Kelly ¼ sur l'avantage compté : 4 × 0,63 € (docs/strategie-mises.md)
     titre, corps = message_ntfy({"bookmaker": "PMU", "sport": "football", "cote": 2.0, "pari": "x", "domicile": "A",
                                  "exterieur": "B", "debut": "2026-10-26T18:00:00Z", **champs})
-    assert "Mise Kelly 1/16 : 1 €" in corps
+    assert "Mise Kelly ¼ corrigé : 3 €" in corps
     assert "Mise Kelly" not in message_ntfy({"bookmaker": "PMU", "cote": 2.0, "pari": "x",
                                              "debut": "2026-10-26T18:00:00Z"})[1]
 

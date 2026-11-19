@@ -1,6 +1,6 @@
 import pytest
 
-from cotes.strategie_optimisee import (OPTIMISEE, OPTIMISEE_POLYMARKET, avantage_compte, mise_kelly_16,
+from cotes.strategie_optimisee import (OPTIMISEE, OPTIMISEE_POLYMARKET, avantage_compte, mise_conseillee,
                                        motif_refus_optimisee, selection_optimisee)
 
 
@@ -49,17 +49,17 @@ def test_une_mise_par_cote_et_rien_avant_le_lancement():
     assert selection_optimisee([a, b, avant, *refuse_puis_accepte]) == {id(a), id(refuse_puis_accepte[1])}
 
 
-def test_mise_kelly_16_suit_l_etude_du_14_11():
-    # Exemples de docs/strategie-mises.md (1 000 € de bankroll)
-    assert mise_kelly_16({"cote": 2.0, "ecart": 0.04}) == pytest.approx(0.63)
-    assert mise_kelly_16({"cote": 2.0, "ecart": 0.07}) == pytest.approx(2.90)
-    assert mise_kelly_16({"cote": 1.5, "ecart": 0.10}) == pytest.approx(10.19)
-    assert mise_kelly_16({"cote": 2.0, "ecart": 0.025}) == 0.0
-    assert mise_kelly_16({"cote": 1.01, "ecart": 0.30}) == 20.0                              # plafond 2 %
+def test_mise_conseillee_suit_l_etude_du_14_11():
+    # Exemples de docs/strategie-mises.md (1 000 € de bankroll), au ¼ au lieu du 1/16 : × 4
+    assert mise_conseillee({"cote": 2.0, "ecart": 0.04}) == pytest.approx(2.52)
+    assert mise_conseillee({"cote": 2.0, "ecart": 0.07}) == pytest.approx(11.6)
+    assert mise_conseillee({"cote": 1.5, "ecart": 0.10}) == 20.0                             # 40,75 € plafonné à 2 %
+    assert mise_conseillee({"cote": 2.0, "ecart": 0.025}) == 0.0
+    assert mise_conseillee({"cote": 1.01, "ecart": 0.30}) == 20.0                              # plafond 2 %
     assert avantage_compte(0.06) == pytest.approx((0.0219 + 0.0464) / 2)
     assert avantage_compte(0.20) == avantage_compte(0.10)
     # plus d'avantage compté à 10 % qu'à 3 % : la mise grandit avec l'écart
-    assert mise_kelly_16({"cote": 2.0, "ecart": 0.10}) > 40 * mise_kelly_16({"cote": 2.0, "ecart": 0.03})
+    assert mise_conseillee({"cote": 2.0, "ecart": 0.10}) > 40 * mise_conseillee({"cote": 2.0, "ecart": 0.03})
 
 
 def test_inscrites_dans_les_variantes():

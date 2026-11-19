@@ -83,12 +83,12 @@ def _nombre(x):
 
 def champs_valeur(o: dict) -> dict:
     """Edge, cote juste, cote Pinnacle brute, ligue, cote minimale (garde l'edge ≥ 2 % : juste × 1,02), équipes et lien."""
-    # Mise conseillée : Kelly 1/16 sur l'avantage compté (analyse du 19/11 ; docs/strategie-optimisee.md). Les bilans
+    # Mise conseillée : Kelly ¼ sur l'avantage compté (corrigé) (analyse du 19/11 ; docs/strategie-optimisee.md). Les bilans
     # du site gardent leur mode Kelly ¼ (simulation.mise_kelly), déjà publié.
-    from .strategie_optimisee import mise_kelly_16
+    from .strategie_optimisee import mise_conseillee
     juste = _nombre(o.get("cote_juste"))
     lien, repli = lien_info(o)
-    return {"ecart": _nombre(o.get("ecart")), "cote_juste": juste, "mise_kelly": mise_kelly_16(o) or None,
+    return {"ecart": _nombre(o.get("ecart")), "cote_juste": juste, "mise_kelly": mise_conseillee(o) or None,
             "cote_pinnacle": _nombre(o.get("cote_reference")) if o.get("reference") == "Pinnacle" else None,
             "pinnacle_ecart": _nombre(o.get("ecart_pinnacle")), "pinnacle_age_s": _nombre(o.get("age_prix_pinnacle_s")),
             "ligue": o.get("ligue"), "marche": o.get("marche"), "selection": o.get("pari", "")[:180],

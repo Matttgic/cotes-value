@@ -209,9 +209,9 @@ def test_seules_les_strategies_cochees_sont_nommees():
 def test_mise_kelly_selon_bankroll_et_plus_de_ligne_macrodroid():
     a = alerte(mise_kelly=12.34)
     m = E.message_pushover(a, ENV, NOW)["message"]
-    assert "Mise Kelly 1/16 : 13 €" in m and m.endswith("\n1 stratégie : Eden")    # 12,34 arrondi à l'euro supérieur
+    assert "Mise Kelly ¼ corrigé : 13 €" in m and m.endswith("\n1 stratégie : Eden")    # 12,34 arrondi à l'euro supérieur
     moitie = E.message_pushover(a, {**ENV, "PUSHOVER_BANKROLL": "500"}, NOW)["message"]
-    assert "Mise Kelly 1/16 : 7 €" in moitie                                       # 12,34 × 500/1000 = 6,17 -> 7
+    assert "Mise Kelly ¼ corrigé : 7 €" in moitie                                       # 12,34 × 500/1000 = 6,17 -> 7
     assert E.message_pushover(a, {**ENV, "PUSHOVER_BANKROLL": "abc"}, NOW)["message"] == m      # valeur absurde : défaut
     for env in (ENV, {**ENV, "PUSHOVER_LIGNE_MACRO": "oui"}):
         for x in (a, alerte(mise_kelly=5, lien_repli=True)):
@@ -240,9 +240,9 @@ def test_meme_pari_pour_plusieurs_strategies_cochees_affiche_la_mise_totale():
     a = E.alertes_pushover(flux, [], {}, {"eden", "labo:PIN-1.3-2-e2-h36"}, NOW)[0]
     assert a["mises"] == 2
     m = E.message_pushover(a, ENV, NOW)["message"]
-    assert "Mise totale Kelly 1/16 : 18 € (2 × 9 €)" in m and "STAKE" not in m
+    assert "Mise totale Kelly ¼ corrigé : 18 € (2 × 9 €)" in m and "STAKE" not in m
     seul = E.message_pushover({**a, "mises": 1}, ENV, NOW)["message"]
-    assert "Mise Kelly 1/16 : 9 €" in seul and "totale" not in seul
+    assert "Mise Kelly ¼ corrigé : 9 €" in seul and "totale" not in seul
     sans = E.message_pushover({**a, "mise_kelly": None, "mises": 3}, ENV, NOW)["message"]
     assert "Mise totale : 30 € (3 × 10 €)" in sans                              # 10 € par défaut, comme suivi.js
     assert "Mise totale : 60 € (3 × 20 €)" in E.message_pushover(
