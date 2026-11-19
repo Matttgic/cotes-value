@@ -46,3 +46,23 @@ def test_lien_de_l_alerte_sinon_celui_du_prix_et_repli_annonce():
     o = opportunite(bookmaker="OlyBet", match_id="olybet|31187407", lien=None)
     (x,) = ordres.construire({"alertes": [alerte(o)]}, [o], NOW)["ordres"]
     assert x["lien"] == "https://www.olybet.fr/sportsbook/pre-match/match/Soccer" and x["lien_repli"] is True
+
+
+def test_cote_min_jamais_sous_le_plancher_de_valeur():
+    # Cote juste 2,00 relevée à 2,05 (+2,5 %) : 3 % de tolérance donnerait 1,99, sous la cote juste.
+    o = opportunite(cote=2.05, cote_juste=2.00)
+    (x,) = ordres.construire({"alertes": [alerte(o)]}, [o], NOW)["ordres"]
+    assert x["cote_min"] == 2.04
+    # Gros écart : la tolérance (2,13) est au-dessus du plancher (2,04) et reste la règle.
+    o = opportunite(cote=2.20, cote_juste=2.00)
+    assert ordres.construire({"alertes": [alerte(o)]}, [o], NOW)["ordres"][0]["cote_min"] == 2.13
+
+
+def test_ordre_non_emis_sous_le_plancher_et_plancher_de_l_alerte_prioritaire():
+    o = opportunite(cote=2.02, cote_juste=2.00)                  # +1 % seulement
+    assert ordres.construire({"alertes": [alerte(o)]}, [o], NOW)["ordres"] == []
+    o = opportunite(cote=2.20, cote_juste=2.00)
+    (x,) = ordres.construire({"alertes": [{**alerte(o), "cote_min": 2.151}]}, [o], NOW)["ordres"]
+    assert x["cote_min"] == 2.16                                  # arrondi au centime supérieur
+    o = opportunite(cote=1.32, cote_juste=1.25)                   # plancher absolu 1,30
+    assert ordres.construire({"alertes": [alerte(o)]}, [o], NOW)["ordres"][0]["cote_min"] == 1.3

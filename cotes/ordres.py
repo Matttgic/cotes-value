@@ -1,16 +1,17 @@
 """Ordres de pari : ce que vous (ou une IA avec ordinateur) devez jouer, avec ses garde-fous.
 
 Le fichier ``ordres.json`` reprend les alertes du moment avec ce qu'il faut pour parier sans se tromper :
-le match exact, le marché, l'issue, la cote minimale acceptable, la mise, l'heure limite et le lien vers
+le match exact, le marché, l'issue, la cote minimale acceptable (jamais sous la cote juste × 1,02), la mise, l'heure limite et le lien vers
 le bookmaker quand il est connu. Ce module ne place aucun pari et ne contient aucun identifiant de compte.
 """
 from __future__ import annotations
 
+import math
 from datetime import datetime, timedelta, timezone
 
 from .laboratoire import heure
 from .liens import lien_info
-from .notifications import empreinte_prix
+from .notifications import COTE_MIN_MARGE, COTE_MIN_PLANCHER, empreinte_prix
 
 MISE_EUR = 10.0               # mise de la simulation ; à régler ici avant tout pari réel
 TOLERANCE_COTE = 0.03         # on accepte une cote jusqu'à 3 % plus basse que celle relevée
@@ -35,6 +36,23 @@ def lien_ordre(a: dict, o: dict) -> dict:
     return {"lien": lien, "lien_repli": repli}
 
 
+def _nombre(x) -> float | None:
+    return float(x) if isinstance(x, (int, float)) and not isinstance(x, bool) and x == x else None
+
+
+def cote_minimale(cote: float, a: dict, o: dict) -> float:
+    """Cote la plus basse acceptable : la tolérance de 3 % sous la cote relevée, jamais sous le plancher de valeur
+    (cote juste × 1,02, au moins 1,30 ; celui de l'alerte s'il est donné), arrondi au centime supérieur."""
+    plancher = _nombre(a.get("cote_min"))
+    juste = _nombre(o.get("cote_juste"))
+    if plancher is None and juste:
+        plancher = max(COTE_MIN_PLANCHER, juste * COTE_MIN_MARGE)
+    tolerance = round(cote * (1 - TOLERANCE_COTE), 2)
+    if plancher is None:
+        return tolerance
+    return max(tolerance, math.ceil(round(plancher * 100, 6)) / 100)
+
+
 def construire(flux: dict, actuelles: list[dict], maintenant: datetime | None = None) -> dict:
     """Un ordre par alerte encore valable ; ``flux`` vient de ``notifications.flux``."""
     maintenant = maintenant or datetime.now(timezone.utc)
@@ -49,12 +67,15 @@ def construire(flux: dict, actuelles: list[dict], maintenant: datetime | None = 
         expire = min(recue + timedelta(minutes=VALIDITE_MIN), debut - timedelta(minutes=AVANT_DEBUT_MIN))
         if expire <= maintenant:
             continue
+        cote_min = cote_minimale(cote, a, o)
+        if cote < cote_min:                 # la cote relevée n'atteint déjà plus le plancher de valeur
+            continue
         ordres.append({
             "id": a["id"], "bookmaker": a.get("bookmaker"), "sport": o.get("sport"), "ligue": o.get("ligue"),
             "domicile": o.get("domicile"), "exterieur": o.get("exterieur"), "debut": debut.isoformat(),
             "marche": o.get("marche"), "periode": o.get("periode"), "ligne": o.get("ligne"), "issue": o.get("issue"),
             "pari": o.get("pari"), "libelle_bookmaker": o.get("libelle_bookmaker"),
-            "cote_relevee": cote, "cote_min": round(cote * (1 - TOLERANCE_COTE), 2), "mise": MISE_EUR,
+            "cote_relevee": cote, "cote_min": cote_min, "mise": MISE_EUR,
             "mise_kelly": a.get("mise_kelly"),
             "expire_le": expire.isoformat(), "strategies": a.get("labels", []),
             **lien_ordre(a, o),

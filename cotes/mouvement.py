@@ -67,6 +67,21 @@ def _id(match_id, k: tuple) -> str:
     return hashlib.blake2b(f"{match_id}|{k}".encode(), digest_size=6).hexdigest()
 
 
+def _cote_pinnacle(mid_fr, k: tuple, l: dict) -> tuple:
+    """(match Pinnacle, clé dans l'ordre de Pinnacle) de la ligne ``l`` rangée sous le match français ``mid_fr``.
+
+    Un même match Pinnacle est associé à un match de chaque bookmaker français : sans cette clé, son mouvement
+    comptait une fois par bookmaker dans les statistiques du z (19/11/2026). Ligne sans identifiant ou incomplète :
+    repli sur le match français et sa clé."""
+    mid = l.get("match_id")
+    if mid is None:
+        return mid_fr, k
+    try:
+        return mid, cle(l)
+    except (KeyError, TypeError, ValueError):
+        return mid_fr, k
+
+
 def lire(chemin: Path | None) -> dict:
     if chemin is None:
         return {}
@@ -141,14 +156,16 @@ def annoter(opportunites: list[dict], index: dict, chemin: Path | None, maintena
     if chemin is None:
         return {"actif": False}
     try:
+        pinnacle = index.get("Pinnacle") or {}
         lignes: dict[str, float] = {}
         cles: dict[str, tuple] = {}
-        for mid_fr, par_cle in (index.get("Pinnacle") or {}).items():
+        for mid_fr, par_cle in pinnacle.items():
             for k, l in par_cle.items():
                 p = l.get("proba_juste")
                 if isinstance(p, (int, float)) and 0 < p < 1:
-                    i = _id(mid_fr, k)
-                    lignes[i], cles[i] = p, (mid_fr, k)
+                    mid, kp = _cote_pinnacle(mid_fr, k, l)
+                    i = _id(mid, kp)
+                    lignes[i], cles[i] = p, (mid, kp)     # une seule fois par cote Pinnacle, quel que soit le bookmaker
         ancres = lire(chemin)
         mouvements = mettre_a_jour(ancres, lignes, maintenant)
         mesures: dict[str, list[float]] = {}
@@ -165,13 +182,15 @@ def annoter(opportunites: list[dict], index: dict, chemin: Path | None, maintena
         n = figees = 0
         for o in opportunites:
             k = cle(o)
-            m = mouvements.get(_id(o.get("match_id"), k))
+            l = (pinnacle.get(o.get("match_id")) or {}).get(k)
+            mid, kp = _cote_pinnacle(o.get("match_id"), k, l) if isinstance(l, dict) else (o.get("match_id"), k)
+            m = mouvements.get(_id(mid, kp))
             if m:
                 o["mouvement_pinnacle"], o["mouvement_s"] = m
-                base = avant.get(_groupe(k))
+                base = avant.get(_groupe(kp))
                 if base:
                     o["mouvement_z"] = round((m[0] - base[0]) / base[1], 2)
-                o["mouvement_lignes"] = episodes.get(_episode(o.get("match_id"), k), 0)
+                o["mouvement_lignes"] = episodes.get(_episode(mid, kp), 0)
                 n += 1
                 if est_figee(o):
                     if not o.get("suspect"):
