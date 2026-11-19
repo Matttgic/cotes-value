@@ -172,11 +172,11 @@
       règle, par exemple « seulement les cotes de 2 à 5 repérées par Pinnacle ». On fait comme si on misait 10 € sur
       chacun de ses paris. <b>Exemple</b> : « Pinnacle 12 · 81 réglés · +91 € » = la règle a choisi 81 paris terminés,
       qui auraient rapporté 91 €. Les « Recommandées » sont les meilleures du moment : coche-les dans Notifs.</p>
-      <span class="periode-badge cache" id="strategies-contexte">Suivi prospectif</span>
+      <span class="periode-badge" id="strategies-contexte">Suivi prospectif</span>
       <section id="strategies-recommandees" class="recommandees" aria-label="Stratégies recommandées"></section>
-      <div class="puces cache" id="strategies-periodes" aria-label="Période des stratégies"></div>
-      <div id="strategies-dates" class="cache"></div>
-      <div class="filtres filtres-strategies cache">
+      <div class="puces" id="strategies-periodes" aria-label="Période des stratégies"></div>
+      <div id="strategies-dates"></div>
+      <div class="filtres filtres-strategies">
         <div class="champ"><label for="strategies-ref">Afficher</label>
         <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
         <div class="champ"><label for="strategies-avis">Verdict</label>
@@ -184,7 +184,7 @@
         <div class="champ"><label for="strategies-tri">Classer par</label>
         <select id="strategies-tri"><option value="preuve" selected>Preuve (CLV Pinnacle, cas prudent)</option><option value="note">Note /100 (par match, robustesse)</option><option value="progression">Progression de la note (7 jours)</option><option value="gain">Gain net</option><option value="roi">ROI</option><option value="clv">CLV</option><option value="valeur">Valeur (ROI + CLV)</option><option value="regles">Paris réglés</option><option value="gagnes">Paris gagnés</option><option value="reussite">Réussite</option><option value="nom">Nom</option></select></div>
       </div>
-      <p class="aide cache" id="strategies-total"></p>
+      <p class="aide" id="strategies-total"></p>
       <details class="mode-emploi cache"><summary>Comment la note /100 est calculée</summary><p class="aide">Elle compte les
       <b>matchs</b>, pas les paris : plusieurs paris sur un même match gagnent ou perdent ensemble, ils sont réunis avant
       tout calcul. <b>Rentabilité prudente /25</b> : borne basse de l'intervalle de confiance à 80 % du ROI, calculée par
@@ -194,7 +194,7 @@
       <b>Régularité /15</b> : part de jours gagnants et plus forte baisse comparée au hasard. <b>Solidité /15</b> : nombre de
       matchs réglés, durée d'observation et cote moyenne. Note à partir de 10 matchs réglés, provisoire sous 50. Elle suit
       la période et la mise choisies. Descriptive : elle ne garantit aucun gain futur.</p></details>
-      <div class="vue-strategies-toggle cache" role="group" aria-label="Présentation des stratégies">
+      <div class="vue-strategies-toggle" role="group" aria-label="Présentation des stratégies">
         <button data-vue-strategies="liste" aria-pressed="true">Comparaison</button>
         <button data-vue-strategies="graphiques" aria-pressed="false">Graphiques</button>
       </div>
