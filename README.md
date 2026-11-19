@@ -240,6 +240,14 @@ de retard (cache). [Règle, origine et limites](docs/strategie-claude-drop.md).
 ### Claude · Drop z-score
 
 Variante de Drop Pinnacle, suivie dès le 18/11/2026 à 8 h : même règle, plus une chute inhabituelle pour son marché (z-score ≥ 2 face aux mouvements Pinnacle du même type de marché). Détails : [docs/strategie-claude-drop.md](docs/strategie-claude-drop.md).
+
+### Optimisée 19/11
+
+Suivie dès le 19/11/2026 à 18 h, issue de l'analyse de tous les paris
+([docs/analyse-paris-19-11.md](docs/analyse-paris-19-11.md)) : cote ≤ 5, écart ≥ 3 %, sans Winamax ni OlyBet, sans
+volley ni total au basket, au plus 24 h avant le match, une mise par cote. Variante « + Polymarket » : Pinnacle
+seulement, Polymarket voit aussi un écart ≥ 5 %. Les notifications proposent depuis le même jour une mise Kelly 1/16
+sur l'avantage compté. [Règle, chiffres et limites](docs/strategie-optimisee.md).
 ### Avis d'analyste
 
 Chaque fiche de stratégie porte un verdict (« Fiable », « Prometteur mais pas prouvé », « Chance ou yo-yo », « Trop
