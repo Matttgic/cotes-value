@@ -298,11 +298,16 @@ def libelle(pari: dict, match: dict) -> str:
                          "sport": match.get("sport")})
 
 
+SEPARATEURS_COMBINE = r",(?!\d)|\s(?:et|puis)\s|(?<!\d)\s\+\s(?!\d)|(?<=[a-z])\+(?=[a-z])|\s&\s"
+
+
 def selections(r: dict) -> int:
-    """Nombre de sélections du boost : 1 s'il est traduit en pari standard, sinon les « , » et « et » de l'intitulé."""
+    """Nombre de sélections du boost : 1 s'il est traduit en pari standard, sinon les séparateurs de combiné de
+    l'intitulé (ceux que ``traduire`` refuse) : « , », « et », « puis », « + » et « & ». Pas de coupe sur une virgule
+    décimale (« 2,5 ») ni sur un « + » de ligne ou de seuil (« +4,5 », « 1+ tir »)."""
     if r.get("pari"):
         return 1
-    return len([x for x in re.split(r",(?!\d)| et ", normaliser(r.get("libelle"))) if x.strip()]) or 1
+    return len([x for x in re.split(SEPARATEURS_COMBINE, normaliser(r.get("libelle"))) if x.strip()]) or 1
 
 
 def verdict(r: dict) -> tuple[str, float | None]:

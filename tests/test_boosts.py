@@ -206,6 +206,24 @@ def test_verdict_jouer_ou_passer():
     assert B.verdict({"value": None, "marge_seuil": None}) == ("passer", None)
 
 
+@pytest.mark.parametrize("libelle, n", [
+    ("PSG gagne + Mbappé marque + Plus de 2,5 buts", 3),
+    ("Real gagne & Bellingham buteur", 2),
+    ("Arsenal gagne puis plus de 1,5 buts", 2),
+    ("Lyon gagne, Paris gagne et Lens gagne", 3),
+    ("Lakers +4,5", 1),
+    ("Plus de 2,5 buts", 1),
+    ("Lakers + 4,5 points", 1),
+    ("Mbappé 1+ tir cadré", 1),
+])
+def test_selections_compte_tous_les_separateurs_de_combine(libelle, n):
+    assert B.selections({"libelle": libelle}) == n
+
+
+def test_selections_boost_traduit_vaut_une():
+    assert B.selections({"libelle": "PSG gagne + Mbappé marque", "pari": "PSG"}) == 1
+
+
 def test_evaluer_donne_un_verdict_a_chaque_boost():
     boost = {"id": "c", "bookmaker": "Winamax", "domicile": "Carlos Alcaraz", "exterieur": "Frances Tiafoe",
              "debut": "2026-11-16T13:00:00+00:00", "libelle": "Alcaraz gagne et plus de 22,5 jeux",
