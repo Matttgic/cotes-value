@@ -85,7 +85,7 @@ def test_la_prise_enregistre_la_preuve_des_composantes():
     from datetime import datetime, timezone
     from cotes.simulation import placer
     o = {"ecart": 0.05, "cote": 2.1, "reference": "Consensus", "match_id": "winamax|1",
-         "detecte": "2026-10-07T10:00:00+00:00", "bookmaker": "Winamax", "sport": "football",
+         "detecte": "2026-10-07T10:00:00+00:00", "bookmaker": "Betclic", "sport": "football",
          "domicile": "Lens", "exterieur": "Lille", "debut": "2026-10-07T18:00:00+00:00",
          "marche": "RESULTAT_1N2", "periode": "MATCH", "issue": "DOM", "pari": "Lens", "cote_juste": 2.0,
          "composantes": {"Pinnacle": 2.01, "Polymarket": 1.99}, "preuves_composantes": COMPOSANTES,

@@ -34,6 +34,14 @@ MISE = 10.0
 # 5–10 : −33 % ; > 15 : réussite de 0 à 3 % et ROI de −39 à −80 %, avec des écarts annoncés de 12 à 20 %
 # (cotes fantômes, biais favori/outsider de la cote juste). Les anciens paris restent comptés tels quels.
 COTE_MAX_PRISE = 5.0
+# Règle de prise du 19/11/2026 (docs/analyse-paris-19-11.md), appliquée comme le plafond de cote : plus de nouveaux
+# paris hors règle, et les anciens sortent de tous les bilans du site (archivés dans hors_plafond.json, jamais
+# supprimés des données). Ces segments ne battent pas la clôture Pinnacle sur les trois périodes mesurées.
+ECART_MIN_PRISE = 0.03
+BOOKMAKERS_EXCLUS = ("Winamax", "OlyBet")
+SPORTS_EXCLUS = ("volley",)
+MARCHES_EXCLUS_PAR_SPORT = {"basket": ("TOTAL",)}       # le total d'une équipe (TOTAL_DOM, TOTAL_EXT) reste
+AVANCE_MAX_PRISE_H = 24.0
 INF = float("inf")
 FRAICHEUR_PRISE_MIN = 15
 SIMULATIONS = {     # écart dans [ecart, ecart_max[, cote dans [cote_min, cote_max]
@@ -44,6 +52,27 @@ SIMULATIONS = {     # écart dans [ecart, ecart_max[, cote dans [cote_min, cote_
     "E": {"ecart": 0.07, "ecart_max": INF, "cote_min": 1.0, "cote_max": 10.0, "nom": "7 % et plus"},
     # X (cotes > 10) : retirée le 11/11/2026 avec le plafond de cote à 5 (COTE_MAX_PRISE).
 }
+
+
+def motif_hors_regle(p: dict) -> str | None:
+    """Pourquoi un pari (ou une opportunité) sort de la règle de prise, ou None s'il y entre. Une valeur absente ne
+    l'exclut pas (``placer`` exige déjà une cote et un écart valides)."""
+    cote, ecart = p.get("cote"), p.get("ecart")
+    if _nombre_fini(cote) and cote > COTE_MAX_PRISE:
+        return f"cote > {COTE_MAX_PRISE:g}"
+    if _nombre_fini(ecart) and round(ecart, 6) < ECART_MIN_PRISE:
+        return "écart < 3 %"
+    if p.get("bookmaker") in BOOKMAKERS_EXCLUS:
+        return p["bookmaker"]
+    sport = p.get("sport")
+    if sport in SPORTS_EXCLUS:
+        return sport
+    if p.get("marche") in MARCHES_EXCLUS_PAR_SPORT.get(sport, ()):
+        return f"{sport} · {p['marche'].lower()}"
+    t, debut = _heure(p.get("detecte")), _heure(p.get("debut"))
+    if t and debut and t.tzinfo and debut.tzinfo and (debut - t).total_seconds() > AVANCE_MAX_PRISE_H * 3600:
+        return "plus de 24 h avant le match"
+    return None
 
 
 def simulation_de(ecart: float, cote: float) -> str | None:
@@ -79,7 +108,7 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
             continue
         if not _lectures_fraiches(o, decision, debut):
             continue
-        if o["cote"] > COTE_MAX_PRISE:
+        if motif_hors_regle({**o, "detecte": decision.isoformat()}):
             continue
         code = simulation_de(o["ecart"], o["cote"])
         if code is None:

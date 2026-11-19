@@ -1,7 +1,7 @@
 """Cycle complet à blanc, sans réseau (docs/architecture-cible.md, E0.2).
 
 `cycle.main()` tourne de bout en bout sur un dossier vide : Pinnacle donne un match de football (1N2),
-Winamax la même affiche avec une cote 5 % au-dessus de la cote juste, les autres sources sont vides ou coupées.
+PMU la même affiche avec une cote 5 % au-dessus (Winamax est hors règle de prise depuis le 19/11/2026) de la cote juste, les autres sources sont vides ou coupées.
 Filet de sécurité des déplacements de la phase 3 : mêmes fichiers écrits, mêmes clés du journal.
 """
 import gzip
@@ -28,7 +28,7 @@ def _lignes(maintenant: datetime):
     pinnacle = [{**commun, "source": "Pinnacle", "bookmaker": "pinnacle", "match_id": "pin-1", "issue": issue,
                  "cote": round(1 / (p * 1.03), 3), "proba_juste": p, "marge_pinnacle": 0.03, "age_cache_s": 5}
                 for issue, p in PROBAS.items()]
-    winamax = {**commun, "source": "Winamax", "bookmaker": "winamax", "match_id": "wina-1", "issue": "DOM",
+    winamax = {**commun, "source": "PMU", "bookmaker": "pmu", "match_id": "pmu-1", "issue": "DOM",
                "cote": round(1.05 / PROBAS["DOM"], 2), "libelle": "Lens"}
     return pinnacle, winamax
 
@@ -64,9 +64,9 @@ def cycle_a_blanc(tmp_path, monkeypatch):
     _controle_conforme(donnees, winamax, maintenant)
     monkeypatch.setattr(cycle.pinnacle, "collecter", lambda *a, **k: [dict(l) for l in pinnacle])
     monkeypatch.setattr(cycle.polymarket, "collecter", lambda *a, **k: [])
-    monkeypatch.setattr(cycle.winamax_direct, "collecter",
+    monkeypatch.setattr(cycle.pmu_direct, "collecter",
                         lambda *a, **k: ([dict(winamax)], {"ok": True, "erreurs": [], "requetes": 1, "matchs": 1}))
-    for module in (cycle.pmu_direct, cycle.betclic_direct, cycle.unibet_direct):
+    for module in (cycle.winamax_direct, cycle.betclic_direct, cycle.unibet_direct):
         monkeypatch.setattr(module, "collecter", lambda *a, **k: (list(VIDE[0]), dict(VIDE[1])))
     monkeypatch.setattr(sys, "argv", ["cycle.py", "--mode", "complet", "--donnees", str(donnees), "--sans-site",
                                       "--reglement", "non"])
@@ -83,7 +83,7 @@ def test_cycle_complet_sans_reseau(cycle_a_blanc, capsys):
     assert cycle.main() == 0
     assert time.perf_counter() - t < 5
     paris = _paris(donnees)
-    assert [p["bookmaker"] for p in paris] == ["Winamax"]
+    assert [p["bookmaker"] for p in paris] == ["PMU"]
     assert paris[0]["issue"] == "DOM" and paris[0]["reference"] in ("Pinnacle", "Consensus")
     jours = list((donnees / "opportunites").glob("*.jsonl.gz"))
     assert len(jours) == 1

@@ -17,7 +17,7 @@ from scripts import empreinte_site as es  # noqa: E402
 
 def _pari(i: int, cote: float = 1.8) -> dict:
     return {"id": f"p{i}", "simulation": "D", "match_id": f"winamax|{i}", "reference": "Pinnacle",
-            "bookmaker": "Winamax", "sport": "football", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5,
+            "bookmaker": "Betclic", "sport": "football", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5,
             "issue": "PLUS", "detecte": f"2026-10-1{i}T12:00:00Z", "debut": f"2026-10-1{i}T18:00:00Z",
             "cloture_lue": f"2026-10-1{i}T17:40:00Z", "regle_le": f"2026-10-1{i}T20:00:00Z",
             "statut": "gagne" if i % 2 else "perdu", "cote": cote, "mise": 10,

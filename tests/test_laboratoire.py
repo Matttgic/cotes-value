@@ -10,7 +10,7 @@ R = Regle("test", "Pinnacle", 1.3, 3, .02, 36)
 
 
 def pari(id="a", **changes):
-    return {"id": id, "match_id": "book|"+id, "reference": "Pinnacle", "bookmaker": "Winamax",
+    return {"id": id, "match_id": "book|"+id, "reference": "Pinnacle", "bookmaker": "Betclic",
             "sport": "football", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS",
             "detecte": "2026-10-10T18:00:00Z", "debut": "2026-10-10T20:00:00Z",
             "lu_reference": "2026-10-10T17:59:00Z", "cote": 2.1, "cote_juste": 2.0, "ecart": .05,

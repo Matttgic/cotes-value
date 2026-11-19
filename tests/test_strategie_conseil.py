@@ -56,7 +56,7 @@ def test_accord_polymarket_exige_un_ecart_mesure():
 
 def test_convergence_ne_compte_que_les_prises_deja_vues():
     tot = dict(marche="TOTAL", issue="PLUS", ligne=2.5)
-    a = pari("a", **tot)
+    a = pari("a", **tot, bookmaker="Winamax")
     b = pari("a", **tot, id="b", bookmaker="Betclic", match_id="betclic|a", detecte="2026-10-15T09:05:00Z",
              lu_reference="2026-10-15T09:05:00Z")
     c = pari("a", **tot, id="c", bookmaker="PMU", match_id="pmu|a", detecte="2026-10-15T08:00:00Z",

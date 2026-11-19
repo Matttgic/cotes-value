@@ -7,7 +7,7 @@ from cotes.strategie_jules_v2 import JULES_V2, analyser_jules_v2, motif_refus_ju
 
 
 def pari(pid="alpha", **kw):
-    p = {"id": pid, "match_id": "winamax|"+pid, "bookmaker": "Winamax", "reference": "Pinnacle",
+    p = {"id": pid, "match_id": "winamax|"+pid, "bookmaker": "Betclic", "reference": "Pinnacle",
          "sport": "football", "ligue": "France Ligue 1", "domicile": "Paris "+pid,
          "exterieur": "Lyon "+pid, "match_reference": "Paris "+pid+" - Lyon "+pid,
          "simulation": "D", "detecte": "2026-10-15T09:00:00Z", "debut": "2026-10-15T12:00:00Z",
@@ -136,7 +136,7 @@ def test_bilan_courbe_cartes_navigation_et_prix_exact_coherents(tmp_path, monkey
     avant = deepcopy(rows)
     assert bilan(rows)["D|JULES EDGE v2"]["regles"] == 2
     assert bilan(rows)["D|JULES EDGE v2"]["gains"] == 1
-    assert bilan_bookmakers(rows)["Winamax·D|JULES EDGE v2"]["gains"] == 1
+    assert bilan_bookmakers(rows)["Betclic·D|JULES EDGE v2"]["gains"] == 1
     assert bilan_tranches(rows)["2,01 – 3,00|JULES EDGE v2"]["regles"] == 2
     assert sum(x[1] for x in site_web.courbes(rows)["JULES EDGE v2"]) == 1
     (tmp_path/"paris.json").write_text(json.dumps(rows))

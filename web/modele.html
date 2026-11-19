@@ -406,7 +406,7 @@ const dc = (D.etat||{}).dernier_cycle || {};
 document.getElementById("maj").textContent = dc.debut ? "mis à jour " + quand(dc.debut) + (dc.mode==="test" ? " · test" : "") : "pas encore de données";
 { const h = D.hors_plafond, z = document.getElementById("bilan-hors-plafond");
   if (z && h && h.paris) { z.hidden = false;
-    z.innerHTML = `Cotes au-dessus de ${h.plafond} exclues (${h.paris} paris, ${eur(h.gain)}) · <a href="hors_plafond.json">archive</a>`; } }
+    z.innerHTML = `Paris hors règle exclus : ${h.paris} paris, ${eur(h.gain)}${h.motifs ? " (" + Object.entries(h.motifs).map(([m, n]) => `${m} : ${n}`).join(", ") + ")" : ""} · <a href="hors_plafond.json">archive</a>`; } }
 document.getElementById("fraicheur")?.setAttribute("title", "Santé du système · " + document.getElementById("maj").textContent);
 // Le bilan a deux vues : les paris uniques et les stratégies (ancienne page Stratégies).
 let vueBilan = "uniques";

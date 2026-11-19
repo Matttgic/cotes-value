@@ -49,11 +49,24 @@ Ne change pas : les bilans du site gardent leur mode Kelly ¼ (`simulation.mise_
 retire pas ce qui est déjà misé sur le même match (l'étude le fait) : à faire à la main si plusieurs paris tombent
 sur un match.
 
-## Ce qui ne change pas
+## Règle appliquée à tout le site (comme le plafond de cote du 11/11)
 
-La simulation de base (`placer`) prend toujours tout à cote ≤ 5 : les stratégies déjà lancées (Fusion 1, Pinnacle
-1,3–2 · ≥ 2 %…) en dépendent et sont figées. Pour jouer la règle optimisée, cocher « Optimisée 19/11 » dans
-Notifications.
+Depuis le 19/11/2026, la même règle (`simulation.motif_hors_regle`) s'applique **à la prise et à tous les bilans** :
+
+- `placer` ne prend plus de pari hors règle : cote > 5, écart < 3 %, Winamax, OlyBet, volley, total au basket, plus
+  de 24 h avant le match. Une cote vue à plus de 24 h est prise à sa première détection dans les 24 h, si elle est
+  encore là.
+- Le site retire les anciens paris hors règle de tous les bilans (Bilan, Paris, stratégies), sans les supprimer des
+  données : ils sont dans `hors_plafond.json`, avec leur nombre par motif sous le Bilan.
+
+Effet sur les paris uniques réglés au 19/11 : **1 447 gardés, +519 €, ROI +3,6 %** ; 4 112 exclus, −3 563 €,
+ROI −8,7 %. Motifs, sur tous les paris enregistrés (écart < 3 % : 2 501 ; cote > 5 : 1 095 ; plus de 24 h : 609 ; Winamax : 428 ; OlyBet : 212 ; total au
+basket : 158 ; volley : 75 ; un pari peut avoir plusieurs motifs, seul le premier est compté).
+
+Conséquence : les stratégies qui prenaient ces paris les perdent aussi, dans leurs bilans et à l'avenir (règles à
+écart ≥ 2 %, Fusion 1, Liquidité sûre, bookmakers Winamax…), comme les cotes > 5 le 11/11. Le protocole
+(`scripts/protocole.py`) garde sa propre mesure, figée le 15/11. La stratégie « Optimisée 19/11 » fait désormais
+presque doublon avec le Bilan ; elle reste suivie (inscrite au protocole).
 
 ## Limites
 

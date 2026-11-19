@@ -196,7 +196,7 @@ def test_ecart_affiche_meme_hors_decision():
 
 def test_moyenne_des_paris_regles_reutilise_lancien_ecart():
     base = {"simulation": "A", "mise": 10, "marche": "VAINQUEUR", "periode": "MATCH", "ligne": None,
-            "issue": "DOM", "joueur": None, "cote": 2.2, "bookmaker": "Winamax",
+            "issue": "DOM", "joueur": None, "cote": 2.2, "bookmaker": "Betclic",
             "detecte": "2026-10-01T10:00:00+00:00"}
     ancien = {**base, "match_id": "m1", "reference": "Polymarket", "ecart": 0.04, "statut": "gagne", "gain": 12}
     nouveau = {**base, "match_id": "m2", "reference": "Pinnacle", "ecart": 0.05, "statut": "perdu",
@@ -317,7 +317,7 @@ def test_bilan_affiche_ecart_vs_smarkets(tmp_path):
     import site_web
     pari = {"id": "p1", "simulation": "A", "reference": "Polymarket", "match_id": "m1", "marche": "TOTAL",
             "periode": "MATCH", "ligne": 2.5, "issue": "PLUS", "detecte": "2026-10-01T10:00:00+00:00",
-            "statut": "gagne", "cote": 2.1, "bookmaker": "Winamax", "sport": "football", "mise": 10,
+            "statut": "gagne", "cote": 2.1, "bookmaker": "Betclic", "sport": "football", "mise": 10,
             "gain": 11, "clv": 0.02, "ecart": 0.04, "ecart_smarkets": 0.03, "domicile": "Fulham",
             "exterieur": "Crystal Palace", "pari": "Plus de 2,5"}
     (tmp_path / "paris.json").write_text(json.dumps([pari]), encoding="utf-8")

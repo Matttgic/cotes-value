@@ -355,7 +355,7 @@ def test_construire_attache_l_avis_sans_rien_selectionner(tmp_path):
     sys.path.insert(0, str(RACINE / "scripts"))
     import site_web
 
-    pari = {"id": "p1", "simulation": "D", "match_id": "m1", "reference": "Pinnacle", "bookmaker": "Winamax",
+    pari = {"id": "p1", "simulation": "D", "match_id": "m1", "reference": "Pinnacle", "bookmaker": "Betclic",
             "sport": "football", "marche": "TOTAL", "periode": "MATCH", "ligne": 2.5, "issue": "PLUS",
             "detecte": "2026-10-15T12:00:00Z", "debut": "2026-10-15T18:00:00Z",
             "cloture_lue": "2026-10-15T17:40:00Z", "regle_le": "2026-10-15T20:00:00Z",

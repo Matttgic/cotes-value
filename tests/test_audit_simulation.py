@@ -199,5 +199,5 @@ def test_paris_hors_plafond_resume_et_archive():
     b = {"id": "b", "cote": 12.0, "statut": "gagne", "gain": 110.0, "mise": 10.0, "debut": "2026-11-02T10:00:00+00:00"}
     c = {"id": "c", "cote": 30.0, "statut": "en_cours", "gain": None, "mise": 10.0, "debut": "2026-11-03T10:00:00+00:00"}
     r = W.resume_hors_plafond([a, b, c])
-    assert r == {"plafond": 5.0, "paris": 3, "regles": 2, "gain": 100.0, "mises": 20.0}
+    assert r == {"plafond": 5.0, "paris": 3, "regles": 2, "gain": 100.0, "mises": 20.0, "motifs": {"cote > 5": 3}}
     assert [x["id"] for x in W.archive_hors_plafond([a, b, c])] == ["c", "b", "a"]
