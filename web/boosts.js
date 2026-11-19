@@ -166,3 +166,40 @@ function rendreBoosts() {
   rendreCouverts();
   rendreBoostsListe();
 }
+
+// Bilan › Boosts : boosts « jouer » à régler à la main (texte à copier pour Claude) et boosts réglés
+// (donnees/boosts_resultats.json, scripts/regler_boosts.py).
+function texteBoostsARegler(liste) {
+  const jour = x => x ? new Intl.DateTimeFormat('fr-FR', {timeZone: 'Europe/Paris', weekday: 'short', day: '2-digit',
+    month: '2-digit', hour: '2-digit', minute: '2-digit'}).format(new Date(x)) : '?';
+  const match = b => [b.domicile, b.exterieur].filter(Boolean).join(' – ');
+  return ['Boosts à régler (gagné / perdu / remboursé) :'].concat(liste.map(b =>
+    `${b.code} · ${jour(b.debut)} · ${b.bookmaker} · ${match(b)} · ${b.libelle} · cote ${fr2(b.cote)} · mise ${fr2(b.mise)} €`)).join('\n');
+}
+function rendreBilanBoosts() {
+  const B = D.boosts || {}, zone = document.getElementById('bb-a-regler');
+  if (!zone) return;
+  const aRegler = B.a_regler || [], regles = B.regles || [], s = B.bilan_regles || {};
+  document.getElementById('bb-kpis').innerHTML = s.n ? kpis([
+    ['Gain net', (s.gain >= 0 ? '+' : '') + fr2(s.gain) + ' €', signe(s.gain), `${s.n} boosts réglés`],
+    ['ROI', s.roi == null ? '—' : pct(s.roi), signe(s.gain), `${fr2(s.mise)} € misés`],
+    ['Gagnés', `${s.gagnes}/${s.n}`, '', 'boosts gagnés']
+  ]) : '<p class="aide">Aucun boost réglé pour l’instant.</p>';
+  document.getElementById('bb-n').textContent = aRegler.length ? String(aRegler.length) : '';
+  zone.innerHTML = aRegler.length
+    ? `<textarea class="bb-texte" id="bb-texte" readonly rows="${Math.min(12, aRegler.length + 1)}">${e(texteBoostsARegler(aRegler))}</textarea>
+<p><button type="button" class="btn" id="bb-copier">Copier la liste</button> <span class="aide" id="bb-copie" role="status"></span></p>`
+    : '<p class="aide">Rien à régler.</p>';
+  const bouton = document.getElementById('bb-copier');
+  if (bouton) bouton.onclick = async () => {
+    const t = document.getElementById('bb-texte'), msg = document.getElementById('bb-copie');
+    try { await navigator.clipboard.writeText(t.value); msg.textContent = 'Copié. Colle-le dans ton message à Claude.'; }
+    catch { t.select(); msg.textContent = 'Sélectionné : copie-le à la main.'; }
+  };
+  const mot = {gagne: 'Gagné', perdu: 'Perdu', rembourse: 'Remboursé'};
+  document.getElementById('bb-regles').innerHTML = regles.length ? regles.map(r =>
+    `<div class="acc-resultat"><span><b>${e([r.domicile, r.exterieur].filter(Boolean).join(' – '))}</b>
+<small>${e(r.libelle)} · ${e(r.bookmaker)} ${fr2(r.cote)} · mise ${fr2(r.mise)} €${r.score ? ' · ' + e(r.score) : ''} · ${mot[r.statut] || e(r.statut)}</small></span>
+<b class="${signe(r.gain)}">${(r.gain >= 0 ? '+' : '') + fr2(r.gain)} €</b></div>`).join('')
+    : '<p class="aide">Aucun boost réglé pour l’instant.</p>';
+}

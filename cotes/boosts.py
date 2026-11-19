@@ -603,6 +603,54 @@ def bilan_couverts(episodes: list[dict], maintenant: datetime, jours: int = 7) -
             "rendement_median": round(median(e["rendement_initial"] for e in es), 4)}
 
 
+# --- Règlement à la main des boosts « jouer » (donnees/boosts_resultats.json, écrit par scripts/regler_boosts.py)
+# Les boosts n'ont pas de source de résultats : leur match commencé, ceux au verdict « jouer » attendent un résultat saisi
+# à la main. Chaque résultat garde une copie du boost (l'épisode disparaît de boosts.json après GARDER_JOURS) ; mise =
+# mise maximale du boost (10 € si inconnue), à la cote de la première lecture.
+STATUTS_BOOST = {"gagne": "gagné", "perdu": "perdu", "rembourse": "remboursé"}
+CHAMPS_REGLE = ("id", "bookmaker", "libelle", "pari", "domicile", "exterieur", "debut", "sport", "lien")
+
+
+def code_boost(ident: str) -> str:
+    """Code court et stable d'un boost (« B-3F2A0C »), à recopier dans un message."""
+    return "B-" + hashlib.sha1(str(ident).encode()).hexdigest()[:6].upper()
+
+
+def boosts_a_regler(episodes: list[dict], resultats: dict, maintenant: datetime) -> list[dict]:
+    """Boosts « jouer » dont le match a commencé, sans résultat saisi, du plus ancien au plus récent."""
+    out = []
+    for e in episodes:
+        debut = _t(e.get("debut"))
+        if (e.get("id") and e["id"] not in resultats and _verdict_episode(e) == "jouer" and debut and debut <= maintenant
+                and e.get("cote")):
+            out.append({**{k: e.get(k) for k in CHAMPS_REGLE}, "code": code_boost(e["id"]), "cote": e["cote"],
+                        "mise": e.get("mise_max") or MISE_DEFAUT, "mise_max_connue": bool(e.get("mise_max"))})
+    return sorted(out, key=lambda x: x.get("debut") or "")
+
+
+def gain_boost(statut: str, cote: float, mise: float) -> float:
+    return round(mise * (cote - 1), 2) if statut == "gagne" else -mise if statut == "perdu" else 0.0
+
+
+def regler_boost(episode: dict, statut: str, maintenant: datetime, score: str | None = None) -> dict:
+    """Résultat d'un boost, autonome (copie du boost, mise, gain)."""
+    if statut not in STATUTS_BOOST:
+        raise ValueError(f"statut inconnu : {statut} (gagne, perdu ou rembourse)")
+    mise = episode.get("mise_max") or MISE_DEFAUT
+    return {**{k: episode.get(k) for k in CHAMPS_REGLE}, "code": code_boost(episode["id"]), "cote": episode["cote"],
+            "mise": mise, "statut": statut, "score": score or None, "gain": gain_boost(statut, episode["cote"], mise),
+            "regle_le": maintenant.isoformat(timespec="seconds")}
+
+
+def bilan_regles(resultats: dict) -> dict:
+    """Bilan des boosts réglés à la main : nombre, gagnés, mises, gain net, ROI."""
+    rs = [r for r in resultats.values() if isinstance(r, dict) and r.get("statut") in STATUTS_BOOST]
+    mise = round(sum(r.get("mise") or 0 for r in rs if r["statut"] != "rembourse"), 2)
+    gain = round(sum(r.get("gain") or 0 for r in rs), 2)
+    return {"n": len(rs), "gagnes": sum(r["statut"] == "gagne" for r in rs), "mise": mise, "gain": gain,
+            "roi": round(gain / mise, 4) if mise else None}
+
+
 def publier(actuels: list[dict], etat: dict, maintenant: datetime, journal: dict | None = None,
             couverts_du_cycle: list[dict] | None = None) -> dict:
     """Document ``donnees/boosts.json`` : boosts du cycle, épisodes suivis, boosts couverts du cycle et leurs

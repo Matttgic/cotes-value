@@ -23,17 +23,25 @@ function nomMiseAccueil(mode) { return typeof nomMise === 'function' ? nomMise(m
 // Le chapô : un exemple chiffré plutôt qu'une explication.
 function chapoAccueil(jouer, enCours) {
   const x=jouer[0] && jouer[0].p;
-  if(!x) return `${enCours} paris en cours, aucun ne passe la règle du jour : leur bookmaker ou leur référence ne bat pas encore la clôture Pinnacle.`;
+  if(!x) return `${enCours} paris en cours, aucun n'est assez sûr aujourd'hui.`;
   return `Exemple : ${e(x.bookmaker)} paie <b>${cote(x.cote)}</b> sur « ${e(x.pari)} » (${e(x.domicile)} – ${e(x.exterieur)}). `
     +`${e(x.reference)} estime le juste prix à <b>${cote(x.cote_juste)}</b> : on est payé ${pct(x.ecart)} de plus que ce que le pari vaut.`;
 }
 function carteRecommandee(x, i, noms) {
-  const P=typeof preuveDe==='function' ? preuveDe(x.id) : null, d=x.depuis_entree || {};
-  const clv=P && P.clv!=null ? `<span class="${signe(P.clv)}">CLV Pinnacle ${pct(P.clv/100)}</span> · ${P.matchs} matchs` : 'pas encore mesurée';
-  const depuis=d.regles ? `depuis le ${x.depuis.slice(8,10)}/${x.depuis.slice(5,7)} : ${d.regles} réglés, <span class="${signe(d.gain)}">${eur(d.gain)}</span>`
-    : `depuis le ${x.depuis.slice(8,10)}/${x.depuis.slice(5,7)} : rien de réglé`;
+  const d=x.depuis_entree || {}, jour=`${x.depuis.slice(8,10)}/${x.depuis.slice(5,7)}`;
+  const depuis=d.regles ? `<span class="${signe(d.gain)}">${eur(d.gain)}</span> depuis le ${jour} (${d.regles} paris terminés)`
+    : `recommandée depuis le ${jour}, aucun pari terminé`;
   return `<div class="acc-rang"><span class="acc-num">${i+1}.</span><span class="acc-rang-nom"><b>${e(noms.get(x.id) || x.id)}</b>
-<small class="acc-rang-detail">${clv}<br>${depuis}</small></span></div>`;
+<small class="acc-rang-detail">${depuis}</small></span></div>`;
+}
+// Boost « jouer » du dernier relevé : la mise max en premier, c'est elle qu'on joue.
+function ligneAccueilBoost(b) {
+  const match=[b.domicile, b.exterieur].filter(Boolean).join(' – ');
+  return `<article class="acc-pari"><div class="acc-pari-texte"><span class="acc-meta">${b.sport ? e(nomSport(b.sport))+' · ' : ''}${e(match)}</span>
+<b>${e(b.libelle)}</b><span class="pari-debut">Match ${horairePari(b)}</span></div>
+<div class="acc-pari-prix"><span class="acc-book">${e(b.bookmaker)}</span><b class="acc-cote">${cote(b.cote)}</b>
+<small class="acc-ref">au lieu de ${cote(b.cote_avant)}</small><i class="acc-mise">Mise max ${b.mise_max ? euros(b.mise_max) : 'inconnue : 10 €'}</i>
+${boutonBookmaker({bookmaker: b.bookmaker, lien: b.lien, statut: 'en_cours'},true)}</div></article>`;
 }
 function rendreAccueil() {
   const cible=document.getElementById('acc-kpis');if(!cible) return;
@@ -58,10 +66,12 @@ function rendreAccueil() {
   document.getElementById('acc-titre').textContent=jouer.length ? `${jouer.length} pari${jouer.length>1?'s':''} à jouer` : 'Rien à jouer pour l\'instant';
   document.getElementById('une-chapo').innerHTML=chapoAccueil(jouer, enCours.length);
   document.getElementById('acc-values-n').textContent=jouer.length ? `${jouer.length} sur ${enCours.length} en cours` : '';
-  document.getElementById('acc-values').innerHTML=jouer.length ? jouer.slice(0,5).map(x=>ligneAccueilPari(x.p)).join('')
-    + (jouer.length>5 ? `<p class="aide">Et ${jouer.length-5} autres dans l'onglet Décision.</p>` : '')
+  document.getElementById('acc-values').innerHTML=jouer.length ? jouer.map(x=>ligneAccueilPari(x.p)).join('')
     : '<p class="aide">Aucun pari ne passe la règle du jour.</p>';
-  document.getElementById('acc-tous').textContent=`Les ${enCours.length} paris en cours →`;
+  const boosts=((D.boosts || {}).actuels || []).filter(b=>b.verdict==='jouer');
+  document.getElementById('acc-boosts-n').textContent=boosts.length ? String(boosts.length) : '';
+  document.getElementById('acc-boosts').innerHTML=boosts.length ? boosts.map(ligneAccueilBoost).join('')
+    : '<p class="aide">Aucun boost à jouer pour l\'instant.</p>';
   // Recommandées (cotes/recommandations.py) : la liste de la semaine, avec leur preuve et leur résultat depuis l'entrée.
   const noms=new Map(lignesStrategies('futur').map(r=>[r.id, r.nomCourt || r.nom]));
   const recos=(D.recommandees && D.recommandees.actuelles) || [];
