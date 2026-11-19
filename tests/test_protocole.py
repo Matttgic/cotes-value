@@ -14,9 +14,9 @@ SCELLES = [
     (72, "11985c81ed9f91a9e5a91e47caad4b251ac1f8dcd8e2fe38405de769bd01acb4"),      # Claude · Drop z-score, 18/11/2026
     (73, "f52a15726912d1a9684a1d26838cc25b22e37e4c3818c22456e1e29d69802ccf"),      # Optimisée 19/11, 19/11/2026
     (74, "d40c4266cfc84a698fde7c91b39809bbbdea5efd89f332e4858c392e299111da"),      # Optimisée 19/11 + Polymarket, 19/11/2026
-    (75, "ace477fba13daf86cc56dc6988e849bc9933ed5ee4de7d0ece2f25c5f598c8af"),      # IA · Socle sharp, 20/11/2026
-    (76, "b2f9cf5e2d910c85c5790aaa9b57aa6300a8ceb1e203132f14a7fa47b9ccdc47"),      # IA · Sniper écart, 20/11/2026
-    (77, "528f1cefc297090d2fa27e56a6ef0cff482ffeef8ef91a69cd7f5d94a0c259af"),      # IA · Consensus multi, 20/11/2026
+    (75, "eaca21113cd4df26fe58add66c5db39f97adf21732d8552f697498d04fc5aba2"),      # Néon 1 · Socle sharp, 20/11/2026
+    (76, "ecff3c317860308020f848ff16df4daea71c54a0a3a8ba4460f5bc515d4303c8"),      # Néon 2 · Sniper écart, 20/11/2026
+    (77, "e5f2ca7c34ec5489d81a383ce15352ff58360bb93f36cafa9862f239a01eb6e6"),      # Néon 3 · Consensus multi, 20/11/2026
 ]
 
 
