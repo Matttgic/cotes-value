@@ -164,7 +164,6 @@ function rendreBoosts() {
   }
   rendreSurebets();
   rendreCouverts();
-  rendreBoostsListe();
 }
 
 // Bilan › Boosts : boosts « jouer » à régler à la main (texte à copier pour Claude) et boosts réglés
@@ -177,6 +176,7 @@ function texteBoostsARegler(liste) {
     `${b.code} · ${jour(b.debut)} · ${b.bookmaker} · ${match(b)} · ${b.libelle} · cote ${fr2(b.cote)} · mise ${fr2(b.mise)} €`)).join('\n');
 }
 function rendreBilanBoosts() {
+  rendreBoostsListe();
   const B = D.boosts || {}, zone = document.getElementById('bb-a-regler');
   if (!zone) return;
   const aRegler = B.a_regler || [], regles = B.regles || [], s = B.bilan_regles || {};
