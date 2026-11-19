@@ -32,4 +32,6 @@ avec les autres à la demande de l'utilisateur, parce qu'elle suit le même chem
   ces paris, la cote de clôture était mal mesurée. Il faut toujours vérifier que le ROI va dans le même sens.
 - **La pause automatique ne voit que la CLV** (`cotes/pauses.py`). Une stratégie qui perd de l'argent avec une CLV
   positive doit être retirée à la main.
+- **Exemple de rechute** : « IA · Sniper écart » (20/11, [strategie-ia-value.md](strategie-ia-value.md)) reprend
+  le gros écart à moins de 12 h. En validation : CLV +6,2 %, ROI −24,6 %. Suivie, pas notifiée.
 - **Les handicaps et les « books lents »** (Betclic, PMU) avec un gros écart ont donné les pires résultats.

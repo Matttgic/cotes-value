@@ -14,6 +14,9 @@ SCELLES = [
     (72, "11985c81ed9f91a9e5a91e47caad4b251ac1f8dcd8e2fe38405de769bd01acb4"),      # Claude · Drop z-score, 18/11/2026
     (73, "f52a15726912d1a9684a1d26838cc25b22e37e4c3818c22456e1e29d69802ccf"),      # Optimisée 19/11, 19/11/2026
     (74, "d40c4266cfc84a698fde7c91b39809bbbdea5efd89f332e4858c392e299111da"),      # Optimisée 19/11 + Polymarket, 19/11/2026
+    (75, "ace477fba13daf86cc56dc6988e849bc9933ed5ee4de7d0ece2f25c5f598c8af"),      # IA · Socle sharp, 20/11/2026
+    (76, "b2f9cf5e2d910c85c5790aaa9b57aa6300a8ceb1e203132f14a7fa47b9ccdc47"),      # IA · Sniper écart, 20/11/2026
+    (77, "528f1cefc297090d2fa27e56a6ef0cff482ffeef8ef91a69cd7f5d94a0c259af"),      # IA · Consensus multi, 20/11/2026
 ]
 
 
