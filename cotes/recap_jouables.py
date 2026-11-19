@@ -125,16 +125,16 @@ def jouables(paris: list[dict], cotes: dict[tuple, tuple[str, float]]) -> list[d
 
 
 def messages(lignes: list[dict], bankroll: float, maintenant: datetime, par_message: int = 6) -> list[dict]:
-    """Messages Pushover (HTML) : une ligne par pari, lien cliquable, mise Kelly 1/16 (avantage compté) ramenée à la bankroll et
+    """Messages Pushover (HTML) : une ligne par pari, lien cliquable, mise Kelly ¼ sur l'avantage corrigé ramenée à la bankroll et
     arrondie à l'euro supérieur."""
-    from .strategie_optimisee import mise_kelly_16
+    from .strategie_optimisee import mise_conseillee
     out = []
     blocs = [lignes[i:i + par_message] for i in range(0, len(lignes), par_message)]
     for n, bloc in enumerate(blocs, 1):
         corps = []
         for p in bloc:
             d = datetime.fromisoformat(str(p["debut"]).replace("Z", "+00:00")).astimezone(PARIS)
-            mise = mise_arrondie(mise_kelly_16(p) * bankroll / 1000.0)
+            mise = mise_arrondie(mise_conseillee(p) * bankroll / 1000.0)
             minimum = math.ceil(round(p["cote_min"] * 100, 6)) / 100
             texte = (f'<b>{_h(p.get("domicile"))} – {_h(p.get("exterieur"))}</b> ({d:%d/%m %Hh%M})<br>'
                      f'{_h(p.get("pari"))} · {_h(p.get("bookmaker"))} @ {_fr(p["cote_actuelle"])} '

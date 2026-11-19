@@ -98,11 +98,11 @@ def _lignes_mise(kelly, mises: int, defaut: float) -> list[str]:
     """Ligne de mise ; affichage seul (les gains n'en dépendent pas)."""
     connue = isinstance(kelly, (int, float)) and not isinstance(kelly, bool) and kelly > 0
     if not (isinstance(mises, int) and mises > 1):
-        return [f"Mise Kelly 1/16 : {mise_arrondie(kelly)} €"] if connue else []
+        return [f"Mise Kelly ¼ corrigé : {mise_arrondie(kelly)} €"] if connue else []
     u = mise_arrondie(kelly if connue else defaut)
     if u is None:
         return []
-    return [f"Mise totale{' Kelly 1/16' if connue else ''} : {u * mises} € ({mises} × {u} €)"]
+    return [f"Mise totale{' Kelly ¼ corrigé' if connue else ''} : {u * mises} € ({mises} × {u} €)"]
 
 
 def _entete_utf8(texte: str) -> str:

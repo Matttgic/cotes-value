@@ -32,22 +32,36 @@ Volley : ROI −15,8 % [−27 ; −3], négatif sur les trois périodes. Total a
 
 ## Mise conseillée dans les notifications
 
-Depuis le 19/11, la mise des notifications (Pushover, ntfy, récapitulatif « Encore jouables ») est un **Kelly au
-1/16** sur l'avantage « compté » de l'étude du 14/11 (`mise_kelly_16`) :
+Depuis le 19/11, la mise des notifications (Pushover, ntfy, récapitulatif « Encore jouables ») est un **Kelly au ¼
+sur l'avantage « compté »** de l'étude du 14/11 (`mise_conseillee`). Le même jour, un premier essai au 1/16 a été
+jugé trop petit en euros et remplacé.
 
-    mise = 1 000 € × 1/16 × avantage compté / (cote − 1), plafonnée à 2 %, rapportée à la bankroll réglée
+    mise = bankroll × ¼ × avantage compté / (cote − 1), plafonnée à 2 % de la bankroll
 
 | Écart annoncé | < 3 % | 3 % | 4 % | 5 % | 7 % | ≥ 10 % |
 |---|---|---|---|---|---|---|
 | Avantage compté | 0 | +0,18 % | +1,01 % | +2,19 % | +4,64 % | +8,15 % |
 
-Entre deux points, interpolation linéaire. Exemples pour 1 000 € : cote 2,00 à 4 %, 0,63 € ; à 7 %, 2,90 € ; cote
-1,50 à 10 %, 10,19 €. La mise affichée est arrondie à l'euro supérieur, 1 € au moins. L'ancienne mise (Kelly ¼ sur
-l'écart brut) misait plus sur un écart de 3 % que l'avantage mesuré ne le justifie.
+Entre deux points, interpolation linéaire. Exemples pour 1 000 € : cote 2,00 à 4 %, 2,52 € ; à 7 %, 11,60 € ; cote
+1,50 à 10 %, 20 € (plafond). La mise affichée est arrondie à l'euro supérieur, 1 € au moins.
 
-Ne change pas : les bilans du site gardent leur mode Kelly ¼ (`simulation.mise_kelly`), déjà publié. La mise ne
-retire pas ce qui est déjà misé sur le même match (l'étude le fait) : à faire à la main si plusieurs paris tombent
-sur un match.
+Rejeu sur les 1 447 paris gardés au 19/11, bankroll fixe de 1 000 € :
+
+| Mise | Total misé | Gain | ROI |
+|---|---|---|---|
+| Fixe 10 € | 14 470 € | +519 € | +3,6 % |
+| Kelly ¼ sur l'écart brut (ancienne) | 18 271 € | +883 € | +4,8 % |
+| **Kelly ¼ sur l'avantage compté** | 9 341 € | +550 € | +5,9 % |
+| Kelly 1/16 sur l'avantage compté | 2 517 € | +161 € | +6,4 % |
+
+Le plafond de 2 % coupe les gros écarts : c'est pourquoi le Kelly ¼ compté ne fait pas 4 fois le gain du 1/16.
+
+**Bankroll** : `PUSHOVER_BANKROLL` (variable GitHub, 1 000 € par défaut), réglée à la main. Conseil : la baisser dès
+que la bankroll réelle tombe 10 % sous la valeur déclarée, la monter par paliers de +20 % (1 000 → 1 200 → 1 440…).
+
+Ne change pas : les bilans du site gardent leur mode Kelly ¼ sur l'écart brut (`simulation.mise_kelly`), déjà publié.
+La mise ne retire pas ce qui est déjà misé sur le même match : à faire à la main si plusieurs paris tombent sur un
+match.
 
 ## Règle appliquée à tout le site (comme le plafond de cote du 11/11)
 

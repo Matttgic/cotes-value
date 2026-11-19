@@ -81,7 +81,7 @@ def ligne_methode_claude(a: dict, env) -> str:
 
 
 def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> dict:
-    """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable). Mise Kelly 1/16 ramenée à
+    """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable). Mise Kelly ¼ corrigé ramenée à
     ``PUSHOVER_BANKROLL``."""
     env = os.environ if env is None else env
     maintenant = maintenant or datetime.now(timezone.utc)
