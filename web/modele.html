@@ -142,12 +142,19 @@
       <p class="explication"><b>À quoi sert cette page ?</b> Un boost, c'est une promo : le bookmaker paie plus cher que
       d'habitude, avec une mise max. <b>Exemple</b> : Winamax paie 3,50 au lieu de 2,90, mise max 20 €. Gagné : tu
       reçois 20 × 3,50 = 70 €, soit 50 € de gain. Perdu : tu perds 20 €. On joue ceux marqués « Jouer », à la mise max.</p>
-      <div class="bu-kpis" id="bb-kpis"></div>
+      <h3 class="bu-titre">Boosts du moment <small id="bo-maj"></small></h3>
+      <div id="bo-actuels"></div>
+      <div id="bo-bilan"></div>
+      <details class="mode-emploi"><summary>Comment c’est calculé</summary>
+        <p>Les boosts de Winamax, Unibet, NetBet et OlyBet sont lus à chaque relevé (Genybet et Betsson refusent les connexions hors de France). Quand l’intitulé est un pari standard (victoire, score exact, handicap « gagne par au moins N d’écart », mi-temps/fin, total, les deux équipes marquent, buteur, points d’un joueur), il est relié au même match et à sa cote juste chez la référence : value = cote boostée × probabilité juste − 1.</p>
+        <p><b>Jouer ou passer</b> : avec une cote juste, « Jouer » si la value est positive. Sans cote juste, « Jouer » si la marge sous laquelle le boost est rentable (1 − cote d’avant / cote boostée) dépasse de 5 points la marge habituelle du bookmaker (6 % par sélection, cumulée sur un combiné). Sans cote d’avant : « Passer ».</p>
+        <p>Combinés et intitulés non reconnus : pas de cote juste. La hausse (cote boostée / cote d’avant) et la marge sous laquelle le boost serait rentable sont un repère, pas une mesure. Mesuré par le dépôt cotes-boostees sur 979 boosts réglés : les jouer tous rapporte −6,6 %. Le « gain espéré » est une espérance ; le résultat réel est dans « Réglés », plus bas.</p></details>
       <h3 class="bu-titre">À régler <small id="bb-n"></small></h3>
       <p class="aide">Personne ne donne encore le résultat des boosts. Copie la liste, envoie-la à Claude : il cherche les
       scores et règle chaque boost.</p>
       <div id="bb-a-regler"></div>
       <h3 class="bu-titre">Réglés</h3>
+      <div class="bu-kpis" id="bb-kpis"></div>
       <div id="bb-regles"></div>
     </div>
     <div id="bilan-props" role="tabpanel" aria-labelledby="bt-props" hidden>
@@ -270,7 +277,7 @@
   </section>
   <section class="onglet" id="o-boosts">
     <div class="page-tete"><div><p class="surtitre">Gain garanti ou cote dopée</p><h2>Boosts et surebets</h2>
-      <p class="sous-texte">Surebets : des cotes de bookmakers différents qui, jouées ensemble, gagnent quoi qu’il arrive. Boosts couverts : un boost assez gros pour gagner quoi qu’il arrive en couvrant les autres issues. Cotes boostées : les promotions de Winamax, Unibet, NetBet et OlyBet comparées à la cote juste.</p></div></div>
+      <p class="sous-texte">Surebets : des cotes de bookmakers différents qui, jouées ensemble, gagnent quoi qu’il arrive. Boosts couverts : un boost assez gros pour gagner quoi qu’il arrive en couvrant les autres issues. Les cotes boostées (Jouer / Passer) sont dans Bilan › Boosts.</p></div></div>
     <h3 class="bu-titre">Surebets <small id="sb-maj"></small></h3>
     <p class="aide sb-reglage"><label for="sb-total">Somme à répartir</label> <input id="sb-total" class="champ sb-total" type="number" inputmode="numeric" min="10" max="100000" step="10" value="100"> €</p>
     <div id="sb-actuels"></div>
@@ -290,12 +297,6 @@
       <p>Un boost traduit en pari standard (1N2, vainqueur, double chance, les deux équipes marquent, handicap ou total à demi-ligne) est joué à sa mise maximale ; chaque autre issue est couverte à la meilleure cote française du relevé, pour le même retour. Si 1/cote boostée + la somme des 1/cote de couverture est sous 1, le gain est le même quel que soit le résultat : mise du boost × cote boostée × (1 − cette somme), aux arrondis près.</p>
       <p>Couvertures : mêmes cotes et mêmes garde-fous que les surebets (lues depuis moins de 10 minutes, proches de leur cote juste, intitulés contrôlés). « Vérifié » : le boost et chaque couverture ont une cote juste chez la référence et couvrent bien tous les résultats. Mise maximale inconnue : 10 € sur le boost.</p>
       <p>Garanti sur le papier seulement : la couverture peut bouger avant d’être jouée. Mise d’abord le boost (il peut disparaître), puis la couverture tout de suite.</p></details>
-    <h3 class="bu-titre">Cotes boostées <small id="bo-maj"></small></h3>
-    <div id="bo-actuels"></div>
-    <div id="bo-bilan"></div>
-    <details class="mode-emploi"><summary>Comment c’est calculé</summary>
-      <p>Les boosts de Winamax, Unibet, NetBet et OlyBet sont lus à chaque relevé (Genybet et Betsson refusent les connexions hors de France). Quand l’intitulé est un pari standard (victoire, score exact, handicap « gagne par au moins N d’écart », mi-temps/fin, total, les deux équipes marquent, buteur, points d’un joueur), il est relié au même match et à sa cote juste chez la référence : value = cote boostée × probabilité juste − 1.</p>
-      <p>Combinés et intitulés non reconnus : pas de cote juste. La hausse (cote boostée / cote d’avant) et la marge sous laquelle le boost serait rentable sont un repère, pas une mesure. Mesuré par le dépôt cotes-boostees sur 979 boosts réglés : les jouer tous rapporte −6,6 %. Les boosts ne sont pas encore réglés ici : le « gain espéré » est une espérance.</p></details>
   </section>
   <section class="onglet" id="o-analyses" aria-label="Analyses">
     <div class="page-tete"><div><p class="surtitre">Données et tendances</p><h2>Analyses</h2><p class="sous-texte">Résultats, volume et qualité des cotes.</p></div><span class="periode-badge" id="analyse-periode-badge">Suivi prospectif</span></div>
