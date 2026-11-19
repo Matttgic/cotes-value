@@ -15,7 +15,7 @@ function sourcesAccueil(p) {
 }
 function rangTexte(n) {return `${n}<sup>${n===1 ? 'er' : 'e'}</sup>`;}
 // Bilan des paris uniques réglés dans une mise donnée, quel que soit le mode affiché : même règle qu'appliquerMise
-// (mise Kelly ¼ quand le pari en a une, sinon la mise fixe d'origine).
+// (mise Kelly ⅛ corrigé, celle des alertes, quand le pari en a une, sinon la mise fixe d'origine).
 function bilanEnMise(ps, kelly) {
   let mises = 0, net = 0;
   for (const p of ps) {
@@ -25,7 +25,7 @@ function bilanEnMise(ps, kelly) {
   }
   return {net: Math.round(net * 100) / 100, roi: mises ? net / mises : null};
 }
-function nomMiseAccueil(mode) { return typeof nomMise === 'function' ? nomMise(mode) : mode === 'fixe' ? '10 € fixes' : 'Kelly ¼'; }
+function nomMiseAccueil(mode) { return typeof nomMise === 'function' ? nomMise(mode) : mode === 'fixe' ? '10 € fixes' : 'Kelly ⅛ corrigé'; }
 // Le chapô : un exemple chiffré plutôt qu'une explication.
 function chapoAccueil(jouer, enCours) {
   const x=jouer[0] && jouer[0].p;

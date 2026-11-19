@@ -43,40 +43,10 @@ OPTIMISEE_POLYMARKET = {
 }
 OPTIMISEES = (OPTIMISEE, OPTIMISEE_POLYMARKET)
 
-# Avantage « compté » selon l'écart annoncé (docs/strategie-mises.md, partie 3) : écart en %, avantage en fraction.
-AVANTAGE_COMPTE = ((3.0, 0.0018), (4.0, 0.0101), (5.0, 0.0219), (7.0, 0.0464), (10.0, 0.0815))
-# Kelly 1/8 sur l'avantage corrigé, garde-fou à 5 % (19/11/2026, après 1/16 puis ¼ plafonné à 2 %) : simulation sur
-# 3 mois, risque de perdre la moitié 0,1 % si l'avantage est réel, 3 % sinon (contre 10 % et 41 % au ¼).
-KELLY_FRACTION_CONSEIL = 1 / 8
-KELLY_BANKROLL_CONSEIL = 1000.0       # même bankroll de référence que mise_kelly (rapportée à la bankroll réelle à l'envoi)
-KELLY_PLAFOND_CONSEIL = 0.05
-
-
-def avantage_compte(ecart: float) -> float:
-    """Avantage attendu d'un pari, en fraction, selon son écart annoncé (fraction) ; 0 sous 3 %. Interpolation
-    linéaire entre les points de l'étude, constant au-delà de 10 %."""
-    e = nombre_fini(ecart)
-    if e is None:
-        return 0.0
-    e *= 100
-    points = AVANTAGE_COMPTE
-    if e < points[0][0]:
-        return 0.0
-    if e >= points[-1][0]:
-        return points[-1][1]
-    for (x0, y0), (x1, y1) in zip(points, points[1:]):
-        if x0 <= e < x1:
-            return y0 + (y1 - y0) * (e - x0) / (x1 - x0)
-    return 0.0
-
-
-def mise_conseillee(p: dict) -> float:
-    """Mise Kelly au 1/8 sur l'avantage compté, pour 1 000 € de bankroll, plafonnée à 5 % ; 0 si rien à miser."""
-    cote = nombre_fini(p.get("cote"))
-    if cote is None or cote <= 1:
-        return 0.0
-    m = KELLY_BANKROLL_CONSEIL * KELLY_FRACTION_CONSEIL * avantage_compte(p.get("ecart")) / (cote - 1)
-    return round(min(m, KELLY_BANKROLL_CONSEIL * KELLY_PLAFOND_CONSEIL), 2)
+# Mise des alertes (Kelly ⅛ sur l'avantage corrigé) : définie dans cotes/simulation.py, couche des paris, pour que les
+# bilans du site misent comme les alertes. Réexportée ici.
+from .simulation import (AVANTAGE_COMPTE, KELLY_BANKROLL_CONSEIL, KELLY_FRACTION_CONSEIL,  # noqa: E402,F401
+                         KELLY_PLAFOND_CONSEIL, avantage_compte, mise_conseillee)
 
 
 def motif_refus_optimisee(p: dict, c: dict = OPTIMISEE) -> str | None:

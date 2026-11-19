@@ -266,7 +266,7 @@ function visuelBankroll(v) {return typeof enBankroll==='function'?enBankroll(v):
 function miseMoyenne(s) {
   if(typeof miseMode==='undefined' || miseMode==='fixe' || !s.regles || !Number.isFinite(s.mise)) return '';
   const moyenne=visuelBankroll(s.mise/s.regles).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  return `<div class="mise-moyenne"><dt>Mise moyenne</dt><dd>${moyenne} €</dd><small>${typeof nomMise==='function'?e(nomMise()):'Kelly ¼'} · sur ${s.regles} réglés</small></div>`;
+  return `<div class="mise-moyenne"><dt>Mise moyenne</dt><dd>${moyenne} €</dd><small>${typeof nomMise==='function'?e(nomMise()):'Kelly ⅛ corrigé'} · sur ${s.regles} réglés</small></div>`;
 }
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);

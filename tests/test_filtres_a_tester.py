@@ -67,9 +67,10 @@ def test_bilan_kelly_proportionnel_au_gain():
     gagne = {**BASE, "match_id": "w|1", "statut": "gagne", "gain": 10.0, "clv": .05}
     perdu = {**BASE, "match_id": "w|2", "statut": "perdu", "gain": -10.0, "clv": -.01, "cote": 3.0, "ecart": .10}
     b = bilan([gagne, perdu])["A|Pinnacle"]
-    assert b["mises_kelly"] == 22.5                                   # 10 € + 12,5 €
-    assert b["gains_kelly"] == pytest.approx(10.0 - 12.5)             # gain réel × mise Kelly / mise fixe
-    assert b["roi_kelly"] == round(-2.5 / 22.5, 4)
+    # mise des alertes (Kelly ⅛ corrigé) : 125 × 1,01 % / 1 = 1,26 € ; 125 × 8,15 % / 2 = 5,09 €
+    assert b["mises_kelly"] == pytest.approx(6.35)
+    assert b["gains_kelly"] == pytest.approx(1.26 - 5.09)             # gain réel × mise Kelly / mise fixe
+    assert b["roi_kelly"] == round(-3.83 / 6.35, 4)
 
 
 def test_bilan_filtres_tranches_et_anciens_paris_exclus():

@@ -15,7 +15,7 @@ RACINE = Path(__file__).resolve().parents[2]
 
 from cotes.simulation import (REFERENCES, SIMULATIONS, STRATEGIE, TRANCHES, bilan,  # noqa: E402
                               bilan_filtres, bilan_plafond, bilan_tranches, moyennes_ecarts, paris_strategie,
-                              mise_kelly, premiers_par_selection, profil_horaire, REGLES, clv_finale, segments, tranche)
+                              premiers_par_selection, profil_horaire, REGLES, clv_finale, segments, tranche)
 from cotes.convergence import (CONVERGENCE, STRATEGIES, selections, paris_convergence,
                                valider_actuelles)  # noqa: E402
 from cotes.strategies_prudentes import VARIANTES, selections_prudentes  # noqa: E402
@@ -391,7 +391,7 @@ def paris_en_mise(paris: list[dict], mode: str) -> list[dict]:
 
 
 def paris_en_mise_kelly(paris: list[dict]) -> list[dict]:
-    """Copies des paris misés en Kelly ¼, le mode par défaut du site."""
+    """Copies des paris misés en Kelly ⅛ corrigé (la mise des alertes), le mode par défaut du site."""
     return paris_en_mise(paris, "kelly")
 
 
@@ -412,7 +412,7 @@ def catalogue_paris(paris: list[dict], retenus: dict[str, set[int]], regles: dic
         f = fiche(p)
         f.update(simulation=p.get("simulation"), clv=clv_finale(p), tranche=tranche(p["cote"]) if p.get("cote") else None,
                  strategies=[cle for cle in retenus if id(p) in retenus[cle]], convergence=id(p) in convergents,
-                 mise=p.get("mise"), mise_kelly=mise_kelly(p) or 1.0, unique_bilan=id(p) in uniques,
+                 mise=p.get("mise"), mise_kelly=mise_du_mode("kelly", p), unique_bilan=id(p) in uniques,
                  regles=[cle for cle in regles if id(p) in regles[cle]],      # règles Pinnacle/Polymarket (« Mes stratégies »)
                  sources=len(sources.get(cle_selection_unique(p)) or ()) or 1)   # références qui ont repéré la cote
         rows.append([f[k] for k in champs])
