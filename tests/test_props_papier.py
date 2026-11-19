@@ -204,3 +204,24 @@ def test_match_espn_doublon_et_abreviation_new_york():
     # Deux matchs différents restent ambigus ; un autre surnom ne correspond pas.
     assert P._match_espn(pari, [m, dict(m, espn_id="8")]) is None
     assert P._match_espn(dict(pari, exterieur="NY Rangers"), [m]) is None
+
+
+def test_absent_de_la_feuille_complete_annule_sauf_homonyme():
+    # Nolan Traoré, Pelicans–Nets du 11/11/2026 : blessé, absent de la feuille ESPN et de ses blessés.
+    def pari(joueur, cle):
+        return {"statut": "en_cours", "sport": "basket", "domicile": "New Orleans Pelicans", "exterieur": "Brooklyn Nets",
+                "debut": "2026-11-12T01:10:00+00:00", "joueur": joueur, "cle_joueur": cle, "stat": "Rebounds",
+                "ligne": 1.5, "issue": "PLUS", "cote": 1.62}
+    matchs = [{"sport": "basket", "domicile": "New Orleans Pelicans", "exterieur": "Brooklyn Nets",
+               "debut": "2026-11-12T01:00:00+00:00", "espn_id": "401909972", "final": True}]
+    autres = [{"nom": f"Joueur {i}", "cle": f"joueur{i}|j|", "dnp": False, "stats": {"REB": 3}} for i in range(16)]
+    doc = {"paris": [pari("Nolan Traore", "traore|n|"), pari("Bob Smith", "smith|b|")]}
+    feuille = autres + [{"nom": "Jabari Smith", "cle": "smith|j|", "dnp": False, "stats": {"REB": 5}}]
+    t = datetime(2026, 11, 13, tzinfo=timezone.utc)
+    assert P.regler(doc, matchs, {"401909972": feuille}, t) == 1
+    traore, smith = doc["paris"]
+    assert traore["statut"] == "annule" and traore["reglement"] == "absent" and traore["gain"] == 0.0
+    assert smith["statut"] == "en_cours" and smith["reglement_note"] == "joueur ambigu ou absent"
+    # Feuille incomplète (une équipe manque) : rien n'est annulé.
+    doc = {"paris": [pari("Nolan Traore", "traore|n|")]}
+    assert P.regler(doc, matchs, {"401909972": autres[:8]}, t) == 0 and doc["paris"][0]["statut"] == "en_cours"
