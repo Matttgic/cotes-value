@@ -250,6 +250,13 @@ seulement, Polymarket voit aussi un écart ≥ 5 %. Les notifications proposent 
 sur l'avantage compté, calculée sur une bankroll automatique (`cotes/alertes/bankroll.py`). **La même règle s'applique à la prise et à tous les bilans du site**, comme le plafond de cote
 du 11/11 (`simulation.motif_hors_regle`) : les anciens paris hors règle sont archivés dans `hors_plafond.json`.
 [Règle, chiffres et limites](docs/strategie-optimisee.md).
+
+### Néon 1, 2 et 3
+
+Règles de Néon (rapport du 19/11/2026), suivies dès le 20/11/2026 à 1 h, sans rejeu : PMU, Betclic ou Unibet,
+cote ≤ 4, au plus 24 h avant le match (Néon 2 : 12 h), un seul pari par match. Néon 1 (Socle) : Pinnacle, Betfair ou Matchbook,
+écart 4–25 %. Néon 2 (Sniper) : mêmes références, écart 6–25 %. Néon 3 (Consensus) : référence Consensus, écart 2,5–25 %.
+[Règles, chiffres de validation et limites](docs/strategie-neon.md).
 ### Avis d'analyste
 
 Chaque fiche de stratégie porte un verdict (« Fiable », « Prometteur mais pas prouvé », « Chance ou yo-yo », « Trop

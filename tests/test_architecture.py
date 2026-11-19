@@ -35,7 +35,7 @@ _PAR_COUCHE = {
     "strategies": "cotes.strategies cotes.strategies.registre cotes.decisions cotes.convergence cotes.laboratoire cotes.memo cotes.pauses "
                   "cotes.strategies_prudentes cotes.strategie_recommandee cotes.strategie_chatgpt "
                   "cotes.strategie_claude_defi cotes.strategie_claude_humain cotes.strategie_claude_opus "
-                  "cotes.strategie_claude_drop cotes.strategie_claude_drop_z cotes.strategie_optimisee cotes.strategie_claude_signal cotes.strategie_coeur cotes.strategie_commune "
+                  "cotes.strategie_claude_drop cotes.strategie_claude_drop_z cotes.strategie_optimisee cotes.strategie_neon cotes.strategie_claude_signal cotes.strategie_coeur cotes.strategie_commune "
                   "cotes.strategie_conseil cotes.strategie_defi cotes.strategie_eden cotes.strategie_gemini "
                   "cotes.strategie_gemini_defi cotes.strategie_grok cotes.strategie_jules cotes.strategie_jules_v2 "
                   "cotes.strategie_liquidite cotes.strategie_m3 cotes.strategie_qwen",
