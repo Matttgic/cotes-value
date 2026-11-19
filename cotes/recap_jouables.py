@@ -124,9 +124,10 @@ def jouables(paris: list[dict], cotes: dict[tuple, tuple[str, float]]) -> list[d
     return out
 
 
-def messages(lignes: list[dict], bankroll: float, maintenant: datetime, par_message: int = 6) -> list[dict]:
+def messages(lignes: list[dict], bankroll: float, maintenant: datetime, par_message: int = 6,
+             entete: str = "") -> list[dict]:
     """Messages Pushover (HTML) : une ligne par pari, lien cliquable, mise Kelly 1/8 sur l'avantage corrigé ramenée à la bankroll et
-    arrondie à l'euro supérieur."""
+    arrondie à l'euro supérieur. ``entete`` (la bankroll automatique) ouvre le premier message."""
     from .strategie_optimisee import mise_conseillee
     out = []
     blocs = [lignes[i:i + par_message] for i in range(0, len(lignes), par_message)]
@@ -144,6 +145,8 @@ def messages(lignes: list[dict], bankroll: float, maintenant: datetime, par_mess
                 texte += f' · <a href="{_h(lien)}">ouvrir</a>'
             corps.append(texte)
         titre = f"Encore jouables · {maintenant.astimezone(PARIS):%d/%m %Hh}" + (f" ({n}/{len(blocs)})" if len(blocs) > 1 else "")
+        if entete and n == 1:
+            corps.insert(0, f"<i>{_h(entete)}</i>")
         out.append({"title": titre, "message": "<br><br>".join(corps)[:1024], "html": "1"})
     return out
 
