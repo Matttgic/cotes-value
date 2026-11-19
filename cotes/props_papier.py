@@ -34,6 +34,7 @@ LIVRES = ("Winamax", "Unibet", "NetBet")
 MISE = 10.0
 PLAFOND_FEUILLES = 12
 FENETRE_MATCH_H = 6
+FEUILLE_COMPLETE_MIN = 16   # joueurs lus sur la feuille : en dessous, une équipe manque, rien n'est annulé
 STRATEGIES = (
     {"cle": "props_pinnacle", "nom": "Props Pinnacle", "reference": "Pinnacle", "actif": False},
     {"cle": "props_polymarket", "nom": "Props Polymarket", "reference": "Polymarket", "actif": False},
@@ -385,6 +386,17 @@ def regler(doc: dict, matchs: list[dict], feuilles: dict[str, list[dict]], maint
             # même nom et même initiale, seulement si un seul joueur de la feuille correspond.
             base = p["cle_joueur"].rsplit("|", 1)[0]
             meme = [j for j in joueurs if j.get("cle") and j["cle"].rsplit("|", 1)[0] == base]
+        if not meme and p.get("cle_joueur") and len(joueurs) >= FEUILLE_COMPLETE_MIN:
+            # Absent d'une feuille complète, sans personne du même nom de famille : il n'a pas joué (blessé, écarté),
+            # pari annulé comme un DNP. ESPN ne liste pas toujours les absents (Nolan Traoré, Pelicans–Nets du
+            # 11/11/2026, absent sur blessure, ni dans la feuille ni dans ses blessés). Un homonyme laisse la note.
+            nom = p["cle_joueur"].split("|", 1)[0]
+            if nom and not any((j.get("cle") or "").split("|", 1)[0] == nom for j in joueurs):
+                p.update(statut="annule", gain=0.0, regle_le=maintenant.isoformat(timespec="seconds"),
+                         reglement="absent", espn_id=match.get("espn_id"))
+                p.pop("reglement_note", None)
+                n += 1
+                continue
         if len(meme) != 1:
             p["reglement_note"] = "joueur ambigu ou absent"
             continue
