@@ -204,8 +204,8 @@ ${decHtmlEcartes(J.coupes, () => 'à couper')}${decHtmlEcartes(J.attente, l => l
   const virgule = x => String(x).replace('.', ',');
   const items = [
     ...C.couper.map(l => `<li><span class="badge perdu">À couper</span> ${quoi(l)} : ${e(l.raison)}. ${chiffres(l)}</li>`),
-    ...C.pauses.map(p => `<li><span class="badge perdu">Déjà coupée</span> <b>${e(decNomStrategie(p.id, noms))}</b> : en pause automatique depuis le ${decJour(p.depuis)}, elle perd contre la clôture.
-<span class="dec-chiffre">CLV par pari ${virgule(p.clv)} % (au mieux ${virgule(p.clv_haute)} %) · par match ${virgule(p.clv_match)} % · ${decPluriel(p.regles, 'réglé')}</span> ${vers}</li>`),
+    ...C.pauses.map(p => `<li><span class="badge perdu">Déjà coupée</span> <b>${e(decNomStrategie(p.id, noms))}</b> : ${p.retiree ? `retirée le ${decJour(p.depuis)}, elle perd même dans le meilleur cas` : `en pause automatique depuis le ${decJour(p.depuis)}, elle perd contre la clôture.
+<span class="dec-chiffre">CLV par pari ${virgule(p.clv)} % (au mieux ${virgule(p.clv_haute)} %) · par match ${virgule(p.clv_match)} % · ${decPluriel(p.regles, 'réglé')}</span>`} ${p.retiree ? `<span class="dec-chiffre">ROI ${virgule(p.roi)} % (au mieux ${virgule(p.roi_haut)} %) sur ${p.matchs} matchs</span>` : ''} ${vers}</li>`),
     ...C.echecs.map(l => `<li><span class="badge perdu">Non validée</span> <b>${e(l.nom)}</b> : ${e(l.motif || 'protocole non réussi')}. ${decPreuve('protocole:' + l.cle, lecture(l))}</li>`),
     ...C.rompues.map(l => `<li><span class="badge perdu">Protocole rompu</span> <b>${e(l.nom)}</b> : ${e(l.motif || 'règles modifiées')} ; aucune conclusion possible sans nouvelle inscription. ${decPreuve('protocole:' + l.cle, 'Protocole rompu')}</li>`),
     ...C.surveiller.map(l => `<li><span class="badge a_regler">À surveiller</span> <b>${e(l.nom)}</b> : ${e(l.raison)}. ${chiffres(l)}</li>`),
