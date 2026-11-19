@@ -138,18 +138,13 @@ function rendreBoostsListe() {
   const B = D.boosts || {}, zone = document.getElementById('bo-actuels');
   if (!zone) return;
   document.getElementById('bo-maj').textContent = B.maj ? 'relevé de ' + hm(B.maj) : 'aucun relevé';
-  const actuels = B.actuels || [];
-  zone.innerHTML = actuels.length ? actuels.map(carteBoost).join('')
-    : '<p class="vide">Aucune cote boostée lue au dernier relevé.</p>';
+  const actuels = B.actuels || [], aJouer = actuels.filter(b => b.verdict === 'jouer');
+  zone.innerHTML = aJouer.length ? aJouer.map(carteBoost).join('')
+    : `<p class="vide">Aucun boost à jouer au dernier relevé${actuels.length ? ` (${actuels.length} à passer)` : ''}.</p>`;
   const b = (B.bilan || {})['7'] || {};
-  document.getElementById('bo-bilan').innerHTML = b.n ? kpis([
-    ['Boosts (7 j)', String(b.n), '', `${b.evalues} avec une cote juste`],
-    b.jouer != null
-      ? ['À jouer', `${b.jouer}/${b.n}`, b.jouer ? 'pos' : '', `${b.positifs} en value · ${b.jouer_sans_juste} sans cote juste`]
-      : ['En value', `${b.positifs}/${b.evalues}`, b.positifs ? 'pos' : '', 'value positive à la première lecture'],
-    ['Value médiane', b.value_mediane == null ? '—' : pct(b.value_mediane), signe(b.value_mediane), 'boosts évalués'],
-    ['Gain espéré', (b.gain_espere_positifs >= 0 ? '+' : '') + fr2(b.gain_espere_positifs) + ' €', signe(b.gain_espere_positifs), 'boosts en value, à la mise max (hors « jouer » sans cote juste)']
-  ]) : '<p class="aide">Pas encore de boost suivi sur 7 jours.</p>';
+  document.getElementById('bo-bilan').innerHTML = b.n && b.jouer != null ? kpis([
+    ['À jouer (7 j)', String(b.jouer), b.jouer ? 'pos' : '', `sur ${b.n} boosts lus`]
+  ]) : '';
 }
 
 function rendreBoosts() {
