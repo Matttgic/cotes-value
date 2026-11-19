@@ -103,6 +103,8 @@ paris sans CLV, donc de la chance. Avantage par pari : ×3 avec la figée, ×4 a
 
 ## Recommandations
 
+**Appliquées le 19/11** (points 1 à 4) : voir [strategie-optimisee.md](strategie-optimisee.md).
+
 1. **Appliquer la stratégie figée** au site (simulation principale ou stratégie suivie à part) : cote ≤ 5, écart
    ≥ 3 %, hors Winamax et OlyBet, ≤ 24 h avant le match.
 2. **Couper le volley** et le **total au basket**.
