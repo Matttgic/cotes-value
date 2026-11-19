@@ -408,6 +408,32 @@ def paris_strategie(paris: list[dict], depuis: str | None = None) -> set[int]:
     return {id(p) for p in premiers.values()}
 
 
+# Mise selon le nombre de sources : une cote française repérée par plusieurs références (Pinnacle, Polymarket…) bat
+# mieux la clôture (CLV moyenne ≈ 8 % contre 3 % pour une seule, données au 19/11) : on la joue une fois par source,
+# SOURCES_MAX fois au plus.
+SOURCES_MAX = 3
+
+
+def cle_selection_unique(p: dict) -> tuple | None:
+    """Clé d'une cote française (même clé que ``premiers_par_selection``) ; None sans match relié."""
+    return tuple(p.get(c) for c in ("match_id", "marche", "periode", "ligne", "issue", "joueur")) if p.get("match_id") else None
+
+
+def sources_par_selection(paris: list[dict]) -> dict[tuple, set[str]]:
+    """Références distinctes qui ont repéré chaque cote française."""
+    out: dict[tuple, set[str]] = {}
+    for p in paris:
+        k = cle_selection_unique(p)
+        if k is not None and p.get("reference"):
+            out.setdefault(k, set()).add(p["reference"])
+    return out
+
+
+def facteur_sources(n: int) -> int:
+    """Nombre de mises d'un pari repéré par ``n`` références : 1 à SOURCES_MAX."""
+    return max(1, min(SOURCES_MAX, int(n or 0)))
+
+
 def premiers_par_selection(paris: list[dict]) -> set[int]:
     """Les « paris uniques » (repérés par id() de leur dict) : pour chaque cote française (bookmaker, match, marché, issue), le
     pari de sa première détection, quelle que soit la référence qui l'a repérée. C'est ce

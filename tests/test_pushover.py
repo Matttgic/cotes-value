@@ -247,3 +247,15 @@ def test_meme_pari_pour_plusieurs_strategies_cochees_affiche_la_mise_totale():
     assert "Mise totale : 30 € (3 × 10 €)" in sans                              # 10 € par défaut, comme suivi.js
     assert "Mise totale : 60 € (3 × 20 €)" in E.message_pushover(
         {**a, "mise_kelly": None, "mises": 3}, {**ENV, "PUSHOVER_BANKROLL": "2000"}, NOW)["message"]
+
+
+def test_pari_repere_par_plusieurs_sources_mise_multipliee_trois_au_plus():
+    """Mise × nombre de références qui repèrent la cote (cotes/simulation.py › facteur_sources), 3 au plus."""
+    flux = {"alertes": [alerte(strategies=("eden",), labels=["Eden"], mise_kelly=8.74,
+                               sources=["Pinnacle", "Polymarket"])]}
+    a = E.alertes_pushover(flux, [], {}, {"eden"}, NOW)[0]
+    assert a["mises"] == 2
+    m = E.message_pushover(a, ENV, NOW)["message"]
+    assert "Repéré par 2 sources : Pinnacle, Polymarket" in m and "(2 × 9 €)" in m
+    cinq = {"alertes": [alerte(strategies=("eden",), labels=["Eden"], sources=list("ABCDE"))]}
+    assert E.alertes_pushover(cinq, [], {}, {"eden"}, NOW)[0]["mises"] == 3

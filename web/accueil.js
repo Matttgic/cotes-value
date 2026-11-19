@@ -6,7 +6,12 @@ function ligneAccueilPari(p) {
   return `<article class="acc-pari"><div class="acc-pari-texte"><span class="acc-meta">${e(nomSport(p.sport))}${p.ligue ? ' · '+e(p.ligue) : ''}</span>
 <b>${e(p.domicile)} – ${e(p.exterieur)}</b><span>${e(p.pari)}</span><span class="pari-debut">Match ${horairePari(p)}</span></div>
 <div class="acc-pari-prix"><span class="acc-book">${e(p.bookmaker)}${heureEnvoi(p) ? ' · '+heureEnvoi(p) : ''}</span>
-<b class="acc-cote">${cote(p.cote)}</b><small class="acc-ref">${e(ref)}${cote(p.cote_juste)}</small><i class="acc-ecart">${pct(p.ecart)}</i>${boutonBookmaker(p,true)}</div></article>`;
+<b class="acc-cote">${cote(p.cote)}</b><small class="acc-ref">${e(ref)}${cote(p.cote_juste)}</small><i class="acc-ecart">${pct(p.ecart)}</i>${sourcesAccueil(p)}${boutonBookmaker(p,true)}</div></article>`;
+}
+// Plusieurs références sur la même cote : la mise est multipliée (3 fois au plus), comme dans l'alerte Pushover.
+function sourcesAccueil(p) {
+  const k=typeof facteurSources==='function' ? facteurSources(p) : 1;
+  return k>1 ? `<i class="acc-mise">${p.sources} sources · mise ×${k}</i>` : '';
 }
 function rangTexte(n) {return `${n}<sup>${n===1 ? 'er' : 'e'}</sup>`;}
 // Bilan des paris uniques réglés dans une mise donnée, quel que soit le mode affiché : même règle qu'appliquerMise
@@ -14,8 +19,9 @@ function rangTexte(n) {return `${n}<sup>${n===1 ? 'er' : 'e'}</sup>`;}
 function bilanEnMise(ps, kelly) {
   let mises = 0, net = 0;
   for (const p of ps) {
-    if (kelly && p.mise_kelly && p.mise_fixe) { mises += p.mise_kelly; net += p.gain_fixe * p.mise_kelly / p.mise_fixe; }
-    else { mises += p.mise_fixe ?? p.mise ?? 0; net += p.gain_fixe ?? p.gain ?? 0; }
+    const k = typeof facteurSources === 'function' ? facteurSources(p) : 1;
+    if (kelly && p.mise_kelly && p.mise_fixe) { mises += k * p.mise_kelly; net += k * p.gain_fixe * p.mise_kelly / p.mise_fixe; }
+    else { mises += k * (p.mise_fixe ?? p.mise ?? 0); net += k * (p.gain_fixe ?? p.gain ?? 0); }
   }
   return {net: Math.round(net * 100) / 100, roi: mises ? net / mises : null};
 }
@@ -52,9 +58,10 @@ function rendreAccueil() {
   const mise=nomMiseAccueil(miseMode);
   // Premier chiffre : les cotes de 10 au plus. Au-delà, c'est de la loterie (quelques gains sur des centaines de
   // paris) qui masquait tout le reste.
-  const reglees=fiches.filter(p=>p.unique_bilan && p.gain!=null && !(p.cote>10)),s=statsBU(reglees);
+  const unes=fiches.filter(p=>p.unique_bilan && p.gain!=null && !(p.cote>10));
+  const reglees=typeof enSources==='function' ? enSources(unes) : unes,s=statsBU(reglees);
   const enCours=fiches.filter(p=>p.statut==='en_cours' && !p.a_regler);
-  const autreKelly=miseMode==='fixe', autre=bilanEnMise(reglees,autreKelly), nomAutre=nomMiseAccueil(autreKelly ? 'kelly' : 'fixe');
+  const autreKelly=miseMode==='fixe', autre=bilanEnMise(unes,autreKelly), nomAutre=nomMiseAccueil(autreKelly ? 'kelly' : 'fixe');
   cible.innerHTML=[
     ['Gain net',eurC(s.net),signe(s.net),`${s.n} paris réglés · ${mise}`],
     ['ROI',pct(s.roi),signe(s.net),`en ${nomAutre} : ${pct(autre.roi)}`],
@@ -79,11 +86,8 @@ function rendreAccueil() {
     : '<p class="aide">Aucune stratégie ne bat encore la clôture de façon prouvée.</p>';
   // Gain cumulé des paris uniques (même courbe que le Bilan, tracée en marches), avec la ligne témoin : gain attendu
   // cumulé et marge du hasard (variance cumulée de chaque pari, 5e colonne).
-  let total=0,attendu=0,variance=0;
-  const points=((D.courbes || {}).Uniques || []).map(p=>[p[0]*60,total=Math.round((total+p[1])*100)/100,
-    attendu=Math.round((attendu+(p[3] || 0))*100)/100,Math.sqrt(variance+=Number.isFinite(p[4])?p[4]:0)]);
-  document.getElementById('acc-courbe').innerHTML=grandeCourbe(points);
-  document.getElementById('acc-courbe-mise').textContent=`paris uniques · ${mise}`;
+  document.getElementById('acc-courbe').innerHTML=grandeCourbe(pointsDepuisParis(reglees));
+  document.getElementById('acc-courbe-mise').textContent=`paris uniques · ${mise} × sources`;
   // Derniers résultats : les cinq derniers paris uniques réglés.
   const derniers=fiches.filter(p=>p.unique_bilan && p.gain!=null && p.regle_le).sort((a,b)=>Date.parse(b.regle_le)-Date.parse(a.regle_le)).slice(0,5);
   document.getElementById('acc-derniers').innerHTML=derniers.length ? derniers.map(p=>`<div class="acc-resultat"><span><b>${e(p.domicile)} – ${e(p.exterieur)}</b>

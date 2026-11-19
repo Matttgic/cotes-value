@@ -520,6 +520,9 @@ liste les matchs qu'aucune source ne règle (un match vu par plusieurs bookmaker
 ses clés dans `match_ids`), avec le modèle de saisie de `resultats_manuels.json`. Le journal du
 cycle indique quelles sources ont réglé les paris (`sources_reglement`). LiveScore et Flashscore sont des flux non
 officiels : ils peuvent changer sans préavis.
+**Mise × sources** : une cote française repérée par plusieurs références (Pinnacle, Polymarket…) est jouée une
+fois par référence, 3 fois au plus (`cotes/simulation.py` › `facteur_sources`) : alerte Pushover (« Repéré par 2
+sources », mise totale), bankroll automatique, Accueil et Bilan › Paris. Les autres bilans restent à une mise par pari.
 **Boosts réglés à la main** : les boosts « Jouer » dont le match a commencé apparaissent dans Bilan › Boosts, avec
 un code `B-XXXXXX` et un bouton « Copier ». `python scripts/regler_boosts.py --donnees donnees B-XXXXXX=gagne:2-1 …`
 (gagne, perdu, rembourse) les écrit dans `donnees/boosts_resultats.json` : mise = mise max du boost (10 € si inconnue).

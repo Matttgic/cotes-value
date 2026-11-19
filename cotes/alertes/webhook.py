@@ -90,6 +90,9 @@ def message_ntfy(a: dict, mises: int = 1, defaut: float = 10.0) -> tuple[str, st
     if isinstance(age, (int, float)) and age > 300:          # match lointain, lu à son rythme : on le dit
         lignes.append(f"Prix relevé il y a {round(age / 60)} min")
     lignes += _ligne_pinnacle(a)
+    sources = [s for s in a.get("sources") or [] if s]
+    if len(sources) > 1:                     # plusieurs références : la mise est multipliée (pushover.alertes_pushover)
+        lignes.append(f"Repéré par {len(sources)} sources : {', '.join(sources)}")
     lignes += _lignes_mise(a.get("mise_kelly"), mises, defaut)
     return f'{a.get("bookmaker") or "—"} – {_sport(a.get("sport"))}', "\n".join(lignes)
 

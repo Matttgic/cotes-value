@@ -23,6 +23,7 @@ def test_flux_meme_prise_prix_et_plusieurs_strategies_sans_doublon():
     a=b['alertes'][0]
     assert a['strategies']==['claude_prudent','strategie']
     assert a['validations']['strategie']==p['detecte']
+    assert a['sources']==['Betfair','Pinnacle']          # deux références sur la même cote : mise × 2
     assert not flux([{**o,'cote':2.01}],[p],{'strategie':{id(p)}},NOW)['alertes']
     assert not flux([o],[p],{'strategie':set()},NOW)['alertes']
 

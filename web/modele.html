@@ -29,7 +29,7 @@
     <header class="une-tete"><p class="une-date" id="une-date"></p><h2 id="acc-titre">Cotes Value</h2>
       <p class="explication"><b>À quoi sert cette page ?</b> À savoir quoi jouer aujourd'hui. Un pari « value », c'est un
       pari que le bookmaker paie plus cher qu'il ne vaut : comme acheter pour 1,65 € une chose qui vaut 1,60 €. On peut
-      perdre un pari, mais sur des centaines, on gagne.</p>
+      perdre un pari, mais sur des centaines, on gagne. Quand un pari affiche « 2 sources · mise ×2 », mise deux fois plus.</p>
       <p class="une-chapo" id="une-chapo"></p></header>
     <div class="acc-kpis" id="acc-kpis"></div>
     <div class="acc-grille">
@@ -61,7 +61,8 @@
     <div id="bilan-uniques" role="tabpanel" aria-labelledby="bt-uniques">
       <p class="explication"><b>À quoi sert cette page ?</b> À voir ce que tu aurais gagné en jouant tous les paris
       proposés. <b>Exemple</b> : « Gain net +100 € » = en jouant tout depuis le début, tu aurais 100 € de plus.
-      « ROI +5 % » = pour 100 € misés, 5 € gagnés. « Réussite 49 % » = presque un pari sur deux gagné.</p>
+      « ROI +5 % » = pour 100 € misés, 5 € gagnés. « Réussite 49 % » = presque un pari sur deux gagné. Un pari repéré
+      par 2 sources (Pinnacle et Polymarket, par exemple) est plus sûr : il est joué 2 fois (3 au plus).</p>
       <p class="aide" id="bilan-bankroll" hidden></p>
       <p class="aide cache" id="bilan-hors-plafond" hidden></p>
       <div class="puces bu-periodes" id="bu-periodes" aria-label="Période"></div>
@@ -1088,6 +1089,10 @@ const statsBU = L => {
   return {n:L.length, net, mises, roi:mises ? net/mises : null, reussite:L.length ? gagnes/L.length : null};
 };
 const pctEntier = x => x==null ? "—" : Math.round(100*x)+" %";
+// Mise × sources (cotes/simulation.py › facteur_sources) : un pari repéré par 2 références est joué deux fois, 3 au plus.
+const facteurSources = p => Math.max(1, Math.min(D.sources_max || 3, Number(p.sources) || 1));
+const enSources = L => L.map(p => { const k = facteurSources(p);
+  return k > 1 ? {...p, mise: (p.mise ?? 10) * k, gain: p.gain == null ? p.gain : Math.round(100 * p.gain * k) / 100} : p; });
 function tableBU(groupes) {
   const lignes = groupes.map(([nom,L]) => ({nom, ...statsBU(L)})).filter(r => r.n);
   if (!lignes.length) return '<p class="aide">Aucun pari réglé sur cette période.</p>';
@@ -1101,9 +1106,9 @@ function rendreBilanUniques(maintenant=Date.now()) {
   const depuis = maintenant - Number(periodeBU)*86400000;
   const pr = suiviPeriode(), bo = suiviBornes(pr.depuis, pr.jusqua), perso = bo.depuis != null || bo.jusqua != null;
   const date = p => Date.parse(p.regle_le || p.debut || p.detecte);
-  const L = fiches.filter(p => p.unique_bilan && p.gain != null && (perso
+  const L = enSources(fiches.filter(p => p.unique_bilan && p.gain != null && (perso
     ? (bo.depuis == null || date(p) >= bo.depuis) && (bo.jusqua == null || date(p) < bo.jusqua)
-    : (!periodeBU || date(p) >= depuis)));
+    : (!periodeBU || date(p) >= depuis))));
   rendreDatesBilan();
   const periodes = document.getElementById("bu-periodes");
   // Menu déroulant, comme la mise des bilans. Des dates choisies (Du / Au) remplacent la période rapide.
@@ -1118,7 +1123,7 @@ function rendreBilanUniques(maintenant=Date.now()) {
   document.getElementById("bu-kpis").innerHTML = [["Gain net",eur(s.net),signe(s.net)],["ROI",pct(s.roi),signe(s.net)],
     ["Réussite",pctEntier(s.reussite),""]].map(([t,v,c]) => `<div><span>${t}</span><b class="${c}">${v}</b></div>`).join("");
   document.getElementById("bu-note").textContent =
-    `${s.n} paris réglés · ${Math.round(enBankroll(s.mises)).toLocaleString("fr-FR")} € misés · ${nomMise()}`;
+    `${s.n} paris réglés · ${Math.round(enBankroll(s.mises)).toLocaleString("fr-FR")} € misés · ${nomMise()} · mise × nombre de sources (${D.sources_max || 3} au plus)`;
   // Les cotes de plus de 10 sont de la loterie (quelques gains sur des dizaines de paris) : leur résultat est montré à part.
   const petites = statsBU(L.filter(p => !(p.cote > 10))), grosses = statsBU(L.filter(p => p.cote > 10));
   const resume = (t, x) => x.n ? `${t} : ${x.n} paris, ${eur(x.net)}, ROI ${pct(x.roi)}` : "";
