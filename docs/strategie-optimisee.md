@@ -72,6 +72,8 @@ les bookmakers : il suppose que **chaque alerte Pushover envoyée est jouée à 
    et monte par paliers de +20 % (1 000 → 1 200 → 1 440…).
 4. **Recaler** sur la réalité : changer `PUSHOVER_BANKROLL` (le calcul repart de ce chiffre). À faire si tu ne joues
    pas une alerte, ou à une autre cote. `PUSHOVER_BANKROLL_AUTO=non` coupe le calcul.
+5. **Affichage** : une ligne en haut du Bilan (« Paris uniques ») et en tête du récapitulatif quotidien « Encore
+   jouables » : bankroll calculée, gain depuis le départ, bankroll de mise, paris en cours.
 
 Ne change pas : les bilans du site gardent leur mode Kelly ¼ sur l'écart brut (`simulation.mise_kelly`), déjà publié.
 La mise ne retire pas ce qui est déjà misé sur le même match : à faire à la main si plusieurs paris tombent sur un

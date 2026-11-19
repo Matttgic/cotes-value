@@ -98,6 +98,33 @@ def mettre_a_jour(etat: dict, paris: list[dict], env, maintenant: datetime) -> d
     return etat
 
 
+def resume(etat: dict) -> dict | None:
+    """Ce que le site et le récapitulatif affichent ; None sans bankroll calculée."""
+    b, d = _nombre(etat.get("bankroll")), _nombre(etat.get("depart"))
+    if b is None or d is None:
+        return None
+    ouvertes = etat.get("ouvertes") or {}
+    hist = etat.get("historique") or []
+    return {"bankroll": round(b, 2), "depart": d, "depart_le": etat.get("depart_le"), "gain": round(b - d, 2),
+            "mise_sur": _nombre(etat.get("mise_sur")) or d, "en_cours": len(ouvertes),
+            "engage": round(sum(_nombre(o.get("mise")) or 0 for o in ouvertes.values()), 2),
+            "regles": len(hist), "maj": etat.get("maj")}
+
+
+def ligne(r: dict | None) -> str:
+    """Une ligne de texte : « Bankroll 1 012 € (+12 € depuis le 19/11) · mises sur 1 000 € · 3 en cours (9 €) »."""
+    if not r:
+        return ""
+    def eur(x):
+        return f"{round(x):,}".replace(",", "\u202f") + " €"
+    signe = "+" if r["gain"] >= 0 else "−"
+    depuis = f" depuis le {r['depart_le'][8:10]}/{r['depart_le'][5:7]}" if r.get("depart_le") else ""
+    texte = f"Bankroll {eur(r['bankroll'])} ({signe}{eur(abs(r['gain']))}{depuis}) · mises sur {eur(r['mise_sur'])}"
+    if r["en_cours"]:
+        texte += f" · {r['en_cours']} en cours ({eur(r['engage'])})"
+    return texte
+
+
 def noter(etat: dict, alertes: list[dict], maintenant: datetime) -> None:
     """Note la mise affichée de chaque alerte envoyée (mise unitaire × nombre de stratégies cochées), comme
     ``webhook.message_ntfy``. Une alerte sans mise conseillée n'est pas notée."""

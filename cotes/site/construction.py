@@ -25,6 +25,7 @@ from cotes.reglement import GAIN, taux_manuel  # noqa: E402
 from cotes.sources_resultats import ou_chercher  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.simulation import COTE_MAX_PRISE, motif_hors_regle  # noqa: E402
+from cotes.alertes import bankroll as bankroll_auto  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
 from cotes.strategie_jules import JULES, paris_jules  # noqa: E402
@@ -960,6 +961,7 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
             "props": props_publies,
             # même match réglé avec deux scores chez deux bookmakers (resultats.incoherences_freres), page Santé
             "hors_plafond": resume_hors_plafond(hors_plafond),
+            "bankroll_auto": bankroll_auto.resume(_lire(donnees / bankroll_auto.FICHIER, {}) or {}),
             "taux_manuel": taux_manuel(paris, _maintenant(instant)),
             "marches_inconnus": inconnus_mod.resume(_lire(donnees / "marches_inconnus.json", {}) or {}, _maintenant(instant)),
             "incoherences_reglement": [x for x in (_lire(donnees / "resultats_a_saisir.json", {}) or {}).get("incoherences") or []

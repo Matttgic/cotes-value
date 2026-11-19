@@ -58,6 +58,7 @@
       <button type="button" role="tab" id="bt-props" data-bilan="props" aria-controls="bilan-props">Props</button>
     </div>
     <div id="bilan-uniques" role="tabpanel" aria-labelledby="bt-uniques">
+      <p class="aide" id="bilan-bankroll" hidden></p>
       <p class="aide" id="bilan-hors-plafond" hidden></p>
       <div class="puces bu-periodes" id="bu-periodes" aria-label="Période"></div>
       <div id="bu-dates"></div>
@@ -404,6 +405,12 @@ __INTERFACE_JS__
 // --- en-tête et onglets
 const dc = (D.etat||{}).dernier_cycle || {};
 document.getElementById("maj").textContent = dc.debut ? "mis à jour " + quand(dc.debut) + (dc.mode==="test" ? " · test" : "") : "pas encore de données";
+{ const k = D.bankroll_auto, z = document.getElementById("bilan-bankroll");
+  if (z && k) { const e = x => Math.round(Number(x)).toLocaleString("fr-FR") + " €";
+    const depuis = k.depart_le ? " depuis le " + new Date(k.depart_le).toLocaleDateString("fr-FR", {timeZone: "Europe/Paris", day: "numeric", month: "numeric"}) : "";
+    z.hidden = false;
+    z.textContent = `Bankroll automatique des alertes : ${e(k.bankroll)} (${k.gain >= 0 ? "+" : "−"}${e(Math.abs(k.gain))}${depuis}, départ ${e(k.depart)}) · mises calculées sur ${e(k.mise_sur)}`
+      + (k.en_cours ? ` · ${k.en_cours} pari${k.en_cours > 1 ? "s" : ""} en cours (${e(k.engage)} engagés)` : "") + ` · ${k.regles} réglé${k.regles > 1 ? "s" : ""}`; } }
 { const h = D.hors_plafond, z = document.getElementById("bilan-hors-plafond");
   if (z && h && h.paris) { z.hidden = false;
     z.innerHTML = `Paris hors règle exclus : ${h.paris} paris, ${eur(h.gain)}${h.motifs ? " (" + Object.entries(h.motifs).map(([m, n]) => `${m} : ${n}`).join(", ") + ")" : ""} · <a href="hors_plafond.json">archive</a>`; } }

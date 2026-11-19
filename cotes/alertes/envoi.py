@@ -275,9 +275,12 @@ def recap_pushover(donnees: Path, paris: list[dict], envoyes: dict, env, mainten
         cands = R.candidats(paris, envoyes, depuis, maintenant)
         cotes = R.dernieres_cotes(donnees, {R.cle_historique(p) for p in cands}, maintenant)
         lignes = R.jouables(cands, cotes)
-        msgs = R.messages(lignes, _bankroll(env), maintenant) if lignes else [{
+        from cotes.alertes import bankroll as bankroll_auto
+        entete = bankroll_auto.ligne(bankroll_auto.resume(bankroll_auto.lire(donnees))) if bankroll_auto.actif(env) else ""
+        msgs = R.messages(lignes, _bankroll(env), maintenant, entete=entete) if lignes else [{
             "title": f"Encore jouables · {maintenant.astimezone(R.PARIS):%d/%m %Hh}",
-            "message": f"Aucune alerte encore jouable ({len(cands)} alerte(s) revue(s) depuis le dernier récapitulatif)."}]
+            "message": f"Aucune alerte encore jouable ({len(cands)} alerte(s) revue(s) depuis le dernier récapitulatif)."
+                       + (f"\n{entete}" if entete else "")}]
         jeton, cle = env.get("PUSHOVER_APP_TOKEN", "").strip(), env.get("PUSHOVER_USER_KEY", "").strip()
         envoyes_n = 0
         for m in msgs[:5]:

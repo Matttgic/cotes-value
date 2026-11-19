@@ -56,3 +56,35 @@ def test_perte_fait_baisser_la_mise_tout_de_suite():
 
 def test_desactivable():
     assert B.actif({}) and not B.actif({"PUSHOVER_BANKROLL_AUTO": "non"})
+
+
+def test_resume_et_ligne():
+    assert B.resume({}) is None and B.ligne(None) == ""
+    e = {"bankroll": 950.0, "depart": 1000.0, "depart_le": "2026-11-19T18:00:00+00:00", "mise_sur": 1000.0,
+         "ouvertes": {"a": {"mise": 4.0}}, "historique": [{}]}
+    r = B.resume(e)
+    assert r["gain"] == -50 and r["en_cours"] == 1 and r["engage"] == 4 and r["regles"] == 1
+    assert B.ligne(r) == "Bankroll 950 € (−50 € depuis le 19/11) · mises sur 1 000 € · 1 en cours (4 €)"
+
+
+def test_recap_ouvre_sur_la_bankroll():
+    from cotes.recap_jouables import messages
+    p = {"debut": "2026-11-20T18:00:00+00:00", "domicile": "A", "exterieur": "B", "pari": "A", "bookmaker": "PMU",
+         "cote_actuelle": 2.0, "cote_min": 1.95, "cote": 2.0, "ecart": 0.05}
+    m = messages([p], 1000.0, T, entete="Bankroll 1 012 €")
+    assert m[0]["message"].startswith("<i>Bankroll 1 012 €</i><br><br>")
+    assert not messages([p], 1000.0, T)[0]["message"].startswith("<i>")
+
+
+def test_site_affiche_la_bankroll(tmp_path):
+    import json
+    import re
+    from scripts import site_web
+    (tmp_path / "paris.json").write_text("[]")
+    (tmp_path / "bankroll.json").write_text(json.dumps({"bankroll": 1012.0, "depart": 1000.0, "mise_sur": 1000.0,
+                                                        "depart_le": "2026-11-19T18:00:00+00:00", "ouvertes": {},
+                                                        "historique": []}))
+    html = site_web.construire(tmp_path, tmp_path / "site").read_text()
+    d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    assert d["bankroll_auto"]["bankroll"] == 1012 and d["bankroll_auto"]["gain"] == 12
+    assert 'id="bilan-bankroll"' in html
