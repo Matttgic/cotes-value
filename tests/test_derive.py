@@ -39,10 +39,11 @@ def test_mesurer_compte_et_empreinte():
     a = lignes(12)
     m = derive.mesurer(a)
     assert (m["lignes"], m["matchs"], m["sports"]) == (72, 12, {"football": 12})
-    assert m["couverture"] == {"football RESULTAT_1N2 MATCH": 1.0, "football TOTAL MATCH": 1.0}
+    assert m["presence"] == {"football RESULTAT_1N2 MATCH": {"?": 12}, "football TOTAL MATCH": {"?": 12}}
+    assert m["ligues"] == {"football": {"?": 12}}
     assert derive.mesurer(list(reversed(a)))["empreinte"] == m["empreinte"]
     assert derive.mesurer([{**a[0], "cote": 2.0}] + a[1:])["empreinte"] != m["empreinte"]
-    assert derive.mesurer(lignes(5))["couverture"] == {}           # moins de 10 matchs : marchés non mesurés
+    assert derive.mesurer(lignes(5))["presence"] == {}             # moins de 10 matchs : marchés non mesurés
     assert derive.mesurer(a, prix=False)["empreinte"] == 0
 
 
@@ -92,6 +93,29 @@ def test_marche_disparu_seulement_si_le_sport_est_la():
     tennis = [lignes(40, marches=("VAINQUEUR",), sport="tennis") for _ in range(5)]
     _, vus = rejouer({}, "betclic", normal + tennis)                 # plus de football du tout : rien à dire
     assert "marche" not in genres(vus[-1])
+
+
+def test_marche_d_une_competition_absente_n_est_pas_juge():
+    """Cas PMU du 19-20/11 : VAINQUEUR et totaux par quart-temps n'existent qu'en NBA ; la nuit la NBA joue en
+    direct et sort de la liste d'avant-match. Le basket européen reste : ce n'est pas une disparition."""
+    def basket(nba, cote, vainqueur=True):
+        out = []
+        for i in range(nba + 25):
+            ligue, m = ("NBA", "pmu|n%d" % i) if i < nba else ("Euroligue", "pmu|e%d" % i)
+            marches = ["FACE_A_FACE"] + (["VAINQUEUR"] if ligue == "NBA" and vainqueur else [])
+            out += [{"bookmaker": "pmu", "sport": "basket", "ligue": ligue, "match_id": m, "marche": k,
+                     "periode": "MATCH", "ligne": None, "issue": x, "cote": cote, "joueur": None}
+                    for k in marches for x in ("DOM", "EXT")]
+        return out
+    normal = [basket(12, 1.5 + i / 100) for i in range(14)]
+    sans_nba = [basket(0, 1.7 + i / 100) for i in range(8)]
+    etat, vus = rejouer({}, "pmu", normal + sans_nba)
+    assert not any("marche" in genres(v) for v in vus)
+    assert etat["pmu"]["series"]["c:basket VAINQUEUR MATCH"]["ligues"] == ["NBA"]
+    disparu = [basket(12, 1.8 + i / 100, vainqueur=False) for i in range(5)]
+    _, vus = rejouer({}, "pmu", normal + sans_nba + disparu)    # la NBA revient sans le marché : vraie disparition
+    assert "basket VAINQUEUR MATCH (0% des matchs, 100% d'habitude)" in next(
+        c["detail"] for c in vus[-1] if c["genre"] == "marche")
 
 
 def test_hausse_des_marches_non_reconnus():
