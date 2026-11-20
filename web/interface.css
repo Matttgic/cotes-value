@@ -1,5 +1,5 @@
 /* Direction artistique : papier et encre, filets fins ; la couche « Finitions » (fin de fichier) ajoute surfaces, coins doux et verre dépoli.
-   L'orange (--signal) est réservé à l'écart de value ; une perte est en rouge brique, un gain à l'encre.
+   L'écart de value est en vert (comme un gain), une perte en rouge brique ; l'orange (--signal) marque la marque et les encadrés.
    Polices sous licence OFL, servies en WOFF2 depuis polices/ : titres, texte, chiffres. */
 @font-face{font-family:"Instrument Serif";font-display:swap;src:url("polices/InstrumentSerif-Regular.woff2") format("woff2")}
 @font-face{font-family:"Familjen Grotesk";font-weight:400 700;font-display:swap;src:url("polices/FamiljenGrotesk-VariableFont_wght.woff2") format("woff2")}
@@ -384,7 +384,7 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 :is(#liste-paris,#mes-liste) .etat-perdu>summary,:is(#liste-paris,#mes-liste) .etat-perdu>summary :not(.btn){color:var(--perdu)}
 :is(#liste-paris,#mes-liste) .etat-regler>summary :is(.pari-ligue,.pari-bookmaker,.pari-ref,.pari-etat,.pari-selection){color:var(--regler)}
 /* Pari en cours : la valeur affichée est l'écart, seule place de l'orange. */
-:is(#liste-paris,#mes-liste) .etat-cours>summary .ligne-valeur{color:var(--signal)}
+:is(#liste-paris,#mes-liste) .etat-cours>summary .ligne-valeur{color:var(--vert)}
 .etat-rembourse .pari-etat{font-style:italic}
 @media(min-width:1000px){#liste-paris{display:block}}
 
@@ -594,7 +594,7 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
 :is(#liste-paris,#mes-liste) .pari-ligne .pari-selection{font-size:14px;color:var(--texte)}
 .pari-ligne .ligne-cote{font-size:16px;font-weight:600}.pari-ref{font-size:11.5px;color:var(--doux)}
 .pari-ligne .ligne-valeur{font-size:14px;font-weight:600}
-.ecart{color:var(--signal);font-weight:600}
+.ecart{color:var(--vert);font-weight:600}
 .ligne-colonnes{border-bottom:1px solid var(--ligne);border-top:1px solid var(--texte)}
 .ligne-nom{font-weight:600}.ligne-volume>small{font-family:var(--sans)}
 .sante-ligne,.notif-mesure,.notif-alerte,.notif-vide,.sante-vide{padding-left:0;padding-right:0}
@@ -922,10 +922,10 @@ tr.en-pause td{opacity:.7}
 /* ===== Finitions (nov. 2026) : surfaces légèrement relevées, coins doux, navigation en verre, chiffres alignés.
    Principes retenus : pas de noir pur, un seul accent (orange = value), états lisibles en un coup d'œil,
    cibles tactiles ≥ 44 px, chiffres tabulaires. Les deux thèmes partagent les mêmes jetons. ===== */
-:root{--surface:#F5F3EE;--surface-2:#FBFAF7;--bord-doux:color-mix(in srgb,var(--ligne) 70%,transparent);--rayon:12px;--rayon-p:8px;
---ombre:0 1px 0 rgba(18,18,15,.04),0 6px 18px -10px rgba(18,18,15,.18);--verre:color-mix(in srgb,var(--fond) 82%,transparent)}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--surface:#1B1B17;--surface-2:#23231E;--ombre:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px -14px rgba(0,0,0,.7)}}
-:root[data-theme=dark]{--surface:#1B1B17;--surface-2:#23231E;--ombre:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px -14px rgba(0,0,0,.7)}
+:root{--surface:#F5F3EE;--surface-2:#FBFAF7;--bord-doux:color-mix(in srgb,var(--ligne) 70%,transparent);--rayon:2px;--rayon-p:2px;
+--ombre:none;--verre:color-mix(in srgb,var(--fond) 82%,transparent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--surface:#1B1B17;--surface-2:#23231E;--ombre:none}}
+:root[data-theme=dark]{--surface:#1B1B17;--surface-2:#23231E;--ombre:none}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-webkit-tap-highlight-color:transparent}
 main :is(b,strong,td,.acc-cote,.acc-ecart,.acc-rang-gain,.acc-resultat>b){font-variant-numeric:tabular-nums}
 :focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:4px}
@@ -944,15 +944,15 @@ main :is(b,strong,td,.acc-cote,.acc-ecart,.acc-rang-gain,.acc-resultat>b){font-v
 #acc-values>.acc-pari,#acc-boosts>.acc-pari,#bo-actuels>.acc-pari,.acc-values #acc-values>.acc-pari:first-child{
   background:var(--surface);border:1px solid var(--bord-doux);border-radius:var(--rayon);padding:14px 16px;margin:0 0 10px;box-shadow:var(--ombre)}
 .acc-cote{font-size:20px;font-weight:600;letter-spacing:-.01em}
-.acc-ecart{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12.5px;color:var(--signal);
-  background:color-mix(in srgb,var(--signal) 14%,transparent)}
+.acc-ecart{display:inline-block;padding:3px 8px;border-radius:2px;font-size:12.5px;color:var(--vert);
+  background:color-mix(in srgb,var(--vert) 16%,transparent)}
 .acc-pari-prix .btn,.lien-bookmaker.btn{border-radius:var(--rayon-p);min-height:44px;display:inline-flex;align-items:center;justify-content:center;
   font-weight:600;border-color:var(--bord-doux);background:var(--surface-2);transition:background .15s,color .15s,border-color .15s}
 .acc-pari-prix .btn:hover,.lien-bookmaker.btn:hover{border-color:var(--texte)}
 .acc-pari-prix .btn:active,.lien-bookmaker.btn:active{transform:scale(.98)}
 
 /* Pastilles et badges : arrondis, lisibles. */
-.badge{border-radius:999px;padding:2px 9px}
+.badge{border-radius:2px;padding:2px 8px}
 .badge.verdict.jouer{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--vert) 40%,transparent)}
 .badge.verdict.passer{box-shadow:inset 0 0 0 1px var(--ligne)}
 
@@ -970,45 +970,44 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
 .reco-carte{background:var(--surface);border:1px solid var(--bord-doux);border-radius:var(--rayon);box-shadow:inset 3px 0 0 var(--texte)}
 
 /* Sous-onglets du bilan : contrôle segmenté. */
-.bilan-onglets{background:var(--surface)!important;border:1px solid var(--bord-doux);border-radius:var(--rayon);padding:4px;gap:4px}
-.bilan-onglets button{border:0!important;margin:0;border-radius:var(--rayon-p);min-height:40px;transition:background .15s,color .15s}
-.bilan-onglets button[aria-selected=true]{background:var(--surface-2)!important;color:var(--texte);box-shadow:var(--ombre)}
+.bilan-onglets{background:transparent!important;border:0;border-top:1px solid var(--texte);border-bottom:1px solid var(--ligne);border-radius:0;padding:0;gap:0}
+.bilan-onglets button{border:0!important;border-bottom:2px solid transparent!important;margin:0 0 -1px;border-radius:0;min-height:42px;
+  font-variant-caps:all-small-caps;letter-spacing:.05em;font-size:14.5px!important;transition:color .15s,border-color .15s}
+.bilan-onglets button[aria-selected=true]{background:transparent!important;color:var(--texte);border-bottom-color:var(--texte)!important}
 
 @media(max-width:760px){
   .acc-kpi,.bu-kpis>div,.acc-kpi:nth-child(odd),.bu-kpis>div:first-child,.bu-kpis>div:nth-child(2){padding:12px 14px 14px;border:1px solid var(--bord-doux)}
   .acc-kpi:nth-child(n+3){border-top:1px solid var(--bord-doux)}
   .acc-pari-prix{gap:6px 12px}
   #onglets{background:var(--verre);-webkit-backdrop-filter:saturate(1.4) blur(16px);backdrop-filter:saturate(1.4) blur(16px);
-    border-top:1px solid var(--bord-doux);padding:6px 10px calc(6px + env(safe-area-inset-bottom));gap:6px;grid-template-columns:repeat(3,minmax(0,1fr))}
-  #onglets button{min-height:46px;border:0!important;margin:0;border-radius:999px;font-weight:550;color:var(--doux);transition:background .2s,color .2s}
-  #onglets button.actif{background:var(--surface-2)!important;color:var(--texte);font-weight:700;box-shadow:var(--ombre)}
+    border-top:1px solid var(--texte);padding:0 10px env(safe-area-inset-bottom);gap:6px;grid-template-columns:repeat(3,minmax(0,1fr))}
+  #onglets button{min-height:46px;border:0!important;border-top:2px solid transparent!important;margin:0;border-radius:0;font-weight:550;color:var(--doux);
+    text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;transition:color .2s,border-color .2s}
+  #onglets button.actif{background:transparent!important;color:var(--texte);font-weight:700;border-top-color:var(--texte)!important}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ===== Effets (web/effets.js) : champ 3D, reflet holographique, bordure qui tourne, transitions, apparition au défilement. ===== */
-/* Champ 3D derrière le titre de l'Accueil, fondu vers le bas pour laisser le texte lisible. */
-.une-tete{position:relative;isolation:isolate}
-.une-tete{padding-top:150px!important}
-.cv-champ{position:absolute;z-index:-1;top:-18px;left:-16px;width:calc(100% + 32px);height:330px;pointer-events:none;opacity:0;
-  transition:opacity 1.2s ease;-webkit-mask-image:linear-gradient(180deg,#000 35%,transparent 92%);mask-image:linear-gradient(180deg,#000 45%,transparent 95%)}
-.cv-champ.cv-champ-pret{opacity:1}
-.une-tete h2{text-shadow:0 2px 24px var(--fond)}
+/* Bandeau boursier (Accueil) : une ligne de cotation entre deux filets, en chiffres mono, qui défile à vitesse constante. */
+.cv-bandeau{overflow:hidden;margin:0 -16px 12px;border-bottom:1px solid var(--texte);background:var(--texte);color:var(--fond);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.cv-piste{display:flex;width:max-content;animation:cv-cotation var(--cv-duree,40s) linear infinite}
+.cv-bandeau:hover .cv-piste{animation-play-state:paused}
+.cv-double{display:flex}
+.cv-cote{display:inline-flex;align-items:baseline;gap:6px;padding:7px 18px;white-space:nowrap;font:500 11.5px/1 var(--mono);letter-spacing:.04em;
+  border-right:1px solid color-mix(in srgb,var(--fond) 22%,transparent)}
+.cv-sym{opacity:.72}.cv-cote b{font-weight:700}
+.cv-cote i{font-style:normal;font-weight:600}
+:root{--cv-b-vert:#86D19F;--cv-b-rouge:#E8907D}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--cv-b-vert:#24603A;--cv-b-rouge:#9C3B2E}}
+:root[data-theme=dark]{--cv-b-vert:#24603A;--cv-b-rouge:#9C3B2E}
+.cv-cote i.pos{color:var(--cv-b-vert)}.cv-cote i.neg{color:var(--cv-b-rouge)}
+@keyframes cv-cotation{to{transform:translateX(-50%)}}
+@media(min-width:761px){.cv-bandeau{margin:0 0 12px}}
+@media(prefers-reduced-motion:reduce){.cv-bandeau{overflow-x:auto}.cv-double{display:none}}
 
-:root{--cv-reflet:rgba(255,255,255,.75)}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--cv-reflet:rgba(236,233,225,.08)}}
-:root[data-theme=dark]{--cv-reflet:rgba(236,233,225,.08)}
-/* Reflet : une lueur qui glisse sur les cartes quand on incline le téléphone (ou bouge la souris). */
-:is(#acc-values,#acc-boosts,#bo-actuels)>.acc-pari,.acc-kpi,.bu-kpis>div{
-  background:radial-gradient(120% 90% at var(--cv-gx,50%) var(--cv-gy,30%),var(--cv-reflet),transparent 55%),var(--surface)}
-
-/* Bordure lumineuse qui tourne : le meilleur pari du moment et les boosts « Jouer ». */
-@property --cv-angle{syntax:"<angle>";inherits:false;initial-value:0deg}
-@keyframes cv-tour{to{--cv-angle:360deg}}
-.acc-values #acc-values>.acc-pari:first-child,:is(#acc-boosts,#bo-actuels)>.acc-pari:has(.verdict.jouer){
-  border:1px solid transparent;
-  background:radial-gradient(120% 90% at var(--cv-gx,50%) var(--cv-gy,30%),var(--cv-reflet),transparent 55%) padding-box,linear-gradient(var(--surface),var(--surface)) padding-box,
-    conic-gradient(from var(--cv-angle),var(--bord-doux) 0 62%,var(--signal) 78%,color-mix(in srgb,var(--signal) 30%,transparent) 88%,var(--bord-doux)) border-box;
-  animation:cv-tour 5s linear infinite}
+/* Le meilleur pari du moment et les boosts « Jouer » : un filet vert en tête, comme une valeur en hausse à la cote. */
+.acc-values #acc-values>.acc-pari:first-child,:is(#acc-boosts,#bo-actuels)>.acc-pari:has(.verdict.jouer){border-top:3px solid var(--vert)}
 
 /* Changement d'onglet : l'ancien contenu s'efface vers le haut, le nouveau monte ; en-tête et barre du bas restent fixes. */
 .haut{view-transition-name:cv-haut}
@@ -1023,11 +1022,15 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
   @keyframes cv-defilement{from{opacity:.15;translate:0 18px;scale:.97}to{opacity:1;translate:0 0;scale:1}}
   :is(#acc-values,#acc-boosts,#bo-actuels,#acc-derniers,#acc-top5)>*,.reco-carte,.acc-courbe .grande-courbe{
     animation:cv-defilement linear both;animation-timeline:view();animation-range:entry 0% entry 70%}
-  .acc-values #acc-values>.acc-pari:first-child,:is(#acc-boosts,#bo-actuels)>.acc-pari:has(.verdict.jouer){
-    animation:cv-tour 5s linear infinite,cv-defilement linear both;animation-timeline:auto,view();animation-range:normal,entry 0% entry 70%}
 }
 @media(prefers-reduced-motion:reduce){
-  .cv-champ{transition:none}
   *{animation:none!important}
   ::view-transition-old(root),::view-transition-new(root){animation:none!important}
 }
+
+/* Point d'arrivée de la courbe : une onde quand le tracé atteint le gain d'aujourd'hui. */
+@keyframes cv-arrivee{0%{r:3.5;stroke-width:0}40%{r:6;stroke-width:6}100%{r:3.5;stroke-width:0}}
+.grande-courbe circle.cv-arrivee{stroke:currentColor;stroke-opacity:.35;animation:cv-arrivee .8s ease-out}
+
+/* Manchette : le nom du site en serif, comme la une d'un quotidien financier. */
+.haut h1{font:400 23px/1 var(--serif);letter-spacing:-.01em}

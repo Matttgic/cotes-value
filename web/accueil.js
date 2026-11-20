@@ -93,4 +93,15 @@ function rendreAccueil() {
   document.getElementById('acc-derniers').innerHTML=derniers.length ? derniers.map(p=>`<div class="acc-resultat"><span><b>${e(p.domicile)} – ${e(p.exterieur)}</b>
 <small>${e(p.pari)} · ${e(p.bookmaker)} ${cote(p.cote)}</small></span><b class="${signe(p.gain)}">${eur(p.gain)}</b></div>`).join('')
     : '<p class="aide">Aucun résultat récent.</p>';
+  if (typeof bandeauBoursier === 'function') {
+    const court=t=>String(t || '').toUpperCase();
+    bandeauBoursier([
+      ['GAIN NET', eurC(s.net), '', signe(s.net)],
+      ['ROI', pct(s.roi), '', signe(s.net)],
+      ['RÉUSSITE', pctEntier(s.reussite), '', ''],
+      ['EN COURS', String(enCours.length), '', ''],
+      ...jouer.map(x=>[`${court(x.p.domicile)} – ${court(x.p.exterieur)}`, cote(x.p.cote), pct(x.p.ecart), 'pos']),
+      ...derniers.map(p=>[`${court(p.domicile)} – ${court(p.exterieur)}`, cote(p.cote), eur(p.gain), signe(p.gain)])
+    ]);
+  }
 }

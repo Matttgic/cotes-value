@@ -1,23 +1,6 @@
-// Effets de présentation : champ 3D de l'Accueil (WebGL, sans librairie), reflet des cartes guidé par le gyroscope
-// ou la souris, transitions entre onglets (View Transitions) et petite vibration au changement d'onglet.
-// Tout s'arrête si l'appareil demande moins de mouvement ; rien ne tourne quand l'Accueil n'est pas visible.
-
-// Inclinaison commune (-1…1), lissée : gyroscope sur téléphone, souris sur ordinateur.
-const cvIncl={x:0,y:0,cx:0,cy:0};
-addEventListener('pointermove',e=>{
-  if(e.pointerType!=='mouse') return;
-  cvIncl.cx=e.clientX/innerWidth*2-1;cvIncl.cy=e.clientY/innerHeight*2-1;
-},{passive:true});
-addEventListener('deviceorientation',e=>{
-  if(e.gamma==null || e.beta==null) return;
-  cvIncl.cx=Math.max(-1,Math.min(1,e.gamma/30));cvIncl.cy=Math.max(-1,Math.min(1,(e.beta-45)/30));
-},{passive:true});
-(function suivreInclinaison(){
-  cvIncl.x+=(cvIncl.cx-cvIncl.x)*.08;cvIncl.y+=(cvIncl.cy-cvIncl.y)*.08;
-  const r=document.documentElement.style;
-  r.setProperty('--cv-gx',`${(50+cvIncl.x*45).toFixed(1)}%`);r.setProperty('--cv-gy',`${(30+cvIncl.y*40).toFixed(1)}%`);
-  if(animationsPermises()) requestAnimationFrame(suivreInclinaison);
-})();
+// Effets de présentation, style journal financier : bandeau boursier de l'Accueil, courbes qui se tracent,
+// transitions entre onglets (View Transitions) et petite vibration au changement d'onglet.
+// Rien ne bouge si l'appareil demande moins de mouvement.
 
 // Changement d'onglet : fondu enchaîné natif quand le navigateur le permet, et une vibration de 8 ms sur Android.
 function basculer(action) {
@@ -26,48 +9,55 @@ function basculer(action) {
   else action();
 }
 
-// Champ 3D : une grille de points qui ondule comme un marché ; les crêtes s'allument à l'orange de la value.
-function champValue(hote) {
-  if(!hote || hote.querySelector('.cv-champ')) return;
-  const toile=document.createElement('canvas');toile.className='cv-champ';toile.setAttribute('aria-hidden','true');
-  const gl=toile.getContext('webgl',{premultipliedAlpha:true,antialias:false,alpha:true});
-  if(!gl) return;
-  hote.prepend(toile);
-  const vs=`attribute vec2 p;uniform float t,asp,dpr;uniform vec2 inc;varying float h,d;
-void main(){float x=p.x*1.9,z=p.y*1.9;
-float y=.17*sin(x*2.1+t*.8)+.13*sin(z*2.9-t*.6)+.09*sin((x+z)*4.2+t*1.25)+.05*sin(length(vec2(x,z))*6.-t*1.6);
-h=y;float a=.5+inc.x*.35+t*.03;float c=cos(a),s=sin(a);vec3 v=vec3(x*c-z*s,y,x*s+z*c);
-float b=.62+inc.y*.18;float cb=cos(b),sb=sin(b);v=vec3(v.x,v.y*cb-v.z*sb,v.y*sb+v.z*cb);v.z+=2.5;d=v.z;
-gl_Position=vec4(v.x*2.3/asp,v.y*2.3+.05,0.,v.z);gl_PointSize=dpr*(1.6+6.*smoothstep(.2,.38,y))*2.6/v.z;}`;
-  const fs=`precision mediump float;uniform vec3 encre,signal;varying float h,d;
-void main(){vec2 c=gl_PointCoord-.5;float r=length(c);if(r>.5)discard;float pic=smoothstep(.2,.36,h);
-float a=(1.-smoothstep(.15,.5,r))*mix(.5,1.,pic)*clamp(1.9-(d-1.8)*.8,0.,1.);gl_FragColor=vec4(mix(encre,signal,pic)*a,a);}`;
-  const shader=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s;};
-  const prog=gl.createProgram();
-  gl.attachShader(prog,shader(gl.VERTEX_SHADER,vs));gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(prog);
-  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)) {toile.remove();return;}
-  gl.useProgram(prog);
-  const N=96,M=64,pts=new Float32Array(N*M*2);
-  for(let i=0;i<N;i++) for(let j=0;j<M;j++){pts[(i*M+j)*2]=i/(N-1)*2-1;pts[(i*M+j)*2+1]=j/(M-1)*2-1;}
-  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,pts,gl.STATIC_DRAW);
-  const loc=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-  const u=n=>gl.getUniformLocation(prog,n);
-  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-  const rgb=v=>{const m=getComputedStyle(document.documentElement).getPropertyValue(v).trim().match(/^#?([\da-f]{6})$/i);
-    const n=parseInt(m ? m[1] : 'ECE9E1',16);return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255];};
-  let couleurs=0,visible=false,boucle=0;const dpr=Math.min(2,devicePixelRatio || 1);
-  const taille=()=>{toile.width=Math.round(toile.clientWidth*dpr);toile.height=Math.round(toile.clientHeight*dpr);};
-  new ResizeObserver(()=>{taille();if(!animationsPermises()) dessiner(4000);}).observe(toile);
-  function dessiner(ms){
-    if(couleurs++%90===0){gl.uniform3fv(u('encre'),rgb('--texte'));gl.uniform3fv(u('signal'),rgb('--signal'));}
-    gl.viewport(0,0,toile.width,toile.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform1f(u('t'),ms/1000);gl.uniform1f(u('asp'),toile.width/Math.max(1,toile.height));gl.uniform1f(u('dpr'),dpr);
-    gl.uniform2f(u('inc'),cvIncl.x,cvIncl.y);gl.drawArrays(gl.POINTS,0,N*M);
+// Bandeau boursier de l'Accueil, façon cotation de Wall Street : chiffres clés, paris à jouer (▲ vert), derniers
+// résultats (▲ gain, ▼ perte). Les éléments sont doublés pour que le défilement boucle sans saut.
+function bandeauBoursier(elements) {
+  const une=document.querySelector('#o-accueil .une-tete');if(!une) return;
+  let bandeau=une.querySelector('.cv-bandeau');
+  if(!elements.length){bandeau?.remove();return;}
+  if(!bandeau){
+    bandeau=document.createElement('div');bandeau.className='cv-bandeau';bandeau.setAttribute('role','marquee');
+    bandeau.setAttribute('aria-label','Cotation du jour');une.prepend(bandeau);
   }
-  const tourner=ms=>{if(!visible || document.hidden){boucle=0;return;}dessiner(ms);boucle=requestAnimationFrame(tourner);};
-  const relancer=()=>{if(animationsPermises()){if(!boucle && visible && !document.hidden) boucle=requestAnimationFrame(tourner);}else dessiner(4000);};
-  new IntersectionObserver(([e])=>{visible=e.isIntersecting;relancer();}).observe(toile);
-  document.addEventListener('visibilitychange',relancer);
-  toile.classList.add('cv-champ-pret');
+  const fleche=c=>c==='pos'?'▲':c==='neg'?'▼':'';
+  const html=elements.map(([nom,valeur,variation,classe])=>`<span class="cv-cote"><span class="cv-sym">${e(nom)}</span> <b>${e(valeur)}</b>${variation||classe?` <i class="${classe||''}">${fleche(classe)}${variation?' '+e(variation):''}</i>`:''}</span>`).join('');
+  bandeau.innerHTML=`<div class="cv-piste">${html}<span aria-hidden="true" class="cv-double">${html}</span></div>`;
+  const piste=bandeau.firstElementChild;
+  requestAnimationFrame(()=>piste.style.setProperty('--cv-duree',`${Math.max(20,piste.scrollWidth/2/40)}s`));
 }
-champValue(document.querySelector('#o-accueil .une-tete'));
+
+// Courbe qui se trace : à la première ouverture d'une stratégie (et à la première vue du gain cumulé de l'Accueil),
+// la ligne part du début et le point avance jusqu'au gain d'aujourd'hui.
+const courbesTracees=new Set();
+function tracerCourbe(svg) {
+  if(!svg || !animationsPermises()) return;
+  const chemins=[...svg.querySelectorAll(':scope>path')],ligne=chemins.at(-1),point=svg.querySelector(':scope>circle');
+  if(!ligne || !ligne.getTotalLength) return;
+  const long=ligne.getTotalLength(),duree=1700,debut=performance.now(),fin=point?[point.getAttribute('cx'),point.getAttribute('cy')]:null;
+  const autres=chemins.slice(0,-1);
+  ligne.style.strokeDasharray=`${long} ${long}`;ligne.style.strokeDashoffset=long;
+  autres.forEach(c=>{c.style.opacity=0;c.style.transition='opacity .6s ease .9s';});
+  requestAnimationFrame(()=>autres.forEach(c=>c.style.opacity=''));
+  const pas=t=>{
+    const p=Math.min(1,(t-debut)/duree),lisse=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+    ligne.style.strokeDashoffset=long*(1-lisse);
+    if(point){const q=ligne.getPointAtLength(long*lisse);point.setAttribute('cx',q.x);point.setAttribute('cy',q.y);}
+    if(p<1) requestAnimationFrame(pas);
+    else {ligne.style.strokeDasharray=ligne.style.strokeDashoffset='';if(point){point.setAttribute('cx',fin[0]);point.setAttribute('cy',fin[1]);point.classList.add('cv-arrivee');}}
+  };
+  requestAnimationFrame(pas);
+}
+document.addEventListener('toggle',e=>{
+  const d=e.target;
+  if(!(d instanceof HTMLDetailsElement) || !d.open || !d.classList.contains('ligne-strategie')) return;
+  const cle=d.id || d.querySelector('summary')?.textContent;
+  if(courbesTracees.has(cle)) return;
+  courbesTracees.add(cle);
+  tracerCourbe(d.querySelector('.grande-courbe'));
+},true);
+const zoneCourbeAccueil=document.getElementById('acc-courbe');
+if(zoneCourbeAccueil) new IntersectionObserver((entrees,obs)=>{
+  if(!entrees[0].isIntersecting) return;
+  const svg=zoneCourbeAccueil.querySelector('.grande-courbe');if(!svg) return;
+  obs.disconnect();tracerCourbe(svg);
+},{threshold:.4}).observe(zoneCourbeAccueil);
