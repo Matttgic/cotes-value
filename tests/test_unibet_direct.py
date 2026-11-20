@@ -441,3 +441,16 @@ def test_un_filtre_coupe_par_l_echeance_avant_la_fin_n_est_pas_compte_comme_lu()
     client = unibet.Client(Session([]), Page(), (0, 0))
     assert unibet._lire_filtre(client, 1, "football", {"events": {}}, 100, 1, echeance=Fin()) is False
     assert "budget" in client.erreurs
+
+
+def test_un_appel_refuse_faute_de_temps_ne_compte_pas_le_filtre_comme_lu():
+    """Le client refuse un appel à moins de 3 s de l'échéance alors qu'elle est encore « ok » : filtre à relire."""
+    class Presque:
+        def ok(self):
+            return True
+
+        def reste(self):
+            return unibet._MARGE_S - 1
+
+    client = unibet.Client(Session([]), Page(), (0, 0), echeance=Presque())
+    assert unibet._lire_filtre(client, 1, "football", {"events": {}}, 100, 1, echeance=Presque()) is False
