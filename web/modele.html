@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value</title>
+<script>try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}</script>
 <style>__INTERFACE_CSS__</style>
 </head>
 <body>
@@ -18,6 +19,7 @@
   <p class="aide mode-mise-note" id="mode-mise-note" role="status"></p>
   <nav id="onglets" aria-label="Navigation principale">
     <button data-o="accueil"><span>Accueil</span></button>
+    <button data-o="decision"><span>Décision</span></button>
     <button data-o="bilan"><span>Bilan</span></button>
     <button data-o="notifications"><span>Notifs</span></button>
   </nav>
@@ -27,9 +29,10 @@
   <noscript><p class="vide">Active JavaScript dans Chrome pour afficher les paris et les stratégies.</p></noscript>
   <section class="onglet" id="o-accueil">
     <header class="une-tete"><p class="une-date" id="une-date"></p><h2 id="acc-titre">Cotes Value</h2>
-      <p class="explication"><b>À quoi sert cette page ?</b> À savoir quoi jouer aujourd'hui. Un pari « value », c'est un
+      <details class="explication-pli"><summary><span aria-hidden="true">?</span> À quoi sert cette page</summary>
+      <p class="explication">À savoir quoi jouer aujourd'hui. Un pari « value », c'est un
       pari que le bookmaker paie plus cher qu'il ne vaut : comme acheter pour 1,65 € une chose qui vaut 1,60 €. On peut
-      perdre un pari, mais sur des centaines, on gagne. Quand un pari affiche « 2 sources · mise ×2 », mise deux fois plus.</p>
+      perdre un pari, mais sur des centaines, on gagne. Quand un pari affiche « 2 sources · mise ×2 », mise deux fois plus.</p></details>
       <p class="une-chapo" id="une-chapo"></p></header>
     <div class="acc-kpis" id="acc-kpis"></div>
     <section class="cv-terminal" id="acc-cotation" aria-label="Cotation du jour" hidden></section>
@@ -397,9 +400,41 @@
 </main>
 <footer id="voyant-pushover" class="voyant voyant-attention" role="status" aria-live="polite"><span class="voyant-point" aria-hidden="true"></span><span class="voyant-texte">Pushover : vérification en cours…</span></footer>
 <script>
-// Mode jour/nuit appliqué dès le début du script unique de la page (les contrôles de publication exigent un seul script).
-try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}
+// Mode jour/nuit : appliqué dans le <head> par un premier script fixe (THEME_SCRIPT de cotes/site/construction.py),
+// avant le chargement des données (audit du 20/11/2026 : écran au mauvais thème pendant 6 s).
 const D = __DONNEES__;
+// Rendu à la demande (audit du 20/11/2026) : seul l'onglet ouvert est construit au chargement ; les autres le sont à
+// leur ouverture, ou en tâche de fond quand le navigateur est libre. Un changement de mise les marque à refaire.
+const PAGES_RENDUS = {
+  accueil: [() => rendreAccueil()],
+  bilan: [() => rendreBilan(), () => rendreBilanUniques(), () => rendreMesStrategies(), () => rendreStrategies()],
+  segments: [() => rendreSegments()],
+  paris: [() => rendreSanteParis(), () => rendreParis()],
+  analyses: [() => rendreAnalyses()],
+  controle: [() => rendreControle(), () => rendreSante()],
+};
+const pagesARendre = new Set(["bilan", "segments", "paris", "controle"]);
+// Ancien rendu au chargement, laissé à sa place dans le code : la page le fait par rendrePage(page) (ouverture ou
+// tâche de fond). Les tests qui découpent ce gabarit remplacent cette fonction par un rendu immédiat.
+function rendreDiffere(page, rendre) {}
+let pageActive = null, fondPrevu = false;
+function rendrePage(page) {
+  if (!pagesARendre.delete(page)) return;
+  for (const f of PAGES_RENDUS[page]) { try { f(); } catch (err) { console.error(err); } }
+  if (typeof adapterTableaux === "function") adapterTableaux();
+}
+function rendreEnFond() {
+  if (fondPrevu) return;
+  fondPrevu = true;
+  const attendre = window.requestIdleCallback ? f => requestIdleCallback(f, {timeout: 4000}) : f => setTimeout(f, 200);
+  const suivant = () => {
+    const page = pagesARendre.values().next().value;
+    if (page === undefined) { fondPrevu = false; return; }
+    rendrePage(page);
+    attendre(suivant);
+  };
+  attendre(suivant);
+}
 const e = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cote = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
 const pct = x => x==null ? "—" : (x>0?"+":"") + (100*x).toFixed(1).replace(".", ",") + " %";
@@ -475,6 +510,8 @@ function ouvrir(o) {
     b.classList.toggle("actif", b.dataset.o===groupe);
     if (b.dataset.o===groupe) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
   });
+  pageActive = page;
+  rendrePage(page);
   document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id==="o-"+page));
   let hash = nom;
   if (page === "paris" && typeof hashParis === "string" && hashParis) { hash = hashParis; hashParis = null; }
@@ -786,7 +823,7 @@ function rendreCourbe() {
   zone.addEventListener("pointerleave", cacher);
 }
 window.addEventListener("resize", () => { rendreCourbe(); if (document.getElementById("o-strategies").classList.contains("actif")) rendreStrategies(); });
-rendreBilan();
+rendreDiffere("bilan", rendreBilan);
 document.getElementById("infos").innerHTML = [
   ["Cotes françaises lues", (dc.cotes||{}).francaises], ["Matchs comparés", dc.matchs_francais],
   ["Erreurs au dernier passage", dc.opportunites],
@@ -1083,8 +1120,7 @@ function rendreSanteParis(maintenant=Date.now()) {
     `<span class="sante-suite">${mineures ? mineures+" alerte"+(mineures>1?"s":"")+" mineure"+(mineures>1?"s":"") : "Détails"} ›</span>`;
   b.onclick = () => { ouvrir("controle"); window.scrollTo(0,0); };
 }
-rendreSanteParis();
-rendreParis();
+rendreDiffere("paris", () => { rendreSanteParis(); rendreParis(); });
 
 // --- Bilan, paris uniques : chaque cote française comptée une fois, par écart, par cote et par sport
 const BU_PERIODES = [["","Tout le suivi"],["30","30 derniers jours"],["7","7 derniers jours"],["1","Dernières 24 h"]];
@@ -1230,7 +1266,7 @@ function rendreProps() {
   const st = (P.strategies || []).map(s => `${s.nom} (${s.actif ? "active" : "désactivée"})`).join(" · ");
   document.getElementById("props-strategies").textContent = st;
 }
-rendreBilanUniques();
+rendreDiffere("bilan", rendreBilanUniques);
 
 // --- Segments : les groupes de paris qui marchent, avec ce qui relève de la chance
 let triSeg = "roi";
@@ -1286,7 +1322,7 @@ ${(n => n ? `<span class="badge en_cours">${n} à venir</span>` : "")(aVenir(s).
 <span>CLV <span class="${signe(x[7])}">${pct(x[7])}</span></span></div></div>`).join("")}</div>`);
   });
 }
-rendreSegments();
+rendreDiffere("segments", rendreSegments);
 
 // --- À régler
 const manUniques = new Map();
@@ -1358,7 +1394,7 @@ ${(g.exemples||[]).map(x => `<div class="l4"><span>${e(x.match)}</span><span>${e
   }
   document.getElementById("ctl-liste").innerHTML = html;
 }
-rendreControle();
+rendreDiffere("controle", rendreControle);
 
 // --- Santé : état des automatismes et des sources, en mots simples
 const SOURCES_COTES = [["pinnacle","Pinnacle"],["polymarket","Polymarket"],["netbet","NetBet"],["winamax_direct","Winamax"],
@@ -1520,7 +1556,7 @@ function rendreSante(maintenant=Date.now()) {
     (tm.taux_avant == null ? "" : ` · ${tm.jours} j d'avant : ${pctT(tm.taux_avant)}`), tm.alerte ? "alerte" : "ok") : "";
   document.getElementById("sante-saisie").textContent = `Matchs à saisir à la main${man.length ? " ("+groupesReglement.size+")" : ""} ›`;
 }
-rendreSante();
+rendreDiffere("controle", rendreSante);
 
 // Famille publiée une fois : aucun nouveau classement choisi selon le test final.
 // Comparaison complète : même ligne de données pour le tableau et le graphique.
@@ -1965,7 +2001,7 @@ document.getElementById("strategies-ref").onchange = rendreStrategies;
   }
 }
 document.getElementById("strategies-tri").onchange = rendreStrategies;
-rendreStrategies();
+rendreDiffere("bilan", rendreStrategies);
 
 
 // onglet de départ : celui de l'adresse, sinon le dernier ouvert, sinon Paris (« #jouer » reste un ancien raccourci vers Paris)
@@ -1979,11 +2015,12 @@ __BOOSTS_JS__
 { const nb = (D.surebets?.actuels || []).filter(s => !s.suspect).length + (D.boosts?.actuels || []).filter(b => b.value > 0).length;
   const z = document.getElementById("nb-boosts"); if (z) z.textContent = nb || ""; }
 const ONGLETS = ["accueil","decision","jouer","bilan","strategies","mes","segments","paris","boosts","bilan-boosts","notifications","regler","controle","analyses"];
-// Menu réduit à Accueil, Bilan et Notifs : un ancien onglet mémorisé (Décision, Paris, Boosts…) rouvre l'accueil ou le
+// Menu à quatre entrées (Accueil, Décision, Bilan, Notifs) : un ancien onglet mémorisé (Paris, Boosts…) rouvre l'accueil ou le
 // bilan des boosts ; une adresse explicite (« #paris ») reste servie.
-const DEPART_MENU = {decision: "accueil", jouer: "accueil", paris: "accueil", segments: "bilan", analyses: "bilan", boosts: "bilan-boosts"};
+const DEPART_MENU = {jouer: "accueil", paris: "accueil", segments: "bilan", analyses: "bilan", boosts: "bilan-boosts"};
 const departMenu = ancreDepart.page ? depart : (DEPART_MENU[depart] || depart);
 ouvrir(ONGLETS.includes(departMenu) ? departMenu : "accueil");
+rendreEnFond();
 window.addEventListener("hashchange", () => {
   const a = lireAncre();
   if (!ONGLETS.includes(a.page)) return;
@@ -2000,8 +2037,9 @@ __ANALYSES_JS__
 __ACCUEIL_JS__
 __DECISION_JS__
 function rendreTout() {
-  rendreAccueil(); rendreBilan(); rendreBilanUniques(); rendreMesStrategies(); rendreParis(); rendreSegments(); rendreStrategies(); rendreAnalyses();
-  adapterTableaux();
+  for (const page of Object.keys(PAGES_RENDUS)) pagesARendre.add(page);
+  rendrePage(pageActive in PAGES_RENDUS ? pageActive : "accueil");
+  rendreEnFond();
 }
 // Texte sous le menu : un message ponctuel seulement ; la règle du mode, la bankroll et ce qui ne change pas sont au survol.
 function noteMise(message) {

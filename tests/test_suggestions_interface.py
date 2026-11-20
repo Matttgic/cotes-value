@@ -21,8 +21,8 @@ def test_le_script_de_la_page_construite_est_du_javascript_valide(tmp_path):
     (tmp_path / "paris.json").write_text(json.dumps([pari(i) for i in range(3)]), encoding="utf-8")
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
     scripts = re.findall(r"<script(?:\s[^>]*)?>([\s\S]*?)</script>", html)
-    assert len(scripts) == 1
-    (tmp_path / "page.js").write_text(scripts[0], encoding="utf-8")
+    assert len(scripts) == 2 and scripts[0] == site_web.THEME_SCRIPT
+    (tmp_path / "page.js").write_text(scripts[1], encoding="utf-8")
     r = subprocess.run([NODE, "--check", str(tmp_path / "page.js")], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr[-600:]
 
