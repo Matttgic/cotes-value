@@ -179,7 +179,7 @@ function rendreBilanBoosts() {
     ['Gain net', (s.gain >= 0 ? '+' : '') + fr2(s.gain) + ' €', signe(s.gain), `${s.n} boosts réglés`],
     ['ROI', s.roi == null ? '—' : pct(s.roi), signe(s.gain), `${fr2(s.mise)} € misés`],
     ['Gagnés', `${s.gagnes}/${s.n}`, '', 'boosts gagnés']
-  ]) : '<p class="aide">Aucun boost réglé pour l’instant.</p>';
+  ]) : '';
   document.getElementById('bb-n').textContent = aRegler.length ? String(aRegler.length) : '';
   zone.innerHTML = aRegler.length
     ? `<textarea class="bb-texte" id="bb-texte" readonly rows="${Math.min(12, aRegler.length + 1)}">${e(texteBoostsARegler(aRegler))}</textarea>

@@ -237,8 +237,12 @@ function grandeCourbe(points, couleur='var(--accent)') {
   let path=`M ${g} ${y(0)}`;
   for(const [t,v] of pts) path+=` H ${x(t).toFixed(1)} V ${y(v).toFixed(1)}`;
   const jour=t=>new Date(t*1000).toLocaleDateString('fr-FR',{timeZone:'Europe/Paris',day:'numeric',month:'short'});
-  const graduations=[...new Set([hi,0,lo])].map(v=>`<line x1="${g}" x2="${W-d}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ligne)"${v?'':' stroke-dasharray="3 3"'}/>
-    <text x="${g-4}" y="${y(v)+3}" text-anchor="end">${euros(v)}</text>`).join('');
+  // Montant d'une graduation seulement s'il ne chevauche pas un autre (« 0 € » et « -50 € » collés au bas du graphique).
+  const etiquetees=[];
+  const graduations=[...new Set([hi,0,lo])].map(v=>{
+    const libre=etiquetees.every(w=>Math.abs(y(w)-y(v))>=12);if(libre) etiquetees.push(v);
+    return `<line x1="${g}" x2="${W-d}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ligne)"${v?'':' stroke-dasharray="3 3"'}/>${libre?`
+    <text x="${g-4}" y="${y(v)+3}" text-anchor="end">${euros(v)}</text>`:''}`;}).join('');
   const ligne=f=>pts.map(p=>`L ${x(p[0]).toFixed(1)} ${y(f(p)).toFixed(1)}`).join(' ');
   const bande=temoin?`<path class="temoin-bande" d="M ${g} ${y(0)} ${ligne(p=>p[2]+margeTemoin(p))} ${[...pts].reverse().map(p=>`L ${x(p[0]).toFixed(1)} ${y(p[2]-margeTemoin(p)).toFixed(1)}`).join(' ')} Z" fill="var(--attendu)" fill-opacity=".16" stroke="none"/>`:'';
   const attendu=temoin?`<path d="M ${g} ${y(0)} ${ligne(p=>p[2])}" fill="none" stroke="var(--attendu)" stroke-width="1.6" stroke-dasharray="5 4"/>`:'';
@@ -277,7 +281,7 @@ function parJour(s) {
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}">${e(r.nomCourt || r.nom)}${etiquetteVerdict(r.id)}${etiquetteProtocole(r.id)}${pastillesMedailles(r.medailles)}</span>${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="avis-mini neg">En pause</small>':''}<span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}"><span class="ligne-titre">${e(r.nomCourt || r.nom)}</span><span class="ligne-badges">${etiquetteVerdict(r.id)}${etiquetteProtocole(r.id)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="avis-mini neg">En pause</small>':''}${pastillesMedailles(r.medailles)}</span></span><span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><h3>${e(r.nom)}</h3></div>
