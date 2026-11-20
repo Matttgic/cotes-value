@@ -429,3 +429,15 @@ def test_le_curseur_suit_la_cle_du_filtre_quand_la_liste_change(monkeypatch):
     assert meta["rotation"] == {"secondaires": n, "depart": 5, "lances": k, "props": 0}
     assert meta["reserve"]["curseur"] == (5 + k) % n
     assert meta["reserve"]["curseur_cle"] == list(("football",) + tuple(filtres[(5 + k) % n]))
+
+
+def test_un_filtre_coupe_par_l_echeance_avant_la_fin_n_est_pas_compte_comme_lu():
+    """20/11/2026, 13 h : des filtres lancés en fin de tranche s'arrêtaient sans lire une page et le curseur les
+    passait ; 55 = 28 + 27, la même fin de tranche était coupée à chaque tour."""
+    class Fin:
+        def ok(self):
+            return False
+
+    client = unibet.Client(Session([]), Page(), (0, 0))
+    assert unibet._lire_filtre(client, 1, "football", {"events": {}}, 100, 1, echeance=Fin()) is False
+    assert "budget" in client.erreurs
