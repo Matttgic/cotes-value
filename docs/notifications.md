@@ -230,3 +230,17 @@ quand le téléphone l'associe à son site.
 - Quota gratuit de Pushover : 10 000 messages par mois et par application ; un 429 arrête l'envoi du passage.
 - Le bilan est dans `notifications_diagnostic.json` (champ `pushover` : actif, source des stratégies, nombre de stratégies, envois, échecs, clés
   inconnues), jamais le jeton ni la clé.
+
+## Origine, statut vivant et journal réel (audit du 20/11/2026)
+
+- **Origine de la value** (`cotes/origine.py`) : à la prise, l'historique des cotes du jour dit si le bookmaker
+  venait de monter sa cote (`hausse`), de la baisser, si elle est apparue dans l'heure, ou si seule la référence a
+  bougé (`stable`). Champ `origine` du pari, ligne « Origine : … » dans l'alerte. Informatif : aucune règle n'en dépend.
+- **Statut vivant** (`cotes/alertes/statut.py`) : la cote relue des alertes des 3 dernières heures. Sous la cote
+  alertée : « Cote baissée » ; sous la cote minimale : « Plus jouable ». Pushover : une relance discrète
+  (priorité −1) par statut. Web push : `statuts` dans `notifications.json`, et `web/sw.js` remplace la notification
+  encore affichée (même `tag`). **À faire** : `cv-notifications` doit transmettre ces statuts aux appareils déjà
+  servis (lecture de `cv_push_deliveries`, puis redéploiement de la fonction).
+- **Journal réel** (`web/journal.js`) : chaque alerte Pushover porte quatre liens (Joué, Refusé, Plafonné, Disparu)
+  vers `#notifications?journal=<pari>&r=…`. La réponse reste sur l'appareil ; la page Notifs donne le gain réel à la
+  cote obtenue et signale un bookmaker qui plafonne (3 mises plafonnées et 30 % des réponses au moins).

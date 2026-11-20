@@ -31,7 +31,7 @@ _PAR_COUCHE = {
                "cotes.direct.horizon cotes.direct.matchbook cotes.direct.netbet cotes.direct.olybet "
                "cotes.direct.pmu cotes.direct.unibet cotes.direct.winamax cotes.direct.boosts_sites cotes.direct.ws",
     "domaine": "cotes.controle cotes.comparaison cotes.mouvement cotes.props cotes.surebets cotes.boosts cotes.euria",
-    "paris": "cotes.simulation cotes.reglement cotes.mises cotes.props_papier",
+    "paris": "cotes.simulation cotes.reglement cotes.mises cotes.props_papier cotes.origine",
     "strategies": "cotes.strategies cotes.strategies.registre cotes.decisions cotes.convergence cotes.laboratoire cotes.memo cotes.pauses "
                   "cotes.strategies_prudentes cotes.strategie_recommandee cotes.strategie_chatgpt "
                   "cotes.strategie_claude_defi cotes.strategie_claude_humain cotes.strategie_claude_opus "
@@ -43,7 +43,7 @@ _PAR_COUCHE = {
               "cotes.analyse_marche cotes.analyse_marche.cache cotes.analyse_marche.lecture "
               "cotes.analyse_marche.meneurs cotes.analyse_marche.opportunites cotes.analyse_marche.segments",
     "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables cotes.alertes cotes.alertes.webhook "
-               "cotes.alertes.pushover cotes.alertes.bankroll cotes.alertes.chrome cotes.alertes.envoi cotes.alertes.promos",
+               "cotes.alertes.pushover cotes.alertes.bankroll cotes.alertes.chrome cotes.alertes.envoi cotes.alertes.promos cotes.alertes.statut",
     "site": "scripts.site_web cotes.site cotes.site.construction",
     "cycle": "cotes.pipeline cotes.pipeline.contexte cotes.pipeline.outils cotes.pipeline.reglement cotes.pipeline.sauvegarde cotes.pipeline.analyse cotes.pipeline.prise cotes.pipeline.collecte cotes.pipeline.cycle",
     "scripts": "cotes.__main__ scripts.relancer scripts.cycle scripts.envoyer_notifications scripts.envoyes_secours scripts.serveur_direct "

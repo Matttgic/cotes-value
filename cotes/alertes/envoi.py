@@ -236,6 +236,16 @@ def pushover(donnees: Path, flux: dict, env=None, paris: list[dict] | None = Non
         bilan = poster_pushover(a_envoyer, env) if a_envoyer else {"envoyees": [], "echecs": 0, "erreurs": []}
         for pid in bilan["envoyees"]:
             recents[pid] = maintenant.isoformat(timespec="seconds")
+        # Statut vivant (cotes/alertes/statut.py) : une relance discrète quand la cote d'une alerte baisse ou disparaît.
+        from cotes.alertes import statut as statut_mod
+        relances = [{**s, "type": "statut", "id": f'{s["id"]}:{s["statut"]}'}
+                    for s in statut_mod.relances(statut_mod.statuts(paris, recents, maintenant), recents)]
+        bilan_r = poster_pushover(relances, env) if relances else {"envoyees": [], "echecs": 0, "erreurs": []}
+        for pid in bilan_r["envoyees"]:
+            recents[pid] = maintenant.isoformat(timespec="seconds")
+        bilan["envoyees"] = bilan["envoyees"] + bilan_r["envoyees"]
+        bilan["echecs"] += bilan_r["echecs"]
+        bilan["erreurs"] = sorted(set(bilan["erreurs"]) | set(bilan_r["erreurs"]))[:5]
         if bilan["envoyees"] or amorcage or len(recents) != len(envoyes):
             ecrire_json(chemin, recents)
         if etat_bk is not None:
@@ -243,7 +253,7 @@ def pushover(donnees: Path, flux: dict, env=None, paris: list[dict] | None = Non
             bankroll_auto.noter(etat_bk, [a for a in a_envoyer if a["id"] in envoyees], maintenant)
             bankroll_auto.ecrire(donnees, etat_bk)
         recap = recap_pushover(donnees, paris, recents, env, maintenant)
-        retour = {**base, "envoyees": len(bilan["envoyees"]), "echecs": bilan["echecs"],
+        retour = {**base, "envoyees": len(bilan["envoyees"]), "relances": len(bilan_r["envoyees"]), "echecs": bilan["echecs"],
                   "erreurs": bilan["erreurs"], "recap": recap}
         if etat_bk is not None:
             retour["bankroll"] = {"calculee": etat_bk["bankroll"], "mise_sur": etat_bk["mise_sur"],
@@ -296,6 +306,21 @@ def recap_pushover(donnees: Path, paris: list[dict], envoyes: dict, env, mainten
         return {"actif": True, "envoye": False, "erreur": type(e).__name__}
 
 
+def statuts_web(paris: list[dict] | None, maintenant: datetime) -> list[dict]:
+    """Statuts vivants pour le web push (``notifications.json``) : toute prise des 3 dernières heures, alertée ou non ;
+    le service ne remplace que les notifications réellement envoyées et encore affichées (web/sw.js)."""
+    from cotes.alertes import statut as statut_mod
+    from cotes.notifications import empreinte_prix
+    if not paris:
+        return []
+    try:
+        envoyes = {empreinte_prix(p): p.get("decide_le") or p.get("detecte") for p in paris
+                   if p.get("statut") == "en_cours" and isinstance(p.get("decide_le") or p.get("detecte"), str)}
+        return statut_mod.statuts(paris, envoyes, maintenant)[:100]
+    except Exception:  # noqa: BLE001 - les statuts ne bloquent jamais l'envoi des alertes
+        return []
+
+
 def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
     from cotes.depot.json_io import ecrire_json
     retenues: list = []
@@ -304,6 +329,7 @@ def envoyer_et_journaliser(donnees: Path, destination: Path) -> dict:
     except (OSError, ValueError):
         paris = None                                # chacun relit et gère l'erreur comme avant
     flux = preparer(donnees, retenues=retenues, paris_bruts=paris)
+    flux["statuts"] = statuts_web(paris, datetime.now(timezone.utc))
     ecrire_json(destination, flux)
     push = pushover(donnees, flux, paris=paris)     # d'abord : c'est le canal le plus rapide
     webhook = webhook_pinnacle2(donnees, flux, paris=paris)

@@ -329,6 +329,8 @@
     <p class="explication"><b>À quoi sert cette page ?</b> À recevoir les paris sur ton téléphone. Coche une stratégie,
     entre ton code, appuie sur « Enregistrer ». Quand elle trouve un pari, l'appli Pushover te l'envoie.
     <b>Exemple</b> : tu coches « Pinnacle 8 » ; tu reçois « Caen – Nîmes · Nîmes −1,5 · PMU 1,91 · mise 12 € ».</p>
+    <h3 class="bu-titre">Journal réel</h3>
+    <div id="journal-reel"></div>
     <h3 class="bu-titre">Alertes Pushover</h3>
     <p class="aide" id="pushover-etat" role="status" aria-live="polite">Chargement du choix…</p>
     <label class="notif-filtre"><input type="checkbox" data-filtre="pushover-strategies"> Activées seulement</label>
@@ -403,6 +405,7 @@
 // Mode jour/nuit : appliqué dans le <head> par un premier script fixe (THEME_SCRIPT de cotes/site/construction.py),
 // avant le chargement des données (audit du 20/11/2026 : écran au mauvais thème pendant 6 s).
 const D = __DONNEES__;
+const ANCRE_DEPART = location.hash;     // avant toute réécriture par ouvrir() (journal réel : web/journal.js)
 // Rendu à la demande (audit du 20/11/2026) : seul l'onglet ouvert est construit au chargement ; les autres le sont à
 // leur ouverture, ou en tâche de fond quand le navigateur est libre. Un changement de mise les marque à refaire.
 const PAGES_RENDUS = {
@@ -2009,6 +2012,7 @@ rendreDiffere("bilan", rendreStrategies);
 const ancreDepart = lireAncre();
 const depart = ancreDepart.page || lire("onglet") || "accueil";
 __NOTIFICATIONS_JS__
+__JOURNAL_JS__
 __PUSHOVER_JS__
 __VOYANT_JS__
 __BOOSTS_JS__
@@ -2106,6 +2110,7 @@ if (miseMode !== "fixe" || BANKROLL !== BANKROLL_BASE) rendreTout();     // les 
 if (miseVoulue !== miseMode) choisirMise(miseVoulue);                     // mode mémorisé chargé à la demande
 initialiserAnalyses();
 initialiserInterface();
+initialiserJournal();
 __ACTUALISATION_JS__
 const champsVue = ["f-q", "paris-horaire", "paris-tri", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
 const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +
