@@ -5,8 +5,10 @@ La surveillance (cotes/surveillance.py) voit une source qui tombe ou qui refuse.
 source à sa propre habitude récente, cycle après cycle, sur quatre signaux :
 
 - ``volume`` : cotes (ou matchs) sous ``CHUTE_VOLUME`` de l'habituel ; une lecture vide sans erreur en fait partie ;
-- ``marche`` : un marché d'un sport (« football TOTAL MATCH ») presque disparu, mesuré par la part des matchs de ce
-  sport qui l'ont (le nombre de matchs du jour ne joue donc pas) ;
+- ``marche`` : un marché d'un sport (« football TOTAL MATCH ») presque disparu, mesuré par la part des matchs qui
+  l'ont parmi ceux des compétitions où il est d'habitude proposé (le nombre de matchs du jour ne joue donc pas, ni
+  l'absence d'une compétition : chez PMU, les marchés NBA ne sont pas jugés la nuit, quand la NBA joue en direct et
+  sort de la liste d'avant-match) ;
 - ``inconnus`` : part d'offres qu'aucun traducteur ne reconnaît (cotes/inconnus.py) en forte hausse ;
 - ``figees`` : aucune cote de la source n'a changé depuis ``FIGEES_MIN`` minutes (bookmakers français seulement, les
   seuls dont l'historique a permis de régler le seuil : docs/durer.md).
@@ -45,6 +47,7 @@ LIGNES_MIN = 50                     # habitude en dessous : trop peu pour juger 
 CHUTE_COUVERTURE = 0.3              # marché présent sur moins de 30 % de sa part habituelle des matchs
 COUVERTURE_MIN = 0.3                # seuls les marchés habituellement présents sur 30 % des matchs du sport
 MATCHS_MIN = 10                     # matchs du sport chez la source pour mesurer ses marchés
+HABITUEL_LIGUE = 0.5                # compétition retenue pour un marché s'il y couvre la moitié des matchs
 HAUSSE_INCONNUS = 2.0               # part d'offres non reconnues doublée…
 INCONNUS_PLANCHER = 0.10            # … et en hausse d'au moins 10 points
 LIGNES_FIGEES_MIN = 200
@@ -67,22 +70,31 @@ def mesurer(lignes, prix: bool = True) -> dict:
     """Mesures d'une source sur un cycle : volume, matchs par sport, part des matchs qui ont chaque marché et, si
     ``prix``, une empreinte des prix indépendante de l'ordre (elle change dès qu'une cote change, apparaît ou
     disparaît)."""
-    matchs, marches, somme, n = defaultdict(set), defaultdict(set), 0, 0
+    matchs, ligues, marches, somme, n = defaultdict(set), defaultdict(set), defaultdict(set), 0, 0
     for l in lignes or ():
         if not isinstance(l, dict):
             continue
         n += 1
         match, sport, marche = l.get("match_id"), str(l.get("sport") or "?"), str(l.get("marche") or "?")
+        ligue = str(l.get("ligue") or "?")
         matchs[sport].add(match)
+        ligues[(sport, ligue)].add(match)
         if not marche.startswith("JOUEUR:"):
-            marches[(sport, marche, str(l.get("periode") or "?"))].add(match)
+            marches[(sport, marche, str(l.get("periode") or "?"), ligue)].add(match)
         if prix:
             texte = f"{match}|{marche}|{l.get('periode')}|{l.get('ligne')}|{l.get('issue')}|{l.get('joueur')}|{l.get('cote')}"
             somme = (somme + zlib.crc32(texte.encode("utf-8", "replace")) * 2654435761) & _MASQUE
     sports = {s: len(m) for s, m in matchs.items()}
+    # présence[marché][compétition] = matchs qui l'ont ; ligues[sport][compétition] = matchs de la compétition
+    presence, par_ligue = defaultdict(dict), defaultdict(dict)
+    for (sport, ligue), m in ligues.items():
+        if sports[sport] >= MATCHS_MIN:
+            par_ligue[sport][ligue] = len(m)
+    for (sport, marche, periode, ligue), m in marches.items():
+        if sports[sport] >= MATCHS_MIN:
+            presence[f"{sport} {marche} {periode}"][ligue] = len(m)
     return {"lignes": n, "matchs": sum(sports.values()), "sports": sports, "empreinte": somme,
-            "couverture": {" ".join(k): round(len(m) / sports[k[0]], 4) for k, m in marches.items()
-                           if sports[k[0]] >= MATCHS_MIN}}
+            "ligues": dict(par_ligue), "presence": dict(presence)}
 
 
 def _minutes(depuis, maintenant: datetime) -> float | None:
@@ -134,12 +146,23 @@ def _juger_source(source: str, e: dict, m: dict, maintenant: datetime) -> tuple[
         if s and not any(c["genre"] == nom for c in constats):
             constats.append({"genre": nom, "depuis": s["anomalie"],
                              "detail": f"{_nombre(valeur)} {mot}, {_nombre(s['ref'])} d'habitude"})
-    disparus = []
-    for cle in {k[2:] for k in series if k.startswith("c:")} | set(m["couverture"]):
-        if m["sports"].get(cle.split(" ")[0], 0) < MATCHS_MIN:
+    disparus, presence = [], m.get("presence") or {}
+    for cle in {k[2:] for k in series if k.startswith("c:")} | set(presence):
+        sport = cle.split(" ")[0]
+        if m["sports"].get(sport, 0) < MATCHS_MIN:
             continue                    # sport presque absent ce cycle : ses marchés ne sont pas jugés
-        part = m["couverture"].get(cle, 0.0)
+        # Compétitions où le marché est d'habitude proposé : seuls leurs matchs comptent.
+        avant, ici, du_sport = series.get("c:" + cle) or {}, presence.get(cle) or {}, (m.get("ligues") or {}).get(sport) or {}
+        habituelles = set(avant.get("ligues") or ()) | {
+            l for l, k in ici.items() if du_sport.get(l) and k >= HABITUEL_LIGUE * du_sport[l]}
+        total = sum(du_sport.get(l, 0) for l in habituelles)
+        if total < MATCHS_MIN:          # ses compétitions sont absentes ce cycle (pas encore affichées, en direct)
+            if habituelles:
+                series["c:" + cle] = {**avant, "ligues": sorted(habituelles), "vu": iso}
+            continue
+        part = round(sum(ici.get(l, 0) for l in habituelles) / total, 4)
         s = juger("c:" + cle, part, hausse=False, facteur=CHUTE_COUVERTURE, minimum=COUVERTURE_MIN)
+        series["c:" + cle]["ligues"] = sorted(habituelles)
         if s:
             disparus.append((s["anomalie"], cle, part, s["ref"]))
     if disparus:
