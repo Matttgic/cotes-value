@@ -9,6 +9,7 @@ première trame, sans pagination et sans attendre la suite.
 from __future__ import annotations
 
 import re
+from collections import Counter
 import struct
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -409,6 +410,14 @@ def categories_du_detail(trame: bytes | None) -> list[tuple[str, str]]:
     return sortie
 
 
+def onglets_par_sport(client) -> dict[str, dict[str, int]]:
+    """{sport: {onglet: matchs qui le proposent}} du passage, onglets lus marqués d'une étoile."""
+    out: dict[str, dict[str, int]] = {}
+    for (sport, nom), n in sorted(getattr(client, "onglets_vus", Counter()).items()):
+        out.setdefault(sport, {})[nom + (" *" if nom.lower() in LIBELLES_ONGLETS else "")] = n
+    return out
+
+
 def onglets_utiles(trame: bytes | None) -> list[str]:
     """Onglets de marchés comparables (résultats, buts, points, sets, jeux), sans « Le Top »."""
     utiles = []
@@ -663,6 +672,10 @@ class Client:
         self.requetes = 0
         self.erreurs: list[str] = []
         self._bloque = False
+        # Onglets proposés par sport (« Le Top », « Résultats », « Mi-temps »…), publiés dans le journal du cycle :
+        # un onglet renommé fait disparaître ses marchés sans erreur (handball, 20/11/2026 vers 11:20 UTC).
+        self.onglets_vus: Counter = Counter()
+        self._verrou_onglets = threading.Lock()
 
     def _temps(self) -> bool:
         if self._bloque:
@@ -772,6 +785,10 @@ def _detailler(client: Client, match: dict, moment: str,
     du_top = {f"betclic|{t['marketId']}" for o in offres
               for t in marches_pulse(o, match["domicile"], match["exterieur"], match["sport"])}
     complet = bool(trame)
+    if trame:
+        noms = {lib.strip() for _, lib in categories_du_detail(trame)}
+        with client._verrou_onglets:
+            client.onglets_vus.update((match["sport"], nom) for nom in noms)
     if onglets and trame:
         for ident in onglets_utiles(trame):
             if client._bloque or not client._temps():
@@ -933,7 +950,7 @@ def _collecter_reserve(client: Client, demandes, heures: float, maintenant: date
         "erreurs": list(client.erreurs),
         "requetes": client.requetes,
         "matchs": len({l.get("match_id") for l in fusion}),
-        "onglets": dict(compte), "proches": suivi,
+        "onglets": dict(compte), "proches": suivi, "onglets_vus": onglets_par_sport(client),
         "reserve": {"offset": 0, "lignes": fusion,
                     "onglets": {mid: v for mid, v in onglets_lus.items() if mid in au_catalogue}},
     }

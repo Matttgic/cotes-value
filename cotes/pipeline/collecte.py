@@ -482,6 +482,9 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         proches = (metas.get("betclic_direct") or {}).get("proches")
         if isinstance(proches, dict):         # matchs proches de Betclic : relances, lectures ratées ou vides
             journal["betclic_proches"] = proches
+        onglets_bc = (metas.get("betclic_direct") or {}).get("onglets_vus")
+        if isinstance(onglets_bc, dict):      # onglets proposés par sport : repérer un onglet renommé
+            journal["betclic_onglets"] = onglets_bc
         if source_oly == "direct":
             oly_lignes, oly_meta = recevoir("olybet")
         else:
