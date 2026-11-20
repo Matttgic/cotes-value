@@ -367,3 +367,41 @@ def test_accueil_change_d_empreinte_quand_datadome_refuse(monkeypatch):
     _, meta = unibet.collecter({"football"}, 36, session=session, pause=(0, 0), maintenant=MAINTENANT)
     assert essayees == ["safari", "firefox"] and not any("accueil" in e for e in meta["erreurs"])
     assert unibet.EMPREINTES[:2] == ("safari", "firefox") and "chrome" not in unibet.EMPREINTES[:2]
+
+
+def test_budget_epuise_la_rotation_reprend_au_premier_filtre_non_lu(monkeypatch):
+    """20/11/2026 : un cycle sur quatre s'arrêtait sur « budget » au milieu de la tranche ; le curseur avançait
+    quand même de 20 et les filtres non lus attendaient un tour complet (~19 min) : leurs marchés sortaient de la
+    fenêtre de 15 min et la dérive les voyait disparaître."""
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+
+    class Budget:
+        def __init__(self, n):
+            self.n, self.limite = 0, n
+
+        def ok(self):
+            return self.n < self.limite
+
+        def reste(self):
+            return 20.0 if self.ok() else 0.0
+
+        def timeout(self, plafond):
+            return 4
+
+    def cycle(limite, curseur):
+        budget = Budget(limite)
+
+        class UneSession(Session):
+            def get(self, url, timeout=30, headers=None):
+                budget.n += 1
+                return super().get(url, timeout=timeout, headers=headers)
+
+        session = UneSession([(200, {"items": {}, "numberOfEvents": 0}, {})] * 60)
+        _, meta = unibet.collecter({"football"}, 36, session=session, page=Page(), pause=(0, 0),
+                                   maintenant=MAINTENANT, echeance=budget, concurrence=1,
+                                   reserve={"lignes": [], "curseur": curseur})
+        return meta["reserve"]["curseur"], len(session.urls)
+
+    n = len(unibet._filtres("football", 36)) - 1
+    assert cycle(1 + 5, 4) == (9, 6)                          # marché principal + 5 secondaires lus sur 20
+    assert cycle(1000, 4) == ((4 + unibet._SECONDAIRES_PAR_CYCLE) % n, 1 + unibet._SECONDAIRES_PAR_CYCLE)

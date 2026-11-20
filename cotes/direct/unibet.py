@@ -747,6 +747,8 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
 
         return espacer
 
+    commences: set = set()          # filtres lancés : la rotation reprend au premier qui ne l'a pas été
+
     def executer(taches: list[tuple]) -> None:
         if not taches:
             return
@@ -755,6 +757,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
                 if echeance is not None and not echeance.ok():
                     client._noter("budget")
                     return
+                commences.add((sport, type_id, periode))
                 _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
                              pages_max, session=session)
             return
@@ -764,6 +767,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
                 client._noter("budget")
                 return
             noeud, sport, type_id, periode = tache
+            commences.add((sport, type_id, periode))
             _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
                          pages_max, session=requests.Session(), espacer=pause_locale(),
                          verrou_sac=verrou_sac)
@@ -803,6 +807,12 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         places = max(0, _SECONDAIRES_PAR_CYCLE - len(props))
         pris, curseur_suivant = tranche(secondaires, bloc.get("curseur"), places)
         executer(pris)
+        # Budget épuisé au milieu de la tranche (constaté le 20/11 : un cycle sur quatre à 71 s, « budget ») :
+        # les filtres non lancés passent en tête du cycle suivant au lieu d'attendre un tour complet (~19 min),
+        # pendant lequel leurs cotes sortaient de la fenêtre de 15 min et les marchés disparaissaient.
+        lances = next((k for k, t in enumerate(pris) if (t[1], t[2], t[3]) not in commences), len(pris))
+        if lances < len(pris):
+            curseur_suivant = (int(bloc.get("curseur") or 0) + lances) % len(secondaires)
     elif filtre_radar:
         primaires = []
         for interne, noeud in candidats:
