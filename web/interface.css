@@ -1,5 +1,5 @@
 /* Direction artistique : papier et encre, filets fins ; la couche « Finitions » (fin de fichier) ajoute surfaces, coins doux et verre dépoli.
-   L'orange (--signal) est réservé à l'écart de value ; une perte est en rouge brique, un gain à l'encre.
+   L'écart de value est en vert (comme un gain), une perte en rouge brique ; l'orange (--signal) marque la marque et les encadrés.
    Polices sous licence OFL, servies en WOFF2 depuis polices/ : titres, texte, chiffres. */
 @font-face{font-family:"Instrument Serif";font-display:swap;src:url("polices/InstrumentSerif-Regular.woff2") format("woff2")}
 @font-face{font-family:"Familjen Grotesk";font-weight:400 700;font-display:swap;src:url("polices/FamiljenGrotesk-VariableFont_wght.woff2") format("woff2")}
@@ -384,7 +384,7 @@ details.carte>summary{font-size:13px;line-height:1.6;padding:2px 0}details.carte
 :is(#liste-paris,#mes-liste) .etat-perdu>summary,:is(#liste-paris,#mes-liste) .etat-perdu>summary :not(.btn){color:var(--perdu)}
 :is(#liste-paris,#mes-liste) .etat-regler>summary :is(.pari-ligue,.pari-bookmaker,.pari-ref,.pari-etat,.pari-selection){color:var(--regler)}
 /* Pari en cours : la valeur affichée est l'écart, seule place de l'orange. */
-:is(#liste-paris,#mes-liste) .etat-cours>summary .ligne-valeur{color:var(--signal)}
+:is(#liste-paris,#mes-liste) .etat-cours>summary .ligne-valeur{color:var(--vert)}
 .etat-rembourse .pari-etat{font-style:italic}
 @media(min-width:1000px){#liste-paris{display:block}}
 
@@ -594,7 +594,7 @@ select{border:1px solid var(--ligne);background-color:transparent;color:var(--te
 :is(#liste-paris,#mes-liste) .pari-ligne .pari-selection{font-size:14px;color:var(--texte)}
 .pari-ligne .ligne-cote{font-size:16px;font-weight:600}.pari-ref{font-size:11.5px;color:var(--doux)}
 .pari-ligne .ligne-valeur{font-size:14px;font-weight:600}
-.ecart{color:var(--signal);font-weight:600}
+.ecart{color:var(--vert);font-weight:600}
 .ligne-colonnes{border-bottom:1px solid var(--ligne);border-top:1px solid var(--texte)}
 .ligne-nom{font-weight:600}.ligne-volume>small{font-family:var(--sans)}
 .sante-ligne,.notif-mesure,.notif-alerte,.notif-vide,.sante-vide{padding-left:0;padding-right:0}
@@ -944,8 +944,8 @@ main :is(b,strong,td,.acc-cote,.acc-ecart,.acc-rang-gain,.acc-resultat>b){font-v
 #acc-values>.acc-pari,#acc-boosts>.acc-pari,#bo-actuels>.acc-pari,.acc-values #acc-values>.acc-pari:first-child{
   background:var(--surface);border:1px solid var(--bord-doux);border-radius:var(--rayon);padding:14px 16px;margin:0 0 10px;box-shadow:var(--ombre)}
 .acc-cote{font-size:20px;font-weight:600;letter-spacing:-.01em}
-.acc-ecart{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12.5px;color:var(--signal);
-  background:color-mix(in srgb,var(--signal) 14%,transparent)}
+.acc-ecart{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12.5px;color:var(--vert);
+  background:color-mix(in srgb,var(--vert) 16%,transparent)}
 .acc-pari-prix .btn,.lien-bookmaker.btn{border-radius:var(--rayon-p);min-height:44px;display:inline-flex;align-items:center;justify-content:center;
   font-weight:600;border-color:var(--bord-doux);background:var(--surface-2);transition:background .15s,color .15s,border-color .15s}
 .acc-pari-prix .btn:hover,.lien-bookmaker.btn:hover{border-color:var(--texte)}
@@ -1007,7 +1007,7 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
 .acc-values #acc-values>.acc-pari:first-child,:is(#acc-boosts,#bo-actuels)>.acc-pari:has(.verdict.jouer){
   border:1px solid transparent;
   background:radial-gradient(120% 90% at var(--cv-gx,50%) var(--cv-gy,30%),var(--cv-reflet),transparent 55%) padding-box,linear-gradient(var(--surface),var(--surface)) padding-box,
-    conic-gradient(from var(--cv-angle),var(--bord-doux) 0 62%,var(--signal) 78%,color-mix(in srgb,var(--signal) 30%,transparent) 88%,var(--bord-doux)) border-box;
+    conic-gradient(from var(--cv-angle),var(--bord-doux) 0 62%,var(--vert) 78%,color-mix(in srgb,var(--vert) 30%,transparent) 88%,var(--bord-doux)) border-box;
   animation:cv-tour 5s linear infinite}
 
 /* Changement d'onglet : l'ancien contenu s'efface vers le haut, le nouveau monte ; en-tête et barre du bas restent fixes. */
@@ -1031,3 +1031,7 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
   *{animation:none!important}
   ::view-transition-old(root),::view-transition-new(root){animation:none!important}
 }
+
+/* Point d'arrivée de la courbe : une onde quand le tracé atteint le gain d'aujourd'hui. */
+@keyframes cv-arrivee{0%{r:3.5;stroke-width:0}40%{r:6;stroke-width:6}100%{r:3.5;stroke-width:0}}
+.grande-courbe circle.cv-arrivee{stroke:currentColor;stroke-opacity:.35;animation:cv-arrivee .8s ease-out}
