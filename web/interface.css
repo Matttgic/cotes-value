@@ -916,8 +916,6 @@ tr.en-pause td{opacity:.7}
   .acc-kpi.cv-flash.cv-neutre{animation:cv-flash-neutre 1.6s ease .7s 2}
 }
 .cv-defile{font-variant-numeric:tabular-nums}
-.acc-kpi.cv-hausse strong::after,.acc-kpi.cv-baisse strong::after{font:400 .35em var(--mono);vertical-align:super;margin-left:.2em}
-.acc-kpi.cv-hausse strong::after{content:'▲';color:var(--vert)}.acc-kpi.cv-baisse strong::after{content:'▼';color:var(--rouge)}
 
 /* ===== Finitions (nov. 2026) : surfaces légèrement relevées, coins doux, navigation en verre, chiffres alignés.
    Principes retenus : pas de noir pur, un seul accent (orange = value), états lisibles en un coup d'œil,
@@ -1047,3 +1045,37 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
   .bu-entete{letter-spacing:.02em}
 }
 #notif-strategies,#pushover-strategies{background:transparent}
+
+/* Marché boursier (bourse.js) : terminal de cotation, séance, variations, tendance 30 j, chaleur, chandeliers. */
+.cv-terminal{margin:0 0 18px;background:#0d0d0c;color:#e6e3da;border:1px solid #2a2925;font:500 11.5px/1.25 var(--mono);
+  font-variant-numeric:tabular-nums;--t-vert:#4fd18b;--t-rouge:#ff6a5c;--t-ambre:#ffb347}
+.cv-terminal-tete{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:7px 10px;background:#1b1a17;border-bottom:1px solid #2a2925}
+.cv-terminal-tete b{color:var(--t-ambre);letter-spacing:.14em;font-size:11px}.cv-terminal-tete span{color:#8d8a80;font-size:9.5px;letter-spacing:.06em;text-align:right}
+.cv-terminal-ligne{display:grid;grid-template-columns:74px minmax(0,1fr) 28px 36px 36px 60px;gap:6px;align-items:center;padding:6px 10px;border-top:1px solid #1d1c19}
+.cv-terminal-ligne>:nth-child(n+3){text-align:right}.cv-terminal-ligne>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cv-terminal-entete{color:var(--t-ambre);font-size:9px;letter-spacing:.08em;border-top:0;padding-top:5px;padding-bottom:5px}
+.cv-terminal-ligne:nth-child(odd):not(.cv-terminal-entete){background:#121210}
+.cv-terminal .cv-symb{color:#fff;font-weight:700}.cv-terminal .cv-pari,.cv-terminal .cv-book{color:#9b988e}
+.cv-terminal-ligne>b{color:#fff}.cv-terminal-ligne>i{font-style:normal;font-weight:700}
+.cv-terminal .pos{color:var(--t-vert)}.cv-terminal .neg{color:var(--t-rouge)}
+.cv-terminal .cv-a-jouer .cv-symb{color:var(--t-vert)}
+@media(min-width:761px){.cv-terminal{font-size:12.5px}.cv-terminal-ligne{grid-template-columns:90px minmax(0,1fr) 70px 56px 56px 84px;gap:12px}}
+.cv-seance{display:inline-flex;align-items:center;gap:6px;margin:-4px 0 10px;font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--doux)}
+.cv-seance::before{content:'';width:7px;height:7px;background:var(--doux)}
+.cv-seance.ouverte{color:var(--vert)}.cv-seance.ouverte::before{background:var(--vert);animation:cv-pouls 2s ease-in-out infinite}
+@keyframes cv-pouls{50%{opacity:.25}}
+.cv-delta{display:block;margin-top:4px;font:600 10.5px var(--mono);font-style:normal;letter-spacing:.02em}
+.cv-delta.pos{color:var(--vert)}.cv-delta.neg{color:var(--rouge)}
+.cv-tendance{flex:none;color:var(--doux)}.cv-tendance.pos{color:var(--vert)}.cv-tendance.neg{color:var(--rouge)}
+.ligne-badges .cv-tendance{margin-left:2px}
+.cv-chaleur{display:grid;grid-template-columns:minmax(64px,1fr) repeat(var(--cv-colonnes),minmax(0,1fr));gap:2px;margin:6px 0 8px;font:500 11px var(--mono);font-variant-numeric:tabular-nums}
+.cv-chaleur-tete{font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--doux);text-align:center;padding:4px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cv-chaleur-sport{font:600 12px var(--sans);display:flex;align-items:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cv-case{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:42px;border:1px solid var(--ligne);text-align:center}
+.cv-case b{font-size:11px;font-weight:700}.cv-case small{font-size:9px;color:var(--doux)}
+.cv-case.cv-peu{background:repeating-linear-gradient(135deg,transparent 0 4px,var(--ligne) 4px 5px)}
+@media(max-width:420px){.cv-case b{font-size:9.5px}}
+.cv-bougies .cv-bougie line{stroke-width:1.2}.cv-bougies .cv-bougie.pos{color:var(--vert)}.cv-bougies .cv-bougie.neg{color:var(--rouge)}
+.cv-bougies .cv-bougie line{stroke:currentColor}.cv-bougies .cv-bougie rect{fill:currentColor}
+.cv-bougies .cv-bougie.pos rect{fill:var(--fond);stroke:currentColor;stroke-width:1.2}
+@media(prefers-reduced-motion:reduce){.cv-seance.ouverte::before{animation:none}}

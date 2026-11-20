@@ -62,12 +62,16 @@ function rendreAccueil() {
   const reglees=typeof enSources==='function' ? enSources(unes) : unes,s=statsBU(reglees);
   const enCours=fiches.filter(p=>p.statut==='en_cours' && !p.a_regler);
   const autreKelly=miseMode==='fixe', autre=bilanEnMise(unes,autreKelly), nomAutre=nomMiseAccueil(autreKelly ? 'kelly' : 'fixe');
+  // Variation chiffrée depuis la visite précédente sur cet appareil (bourse.js) ; le clignotement est dans interface.js.
+  const bouge=typeof comparerChiffres==='function' ? comparerChiffres(`${miseMode}|${typeof BANKROLL!=='undefined'?BANKROLL:''}`,
+    {net:s.net, roi:s.roi, reussite:s.reussite, encours:enCours.length}) : {};
+  const variation=(k,texte)=>bouge[k]==null ? '' : `<em class="cv-delta ${bouge[k]>0?'pos':'neg'}" title="Depuis ta dernière visite">${bouge[k]>0?'▲':'▼'} ${texte(bouge[k])}</em>`;
   cible.innerHTML=[
-    ['Gain net',eurC(s.net),signe(s.net),`${s.n} paris réglés · ${mise}`],
-    ['ROI',pct(s.roi),signe(s.net),`en ${nomAutre} : ${pct(autre.roi)}`],
-    ['Réussite',pctEntier(s.reussite),'','paris gagnés'],
-    ['En cours',String(enCours.length),'','pas encore réglés']
-  ].map(([t,v,c,d])=>`<div class="acc-kpi"><p>${e(t)}</p><strong class="${c}">${e(v)}</strong><span>${e(d)}</span></div>`).join('');
+    ['Gain net',eurC(s.net),signe(s.net),`${s.n} paris réglés · ${mise}`,variation('net',v=>eurC(v))],
+    ['ROI',pct(s.roi),signe(s.net),`en ${nomAutre} : ${pct(autre.roi)}`,variation('roi',v=>pct(v))],
+    ['Réussite',pctEntier(s.reussite),'','paris gagnés',variation('reussite',v=>pct(v))],
+    ['En cours',String(enCours.length),'','pas encore réglés',variation('encours',v=>(v>0?'+':'')+v)]
+  ].map(([t,v,c,d,x])=>`<div class="acc-kpi"><p>${e(t)}</p><strong class="${c}">${e(v)}</strong><span>${e(d)}</span>${x}</div>`).join('');
   // À jouer : la règle de la page Décision (bookmaker ET référence qui battent la clôture Pinnacle).
   const jouer=typeof decisionParis==='function' ? decisionParis(fiches, D.decision, D.protocole).jouer : [];
   document.getElementById('acc-titre').textContent=jouer.length ? `${jouer.length} pari${jouer.length>1?'s':''} à jouer` : 'Rien à jouer pour l\'instant';
@@ -93,6 +97,7 @@ function rendreAccueil() {
   document.getElementById('acc-derniers').innerHTML=derniers.length ? derniers.map(p=>`<div class="acc-resultat"><span><b>${e(p.domicile)} – ${e(p.exterieur)}</b>
 <small>${e(p.pari)} · ${e(p.bookmaker)} ${cote(p.cote)}</small></span><b class="${signe(p.gain)}">${eur(p.gain)}</b></div>`).join('')
     : '<p class="aide">Aucun résultat récent.</p>';
+  if (typeof tableauCotation === 'function') { tableauCotation(enCours, jouer); afficherSeance(enCours); }
   if (typeof bandeauBoursier === 'function') {
     const court=t=>String(t || '').toUpperCase();
     bandeauBoursier([

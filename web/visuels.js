@@ -281,7 +281,7 @@ function parJour(s) {
 function carteStrategieVisuelle(r, points, couleur='var(--accent)') {
   const s=r.stats,pp=x=>pct(x==null?null:x/100);
   return `<details class="ligne-detail ligne-strategie" id="strategie-${e(encodeURIComponent(r.id))}"><summary>
-    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}"><span class="ligne-titre">${e(r.nomCourt || r.nom)}</span><span class="ligne-badges">${etiquetteVerdict(r.id)}${etiquetteProtocole(r.id)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="avis-mini neg">En pause</small>':''}${pastillesMedailles(r.medailles)}</span></span><span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
+    <span class="ligne-nom" title="${e(r.nom+' · '+r.detail)}"><span class="ligne-titre">${e(r.nomCourt || r.nom)}</span><span class="ligne-badges">${etiquetteVerdict(r.id)}${etiquetteProtocole(r.id)}${(typeof D!=='undefined'&&(D.pauses?.liste||{})[r.id])?' <small class="avis-mini neg">En pause</small>':''}${pastillesMedailles(r.medailles)}${typeof tendance30==='function'?tendance30(points):''}</span></span><span class="ligne-volume" aria-label="${s.regles} paris réglés, ${s.evenements_regles ?? "inconnu"} matchs">${s.regles}<small>${s.evenements_regles ?? "—"} matchs</small></span>
     <span class="ligne-roi ${signe(s.roi)}">${pp(s.roi)}</span><b class="ligne-valeur ${signe(s.gain)}">${s.regles?eur(s.gain):'—'}</b></summary>
     <div class="ligne-corps"><article class="strategie-ligne strategie-visuelle" style="--identite:${e(couleur)}">
     <div class="strategie-entete"><div class="strategie-identite"><h3>${e(r.nom)}</h3></div>

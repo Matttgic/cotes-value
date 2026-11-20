@@ -32,6 +32,7 @@
       perdre un pari, mais sur des centaines, on gagne. Quand un pari affiche « 2 sources · mise ×2 », mise deux fois plus.</p>
       <p class="une-chapo" id="une-chapo"></p></header>
     <div class="acc-kpis" id="acc-kpis"></div>
+    <section class="cv-terminal" id="acc-cotation" aria-label="Cotation du jour" hidden></section>
     <div class="acc-grille">
       <section class="acc-values"><h3 class="bu-titre">À jouer <small id="acc-values-n"></small></h3>
         <div id="acc-values"></div></section>
@@ -72,9 +73,12 @@
       <p class="aide cache" id="bu-note-cotes"></p>
       <h3 class="bu-titre">Gain cumulé <small>sur la période · pointillés : attendu · zone grisée : marge du hasard</small></h3>
       <div class="bu-courbe" id="bu-courbe"></div>
+      <h3 class="bu-titre">Séances hebdomadaires <small>une bougie par semaine · verte si le gain monte</small></h3>
+      <div class="bu-courbe" id="bu-bougies"></div>
       <div class="cache"><h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div></div>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
+      <h3 class="bu-titre">Carte de chaleur <small>ROI par sport et bookmaker</small></h3><div id="bu-chaleur"></div>
       <div class="cache"><h3 class="bu-titre">Par référence</h3>
       <div class="bu-table" id="bu-reference"></div></div>
       <details class="mode-emploi bilan-essais cache"><summary>Essais en cours <small>mises, combinaisons, indicateurs · rien n'est appliqué</small></summary>
@@ -427,6 +431,7 @@ __HORAIRES_JS__
 __SUIVI_JS__
 __INTERFACE_JS__
 __EFFETS_JS__
+__BOURSE_JS__
 
 // --- en-tête et onglets
 const dc = (D.etat||{}).dernier_cycle || {};
@@ -1133,6 +1138,9 @@ function rendreBilanUniques(maintenant=Date.now()) {
     ? [resume("Cote de 10 au plus", petites), resume("Cote supérieure à 10", grosses)].filter(Boolean).join(" · ") : "";
   const zoneCourbe = document.getElementById("bu-courbe");      // courbe et ligne témoin (visuels.js)
   if (zoneCourbe && typeof grandeCourbe === "function") zoneCourbe.innerHTML = grandeCourbe(pointsDepuisParis(L));
+  const zoneBougies = document.getElementById("bu-bougies");    // chandeliers et carte de chaleur (bourse.js)
+  if (zoneBougies && typeof bougiesHebdo === "function") zoneBougies.innerHTML = bougiesHebdo(pointsDepuisParis(L));
+  if (typeof carteChaleur === "function") carteChaleur(L);
   document.getElementById("bu-ecart").innerHTML = tableBU(Object.entries(NOMS_ECART).map(([k,nom]) => [nom, L.filter(p => p.simulation===k)]));
   document.getElementById("bu-cote").innerHTML = tableBU((D.tranches || []).map(t => [t, L.filter(p => p.tranche===t)]));
   const parSport = new Map();
