@@ -629,6 +629,17 @@ def _id_suivant(doc: dict) -> str | None:
     return texte if texte.isdigit() else None
 
 
+def _coupe(echeance) -> bool:
+    """Vrai si l'échéance empêche un appel : finie, ou trop proche pour en lancer un (``Client._delai``). Le 20/11,
+    les appels refusés à moins de 3 s de la fin passaient pour des filtres lus : 17 marchés foot jamais relus."""
+    if echeance is None:
+        return False
+    if not echeance.ok():
+        return True
+    reste = echeance.reste() if hasattr(echeance, "reste") else None
+    return reste is not None and reste < _MARGE_S
+
+
 def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
                  type_id, periode, horizon: datetime | None = None, echeance=None,
                  pages_max: int = _PAGES_MAX, session=None, espacer=None,
@@ -650,7 +661,7 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
             requete["nextEventId"] = suivant
         doc = client.get(f"next/50/p{noeud}", requete, session=session, espacer=espacer)
         if not doc:
-            return not (echeance is not None and not echeance.ok())   # refus du serveur : filtre passé
+            return not _coupe(echeance)          # refus du serveur : filtre passé ; manque de temps : à relire
         items = doc.get("items") if isinstance(doc.get("items"), dict) else {}
 
         def integrer():
