@@ -984,3 +984,50 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
   #onglets button.actif{background:var(--surface-2)!important;color:var(--texte);font-weight:700;box-shadow:var(--ombre)}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== Effets (web/effets.js) : champ 3D, reflet holographique, bordure qui tourne, transitions, apparition au défilement. ===== */
+/* Champ 3D derrière le titre de l'Accueil, fondu vers le bas pour laisser le texte lisible. */
+.une-tete{position:relative;isolation:isolate}
+.une-tete{padding-top:150px!important}
+.cv-champ{position:absolute;z-index:-1;top:-18px;left:-16px;width:calc(100% + 32px);height:330px;pointer-events:none;opacity:0;
+  transition:opacity 1.2s ease;-webkit-mask-image:linear-gradient(180deg,#000 35%,transparent 92%);mask-image:linear-gradient(180deg,#000 45%,transparent 95%)}
+.cv-champ.cv-champ-pret{opacity:1}
+.une-tete h2{text-shadow:0 2px 24px var(--fond)}
+
+:root{--cv-reflet:rgba(255,255,255,.75)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--cv-reflet:rgba(236,233,225,.08)}}
+:root[data-theme=dark]{--cv-reflet:rgba(236,233,225,.08)}
+/* Reflet : une lueur qui glisse sur les cartes quand on incline le téléphone (ou bouge la souris). */
+:is(#acc-values,#acc-boosts,#bo-actuels)>.acc-pari,.acc-kpi,.bu-kpis>div{
+  background:radial-gradient(120% 90% at var(--cv-gx,50%) var(--cv-gy,30%),var(--cv-reflet),transparent 55%),var(--surface)}
+
+/* Bordure lumineuse qui tourne : le meilleur pari du moment et les boosts « Jouer ». */
+@property --cv-angle{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes cv-tour{to{--cv-angle:360deg}}
+.acc-values #acc-values>.acc-pari:first-child,:is(#acc-boosts,#bo-actuels)>.acc-pari:has(.verdict.jouer){
+  border:1px solid transparent;
+  background:radial-gradient(120% 90% at var(--cv-gx,50%) var(--cv-gy,30%),var(--cv-reflet),transparent 55%) padding-box,linear-gradient(var(--surface),var(--surface)) padding-box,
+    conic-gradient(from var(--cv-angle),var(--bord-doux) 0 62%,var(--signal) 78%,color-mix(in srgb,var(--signal) 30%,transparent) 88%,var(--bord-doux)) border-box;
+  animation:cv-tour 5s linear infinite}
+
+/* Changement d'onglet : l'ancien contenu s'efface vers le haut, le nouveau monte ; en-tête et barre du bas restent fixes. */
+.haut{view-transition-name:cv-haut}
+@media(max-width:760px){#onglets{view-transition-name:cv-barre}}
+::view-transition-old(root){animation:cv-sortie .18s ease both}
+::view-transition-new(root){animation:cv-entree .32s cubic-bezier(.2,.7,.3,1) both}
+@keyframes cv-sortie{to{opacity:0;transform:translateY(-6px)}}
+@keyframes cv-entree{from{opacity:0;transform:translateY(10px)}}
+
+/* Apparition au défilement, en CSS natif (sans script) là où le navigateur le permet. */
+@supports (animation-timeline:view()){
+  @keyframes cv-defilement{from{opacity:.15;translate:0 18px;scale:.97}to{opacity:1;translate:0 0;scale:1}}
+  :is(#acc-values,#acc-boosts,#bo-actuels,#acc-derniers,#acc-top5)>*,.reco-carte,.acc-courbe .grande-courbe{
+    animation:cv-defilement linear both;animation-timeline:view();animation-range:entry 0% entry 70%}
+  .acc-values #acc-values>.acc-pari:first-child,:is(#acc-boosts,#bo-actuels)>.acc-pari:has(.verdict.jouer){
+    animation:cv-tour 5s linear infinite,cv-defilement linear both;animation-timeline:auto,view();animation-range:normal,entry 0% entry 70%}
+}
+@media(prefers-reduced-motion:reduce){
+  .cv-champ{transition:none}
+  *{animation:none!important}
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}

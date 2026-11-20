@@ -426,6 +426,7 @@ __VISUELS_JS__
 __HORAIRES_JS__
 __SUIVI_JS__
 __INTERFACE_JS__
+__EFFETS_JS__
 
 // --- en-tête et onglets
 const dc = (D.etat||{}).dernier_cycle || {};
@@ -480,13 +481,13 @@ function ouvrir(o) {
   if (page === "decision") rendreDecision();
   if (page === "boosts") rendreBoosts();
 }
-document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => {
+document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => basculer(() => {
   const hash = b.dataset.bilan === "uniques" ? "bilan" : b.dataset.bilan === "boosts" ? "bilan-boosts" : b.dataset.bilan;
   montrerVueBilan(b.dataset.bilan); history.replaceState(null, "", "#"+hash);
   ecrire("onglet", hash);
-});
-document.querySelectorAll("[data-aller]").forEach(b => b.onclick = () => {ouvrir(b.dataset.aller);window.scrollTo(0,0);});
-document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => {ouvrir(b.dataset.o);window.scrollTo(0,0);});
+}));
+document.querySelectorAll("[data-aller]").forEach(b => b.onclick = () => basculer(() => {ouvrir(b.dataset.aller);window.scrollTo(0,0);}));
+document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => basculer(() => {ouvrir(b.dataset.o);window.scrollTo(0,0);}));
 
 // --- Outils partagés par Paris et Bilan
 const minutes = s => s ? Math.max(0, Math.round((Date.now() - new Date(s)) / 60000)) : null;

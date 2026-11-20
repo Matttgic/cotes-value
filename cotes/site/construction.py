@@ -1007,6 +1007,7 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     html = html.replace("__LIENS_JS__", (web / "liens.js").read_text(encoding="utf-8"))
     html = html.replace("__VISUELS_JS__", (web / "visuels.js").read_text(encoding="utf-8"))
     html = html.replace("__INTERFACE_JS__", (web / "interface.js").read_text(encoding="utf-8"))
+    html = html.replace("__EFFETS_JS__", (web / "effets.js").read_text(encoding="utf-8"))
     html = html.replace("__HORAIRES_JS__", (web / "horaires.js").read_text(encoding="utf-8"))
     html = html.replace("__ANALYSES_JS__", (web / "analyses.js").read_text(encoding="utf-8"))
     html = html.replace("__ACCUEIL_JS__", (web / "accueil.js").read_text(encoding="utf-8"))
