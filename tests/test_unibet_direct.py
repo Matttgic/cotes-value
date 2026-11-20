@@ -404,4 +404,12 @@ def test_budget_epuise_la_rotation_reprend_au_premier_filtre_non_lu(monkeypatch)
 
     n = len(unibet._filtres("football", 36)) - 1
     assert cycle(1 + 5, 4) == (9, 6)                          # marché principal + 5 secondaires lus sur 20
-    assert cycle(1000, 4) == ((4 + unibet._SECONDAIRES_PAR_CYCLE) % n, 1 + unibet._SECONDAIRES_PAR_CYCLE)
+    k = min(unibet._SECONDAIRES_PAR_CYCLE, n)
+    assert cycle(1000, 4) == ((4 + k) % n, 1 + k)
+
+
+def test_le_tour_des_marches_secondaires_tient_dans_la_fenetre_de_15_minutes():
+    """20/11/2026 : 7 props sur 20 places laissaient 13 secondaires par cycle, un tour en ~20 min (> 15 min)."""
+    secondaires = sum(max(0, len(unibet._filtres(s, 36)) - 1) for s in set(unibet.SPORTS.values()))
+    tours = -(-secondaires // unibet._SECONDAIRES_PAR_CYCLE)
+    assert tours * 5 < 15                                     # cycles de ~5 min sous la fenêtre de 15 min

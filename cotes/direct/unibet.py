@@ -89,9 +89,12 @@ _PAGES_MAX = 16
 _PAGES_COURT = 3
 _HORIZON_COURT = 6
 # Cycle avec réserve : marché principal à chaque cycle, autres marchés par tranches tournantes. Une lecture
-# complète (~100 requêtes) dépassait le budget de 75 s un cycle sur trois avant le 18/10 ; 20 filtres par
-# cycle couvrent les ~55 secondaires en trois cycles (~14 min), sous la fenêtre de 15 min de la comparaison.
-_SECONDAIRES_PAR_CYCLE = 20
+# complète (~100 requêtes) dépassait le budget de 75 s un cycle sur trois avant le 18/10. Les props (7 filtres)
+# prenaient leurs places dans la tranche de 20 : 13 secondaires par cycle, un tour des 55 en ~20 min, au-delà de la
+# fenêtre de 15 min de la comparaison (dérive Unibet du 20/11, un marché foot disparu toutes les ~19 min). Les
+# props sont désormais en plus, et 28 secondaires font le tour en deux cycles (~9 min) : de la marge pour les cycles
+# coupés par le budget, qui reprennent au premier filtre non lu. Un cycle sans coupure durait ~25 s sur 72.
+_SECONDAIRES_PAR_CYCLE = 28
 # Une requête lancée trop près de l'échéance dépasserait le join du cycle et
 # ferait jeter les cotes déjà lues. On s'arrête avant, avec le partiel.
 _MARGE_S = 3.0
@@ -804,7 +807,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
                 break
             _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
                          _PAGES_PROPS, session=session)
-        places = max(0, _SECONDAIRES_PAR_CYCLE - len(props))
+        places = _SECONDAIRES_PAR_CYCLE
         pris, curseur_suivant = tranche(secondaires, bloc.get("curseur"), places)
         executer(pris)
         # Budget épuisé au milieu de la tranche (constaté le 20/11 : un cycle sur quatre à 71 s, « budget ») :
