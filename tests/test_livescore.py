@@ -82,7 +82,7 @@ def test_liste_a_saisir_pour_les_matchs_sans_source():
     autre = {**p, "periode": "MATCH", "statut": "gagne", "match_id": "pmu|2"}
     liste = resultats.a_saisir([p, {**p, "periode": "MATCH"}, autre], [], datetime(2026, 10, 18, tzinfo=timezone.utc))
     assert len(liste) == 1 and liste[0]["paris"] == 2 and liste[0]["periodes_requises"] == ["MATCH", "MT1"]
-    assert liste[0]["modele"] == {"score": [None, None], "mi_temps": [None, None]}
+    assert liste[0]["modele"] == {"score": [None, None], "source": None, "mi_temps": [None, None]}
     assert liste[0]["raison"] == "aucune source"
 
 

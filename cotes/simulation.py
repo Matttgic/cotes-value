@@ -34,16 +34,20 @@ MISE = 10.0
 # 5–10 : −33 % ; > 15 : réussite de 0 à 3 % et ROI de −39 à −80 %, avec des écarts annoncés de 12 à 20 %
 # (cotes fantômes, biais favori/outsider de la cote juste). Les anciens paris restent comptés tels quels.
 COTE_MAX_PRISE = 5.0
-# Règle de prise du 19/11/2026 (docs/analyse-paris-19-11.md), appliquée comme le plafond de cote : plus de nouveaux
-# paris hors règle, et les anciens sortent de tous les bilans du site (archivés dans hors_plafond.json, jamais
-# supprimés des données). Ces segments ne battent pas la clôture Pinnacle sur les trois périodes mesurées.
+# Règle de prise : celle figée le 14/11/2026 (cotes/regle_principale.py), appliquée comme le plafond de cote : plus
+# de nouveaux paris hors règle, et les anciens sortent de tous les bilans du site (archivés dans hors_plafond.json,
+# jamais supprimés des données). Les exclusions du 19/11 (volley, total au basket) sont retirées le 20/11 : choisies
+# sur les données qui les jugeaient (audit du 20/11), elles empêcheraient de juger la règle figée.
 ECART_MIN_PRISE = 0.03
 BOOKMAKERS_EXCLUS = ("Winamax", "OlyBet")
-SPORTS_EXCLUS = ("volley",)
-MARCHES_EXCLUS_PAR_SPORT = {"basket": ("TOTAL",)}       # le total d'une équipe (TOTAL_DOM, TOTAL_EXT) reste
+SPORTS_EXCLUS: tuple[str, ...] = ()
+MARCHES_EXCLUS_PAR_SPORT: dict[str, tuple[str, ...]] = {}
 AVANCE_MAX_PRISE_H = 24.0
 INF = float("inf")
-FRAICHEUR_PRISE_MIN = 15
+# Âge maximal de chaque lecture (cote française et références) à la décision. 15 min jusqu'au 20/11/2026 ; audit du
+# 20/11 : un prix Pinnacle de plus de 5 min fabrique de fausses values (CLV −1,82 % au-delà, +3,09 % en deçà, sur les
+# deux moitiés de la période).
+FRAICHEUR_PRISE_MIN = 5
 SIMULATIONS = {     # écart dans [ecart, ecart_max[, cote dans [cote_min, cote_max]
     "A": {"ecart": 0.02, "ecart_max": 0.03, "cote_min": 1.0, "cote_max": 10.0, "nom": "2 à 3 %"},
     "B": {"ecart": 0.03, "ecart_max": 0.04, "cote_min": 1.0, "cote_max": 10.0, "nom": "3 à 4 %"},
@@ -90,11 +94,13 @@ def _id(*parts) -> str:
     return hashlib.sha1("|".join(str(p) for p in parts).encode()).hexdigest()[:16]
 
 
-def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | None = None) -> list[dict]:
+def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | None = None,
+           exclus: set[str] | frozenset[str] = frozenset()) -> list[dict]:
     """Ajoute les nouveaux paris (modifie `paris`) et renvoie ceux qui viennent d'être pris. Un pari par
     référence, bookmaker et sélection, à la première détection, rangé dans la tranche de son écart. Un même
-    pari vu chez plusieurs bookmakers = paris distincts (on sait ainsi lequel se trompe le plus souvent)."""
-    deja = {p["id"] for p in paris}
+    pari vu chez plusieurs bookmakers = paris distincts (on sait ainsi lequel se trompe le plus souvent).
+    ``exclus`` : identifiants à ne jamais reprendre (paris « supprime » de resultats_manuels.json)."""
+    deja = {p["id"] for p in paris} | set(exclus)
     nouveaux = []
     lot = maintenant or datetime.now(timezone.utc)
     admissibles = [o for o in opportunites if _nombre_fini(o.get("ecart"))

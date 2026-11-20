@@ -730,7 +730,7 @@ def a_saisir(paris: list[dict], enregistrements: list[dict], maintenant: datetim
         ids = sorted({x["match_id"] for x in ps})
         mid = p["match_id"]
         periodes = sorted({x["periode"] for x in ps})
-        modele = {"score": [None, None]}
+        modele = {"score": [None, None], "source": None}      # source obligatoire (audit du 20/11)
         if any(x["periode"] in ("MT1", "MT2") or x["marche"] == "HALF_TIME_FULL_TIME" for x in ps):
             modele["mi_temps"] = [None, None]
         if any(x["marche"].startswith("CORNERS_") for x in ps):

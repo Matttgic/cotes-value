@@ -57,7 +57,7 @@ def test_date_manquante_et_statut_manuel_inconnu_ni_crash_ni_faux_gain():
     assert set(p['alertes'])=={'date_debut_absente_ou_invalide','statut_reglement_inconnu'}
     assert p['gain'] is None
     # Une instruction manuelle valide explicite reste utilisable.
-    appliquer([p],{}, {'p1':'rembourse'},T)
+    appliquer([p],{}, {'p1':{'statut':'rembourse','source':'test','motif':'annulé'}},T)
     assert p['statut']=='rembourse' and p['gain']==0
 
 

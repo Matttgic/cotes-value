@@ -77,7 +77,7 @@ def test_un_passage_regle_ce_qui_est_prouve_et_compte_les_selections_en_attente(
     monkeypatch.setattr(cycle.resultats_mod,'consensus',lambda *a:None)
     monkeypatch.setattr(cycle.resultats_mod,'reporte',lambda *a:None)
     monkeypatch.setattr(cycle.resultats_mod,'diagnostic',lambda p,*a:{'match_id':p['match_id'],'raison':'aucune source'})
-    (tmp_path/'resultats_manuels.json').write_text(json.dumps({'prouve':'gagne'}))
+    (tmp_path/'resultats_manuels.json').write_text(json.dumps({'prouve':{'statut':'gagne','source':'test','score':[1,0]}}))
     ps=[pari(id='prouve',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler'),
         pari(id='vrai',reference='Pinnacle',match_id='pmu|absent',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler'),
         pari(id='autre-ref',reference='Betfair',match_id='pmu|absent',debut=(NOW-timedelta(days=2)).isoformat(),statut='a_regler'),

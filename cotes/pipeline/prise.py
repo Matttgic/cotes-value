@@ -38,8 +38,11 @@ def prendre(ctx: Contexte) -> None:
     paris = charger_paris(donnees, journal)
     # paris annulés à la main (pris sur un match mal associé) : « supprime » dans resultats_manuels.json
     manuels = lire_json(donnees / "resultats_manuels.json", {})
-    paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
-    nouveaux = simulation.placer(opportunites, paris)
+    from cotes.reglement import est_supprime
+    supprimes = {p["id"] for p in paris if est_supprime(manuels.get(p["id"]))}
+    paris = [p for p in paris if p["id"] not in supprimes]
+    # un pari supprimé ne revient pas au cycle suivant tant que l'opportunité existe (audit du 20/11)
+    nouveaux = simulation.placer(opportunites, paris, exclus=supprimes)
     from cotes.decisions import figer_nouveaux, redecider_ouverts
     from cotes.strategie_recommandee import charger_fusions
     charger_fusions(donnees)          # fusions automatiques actives : leurs prises sont notées avec les autres
