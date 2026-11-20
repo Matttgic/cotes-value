@@ -632,7 +632,8 @@ def _id_suivant(doc: dict) -> str | None:
 def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
                  type_id, periode, horizon: datetime | None = None, echeance=None,
                  pages_max: int = _PAGES_MAX, session=None, espacer=None,
-                 verrou_sac: threading.Lock | None = None) -> None:
+                 verrou_sac: threading.Lock | None = None) -> bool:
+    """Lit un filtre page après page. Faux si l'échéance l'a coupé avant la fin (à relire au cycle suivant)."""
     params = dict(PARAMS)
     if type_id is not None:
         params["marketTypeId"] = str(type_id)
@@ -643,13 +644,13 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
     for page in range(max(1, pages_max)):
         if echeance is not None and not echeance.ok():
             client._noter("budget")
-            return
+            return False
         requete = dict(params)
         if suivant:
             requete["nextEventId"] = suivant
         doc = client.get(f"next/50/p{noeud}", requete, session=session, espacer=espacer)
         if not doc:
-            return
+            return not (echeance is not None and not echeance.ok())   # refus du serveur : filtre passé
         items = doc.get("items") if isinstance(doc.get("items"), dict) else {}
 
         def integrer():
@@ -661,23 +662,23 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
             with verrou_sac:
                 vus, loin = integrer()
                 if not vus or all(v in connus for v in vus):
-                    return
+                    return True
                 if loin:
-                    return
+                    return True
                 connus.update(vus)
         else:
             vus, loin = integrer()
             if not vus or all(v in connus for v in vus):
-                return
+                return True
             if loin:
-                return
+                return True
             connus.update(vus)
         total = doc.get("numberOfEvents")
         if isinstance(total, int) and not isinstance(total, bool) and (page + 1) * 50 >= total:
-            return
+            return True
         nxt = _id_suivant(doc)
         if not nxt or nxt == suivant:
-            return
+            return True
         suivant = nxt
 
 
@@ -750,7 +751,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
 
         return espacer
 
-    commences: set = set()          # filtres lancés : la rotation reprend au premier qui ne l'a pas été
+    lus: set = set()                # filtres lus jusqu'au bout : la rotation reprend au premier qui ne l'est pas
 
     def executer(taches: list[tuple]) -> None:
         if not taches:
@@ -760,9 +761,9 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
                 if echeance is not None and not echeance.ok():
                     client._noter("budget")
                     return
-                commences.add((sport, type_id, periode))
-                _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
-                             pages_max, session=session)
+                if _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
+                                pages_max, session=session):
+                    lus.add((sport, type_id, periode))
             return
 
         def un(tache):
@@ -770,10 +771,10 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
                 client._noter("budget")
                 return
             noeud, sport, type_id, periode = tache
-            commences.add((sport, type_id, periode))
-            _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
-                         pages_max, session=requests.Session(), espacer=pause_locale(),
-                         verrou_sac=verrou_sac)
+            if _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
+                            pages_max, session=requests.Session(), espacer=pause_locale(),
+                            verrou_sac=verrou_sac):
+                lus.add((sport, type_id, periode))
 
         with ThreadPoolExecutor(max_workers=min(largeur, len(taches))) as pool:
             list(pool.map(un, taches))
@@ -819,7 +820,10 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         # Budget épuisé au milieu de la tranche (constaté le 20/11 : un cycle sur quatre à 71 s, « budget ») :
         # les filtres non lancés passent en tête du cycle suivant au lieu d'attendre un tour complet (~19 min),
         # pendant lequel leurs cotes sortaient de la fenêtre de 15 min et les marchés disparaissaient.
-        lances = next((k for k, t in enumerate(pris) if (t[1], t[2], t[3]) not in commences), len(pris))
+        # Un filtre « lancé » puis coupé par l'échéance sans finir ne compte pas (20/11, 13 h : 55 = 28 + 27, la
+        # même fin de tranche était coupée à chaque tour et 12 marchés foot n'étaient plus jamais relus). Au moins
+        # un pas par cycle : un filtre trop long pour le temps restant ne bloque pas le tour.
+        lances = max(1, next((k for k, t in enumerate(pris) if (t[1], t[2], t[3]) not in lus), len(pris))) if pris else 0
         if secondaires:
             curseur_suivant = (depart + lances) % len(secondaires)
             curseur_cle = list(cles[curseur_suivant])
