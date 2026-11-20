@@ -1,4 +1,4 @@
-/* Direction artistique : papier et encre, filets fins, ni arrondi, ni ombre, ni dégradé, ni icône.
+/* Direction artistique : papier et encre, filets fins ; la couche « Finitions » (fin de fichier) ajoute surfaces, coins doux et verre dépoli.
    L'orange (--signal) est réservé à l'écart de value ; une perte est en rouge brique, un gain à l'encre.
    Polices sous licence OFL, servies en WOFF2 depuis polices/ : titres, texte, chiffres. */
 @font-face{font-family:"Instrument Serif";font-display:swap;src:url("polices/InstrumentSerif-Regular.woff2") format("woff2")}
@@ -918,3 +918,69 @@ tr.en-pause td{opacity:.7}
 .cv-defile{font-variant-numeric:tabular-nums}
 .acc-kpi.cv-hausse strong::after,.acc-kpi.cv-baisse strong::after{font:400 .35em var(--mono);vertical-align:super;margin-left:.2em}
 .acc-kpi.cv-hausse strong::after{content:'▲';color:var(--vert)}.acc-kpi.cv-baisse strong::after{content:'▼';color:var(--rouge)}
+
+/* ===== Finitions (nov. 2026) : surfaces légèrement relevées, coins doux, navigation en verre, chiffres alignés.
+   Principes retenus : pas de noir pur, un seul accent (orange = value), états lisibles en un coup d'œil,
+   cibles tactiles ≥ 44 px, chiffres tabulaires. Les deux thèmes partagent les mêmes jetons. ===== */
+:root{--surface:#F5F3EE;--surface-2:#FBFAF7;--bord-doux:color-mix(in srgb,var(--ligne) 70%,transparent);--rayon:12px;--rayon-p:8px;
+--ombre:0 1px 0 rgba(18,18,15,.04),0 6px 18px -10px rgba(18,18,15,.18);--verre:color-mix(in srgb,var(--fond) 82%,transparent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--surface:#1B1B17;--surface-2:#23231E;--ombre:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px -14px rgba(0,0,0,.7)}}
+:root[data-theme=dark]{--surface:#1B1B17;--surface-2:#23231E;--ombre:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px -14px rgba(0,0,0,.7)}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-webkit-tap-highlight-color:transparent}
+main :is(b,strong,td,.acc-cote,.acc-ecart,.acc-rang-gain,.acc-resultat>b){font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:4px}
+
+/* En-tête et barre du bas : verre dépoli, le contenu défile dessous. */
+/* Le flou vit sur un pseudo-élément : posé sur .haut, il ferait de l'en-tête le repère de la barre du bas (position fixed). */
+.haut{background:var(--verre)}
+.haut::before{content:"";position:absolute;inset:0;z-index:-1;-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px)}
+.monogramme{border-radius:var(--rayon-p)}
+
+/* Encadré d'explication : une note, pas une alerte. */
+.explication{border-left:0;border-radius:var(--rayon);background:var(--surface);box-shadow:inset 3px 0 0 var(--signal);
+  padding:14px 16px;font-size:14px;line-height:1.55;color:color-mix(in srgb,var(--texte) 88%,var(--doux))}
+
+/* Cartes de pari (values, boosts) : une surface par pari, la cote en grand, l'écart en pastille. */
+#acc-values>.acc-pari,#acc-boosts>.acc-pari,#bo-actuels>.acc-pari,.acc-values #acc-values>.acc-pari:first-child{
+  background:var(--surface);border:1px solid var(--bord-doux);border-radius:var(--rayon);padding:14px 16px;margin:0 0 10px;box-shadow:var(--ombre)}
+.acc-cote{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.acc-ecart{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12.5px;color:var(--signal);
+  background:color-mix(in srgb,var(--signal) 14%,transparent)}
+.acc-pari-prix .btn,.lien-bookmaker.btn{border-radius:var(--rayon-p);min-height:44px;display:inline-flex;align-items:center;justify-content:center;
+  font-weight:600;border-color:var(--bord-doux);background:var(--surface-2);transition:background .15s,color .15s,border-color .15s}
+.acc-pari-prix .btn:hover,.lien-bookmaker.btn:hover{border-color:var(--texte)}
+.acc-pari-prix .btn:active,.lien-bookmaker.btn:active{transform:scale(.98)}
+
+/* Pastilles et badges : arrondis, lisibles. */
+.badge{border-radius:999px;padding:2px 9px}
+.badge.verdict.jouer{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--vert) 40%,transparent)}
+.badge.verdict.passer{box-shadow:inset 0 0 0 1px var(--ligne)}
+
+/* Chiffres clés : tuiles. */
+.acc-kpis,.bu-kpis{gap:8px;border:0}
+.acc-kpi,.bu-kpis>div,.acc-kpi:first-child,.bu-kpis>div:first-child{background:var(--surface);border:1px solid var(--bord-doux);border-radius:var(--rayon);padding:14px 16px 16px}
+
+/* Listes : Top, derniers résultats, à régler. */
+.acc-rang,.acc-resultat{padding:12px 4px}
+#acc-top5,#acc-derniers{background:var(--surface);border:1px solid var(--bord-doux);border-radius:var(--rayon);padding:2px 12px}
+#acc-top5>.acc-rang:first-child,#acc-derniers>.acc-resultat:first-child{border-top:0}
+.carte,.courbe,table,textarea,select,input:not([type=checkbox]):not([type=radio]),.puces button,.btn{border-radius:var(--rayon-p)}
+.carte,.courbe{background:var(--surface);border-color:var(--bord-doux)}
+textarea{background:var(--surface);border:1px solid var(--bord-doux)}
+.reco-carte{background:var(--surface);border:1px solid var(--bord-doux);border-radius:var(--rayon);box-shadow:inset 3px 0 0 var(--texte)}
+
+/* Sous-onglets du bilan : contrôle segmenté. */
+.bilan-onglets{background:var(--surface)!important;border:1px solid var(--bord-doux);border-radius:var(--rayon);padding:4px;gap:4px}
+.bilan-onglets button{border:0!important;margin:0;border-radius:var(--rayon-p);min-height:40px;transition:background .15s,color .15s}
+.bilan-onglets button[aria-selected=true]{background:var(--surface-2)!important;color:var(--texte);box-shadow:var(--ombre)}
+
+@media(max-width:760px){
+  .acc-kpi,.bu-kpis>div,.acc-kpi:nth-child(odd),.bu-kpis>div:first-child,.bu-kpis>div:nth-child(2){padding:12px 14px 14px;border:1px solid var(--bord-doux)}
+  .acc-kpi:nth-child(n+3){border-top:1px solid var(--bord-doux)}
+  .acc-pari-prix{gap:6px 12px}
+  #onglets{background:var(--verre);-webkit-backdrop-filter:saturate(1.4) blur(16px);backdrop-filter:saturate(1.4) blur(16px);
+    border-top:1px solid var(--bord-doux);padding:6px 10px calc(6px + env(safe-area-inset-bottom));gap:6px;grid-template-columns:repeat(3,minmax(0,1fr))}
+  #onglets button{min-height:46px;border:0!important;margin:0;border-radius:999px;font-weight:550;color:var(--doux);transition:background .2s,color .2s}
+  #onglets button.actif{background:var(--surface-2)!important;color:var(--texte);font-weight:700;box-shadow:var(--ombre)}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
