@@ -1034,3 +1034,16 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
 
 /* Manchette : le nom du site en serif, comme la une d'un quotidien financier. */
 .haut h1{font:400 23px/1 var(--serif);letter-spacing:-.01em}
+
+/* Alignements : nom de stratégie sur une ligne, étiquettes dessous (plus de badge coupé ni de médaille hors écran),
+   en-têtes de colonnes calés sur les chiffres, liste Pushover sans fond pour que le texte ne colle pas à un bord. */
+.ligne-strategie .ligne-nom{display:flex;flex-direction:column;gap:4px;overflow:visible;white-space:normal}
+.ligne-titre{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ligne-badges{display:flex;flex-wrap:wrap;align-items:center;gap:4px}.ligne-badges:empty{display:none}
+.ligne-badges .medailles{margin:0;gap:4px}
+@media(max-width:760px){
+  .ligne-colonnes>span:nth-child(2){width:48px}
+  .bu-ligne{grid-template-columns:minmax(0,1fr) 38px 46px 64px 56px}
+  .bu-entete{letter-spacing:.02em}
+}
+#notif-strategies,#pushover-strategies{background:transparent}
