@@ -1069,6 +1069,9 @@ def montant_vitrine(gain: float) -> str:
     return signe + tranches[0] + "".join(f'<span class="milliers">{t}</span>' for t in tranches[1:]) + "<sup>€</sup>"
 
 
+# Premier script de la page, fixe, dans le <head> : le mode jour/nuit mémorisé, avant tout le reste. Les contrôles de
+# publication (site.yml, tests) exigent exactement deux scripts : celui-ci, à l'identique, puis le script principal.
+THEME_SCRIPT = 'try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}'
 # Gabarit de la page (HTML, CSS et JavaScript, environ 1 800 lignes) : web/modele.html, rempli par construire().
 MODELE = (RACINE / "web" / "modele.html").read_text(encoding="utf-8")
 

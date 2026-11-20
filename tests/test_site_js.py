@@ -13,6 +13,8 @@ pytestmark=pytest.mark.skipif(not NODE,reason="Node absent")
 
 
 def executer(js):
+    # rendreDiffere (web/modele.html) : rendu au chargement repoussé dans la page, immédiat dans ces tests
+    js = "var rendreDiffere=(page,rendre)=>rendre();\n" + js
     r=subprocess.run([NODE,"-"],input=js,text=True,capture_output=True)
     assert r.returncode == 0, r.stderr
 
@@ -310,7 +312,7 @@ assert.ok(html.includes('À confirmer') && html.includes('essais multiples non c
 
 def test_js_sante_niveaux_et_resume_des_erreurs():
     section = (MODELE[MODELE.index("function diagnosticSante"):MODELE.index("function rendreSanteParis")] +
-               MODELE[MODELE.index("const SOURCES_COTES"):MODELE.index("rendreSante();\n\n// Famille publiée")])
+               MODELE[MODELE.index("const SOURCES_COTES"):MODELE.index("rendreDiffere(\"controle\", rendreSante);\n\n// Famille publiée")])
     cycle = {"fin": "2026-10-15T09:00:00Z", "debut": "2026-10-15T08:58:00Z", "cotes": {"francaises": 25833},
              "pinnacle_secours": {"lignes": 120, "sports": ["football", "tennis"], "erreurs": [], "retard": ["football"]},
              "pinnacle_fraicheur": {"seuil_min": 10, "lignes": 1000, "lignes_perimees": 1000, "age_min_s": 650, "age_max_s": 880},

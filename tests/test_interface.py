@@ -29,7 +29,7 @@ def test_document_autonome_navigation_unique_et_apercu(tmp_path):
     assert not [k for k, n in Counter(p.ids).items() if n > 1]
     # Six onglets (Accueil en tête, puis Décision) : « À jouer », Stratégies, Analyses, Segments et À régler vivent
     # sous Paris, Bilan et Santé ; Boosts réunit surebets et cotes boostées (web/boosts.js).
-    assert p.onglets == ["accueil", "bilan", "notifications"]
+    assert p.onglets == ["accueil", "decision", "bilan", "notifications"]
     assert {"strategies-mobile", "fraicheur", "liste-paris"} <= set(p.ids)
     assert set(p.labels) <= set(p.ids)
     # Les fragments servent au routeur, jamais à une ancre située sous les filtres.

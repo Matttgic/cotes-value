@@ -977,13 +977,30 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
   .acc-kpi,.bu-kpis>div,.acc-kpi:nth-child(odd),.bu-kpis>div:first-child,.bu-kpis>div:nth-child(2){padding:12px 14px 14px;border:1px solid var(--bord-doux)}
   .acc-kpi:nth-child(n+3){border-top:1px solid var(--bord-doux)}
   .acc-pari-prix{gap:6px 12px}
-  #onglets{background:var(--verre);-webkit-backdrop-filter:saturate(1.4) blur(16px);backdrop-filter:saturate(1.4) blur(16px);
-    border-top:1px solid var(--texte);padding:0 10px env(safe-area-inset-bottom);gap:6px;grid-template-columns:repeat(3,minmax(0,1fr))}
-  #onglets button{min-height:46px;border:0!important;border-top:2px solid transparent!important;margin:0;border-radius:0;font-weight:550;color:var(--doux);
-    text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;transition:color .2s,border-color .2s}
+  /* Barre du bas opaque, quatre entrées (audit du 20/11/2026 : libellés gris sur verre à 4,0:1, sous le seuil AA). */
+  #onglets{background:var(--fond);-webkit-backdrop-filter:none;backdrop-filter:none;
+    border-top:1px solid var(--texte);padding:0 6px env(safe-area-inset-bottom);gap:2px;grid-template-columns:repeat(4,minmax(0,1fr))}
+  #onglets button{min-height:48px;border:0!important;border-top:2px solid transparent!important;margin:0;border-radius:0;font-weight:550;color:var(--texte);
+    text-transform:uppercase;letter-spacing:.06em;font-size:12px;transition:color .2s,border-color .2s}
   #onglets button.actif{background:transparent!important;color:var(--texte);font-weight:700;border-top-color:var(--texte)!important}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Accueil : « ? » replié au lieu de l'encadré, et sur téléphone les cartes « À jouer » dans le premier écran
+   (audit du 20/11/2026 : premier pari à 1 153 px pour un écran de 844 px). */
+.explication-pli{margin:8px 0}
+.explication-pli>summary{display:inline-flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;color:var(--texte);font-size:14px;list-style:none}
+.explication-pli>summary::-webkit-details-marker{display:none}
+.explication-pli>summary>span{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--texte);border-radius:50%;font-weight:700}
+.explication-pli[open]>summary{margin-bottom:6px}
+@media(max-width:760px){
+  #o-accueil.actif{display:flex;flex-direction:column}
+  #o-accueil>.une-tete{order:0}
+  #o-accueil>.acc-grille{order:1}
+  #o-accueil>.acc-kpis{order:2;margin-top:12px}
+  #o-accueil .cv-bandeau,#o-accueil>#acc-cotation{display:none!important}
+  .acc-pari-prix .btn,.lien-bookmaker.btn{min-height:48px}
+}
 
 /* ===== Effets (web/effets.js) : champ 3D, reflet holographique, bordure qui tourne, transitions, apparition au défilement. ===== */
 /* Bandeau boursier (Accueil) : une ligne de cotation entre deux filets, en chiffres mono, qui défile à vitesse constante. */
