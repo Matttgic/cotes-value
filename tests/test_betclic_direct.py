@@ -450,3 +450,10 @@ def test_match_lointain_n_est_pas_relance():
     _, m1, _ = _passe({"lignes": []}, 0, _top(TOTAL), MI_TEMPS)
     _, meta, _ = _passe(m1["reserve"], 5, b"", b"")
     assert meta["proches"] == {"proches": 0, "relances": 0, "proches_non_lus": 0, "proches_vides": 0}
+
+
+def test_onglets_proposes_par_sport_publies_pour_reperer_un_renommage():
+    """20/11/2026 vers 11:20 UTC : double chance et 1N2 par mi-temps disparaissent de tous les matchs de handball
+    Betclic, sans erreur. Le journal donne désormais les onglets proposés (lus marqués d'une étoile)."""
+    _, meta, _ = _passe({"lignes": []}, 0, _top(TOTAL), MI_TEMPS)
+    assert meta["onglets_vus"] == {"football": {"Buts *": 1, "Le Top": 1}}
