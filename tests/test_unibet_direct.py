@@ -413,3 +413,19 @@ def test_le_tour_des_marches_secondaires_tient_dans_la_fenetre_de_15_minutes():
     secondaires = sum(max(0, len(unibet._filtres(s, 36)) - 1) for s in set(unibet.SPORTS.values()))
     tours = -(-secondaires // unibet._SECONDAIRES_PAR_CYCLE)
     assert tours * 5 < 15                                     # cycles de ~5 min sous la fenêtre de 15 min
+
+
+def test_le_curseur_suit_la_cle_du_filtre_quand_la_liste_change(monkeypatch):
+    """Un sport absent de l'accueil un cycle décale la liste des secondaires : le curseur suit la clé du filtre."""
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    filtres = unibet._filtres("football", 36)[1:]
+    cible = list((("football",) + tuple(filtres[5])))
+    session = Session([(200, {"items": {}, "numberOfEvents": 0}, {})] * 80)
+    _, meta = unibet.collecter({"football"}, 36, session=session, page=Page(), pause=(0, 0),
+                               maintenant=MAINTENANT, concurrence=1,
+                               reserve={"lignes": [], "curseur": 0, "curseur_cle": cible})
+    n = len(filtres)
+    k = min(unibet._SECONDAIRES_PAR_CYCLE, n)
+    assert meta["rotation"] == {"secondaires": n, "depart": 5, "lances": k, "props": 0}
+    assert meta["reserve"]["curseur"] == (5 + k) % n
+    assert meta["reserve"]["curseur_cle"] == list(("football",) + tuple(filtres[(5 + k) % n]))
