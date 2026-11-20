@@ -25,6 +25,8 @@ def analyser(ctx: Contexte) -> None:
     #    Le contrôle reste celui des références déjà en place : Smarkets a sa table,
     #    pas une nouvelle mesure de conformité.
     index = etape("association", journal, comparaison.indexer, francais, references) or {}
+    if comparaison.ERREURS_INDEX:          # une référence défaillante, les autres associées quand même
+        journal["association_erreurs"] = dict(comparaison.ERREURS_INDEX)
     try:            # historique des références, relevé des sources et rapprochements : jamais bloquant
         journal["historique_references"] = historiques.enregistrer(donnees, francais, references, index,
                                                                               maintenant)

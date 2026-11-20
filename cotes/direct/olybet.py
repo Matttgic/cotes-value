@@ -22,6 +22,7 @@ from cotes import inconnus
 from cotes.correspondance import ressemblance
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
+from cotes.direct.ws import fin_lecture, recevoir
 
 SWARM = "wss://eu-swarm-reverse.betconstruct.com/"
 ORIGINE = "https://sports.olybet.fr"
@@ -257,7 +258,11 @@ class Swarm:
                 if "budget" not in self.erreurs:
                     self.erreurs.append("budget")
                 return None
-            message = json.loads(self.ws.recv_str())
+            try:            # trame bornée (cotes/direct/ws.py) : plus d'attente sans fin
+                message = json.loads(recevoir(self.ws, fin_lecture(LECTURE_S, self.echeance)))
+            except TimeoutError:
+                self.erreurs.append("délai")
+                return None
             if str(message.get("rid")) != rid:
                 continue
             if message.get("code") not in (0, None):
@@ -272,6 +277,9 @@ class Swarm:
             self.ws.close()
         finally:
             self._s.close()
+
+
+LECTURE_S = 12          # une trame au plus ; jamais au-delà de l'échéance du cycle
 
 
 def _lots(ids: list, taille: int):

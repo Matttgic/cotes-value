@@ -27,6 +27,7 @@ from math import isfinite
 from datetime import datetime
 
 from . import controle as CT
+from .temps import instant
 from . import correspondance as C
 from .marches import cle, deriver_double_chance, inverser
 
@@ -34,7 +35,9 @@ FENETRE_MIN = CT.FENETRE_MIN
 MARGE_MAX_PINNACLE = 0.12
 ECART_ACHAT_VENTE_MAX = 0.05
 ECART_RELATIF_MAX = 0.25       # écart achat/vente rapporté au prix : 0,01/0,03 n'est pas un prix fiable
-LIQUIDITE_MIN = {"Polymarket": 100.0, "Smarkets": 20.0}
+# Mise disponible au meilleur prix, le plus petit des deux côtés (achat, vente). Betfair et Matchbook : 20, comme
+# Smarkets (audit du 20/11/2026 : sans seuil, un prix à 0 € de liquidité servait de référence).
+LIQUIDITE_MIN = {"Polymarket": 100.0, "Smarkets": 20.0, "Betfair": 20.0, "Matchbook": 20.0}
 ECARTS_AFFICHES = (("Polymarket", "ecart_polymarket"), ("Smarkets", "ecart_smarkets"))
 ECART_MIN = 0.02
 # Au-delà, une « erreur de cote » est presque toujours un marché mal reconnu (statistique prise pour des
@@ -174,30 +177,52 @@ def annoter_ecarts(opportunites: list[dict], francais: list[dict],
     return opportunites
 
 
+# Références dont l'association a échoué au dernier ``indexer`` (nom -> message) : les autres sont gardées.
+ERREURS_INDEX: dict[str, str] = {}
+
+
+def _date_avec_fuseau(l) -> bool:
+    """Une date de début sans fuseau ne se compare à aucune autre (TypeError) : la ligne est écartée à l'entrée."""
+    return isinstance(l, dict) and instant(l.get("debut")) is not None
+
+
 def indexer(francais: list[dict], references: dict[str, list[dict]]) -> dict[str, dict]:
-    """nom de la référence -> {match français: {clé de marché: ligne de référence fiable}}."""
-    matchs_fr = C.matchs_de(francais)
+    """nom de la référence -> {match français: {clé de marché: ligne de référence fiable}}.
+
+    Chaque référence est associée à part : une erreur chez l'une (date illisible…) ne vide plus tout le cycle
+    (audit du 20/11/2026) ; elle est notée dans ``ERREURS_INDEX`` et la référence reste sans comparaison."""
+    matchs_fr = C.matchs_de([l for l in francais if _date_avec_fuseau(l)])
     index: dict[str, dict] = {}
+    ERREURS_INDEX.clear()
     for nom, lignes in references.items():
-        # L'association voit TOUS les matchs de la référence, pas seulement ceux dont une cote est fiable à cet
-        # instant : sinon, quand le vrai match n'a que des cotes périmées ou à forte marge, il disparaît des candidats
-        # et un sosie prend sa place (cas réel du 30/10/2026 : Tappara – Ilves, Liiga, associé à l'envers chez six
-        # bookmakers au match Pinnacle 1639061776 « Ilves – Tappara » d'une autre catégorie, score 0,85, alors que
-        # le bon match 1639048394 existait ; 6 paris). Seules les lignes fiables servent ensuite à la comparaison.
-        tous = C.matchs_de([l for l in lignes if isinstance(l, dict) and l.get("match_id")])
-        lignes = [x for x in (_lisible(nom, l) for l in lignes) if x is not None]
-        par_match: dict[str, list[dict]] = {}
-        for l in lignes:
-            par_match.setdefault(l["match_id"], []).append(l)
-        assoc = C.associer(matchs_fr, tous)
-        index[nom] = {}
-        for mid_fr, (mid_ref, inverse, score) in assoc.items():
-            if mid_ref not in par_match:
-                continue                      # bon match, mais aucune cote fiable ce cycle : pas de comparaison
-            index[nom][mid_fr] = {cle(inverser(l) if inverse else l): {**l, "score_association": round(score, 2),
-                                                                        "inverse": inverse}
-                                  for l in par_match.get(mid_ref, [])}
+        try:
+            index[nom] = _indexer_reference(nom, lignes, matchs_fr)
+        except Exception as e:  # noqa: BLE001 — une référence défaillante ne coupe pas les autres
+            ERREURS_INDEX[nom] = f"{type(e).__name__}: {e}"[:200]
+            index[nom] = {}
     return index
+
+
+def _indexer_reference(nom: str, lignes: list[dict], matchs_fr: dict[str, dict]) -> dict:
+    # L'association voit TOUS les matchs de la référence, pas seulement ceux dont une cote est fiable à cet
+    # instant : sinon, quand le vrai match n'a que des cotes périmées ou à forte marge, il disparaît des candidats
+    # et un sosie prend sa place (cas réel du 30/10/2026 : Tappara – Ilves, Liiga, associé à l'envers chez six
+    # bookmakers au match Pinnacle 1639061776 « Ilves – Tappara » d'une autre catégorie, score 0,85, alors que
+    # le bon match 1639048394 existait ; 6 paris). Seules les lignes fiables servent ensuite à la comparaison.
+    tous = C.matchs_de([l for l in lignes if _date_avec_fuseau(l) and l.get("match_id")])
+    lignes = [x for x in (_lisible(nom, l) for l in lignes) if x is not None]
+    par_match: dict[str, list[dict]] = {}
+    for l in lignes:
+        par_match.setdefault(l["match_id"], []).append(l)
+    assoc = C.associer(matchs_fr, tous)
+    out: dict = {}
+    for mid_fr, (mid_ref, inverse, score) in assoc.items():
+        if mid_ref not in par_match:
+            continue                      # bon match, mais aucune cote fiable ce cycle : pas de comparaison
+        out[mid_fr] = {cle(inverser(l) if inverse else l): {**l, "score_association": round(score, 2),
+                                                             "inverse": inverse}
+                       for l in par_match.get(mid_ref, [])}
+    return out
 
 
 ISSUES_COMPLETES = ({"DOM", "EXT"}, {"PLUS", "MOINS"}, {"YES", "NO"}, {"DOM", "NUL", "EXT"})

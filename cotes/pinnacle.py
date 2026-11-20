@@ -816,11 +816,23 @@ def _lignes_match(mu, mk, prix, par_id, periodes, base) -> list[dict]:
         if issue is None or (typ != "moneyline" and ligne is None):
             return []
         out.append({**base, "ligue": (parent.get("league") or {}).get("name"), "match_id": parent["id"],
-                    "domicile": dom, "exterieur": ext, "debut": parent.get("startTime"),
+                    "domicile": dom, "exterieur": ext, "debut": _debut_utc(parent.get("startTime")),
                     "marche": unite + marche, "periode": periode, "ligne": ligne, "issue": issue,
                     "joueur": None, "cote": cote,
                     "cle_marche": f"{mu['id']}|{mk.get('key')}|{mk.get('side', '')}"})
     return out
+
+
+def _debut_utc(valeur) -> str | None:
+    """Heure de début de l'API, toujours en UTC : une date sans fuseau y est lue en UTC (audit du 20/11/2026), une
+    date illisible devient None (le match n'est pas associé, le reste du cycle continue)."""
+    if not isinstance(valeur, str):
+        return None
+    try:
+        t = datetime.fromisoformat(valeur.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return (t if t.tzinfo else t.replace(tzinfo=timezone.utc)).isoformat()
 
 
 def _lignes_special(mu, mk, prix, par_id, base) -> list[dict]:
@@ -849,7 +861,7 @@ def _lignes_special(mu, mk, prix, par_id, base) -> list[dict]:
             if not joueur or ligne is None:
                 return []
             out.append({**base, "ligue": (parent.get("league") or {}).get("name"), "match_id": parent["id"],
-                        "domicile": dom, "exterieur": ext, "debut": parent.get("startTime"),
+                        "domicile": dom, "exterieur": ext, "debut": _debut_utc(parent.get("startTime")),
                         "marche": f"JOUEUR:{stat}", "periode": "MATCH", "ligne": ligne,
                         "issue": issue, "joueur": joueur, "cote": americaine_vers_decimale(p["price"]),
                         # La ligne dans la clé : deux alternates du même spécial ne partagent pas une marge.
@@ -862,7 +874,7 @@ def _lignes_special(mu, mk, prix, par_id, base) -> list[dict]:
         nom = noms.get(p.get("participantId"), "?")
         issue = {dom: "DOM", ext: "EXT", "Draw": "NUL"}.get(nom, nom)
         out.append({**base, "ligue": (parent.get("league") or {}).get("name"), "match_id": parent["id"],
-                    "domicile": dom, "exterieur": ext, "debut": parent.get("startTime"),
+                    "domicile": dom, "exterieur": ext, "debut": _debut_utc(parent.get("startTime")),
                     "marche": f"SPECIAL:{marche}", "periode": periode, "ligne": p.get("points"),
                     "issue": issue, "joueur": None, "cote": americaine_vers_decimale(p["price"]),
                     "cle_marche": f"{mu['id']}|{mk.get('key')}"})

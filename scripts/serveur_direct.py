@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import os
 import signal
+import re
 import subprocess
 import sys
 import time
@@ -48,15 +49,23 @@ def journal(message: str) -> None:
     print(f"{datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%SZ} {message}", flush=True)
 
 
+_JETON_URL = re.compile(r"(x-access-token:)[^@\s]+@")
+
+
+def masquer(texte: str) -> str:
+    """Retire le jeton GitHub d'une URL de clone avant de journaliser (audit du 20/11/2026)."""
+    return _JETON_URL.sub(r"\1***@", texte)
+
+
 def executer(commande: list[str], cwd: Path = RACINE, timeout: float = 600, env: dict | None = None) -> bool:
-    """Lance une commande ; jamais d'exception. True si elle a réussi."""
+    """Lance une commande ; jamais d'exception. True si elle a réussi. Le journal ne montre jamais le jeton."""
     try:
         r = subprocess.run(commande, cwd=cwd, timeout=timeout, env=env, capture_output=True, text=True)
     except (OSError, subprocess.SubprocessError) as e:
-        journal(f"échec {commande[:3]} : {type(e).__name__}")
+        journal(masquer(f"échec {commande[:3]} : {type(e).__name__}"))
         return False
     if r.returncode != 0:
-        journal(f"échec {commande[:3]} (code {r.returncode}) : {(r.stderr or r.stdout).strip()[-400:]}")
+        journal(masquer(f"échec {commande[:3]} (code {r.returncode}) : {(r.stderr or r.stdout).strip()[-400:]}"))
     return r.returncode == 0
 
 

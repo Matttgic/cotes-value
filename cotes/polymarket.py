@@ -82,13 +82,31 @@ TYPES = {
 }
 
 
+_echeance = None          # Echeance posée par le cycle (cotes/pipeline/collecte.py) ; None hors cycle
+
+
+def _temps_restant() -> bool:
+    e = _echeance
+    return e is None or e.ok()
+
+
+def _timeout(plafond: float) -> float:
+    e = _echeance
+    return plafond if e is None else e.timeout(plafond)
+
+
 def _get(path: str, params: dict, essais: int = 3):
+    """GET de l'API, au plus ``essais`` fois, sans jamais dépasser l'échéance du cycle (audit du 20/11/2026 :
+    60 s × 3 essais pour un budget de 30 s)."""
     global _bloque
     if _bloque:
         return None
     for i in range(essais):
+        if not _temps_restant():
+            _erreur("budget épuisé")
+            return None
         try:
-            r = _http.get(BASE + path, params=params, timeout=60)
+            r = _http.get(BASE + path, params=params, timeout=_timeout(60))
             if r.status_code == 200:
                 try:
                     d = r.json()
@@ -108,6 +126,8 @@ def _get(path: str, params: dict, essais: int = 3):
         except requests.RequestException:
             _erreur("réseau indisponible")
         if i + 1 < essais:
+            if _echeance is not None and (_echeance.reste() or 0) <= 2 * (i + 1):
+                return None
             time.sleep(2 * (i + 1))
     return None
 

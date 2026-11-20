@@ -282,13 +282,15 @@ def boosts_olybet(reponse_jeux: dict, choisis: dict[int, set[int]], moment: str,
 
 def lire_olybet(moment: str, maintenant: datetime, delai: float = 15) -> list[dict]:
     from curl_cffi.requests import Session
+
+    from cotes.direct.ws import fin_lecture, recevoir
     s = Session(impersonate="chrome")
     ws = s.ws_connect(SWARM, headers={"Origin": OLYBET_ORIGINE}, timeout=delai)
     try:
         def appel(rid: int, commande: str, params: dict) -> dict:
             ws.send_str(json.dumps({"command": commande, "params": params, "rid": str(rid)}))
             for _ in range(50):
-                m = json.loads(ws.recv_str())
+                m = json.loads(recevoir(ws, fin_lecture(delai)))      # trame bornée (cotes/direct/ws.py)
                 if m.get("rid") == str(rid):
                     if m.get("code") not in (0, None):
                         raise PageInattendue(f"swarm {commande} : code {m.get('code')}")
