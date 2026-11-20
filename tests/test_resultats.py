@@ -113,7 +113,7 @@ def test_manuel_par_manches_baseball():
     from cotes.reglement import appliquer
     p = {"id": "x", "match_id": "pmu|1", "sport": "baseball", "statut": "a_regler", "marche": "HANDICAP",
          "periode": "5_MANCHES", "issue": "EXT", "ligne": -0.5, "mise": 10, "cote": 2.0, "debut": "2026-10-06T09:30:00Z"}
-    m = {"pmu|1": {"score": [1, 3], "periodes": [[0, 0], [0, 0], [0, 0], [0, 1], [0, 0], [1, 0], [0, 0], [0, 0], [0, 2]]}}
+    m = {"pmu|1": {"score": [1, 3], "source": "mlb.com", "periodes": [[0, 0], [0, 0], [0, 0], [0, 1], [0, 0], [1, 0], [0, 0], [0, 0], [0, 2]]}}
     appliquer([p], {}, m)
     assert p["statut"] == "gagne"
 

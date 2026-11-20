@@ -105,18 +105,18 @@ def test_une_affiche_rejouee_trois_jours_plus_tard_n_est_pas_un_report():
 def test_corriger_un_pari_deja_regle_par_son_identifiant():
     p = regle(pari("021816f8", "Winamax", "Manchester City", "Brighton"), "perdu", {"MATCH": [0, 1]},
               sources=("espn", "livescore"))
-    reglement.appliquer([p], {}, {"021816f8": "gagne"}, APRES)
+    reglement.appliquer([p], {}, {"021816f8": {"statut": "gagne", "source": "test", "score": [2, 1]}}, APRES)
     assert p["statut"] == "gagne" and p["gain"] == 34.0 and p["regle_le"] == "2026-10-29T01:31:42+00:00"
     assert p["preuve_reglement"]["ancien_statut"] == "perdu" and p["preuve_reglement"]["anciennes_sources"] == ["espn", "livescore"]
     assert p["preuve_reglement"]["origine"] == "statut saisi à la main" and p["preuve_reglement"]["corrige_le"]
     trace = dict(p["preuve_reglement"])
-    reglement.appliquer([p], {}, {"021816f8": "gagne"}, APRES + timedelta(hours=1))     # déjà corrigé : rien ne bouge
+    reglement.appliquer([p], {}, {"021816f8": {"statut": "gagne", "source": "test", "score": [2, 1]}}, APRES + timedelta(hours=1))     # déjà corrigé : rien ne bouge
     assert p["preuve_reglement"] == trace
     q = regle(pari("x", "PMU", "A", "B"), "gagne", {"MATCH": [1, 1]})
     for valeur in (None, "inconnu", {"score": [1, 0]}, "supprime"):                       # rien d'autre ne corrige
         reglement.appliquer([q], {}, {"x": valeur}, APRES)
         assert q["statut"] == "gagne" and q["preuve_reglement"]["origine"] == "automatique"
-    assert reglement.corriger({"statut": "en_cours", "mise": 10, "cote": 2.0}, "gagne", APRES) is False
+    assert reglement.corriger({"statut": "en_cours", "mise": 10, "cote": 2.0}, {"statut": "gagne", "source": "t", "score": [1, 0]}, APRES) is False
 
 
 def test_meme_match_deux_scores_est_signale():

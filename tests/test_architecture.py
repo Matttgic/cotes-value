@@ -39,7 +39,7 @@ _PAR_COUCHE = {
                   "cotes.strategie_conseil cotes.strategie_defi cotes.strategie_eden cotes.strategie_gemini "
                   "cotes.strategie_gemini_defi cotes.strategie_grok cotes.strategie_jules cotes.strategie_jules_v2 "
                   "cotes.strategie_liquidite cotes.strategie_m3 cotes.strategie_qwen",
-    "bilans": "cotes.analyste cotes.notation cotes.recommandations cotes.protocole cotes.decision cotes.evenements "
+    "bilans": "cotes.analyste cotes.notation cotes.recommandations cotes.protocole cotes.decision cotes.regle_principale cotes.evenements "
               "cotes.analyse_marche cotes.analyse_marche.cache cotes.analyse_marche.lecture "
               "cotes.analyse_marche.meneurs cotes.analyse_marche.opportunites cotes.analyse_marche.segments",
     "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables cotes.alertes cotes.alertes.webhook "
@@ -50,7 +50,7 @@ _PAR_COUCHE = {
                "scripts.serveur_actif scripts.protocole scripts.verifier_secrets scripts.verifier_strategie_jules "
                "scripts.verifier_strategie_jules_v2 scripts.archiver_donnees_brutes scripts.sonde_betfair "
                "scripts.sonde_sources_us scripts.sonde_unibet scripts.sonde_boosts scripts.empreinte_site scripts.regler_boosts",
-    "etudes": "etudes etudes.etude_surebets etudes.erreurs_systematiques etudes.analyse_chatgpt etudes.analyse_marche etudes.audit_bilans etudes.avantage_reel "
+    "etudes": "etudes etudes.manuels_sans_preuve etudes.etude_surebets etudes.erreurs_systematiques etudes.analyse_chatgpt etudes.analyse_marche etudes.audit_bilans etudes.avantage_reel "
               "etudes.comparer_secours_pinnacle etudes.comparer_strategies etudes.cote_juste etudes.durer "
               "etudes.etude_duree_values etudes.modele_prix etudes.recherche_cloture etudes.strategie_mises",
 }

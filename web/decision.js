@@ -21,6 +21,18 @@ function decPreuve(id, texte) {
   return `<button type="button" class="dec-preuve" data-chiffre="${e(id)}">${e(texte)} <span aria-hidden="true">↓</span></button>`;
 }
 
+// Règle principale (cotes/regle_principale.py) : la seule règle jugée, figée le 14/11, sur les paris d'après le gel.
+function decHtmlPrincipale(P) {
+  if (!P || !P.regle) return '';
+  const verdict = P.prouve ? '<b class="pos">Avantage mesuré</b>' : '<b>Pas encore prouvé</b>';
+  const clv = P.clv == null ? 'CLV Pinnacle non mesurée'
+    : `CLV Pinnacle ${decPct(P.clv)}${decIc(P.clv_ic)} · ${decPluriel(P.clv_n, 'mesuré')}${P.clv_p == null ? '' : ' · ' + decP(P.clv_p)}`;
+  const roi = P.roi == null ? 'aucun pari réglé' : `ROI ${decPct(P.roi, 1)}${decIc(P.roi_ic, 1)} · ${decPluriel(P.regles, 'réglé')}`;
+  return `<li><span class="badge ${P.prouve ? 'gagne' : 'en_cours'}">Règle principale</span> ${verdict} : ${e(P.regle.nom)}, seule règle jugée,
+sur les paris détectés depuis le ${decJour(P.regle.gel)}. <span class="dec-chiffre">${e(clv)} · ${e(roi)}</span>
+<span class="aide">${e(P.regle.texte)}. Un seul test : CLV &gt; 0, seuil ${decPct(100 * P.alpha, 0).replace('+', '')}.</span></li>`;
+}
+
 // 1. L'avantage est-il prouvé ? Seul le protocole fixé à l'avance peut le dire : une stratégie « validée ».
 function decisionAvantage(P, maintenant = Date.now()) {
   const R = (P && P.regles) || {}, lignes = Object.values((P && P.lignes) || {}).filter(l => l.statut !== 'hors_protocole');
@@ -180,7 +192,7 @@ function htmlDecision(D, fiches, maintenant = Date.now(), noms = null) {
 <p class="dec-reponse"><strong class="${A.prouve ? 'pos' : ''}">${A.prouve ? `Oui, pour ${decPluriel(A.validees.length, 'stratégie')}.` : 'Non.'}</strong>
 ${A.prouve ? 'Elles battent la clôture Pinnacle au seuil fixé avant les paris.' : "Aucune stratégie n'a passé le protocole fixé avant les paris, seul à pouvoir le dire."}
 ${decPreuve('protocole', compte + seuil)}</p>
-<ul class="dec-liste">${A.validees.map(l => `<li><b>${e(l.nom)}</b> : validée. ${decPreuve('protocole:' + l.cle, lecture(l))}</li>`).join('')}${etabli}${gain}${suite}</ul></section>`;
+<ul class="dec-liste">${decHtmlPrincipale(DEC.principale)}${A.validees.map(l => `<li><b>${e(l.nom)}</b> : validée. ${decPreuve('protocole:' + l.cle, lecture(l))}</li>`).join('')}${etabli}${gain}${suite}</ul></section>`;
 
   // --- 2. Quoi jouer aujourd'hui ?
   const jouables = lignes.filter(l => l.decision === 'jouer' && l.famille !== 'ensemble');

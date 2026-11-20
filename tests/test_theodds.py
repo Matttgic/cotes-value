@@ -238,7 +238,7 @@ def test_reportes_et_vieux_resultats_ne_consomment_pas_de_credits():
 def test_saisie_manuelle_prioritaire_sur_restriction_du_secours():
     p = pari(id="manual", periode="QT1", marche="TOTAL", issue="PLUS", ligne=40)
     r, _ = run()
-    reglement.appliquer([p], r, {"manual": "gagne"}, NOW)
+    reglement.appliquer([p], r, {"manual": {"statut": "gagne", "source": "test", "score": [1, 0]}}, NOW)
     assert p["statut"] == "gagne" and p["preuve_reglement"]["origine"] == "statut saisi à la main"
 
 

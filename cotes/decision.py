@@ -234,6 +234,7 @@ def rejouer(paris: list[dict], match_de, clvs: dict[int, float]) -> dict:
 def construire(paris: list[dict], maintenant: datetime) -> dict:
     """Bloc publié dans le site (``D.decision``) : règles appliquées et lignes mesurées, avec leur décision, et le
     bilan de la règle « Quoi jouer » rejouée sans regard vers l'avenir (``rejouer``)."""
+    from . import regle_principale
     from .evenements import identites
     liens = identites(paris)
     match_de = lambda p: liens.get(id(p), ("ligne", p.get("id")))  # noqa: E731
@@ -243,4 +244,5 @@ def construire(paris: list[dict], maintenant: datetime) -> dict:
             "regles": {"alpha": ALPHA, "min_paris": MIN_PARIS, "min_matchs": MIN_MATCHS, "min_clv": MIN_CLV,
                        "part_pinnacle_min": PART_PINNACLE_MIN, "tests_roi": tests["roi"], "tests_clv": tests["clv"]},
             "lignes": [_publier(x) for x in resultats],
-            "rejeu": rejouer(paris, match_de, clvs)}
+            "rejeu": rejouer(paris, match_de, clvs),
+            "principale": regle_principale.construire(paris, match_de, clvs)}

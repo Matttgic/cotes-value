@@ -304,6 +304,9 @@ reste en mises fixes.
 
 ### Ajouter une stratégie
 
+**Gelé depuis le 20/11/2026** : plus aucune stratégie ni inscription au protocole. Seule la règle principale est
+jugée ([docs/regle-principale.md](docs/regle-principale.md)) ; `tests/test_regle_principale.py` bloque le registre.
+
 1. **Un fichier** `cotes/strategie_x.py` : le dictionnaire de la règle (`cle`, `nom`, `court`, `debut`, `version`,
    `mise`, `regles`) et son sélecteur décoré par `@figer_selecteur("x")` (`cotes/decisions.py`), qui fige chaque
    décision à la prise.
@@ -446,8 +449,10 @@ cycle, cache évincé) : démarrage à froid, le cycle relit tout. Un seul commi
 - `etat.json` : dernier cycle, dernier règlement et historique des 200 derniers relevés ;
 - `theodds.json` : scores de secours en cache et compteurs de crédits, sans clés API ;
 - `resultats_manuels.json` : règlements à la main, par exemple
-  `{"winamax|72036146": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3]}}` ; `periodes` donne le
-  score de chaque période (manches de baseball pour les marchés « 5 manches »).
+  `{"winamax|72036146": {"score": [2, 1], "mi_temps": [1, 0], "corners": [7, 3], "source": "flashscore.fr"}}` ;
+  `periodes` donne le score de chaque période (manches de baseball pour les marchés « 5 manches »). Sous
+  l'identifiant d'un pari : `{"statut": "rembourse", "source": "…", "score": [2, 1]}` (ou `"motif"` sans score).
+  Sans source, rien n'est réglé ([docs/regle-principale.md](docs/regle-principale.md)).
 
 ## Études et idées
 

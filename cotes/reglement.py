@@ -328,14 +328,15 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
         if p["statut"] not in ("en_cours", "a_regler"):
             corriger(p, manuels.get(p.get("id")), maintenant)
             continue
-        statut = manuels.get(p["id"]) if isinstance(manuels.get(p["id"]), str) else None
-        if statut is not None and statut not in GAIN:
-            _alerte(p, "statut_reglement_inconnu")
-        preuve = {"origine": "statut saisi à la main"} if statut else None
+        statut, preuve, refus = statut_saisi(manuels.get(p["id"]))
+        if refus:
+            _alerte(p, refus)
         if statut is None:
             r = resultats.get(p["match_id"])
             m = manuels.get(p["match_id"])
-            if isinstance(m, dict) and m.get("score"):
+            if isinstance(m, dict) and m.get("score") and not _texte(m.get("source")):
+                _alerte(p, "reglement_manuel_sans_source")
+            elif isinstance(m, dict) and m.get("score"):
                 sc = {"MATCH": tuple(m["score"])}
                 if m.get("periodes"):                 # score de chaque période réglementaire (ex. manches)
                     ps = [tuple(x) for x in m["periodes"]]
@@ -407,16 +408,55 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
             p["statut"] = "a_regler"              # résultat introuvable : à régler à la main
 
 
+# Saisies tolérées pour un statut (« gagné » au lieu de « gagne »…) : ramenées au statut du moteur.
+STATUTS_SAISIS = {"gagné": "gagne", "remboursé": "rembourse", "demi-gagné": "demi_gagne", "demi_gagné": "demi_gagne",
+                  "demi-gagne": "demi_gagne", "demi-perdu": "demi_perdu"}
+
+
+def _texte(v) -> bool:
+    return isinstance(v, str) and bool(v.strip())
+
+
+def statut_saisi(v) -> tuple[str | None, dict | None, str | None]:
+    """Règlement à la main sous l'identifiant d'un pari : ``(statut, preuve, alerte)``.
+
+    Forme exigée depuis l'audit du 20/11/2026 : ``{"statut": "rembourse", "source": "<où le résultat a été lu>",
+    "score": [2, 1]}`` (ou ``"motif"`` à la place du score : match annulé, joueur absent…). Un statut sans source ni
+    score/motif n'est plus appliqué : 74 des 76 remboursements manuels d'avant n'avaient aucune trace. Un statut mal
+    écrit n'empêche plus le règlement automatique par le score."""
+    if v is None or v == "supprime" or (isinstance(v, dict) and "statut" not in v):
+        return None, None, None
+    if not isinstance(v, dict):
+        v = {"statut": v}
+    statut = v.get("statut")
+    statut = STATUTS_SAISIS.get(statut.strip().lower(), statut.strip().lower()) if isinstance(statut, str) else statut
+    if statut == "supprime":
+        return None, None, None
+    if statut not in GAIN:
+        return None, None, "statut_reglement_inconnu"
+    if not _texte(v.get("source")) or not (v.get("score") or _texte(v.get("motif"))):
+        return None, None, "reglement_manuel_sans_preuve"
+    preuve = {"origine": "statut saisi à la main", "source": v["source"].strip()}
+    preuve.update({k: v[k] for k in ("score", "motif") if v.get(k)})
+    return statut, preuve, None
+
+
+def est_supprime(v) -> bool:
+    """Pari annulé à la main (pris sur un match mal associé) : ``"supprime"`` ou ``{"statut": "supprime", …}``."""
+    return v == "supprime" or (isinstance(v, dict) and v.get("statut") == "supprime")
+
+
 def corriger(p: dict, statut, maintenant: datetime) -> bool:
     """Corrige un pari déjà réglé quand ``resultats_manuels.json`` donne un autre statut sous son identifiant.
 
     Un règlement automatique peut être faux (mauvais match, score erroné d'une source) : sans cela, rien ne
     permettait de le reprendre. La date du règlement reste celle d'origine (les courbes ne bougent pas dans le
-    temps) ; la trace garde l'ancien statut et la date de la correction."""
-    if not isinstance(statut, str) or statut not in GAIN or p.get("statut") not in GAIN or statut == p["statut"]:
+    temps) ; la trace garde l'ancien statut et la date de la correction. Même forme exigée que ``statut_saisi``."""
+    statut, preuve, _ = statut_saisi(statut)
+    if statut is None or p.get("statut") not in GAIN or statut == p["statut"]:
         return False
     ancienne = p.get("preuve_reglement") or {}
-    p["preuve_reglement"] = {"origine": "statut saisi à la main", "corrige_le": maintenant.isoformat(timespec="seconds"),
+    p["preuve_reglement"] = {**preuve, "corrige_le": maintenant.isoformat(timespec="seconds"),
                              "ancien_statut": p["statut"], "ancienne_origine": ancienne.get("origine"),
                              "anciennes_sources": ancienne.get("sources"), "periode_utilisee": p.get("periode"),
                              "version": VERSION}

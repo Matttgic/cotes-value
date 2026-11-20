@@ -38,9 +38,9 @@ def test_un_import_invalide_ne_bloque_pas_les_autres_prises(champ, valeur):
 
 
 @pytest.mark.parametrize('age_fr,age_ref,accepte', [
-    (0, 900, True), (900, 0, True), (0, 901, False), (901, 0, False),
+    (0, 300, True), (300, 0, True), (0, 301, False), (301, 0, False),
     (3600, 3600, False), (0, -60, True), (0, -61, False),
-    (840, -60, True), (841, -60, False)])
+    (300, -60, True), (301, -60, False)])
 def test_fraicheur_absolue_et_relative_aux_bornes(age_fr, age_ref, accepte):
     o = candidat(detecte=(NOW-timedelta(seconds=age_fr)).isoformat(),
                  lu_reference=(NOW-timedelta(seconds=age_ref)).isoformat())

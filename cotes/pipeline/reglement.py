@@ -255,10 +255,12 @@ def effectuer_reglement(paris, donnees: Path, maintenant: datetime, journal: dic
         # Rien ne règle ces matchs : la liste est prête à être complétée à la main
         ecrire_json(donnees / "resultats_a_saisir.json",
                     {"genere": maintenant.isoformat(timespec="seconds"),
-                     "aide": "Copier `modele` dans resultats_manuels.json sous chaque clé de `match_ids`, y remplir le score.",
+                     "aide": "Copier `modele` dans resultats_manuels.json sous chaque clé de `match_ids`, y remplir le score "
+                             "et la source (où le score a été lu) : sans source, rien n'est réglé.",
                      "matchs": resultats_mod.a_saisir(paris, enregistrements, maintenant),
-                     "aide_incoherences": "Même match, deux scores : vérifier, puis écrire le bon statut (gagne, perdu, "
-                                          "rembourse…) sous l'identifiant de chaque pari faux dans resultats_manuels.json.",
+                     "aide_incoherences": "Même match, deux scores : vérifier, puis écrire sous l'identifiant de chaque pari "
+                                          "faux dans resultats_manuels.json {\"statut\": \"gagne|perdu|rembourse…\", "
+                                          "\"source\": \"…\", \"score\": [a, b]} (ou \"motif\" sans score).",
                      "incoherences": incoherences})
     else:
         journal["resultats"] = {"saute": True, "dernier_reglement": dernier_reglement}
@@ -279,7 +281,8 @@ def regler_seul(ctx: Contexte, mode_reglement: str) -> bool:
     donnees, maintenant, journal = ctx.donnees, ctx.maintenant, ctx.journal
     paris = charger_paris(donnees, journal)
     manuels = lire_json(donnees / "resultats_manuels.json", {})
-    ctx.paris = [p for p in paris if manuels.get(p["id"]) != "supprime"]
+    from cotes.reglement import est_supprime
+    ctx.paris = [p for p in paris if not est_supprime(manuels.get(p["id"]))]
     journal["mode"] = "reglement"
     ctx.regle = effectuer_reglement(ctx.paris, donnees, maintenant, journal, mode_reglement)
     sauvegarder(ctx, reglement_seul=True)
