@@ -67,12 +67,20 @@ def etape_bornee(nom: str, journal: dict, budget: float, fonction, *args, **kwar
 
 
 def source_bornee(module, nom: str, journal: dict, budget: float, fonction, *args, **kwargs):
-    """Pose l'échéance lue par le connecteur, puis abandonne le fil s'il dépasse."""
+    """Pose l'échéance lue par le connecteur, puis abandonne le fil s'il dépasse.
+
+    Fil abandonné (budget dépassé) : il continue de tourner et relit ``module._echeance`` ; elle reste donc posée,
+    dépassée, au lieu de repasser à None (audit du 20/11/2026 : DraftKings et FanDuel n'avaient alors plus de limite).
+    Le prochain appel borné en pose une neuve."""
     module._echeance = Echeance(budget)
+    abandonne = False
     try:
-        return etape_bornee(nom, journal, budget, fonction, *args, **kwargs)
+        r = etape_bornee(nom, journal, budget, fonction, *args, **kwargs)
+        abandonne = (journal["etapes"].get(nom) or {}).get("erreur") == "budget dépassé"
+        return r
     finally:
-        module._echeance = None
+        if not abandonne:
+            module._echeance = None
 
 
 def _instant(valeur):
@@ -356,8 +364,15 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
                 pinnacle._echeance = None
 
         fpin = pool.submit(etape_bornee, "pinnacle", journal, BUDGETS["pinnacle"], _lire_pinnacle)
-        fpoly = pool.submit(etape_bornee, "polymarket", journal, BUDGETS["polymarket"],
-                            polymarket.collecter, HORIZON_H)
+        def _lire_polymarket():
+            # échéance posée dans le fil : un fil abandonné garde la sienne, dépassée (audit du 20/11/2026)
+            polymarket._echeance = Echeance(BUDGETS["polymarket"])
+            try:
+                return polymarket.collecter(HORIZON_H)
+            finally:
+                polymarket._echeance = None
+
+        fpoly = pool.submit(etape_bornee, "polymarket", journal, BUDGETS["polymarket"], _lire_polymarket)
         futurs = {}
 
         def lancer(nom, module, budget, fonction, *args, **kwargs):
@@ -414,7 +429,9 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
             a_secourir = pinnacle_secours.sports_a_secourir(list(pinnacle.ERREURS), pin)
             en_retard = pinnacle_secours.sports_en_retard(pin) & a_secourir
             if a_secourir:
-                pin = pin + pinnacle_secours.collecter(a_secourir, maintenant, donnees)
+                # borné comme les autres sources : un secours qui traîne ne bloque plus le cycle
+                pin = pin + (etape_bornee("pinnacle_secours", journal, BUDGETS.get("pinnacle_secours", 60),
+                                          pinnacle_secours.collecter, a_secourir, maintenant, donnees) or [])
                 journal["pinnacle_secours"] = {**pinnacle_secours.RESUME, "erreurs": list(pinnacle_secours.ERREURS),
                                                "retard": sorted(pinnacle.SPORTS[s] for s in en_retard)}
         if pinnacle._cle_resolue:

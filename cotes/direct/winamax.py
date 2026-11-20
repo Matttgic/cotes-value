@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 import random
 import re
-import select
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -24,6 +23,7 @@ from cotes import inconnus
 from cotes.joueurs import depuis_titre_et_issues, est_titre_joueur
 from cotes.pulsescore import traduire
 from cotes.temps import instant_utc
+from cotes.direct.ws import recevoir
 
 URL = "wss://sports-eu-west-3.winamax.fr/uof-sports-server/socket.io/?EIO=4&transport=websocket"
 ORIGIN = "https://www.winamax.fr"
@@ -152,37 +152,8 @@ def _cause(e: BaseException) -> str:
     return f"{nom} {int(code)}" if isinstance(code, int) and not isinstance(code, bool) else nom
 
 
-def _recevoir(ws, fin: float) -> str:
-    """Une trame texte, au plus tard à ``fin`` (horloge ``time.monotonic``), sinon ``TimeoutError``.
-
-    Même assemblage que ``WebSocket.recv`` de curl_cffi, mais l'attente est bornée. Les doublures de test n'ont
-    que ``recv_str``."""
-    fragment = getattr(ws, "recv_fragment", None)
-    if fragment is None:
-        return ws.recv_str()
-    from curl_cffi import CurlECode, CurlError, CurlInfo, CurlWsFlag
-    prise = ws.curl.getinfo(CurlInfo.ACTIVESOCKET)
-    morceaux = []
-    while True:
-        try:
-            morceau, trame = fragment()
-        except CurlError as e:
-            if e.code != CurlECode.AGAIN:
-                raise
-            reste = fin - time.monotonic()
-            if reste <= 0:
-                raise TimeoutError("délai") from None
-            select.select([prise], [], [], min(0.5, reste))
-            continue
-        if trame.flags & (CurlWsFlag.PING | CurlWsFlag.PONG):
-            continue
-        if trame.flags & CurlWsFlag.CLOSE:
-            raise OSError("fermeture")
-        morceaux.append(morceau)
-        if trame.bytesleft == 0 and not trame.flags & CurlWsFlag.CONT:
-            return b"".join(morceaux).decode("utf-8")
-        if time.monotonic() >= fin:
-            raise TimeoutError("délai")
+# Lecture bornée d'une trame : socle commun des connecteurs WebSocket (cotes/direct/ws.py).
+_recevoir = recevoir
 
 
 class Socket:
