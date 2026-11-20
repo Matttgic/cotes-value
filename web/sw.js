@@ -39,6 +39,15 @@ self.addEventListener('push',event=>event.waitUntil((async()=>{
   let data;try{data=event.data.json();}catch{return;}
   if(!/^[a-f0-9]{64}$/.test(data.id||'') || Date.parse(data.expires_at)<=Date.now() ||
     !Number.isFinite(Date.parse(data.expires_at)) || !Number.isFinite(Date.parse(data.debut)) || Date.parse(data.debut)<=Date.now()) return;
+  // Statut vivant (cotes/alertes/statut.py) : remplace la notification encore affichée (même tag), sans sonner.
+  if(data.statut==='cote_baissee' || data.statut==='plus_jouable') {
+    const ouvertes=await self.registration.getNotifications({tag:'cv-'+data.id});
+    if(!ouvertes.length) return;
+    await self.registration.showNotification(String(data.title||'Plus jouable').slice(0,120),{
+      body:String(data.body||'').slice(0,500),tag:'cv-'+data.id,renotify:false,silent:true,
+      data:{id:data.id,url:null},timestamp:Date.now()});
+    return;
+  }
   if(!await claim(data.id)) return;
   try {
     await self.registration.showNotification(String(data.title||'Cotes Value').slice(0,120),{

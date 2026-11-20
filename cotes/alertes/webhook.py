@@ -73,6 +73,14 @@ def _ligne_pinnacle(a: dict) -> list[str]:
     return [f"Pinnacle {verdict} : {'+' if e > 0 else ''}{_fr(100 * e, 1)} %{ancien}"]
 
 
+# Origine de la value (cotes/origine.py) : une ligne de l'alerte. « hausse » : la value vient du bookmaker qui monte
+# sa cote, la moins bonne dans l'étude (CLV −1,2 % contre +3,2 % quand seule la référence bouge).
+ORIGINES_ALERTE = {"stable": "Origine : la référence a bougé, pas le bookmaker",
+                   "hausse": "⚠ Origine : le bookmaker vient de monter sa cote",
+                   "baisse": "Origine : le bookmaker vient de baisser sa cote",
+                   "nouvelle": "Origine : cote apparue dans l'heure"}
+
+
 def message_ntfy(a: dict, mises: int = 1, defaut: float = 10.0) -> tuple[str, str]:
     """(titre, corps) en texte brut ; l'heure du match est celle de Paris (« mar. 20/10 20h00 »).
     ``mises`` > 1 (même pari pris par plusieurs stratégies cochées) : mise totale = mise unitaire × nombre, comme
@@ -90,6 +98,9 @@ def message_ntfy(a: dict, mises: int = 1, defaut: float = 10.0) -> tuple[str, st
     if isinstance(age, (int, float)) and age > 300:          # match lointain, lu à son rythme : on le dit
         lignes.append(f"Prix relevé il y a {round(age / 60)} min")
     lignes += _ligne_pinnacle(a)
+    origine = ORIGINES_ALERTE.get(a.get("origine"))
+    if origine:                              # cotes/origine.py : d'où vient la value (docs/duree-values.md, partie 3)
+        lignes.append(origine)
     sources = [s for s in a.get("sources") or [] if s]
     if len(sources) > 1:                     # plusieurs références : la mise est multipliée (pushover.alertes_pushover)
         lignes.append(f"Repéré par {len(sources)} sources : {', '.join(sources)}")

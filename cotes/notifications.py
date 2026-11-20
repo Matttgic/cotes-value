@@ -81,6 +81,19 @@ def _nombre(x):
     return float(x) if isinstance(x, (int, float)) and not isinstance(x, bool) and x == x else None
 
 
+def pari_id(o: dict) -> str | None:
+    """Identifiant du pari simulé de cette opportunité (``simulation.placer``) : relie une réponse du journal réel
+    (Joué, Refusé…) au pari et à son résultat."""
+    from .marches import cle
+    from .simulation import _id
+    if not o.get("reference") or not o.get("match_id"):
+        return None
+    try:
+        return _id(o["reference"], o["match_id"], *cle(o))
+    except (KeyError, TypeError):
+        return None
+
+
 def champs_valeur(o: dict) -> dict:
     """Edge, cote juste, cote Pinnacle brute, ligue, cote minimale (garde l'edge ≥ 2 % : juste × 1,02), équipes et lien."""
     # Mise conseillée : Kelly 1/8 sur l'avantage compté (corrigé) (analyse du 19/11 ; docs/strategie-optimisee.md). Les bilans
@@ -93,7 +106,8 @@ def champs_valeur(o: dict) -> dict:
             "pinnacle_ecart": _nombre(o.get("ecart_pinnacle")), "pinnacle_age_s": _nombre(o.get("age_prix_pinnacle_s")),
             "ligue": o.get("ligue"), "marche": o.get("marche"), "selection": o.get("pari", "")[:180],
             "sport": o.get("sport"), "domicile": o.get("domicile"), "exterieur": o.get("exterieur"),
-            "match_id": o.get("match_id"), "lien": lien, "lien_repli": repli,
+            "match_id": o.get("match_id"), "lien": lien, "lien_repli": repli, "origine": o.get("origine"),
+            "pari_id": pari_id(o),
             "cote_min": round(max(COTE_MIN_PLANCHER, juste * COTE_MIN_MARGE), 3) if juste else None}
 
 

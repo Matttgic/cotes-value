@@ -2,6 +2,7 @@
 du message. L'envoi (`poster_pushover`) reste dans le script."""
 from __future__ import annotations
 
+import html
 import math
 import os
 from datetime import datetime, timezone
@@ -82,11 +83,30 @@ def ligne_methode_claude(a: dict, env) -> str:
     return f"Méthode Claude : jouer si cote ≥ {_fr(cote_min, 2)} · mise {mise} €"
 
 
+SITE = "https://matttgic.github.io/cotes-value/"
+# Journal réel (audit du 20/11/2026, priorité 12) : une réponse d'un toucher, notée par le site (web/journal.js).
+REPONSES_JOURNAL = (("joue", "Joué"), ("refuse", "Refusé"), ("plafonne", "Plafonné"), ("disparu", "Disparu"))
+
+
+def liens_journal(a: dict) -> str:
+    """Liens « Joué · Refusé · Plafonné · Disparu » vers le site, ou rien sans identifiant de pari."""
+    pid = a.get("pari_id")
+    if not isinstance(pid, str) or not pid.isalnum() or len(pid) > 40:
+        return ""
+    cote = a.get("cote")
+    suffixe = f"&cote={cote:.2f}" if isinstance(cote, (int, float)) and not isinstance(cote, bool) else ""
+    return " · ".join(f'<a href="{SITE}#notifications?journal={pid}&r={r}{suffixe}">{nom}</a>'
+                      for r, nom in REPONSES_JOURNAL)
+
+
 def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> dict:
     """Champs de l'API Pushover : le pari en texte, le lien du match dessous (cliquable). Mise Kelly 1/8 corrigé ramenée à
     ``PUSHOVER_BANKROLL``."""
     env = os.environ if env is None else env
     maintenant = maintenant or datetime.now(timezone.utc)
+    if a.get("type") == "statut":                     # relance « cote baissée » / « plus jouable »
+        from cotes.alertes.statut import message
+        return message(a)
     if a.get("type") in ("surebet", "boost", "couvert", "milieu"):           # cotes/alertes/promos.py
         from cotes.alertes import promos
         champs = (promos.message_surebet(a, _bankroll(env)) if a["type"] == "surebet"
@@ -111,7 +131,12 @@ def message_pushover(a: dict, env=None, maintenant: datetime | None = None) -> d
         corps = corps + "\n" + methode
     noms = [str(x) for x in (a.get("labels") or [])]
     ligne = f"\n{len(noms)} stratégie{'s' if len(noms) > 1 else ''} : {', '.join(noms)}" if noms else ""
-    champs = {"title": titre[:250], "message": (corps[:1000 - len(ligne)] + ligne)[:1000]}
+    texte = (corps + ligne)[:1000 - 400]
+    journal = liens_journal(a)
+    if journal:                 # journal réel en un geste : HTML (liens), texte échappé
+        champs = {"title": titre[:250], "message": html.escape(texte, quote=False) + "\n" + journal, "html": 1}
+    else:
+        champs = {"title": titre[:250], "message": (corps[:1000 - len(ligne)] + ligne)[:1000]}
     lien = a.get("lien")
     if isinstance(lien, str) and lien.startswith("https://") and len(lien) <= 500:
         champs["url"] = lien

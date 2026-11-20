@@ -43,6 +43,9 @@ def prendre(ctx: Contexte) -> None:
     paris = [p for p in paris if p["id"] not in supprimes]
     # un pari supprimé ne revient pas au cycle suivant tant que l'opportunité existe (audit du 20/11)
     nouveaux = simulation.placer(opportunites, paris, exclus=supprimes)
+    # origine de la value (bookmaker qui monte ou référence qui bouge), lue dans l'historique des cotes du jour
+    from cotes import origine
+    journal["origine"] = etape("origine", journal, origine.annoter, donnees, nouveaux, maintenant) or {}
     from cotes.decisions import figer_nouveaux, redecider_ouverts
     from cotes.strategie_recommandee import charger_fusions
     charger_fusions(donnees)          # fusions automatiques actives : leurs prises sont notées avec les autres
