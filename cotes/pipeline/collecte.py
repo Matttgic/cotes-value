@@ -482,6 +482,9 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         proches = (metas.get("betclic_direct") or {}).get("proches")
         if isinstance(proches, dict):         # matchs proches de Betclic : relances, lectures ratées ou vides
             journal["betclic_proches"] = proches
+        rotation_ub = (metas.get("unibet_direct") or {}).get("rotation")
+        if isinstance(rotation_ub, dict):     # Unibet : filtres secondaires lancés ce cycle sur le tour complet
+            journal["unibet_rotation"] = rotation_ub
         onglets_bc = (metas.get("betclic_direct") or {}).get("onglets_vus")
         if isinstance(onglets_bc, dict):      # onglets proposés par sport : repérer un onglet renommé
             journal["betclic_onglets"] = onglets_bc

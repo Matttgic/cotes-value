@@ -791,7 +791,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         if noeud is None:
             continue
         candidats.append((interne, noeud))
-    curseur_suivant = None
+    curseur_suivant, curseur_cle, rotation = None, None, None
     if reserve is not None:
         primaires, secondaires = [], []
         for interne, noeud in candidats:
@@ -807,15 +807,23 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
                 break
             _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
                          _PAGES_PROPS, session=session)
-        places = _SECONDAIRES_PAR_CYCLE
-        pris, curseur_suivant = tranche(secondaires, bloc.get("curseur"), places)
+        # Le curseur désigne le prochain filtre par sa clé (sport, type, période), pas seulement par sa position :
+        # un sport absent de l'accueil un cycle décale la liste, et une position seule sautait des filtres.
+        cles = [(t[1], t[2], t[3]) for t in secondaires]
+        depart = int(bloc.get("curseur") or 0)
+        memo = bloc.get("curseur_cle")
+        if isinstance(memo, list) and tuple(memo) in cles:
+            depart = cles.index(tuple(memo))
+        pris, curseur_suivant = tranche(secondaires, depart, _SECONDAIRES_PAR_CYCLE)
         executer(pris)
         # Budget épuisé au milieu de la tranche (constaté le 20/11 : un cycle sur quatre à 71 s, « budget ») :
         # les filtres non lancés passent en tête du cycle suivant au lieu d'attendre un tour complet (~19 min),
         # pendant lequel leurs cotes sortaient de la fenêtre de 15 min et les marchés disparaissaient.
         lances = next((k for k, t in enumerate(pris) if (t[1], t[2], t[3]) not in commences), len(pris))
-        if lances < len(pris):
-            curseur_suivant = (int(bloc.get("curseur") or 0) + lances) % len(secondaires)
+        if secondaires:
+            curseur_suivant = (depart + lances) % len(secondaires)
+            curseur_cle = list(cles[curseur_suivant])
+        rotation = {"secondaires": len(secondaires), "depart": depart, "lances": lances, "props": len(props)}
     elif filtre_radar:
         primaires = []
         for interne, noeud in candidats:
@@ -875,7 +883,9 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
     fusion = fusionner_marches(bloc.get("lignes") or [], lignes, maintenant, heures)
     meta["ok"] = not client.erreurs or bool(fusion)
     meta["matchs"] = len({l.get("match_id") for l in fusion})
-    meta["reserve"] = {"curseur": curseur_suivant, "lignes": fusion}
+    meta["reserve"] = {"curseur": curseur_suivant, "curseur_cle": curseur_cle, "lignes": fusion}
+    if rotation:
+        meta["rotation"] = rotation             # journal du cycle : vitesse réelle du tour des marchés secondaires
     return fusion, meta
 
 
