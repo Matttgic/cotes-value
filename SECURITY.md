@@ -23,3 +23,16 @@ Le réchauffeur de cache (`PINNACLE_RECHAUFFEUR_SECRET` côté Actions, `RECHAUF
 - Un rapport sans alerte ne garantit pas l'absence de tout secret. Les formats propriétaires, les contenus encodés et les données hors périmètre demandent une revue complémentaire.
 
 Le nom de branche n'est pas un contrôle de sécurité. Une migration vers `main` doit coordonner les déclencheurs Actions, la branche par défaut et la règle OIDC de la fonction de notifications. Les protections de branche sont un réglage GitHub distinct.
+
+## Chaîne d'approvisionnement (audit du 20/11/2026)
+
+- `requirements.txt` et `requirements-dev.txt` sont des verrous hachés, générés depuis `requirements.in` et
+  `requirements-dev.in` : `pip-compile --generate-hashes --allow-unsafe --strip-extras -o requirements.txt requirements.in`
+  (idem pour `-dev`). Pip refuse tout paquet dont l'empreinte diffère.
+- Chaque action GitHub est épinglée par SHA de commit (version en commentaire). Dependabot propose chaque semaine les
+  mises à jour des actions et des verrous (`.github/dependabot.yml`).
+- Aucun droit par défaut dans les workflows (`permissions: {}`) : chaque tâche déclare les siens. `cycle` : contents
+  et id-token ; `publier` : pages et id-token ; `relancer` : actions. Le jeton n'est plus interpolé dans `run:`.
+- `cycle` ne tourne pas quand le serveur en direct est actif (tâche `garde`, comme le règlement).
+- **À régler dans GitHub (Settings → Branches)** : protéger la branche par défaut (PR obligatoire, tests verts, pas
+  de force-push) et `donnees` (pas de suppression ni de force-push). Aucun outil de cette session ne peut le faire.

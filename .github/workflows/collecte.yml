@@ -23,19 +23,40 @@ on:
         options: [test, complet]
         default: test
 
-permissions:
-  actions: write
-  contents: write
-  pages: write
-  id-token: write
+# Aucun droit par défaut : chaque tâche reçoit seulement les siens (audit du 20/11/2026).
+permissions: {}
 
 # Trois tâches : le cycle (collecte, comparaison, paris, données), la publication du site, et la relance du
 # cycle suivant. La publication a sa propre file : si GitHub Pages bloque (environnement « en attente »,
 # constaté le 6/10/2026 pendant 2 heures), la collecte et la chaîne des cycles continuent.
 jobs:
-  cycle:
+  # Serveur « en direct » actif (docs/serveur-direct.md) : il collecte et prend les paris lui-même ; un second moteur
+  # donnerait paris et alertes en double. Même garde que reglement.yml.
+  garde:
     if: github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      serveur: ${{ steps.serveur.outputs.actif }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          sparse-checkout: scripts/serveur_actif.py
+          sparse-checkout-cone-mode: false
+      - id: serveur
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "actif=$(python3 scripts/serveur_actif.py --depot "$GITHUB_REPOSITORY")" >> "$GITHUB_OUTPUT"
+
+  cycle:
+    needs: garde
+    if: needs.garde.outputs.serveur != 'oui'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # branche « donnees », références du mois
+      id-token: write       # jeton OIDC des notifications (Supabase)
     timeout-minutes: 40
     concurrency:
       group: donnees
@@ -48,8 +69,8 @@ jobs:
       - name: Heure de début
         id: debut
         run: echo "debut=$(date +%s)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.12"
           cache: pip
@@ -57,8 +78,10 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Récupérer les données (branche « donnees »)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}"
           if git ls-remote --exit-code --heads origin donnees >/dev/null; then
             bash scripts/cloner_donnees.sh "$url" donnees      # sans les jours passés de cotes/ et opportunites/
           else
@@ -68,7 +91,7 @@ jobs:
       # Dernier bon état de Pinnacle et Polymarket (cotes/reprise.py) : quelques Mo en gzip, gardés dans le cache
       # Actions et non dans la branche « donnees ». Absent (premier cycle, cache évincé) : aucune reprise.
       - name: Restaurer le dernier bon état des références
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: reprise
           key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
@@ -79,7 +102,7 @@ jobs:
       # « donnees » (elle grossissait de 256 Mo par jour). Absente (premier cycle, cache évincé après 7 jours sans
       # accès ou au-delà de 10 Go) : démarrage à froid, le cycle relit tout et repart de controle.json (publication horaire).
       - name: Restaurer la mémoire de travail
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: memoire
           key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
@@ -89,7 +112,7 @@ jobs:
       # échoue, ces fichiers seraient perdus et les alertes renvoyées au cycle suivant : une copie est aussi gardée
       # dans le cache Actions (toujours sauvegardée), fusionnée ici avec la version de la branche (union des ids).
       - name: Restaurer les alertes déjà envoyées
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: envoyes
           key: envoyes-${{ github.run_id }}-${{ github.run_attempt }}
@@ -172,7 +195,7 @@ jobs:
       - name: Sauver les alertes déjà envoyées
         if: always() && hashFiles('envoyes/*.json') != ''
         continue-on-error: true
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: envoyes
           key: envoyes-${{ github.run_id }}-${{ github.run_attempt }}
@@ -245,7 +268,7 @@ jobs:
       - name: Sauver le dernier bon état des références
         if: always() && hashFiles('reprise/derniere_lecture.json.gz') != ''
         continue-on-error: true
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: reprise
           key: reprise-${{ github.run_id }}-${{ github.run_attempt }}
@@ -258,12 +281,12 @@ jobs:
       - name: Sauver la mémoire de travail
         if: always() && steps.enregistrer.outcome == 'success' && hashFiles('memoire/*.json.gz') != ''
         continue-on-error: true
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: memoire
           key: memoire-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           include-hidden-files: true      # .nojekyll, comme la v3
           path: site
@@ -273,6 +296,10 @@ jobs:
     needs: cycle
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     concurrency:
       group: pages
       cancel-in-progress: false       # ne pas interrompre une publication plus récente
@@ -293,7 +320,7 @@ jobs:
           fi
       - name: Publier le site (GitHub Pages)
         if: steps.fraicheur.outputs.publier == 'true'
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         with:
           artifact_name: ${{ needs.cycle.outputs.artefact }}
 
@@ -304,8 +331,11 @@ jobs:
     if: always() && vars.COLLECTE_AUTO == 'oui' && needs.cycle.result != 'skipped'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      actions: write        # gh workflow run
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           sparse-checkout: |
             scripts/serveur_actif.py

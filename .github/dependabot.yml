@@ -1,0 +1,17 @@
+# Mises à jour surveillées (audit du 20/11/2026) : actions épinglées par SHA et verrous pip hachés.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      pip:
+        patterns: ["*"]
