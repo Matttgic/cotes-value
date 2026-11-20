@@ -12,10 +12,8 @@ on:
       - .github/workflows/reglement.yml
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+# Aucun droit par défaut : chaque tâche reçoit seulement les siens (audit du 20/11/2026).
+permissions: {}
 
 jobs:
   # Serveur « en direct » actif (docs/serveur-direct.md) : il règle lui-même les paris ; GitHub ne doit pas écrire
@@ -23,10 +21,12 @@ jobs:
   garde:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     outputs:
       serveur: ${{ steps.serveur.outputs.actif }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           sparse-checkout: scripts/serveur_actif.py
           sparse-checkout-cone-mode: false
@@ -42,13 +42,15 @@ jobs:
     if: needs.garde.outputs.serveur != 'oui' && (github.event_name == 'workflow_dispatch' || vars.COLLECTE_AUTO == 'oui')
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    permissions:
+      contents: write       # branche « donnees »
     concurrency:
       group: donnees
       queue: max
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.12"
           cache: pip
@@ -58,7 +60,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}"
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}"
           bash scripts/cloner_donnees.sh "$url" donnees        # sans les jours passés de cotes/ et opportunites/
 
       - name: Regler les paris sans scanner les cotes
@@ -94,7 +96,7 @@ jobs:
           done
           exit 1
 
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           include-hidden-files: true      # .nojekyll, comme la v3
           path: site
@@ -104,6 +106,10 @@ jobs:
     needs: reglement
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     concurrency:
       group: pages
       cancel-in-progress: false
@@ -122,7 +128,7 @@ jobs:
             echo "publier=false" >> "$GITHUB_OUTPUT"
             echo "Publication ignorée : un code plus récent est disponible. Les règlements sont conservés."
           fi
-      - uses: actions/deploy-pages@v5
+      - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         if: steps.fraicheur.outputs.publier == 'true'
         with:
           artifact_name: ${{ needs.reglement.outputs.artefact }}

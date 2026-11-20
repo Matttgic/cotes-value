@@ -30,12 +30,14 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       REEL: ${{ (github.event_name == 'workflow_dispatch' && inputs.reel) || (github.event_name == 'schedule' && vars.ARCHIVAGE_AUTO == 'oui') }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.12"
       - name: Cloner la branche « donnees » en entier
-        run: git clone -q --depth 1 --branch donnees "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" donnees
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: git clone -q --depth 1 --branch donnees "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}" donnees
       - name: Préparer les archives (tar + manifeste, vérifiés)
         run: python -m cotes archiver donnees --sortie archives_brutes
       - name: Publier, vérifier le téléchargement, retirer de la branche
