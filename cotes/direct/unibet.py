@@ -95,6 +95,11 @@ _HORIZON_COURT = 6
 # props sont désormais en plus, et 28 secondaires font le tour en deux cycles (~9 min) : de la marge pour les cycles
 # coupés par le budget, qui reprennent au premier filtre non lu. Un cycle sans coupure durait ~25 s sur 72.
 _SECONDAIRES_PAR_CYCLE = 28
+# 21/11/2026 (samedi) : 13 cycles sur 16 coupés par le budget, 6 secondaires foot lancés par cycle au lieu de 28.
+# Chaque filtre foot suivait jusqu'à 16 pages (800 matchs sur 36 h) : le tour des 55 prenait ~5 cycles (~24 min),
+# au-delà de la fenêtre de 15 min. Les secondaires s'arrêtent à 8 pages (les 400 matchs les plus proches) ; le
+# marché principal garde 16 pages, et un match lointain retrouve ses marchés secondaires en approchant.
+_PAGES_SECONDAIRES = 8
 # Une requête lancée trop près de l'échéance dépasserait le join du cycle et
 # ferait jeter les cotes déjà lues. On s'arrête avant, avec le partiel.
 _MARGE_S = 3.0
@@ -691,6 +696,7 @@ def _lire_filtre(client: Client, noeud: int, sport: str, sac: dict,
         if not nxt or nxt == suivant:
             return True
         suivant = nxt
+    return True                                  # plafond de pages atteint : filtre lu (jusqu'à son plafond)
 
 
 def _avec_reserve(lignes, meta, reserve):
@@ -764,16 +770,17 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
 
     lus: set = set()                # filtres lus jusqu'au bout : la rotation reprend au premier qui ne l'est pas
 
-    def executer(taches: list[tuple]) -> None:
+    def executer(taches: list[tuple], pages: int | None = None) -> None:
         if not taches:
             return
+        plafond = pages_max if pages is None else min(pages_max, pages)
         if largeur == 1 or len(taches) == 1:
             for noeud, sport, type_id, periode in taches:
                 if echeance is not None and not echeance.ok():
                     client._noter("budget")
                     return
                 if _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
-                                pages_max, session=session):
+                                plafond, session=session):
                     lus.add((sport, type_id, periode))
             return
 
@@ -783,7 +790,7 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
                 return
             noeud, sport, type_id, periode = tache
             if _lire_filtre(client, noeud, sport, sac, type_id, periode, horizon, echeance,
-                            pages_max, session=requests.Session(), espacer=pause_locale(),
+                            plafond, session=requests.Session(), espacer=pause_locale(),
                             verrou_sac=verrou_sac):
                 lus.add((sport, type_id, periode))
 
@@ -827,7 +834,9 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         if isinstance(memo, list) and tuple(memo) in cles:
             depart = cles.index(tuple(memo))
         pris, curseur_suivant = tranche(secondaires, depart, _SECONDAIRES_PAR_CYCLE)
-        executer(pris)
+        avant = client.requetes
+        executer(pris, _PAGES_SECONDAIRES)
+        requetes_secondaires = client.requetes - avant
         # Budget épuisé au milieu de la tranche (constaté le 20/11 : un cycle sur quatre à 71 s, « budget ») :
         # les filtres non lancés passent en tête du cycle suivant au lieu d'attendre un tour complet (~19 min),
         # pendant lequel leurs cotes sortaient de la fenêtre de 15 min et les marchés disparaissaient.
@@ -838,7 +847,8 @@ def collecter(sports: set[str] | None = None, heures: float = 36, session=None, 
         if secondaires:
             curseur_suivant = (depart + lances) % len(secondaires)
             curseur_cle = list(cles[curseur_suivant])
-        rotation = {"secondaires": len(secondaires), "depart": depart, "lances": lances, "props": len(props)}
+        rotation = {"secondaires": len(secondaires), "depart": depart, "lances": lances, "props": len(props),
+                    "requetes": requetes_secondaires}
     elif filtre_radar:
         primaires = []
         for interne, noeud in candidats:

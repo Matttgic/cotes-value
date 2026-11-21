@@ -426,7 +426,7 @@ def test_le_curseur_suit_la_cle_du_filtre_quand_la_liste_change(monkeypatch):
                                reserve={"lignes": [], "curseur": 0, "curseur_cle": cible})
     n = len(filtres)
     k = min(unibet._SECONDAIRES_PAR_CYCLE, n)
-    assert meta["rotation"] == {"secondaires": n, "depart": 5, "lances": k, "props": 0}
+    assert meta["rotation"] == {"secondaires": n, "depart": 5, "lances": k, "props": 0, "requetes": k}
     assert meta["reserve"]["curseur"] == (5 + k) % n
     assert meta["reserve"]["curseur_cle"] == list(("football",) + tuple(filtres[(5 + k) % n]))
 
@@ -454,3 +454,42 @@ def test_un_appel_refuse_faute_de_temps_ne_compte_pas_le_filtre_comme_lu():
 
     client = unibet.Client(Session([]), Page(), (0, 0), echeance=Presque())
     assert unibet._lire_filtre(client, 1, "football", {"events": {}}, 100, 1, echeance=Presque()) is False
+
+
+class SessionSansFin(Session):
+    """Chaque page rend 50 nouveaux matchs proches et une page suivante : le plafond de pages décide seul."""
+    def __init__(self):
+        super().__init__([])
+        self.n = 0
+
+    def get(self, url, timeout=30, headers=None):
+        self.urls.append(url)
+        items = {}
+        for _ in range(50):
+            self.n += 1
+            cle, ev = _event(f"e{self.n}", f"A{self.n}", f"B{self.n}", "2026-10-18T14:00:00Z")
+            items[cle] = ev
+        return Reponse(200, {"items": items, "numberOfEvents": 10_000, "nextEventId": f"e{self.n + 1}"}, {})
+
+
+def test_un_filtre_arrete_par_le_plafond_de_pages_compte_comme_lu(monkeypatch):
+    """Un filtre qui atteint son plafond de pages rendait None : la rotation le croyait coupé par le budget."""
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    client = unibet.Client(SessionSansFin(), Page(), (0, 0))
+    assert client.ouvrir()
+    sac = {"events": {}, "markets": {}, "outcomes": {}}
+    assert unibet._lire_filtre(client, 240, "football", sac, 605, 100, pages_max=3) is True
+    assert len(sac["events"]) == 150
+
+
+def test_les_marches_secondaires_s_arretent_a_leur_plafond_de_pages(monkeypatch):
+    """21/11/2026 : 16 pages par secondaire foot, 6 filtres par cycle sur 28, un tour en ~24 min (> 15 min)."""
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    session = SessionSansFin()
+    _, meta = unibet.collecter({"football"}, 36, session=session, page=Page(), pause=(0, 0),
+                               maintenant=MAINTENANT, concurrence=1, reserve={"lignes": [], "curseur": 0})
+    n = len(unibet._filtres("football", 36)) - 1
+    k = min(unibet._SECONDAIRES_PAR_CYCLE, n)
+    rotation = meta["rotation"]
+    assert rotation["lances"] == k and rotation["requetes"] == k * unibet._PAGES_SECONDAIRES
+    assert len(session.urls) == unibet._PAGES_MAX + k * unibet._PAGES_SECONDAIRES   # le principal garde 16 pages
