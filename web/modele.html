@@ -414,14 +414,20 @@ const PAGES_RENDUS = {
   segments: [() => rendreSegments()],
   paris: [() => rendreSanteParis(), () => rendreParis()],
   analyses: [() => rendreAnalyses()],
-  controle: [() => rendreControle(), () => rendreSante()],
+  controle: [() => rendreRegler(), () => rendreControle(), () => rendreSante()],
+  regler: [() => rendreRegler()],
 };
-const pagesARendre = new Set(["bilan", "segments", "paris", "controle"]);
+const pagesARendre = new Set(["bilan", "segments", "paris", "controle", "regler"]);
+// Blocs différés (BLOCS_DIFFERES de cotes/site/construction.py, fichier donnees.json) : tant qu'ils manquent, seul
+// l'accueil est construit ; les autres onglets attendent chargerDifferes(). « var » : absent des tests découpés.
+var differesEnAttente = true, pageEnAttente = null, resoudreDifferes = null;
+var DIFFERES_PRETS = new Promise(r => { resoudreDifferes = r; });   // Notifs et Pushover l'attendent
 // Ancien rendu au chargement, laissé à sa place dans le code : la page le fait par rendrePage(page) (ouverture ou
 // tâche de fond). Les tests qui découpent ce gabarit remplacent cette fonction par un rendu immédiat.
 function rendreDiffere(page, rendre) {}
 let pageActive = null, fondPrevu = false;
 function rendrePage(page) {
+  if (differesEnAttente && page !== "accueil") return;          // repris par chargerDifferes()
   if (!pagesARendre.delete(page)) return;
   for (const f of PAGES_RENDUS[page]) { try { f(); } catch (err) { console.error(err); } }
   if (typeof adapterTableaux === "function") adapterTableaux();
@@ -431,6 +437,7 @@ function rendreEnFond() {
   fondPrevu = true;
   const attendre = window.requestIdleCallback ? f => requestIdleCallback(f, {timeout: 4000}) : f => setTimeout(f, 200);
   const suivant = () => {
+    if (typeof differesEnAttente !== "undefined" && differesEnAttente) { fondPrevu = false; return; }
     const page = pagesARendre.values().next().value;
     if (page === undefined) { fondPrevu = false; return; }
     rendrePage(page);
@@ -520,6 +527,10 @@ function ouvrir(o) {
   if (page === "paris" && typeof hashParis === "string" && hashParis) { hash = hashParis; hashParis = null; }
   ecrire("onglet", nom);
   try { history.replaceState(null, "", "#"+hash); } catch {}
+  // Blocs différés pas encore là : l'onglet s'affiche vide (« Chargement… ») et sera rouvert par chargerDifferes().
+  const attente = typeof differesEnAttente !== "undefined" && differesEnAttente && page !== "accueil";
+  document.body?.classList?.toggle("chargement-differe", attente);
+  if (attente) { pageEnAttente = o; return; }
   if (page === "bilan") montrerVueBilan(vueBilan);
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
   if (page === "accueil") rendreAccueil();
@@ -836,19 +847,13 @@ document.getElementById("infos").innerHTML = [
 ].map(([a,b]) => `<div>${a}<b>${b ?? "—"}</b></div>`).join("");
 
 // --- Paris : fiches déjà regroupées (un même pari pris par plusieurs simulations = une seule fiche)
-const recentes = new Map(D.paris.map(p => [p.id,p]));
+const recentes = new Map((D.paris || []).map(p => [p.id,p]));   // D.paris : bloc différé, complété au chargement
 const fiches = D.catalogue ? D.catalogue.lignes.map(ligne => {
   const p = Object.fromEntries(D.catalogue.champs.map((cle,i) => [cle,ligne[i]]));
   for (const cle of Object.keys(D.strategies_badges || {})) p[cle] = p.strategies.includes(cle);
   return {...p, sims:[p.simulation], trace:recentes.get(p.id)?.trace || []};
-}) : D.paris;
-if(D.laboratoire?.navigation?.paris) {
-  const parId=new Map(fiches.map(p=>[p.id,p]));
-  for(const [id,meta] of Object.entries(D.laboratoire.navigation.paris)) {
-    const p=parId.get(id);
-    if(p) D.laboratoire.navigation.paris[id]={...p,...meta};
-  }
-}
+}) : (D.paris || []);
+// Lignes de navigation du laboratoire (bloc différé) : fusionnées avec les fiches par fusionnerNavigation().
 if (document.getElementById("nb-paris")) document.getElementById("nb-paris").textContent = fiches.length || "";
 var CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
 var D_FIXE = Object.fromEntries(CLES_MISE.map(k => [k, D[k]]));   // « var » : lu par un rendu antérieur sans erreur
@@ -881,7 +886,10 @@ let miseMode = "fixe", miseVoulue = D.mode_mise_defaut || "kelly";
 try { const m = localStorage.getItem(CLE_MISE); if (m && infoMise(m)) miseVoulue = m; } catch {}
 if (!infoMise(miseVoulue)) miseVoulue = "fixe";
 function appliquerMise(mode) {
-  const K = mode !== "fixe" ? blocMise(mode) : null;
+  // Blocs Kelly encore en route (donnees.json) : les fiches passent déjà en Kelly (mise_kelly est dans le catalogue),
+  // les blocs chiffrés suivront avec chargerDifferes().
+  const attente = mode === "kelly" && !D.kelly && typeof differesEnAttente !== "undefined" && differesEnAttente;
+  const K = mode !== "fixe" ? (blocMise(mode) || (attente ? {} : null)) : null;
   miseMode = K ? mode : "fixe";
   // Le laboratoire d'un mode ne publie que ce qui change avec la mise : le reste vient de la vue fixe.
   // Paris des segments : seule la colonne du gain (6) change (colonne 12 pour Kelly ¼, gains_segments sinon).
@@ -1327,44 +1335,48 @@ ${(n => n ? `<span class="badge en_cours">${n} à venir</span>` : "")(aVenir(s).
 }
 rendreDiffere("segments", rendreSegments);
 
-// --- À régler
-const manUniques = new Map();
-D.paris.filter(p => p.a_regler).forEach(p => {
-  const cle = JSON.stringify([p.match_id,p.marche,p.periode,p.ligne,p.issue,p.joueur]);
-  if (!manUniques.has(cle)) manUniques.set(cle,p);
-});
-const man = [...manUniques.values()];
-const jr = (D.etat||{}).dernier_cycle_reglement || {}, diagnostics = ((jr.resultats||{}).non_regles||[]);
-const dr = new Map(diagnostics.map(x => [x.match+"|"+x.sport+"|"+x.debut,x]));
-const groupesReglement = new Map();
-man.forEach(p => {
-  const cle = p.sport+"|"+p.domicile+"|"+p.exterieur+"|"+p.debut;
-  if (!groupesReglement.has(cle)) groupesReglement.set(cle, []);
-  groupesReglement.get(cle).push(p);
-});
-const panneAP = Object.values(jr.etapes||{}).some(x => (x.erreurs||[]).some(t => /suspended/i.test(t)));
-const prop = jr.propline || {};
-document.getElementById("reglement-etat").innerHTML =
-  `<p>${man.length} sélections sur ${groupesReglement.size} affiches.</p>` +
-  (jr.debut ? `<p>Dernière recherche : ${quand(jr.debut)}.${Number.isInteger(jr.resultats?.paris_regles) ? ` ${jr.resultats.paris_regles} enregistrements réglés à ce passage.` : ""}</p>` : "") +
-  (panneAP ? `<p>API-Sports : compte suspendu. Les autres sources continuent. Les quatre clés The Odds API partagent la même couverture ; elles ne couvrent pas toutes les compétitions ni les mi-temps.</p>` : "") +
-  (prop.configure ? `<p>Prop-Line : ${prop.requetes_scores||0} appel(s) scores à ce passage, ${prop.matchs_valides||0} affiche(s) validée(s)${Number.isFinite(prop.quota_restant) ? " · "+prop.quota_restant+" requêtes restantes aujourd’hui" : ""}. ${(prop.erreurs||[]).length ? "Lecture dégradée : "+(prop.erreurs||[]).map(e).join(" ; ")+"." : "Les compétitions et périodes sans couverture restent en attente."}</p>` :
-    (Object.prototype.hasOwnProperty.call(jr,"propline") ? `<p>Prop-Line : clé absente. Les autres sources continuent.</p>` : ""));
-document.getElementById("liste-regler").innerHTML = man.length ? [...groupesReglement.values()].map(ps => {
-  const p = ps[0], d = dr.get(p.domicile+" – "+p.exterieur+"|"+p.sport+"|"+p.debut);
-  const validation = d && d.validation_apres;
-  return `<details class="carte"><summary>${e(p.domicile)} – ${e(p.exterieur)} · ${ps.length} sélection${ps.length>1?"s":""}${horairePari(p)}</summary>
-<div class="l4"><span>${quand(p.debut)}</span><span>${e(p.ligue||"")}</span></div>
-<p class="aide">${e(d ? d.raison : "Recherche automatique en cours")}${validation ? " · nouvelle validation possible après "+quand(validation) : ""}.</p>
-${ps.map(x => `<div class="l4"><span>${e(x.bookmaker)} · ${e(x.pari)}</span><span>${e(x.reference)}</span></div>`).join("")}</details>`;
-}).join("") : `<div class="vide">Aucun résultat en attente.</div>`;
-document.getElementById("copier").style.display = man.length ? "" : "none";
-document.getElementById("copier").onclick = () => {
-  const txt = "Paris à régler (cotes-value) :\n" + man.map(p =>
-    `- [${p.match_id}] ${p.domicile} – ${p.exterieur} (${p.sport}, ${p.ligue||""}, ${new Date(p.debut).toLocaleString("fr-FR")}) : ${p.pari}`).join("\n");
-  navigator.clipboard.writeText(txt).then(() => { const b = document.getElementById("copier"); b.textContent = "Copié ✓";
-    setTimeout(() => b.textContent = "Copier la liste", 2000); });
-};
+// --- À régler (D.paris : bloc différé ; rendu par rendrePage("regler"), avant Santé qui lit man)
+const manUniques = new Map(), groupesReglement = new Map();
+let man = [];
+function rendreRegler() {
+  manUniques.clear(); groupesReglement.clear();
+  (D.paris || []).filter(p => p.a_regler).forEach(p => {
+    const cle = JSON.stringify([p.match_id,p.marche,p.periode,p.ligne,p.issue,p.joueur]);
+    if (!manUniques.has(cle)) manUniques.set(cle,p);
+  });
+  man = [...manUniques.values()];
+  const jr = (D.etat||{}).dernier_cycle_reglement || {}, diagnostics = ((jr.resultats||{}).non_regles||[]);
+  const dr = new Map(diagnostics.map(x => [x.match+"|"+x.sport+"|"+x.debut,x]));
+  man.forEach(p => {
+    const cle = p.sport+"|"+p.domicile+"|"+p.exterieur+"|"+p.debut;
+    if (!groupesReglement.has(cle)) groupesReglement.set(cle, []);
+    groupesReglement.get(cle).push(p);
+  });
+  const panneAP = Object.values(jr.etapes||{}).some(x => (x.erreurs||[]).some(t => /suspended/i.test(t)));
+  const prop = jr.propline || {};
+  document.getElementById("reglement-etat").innerHTML =
+    `<p>${man.length} sélections sur ${groupesReglement.size} affiches.</p>` +
+    (jr.debut ? `<p>Dernière recherche : ${quand(jr.debut)}.${Number.isInteger(jr.resultats?.paris_regles) ? ` ${jr.resultats.paris_regles} enregistrements réglés à ce passage.` : ""}</p>` : "") +
+    (panneAP ? `<p>API-Sports : compte suspendu. Les autres sources continuent. Les quatre clés The Odds API partagent la même couverture ; elles ne couvrent pas toutes les compétitions ni les mi-temps.</p>` : "") +
+    (prop.configure ? `<p>Prop-Line : ${prop.requetes_scores||0} appel(s) scores à ce passage, ${prop.matchs_valides||0} affiche(s) validée(s)${Number.isFinite(prop.quota_restant) ? " · "+prop.quota_restant+" requêtes restantes aujourd’hui" : ""}. ${(prop.erreurs||[]).length ? "Lecture dégradée : "+(prop.erreurs||[]).map(e).join(" ; ")+"." : "Les compétitions et périodes sans couverture restent en attente."}</p>` :
+      (Object.prototype.hasOwnProperty.call(jr,"propline") ? `<p>Prop-Line : clé absente. Les autres sources continuent.</p>` : ""));
+  document.getElementById("liste-regler").innerHTML = man.length ? [...groupesReglement.values()].map(ps => {
+    const p = ps[0], d = dr.get(p.domicile+" – "+p.exterieur+"|"+p.sport+"|"+p.debut);
+    const validation = d && d.validation_apres;
+    return `<details class="carte"><summary>${e(p.domicile)} – ${e(p.exterieur)} · ${ps.length} sélection${ps.length>1?"s":""}${horairePari(p)}</summary>
+  <div class="l4"><span>${quand(p.debut)}</span><span>${e(p.ligue||"")}</span></div>
+  <p class="aide">${e(d ? d.raison : "Recherche automatique en cours")}${validation ? " · nouvelle validation possible après "+quand(validation) : ""}.</p>
+  ${ps.map(x => `<div class="l4"><span>${e(x.bookmaker)} · ${e(x.pari)}</span><span>${e(x.reference)}</span></div>`).join("")}</details>`;
+  }).join("") : `<div class="vide">Aucun résultat en attente.</div>`;
+  document.getElementById("copier").style.display = man.length ? "" : "none";
+  document.getElementById("copier").onclick = () => {
+    const txt = "Paris à régler (cotes-value) :\n" + man.map(p =>
+      `- [${p.match_id}] ${p.domicile} – ${p.exterieur} (${p.sport}, ${p.ligue||""}, ${new Date(p.debut).toLocaleString("fr-FR")}) : ${p.pari}`).join("\n");
+    navigator.clipboard.writeText(txt).then(() => { const b = document.getElementById("copier"); b.textContent = "Copié ✓";
+      setTimeout(() => b.textContent = "Copier la liste", 2000); });
+  };
+}
+rendreDiffere("regler", rendreRegler);
 
 // --- Contrôle
 const CTL = {non_conforme:"Non conformes", a_verifier:"À vérifier", conforme:"Conformes"};
@@ -2024,7 +2036,6 @@ const ONGLETS = ["accueil","decision","jouer","bilan","strategies","mes","segmen
 const DEPART_MENU = {jouer: "accueil", paris: "accueil", segments: "bilan", analyses: "bilan", boosts: "bilan-boosts"};
 const departMenu = ancreDepart.page ? depart : (DEPART_MENU[depart] || depart);
 ouvrir(ONGLETS.includes(departMenu) ? departMenu : "accueil");
-rendreEnFond();
 window.addEventListener("hashchange", () => {
   const a = lireAncre();
   if (!ONGLETS.includes(a.page)) return;
@@ -2107,10 +2118,38 @@ function choisirBankroll(valeur) {
 }
 noteMise();
 if (miseMode !== "fixe" || BANKROLL !== BANKROLL_BASE) rendreTout();     // les premiers rendus étaient en mise fixe
-if (miseVoulue !== miseMode) choisirMise(miseVoulue);                     // mode mémorisé chargé à la demande
-initialiserAnalyses();
-initialiserInterface();
 initialiserJournal();
+// Blocs différés (donnees.json, BLOCS_DIFFERES de cotes/site/construction.py) : chargés juste après l'accueil, puis
+// la mise est réappliquée, le laboratoire fusionné et l'onglet demandé construit. Sans réseau : un message.
+async function chargerDifferes() {
+  let reste = null;
+  for (let essai = 0; essai < 3 && !reste; essai++) {
+    try {
+      const r = await fetch(`./donnees.json?v=${"__VERSION_SITE__".slice(0, 12)}`, {signal: AbortSignal.timeout(60000)});
+      if (r.ok) reste = await r.json();
+    } catch {}
+  }
+  if (!reste) {
+    const z = document.getElementById("hors-ligne");
+    if (z) { z.hidden = false; z.textContent = "Données détaillées indisponibles (connexion) : seul l'accueil est à jour. Recharge la page."; }
+    return;
+  }
+  for (const k of CLES_MISE) if (k in reste) D_FIXE[k] = reste[k];
+  Object.assign(D, reste);
+  for (const p of D.paris || []) recentes.set(p.id, p);
+  for (const f of fiches) f.trace = recentes.get(f.id)?.trace || [];
+  differesEnAttente = false;
+  document.body.classList.remove("chargement-differe");
+  appliquerMise(miseMode);
+  resoudreDifferes();
+  for (const page of Object.keys(PAGES_RENDUS)) pagesARendre.add(page);
+  initialiserInterface();
+  initialiserAnalyses();
+  ouvrir(pageEnAttente || (pageActive === "accueil" ? "accueil" : pageActive) || "accueil");
+  rendreEnFond();
+  if (miseVoulue !== miseMode) choisirMise(miseVoulue);                    // mode mémorisé chargé à la demande
+}
+chargerDifferes();
 __ACTUALISATION_JS__
 const champsVue = ["f-q", "paris-horaire", "paris-tri", ...Object.keys(FILTRES).map(k => "f-"+k), "strategies-ref", "strategies-tri", "analyse-selection", "analyse-periode", "analyse-sport", "analyse-book"];
 const cleDetail = d => d.id || (d.closest("section")?.id || "") + ":" +

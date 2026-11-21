@@ -49,6 +49,14 @@ function ligneAccueilBoost(b) {
 <small class="acc-ref">au lieu de ${cote(b.cote_avant)}</small><i class="acc-mise">Mise max ${b.mise_max ? euros(b.mise_max) : 'inconnue : 10 €'}</i>
 ${boutonBookmaker({bookmaker: b.bookmaker, lien: b.lien, statut: 'en_cours'},true)}</div></article>`;
 }
+// Noms des recommandées avant l'arrivée du laboratoire (bloc différé) : même numérotation que lignesStrategies
+// (« Pinnacle 12 », règles dans l'ordre du laboratoire) ; les variantes gardent leur nom.
+function nomsAvantLaboratoire() {
+  const noms=new Map(), numeros={};
+  for (const [id, ref] of D.regles_labo || []) noms.set(id, `${ref} ${numeros[ref]=(numeros[ref] || 0)+1}`);
+  for (const [id, v] of Object.entries(D.variantes || {})) if (v && v.nom) noms.set(id, v.nom);
+  return noms;
+}
 function rendreAccueil() {
   const cible=document.getElementById('acc-kpis');if(!cible) return;
   const maintenant=new Date();
@@ -84,7 +92,8 @@ function rendreAccueil() {
   document.getElementById('acc-boosts').innerHTML=boosts.length ? boosts.map(ligneAccueilBoost).join('')
     : '<p class="aide">Aucun boost à jouer pour l\'instant.</p>';
   // Recommandées (cotes/recommandations.py) : la liste de la semaine, avec leur preuve et leur résultat depuis l'entrée.
-  const noms=new Map(lignesStrategies('futur').map(r=>[r.id, r.nomCourt || r.nom]));
+  const noms=D.laboratoire && D.laboratoire.resultats ? new Map(lignesStrategies('futur').map(r=>[r.id, r.nomCourt || r.nom]))
+    : nomsAvantLaboratoire();
   const recos=(D.recommandees && D.recommandees.actuelles) || [];
   document.getElementById('acc-top5').innerHTML=recos.length ? recos.map((x,i)=>carteRecommandee(x,i,noms)).join('')
     : '<p class="aide">Aucune stratégie ne bat encore la clôture de façon prouvée.</p>';

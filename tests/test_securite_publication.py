@@ -7,6 +7,7 @@ import pytest
 from cotes.securite import detections, json_public, verifier_public
 from scripts.site_web import construire
 from tests.test_strategie_chatgpt import pari
+from tests.outils_site import donnees_site
 
 
 @pytest.mark.parametrize('champ', ['token', 'token_hash', 'subscription', 'endpoint',
@@ -108,6 +109,6 @@ def test_marqueurs_du_gabarit_dans_un_pari_restent_des_donnees(tmp_path):
     p = pari(pari=texte)
     (tmp_path/'paris.json').write_text(json.dumps([p]))
     html = construire(tmp_path, tmp_path/'site').read_text()
-    d = json.loads(re.search(r'const D = (\{.*?\});\n', html, re.S).group(1))
+    d = donnees_site(html)
     colonne = d['catalogue']['champs'].index('pari')
     assert any(texte == row[colonne] for row in d['catalogue']['lignes'])

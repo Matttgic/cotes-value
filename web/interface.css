@@ -1096,3 +1096,6 @@ textarea{background:var(--surface);border:1px solid var(--bord-doux)}
 .cv-bougies .cv-bougie line{stroke:currentColor}.cv-bougies .cv-bougie rect{fill:currentColor}
 .cv-bougies .cv-bougie.pos rect{fill:var(--fond);stroke:currentColor;stroke-width:1.2}
 @media(prefers-reduced-motion:reduce){.cv-seance.ouverte::before{animation:none}}
+
+/* Blocs différés (donnees.json) pas encore chargés : l'onglet ouvert l'annonce (web/modele.html › chargerDifferes). */
+body.chargement-differe .onglet.actif::before{content:"Chargement des données…";display:block;padding:24px 0;color:var(--doux)}

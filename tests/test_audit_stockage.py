@@ -7,6 +7,7 @@ import json
 import pytest
 
 from cotes import stockage as S
+from tests.outils_site import donnees_site
 
 NOW = datetime(2026, 12, 15, tzinfo=timezone.utc)
 
@@ -164,6 +165,6 @@ def test_site_ne_double_pas_un_pari_archive_encore_actif(tmp_path):
     S.archiver(tmp_path,[p],NOW)
     (tmp_path/'paris.json').write_text(json.dumps([p]))
     html=construire(tmp_path,tmp_path/'site').read_text()
-    d=json.loads(re.search(r'const D = (\{.*?\});\n',html,re.S).group(1).replace('<\\/','</'))
+    d=donnees_site(html)
     b=d['bilan']['C|Pinnacle']
     assert b['paris']==1 and b['mises']==10 and b['gains']==7.5

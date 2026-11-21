@@ -3,6 +3,8 @@ from copy import deepcopy
 
 import pytest
 
+from tests.outils_site import donnees_site
+
 from cotes.laboratoire import (REGLES, Regle, audit, classer, evaluer, intervalle_roi,
                                resume, selectionner, suivi_futur)
 
@@ -153,7 +155,7 @@ def test_site_strategies_et_comparateurs_meme_date(tmp_path, monkeypatch):
             debut="2026-10-14T15:00:00Z", regle_le="2026-10-14T17:00:00Z")]
     (tmp_path / "paris.json").write_text(json.dumps(rows))
     html = site_web.construire(tmp_path, tmp_path / "site").read_text()
-    data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    data = donnees_site(html)
     assert 'data-bilan="strategies"' in html and 'id="o-strategies"' in html
     assert len(data["laboratoire"]["resultats"]) == 24
     for nom in ("Claude (rejeu)", "ChatGPT v1 (rejeu)"):

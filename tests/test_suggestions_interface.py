@@ -11,6 +11,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import site_web  # noqa: E402
 from tests.test_modes_mise import pari  # noqa: E402
+from tests.outils_site import donnees_site
 
 NODE = shutil.which("node")
 
@@ -46,7 +47,7 @@ def test_reglements_incoherents_publies_pour_la_page_sante(tmp_path):
             "b": {"bookmaker": "Winamax", "match": "Manchester City – Brighton", "score": [0, 1], "sources": ["espn"], "paris": ["b"]}}]
     (tmp_path / "resultats_a_saisir.json").write_text(json.dumps({"matchs": [], "incoherences": inc + ["pas un dict"]}), encoding="utf-8")
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
-    d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    d = donnees_site(html)
     assert d["incoherences_reglement"] == inc
     assert 'id="sante-incoherences"' in html and 'id="strategies-avis"' in html
     assert '<option value="" selected>Toutes</option><option value="Bat la clôture">' in html   # verdict CLV, tout par défaut

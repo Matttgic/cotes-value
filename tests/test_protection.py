@@ -4,6 +4,7 @@ import pytest
 from cotes import strategies_prudentes
 from cotes.decisions import figer_selecteur
 from cotes.protection import calculer, proteger_strategies
+from tests.outils_site import donnees_site
 
 
 def _boum(*_a, **_k):
@@ -67,7 +68,7 @@ def test_le_site_se_construit_malgre_une_strategie_en_erreur(tmp_path, monkeypat
               "gain": None, "clv": None} for i in range(3)]
     (tmp_path / "paris.json").write_text(json.dumps(paris), encoding="utf-8")
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
-    d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    d = donnees_site(html)
     etapes = {e["etape"] for e in d["etat"]["echecs_recents"]["liste"]}
     assert {f"stratégie {g['cle']}" for g in strategies_prudentes.GROKS} <= etapes
     assert d["bilan"]["A|Toutes"]["en_cours"] == 3

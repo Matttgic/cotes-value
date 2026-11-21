@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from cotes.alertes import bankroll as B
 from cotes.notifications import empreinte_prix
+from tests.outils_site import donnees_site
 
 T = datetime(2026, 11, 20, 12, tzinfo=timezone.utc)
 PARI = {"match_id": "pmu|1", "marche": "RESULTAT_1N2", "periode": "MATCH", "ligne": None, "issue": "1", "cote": 2.0,
@@ -85,6 +86,6 @@ def test_site_affiche_la_bankroll(tmp_path):
                                                         "depart_le": "2026-11-19T18:00:00+00:00", "ouvertes": {},
                                                         "historique": []}))
     html = site_web.construire(tmp_path, tmp_path / "site").read_text()
-    d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    d = donnees_site(html)
     assert d["bankroll_auto"]["bankroll"] == 1012 and d["bankroll_auto"]["gain"] == 12
     assert 'id="bilan-bankroll"' in html

@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import site_web  # noqa: E402
 from cotes.mises import MODE_DEFAUT, MODES_BILAN, MODES_INTEGRES, mise_du_mode  # noqa: E402
 from cotes.simulation import mise_conseillee, mise_kelly  # noqa: E402
+from tests.outils_site import donnees_site
 
 RACINE = Path(__file__).resolve().parents[1]
 NODE = shutil.which("node")
@@ -63,7 +64,7 @@ def test_le_site_publie_le_menu_et_un_fichier_par_mode_supplementaire(tmp_path):
     (tmp_path / "paris.json").write_text(json.dumps(paris), encoding="utf-8")
     sortie = tmp_path / "site"
     html = site_web.construire(tmp_path, sortie).read_text(encoding="utf-8")
-    d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    d = donnees_site(html)
     assert [m["cle"] for m in d["modes_mise"]] == list(MODES_BILAN) and d["mode_mise_defaut"] == "kelly"
     assert [m["cle"] for m in d["modes_mise"] if m["integre"]] == ["kelly", "fixe"]
     fichiers = sorted(f.stem for f in (sortie / "mises").glob("*.json"))

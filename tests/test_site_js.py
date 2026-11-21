@@ -276,9 +276,11 @@ assert.ok(Math.abs(s.clv_evenement)<1e-10);
 
 
 def test_navigation_compacte_retrouve_contrat_exact_du_catalogue():
-    section=MODELE[MODELE.index('const recentes = '):MODELE.index('if (document.getElementById("nb-paris"))')]
+    # fusion faite au chargement des blocs différés (web/modele.html › chargerDifferes › appliquerMise)
+    section=MODELE[MODELE.index('const recentes = '):MODELE.index('// Modes de mise du menu')] + "\nfusionnerNavigation();\n"
     executer('''
 const assert=require('node:assert/strict');
+const document={getElementById:()=>null};
 const D={paris:[{id:'p',trace:['preuve']}],strategies_badges:{m3_structure:'M3 Max 3'},
  catalogue:{champs:['id','cote','debut','pari','simulation','strategies'],
             lignes:[['p',1.8,'2026-10-17T12:00:00Z','Handicap -3,5','C',['m3_structure']]]},

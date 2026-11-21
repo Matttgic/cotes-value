@@ -1,6 +1,8 @@
 // Intégré dans l'unique script de la page. Aucun suivi des prix en arrière-plan :
 // le serveur envoie les nouvelles prises issues des scans GitHub Actions.
 (async function notifications() {
+  // Lit le laboratoire (bloc différé, donnees.json) : attend chargerDifferes() de la page.
+  if (typeof DIFFERES_PRETS !== 'undefined') await DIFFERES_PRETS;
   const ui=document.getElementById('notif-etat'), message=document.getElementById('notif-message');
   const activer=document.getElementById('notif-activer'), arreter=document.getElementById('notif-arreter');
   const sauver=document.getElementById('notif-sauver'), tester=document.getElementById('notif-test');

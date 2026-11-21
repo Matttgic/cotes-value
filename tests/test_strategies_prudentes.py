@@ -7,6 +7,7 @@ from cotes.convergence import paris_convergence
 from cotes.strategies_prudentes import (CLAUDE_PRUDENT,CONVERGENCE_3,DEBUT_VARIANTES,
                                         selections_prudentes,selection_unique)
 from tests.test_strategie_jules_v2 import pari,ref
+from tests.outils_site import donnees_site
 
 
 def test_lancement_nouveau_pas_de_retroactivite():
@@ -116,7 +117,7 @@ def test_site_tableau_courbe_navigation_badges_prix_et_export_coherents(tmp_path
     p=pari('alpha',statut='gagne',gain=11,regle_le='2026-10-15T15:00:00Z')
     (tmp_path/'paris.json').write_text(json.dumps([p]))
     html=site_web.construire(tmp_path,tmp_path/'site').read_text()
-    d=json.loads(re.search(r'const D = (\{.*?\});\n',html,re.S).group(1).replace('<\\/','</'))
+    d=donnees_site(html)
     labo=d['laboratoire'];nav=labo['navigation']
     for v in [CLAUDE_PRUDENT,CONVERGENCE_3]:
         nom=v['nom'];cle=v['cle']

@@ -6,6 +6,7 @@ import pytest
 
 from cotes.simulation import bilan, bilan_bookmakers, bilan_tranches
 from cotes.strategie_chatgpt import CHATGPT, motif_refus, paris_chatgpt
+from tests.outils_site import donnees_site
 
 
 def pari(mid="m1", **changes):
@@ -102,7 +103,7 @@ def test_bilan_courbe_et_fiches_utilisent_exactement_les_memes_paris(tmp_path):
     assert len(selection_paris(rows, regles=0)[0]) == 2  # pas évincés par les autres simulations
     (tmp_path / "paris.json").write_text(json.dumps(rows))
     html = construire(tmp_path, tmp_path / "site").read_text()
-    data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    data = donnees_site(html)
     assert data["chatgpt"] == json.loads(json.dumps(CHATGPT))
     assert data["bilan"]["D|ChatGPT"]["gains"] == 1
     assert rows == avant  # aucune mutation du suivi de Claude ou des paris sources

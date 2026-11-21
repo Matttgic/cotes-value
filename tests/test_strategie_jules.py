@@ -1,5 +1,6 @@
 """Tests unitaires pour la stratégie JULES EDGE v1."""
 from cotes.strategie_jules import JULES, motif_refus_jules, paris_jules
+from tests.outils_site import donnees_site
 
 
 def _pari_base(**kw) -> dict:
@@ -151,7 +152,7 @@ def test_bilans_courbes_et_cartes_jules_identiques(tmp_path, monkeypatch):
     assert all(p["jules"] for p in site_web.selection_paris(rows)[0])
     (tmp_path/"paris.json").write_text(json.dumps(rows))
     h = site_web.construire(tmp_path, tmp_path/"site").read_text()
-    d = json.loads(re.search(r"const D = (\{.*?\});\n",h,re.S).group(1).replace("<\\/","</"))
+    d = donnees_site(h)
     assert d["laboratoire"]["comparateurs_futur"]["JULES EDGE v1 (rejeu)"]["regles"] == 2
     assert d["laboratoire"]["navigation"]["selections"]["JULES EDGE v1 (rejeu)"]["futur"] == ["g","p"]
     assert d["bilan"]["D|JULES EDGE"]["gains"] == 0
