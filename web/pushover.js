@@ -1,6 +1,8 @@
 // Choix des stratégies envoyées par Pushover : enregistrés sur le serveur avec un code personnel, sans abonnement Chrome.
 // Le job GitHub lit ce choix à chaque cycle (action « strategies » de la fonction cv-notifications).
 (async function pushover() {
+  // Lit le laboratoire (bloc différé, donnees.json) : attend chargerDifferes() de la page.
+  if (typeof DIFFERES_PRETS !== 'undefined') await DIFFERES_PRETS;
   const zone=document.getElementById('pushover-strategies'), message=document.getElementById('pushover-message');
   const sauver=document.getElementById('pushover-sauver'), code=document.getElementById('pushover-code');
   const etat=document.getElementById('pushover-etat');

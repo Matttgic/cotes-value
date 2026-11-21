@@ -997,7 +997,14 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     """Contenu de chaque fichier du site, tout calculé avant d'écrire (le site existant n'est remplacé qu'après)."""
     data, actuelles, paris, retenus = blocs["data"], blocs["actuelles"], blocs["paris"], blocs["retenus"]
     hors_plafond, blocs_mises = blocs["hors_plafond"], blocs["blocs_mises"]
-    donnees_json = json_public(data)
+    # Blocs lourds hors de la page (donnees.json, chargé juste après l'accueil) : la page ne garde que ce que l'accueil lit.
+    leger = {k: v for k, v in data.items() if k not in BLOCS_DIFFERES}
+    # Noms des règles du laboratoire (« Pinnacle 12 ») pour les recommandées de l'accueil, avant donnees.json.
+    leger["regles_labo"] = [[r["regle"]["id"], r["regle"]["reference"]]
+                            for r in (data.get("laboratoire") or {}).get("resultats") or []
+                            if isinstance(r, dict) and isinstance(r.get("regle"), dict) and "id" in r["regle"]]
+    donnees_json = json_public(leger)
+    differes_json = json_public({k: data[k] for k in BLOCS_DIFFERES if k in data})
     flux_alertes = notifications_mod.flux(actuelles, paris, retenus, instant)
     alertes_json = json_public(flux_alertes)
     ordres_json = json_public(ordres_mod.construire(flux_alertes, actuelles, instant))
@@ -1021,7 +1028,7 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
     html = html.replace("__BOOSTS_JS__", (web / "boosts.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
-    version = hashlib.sha256(html.replace("__DONNEES__", donnees_json, 1).encode("utf-8")).hexdigest()
+    version = hashlib.sha256((html.replace("__DONNEES__", donnees_json, 1) + differes_json).encode("utf-8")).hexdigest()
     html = html.replace("__VERSION_SITE__", version)
     # Les données externes ne passent jamais dans les remplacements du gabarit.
     html = html.replace("__DONNEES__", donnees_json, 1)
@@ -1030,7 +1037,7 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     for ref in ("Uniques", "Toutes"):
         gain = sum(b["gains"] for k, b in data["kelly"]["bilan"].items() if k.endswith("|" + ref))
         vitrine = vitrine.replace(f"__GAIN_{ref.upper()}_KELLY__", montant_vitrine(gain))
-    return {"index.html": html, "vitrine.html": vitrine,
+    return {"index.html": html, "vitrine.html": vitrine, "donnees.json": differes_json,
             "hors_plafond.json": json.dumps(archive_hors_plafond(hors_plafond), ensure_ascii=False),
             "version.json": json.dumps({"version": version}),
             "mises": {mode: json_public(bloc) for mode, bloc in blocs_mises.items()},
@@ -1039,9 +1046,14 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
             "euria.json": json.dumps(blocs.get("euria") or {}, ensure_ascii=False, separators=(",", ":"))}
 
 
+DERNIER_SITE: Path | None = None        # dossier du dernier site écrit (tests : tests/outils_site.py)
+
+
 def ecrire_site(sortie: Path, pages: dict) -> Path:
     """Écrit les pages rendues dans le dossier du site ; les modes de mise retirés du menu sont effacés."""
+    global DERNIER_SITE
     sortie.mkdir(parents=True, exist_ok=True)
+    DERNIER_SITE = sortie
     web = RACINE / "web"
     (sortie / "index.html").write_text(pages["index.html"], encoding="utf-8")
     (sortie / "vitrine.html").write_text(pages["vitrine.html"], encoding="utf-8")
@@ -1055,6 +1067,8 @@ def ecrire_site(sortie: Path, pages: dict) -> Path:
         ancien.unlink()
     for mode, texte in pages["mises"].items():
         (sortie / "mises" / f"{mode}.json").write_text(texte, encoding="utf-8")
+    if "donnees.json" in pages:                               # blocs différés (BLOCS_DIFFERES), lus par la page
+        (sortie / "donnees.json").write_text(pages["donnees.json"], encoding="utf-8")
     for nom in ("sw.js", "notifications.json", "ordres.json", ".nojekyll"):
         (sortie / nom).write_text(pages[nom], encoding="utf-8")
     if "euria.json" in pages:                                 # lu par la page Euria (cotes/euria.py)
@@ -1070,6 +1084,9 @@ def montant_vitrine(gain: float) -> str:
     return signe + tranches[0] + "".join(f'<span class="milliers">{t}</span>' for t in tranches[1:]) + "<sup>€</sup>"
 
 
+# Blocs de données publiés à part dans donnees.json et chargés après l'accueil (web/modele.html › chargerDifferes).
+# L'accueil n'en lit aucun : la page passe de 5,3 Mo (956 Ko gzip) à 1,7 Mo (360 Ko gzip) sur les données du 20/11/2026.
+BLOCS_DIFFERES = ("laboratoire", "kelly", "paris", "paris_segments", "courbes", "bilan", "segments", "bilan_tranches")
 # Premier script de la page, fixe, dans le <head> : le mode jour/nuit mémorisé, avant tout le reste. Les contrôles de
 # publication (site.yml, tests) exigent exactement deux scripts : celui-ci, à l'identique, puis le script principal.
 THEME_SCRIPT = 'try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}'

@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.outils_site import donnees_site
+
 from cotes.analyste import (CHANCE, FIABLE, PROMETTEUR, SEUILS, TROP_TOT, VERDICTS,
                             analyser_serie, annoter_avis, avis_des_paris, benjamini_hochberg, betainc,
                             clv_sans_hautes_cotes, moities, moities_clv, proba_hasard, proba_hasard_matchs,
@@ -362,7 +364,7 @@ def test_construire_attache_l_avis_sans_rien_selectionner(tmp_path):
             "statut": "gagne", "cote": 1.8, "mise": 10, "gain": 8, "clv": 0.02}
     (tmp_path / "paris.json").write_text(json.dumps([pari]), encoding="utf-8")
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
-    data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1))
+    data = donnees_site(html)
     base = data["laboratoire"]["bases_futur"]["Pinnacle"]
     assert base["avis"]["verdict"] == TROP_TOT
     assert base["avis"]["details"]["paris_regles"] == 1

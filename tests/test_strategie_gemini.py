@@ -5,6 +5,7 @@ import json
 import re
 
 from cotes.strategie_gemini import GEMINI, motif_refus_gemini, paris_gemini
+from tests.outils_site import donnees_site
 
 
 def pari(mid="m1", **changes):
@@ -95,6 +96,6 @@ def test_bilan_courbe_et_fiches_memes_selections(tmp_path):
     assert all(p["gemini"] for p in selection_paris(rows)[0])
     (tmp_path/"paris.json").write_text(json.dumps(rows))
     h=construire(tmp_path,tmp_path/"site").read_text()
-    d=json.loads(re.search(r"const D = (\{.*?\});\n",h,re.S).group(1).replace("<\\/","</"))
+    d=donnees_site(h)
     assert d["bilan"]["D|Gemini Argon"]["gains"] == 1
     assert rows == avant

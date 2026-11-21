@@ -4,6 +4,7 @@ from copy import deepcopy
 import pytest
 
 from cotes.strategie_jules_v2 import JULES_V2, analyser_jules_v2, motif_refus_jules_v2, paris_jules_v2
+from tests.outils_site import donnees_site
 
 
 def pari(pid="alpha", **kw):
@@ -141,7 +142,7 @@ def test_bilan_courbe_cartes_navigation_et_prix_exact_coherents(tmp_path, monkey
     assert sum(x[1] for x in site_web.courbes(rows)["JULES EDGE v2"]) == 1
     (tmp_path/"paris.json").write_text(json.dumps(rows))
     h = site_web.construire(tmp_path,tmp_path/"site").read_text()
-    d = json.loads(re.search(r"const D = (\{.*?\});\n",h,re.S).group(1).replace("<\\/","</"))
+    d = donnees_site(h)
     nom = "JULES EDGE v2 (rejeu)"
     assert d["laboratoire"]["comparateurs_futur"][nom]["regles"] == 2
     assert d["laboratoire"]["navigation"]["selections"][nom]["futur"] == ["alpha","bravo"]

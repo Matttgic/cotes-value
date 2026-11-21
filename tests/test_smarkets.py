@@ -9,6 +9,7 @@ from cotes.simulation import STRATEGIE, moyennes_ecarts
 from cotes.strategie_gemini import GEMINI
 from cotes.strategie_jules_v2 import JULES_V2
 from cotes.strategie_m3 import M3
+from tests.outils_site import donnees_site
 
 FIX = json.loads((Path(__file__).parent / "fixtures" / "smarkets_football.json").read_text(encoding="utf-8"))
 MAINTENANT = datetime(2026, 10, 18, 10, 0, tzinfo=timezone.utc)
@@ -323,7 +324,7 @@ def test_bilan_affiche_ecart_vs_smarkets(tmp_path):
     (tmp_path / "paris.json").write_text(json.dumps([pari]), encoding="utf-8")
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
     assert "écart vs Smarkets" in html and "écart vs Polymarket" in html and "écart vs Betfair" not in html
-    d = json.loads(__import__("re").search(r"const D = (\{.*?\});\n", html, __import__("re").S).group(1).replace("<\\/", "</"))
+    d = donnees_site(html)
     assert d["ecarts_references"]["Smarkets"] == {"moyenne": 0.03, "n": 1}
     assert d["ecarts_references"]["Polymarket"]["n"] == 1
     assert "ecart_smarkets" in d["catalogue"]["champs"]

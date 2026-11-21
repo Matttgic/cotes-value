@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 
 from cotes.stockage import archiver, lire_archives
+from tests.outils_site import donnees_site
 
 
 def test_archives_mensuelles(tmp_path):
@@ -31,7 +32,7 @@ def test_site_compte_les_archives(tmp_path):
     (tmp_path / "paris.json").write_text(json.dumps([{**base, "id": "w", "match_id": "m2", "statut": "en_cours",
                                                       "gain": None}]), encoding="utf-8")
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
-    d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    d = donnees_site(html)
     assert d["bilan"]["A|Toutes"]["paris"] == 2 and d["bilan"]["A|Toutes"]["gains"] == 10.0
 
 

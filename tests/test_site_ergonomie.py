@@ -7,10 +7,11 @@ from cotes.laboratoire import courbe, resume
 from cotes.simulation import segments
 from scripts import site_web
 from tests.test_strategie_jules_v2 import pari
+from tests.outils_site import donnees_site
 
 
 def donnees_html(html):
-    return json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    return donnees_site(html)
 
 
 def test_ancien_json_sans_nouveaux_comparateurs(tmp_path, monkeypatch):

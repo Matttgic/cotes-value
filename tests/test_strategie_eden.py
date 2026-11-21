@@ -5,6 +5,7 @@ import json
 import re
 
 from cotes.strategie_eden import EDEN, motif_refus_eden, paris_eden
+from tests.outils_site import donnees_site
 
 
 def pari(mid="m1", **changes):
@@ -117,7 +118,7 @@ def test_bilan_courbe_fiches_et_navigation(tmp_path, monkeypatch):
     (tmp_path / "paris.json").write_text(json.dumps(rows))
     html = site_web.construire(tmp_path, tmp_path / "site").read_text()
     assert 'id="eden-picks"' not in html and 'id="voir-eden"' not in html    # listes en double retirées
-    data = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    data = donnees_site(html)
     assert data["eden"]["debut"] == EDEN["debut"]
     assert data["bilan"]["C|Eden"]["gains"] == -2
     assert data["laboratoire"]["comparateurs_futur"]["Eden (rejeu)"]["regles"] == 2

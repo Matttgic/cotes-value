@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import site_web  # noqa: E402
+from tests.outils_site import donnees_site
 
 
 def pari(sim, match, quand, statut="en_cours", cote=2.0, bm="Betclic"):
@@ -32,7 +33,7 @@ def test_construire_bilan_sur_tous_les_paris(tmp_path):
     (tmp_path / "paris.json").write_text(json.dumps(paris), encoding="utf-8")
     import re
     html = site_web.construire(tmp_path, tmp_path / "site").read_text(encoding="utf-8")
-    d = json.loads(re.search(r"const D = (\{.*?\});\n", html, re.S).group(1).replace("<\\/", "</"))
+    d = donnees_site(html)
     assert "fiches_total" not in d and d["bilan"]["A|Toutes"]["en_cours"] == 5
 
 
