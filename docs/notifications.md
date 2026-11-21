@@ -239,8 +239,7 @@ quand le téléphone l'associe à son site.
 - **Statut vivant** (`cotes/alertes/statut.py`) : la cote relue des alertes des 3 dernières heures. Sous la cote
   alertée : « Cote baissée » ; sous la cote minimale : « Plus jouable ». Pushover : une relance discrète
   (priorité −1) par statut. Web push : `statuts` dans `notifications.json`, et `web/sw.js` remplace la notification
-  encore affichée (même `tag`). **À faire** : `cv-notifications` doit transmettre ces statuts aux appareils déjà
-  servis (lecture de `cv_push_deliveries`, puis redéploiement de la fonction).
+  encore affichée (même `tag`), si `cv-notifications` les transmet un jour (non utilisé aujourd'hui).
 - **Journal réel** (`web/journal.js`) : chaque alerte Pushover porte quatre liens (Joué, Refusé, Plafonné, Disparu)
   vers `#notifications?journal=<pari>&r=…`. La réponse reste sur l'appareil ; la page Notifs donne le gain réel à la
   cote obtenue et signale un bookmaker qui plafonne (3 mises plafonnées et 30 % des réponses au moins).
