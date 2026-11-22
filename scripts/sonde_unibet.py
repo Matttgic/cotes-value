@@ -134,6 +134,19 @@ def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
                 noms = sorted({str(v.get("desc"))[:45] for v in ms})[:3]
                 print(f"     ({t}, {per}) {n} sur la page · API : {len(ms)} marchés · {noms} · {ms[0].get('style') if ms else ''}")
             break
+    # Collecte réelle de ces sports avec les filtres du collecteur : marchés et lignes de total par match
+    import collections
+    lignes, meta = U.collecter({"volley", "football_americain", "handball"}, 36)
+    print("collecte :", {k: v for k, v in meta.items() if k in ("ok", "requetes", "matchs")}, meta.get("erreurs", [])[:5])
+    for k, n in sorted(collections.Counter((l["sport"], l["marche"], l["periode"]) for l in lignes).items()):
+        print("  ", k, n)
+    par = collections.defaultdict(set)
+    for l in lignes:
+        if l["marche"] == "TOTAL" and l["periode"] == "MATCH":
+            par[(l["sport"], l["match_id"])].add(l["ligne"])
+    for sp in ("volley", "football_americain", "handball"):
+        v = [len(x) for (s_, _), x in par.items() if s_ == sp]
+        print(f"   {sp} : {len(v)} matchs avec total, {sum(v) / max(1, len(v)):.1f} lignes par match")
     return 0
 
 

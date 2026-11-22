@@ -64,10 +64,13 @@ MARCHES = {
         (361, 185), (361, 186), (361, 187), (361, 188),
         (365, 185), (370, 185), (994033019, 185), (10067, 185), (3006, 185), (376, 185),
     ),
-    "handball": ((231, 1131),),
-    "volley": ((241, 142),),
+    # Totaux et handicaps relevés le 22/11/2026 (workflow « Sonde Unibet », mode marches) : sans eux, résultat ou
+    # vainqueur seul. Handball : buts 3050, handicap 994031010 ; volley : points 3046, handicap 994056013, sets 3080 ;
+    # NFL : points 188 (838 lignes pour 28 matchs), handicap 10091.
+    "handball": ((231, 1131), (3050, 1131), (994031010, 1131)),
+    "volley": ((241, 142), (3046, 142), (994056013, 142), (3080, 142)),
     "rugby": ((112, 218),),
-    "football_americain": ((10089, 120), (11, 119)),
+    "football_americain": ((10089, 120), (11, 119), (188, 119), (10091, 119)),
     "baseball": ((19, 205),),
 }
 # Paris joueurs, relevés le 9/11/2026 (page match + lvs-api, période 209 basket / 1191 hockey).
@@ -94,7 +97,9 @@ _HORIZON_COURT = 6
 # fenêtre de 15 min de la comparaison (dérive Unibet du 20/11, un marché foot disparu toutes les ~19 min). Les
 # props sont désormais en plus, et 28 secondaires font le tour en deux cycles (~9 min) : de la marge pour les cycles
 # coupés par le budget, qui reprennent au premier filtre non lu. Un cycle sans coupure durait ~25 s sur 72.
-_SECONDAIRES_PAR_CYCLE = 28
+# 22/11/2026 : +7 secondaires (totaux et handicaps du volley, de la NFL et du handball, une page chacun ou presque) ;
+# 32 par cycle gardent le tour en deux cycles.
+_SECONDAIRES_PAR_CYCLE = 32
 # 21/11/2026 (samedi) : 13 cycles sur 16 coupés par le budget, 6 secondaires foot lancés par cycle au lieu de 28.
 # Chaque filtre foot suivait jusqu'à 16 pages (800 matchs sur 36 h) : le tour des 55 prenait ~5 cycles (~24 min),
 # au-delà de la fenêtre de 15 min. Les secondaires s'arrêtent à 8 pages (les 400 matchs les plus proches) ; le
@@ -374,6 +379,8 @@ def _canon(desc: str, style: str) -> str | None:
         return "HALF_TIME_FULL_TIME"
     # « Plus / Moins » porte une barre qui n'est pas une combinaison de marchés.
     if "plus / moins" in d or "plus/moins" in d:
+        if re.search(r"\bsets?\b|set\(s\)", d):
+            return None if " - " in desc else "TOTAL_SETS"     # « Plus / Moins Set(s) 3,5 » : pas des points
         return "TEAM_TOTAL" if " - " in desc else "OVER_UNDER"
     if re.search(r"\bet\b", d) or ("/" in desc and "double chance" not in d):
         return None
@@ -415,7 +422,7 @@ def _issue(desc: str, home: str, away: str, canon: str) -> str | None:
 
         return {("H", "N"): "HOME_DRAW", ("N", "A"): "DRAW_AWAY", ("H", "A"): "HOME_AWAY"}.get(
             (cote_nom(parts[0]), cote_nom(parts[1])))
-    if canon in ("OVER_UNDER", "TEAM_TOTAL"):
+    if canon in ("OVER_UNDER", "TEAM_TOTAL", "TOTAL_SETS"):
         if bas.startswith("plus"):
             return "OVER"
         if bas.startswith("moins"):
@@ -486,7 +493,7 @@ def marche_depuis(cle: str, offre: dict, home: str, away: str) -> dict | None:
     periode = str(offre.get("period") or "")
     libelle = desc if not periode or periode.casefold() in desc.casefold() else f"{desc} - {periode}"
     ligne_marche = _crochet(desc)
-    if ligne_marche is None and canon in ("OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
+    if ligne_marche is None and canon in ("OVER_UNDER", "TOTAL_SETS", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
         ligne_marche = _nombre(_sans_equipes(desc, home, away))
     selections = []
     for issue in offre.get("outcomes") or []:
@@ -503,9 +510,10 @@ def marche_depuis(cle: str, offre: dict, home: str, away: str) -> dict | None:
             continue
         sel = {"canonicalOutcome": code, "rawName": nom, "odds": cote}
         ligne = _crochet(nom)
-        if ligne is None and canon in ("OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
+        if ligne is None and canon in ("OVER_UNDER", "TOTAL_SETS", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
             ligne = ligne_marche if ligne_marche is not None else _nombre(_sans_equipes(nom, home, away))
-        if canon in ("ASIAN_HANDICAP", "EUROPEAN_HANDICAP", "OVER_UNDER", "HOME_OVER_UNDER", "AWAY_OVER_UNDER"):
+        if canon in ("ASIAN_HANDICAP", "EUROPEAN_HANDICAP", "OVER_UNDER", "TOTAL_SETS", "HOME_OVER_UNDER",
+                     "AWAY_OVER_UNDER"):
             if ligne is None:
                 continue
             sel["line"] = ligne
