@@ -347,6 +347,8 @@ def _marche(canon, libelle, sels, sport, dom, ext, nul_annonce=False):
         unite = {"GAME_HANDICAP": "JEUX_", "SET_HANDICAP": "SETS_"}.get(canon, "")
         if sport == "volley" and canon == "ASIAN_HANDICAP" and "point" in l:
             unite = "POINTS_"            # le HANDICAP du volley chez Pinnacle est en sets (±1,5) : ne pas les mêler
+        if sport == "volley" and canon == "SET_HANDICAP":
+            unite = ""                   # au volley, le HANDICAP de Pinnacle est justement en sets
         yield unite + "HANDICAP", float(ligne), "DOM", h
         yield unite + "HANDICAP", float(ligne), "EXT", a
     elif canon == "EUROPEAN_HANDICAP":

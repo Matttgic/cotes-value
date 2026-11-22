@@ -368,6 +368,8 @@ def _canonique(offre: dict, domicile: str, exterieur: str) -> tuple[str, str] | 
         # en sets est le marché principal de Pinnacle ; au tennis, un handicap sans unité est ignoré à la traduction.
         if re.search(r"\bgames?\b", bas) or re.search(r"\bjeux\b", fr):
             return "GAME_HANDICAP", _avec_periode(francais, anglais)
+        if re.search(r"\bsets?\b", bas) and "point" not in bas and not re.search(r"\bsets?\s+\d", bas):
+            return "SET_HANDICAP", _avec_periode(francais, anglais)   # « Set Handicap » : handicap en sets
         return "ASIAN_HANDICAP", _avec_periode(francais, anglais)
     if type_offre == "Over/Under" or bas.startswith("total"):
         equipe = _equipe_du_total(anglais, francais)
@@ -377,7 +379,7 @@ def _canonique(offre: dict, domicile: str, exterieur: str) -> tuple[str, str] | 
             if equipe.casefold() == exterieur.casefold():
                 return "AWAY_OVER_UNDER", _avec_periode(francais, anglais)
             return None
-        if "set" in bas and "game" not in bas:
+        if "set" in bas and "game" not in bas and "point" not in bas:
             return "TOTAL_SETS", _avec_periode(francais, anglais)
         return "OVER_UNDER", _avec_periode(francais, anglais)
     if type_offre == "Match":
