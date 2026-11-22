@@ -37,10 +37,16 @@ SPORTS = {
     "Boxing": "boxe", "MMA": "mma", "Golf": "golf",
     "AustralianFootball": "football_australien",
 }
+_TOTAUX_MATCH = ("MatchTotal", "MatchTotal2", "TotalPointsOver/Under", "TotalGamesOver/Under", "TotalFramesOver/Under")
+_HANDICAPS_MATCH = ("MatchHandicap", "MatchHandicap2")
 TYPES = (
     "P1XP2", "P1P2", "OverUnder", "AsianHandicap", "Handicap", "DoubleChance",
     "BothTeamsToScore", "CorrectScore", "HalfTimeFullTime", "Team1OverUnder",
     "Team2OverUnder", "HalfTimeResult", "DrawNoBet",
+    # Totaux et handicaps du match hors football, relevés le 22/11/2026 sur le swarm (sans eux : aucun total) :
+    # basket et NFL MatchTotal / MatchHandicap, hockey et handball MatchTotal2 / MatchHandicap2, volley
+    # TotalPointsOver/Under et TotalbySets (sets), tennis TotalGamesOver/Under, snooker TotalFramesOver/Under.
+    *_TOTAUX_MATCH, *_HANDICAPS_MATCH, "TotalbySets",
 )
 PAR_LOT = 20
 _echeance = None
@@ -181,6 +187,12 @@ def _canonique(type_marche: str, nom: str, sport: str) -> str | None:
         return "HOME_OVER_UNDER"
     if type_marche == "Team2OverUnder":
         return "AWAY_OVER_UNDER"
+    if type_marche in _TOTAUX_MATCH:
+        return "OVER_UNDER"
+    if type_marche in _HANDICAPS_MATCH:
+        return "ASIAN_HANDICAP"
+    if type_marche == "TotalbySets":
+        return "TOTAL_SETS"
     if type_marche == "OverUnder":
         if sport == "tennis" and "set" in libelle and "jeu" not in libelle:
             return "TOTAL_SETS"

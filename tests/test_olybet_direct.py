@@ -160,3 +160,17 @@ def test_cycle_ajoute_olybet_par_defaut(monkeypatch):
     assert any(l["bookmaker"] == "olybet" for l in lignes)
     assert journal["olybet_controle"]["aberrants"] == []
     assert journal["etapes"]["olybet"]["ok"] is True
+
+
+def test_totaux_et_handicaps_du_match_hors_football():
+    """Types relevés le 22/11/2026 : sans eux, aucun total OlyBet hors football."""
+    from cotes.direct import olybet as O
+    for t in ("MatchTotal", "MatchTotal2", "TotalPointsOver/Under", "TotalGamesOver/Under", "TotalFramesOver/Under"):
+        assert t in O.TYPES and O._canonique(t, "Total de points", "volley") == "OVER_UNDER"
+    for t in ("MatchHandicap", "MatchHandicap2"):
+        assert t in O.TYPES and O._canonique(t, "Handicap de buts", "handball") == "ASIAN_HANDICAP"
+    assert O._canonique("TotalbySets", "Total de sets", "volley") == "TOTAL_SETS"
+    m = O.marche_depuis({"id": 1, "type": "MatchHandicap2", "name": "Handicap de buts", "event": {
+        "a": {"type": "Home", "name": "Göppingen", "price": 1.9, "base": 3.5},
+        "b": {"type": "Away", "name": "Berlin", "price": 1.9, "base": -3.5}}}, "handball")
+    assert {s["canonicalOutcome"]: s["line"] for s in m["selections"]} == {"HOME": 3.5, "AWAY": -3.5}
