@@ -324,3 +324,19 @@ def test_lot_plafonne_a_2000_offres_est_redemande_par_moities():
         (200, {"betOffers": [_offre_simple(2)]})])
     assert meta["decoupes"] == 2
     assert {l["match_id"] for l in lignes if l["marche"] == "RESULTAT_1N2"} == {"pmu|1", "pmu|2"}
+
+
+def test_basket_prolongations_incluses_est_le_match_entier():
+    """Kambi marque « Total de points - Prolongations incluses » FULL_TIME_OVERTIME : c'est le match entier."""
+    offres = [
+        _offre("Over/Under", "Total de points - Prolongations incluses", "Total Points - Including Overtime",
+               [("Plus de", 1900, "OT_OVER", 225500), ("Moins de", 1900, "OT_UNDER", 225500)],
+               lifetime="FULL_TIME_OVERTIME"),
+        _offre("Handicap", "Handicap - Prolongations incluses", "Point Spread - Including Overtime",
+               [("Knicks", 1900, "OT_ONE", -4500), ("Blazers", 1900, "OT_TWO", 4500)],
+               lifetime="FULL_TIME_OVERTIME"),
+    ]
+    lignes = _lignes(offres, sport="basket", domicile="Knicks", exterieur="Blazers")
+    cles = {(l["marche"], l["periode"], l["ligne"], l["issue"]) for l in lignes}
+    assert ("TOTAL", "MATCH", 225.5, "PLUS") in cles and ("TOTAL", "MATCH", 225.5, "MOINS") in cles
+    assert any(m == "HANDICAP" and p == "MATCH" for m, p, _, _ in cles)
