@@ -340,3 +340,15 @@ def test_basket_prolongations_incluses_est_le_match_entier():
     cles = {(l["marche"], l["periode"], l["ligne"], l["issue"]) for l in lignes}
     assert ("TOTAL", "MATCH", 225.5, "PLUS") in cles and ("TOTAL", "MATCH", 225.5, "MOINS") in cles
     assert any(m == "HANDICAP" and p == "MATCH" for m, p, _, _ in cles)
+
+
+def test_handicap_de_jeux_du_tennis_est_lu():
+    """« Handicap de jeux » (Game Handicap) devient JEUX_HANDICAP ; un handicap de sets au volley reste HANDICAP."""
+    jeux = _offre("Handicap", "Handicap de jeux", "Game Handicap",
+                  [("A", 1850, "OT_ONE", -3500), ("B", 1900, "OT_TWO", 3500)])
+    lignes = _lignes([jeux], sport="tennis", domicile="A", exterieur="B")
+    assert {(l["marche"], l["ligne"], l["issue"]) for l in lignes} == {
+        ("JEUX_HANDICAP", -3.5, "DOM"), ("JEUX_HANDICAP", -3.5, "EXT")}
+    sets = _offre("Handicap", "Set Handicap", "Set Handicap",
+                  [("A", 1850, "OT_ONE", -1500), ("B", 1900, "OT_TWO", 1500)])
+    assert {l["marche"] for l in _lignes([sets], sport="volley", domicile="A", exterieur="B")} == {"HANDICAP"}
