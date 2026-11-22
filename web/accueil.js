@@ -62,7 +62,7 @@ function rendreAccueil() {
   const maintenant=new Date();
   const jour=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(maintenant);
   const heure=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).format(maintenant).replace(':',' h ');
-  document.getElementById('une-date').textContent=`${jour} · édition de ${heure}`;
+  document.getElementById('une-date').textContent=`${jour} · relevé de ${heure}`;
   const mise=nomMiseAccueil(miseMode);
   // Premier chiffre : les cotes de 10 au plus. Au-delà, c'est de la loterie (quelques gains sur des centaines de
   // paris) qui masquait tout le reste.
@@ -99,7 +99,8 @@ function rendreAccueil() {
     : '<p class="aide">Aucune stratégie ne bat encore la clôture de façon prouvée.</p>';
   // Gain cumulé des paris uniques (même courbe que le Bilan, tracée en marches), avec la ligne témoin : gain attendu
   // cumulé et marge du hasard (variance cumulée de chaque pari, 5e colonne).
-  document.getElementById('acc-courbe').innerHTML=grandeCourbe(pointsDepuisParis(reglees));
+  const zoneCourbe=document.getElementById('acc-courbe');
+  zoneCourbe.innerHTML=grandeCourbe(pointsDepuisParis(reglees),undefined,zoneCourbe.clientWidth);
   document.getElementById('acc-courbe-mise').textContent=`paris uniques · ${mise} × sources`;
   // Derniers résultats : les cinq derniers paris uniques réglés.
   const derniers=fiches.filter(p=>p.unique_bilan && p.gain!=null && p.regle_le).sort((a,b)=>Date.parse(b.regle_le)-Date.parse(a.regle_le)).slice(0,5);
@@ -108,12 +109,12 @@ function rendreAccueil() {
     : '<p class="aide">Aucun résultat récent.</p>';
   if (typeof tableauCotation === 'function') { tableauCotation(enCours, jouer); afficherSeance(enCours); }
   if (typeof bandeauBoursier === 'function') {
-    const court=t=>String(t || '').toUpperCase();
+    const court=t=>String(t || '');
     bandeauBoursier([
-      ['GAIN NET', eurC(s.net), '', signe(s.net)],
+      ['Gain net', eurC(s.net), '', signe(s.net)],
       ['ROI', pct(s.roi), '', signe(s.net)],
-      ['RÉUSSITE', pctEntier(s.reussite), '', ''],
-      ['EN COURS', String(enCours.length), '', ''],
+      ['Réussite', pctEntier(s.reussite), '', ''],
+      ['En cours', String(enCours.length), '', ''],
       ...jouer.map(x=>[`${court(x.p.domicile)} – ${court(x.p.exterieur)}`, cote(x.p.cote), pct(x.p.ecart), 'pos']),
       ...derniers.map(p=>[`${court(p.domicile)} – ${court(p.exterieur)}`, cote(p.cote), eur(p.gain), signe(p.gain)])
     ]);
