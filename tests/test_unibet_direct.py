@@ -518,3 +518,10 @@ def test_volley_nfl_handball_lisent_totaux_et_handicaps():
     assert {(3046, 142), (994056013, 142), (3080, 142)} <= set(unibet.MARCHES["volley"])
     assert {(188, 119), (10091, 119)} <= set(unibet.MARCHES["football_americain"])
     assert {(3050, 1131), (994031010, 1131)} <= set(unibet.MARCHES["handball"])
+    assert (3061, 1195) in unibet.MARCHES["basket"]
+    basket = unibet.marche_depuis("m", {
+        "desc": "Face à Face Handicap Points [+4,5]", "style": "TWO_OUTCOME_LONG", "period": "Match",
+        "outcomes": [{"desc": "Cairns [+4,5]", "price": "1,85"}, {"desc": "SE Melbourne [-4,5]", "price": "1,90"}],
+    }, "Cairns", "SE Melbourne")
+    assert basket["canonicalMarket"] == "ASIAN_HANDICAP"
+    assert {s["canonicalOutcome"]: s["line"] for s in basket["selections"]} == {"HOME": 4.5, "AWAY": -4.5}
