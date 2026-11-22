@@ -66,10 +66,12 @@ _PAR_SPORT = {
         459: "DRAW_NO_BET", 460: "ASIAN_HANDICAP",
     },
     # Le vainqueur à deux issues porte le même identifiant qu'au tennis.
-    "volley": {186: "MATCH_RESULT"},
+    # Volley : écart de points 237, nombre de points 238 ; NFL : mêmes identifiants qu'au basket (relevés le 22/11/2026).
+    "volley": {186: "MATCH_RESULT", 237: "ASIAN_HANDICAP", 238: "OVER_UNDER"},
     "snooker": {186: "MATCH_RESULT"},
     "badminton": {186: "MATCH_RESULT"},
-    "football_americain": {219: "MATCH_RESULT"},
+    "football_americain": {219: "MATCH_RESULT", 223: "ASIAN_HANDICAP", 225: "OVER_UNDER",
+                           227: "HOME_OVER_UNDER", 228: "AWAY_OVER_UNDER"},
 }
 # Filtres de la page sport, limités aux marchés déjà comparés. Le football est
 # le plus lourd (quelques Mo par filtre) ; un filtre remplace des centaines de
@@ -84,11 +86,17 @@ _PAR_SPORT = {
 # équipes marquent (69). Basket : handicap (208), totaux par équipe (228, 229), mi-temps : total (231), handicap
 # (237), totaux par équipe (232, 233). Cotes vérifiées face à Pinnacle (rapport médian 0,85 à 0,91, comme les
 # autres marchés). Les filtres sont lus dans l'ordre : les plus utiles d'abord si le budget coupe.
+# Ajoutés le 22/11/2026 (sans eux, vainqueur ou résultat seul : aucun milieu possible) : volley, nombre de points
+# (135, 152 lignes pour 34 matchs) et écart de points (136) ; NFL, nombre de points (364, 838 lignes pour 28 matchs),
+# écart (365), points de chaque équipe (381, 382) ; handball, nombre de buts (334) et écart (333).
 FILTRES = {
     "football": (6, 13, 16, 56, 17, 74, 4, 44, 58, 59, 48, 45, 70, 71, 18, 19, 69),
     "basket": (207, 208, 228, 229, 231, 237, 232, 233),
     "tennis": (107, 108, 116, 121, 122, 123),
     "hockey": (247, 248, 249, 253, 255),
+    "volley": (135, 136),
+    "football_americain": (364, 365, 381, 382),
+    "handball": (334, 333),
 }
 # Stats joueurs, relevés le 9/11/2026 sur le socket (le filtre 207 est « Nb points » des équipes,
 # pas les joueurs). Basket : points 593 (market 921), rebonds 224 (923), passes 225, PRP 516 (9053).
