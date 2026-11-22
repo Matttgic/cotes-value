@@ -457,3 +457,12 @@ def test_onglets_proposes_par_sport_publies_pour_reperer_un_renommage():
     Betclic, sans erreur. Le journal donne désormais les onglets proposés (lus marqués d'une étoile)."""
     _, meta, _ = _passe({"lignes": []}, 0, _top(TOTAL), MI_TEMPS)
     assert meta["onglets_vus"] == {"football": {"Buts *": 1, "Le Top": 1}}
+
+
+def test_ecart_de_points_nfl_et_rugby_est_un_handicap():
+    marche = {"nom": "Écart de points", "selections": [
+        {"nom": "A gagne de 4 points ou +", "cote": 1.9}, {"nom": "B ne perd pas ou perd de 3 points ou -", "cote": 1.85}]}
+    for sport in ("football_americain", "rugby"):
+        traduits = betclic.marches_pulse(marche, "A", "B", sport)
+        assert [m["canonicalMarket"] for m in traduits] == ["ASIAN_HANDICAP"]
+        assert [s["line"] for s in traduits[0]["selections"]] == [-3.5, 3.5]

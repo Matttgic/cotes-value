@@ -364,6 +364,10 @@ def _canonique(offre: dict, domicile: str, exterieur: str) -> tuple[str, str] | 
     if type_offre == "3-Way Handicap":
         return "EUROPEAN_HANDICAP", _avec_periode(francais, anglais)
     if type_offre == "Handicap" or bas == "handicap":
+        # tennis : « Game Handicap » (handicap de jeux). Les autres restent ASIAN_HANDICAP : au volley, le handicap
+        # en sets est le marché principal de Pinnacle ; au tennis, un handicap sans unité est ignoré à la traduction.
+        if re.search(r"\bgames?\b", bas) or re.search(r"\bjeux\b", fr):
+            return "GAME_HANDICAP", _avec_periode(francais, anglais)
         return "ASIAN_HANDICAP", _avec_periode(francais, anglais)
     if type_offre == "Over/Under" or bas.startswith("total"):
         equipe = _equipe_du_total(anglais, francais)

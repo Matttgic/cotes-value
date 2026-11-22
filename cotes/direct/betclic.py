@@ -561,7 +561,7 @@ def _canon_handicap(nom: str, sport: str | None) -> str | None:
     bas = (nom[m.end():] if m else nom).lower()
     if sport in ("football", "hockey", "handball"):
         return "ASIAN_HANDICAP" if "point" not in bas and "set" not in bas and "jeu" not in bas else None
-    if sport == "basket":
+    if sport in ("basket", "football_americain", "rugby"):
         return "ASIAN_HANDICAP" if "point" in bas else None
     if sport == "tennis":
         return "SET_HANDICAP" if "set" in bas else "GAME_HANDICAP" if "jeu" in bas else None

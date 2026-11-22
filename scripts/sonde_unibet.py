@@ -127,7 +127,7 @@ def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
                         r"mi-temps|quart|set|p[ée]riode|manche", str(o.get("period")), re.I):
                     paires[(t, per)] = paires.get((t, per), 0) + 1
             print(f"     {len(paires)} marchés « match » sur la page ; vérification par l'API :")
-            for (t, per), n in sorted(paires.items(), key=lambda x: -x[1])[:14]:
+            for (t, per), n in sorted(paires.items(), key=lambda x: -x[1])[:30]:
                 d = c.get(f"next/50/p{noeud}", {**U.PARAMS, "marketTypeId": str(t), "periodId": str(per)}) or {}
                 it = d.get("items") if isinstance(d.get("items"), dict) else {}
                 ms = [v for k, v in it.items() if k.startswith("m") and isinstance(v, dict)]
@@ -136,7 +136,8 @@ def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
             break
     # Collecte réelle de ces sports avec les filtres du collecteur : marchés et lignes de total par match
     import collections
-    lignes, meta = U.collecter({"volley", "football_americain", "handball"}, 36)
+    internes = {U.SPORTS[c] for c in sports if c in U.SPORTS}
+    lignes, meta = U.collecter(internes, 36)
     print("collecte :", {k: v for k, v in meta.items() if k in ("ok", "requetes", "matchs")}, meta.get("erreurs", [])[:5])
     for k, n in sorted(collections.Counter((l["sport"], l["marche"], l["periode"]) for l in lignes).items()):
         print("  ", k, n)
@@ -144,11 +145,15 @@ def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
     for l in lignes:
         if l["marche"] == "TOTAL" and l["periode"] == "MATCH":
             par[(l["sport"], l["match_id"])].add(l["ligne"])
-    for sp in ("volley", "football_americain", "handball"):
+    for sp in sorted(internes):
         v = [len(x) for (s_, _), x in par.items() if s_ == sp]
         print(f"   {sp} : {len(v)} matchs avec total, {sum(v) / max(1, len(v)):.1f} lignes par match")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(marches() if "--marches" in sys.argv else main())
+    if "--marches" in sys.argv:
+        i = sys.argv.index("--marches")
+        choix = sys.argv[i + 1].split(",") if len(sys.argv) > i + 1 and sys.argv[i + 1].strip() else None
+        sys.exit(marches(tuple(c.strip().upper() for c in choix if c.strip())) if choix else marches())
+    sys.exit(main())

@@ -10,6 +10,10 @@ on:
         default: acces
         type: choice
         options: [acces, marches]
+      sports:
+        description: "mode marches : codes Unibet séparés par des virgules (BASK, ICEH, TENN…) ; vide = volley, NFL, handball, rugby, badminton"
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -25,4 +29,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
-      - run: python scripts/sonde_unibet.py ${{ inputs.mode == 'marches' && '--marches' || '' }}
+      - run: python scripts/sonde_unibet.py ${{ inputs.mode == 'marches' && '--marches' || '' }} ${MODE:+"$SPORTS"}
+        env:
+          MODE: ${{ inputs.mode == 'marches' && '1' || '' }}
+          SPORTS: ${{ inputs.sports }}
