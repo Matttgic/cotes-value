@@ -57,6 +57,7 @@ SPORTS = {
     "rugby": "rugby_union",
     "football_americain": "american_football",
     "baseball": "baseball",
+    "badminton": "badminton",
 }
 ENTETES = {
     "Content-Type": "application/grpc-web+proto",

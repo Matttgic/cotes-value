@@ -525,3 +525,16 @@ def test_volley_nfl_handball_lisent_totaux_et_handicaps():
     }, "Cairns", "SE Melbourne")
     assert basket["canonicalMarket"] == "ASIAN_HANDICAP"
     assert {s["canonicalOutcome"]: s["line"] for s in basket["selections"]} == {"HOME": 4.5, "AWAY": -4.5}
+
+
+def test_handicap_en_points_du_volley_separe_du_handicap_en_sets():
+    """Pinnacle cote le handicap du volley en sets (±1,5) : un écart de points devient POINTS_HANDICAP."""
+    from cotes.pulsescore import traduire
+    points = unibet.marche_depuis("m", {
+        "desc": "Face à Face Handicap Points", "style": "TWO_OUTCOME_LONG", "period": "Match",
+        "outcomes": [{"desc": "A [+2,5]", "price": "1,90"}, {"desc": "B [-2,5]", "price": "1,85"}]}, "A", "B")
+    ev = {"eventId": 1, "home": "A", "away": "B", "markets": [points]}
+    lignes = traduire(ev, "unibet-fr", "volley", "2026-11-22T12:00:00+00:00")
+    assert {(l["marche"], l["ligne"]) for l in lignes} == {("POINTS_HANDICAP", 2.5)}
+    basket = traduire(ev, "unibet-fr", "basket", "2026-11-22T12:00:00+00:00")
+    assert {l["marche"] for l in basket} == {"HANDICAP"}
