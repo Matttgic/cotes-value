@@ -107,7 +107,10 @@ def periode(sport: str, canonique: str | None, libelle: str) -> str | None:
         if unite == "set":
             return f"SET{n}"
     c = canonique or "FULL_TIME"
-    if c == "FULL_TIME":
+    # « FULL_TIME_OVERTIME » (PMU/Kambi : « - Prolongations incluses », basket et football américain) : match
+    # entier, la règle de prolongation est lue ensuite dans le libellé (periode_match). Relevé du 22/11/2026 :
+    # total, handicap et vainqueur du match NBA et NFL n'avaient que cette durée, donc jamais collectés.
+    if c in ("FULL_TIME", "FULL_TIME_OVERTIME"):
         return "MATCH"
     if sport != "tennis":
         return None        # période annoncée par PulseScore mais absente du libellé : ambigu, ignoré
