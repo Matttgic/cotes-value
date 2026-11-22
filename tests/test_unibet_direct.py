@@ -493,3 +493,28 @@ def test_les_marches_secondaires_s_arretent_a_leur_plafond_de_pages(monkeypatch)
     rotation = meta["rotation"]
     assert rotation["lances"] == k and rotation["requetes"] == k * unibet._PAGES_SECONDAIRES
     assert len(session.urls) == unibet._PAGES_MAX + k * unibet._PAGES_SECONDAIRES   # le principal garde 16 pages
+
+
+def test_volley_sets_et_points_ne_se_melangent_pas():
+    """« Plus / Moins Set(s) 3,5 » est un total de sets, pas de points (sinon faux milieu 3,5 sets / 129,5 points)."""
+    from cotes.pulsescore import traduire
+    home, away = "Cisterna", "Conegliano"
+    points = unibet.marche_depuis("m1", {
+        "desc": "Plus / Moins Point(s) 135,5", "style": "TWO_OUTCOME_LONG", "period": "Match",
+        "outcomes": [{"desc": "Plus de 135,5", "price": "1,85"}, {"desc": "Moins de 135,5", "price": "1,85"}]},
+        home, away)
+    sets = unibet.marche_depuis("m2", {
+        "desc": "Plus / Moins Set(s) 3,5", "style": "TWO_OUTCOME_LONG", "period": "Match",
+        "outcomes": [{"desc": "Plus de 3,5", "price": "1,60"}, {"desc": "Moins de 3,5", "price": "2,20"}]},
+        home, away)
+    assert points["canonicalMarket"] == "OVER_UNDER" and sets["canonicalMarket"] == "TOTAL_SETS"
+    ev = {"id": "e1", "home": home, "away": away, "start": "2026-11-23T10:00:00Z", "league": "Serie A",
+          "markets": [points, sets]}
+    lignes = traduire(ev, "unibet-fr", "volley", "2026-11-22T12:00:00+00:00")
+    assert {(l["marche"], l["ligne"]) for l in lignes} == {("TOTAL", 135.5), ("SETS_TOTAL", 3.5)}
+
+
+def test_volley_nfl_handball_lisent_totaux_et_handicaps():
+    assert {(3046, 142), (994056013, 142), (3080, 142)} <= set(unibet.MARCHES["volley"])
+    assert {(188, 119), (10091, 119)} <= set(unibet.MARCHES["football_americain"])
+    assert {(3050, 1131), (994031010, 1131)} <= set(unibet.MARCHES["handball"])

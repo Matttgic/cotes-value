@@ -101,7 +101,7 @@ def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
         print(f"== {code} : {len(evs)} matchs ; clés d'un marché de la liste : {sorted(mks[0]) if mks else '-'}")
         if mks:
             print("   exemple :", {k: v for k, v in mks[0].items() if k not in ("outcomes",)})
-        for cle, ev in evs[:2]:
+        for cle, ev in evs[:1]:
             chemin = U.chemin_match(cle[1:], ev)
             if not chemin:
                 continue
@@ -119,17 +119,34 @@ def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
                 etat = json.loads(m.group(1))
             except ValueError:
                 continue
-            vus = set()
+            print("     état :", {k: len(json.dumps(v)) for k, v in etat.items()} if isinstance(etat, dict) else type(etat))
+            paires = {}
             for ch, o in _objets(etat):
-                if "desc" in o and any("type" in k.lower() or "period" in k.lower() for k in o):
-                    ids = {k: o[k] for k in o if any(x in k.lower() for x in ("type", "period", "style", "id"))
-                           and not isinstance(o[k], (dict, list))}
-                    cle_v = (str(o.get("desc")), json.dumps(ids, sort_keys=True))
-                    if cle_v in vus:
-                        continue
-                    vus.add(cle_v)
-                    print(f"     {str(o.get('desc'))[:60]:60} {ids}")
+                t, per = o.get("marketTypeId"), o.get("periodId")
+                if isinstance(t, int) and isinstance(per, int) and not re.search(
+                        r"mi-temps|quart|set|p[ée]riode|manche", str(o.get("period")), re.I):
+                    paires[(t, per)] = paires.get((t, per), 0) + 1
+            print(f"     {len(paires)} marchés « match » sur la page ; vérification par l'API :")
+            for (t, per), n in sorted(paires.items(), key=lambda x: -x[1])[:14]:
+                d = c.get(f"next/50/p{noeud}", {**U.PARAMS, "marketTypeId": str(t), "periodId": str(per)}) or {}
+                it = d.get("items") if isinstance(d.get("items"), dict) else {}
+                ms = [v for k, v in it.items() if k.startswith("m") and isinstance(v, dict)]
+                noms = sorted({str(v.get("desc"))[:45] for v in ms})[:3]
+                print(f"     ({t}, {per}) {n} sur la page · API : {len(ms)} marchés · {noms} · {ms[0].get('style') if ms else ''}")
             break
+    # Collecte réelle de ces sports avec les filtres du collecteur : marchés et lignes de total par match
+    import collections
+    lignes, meta = U.collecter({"volley", "football_americain", "handball"}, 36)
+    print("collecte :", {k: v for k, v in meta.items() if k in ("ok", "requetes", "matchs")}, meta.get("erreurs", [])[:5])
+    for k, n in sorted(collections.Counter((l["sport"], l["marche"], l["periode"]) for l in lignes).items()):
+        print("  ", k, n)
+    par = collections.defaultdict(set)
+    for l in lignes:
+        if l["marche"] == "TOTAL" and l["periode"] == "MATCH":
+            par[(l["sport"], l["match_id"])].add(l["ligne"])
+    for sp in ("volley", "football_americain", "handball"):
+        v = [len(x) for (s_, _), x in par.items() if s_ == sp]
+        print(f"   {sp} : {len(v)} matchs avec total, {sum(v) / max(1, len(v)):.1f} lignes par match")
     return 0
 
 
