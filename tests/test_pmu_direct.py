@@ -352,3 +352,14 @@ def test_handicap_de_jeux_du_tennis_est_lu():
     sets = _offre("Handicap", "Set Handicap", "Set Handicap",
                   [("A", 1850, "OT_ONE", -1500), ("B", 1900, "OT_TWO", 1500)])
     assert {l["marche"] for l in _lignes([sets], sport="volley", domicile="A", exterieur="B")} == {"HANDICAP"}
+
+
+def test_handicap_de_sets_du_tennis_et_total_de_points_d_un_set_de_volley():
+    """« Set Handicap » au tennis devient SETS_HANDICAP ; « Total de points - Set 1 » du volley est un total de points."""
+    sets = _offre("Handicap", "Set Handicap", "Set Handicap",
+                  [("A", 1850, "OT_ONE", -1500), ("B", 1900, "OT_TWO", 1500)])
+    assert {l["marche"] for l in _lignes([sets], sport="tennis", domicile="A", exterieur="B")} == {"SETS_HANDICAP"}
+    total = _offre("Over/Under", "Total de points - Set 1", "Total Points - Set 1",
+                   [("Plus de", 1850, "OT_OVER", 45500), ("Moins de", 1900, "OT_UNDER", 45500)])
+    lignes = _lignes([total], sport="volley", domicile="A", exterieur="B")
+    assert {(l["marche"], l["periode"]) for l in lignes} == {("TOTAL", "SET1")}
