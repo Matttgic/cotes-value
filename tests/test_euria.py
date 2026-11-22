@@ -81,13 +81,16 @@ def test_pas_de_milieu_sans_value_ni_cote_juste():
     assert E.milieux(*_calcul(TOTAUX, _index(sans, sans)), T) == []
 
 
-def test_un_seul_milieu_par_match_et_marche():
+def test_tous_les_milieux_en_value_d_un_match_classes_par_esperance():
     fr = [*TOTAUX, _l("Unibet", 3, "TOTAL", "MOINS", 2.05, 212.5)]
     j = {**J_TOTAUX, _cle("TOTAL", 212.5, "MOINS"): 0.50, _cle("TOTAL", 212.5, "PLUS"): 0.50}
     index = _index(J_TOTAUX, J_TOTAUX)
     index["Pinnacle"]["unibet|3"] = _ref(j)
     out = E.milieux(*_calcul(fr, index), T)
-    assert len(out) == 1 and out[0]["jambes"][1]["ligne"] == 213.5        # 8 % de milieu et +6,6 % : le meilleur
+    assert len(out) >= 2 and len({m["cle"] for m in out}) == len(out)
+    assert out[0]["jambes"][1]["ligne"] == 213.5                            # 8 % de milieu et +6,6 % : le meilleur
+    assert all(m["esperance_100"] > 0 for m in out)
+    assert [m["esperance_100"] for m in out] == sorted((m["esperance_100"] for m in out), reverse=True)
 
 
 # 1N2 de football : Pinnacle 48 / 28 / 24 %. Unibet écrit Lille – Lens (à l'envers).

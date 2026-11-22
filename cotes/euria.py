@@ -17,7 +17,7 @@ L'espérance d'un milieu est la somme de celles de ses deux paris. Quand Pinnacl
 probabilité est estimée (``estime``) : Poisson pour les totaux de buts (football, hockey) à partir de la ligne connue
 la plus proche, loi normale ajustée sur au moins deux lignes connues ailleurs. Mises « équilibrées » (même retour hors du milieu),
 100 € au total. Gardés : les deux cotes justes connues, une probabilité de milieu positive, une espérance positive ;
-le meilleur par match, marché et période.
+tous, même plusieurs par match (paires de lignes différentes), classés par espérance.
 
 Conversions de freebets. Pour chaque bookmaker B et chaque issue d'un marché complet (1N2, vainqueur, les deux
 équipes marquent, handicaps et totaux à demi-ligne ; 1N2 aussi contre la double chance des deux autres issues), le
@@ -41,7 +41,7 @@ from statistics import NormalDist, median
 from . import surebets as SB
 
 TOTAL = 100.0
-MILIEUX_MAX = 40
+MILIEUX_MAX = 300                 # tous les milieux en value, du meilleur au moins bon (limite : poids de la page)
 CONVERSIONS_PAR_BOOK = 8
 VALEUR_REMBOURSEMENT = 0.75
 SEUIL_ALERTE_MILIEU = 0.02
@@ -205,9 +205,6 @@ def milieux(familles: dict, matchs: dict, maintenant: datetime, total: float = T
             esperance = m1 * (c1 * p1 - 1) + m2 * (c2 * p2 - 1)
             if esperance <= 0:
                 continue
-            k = (nom, mid, marche, periode)
-            if k in meilleurs and meilleurs[k]["esperance_100"] >= esperance:
-                continue
             cle_m = "|".join(str(x) for x in (nom, mid, marche, periode, l1, l2))
             jambes = []
             for i, (j, ligne, p) in enumerate(((a, l1, p1), (b, l2, p2))):
@@ -216,7 +213,7 @@ def milieux(familles: dict, matchs: dict, maintenant: datetime, total: float = T
                     j.update(proba_juste=round(p, 5), cote_juste=round(1 / p, 3), ecart=round(j["cote"] * p - 1, 4),
                              estimee=True)
                 jambes.append(j)
-            meilleurs[k] = {
+            meilleurs[cle_m] = {
                 "id": hashlib.sha1(cle_m.encode()).hexdigest()[:16], "cle": cle_m,
                 "detecte": maintenant.isoformat(timespec="seconds"), **match,
                 "match": f'{match.get("domicile")} – {match.get("exterieur")}', "reference": nom, "marche": marche,
