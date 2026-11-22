@@ -225,8 +225,9 @@ function miniCourbe(points, couleur='var(--accent)') {
 // pointillés) et marge du hasard (zone grisée) quand les points les portent, puis le verdict.
 // Largeur réelle du graphique : le dessin garde l'échelle 1 (textes à 11 px) au lieu d'être agrandi par le viewBox.
 function dimensionsCourbe(largeur) {
-  const vue=Math.min(window.innerWidth || 360, document.documentElement.clientWidth || 360);
-  const zone=(document.querySelector('main')?.clientWidth || vue)-(vue<761 ? 32 : 96);
+  const nav=typeof window!=='undefined' && typeof document!=='undefined';
+  const vue=nav ? Math.min(window.innerWidth || 360, document.documentElement?.clientWidth || 360) : 360;
+  const zone=((nav && document.querySelector?.('main')?.clientWidth) || vue)-(vue<761 ? 32 : 96);
   const W=Math.round(Math.min(960,Math.max(300,largeur || zone)));
   return {W,H:Math.round(Math.min(280,Math.max(160,W*.38)))};
 }
