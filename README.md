@@ -129,7 +129,10 @@ couvert dès 1 %, avec l'une ou l'autre case.
 
 À chaque cycle, `cotes/euria.py` cherche avec les mêmes cotes et garde-fous que les surebets : les **milieux en value**
 (« Plus de L1 » et « Moins de L2 », ou deux handicaps, dont l'espérance est positive d'après les cotes justes de la
-référence aux deux lignes : P(milieu) = p1 + p2 − 1, espérance = somme de celles des deux paris) et, pour chaque
+référence aux deux lignes : P(milieu) = p1 + p2 − 1, espérance = somme de celles des deux paris ; quand la référence
+n'a pas une des lignes, sa probabilité est estimée, marquée « estimée » : Poisson ajusté sur la ligne connue la plus
+proche pour les totaux de buts du football et du hockey, à 2 buts au plus ; loi normale ajustée sur au moins deux
+lignes connues ailleurs ; la cote doit rester à −30 %/+15 % de sa cote estimée) et, pour chaque
 bookmaker, les meilleurs paris pour **convertir un freebet** ou un « pari remboursé si perdant » en gain garanti.
 `donnees/euria.json` garde aussi les épisodes des milieux ; le site publie `euria.json` (à venir seulement), lu par la
 page Euria (dépôt Euria, même origine matttgic.github.io). Case **Milieux en value** dans « Alertes Pushover » :

@@ -238,3 +238,43 @@ def test_reglement_du_cycle_regle_les_milieux(tmp_path):
     assert PR._regler_milieux(tmp_path, doc, milieux, enr, apres) == {"a_regler": 1, "regles": 1}
     lu = json.loads((tmp_path / "euria.json").read_text())
     assert lu["episodes_milieux"][0]["tombe"] is True
+
+
+AUTRE = {_cle("VAINQUEUR", None, "DOM"): 0.5}               # match relié à Pinnacle, sans la ligne cherchée
+
+
+def test_chance_estimee_par_poisson_quand_pinnacle_n_a_qu_une_ligne():
+    """Football : Pinnacle n'a que 2,5 buts (Plus 55 %). Moins de 3,5 estimé par Poisson ajusté sur 2,5."""
+    fr = [_l("Betclic", 1, "TOTAL", "PLUS", 1.90, 2.5, sport="football"),
+          _l("PMU", 2, "TOTAL", "MOINS", 1.45, 3.5, sport="football")]
+    j = {_cle("TOTAL", 2.5, "PLUS"): 0.55, _cle("TOTAL", 2.5, "MOINS"): 0.45}
+    index = {"Pinnacle": {"betclic|1": _ref(j), "pmu|2": _ref(AUTRE)}}
+    m = E.milieux(*_calcul(fr, index), T)[0]
+    lam = E._lambda(2.5, 0.55)
+    p2 = 1 - E._poisson_queue(lam, 3.5)
+    assert m["estime"] is True and m["jambes"][1]["estimee"] is True and "estimee" not in m["jambes"][0]
+    assert m["p_milieu"] == pytest.approx(0.55 + p2 - 1, abs=1e-4)
+    assert (m["de"], m["a"]) == (3, 3)
+    loin = [fr[0], _l("PMU", 2, "TOTAL", "MOINS", 1.10, 5.5, sport="football")]     # 3 buts de la ligne connue
+    assert E.milieux(*_calcul(loin, index), T) == []
+
+
+def test_chance_estimee_par_loi_normale_sur_deux_lignes_connues():
+    """Basket : Pinnacle a 210,5 et 213,5 ; Moins de 214,5 (sans Pinnacle) estimé par la loi normale ajustée."""
+    fr = [*TOTAUX[:3], _l("Betclic", 2, "TOTAL", "MOINS", 1.80, 213.5), _l("Unibet", 3, "TOTAL", "MOINS", 1.95, 214.5)]
+    index = _index(J_TOTAUX, J_TOTAUX)
+    index["Pinnacle"]["unibet|3"] = _ref(AUTRE)
+    out = E.milieux(*_calcul(fr, index), T)
+    assert out and out[0]["jambes"][1]["ligne"] == 214.5 and out[0]["estime"] is True
+    p = out[0]["jambes"][1]["proba_juste"]
+    assert 0.53 < p < 0.62                                   # entre P(Moins 213,5) = 53 % et un peu plus
+    seul = {k: v for k, v in J_TOTAUX.items() if k[2] == 210.5}                  # une seule ligne : pas d'estimation
+    assert all(not m.get("estime") for m in E.milieux(*_calcul(fr, _index(seul, seul)), T))
+
+
+def test_cote_loin_de_sa_cote_estimee_ecartee():
+    fr = [_l("Betclic", 1, "TOTAL", "PLUS", 1.90, 2.5, sport="football"),
+          _l("PMU", 2, "TOTAL", "MOINS", 3.00, 3.5, sport="football")]               # ~1,5 attendu : mal lue
+    j = {_cle("TOTAL", 2.5, "PLUS"): 0.55, _cle("TOTAL", 2.5, "MOINS"): 0.45}
+    index = {"Pinnacle": {"betclic|1": _ref(j), "pmu|2": _ref(AUTRE)}}
+    assert E.milieux(*_calcul(fr, index), T) == []
