@@ -102,21 +102,6 @@ def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
         if mks:
             print("   exemple :", {k: v for k, v in mks[0].items() if k not in ("outcomes",)})
         for cle, ev in evs[:1]:
-            # marchés d'un seul match par l'API : chemins à la manière de « next/50/p<nœud> »
-            for essai in (f"next/50/{cle}", f"next/500/{cle}", f"event/{cle[1:]}", f"ev/{cle[1:]}"):
-                d = c.get(essai, dict(U.PARAMS)) or {}
-                it = d.get("items") if isinstance(d.get("items"), dict) else {}
-                ms = [v for k, v in it.items() if k.startswith("m") and isinstance(v, dict)]
-                print(f"   API {essai.split('/')[0]}/…/{essai.split('/')[-1][:1]} : {len(ms)} marchés, clés {sorted(d)[:8]}")
-                vus = set()
-                for v in sorted(ms, key=lambda v: (v.get("markettypeId") or 0, v.get("periodId") or 0)):
-                    k = (v.get("markettypeId"), v.get("periodId"), str(v.get("desc"))[:50])
-                    if k not in vus:
-                        vus.add(k)
-                        print(f"     type {k[0]} période {k[1]} ({v.get('period')}) : {k[2]} [{v.get('style')}]")
-                if ms:
-                    break
-        for cle, ev in evs[:1]:
             chemin = U.chemin_match(cle[1:], ev)
             if not chemin:
                 continue
@@ -135,16 +120,19 @@ def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
             except ValueError:
                 continue
             print("     état :", {k: len(json.dumps(v)) for k, v in etat.items()} if isinstance(etat, dict) else type(etat))
-            vus = set()
+            paires = {}
             for ch, o in _objets(etat):
-                if any(k.lower() in ("markettypeid", "markettype", "periodid") for k in o):
-                    ids = {k: o[k] for k in o if any(x in k.lower() for x in ("type", "period", "style", "id"))
-                           and not isinstance(o[k], (dict, list))}
-                    cle_v = (str(o.get("desc")), json.dumps(ids, sort_keys=True))
-                    if cle_v in vus:
-                        continue
-                    vus.add(cle_v)
-                    print(f"     {str(o.get('desc'))[:60]:60} {ids}")
+                t, per = o.get("marketTypeId"), o.get("periodId")
+                if isinstance(t, int) and isinstance(per, int) and not re.search(
+                        r"mi-temps|quart|set|p[ée]riode|manche", str(o.get("period")), re.I):
+                    paires[(t, per)] = paires.get((t, per), 0) + 1
+            print(f"     {len(paires)} marchés « match » sur la page ; vérification par l'API :")
+            for (t, per), n in sorted(paires.items(), key=lambda x: -x[1])[:14]:
+                d = c.get(f"next/50/p{noeud}", {**U.PARAMS, "marketTypeId": str(t), "periodId": str(per)}) or {}
+                it = d.get("items") if isinstance(d.get("items"), dict) else {}
+                ms = [v for k, v in it.items() if k.startswith("m") and isinstance(v, dict)]
+                noms = sorted({str(v.get("desc"))[:45] for v in ms})[:3]
+                print(f"     ({t}, {per}) {n} sur la page · API : {len(ms)} marchés · {noms} · {ms[0].get('style') if ms else ''}")
             break
     return 0
 
