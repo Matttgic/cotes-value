@@ -538,3 +538,12 @@ def test_handicap_en_points_du_volley_separe_du_handicap_en_sets():
     assert {(l["marche"], l["ligne"]) for l in lignes} == {("POINTS_HANDICAP", 2.5)}
     basket = traduire(ev, "unibet-fr", "basket", "2026-11-22T12:00:00+00:00")
     assert {l["marche"] for l in basket} == {"HANDICAP"}
+
+
+def test_handicap_basket_sous_la_periode_temps_reglementaire_compte_la_prolongation():
+    """« Face à Face Handicap Points » (période 1195 « Temps réglementaire ») est comparé au handicap match entier."""
+    from cotes.pulsescore import periode_match
+    assert periode_match("unibet-fr", "basket", "HANDICAP",
+                         "Face à Face Handicap Points [-5,5] - Temps réglementaire", -5.5) == "MATCH"
+    assert periode_match("unibet-fr", "basket", "HANDICAP_3", "1 N 2 Handicap [+10] - Temps réglementaire", 10) \
+        == "TEMPS_REG"

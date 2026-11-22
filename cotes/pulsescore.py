@@ -165,6 +165,10 @@ PERIODE_CONSTATEE = {("unibet-fr", "hockey"): {"TOTAL": "TEMPS_REG"}}
 # à 2 issues (1,18 / 3,65 ; 1,90 / 1,60 ; 1,31 / 2,65) alors que le 1N2 des 60 minutes vaut 1,36, 2,50… Classé
 # « temps réglementaire », il donnait de faux écarts de 8 à 14 % contre le handicap des 60 minutes de Pinnacle.
 HANDICAP_DEMI_PROLONGATION = {("winamax", "hockey")}
+# Intitulé de période trompeur : Unibet range « Face à Face Handicap Points » du basket sous la période 1195
+# (« Temps réglementaire »), mais ce handicap à 2 issues compte la prolongation (confirmé par l'utilisateur le
+# 22/11/2026). Le contrôle de conformité vérifie cette période contre le handicap match entier de Pinnacle.
+PERIODE_FORCEE = {("unibet-fr", "basket"): {"HANDICAP": "MATCH"}}
 # marchés où le nul existe : forcément sur le temps réglementaire
 MARCHES_AVEC_NUL = {"RESULTAT_1N2", "DOUBLE_CHANCE", "DRAW_NO_BET", "HANDICAP_3", "HALF_TIME_FULL_TIME"}
 
@@ -196,6 +200,8 @@ def periode_match(bookmaker: str, sport: str, marche: str, libelle: str, ligne=N
         return "MATCH"                    # football, handball, rugby… : MATCH = temps réglementaire partout
     if _handicap_hockey_sans_effet(sport, marche, ligne):
         return "MATCH"
+    if marche in PERIODE_FORCEE.get((bookmaker, sport), {}):
+        return PERIODE_FORCEE[(bookmaker, sport)][marche]
     if _temps_reglementaire(libelle) or marche in MARCHES_AVEC_NUL:
         return "TEMPS_REG"
     if _prolongation_incluse(libelle):
