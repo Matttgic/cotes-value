@@ -173,8 +173,16 @@ def _regler_abandon(p: dict, scores: dict) -> str:
     Winamax, Unibet, NetBet, PMU : les paris sur une période terminée sont maintenus ; un « plus de X jeux »
     déjà dépassé est gagnant (et le « moins » perdant). Nombre de sets : validé s'il est certain à la fin d'un
     set chez Winamax et Unibet, remboursé chez NetBet (« le set en question n'a pas été mené à son terme »).
+
+    Winamax, « Garantie Abandon » (annoncée le 3/1/2026, simples ATP/WTA, vainqueur du match) : abandon après au
+    moins un set terminé, le pari sur le joueur qui reste est gagné, celui sur le joueur qui abandonne remboursé.
+    Le joueur qui reste n'est connu que par ESPN (``VAINQUEUR_ABANDON``, simples ATP/WTA seulement) : sans lui
+    (Challenger, ITF, double, ESPN absent), le pari est remboursé comme avant.
     """
     m, per, i, ligne = p["marche"], p["periode"], p["issue"], p.get("ligne")
+    if (m == "VAINQUEUR" and per == "MATCH" and (p.get("bookmaker") or "").lower() == "winamax"
+            and scores.get("SETS_TERMINES", 0) >= 1 and scores.get("VAINQUEUR_ABANDON") in ("DOM", "EXT")):
+        return "gagne" if i == scores["VAINQUEUR_ABANDON"] else "rembourse"
     if per.startswith("SET"):
         if per in scores:
             return regler({**p}, {k: v for k, v in scores.items() if k != "ABANDON"}) or "rembourse"
@@ -377,6 +385,8 @@ def appliquer(paris: list[dict], resultats: dict[str, dict], manuels: dict, main
                     sc = scores_par_periode(p["sport"], r["score"], r["periodes"], r["libelles"])
                     if r.get("abandon") and p["sport"] == "tennis":
                         sc["ABANDON"] = True           # même quand le détail des sets est incohérent avec le score
+                        if r.get("abandon_vainqueur"):
+                            sc["VAINQUEUR_ABANDON"] = r["abandon_vainqueur"]   # simple ATP/WTA, d'après ESPN
                     if r.get("corners"):
                         sc["CORNERS"] = tuple(r["corners"])
                 statut = regler(p, sc)

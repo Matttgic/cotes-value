@@ -152,9 +152,10 @@ def lire_espn(sport: str, depuis: datetime, maintenant: datetime, lire_json=_esp
             d = lire_json(f"{ligue}/scoreboard", {"dates": f"{jour:%Y%m%d}", "limit": 1000}) or {}
             for e in d.get("events") or []:
                 # tennis : un tournoi par « event », ses matchs dans groupings[].competitions
-                comps = [c for g in e.get("groupings") or [] for c in g.get("competitions") or []] \
-                    or e.get("competitions") or []
-                for c in comps:
+                comps = [(c, (g.get("grouping") or {}).get("slug")) for g in e.get("groupings") or []
+                         for c in g.get("competitions") or []] \
+                    or [(c, None) for c in e.get("competitions") or []]
+                for c, tableau in comps:
                     cid = c.get("id") or e.get("id")
                     etat = ((c.get("status") or {}).get("type") or {}).get("name")
                     if cid in vus:
@@ -163,18 +164,29 @@ def lire_espn(sport: str, depuis: datetime, maintenant: datetime, lire_json=_esp
                     if r:
                         vus.add(cid)
                         r["abandon"] = sport == "tennis" and etat in ESPN_ABANDONS
+                        if r["abandon"] and str(tableau or "").endswith("singles"):
+                            # simple ATP/WTA : qui gagne sur abandon (Garantie Abandon Winamax, cotes/reglement.py)
+                            gagnants = [cote for cote, x in zip(("DOM", "EXT"), _cotes_espn(c)) if x.get("winner") is True]
+                            if len(gagnants) == 1:
+                                r["abandon_vainqueur"] = gagnants[0]
                         r["a_venir"] = etat not in ESPN_FINAUX and not r["abandon"]
                         out.append(r)
         jour += timedelta(days=1)
     return out
 
 
+def _cotes_espn(c: dict) -> tuple[dict, dict]:
+    """(domicile, extérieur) d'une rencontre ESPN à deux participants."""
+    comp = c.get("competitors") or []
+    eq = {x.get("homeAway"): x for x in comp}
+    return (eq["home"], eq["away"]) if {"home", "away"} <= set(eq) else (comp[0], comp[1])
+
+
 def _espn_match(sport: str, c: dict, e: dict, ligue: str) -> dict | None:
     comp = c.get("competitors") or []
     if len(comp) != 2:
         return None
-    eq = {x.get("homeAway"): x for x in comp}
-    dom, ext = (eq["home"], eq["away"]) if {"home", "away"} <= set(eq) else (comp[0], comp[1])
+    dom, ext = _cotes_espn(c)
     nom = lambda x: ((x.get("team") or {}).get("displayName") or (x.get("athlete") or {}).get("displayName"))  # noqa: E731
     lignes = [[l.get("value") for l in x.get("linescores") or []] for x in (dom, ext)]
     periodes = [(int(a), int(b)) for a, b in zip(*lignes) if a is not None and b is not None]
@@ -227,12 +239,18 @@ def completer_periodes(p: dict, resultat: dict, enregistrements: list[dict], lir
     return resultat
 
 
+COTE_OPPOSEE = {"DOM": "EXT", "EXT": "DOM"}
+
+
 def _oriente(r: dict, inverse: bool) -> dict:
     if not inverse:
         return r
     sw = lambda t: (t[1], t[0]) if t else t       # noqa: E731
-    return {**r, "domicile": r["exterieur"], "exterieur": r["domicile"], "score": sw(r["score"]),
-            "periodes": [sw(p) for p in r["periodes"]], "corners": sw(r["corners"])}
+    out = {**r, "domicile": r["exterieur"], "exterieur": r["domicile"], "score": sw(r["score"]),
+           "periodes": [sw(p) for p in r["periodes"]], "corners": sw(r["corners"])}
+    if r.get("abandon_vainqueur") in COTE_OPPOSEE:
+        out["abandon_vainqueur"] = COTE_OPPOSEE[r["abandon_vainqueur"]]
+    return out
 
 
 def _avec_marqueurs(nom: str, modele: str) -> str:
@@ -496,10 +514,13 @@ def consensus(p: dict, enregistrements: list[dict], maintenant: datetime | None 
         # source fiable (ESPN, NHL, LiveScore), sinon on s'en passe
         avec_periodes = [r for r in avec_periodes if r["source"] in ("nhl_officiel", "espn", "apisports", "livescore")][:1]
     corners = [r["corners"] for r in trouves if r["corners"] is not None and r["corners"] != (0, 0)]
+    # vainqueur sur abandon : ESPN seul le donne (simples ATP/WTA) ; deux réponses contraires -> aucune
+    vainqueurs = {r["abandon_vainqueur"] for r in trouves if r.get("abandon") and r.get("abandon_vainqueur")}
     base = avec_periodes[0] if avec_periodes else None
     return {"sport": p["sport"], "score": score, "final": True,
             **({"annule": True} if any(r.get("annule") for r in trouves) else {}),
             **({"abandon": True} if any(r.get("abandon") for r in trouves) else {}),
+            **({"abandon_vainqueur": vainqueurs.pop()} if len(vainqueurs) == 1 else {}),
             "periodes": base["periodes"] if base else [], "libelles": base["libelles"] if base else [],
             "corners": corners[0] if len(corners) >= SOURCES_MIN and len(set(corners)) == 1 else None,
             "sources": sorted(r["source"] for r in trouves),
@@ -582,7 +603,7 @@ def _inverser_scores(scores: dict) -> dict:
         if isinstance(v, (list, tuple)) and len(v) == 2 and all(isinstance(x, int) and not isinstance(x, bool) for x in v):
             return (v[1], v[0])
         return v
-    return {k: retourne(v) for k, v in scores.items()}
+    return {k: COTE_OPPOSEE.get(v, v) if k == "VAINQUEUR_ABANDON" else retourne(v) for k, v in scores.items()}
 
 
 def par_freres(paris: list[dict], resultats: dict[str, dict], maintenant: datetime) -> dict[str, dict]:

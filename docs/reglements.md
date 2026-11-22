@@ -92,8 +92,16 @@ Dans le code : un dernier set à 10 points ou plus est un super tie-break, compt
 | NetBet | « seuls les paris dont le résultat est déjà définitivement acquis au moment de l'interruption seront validés […]. Par exemple, pour un pari sur le nombre total de sets (plus ou moins 2.5 sets) : si un joueur abandonne au cours du troisième set, le pari sera annulé (remboursé) » |
 | PMU (2022) | « Si un match ayant débuté ne va pas à son terme ou s'il se termine sur un abandon ou une disqualification d'un joueur, les paris seront annulés, sauf si leur résultat est déjà entériné sans équivoque (par exemple le nombre de jeux du 1er set si le 1er set a été joué en totalité). » |
 
+**Garantie Abandon Winamax** (annoncée par @WinamaxSport le 3/1/2026 ; conditions officielles non relues ici) :
+simples ATP/WTA, pari « vainqueur » avant-match ; abandon après le 1er set, le pari sur le joueur qui reste est
+payé, celui sur le joueur qui abandonne remboursé ; abandon pendant le 1er set, pari annulé. Challengers, doubles
+et Cashout exclus.
+
 Dans le code (`_regler_abandon`) :
-- vainqueur du match, handicaps, score exact : remboursés ;
+- Winamax, vainqueur du match, au moins un set terminé et vainqueur connu : gagné pour le joueur qui reste,
+  remboursé pour l'autre. Le vainqueur vient d'ESPN (`winner`, simples ATP/WTA seulement : `abandon_vainqueur`
+  dans `cotes/resultats.py`, `VAINQUEUR_ABANDON` dans les scores). Sans ESPN (Challenger, ITF, double), remboursé ;
+- vainqueur du match (autres bookmakers), handicaps, score exact : remboursés ;
 - sets terminés (vainqueur du 1er set…) : maintenus ;
 - totaux de jeux : gagnés ou perdus si le seuil est déjà dépassé, sinon remboursés ;
 - nombre total de sets : réglé sur « sets terminés + 1 » quand c'est certain, sauf chez NetBet, où il est
