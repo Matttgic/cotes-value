@@ -16,8 +16,8 @@ function tableauCotation(enCours, jouer) {
   if(!lignes.length){zone.innerHTML='';zone.hidden=true;return;}
   zone.hidden=false;
   const heure=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).format(new Date());
-  zone.innerHTML=`<div class="cv-terminal-tete"><b>COTATION</b><span>${enCours.length} EN COURS · ● À JOUER · ${heure}</span></div>
-<div class="cv-terminal-ligne cv-terminal-entete" aria-hidden="true"><span>SYMB.</span><span>PARI</span><span>BOOK</span><span>COTE</span><span>JUSTE</span><span>ÉCART</span></div>
+  zone.innerHTML=`<div class="cv-terminal-tete"><b>Cotes en cours</b><span>${enCours.length} en cours · ● à jouer · ${heure}</span></div>
+<div class="cv-terminal-ligne cv-terminal-entete" aria-hidden="true"><span>Match</span><span>Pari</span><span>Book</span><span>Cote</span><span>Juste</span><span>Écart</span></div>
 ${lignes.map(p=>{const j=aJouer.has(p.id),c=p.ecart>0?'pos':p.ecart<0?'neg':'';
   return `<div class="cv-terminal-ligne${j?' cv-a-jouer':''}" title="${e(p.domicile)} – ${e(p.exterieur)} · ${e(p.pari)}"><span class="cv-symb">${j?'● ':''}${e(symboleMatch(p))}</span>`
   +`<span class="cv-pari">${e(p.pari)}</span><span class="cv-book">${e(String(p.bookmaker || '').slice(0,3).toUpperCase())}</span>`
@@ -86,7 +86,7 @@ function carteChaleur(L) {
 
 // Séances hebdomadaires : un chandelier par semaine (lundi–dimanche, heure de Paris) sur le gain cumulé.
 // Ouverture = gain cumulé à la fin de la semaine précédente, clôture = fin de semaine, mèches = plus haut et plus bas.
-function bougiesHebdo(points) {
+function bougiesHebdo(points, largeur=0) {
   const pts=(points || []).filter(p=>Number.isFinite(p[0]) && Number.isFinite(p[1]));
   if(pts.length<2) return '<span class="courbe-absente">Chandeliers disponibles après deux règlements</span>';
   const lundi=t=>{const d=new Date(new Date(t*1000).toLocaleString('en-US',{timeZone:'Europe/Paris'}));d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime();};
@@ -98,7 +98,7 @@ function bougiesHebdo(points) {
   }
   const S=semaines.slice(-16),lo=Math.min(0,...S.map(s=>s.l)),hi=Math.max(0,...S.map(s=>s.h));
   const euros=v=>{v=visuelBankroll(v);return (v>0?'+':'')+Math.round(v)+' €';};
-  const W=320,H=150,g=Math.max(44,Math.ceil(8+6.2*Math.max(euros(hi).length,euros(lo).length))),d=8,h=10,b=20;
+  const {W,H}=dimensionsCourbe(largeur),g=Math.max(48,Math.ceil(8+6.6*Math.max(euros(hi).length,euros(lo).length))),d=8,h=12,b=24;
   const pas=(W-g-d)/S.length,larg=Math.max(3,Math.min(14,pas*.6));
   const y=v=>H-b-(v-lo)/(hi-lo || 1)*(H-b-h);
   const jour=k=>new Date(k).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
@@ -109,9 +109,9 @@ function bougiesHebdo(points) {
       +`<rect x="${(x-larg/2).toFixed(1)}" y="${top.toFixed(1)}" width="${larg.toFixed(1)}" height="${haut.toFixed(1)}"/></g>`;
   }).join('');
   const hausse=S.filter(s=>s.c>=s.o).length;
-  return `<svg class="grande-courbe cv-bougies" viewBox="0 0 ${W} ${H}" role="img" aria-label="${S.length} semaines : ${hausse} en hausse, ${S.length-hausse} en baisse">
+  return `<svg class="grande-courbe cv-bougies" viewBox="0 0 ${W} ${H}" style="max-width:${W}px" role="img" aria-label="${S.length} semaines : ${hausse} en hausse, ${S.length-hausse} en baisse">
     <line x1="${g}" x2="${W-d}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ligne)" stroke-dasharray="3 3"/>
     <text x="${g-4}" y="${y(hi)+3}" text-anchor="end">${euros(hi)}</text>${Math.abs(y(lo)-y(hi))>=12 && lo!==hi?`<text x="${g-4}" y="${y(lo)+3}" text-anchor="end">${euros(lo)}</text>`:''}
-    ${corps}<text x="${g}" y="${H-4}">${jour(S[0].k)}</text><text x="${W-d}" y="${H-4}" text-anchor="end">${jour(S.at(-1).k)}</text></svg>
+    ${corps}<text x="${g}" y="${H-6}">${jour(S[0].k)}</text><text x="${W-d}" y="${H-6}" text-anchor="end">${jour(S.at(-1).k)}</text></svg>
 <p class="temoin"><span><b class="pos">${hausse}</b> semaine${hausse>1?'s':''} en hausse</span><span><b class="neg">${S.length-hausse}</b> en baisse</span></p>`;
 }

@@ -223,7 +223,14 @@ function miniCourbe(points, couleur='var(--accent)') {
 }
 // Courbe lisible d'une stratégie : gain cumulé en euros, avec zéro, extrêmes et dates ; ligne témoin (attendu, en
 // pointillés) et marge du hasard (zone grisée) quand les points les portent, puis le verdict.
-function grandeCourbe(points, couleur='var(--accent)') {
+// Largeur réelle du graphique : le dessin garde l'échelle 1 (textes à 11 px) au lieu d'être agrandi par le viewBox.
+function dimensionsCourbe(largeur) {
+  const vue=Math.min(window.innerWidth || 360, document.documentElement.clientWidth || 360);
+  const zone=(document.querySelector('main')?.clientWidth || vue)-(vue<761 ? 32 : 96);
+  const W=Math.round(Math.min(960,Math.max(300,largeur || zone)));
+  return {W,H:Math.round(Math.min(280,Math.max(160,W*.38)))};
+}
+function grandeCourbe(points, couleur='var(--accent)', largeur=0) {
   const pts=(points || []).filter(p=>Number.isFinite(p[0]) && Number.isFinite(p[1]));
   if (pts.length<2) return '<span class="courbe-absente">Courbe disponible après deux règlements</span>';
   const temoin=avecTemoin(pts);
@@ -231,7 +238,7 @@ function grandeCourbe(points, couleur='var(--accent)') {
   const lo=Math.min(0,...vals),hi=Math.max(0,...vals);
   const euros=v=>{v=visuelBankroll(v);return (v>0?'+':'')+Math.round(v)+' €';};
   // Marge gauche à la taille des montants (« +4949 € » n'est plus coupé).
-  const W=320,H=150,g=Math.max(44,Math.ceil(8+6.2*Math.max(...[hi,lo].map(v=>euros(v).length)))),d=8,h=10,b=20;
+  const {W,H}=dimensionsCourbe(largeur),g=Math.max(48,Math.ceil(8+6.6*Math.max(...[hi,lo].map(v=>euros(v).length)))),d=8,h=12,b=24;
   const t0=pts[0][0],t1=pts.at(-1)[0],x=t=>g+(t-t0)/(t1-t0 || 1)*(W-g-d);
   const y=v=>H-b-(v-lo)/(hi-lo || 1)*(H-b-h);
   let path=`M ${g} ${y(0)}`;
@@ -246,10 +253,10 @@ function grandeCourbe(points, couleur='var(--accent)') {
   const ligne=f=>pts.map(p=>`L ${x(p[0]).toFixed(1)} ${y(f(p)).toFixed(1)}`).join(' ');
   const bande=temoin?`<path class="temoin-bande" d="M ${g} ${y(0)} ${ligne(p=>p[2]+margeTemoin(p))} ${[...pts].reverse().map(p=>`L ${x(p[0]).toFixed(1)} ${y(p[2]-margeTemoin(p)).toFixed(1)}`).join(' ')} Z" fill="var(--attendu)" fill-opacity=".16" stroke="none"/>`:'';
   const attendu=temoin?`<path d="M ${g} ${y(0)} ${ligne(p=>p[2])}" fill="none" stroke="var(--attendu)" stroke-width="1.6" stroke-dasharray="5 4"/>`:'';
-  return `<svg class="grande-courbe" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gain cumulé : ${euros(pts.at(-1)[1])} après ${pts.length} règlements${temoin?`, attendu ${euros(pts.at(-1)[2])}`:''}">
+  return `<svg class="grande-courbe" viewBox="0 0 ${W} ${H}" style="max-width:${W}px" role="img" aria-label="Gain cumulé : ${euros(pts.at(-1)[1])} après ${pts.length} règlements${temoin?`, attendu ${euros(pts.at(-1)[2])}`:''}">
     ${graduations}${bande}${attendu}<path d="${path}" fill="none" stroke="${e(couleur)}" stroke-width="2"/>
     <circle cx="${x(pts.at(-1)[0])}" cy="${y(pts.at(-1)[1])}" r="3.5" fill="${e(couleur)}"/>
-    <text x="${g}" y="${H-4}">${jour(t0)}</text><text x="${W-d}" y="${H-4}" text-anchor="end">${jour(t1)}</text></svg>${verdictTemoin(pts)}`;
+    <text x="${g}" y="${H-6}">${jour(t0)}</text><text x="${W-d}" y="${H-6}" text-anchor="end">${jour(t1)}</text></svg>${verdictTemoin(pts)}`;
 }
 function repartitionResultats(s) {
   const n=s.regles || 0;
