@@ -345,6 +345,8 @@ def _marche(canon, libelle, sels, sport, dom, ext, nul_annonce=False):
         if la is not None and abs(lh - la) < 1e-9:
             ligne = lh                   # même ligne sur les deux issues = ligne du domicile
         unite = {"GAME_HANDICAP": "JEUX_", "SET_HANDICAP": "SETS_"}.get(canon, "")
+        if sport == "volley" and canon == "ASIAN_HANDICAP" and "point" in l:
+            unite = "POINTS_"            # le HANDICAP du volley chez Pinnacle est en sets (±1,5) : ne pas les mêler
         yield unite + "HANDICAP", float(ligne), "DOM", h
         yield unite + "HANDICAP", float(ligne), "EXT", a
     elif canon == "EUROPEAN_HANDICAP":
