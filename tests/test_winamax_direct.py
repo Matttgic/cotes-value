@@ -278,3 +278,14 @@ def test_filtres_handicap_et_totaux_par_equipe_lus():
     assert {44, 58, 59, 48, 45, 70, 71}.issubset(winamax.FILTRES["football"])
     assert {207, 208, 228, 229, 231, 237}.issubset(winamax.FILTRES["basket"])
     assert winamax.FILTRES["football"][:7] == (6, 13, 16, 56, 17, 74, 4)        # anciens d'abord
+
+
+def test_volley_nfl_handball_lisent_totaux_et_handicaps():
+    # Relevé du 22/11/2026 : sans ces filtres, vainqueur ou résultat seul (aucun milieu possible).
+    assert {135, 136} <= set(winamax.FILTRES["volley"])
+    assert {364, 365, 381, 382} <= set(winamax.FILTRES["football_americain"])
+    assert {334, 333} <= set(winamax.FILTRES["handball"])
+    assert winamax._canon("volley", 238) == "OVER_UNDER" and winamax._canon("volley", 237) == "ASIAN_HANDICAP"
+    assert winamax._canon("football_americain", 225) == "OVER_UNDER"
+    assert winamax._canon("football_americain", 223) == "ASIAN_HANDICAP"
+    assert winamax._canon("handball", 18) == "OVER_UNDER"
