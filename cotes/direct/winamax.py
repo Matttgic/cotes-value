@@ -69,7 +69,7 @@ _PAR_SPORT = {
     # Volley : écart de points 237, nombre de points 238 ; NFL : mêmes identifiants qu'au basket (relevés le 22/11/2026).
     "volley": {186: "MATCH_RESULT", 237: "ASIAN_HANDICAP", 238: "OVER_UNDER"},
     "snooker": {186: "MATCH_RESULT"},
-    "badminton": {186: "MATCH_RESULT"},
+    "badminton": {186: "MATCH_RESULT", 237: "ASIAN_HANDICAP", 238: "OVER_UNDER"},     # comme le volley (22/11/2026)
     "football_americain": {219: "MATCH_RESULT", 223: "ASIAN_HANDICAP", 225: "OVER_UNDER",
                            227: "HOME_OVER_UNDER", 228: "AWAY_OVER_UNDER"},
 }
@@ -97,6 +97,7 @@ FILTRES = {
     "volley": (135, 136),
     "football_americain": (364, 365, 381, 382),
     "handball": (334, 333),
+    "badminton": (153, 154),          # nombre de points, écart de points (22/11/2026)
 }
 # Stats joueurs, relevés le 9/11/2026 sur le socket (le filtre 207 est « Nb points » des équipes,
 # pas les joueurs). Basket : points 593 (market 921), rebonds 224 (923), passes 225, PRP 516 (9053).

@@ -56,7 +56,7 @@ POISSON = {("football", "TOTAL"), ("hockey", "TOTAL"), ("football", "TOTAL_DOM")
 ECART_POISSON_MAX = 2.0           # buts entre la ligne estimée et la ligne connue
 ECART_NORMALE_MAX = 1.0           # en écarts-types, hors de l'intervalle des lignes connues
 UNITES = {"football": "buts", "hockey": "buts", "handball": "buts", "basket": "points", "football_americain": "points",
-          "rugby": "points", "volley": "points"}
+          "rugby": "points", "volley": "points", "badminton": "points", "tennis_de_table": "points"}
 
 
 def _t(s) -> datetime | None:

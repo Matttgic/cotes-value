@@ -285,6 +285,7 @@ def test_volley_nfl_handball_lisent_totaux_et_handicaps():
     assert {135, 136} <= set(winamax.FILTRES["volley"])
     assert {364, 365, 381, 382} <= set(winamax.FILTRES["football_americain"])
     assert {334, 333} <= set(winamax.FILTRES["handball"])
+    assert {153, 154} <= set(winamax.FILTRES["badminton"]) and winamax._canon("badminton", 238) == "OVER_UNDER"
     assert winamax._canon("volley", 238) == "OVER_UNDER" and winamax._canon("volley", 237) == "ASIAN_HANDICAP"
     assert winamax._canon("football_americain", 225) == "OVER_UNDER"
     assert winamax._canon("football_americain", 223) == "ASIAN_HANDICAP"
