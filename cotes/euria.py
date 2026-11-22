@@ -13,7 +13,9 @@ et p2 = P(Moins de L2) :
     P(milieu) = p1 + p2 − 1
     espérance = m1 × (c1 × p1 − 1) + m2 × (c2 × p2 − 1)
 
-L'espérance d'un milieu est la somme de celles de ses deux paris. Mises « équilibrées » (même retour hors du milieu),
+L'espérance d'un milieu est la somme de celles de ses deux paris. Quand Pinnacle n'a pas l'une des deux lignes, sa
+probabilité est estimée (``estime``) : Poisson pour les totaux de buts (football, hockey) à partir de la ligne connue
+la plus proche, loi normale ajustée sur au moins deux lignes connues ailleurs. Mises « équilibrées » (même retour hors du milieu),
 100 € au total. Gardés : les deux cotes justes connues, une probabilité de milieu positive, une espérance positive ;
 le meilleur par match, marché et période.
 
@@ -34,7 +36,7 @@ import hashlib
 import math
 from datetime import datetime, timedelta
 from itertools import product
-from statistics import median
+from statistics import NormalDist, median
 
 from . import surebets as SB
 
@@ -46,6 +48,13 @@ SEUIL_ALERTE_MILIEU = 0.02
 GARDER_JOURS = 60
 EPISODES_MAX = 2000
 REGLES_PUBLIES = 60
+# Chance estimée quand Pinnacle n'a pas l'une des deux lignes : loi de Poisson ajustée sur la ligne connue la plus
+# proche (totaux de buts du football et du hockey), sinon loi normale ajustée sur au moins deux lignes connues du
+# match. Une ligne estimée doit rester proche des lignes connues, et sa cote proche de sa cote estimée.
+POISSON = {("football", "TOTAL"), ("hockey", "TOTAL"), ("football", "TOTAL_DOM"), ("football", "TOTAL_EXT"),
+           ("hockey", "TOTAL_DOM"), ("hockey", "TOTAL_EXT")}
+ECART_POISSON_MAX = 2.0           # buts entre la ligne estimée et la ligne connue
+ECART_NORMALE_MAX = 1.0           # en écarts-types, hors de l'intervalle des lignes connues
 UNITES = {"football": "buts", "hockey": "buts", "handball": "buts", "basket": "points", "football_americain": "points",
           "rugby": "points", "volley": "points"}
 
@@ -72,6 +81,82 @@ def bornes(marche: str, ligne_haute: float, ligne_basse: float) -> tuple[float, 
 
 # --------------------------------------------------------------------------- milieux
 
+def _poisson_queue(lam: float, x: float) -> float:
+    """P(X > x), X de Poisson de moyenne lam, x demi-entier."""
+    k_max = math.floor(x)
+    terme, cumul = math.exp(-lam), 0.0
+    for k in range(k_max + 1):
+        if k:
+            terme *= lam / k
+        cumul += terme
+    return max(0.0, 1.0 - cumul)
+
+
+def _lambda(x: float, p: float) -> float | None:
+    """Moyenne de Poisson telle que P(X > x) = p (dichotomie)."""
+    if not 0 < p < 1:
+        return None
+    bas, haut = 1e-6, 200.0
+    for _ in range(80):
+        mil = (bas + haut) / 2
+        if _poisson_queue(mil, x) < p:
+            bas = mil
+        else:
+            haut = mil
+    return (bas + haut) / 2
+
+
+def _survie(sport: str | None, marche: str, connus: dict[float, float]):
+    """S(x) = P(X > x) estimée à partir des points connus {x: P(X > x)} de Pinnacle, et la règle d'éloignement ;
+    None si on ne peut pas estimer."""
+    if not connus:
+        return None
+    if (sport, marche) in POISSON:
+        def s_poisson(x):
+            x0 = min(connus, key=lambda c: (abs(c - x), c))
+            if abs(x0 - x) > ECART_POISSON_MAX:
+                return None
+            lam = _lambda(x0, connus[x0])
+            return _poisson_queue(lam, x) if lam else None
+        return s_poisson
+    if len(connus) < 2 or sport in ("football", "hockey"):
+        return None                       # écart de buts : trop peu de valeurs pour une loi normale
+    N = NormalDist()
+    pts = [(x, N.inv_cdf(1 - p)) for x, p in connus.items() if 0 < p < 1]
+    if len(pts) < 2:
+        return None
+    zm = sum(z for _, z in pts) / len(pts)
+    xm = sum(x for x, _ in pts) / len(pts)
+    vz = sum((z - zm) ** 2 for _, z in pts)
+    if vz <= 0:
+        return None
+    sigma = sum((x - xm) * (z - zm) for x, z in pts) / vz          # x = mu + sigma × z
+    if not sigma > 0:
+        return None
+    mu = xm - sigma * zm
+    lo, hi = min(connus), max(connus)
+
+    def s_normale(x):
+        if x < lo - ECART_NORMALE_MAX * sigma or x > hi + ECART_NORMALE_MAX * sigma:
+            return None
+        return 1 - N.cdf((x - mu) / sigma)
+    return s_normale
+
+
+def _connus(lignes: dict, marche: str) -> dict[float, float]:
+    """Points connus de la survie S(x) = P(X > x) : X = total (Plus à L gagne si X > L) ou écart domicile −
+    extérieur (domicile à h gagne si X > −h)."""
+    haut_i, bas_i = SB.DEMI_LIGNE[marche]
+    out: dict[float, float] = {}
+    for ligne, issues in lignes.items():
+        x = -ligne if marche.endswith("HANDICAP") else ligne
+        for issue, gagne_haut in ((haut_i, True), (bas_i, False)):
+            p = next((j["proba_juste"] for j in issues.get(issue) or [] if j.get("proba_juste")), None)
+            if p:
+                out.setdefault(x, p if gagne_haut else 1 - p)
+    return out
+
+
 def milieux(familles: dict, matchs: dict, maintenant: datetime, total: float = TOTAL) -> list[dict]:
     """Milieux en value du cycle, de la meilleure espérance à la moins bonne (``familles`` et ``matchs`` :
     ``surebets.candidates``)."""
@@ -82,20 +167,39 @@ def milieux(familles: dict, matchs: dict, maintenant: datetime, total: float = T
     meilleurs: dict[tuple, dict] = {}
     for (nom, mid, marche, periode), lignes in groupes.items():
         haut_i, bas_i = SB.DEMI_LIGNE[marche]          # issue qui gagne quand X est haut (Plus, domicile), bas
+        match = matchs.get((nom, mid)) or {}
+        connus = _connus(lignes, marche)
+        survie = _survie(match.get("sport"), marche, connus)
         for l1, l2 in product(lignes, lignes):
             bas, haut = bornes(marche, l1, l2)
             if not bas < haut:
                 continue
             a = SB._meilleures(lignes[l1].get(haut_i) or [])
             b = SB._meilleures(lignes[l2].get(bas_i) or [])
-            if not a or not b or not a[0].get("proba_juste") or not b[0].get("proba_juste"):
+            if not a or not b:
                 continue
             a, b = a[0], b[0]
-            p1, p2 = a["proba_juste"], b["proba_juste"]
+            # P(Plus de l1) = S(bas), P(Moins de l2) = 1 − S(haut) ; Pinnacle d'abord, sinon estimée
+            p1 = connus.get(bas)
+            p2 = None if haut not in connus else 1 - connus[haut]
+            estime = []
+            if p1 is None and survie:
+                s = survie(bas)
+                p1 = s if s is not None and 0 < s < 1 else None
+                estime.append(0)
+            if p2 is None and survie:
+                s = survie(haut)
+                p2 = 1 - s if s is not None and 0 < s < 1 else None
+                estime.append(1)
+            if not p1 or not p2:
+                continue
+            c1, c2 = a["cote"], b["cote"]
+            if any(not (SB.ECART_JUSTE_BAS <= c * p - 1 <= SB.ECART_JAMBE_MAX)
+                   for i, (c, p) in enumerate(((c1, p1), (c2, p2))) if i in estime):
+                continue                                 # cote loin de sa cote estimée : mal lue ou modèle faux
             p_milieu = p1 + p2 - 1
             if p_milieu <= 0:
                 continue                                 # cotes justes incohérentes entre les deux lignes
-            c1, c2 = a["cote"], b["cote"]
             m1 = total * c2 / (c1 + c2)
             m2 = total - m1
             esperance = m1 * (c1 * p1 - 1) + m2 * (c2 * p2 - 1)
@@ -104,15 +208,21 @@ def milieux(familles: dict, matchs: dict, maintenant: datetime, total: float = T
             k = (nom, mid, marche, periode)
             if k in meilleurs and meilleurs[k]["esperance_100"] >= esperance:
                 continue
-            match = matchs.get((nom, mid)) or {}
             cle_m = "|".join(str(x) for x in (nom, mid, marche, periode, l1, l2))
+            jambes = []
+            for i, (j, ligne, p) in enumerate(((a, l1, p1), (b, l2, p2))):
+                j = {**j, "ligne": ligne}
+                if i in estime:
+                    j.update(proba_juste=round(p, 5), cote_juste=round(1 / p, 3), ecart=round(j["cote"] * p - 1, 4),
+                             estimee=True)
+                jambes.append(j)
             meilleurs[k] = {
                 "id": hashlib.sha1(cle_m.encode()).hexdigest()[:16], "cle": cle_m,
                 "detecte": maintenant.isoformat(timespec="seconds"), **match,
                 "match": f'{match.get("domicile")} – {match.get("exterieur")}', "reference": nom, "marche": marche,
                 "periode": periode, "ecart": marche.endswith("HANDICAP"), "unite": unite(marche, match.get("sport")),
                 "bornes": [bas, haut], "de": math.ceil(bas), "a": math.floor(haut),
-                "jambes": [{**a, "ligne": l1}, {**b, "ligne": l2}],
+                "jambes": jambes, "estime": bool(estime),
                 "p_milieu": round(p_milieu, 4), "p_dessous": round(1 - p1, 4), "p_dessus": round(1 - p2, 4),
                 "mises_100": [round(m1, 2), round(m2, 2)], "milieu_100": round(m1 * c1 + m2 * c2 - total, 2),
                 "hors_100": round(m1 * c1 - total, 2), "esperance_100": round(esperance, 2)}
@@ -221,7 +331,7 @@ def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime) -> list
             e = episodes[m["cle"]] = {
                 "cle": m["cle"], "id": m["id"], "premier": t, "cycles": 0,
                 **{k: m.get(k) for k in ("sport", "ligue", "match", "debut", "marche", "periode", "de", "a", "unite")},
-                "esperance_initiale": m["esperance_100"], "p_milieu_initiale": m["p_milieu"],
+                "esperance_initiale": m["esperance_100"], "p_milieu_initiale": m["p_milieu"], "estime": bool(m.get("estime")),
                 "bookmakers": sorted({j["bookmaker"] for j in m["jambes"]}),
                 "cotes": [j["cote"] for j in m["jambes"]], "lignes": [j["ligne"] for j in m["jambes"]],
                 # pour le règlement (bilan) : équipes dans le sens de la référence, issues, mises et résultats prévus
@@ -306,7 +416,7 @@ def publie(doc: dict | None, surebets_publies: dict | None, boosts_publies: dict
             "bilan_milieux": {str(j): bilan(episodes, maintenant, j) for j in (7, 30)},
             "bilan_regle": {str(j or "tout"): bilan_regle(episodes, maintenant, j) for j in (7, 30, None)},
             "regles": [{k: e.get(k) for k in ("id", "sport", "ligue", "match", "domicile", "exterieur", "debut",
-                                                "marche", "periode", "de", "a", "unite", "bookmakers", "esperance_initiale", "p_milieu_initiale",
+                                                "marche", "periode", "de", "a", "unite", "bookmakers", "esperance_initiale", "p_milieu_initiale", "estime",
                                                 "resultat_100", "tombe", "score")}
                        for e in sorted((e for e in episodes if "resultat_100" in e),
                                        key=lambda e: e.get("debut") or "", reverse=True)[:REGLES_PUBLIES]],

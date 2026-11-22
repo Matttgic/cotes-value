@@ -4,6 +4,12 @@ name: Sonde Unibet
 # À lancer à la main (Actions → Sonde Unibet → Run workflow).
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "acces (pourquoi 403) ou marches (identifiants des marchés volley, NFL, handball, rugby, badminton)"
+        default: acces
+        type: choice
+        options: [acces, marches]
 
 permissions:
   contents: read
@@ -19,4 +25,4 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
-      - run: python scripts/sonde_unibet.py
+      - run: python scripts/sonde_unibet.py ${{ inputs.mode == 'marches' && '--marches' || '' }}

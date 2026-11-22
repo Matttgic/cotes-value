@@ -211,7 +211,8 @@ def message_milieu(m: dict, bankroll: float) -> dict:
               f'{b.get("bookmaker")} : {b.get("pari")} {_fr(b.get("cote"), 2)} → {_fr(m2 * k, 0)} €',
               f'Milieu ({zone}) : {"+" if m["milieu_100"] >= 0 else ""}{_fr(m["milieu_100"] * k, 2)} € ; '
               f'sinon {"+" if m["hors_100"] >= 0 else ""}{_fr(m["hors_100"] * k, 2)} €.',
-              f'Chance du milieu {_fr(100 * m["p_milieu"], 1)} % ({m.get("reference")}) · espérance '
+              f'Chance du milieu {_fr(100 * m["p_milieu"], 1)} % ({m.get("reference")}'
+              f'{", estimée" if m.get("estime") else ""}) · espérance '
               f'+{_fr(m["esperance_100"] * k, 2)} € pour {_fr(total, 0)} €.']
     champs = {"title": f'Milieu +{_fr(m["esperance_100"], 1)} % · {m.get("match")}'[:250],
               "message": "\n".join(lignes)[:1000]}

@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import re
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 ACCUEIL = "https://www.unibet.fr/"
 PAGES = ["https://www.unibet.fr/", "https://www.unibet.fr/sport", "https://www.unibet.fr/sport/football"]
@@ -64,5 +67,71 @@ def main() -> int:
     return 0
 
 
+def _objets(x, chemin=""):
+    """Tous les dictionnaires imbriqués, avec leur chemin."""
+    if isinstance(x, dict):
+        yield chemin, x
+        for k, v in x.items():
+            yield from _objets(v, f"{chemin}/{k}")
+    elif isinstance(x, list):
+        for i, v in enumerate(x[:400]):
+            yield from _objets(v, f"{chemin}[{i}]")
+
+
+def marches(sports=("VOLL", "AMFB", "HAND", "RUGU", "BADM")) -> int:
+    """Identifiants des marchés d'un match par sport : clés des marchés de la liste lvs-api, puis marchés de la
+    page du match (état serverApp). Aucune cote ni jeton affichés : description, style et champs d'identifiants."""
+    import json
+    from cotes.direct import unibet as U
+    c = U.Client()
+    if not c.ouvrir():
+        print("ouverture impossible :", c.erreurs)
+        return 1
+    print("nœuds :", {k: v for k, v in c.noeuds.items() if k in sports})
+    page = U._page_chrome()
+    for code in sports:
+        noeud = c.noeuds.get(code)
+        if not noeud:
+            print(f"== {code} : pas de nœud")
+            continue
+        doc = c.get(f"next/50/p{noeud}", dict(U.PARAMS)) or {}
+        items = doc.get("items") if isinstance(doc.get("items"), dict) else {}
+        evs = [(k, v) for k, v in items.items() if k.startswith("e") and isinstance(v, dict) and U._match(v)]
+        mks = [v for k, v in items.items() if k.startswith("m") and isinstance(v, dict)]
+        print(f"== {code} : {len(evs)} matchs ; clés d'un marché de la liste : {sorted(mks[0]) if mks else '-'}")
+        if mks:
+            print("   exemple :", {k: v for k, v in mks[0].items() if k not in ("outcomes",)})
+        for cle, ev in evs[:2]:
+            chemin = U.chemin_match(cle[1:], ev)
+            if not chemin:
+                continue
+            try:
+                r = page.get("https://www.unibet.fr" + chemin, timeout=20,
+                             headers={"Accept": "text/html", "Accept-Language": "fr-FR"})
+            except Exception as ex:  # noqa: BLE001
+                print(f"   {chemin} : erreur {type(ex).__name__}")
+                continue
+            m = U._SCRIPT.search(r.text or "")
+            print(f"   {ev.get('desc')} : HTTP {r.status_code}, état {'oui' if m else 'non'}")
+            if not m:
+                continue
+            try:
+                etat = json.loads(m.group(1))
+            except ValueError:
+                continue
+            vus = set()
+            for ch, o in _objets(etat):
+                if "desc" in o and any("type" in k.lower() or "period" in k.lower() for k in o):
+                    ids = {k: o[k] for k in o if any(x in k.lower() for x in ("type", "period", "style", "id"))
+                           and not isinstance(o[k], (dict, list))}
+                    cle_v = (str(o.get("desc")), json.dumps(ids, sort_keys=True))
+                    if cle_v in vus:
+                        continue
+                    vus.add(cle_v)
+                    print(f"     {str(o.get('desc'))[:60]:60} {ids}")
+            break
+    return 0
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(marches() if "--marches" in sys.argv else main())
