@@ -48,6 +48,11 @@ SEUIL_ALERTE_MILIEU = 0.02
 GARDER_JOURS = 60
 EPISODES_MAX = 2000
 REGLES_PUBLIES = 60
+# euria-stats.json : tous les milieux réglés, une ligne par milieu (onglet Stats de la page Euria, filtres et
+# découpages faits dans le navigateur). Colonnes dans l'ordre de STATS_COLONNES.
+STATS_COLONNES = ("debut", "sport", "ligue", "marche", "periode", "largeur", "reference", "bookmakers", "cotes",
+                  "esperance", "p_milieu", "estime", "milieu_100", "hors_100", "avance_h", "duree_min",
+                  "esperance_derniere", "resultat_100", "tombe")
 # Chance estimée quand Pinnacle n'a pas l'une des deux lignes : loi de Poisson ajustée sur la ligne connue la plus
 # proche (totaux de buts du football et du hockey), sinon loi normale ajustée sur au moins deux lignes connues du
 # match. Une ligne estimée doit rester proche des lignes connues, et sa cote proche de sa cote estimée.
@@ -327,7 +332,8 @@ def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime) -> list
         if e is None:
             e = episodes[m["cle"]] = {
                 "cle": m["cle"], "id": m["id"], "premier": t, "cycles": 0,
-                **{k: m.get(k) for k in ("sport", "ligue", "match", "debut", "marche", "periode", "de", "a", "unite")},
+                **{k: m.get(k) for k in ("sport", "ligue", "match", "debut", "marche", "periode", "de", "a", "unite",
+                                         "reference")},
                 "esperance_initiale": m["esperance_100"], "p_milieu_initiale": m["p_milieu"], "estime": bool(m.get("estime")),
                 "bookmakers": sorted({j["bookmaker"] for j in m["jambes"]}),
                 "cotes": [j["cote"] for j in m["jambes"]], "lignes": [j["ligne"] for j in m["jambes"]],
@@ -386,6 +392,29 @@ def bilan_regle(episodes: list[dict], maintenant: datetime, jours: int | None = 
             "esperance": round(sum(e["esperance_initiale"] for e in es), 2),
             "tombes": sum(1 for e in es if e.get("tombe")),
             "tombes_attendus": round(sum(e["p_milieu_initiale"] for e in es), 2)}
+
+
+def _heures(a: str | None, b: str | None, par: float) -> float | None:
+    ta, tb = _t(a), _t(b)
+    return None if ta is None or tb is None else round((tb - ta).total_seconds() / par, 1)
+
+
+def stats(episodes: list[dict]) -> dict:
+    """Fichier ``euria-stats.json`` : chaque milieu réglé, du plus récent au plus ancien, pour l'onglet Stats de la page
+    Euria (résultat par sport, type de pari, largeur du milieu, espérance, chance, bookmaker…). ``largeur`` : nombre de
+    résultats entiers dans le milieu ; ``avance_h`` : heures entre le premier relevé et le début du match ;
+    ``duree_min`` : minutes pendant lesquelles le milieu est resté affiché ; ``milieu_100`` et ``hors_100`` donnent la
+    variance de chaque milieu (écart à l'espérance en écarts-types)."""
+    lignes = []
+    for e in sorted((e for e in episodes if isinstance(e, dict) and "resultat_100" in e),
+                    key=lambda e: e.get("debut") or "", reverse=True):
+        de, a = e.get("de"), e.get("a")
+        x = {**e, "esperance": e.get("esperance_initiale"), "p_milieu": e.get("p_milieu_initiale"),
+             "largeur": a - de + 1 if isinstance(de, (int, float)) and isinstance(a, (int, float)) else None,
+             "avance_h": _heures(e.get("premier"), e.get("debut"), 3600),
+             "duree_min": _heures(e.get("premier"), e.get("dernier"), 60), "tombe": bool(e.get("tombe"))}
+        lignes.append([x.get(k) for k in STATS_COLONNES])
+    return {"colonnes": list(STATS_COLONNES), "lignes": lignes}
 
 
 def publier(calcul: dict, episodes: list[dict], maintenant: datetime) -> dict:

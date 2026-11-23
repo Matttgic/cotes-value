@@ -135,7 +135,8 @@ proche pour les totaux de buts du football et du hockey, à 2 buts au plus ; loi
 lignes connues ailleurs ; la cote doit rester à −30 %/+15 % de sa cote estimée) et, pour chaque
 bookmaker, les meilleurs paris pour **convertir un freebet** ou un « pari remboursé si perdant » en gain garanti.
 `donnees/euria.json` garde aussi les épisodes des milieux ; le site publie `euria.json` (à venir seulement), lu par la
-page Euria (dépôt Euria, même origine matttgic.github.io). Case **Milieux en value** dans « Alertes Pushover » :
+page Euria (dépôt Euria, même origine matttgic.github.io), et `euria-stats.json` : tous les milieux réglés, une ligne
+par milieu (onglet Stats d'Euria : résultat par sport, type de pari, largeur, espérance, chance, bookmakers…). Case **Milieux en value** dans « Alertes Pushover » :
 espérance d'au moins `MILIEU_SEUIL_ALERTE` (2 %) de la mise, une fois par milieu.
 
 ### Deux stratégies suivies séparément
