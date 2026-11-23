@@ -50,7 +50,7 @@ EPISODES_MAX = 2000
 REGLES_PUBLIES = 60
 # euria-stats.json : tous les milieux réglés, une ligne par milieu (onglet Stats de la page Euria, filtres et
 # découpages faits dans le navigateur). Colonnes dans l'ordre de STATS_COLONNES.
-STATS_COLONNES = ("debut", "sport", "ligue", "marche", "periode", "largeur", "reference", "bookmakers", "cotes",
+STATS_COLONNES = ("debut", "match", "sport", "ligue", "marche", "periode", "largeur", "reference", "bookmakers", "cotes",
                   "esperance", "p_milieu", "estime", "milieu_100", "hors_100", "avance_h", "duree_min",
                   "esperance_derniere", "resultat_100", "tombe")
 # Chance estimée quand Pinnacle n'a pas l'une des deux lignes : loi de Poisson ajustée sur la ligne connue la plus

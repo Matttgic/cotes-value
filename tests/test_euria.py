@@ -232,7 +232,7 @@ def test_stats_tous_les_milieux_regles(tmp_path):
     s = E.stats([e, {"premier": "x"}])
     (ligne,) = s["lignes"]
     x = dict(zip(s["colonnes"], ligne))
-    assert x["sport"] == "basket" and x["marche"] == e["marche"] and x["tombe"] is True
+    assert x["sport"] == "basket" and x["marche"] == e["marche"] and x["tombe"] is True and x["match"] == e["match"]
     assert x["largeur"] == e["a"] - e["de"] + 1 and x["resultat_100"] == e["resultat_100"]
     assert x["esperance"] == e["esperance_initiale"] and x["p_milieu"] == e["p_milieu_initiale"]
     assert x["reference"] == e["reference"] and x["avance_h"] > 0 and x["duree_min"] == 0
