@@ -989,8 +989,10 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     # Page Euria (autre dépôt, même origine) : fichier à part, hors de index.html (cotes/euria.py).
     from cotes import euria as euria_mod
     euria = euria_mod.publie(entrees.get("euria"), data["surebets"], data["boosts"], _maintenant(instant))
+    euria_stats = euria_mod.stats((entrees.get("euria") or {}).get("episodes_milieux") or []
+                                  if isinstance(entrees.get("euria"), dict) else [])
     return {"data": data, "actuelles": actuelles, "paris": paris, "retenus": retenus, "hors_plafond": hors_plafond,
-            "blocs_mises": blocs_mises, "euria": euria}
+            "blocs_mises": blocs_mises, "euria": euria, "euria_stats": euria_stats}
 
 
 def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
@@ -1043,7 +1045,8 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
             "mises": {mode: json_public(bloc) for mode, bloc in blocs_mises.items()},
             "sw.js": (web / "sw.js").read_text(encoding="utf-8"),
             "notifications.json": alertes_json, "ordres.json": ordres_json, ".nojekyll": "",
-            "euria.json": json.dumps(blocs.get("euria") or {}, ensure_ascii=False, separators=(",", ":"))}
+            "euria.json": json.dumps(blocs.get("euria") or {}, ensure_ascii=False, separators=(",", ":")),
+            "euria-stats.json": json.dumps(blocs.get("euria_stats") or {}, ensure_ascii=False, separators=(",", ":"))}
 
 
 DERNIER_SITE: Path | None = None        # dossier du dernier site écrit (tests : tests/outils_site.py)
@@ -1073,6 +1076,8 @@ def ecrire_site(sortie: Path, pages: dict) -> Path:
         (sortie / nom).write_text(pages[nom], encoding="utf-8")
     if "euria.json" in pages:                                 # lu par la page Euria (cotes/euria.py)
         (sortie / "euria.json").write_text(pages["euria.json"], encoding="utf-8")
+    if "euria-stats.json" in pages:                           # onglet Stats de la page Euria (cotes/euria.py)
+        (sortie / "euria-stats.json").write_text(pages["euria-stats.json"], encoding="utf-8")
     return sortie / "index.html"
 
 

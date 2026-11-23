@@ -221,6 +221,28 @@ def test_milieux_regles_pour_le_bilan():
     assert d["bilan_regle"]["tout"]["n"] == 2 and len(d["regles"]) == 2 and d["regles"][0]["score"] == [110, 102]
 
 
+def test_stats_tous_les_milieux_regles(tmp_path):
+    """euria-stats.json : une ligne par milieu réglé (plus récent d'abord), colonnes nommées, largeur du milieu,
+    avance sur le match, référence ; les milieux pas encore réglés n'y sont pas."""
+    calcul = {"milieux": E.milieux(*_calcul(TOTAUX, _index(J_TOTAUX, J_TOTAUX)), T), "conversions": {}}
+    (e,) = E.suivre({}, calcul["milieux"], T)
+    vide = E.stats([e])
+    assert vide == {"colonnes": list(E.STATS_COLONNES), "lignes": []}
+    assert PR.regler_episode(e, {"score": (110, 102), "periodes": [], "libelles": []})
+    s = E.stats([e, {"premier": "x"}])
+    (ligne,) = s["lignes"]
+    x = dict(zip(s["colonnes"], ligne))
+    assert x["sport"] == "basket" and x["marche"] == e["marche"] and x["tombe"] is True
+    assert x["largeur"] == e["a"] - e["de"] + 1 and x["resultat_100"] == e["resultat_100"]
+    assert x["esperance"] == e["esperance_initiale"] and x["p_milieu"] == e["p_milieu_initiale"]
+    assert x["reference"] == e["reference"] and x["avance_h"] > 0 and x["duree_min"] == 0
+    from cotes.site.construction import construire
+    (tmp_path / "euria.json").write_text(json.dumps(E.publier(calcul, [e], T)))
+    construire(tmp_path, tmp_path / "site", T + timedelta(hours=6))
+    d = json.loads((tmp_path / "site" / "euria-stats.json").read_text())
+    assert d["colonnes"] == list(E.STATS_COLONNES) and len(d["lignes"]) == 1
+
+
 def test_ancien_milieu_sans_issues_pas_reglable():
     calcul = {"milieux": E.milieux(*_calcul(TOTAUX, _index(J_TOTAUX, J_TOTAUX)), T)}
     e = E.suivre({}, calcul["milieux"], T)[0]
