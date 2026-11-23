@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-23T09:05:04+00:00",
+  "debut": "2026-11-23T09:09:53+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,63 +9,65 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 2.9,
-    "ok": true
-   },
-   "draftkings": {
-    "secondes": 3.4,
-    "ok": true
-   },
-   "olybet": {
-    "secondes": 6.1,
-    "ok": true
-   },
-   "polymarket": {
-    "secondes": 8.0,
-    "ok": true
-   },
-   "pinnacle": {
-    "secondes": 12.3,
-    "ok": true
-   },
-   "fanduel": {
-    "secondes": 25.0,
-    "ok": true
-   },
-   "betclic_direct": {
-    "secondes": 29.9,
-    "ok": true
-   },
-   "pmu_direct": {
-    "secondes": 39.5,
-    "ok": true
-   },
-   "netbet": {
-    "secondes": 52.2,
-    "ok": true
-   },
-   "winamax_direct": {
-    "secondes": 57.6,
-    "ok": true
-   },
-   "unibet_direct": {
-    "secondes": 51.9,
-    "ok": true
-   },
-   "smarkets": {
-    "secondes": 22.3,
-    "ok": true,
-    "degrade": true,
-    "erreurs": [
-     "budget"
-    ]
-   },
-   "association": {
     "secondes": 2.8,
     "ok": true
    },
+   "draftkings": {
+    "secondes": 3.6,
+    "ok": true
+   },
+   "olybet": {
+    "secondes": 6.9,
+    "ok": true
+   },
+   "polymarket": {
+    "secondes": 9.6,
+    "ok": true
+   },
+   "pinnacle": {
+    "secondes": 16.3,
+    "ok": true,
+    "degrade": true,
+    "erreurs": [
+     "sport 28 markets/straight : HTTP 403"
+    ],
+    "reprise": 64
+   },
+   "fanduel": {
+    "secondes": 28.8,
+    "ok": true
+   },
+   "betclic_direct": {
+    "secondes": 32.8,
+    "ok": true
+   },
+   "pmu_direct": {
+    "secondes": 38.3,
+    "ok": true
+   },
+   "netbet": {
+    "secondes": 52.3,
+    "ok": true
+   },
+   "unibet_direct": {
+    "secondes": 44.6,
+    "ok": true
+   },
+   "winamax_direct": {
+    "secondes": 67.7,
+    "ok": true
+   },
+   "smarkets": {
+    "secondes": 0.0,
+    "ok": true,
+    "cache": true
+   },
+   "association": {
+    "secondes": 3.7,
+    "ok": true
+   },
    "comparaison": {
-    "secondes": 1.4,
+    "secondes": 1.9,
     "ok": true
    },
    "origine": {
@@ -73,7 +75,7 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.4,
+    "secondes": 0.3,
     "ok": true
    }
   },
@@ -99,25 +101,25 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 170,
-   "lignes": 7150
+   "lignes": 7148
   },
   "matchbook_fraicheur": {
-   "lignes": 7150,
-   "source_connue": 7150,
+   "lignes": 7148,
+   "source_connue": 7148,
    "source_inconnue": 0,
    "source_invalide": 0,
    "mouvement_min_s": 0,
-   "mouvement_max_s": 52662,
-   "reception": "2026-11-23T09:05:04+00:00"
+   "mouvement_max_s": 52951,
+   "reception": "2026-11-23T09:09:53+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 841,
-   "age_min_s": 106,
-   "lignes": 87029,
-   "lignes_perimees": 62,
+   "age_max_s": 617,
+   "age_min_s": 40,
+   "lignes": 87177,
+   "lignes_perimees": 678,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -127,14 +129,15 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 66,
-    "choisi_fixe": 4,
-    "head_403": 3,
-    "choisi_autre": 1,
-    "complement": 4,
-    "complement_marches": 11,
+    "head_200": 46,
+    "head_403": 8,
     "ortho_refusee": 2,
-    "sport_vide": 1
+    "choisi_fixe": 4,
+    "complement": 4,
+    "complement_marches": 427,
+    "choisi_autre": 1,
+    "sport_vide": 4,
+    "reprise_403": 1
    }
   },
   "polymarket_flux": {
@@ -142,7 +145,10 @@
    "utilises": 0
   },
   "reprise": {
-   "actif": true
+   "actif": true,
+   "Pinnacle": {
+    "snooker": 64
+   }
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -171,10 +177,10 @@
   },
   "unibet_rotation": {
    "secondaires": 63,
-   "depart": 47,
+   "depart": 16,
    "lances": 32,
    "props": 7,
-   "requetes": 69
+   "requetes": 56
   },
   "betclic_onglets": {
    "basket": {
@@ -225,83 +231,83 @@
    "examines": 10,
    "comparaisons": [
     {
-     "match": "Hibernian Edinburgh FC – Dundee",
+     "match": "Slaven Belupo – Osijek",
      "source": "Pinnacle",
-     "cote_olybet": 1.55,
-     "cote_reference": 1.641,
-     "ecart_relatif": 0.0555,
+     "cote_olybet": 2.47,
+     "cote_reference": 2.72,
+     "ecart_relatif": 0.0919,
      "aberrant": false
     },
     {
-     "match": "Hibernian Edinburgh FC – Dundee",
+     "match": "Slaven Belupo – Osijek",
      "source": "PMU",
-     "cote_olybet": 1.55,
-     "cote_reference": 1.6,
-     "ecart_relatif": 0.0312,
+     "cote_olybet": 2.47,
+     "cote_reference": 2.4,
+     "ecart_relatif": 0.0292,
      "aberrant": false
     },
     {
-     "match": "Glasgow Rangers – Aberdeen",
+     "match": "ACS Sepsi OSK – Rapid Bucarest",
      "source": "Pinnacle",
-     "cote_olybet": 1.19,
-     "cote_reference": 1.232,
-     "ecart_relatif": 0.0341,
+     "cote_olybet": 3.94,
+     "cote_reference": 4.31,
+     "ecart_relatif": 0.0858,
      "aberrant": false
     },
     {
-     "match": "Glasgow Rangers – Aberdeen",
+     "match": "ACS Sepsi OSK – Rapid Bucarest",
      "source": "PMU",
-     "cote_olybet": 1.19,
-     "cote_reference": 1.19,
-     "ecart_relatif": 0.0,
+     "cote_olybet": 3.94,
+     "cote_reference": 4.0,
+     "ecart_relatif": 0.015,
      "aberrant": false
     },
     {
-     "match": "FK Bodo/Glimt – LASK Linz",
+     "match": "Gimnasia y Esgrima La Plata – Newell's Old Boys",
      "source": "Pinnacle",
-     "cote_olybet": 1.45,
-     "cote_reference": 1.54,
-     "ecart_relatif": 0.0587,
+     "cote_olybet": 2.05,
+     "cote_reference": 2.18,
+     "ecart_relatif": 0.0596,
      "aberrant": false
     },
     {
-     "match": "FK Bodo/Glimt – LASK Linz",
+     "match": "Gimnasia y Esgrima La Plata – Newell's Old Boys",
      "source": "PMU",
-     "cote_olybet": 1.45,
-     "cote_reference": 1.43,
-     "ecart_relatif": 0.014,
+     "cote_olybet": 2.05,
+     "cote_reference": 1.93,
+     "ecart_relatif": 0.0622,
      "aberrant": false
     },
     {
-     "match": "Galatasaray – Aston Villa",
+     "match": "Ludogorets – Dunav Ruse",
      "source": "Pinnacle",
-     "cote_olybet": 2.59,
-     "cote_reference": 2.84,
-     "ecart_relatif": 0.088,
+     "cote_olybet": 1.09,
+     "cote_reference": 1.124,
+     "ecart_relatif": 0.0302,
      "aberrant": false
     },
     {
-     "match": "Galatasaray – Aston Villa",
+     "match": "Ludogorets – Dunav Ruse",
      "source": "PMU",
-     "cote_olybet": 2.59,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0226,
+     "cote_olybet": 1.09,
+     "cote_reference": 1.06,
+     "ecart_relatif": 0.0283,
      "aberrant": false
     },
     {
-     "match": "Feyenoord – FC Porto",
+     "match": "Internacional – Vitoria",
      "source": "Pinnacle",
-     "cote_olybet": 2.58,
-     "cote_reference": 2.86,
-     "ecart_relatif": 0.0979,
+     "cote_olybet": 1.6,
+     "cote_reference": 1.704,
+     "ecart_relatif": 0.0611,
      "aberrant": false
     },
     {
-     "match": "Feyenoord – FC Porto",
+     "match": "Internacional – Vitoria",
      "source": "PMU",
-     "cote_olybet": 2.58,
-     "cote_reference": 2.65,
-     "ecart_relatif": 0.0264,
+     "cote_olybet": 1.6,
+     "cote_reference": 1.56,
+     "ecart_relatif": 0.0256,
      "aberrant": false
     }
    ],
@@ -310,40 +316,8 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 7,
+   "examines": 9,
    "comparaisons": [
-    {
-     "match": "Ludogorets Razgrad – Dunav Ruse",
-     "source": "Pinnacle",
-     "cote_netbet": 1.06,
-     "cote_reference": 1.124,
-     "ecart_relatif": 0.0569,
-     "aberrant": false
-    },
-    {
-     "match": "Ludogorets Razgrad – Dunav Ruse",
-     "source": "PMU",
-     "cote_netbet": 1.06,
-     "cote_reference": 1.06,
-     "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Digenis Akritas Ypsonas – Anorthosis Famagusta",
-     "source": "Pinnacle",
-     "cote_netbet": 3.05,
-     "cote_reference": 3.23,
-     "ecart_relatif": 0.0557,
-     "aberrant": false
-    },
-    {
-     "match": "Digenis Akritas Ypsonas – Anorthosis Famagusta",
-     "source": "PMU",
-     "cote_netbet": 3.05,
-     "cote_reference": 2.95,
-     "ecart_relatif": 0.0339,
-     "aberrant": false
-    },
     {
      "match": "Holywell – Penybont",
      "source": "PMU",
@@ -353,19 +327,67 @@
      "aberrant": false
     },
     {
-     "match": "Luka Koper – NK Aluminij",
+     "match": "Brøndby – Midtjylland",
      "source": "Pinnacle",
-     "cote_netbet": 1.43,
-     "cote_reference": 1.516,
-     "ecart_relatif": 0.0564,
+     "cote_netbet": 2.3,
+     "cote_reference": 2.49,
+     "ecart_relatif": 0.0763,
      "aberrant": false
     },
     {
-     "match": "Luka Koper – NK Aluminij",
+     "match": "Brøndby – Midtjylland",
+     "source": "PMU",
+     "cote_netbet": 2.3,
+     "cote_reference": 2.3,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Sepsi OSK – Rapid Bucarest",
+     "source": "Pinnacle",
+     "cote_netbet": 3.9,
+     "cote_reference": 4.31,
+     "ecart_relatif": 0.0951,
+     "aberrant": false
+    },
+    {
+     "match": "Sepsi OSK – Rapid Bucarest",
+     "source": "PMU",
+     "cote_netbet": 3.9,
+     "cote_reference": 4.0,
+     "ecart_relatif": 0.025,
+     "aberrant": false
+    },
+    {
+     "match": "Bodø/Glimt – LASK",
+     "source": "Pinnacle",
+     "cote_netbet": 1.43,
+     "cote_reference": 1.54,
+     "ecart_relatif": 0.0717,
+     "aberrant": false
+    },
+    {
+     "match": "Bodø/Glimt – LASK",
      "source": "PMU",
      "cote_netbet": 1.43,
-     "cote_reference": 1.48,
-     "ecart_relatif": 0.0338,
+     "cote_reference": 1.43,
+     "ecart_relatif": 0.0,
+     "aberrant": false
+    },
+    {
+     "match": "Galatasaray – Aston Villa",
+     "source": "Pinnacle",
+     "cote_netbet": 2.67,
+     "cote_reference": 2.84,
+     "ecart_relatif": 0.0599,
+     "aberrant": false
+    },
+    {
+     "match": "Galatasaray – Aston Villa",
+     "source": "PMU",
+     "cote_netbet": 2.67,
+     "cote_reference": 2.65,
+     "ecart_relatif": 0.0075,
      "aberrant": false
     }
    ],
@@ -377,7 +399,7 @@
    "requetes": 87,
    "matchs": 17,
    "props": 788,
-   "ignores": 299,
+   "ignores": 309,
    "avertissements": []
   },
   "props_fanduel": {
@@ -396,15 +418,15 @@
    "requetes": 11,
    "matchs": 18,
    "lignes": 108,
-   "props": 1052,
+   "props": 1070,
    "ignores": 0,
    "avertissements": []
   },
   "props_draftkings": {
-   "draftkings": 526,
+   "draftkings": 535,
    "pinnacle": 42,
    "rapproches": 0,
-   "non_rapproches": 526,
+   "non_rapproches": 535,
    "ecart_proba_moyen": null,
    "ecart_absolu_moyen": null,
    "accord": null,
@@ -414,8 +436,8 @@
    "draftkings": 54,
    "non_rapproches": 0,
    "rapproches": 54,
-   "ecart_absolu_moyen": 0.00586,
-   "ecart_proba_moyen": 0.0002,
+   "ecart_absolu_moyen": 0.00588,
+   "ecart_proba_moyen": 0.00018,
    "accord": 0.9444,
    "par_sport": {
     "basket": {
@@ -430,46 +452,47 @@
     },
     "hockey": {
      "rapproches": 21,
-     "ecart_absolu_moyen": 0.00463,
+     "ecart_absolu_moyen": 0.00468,
      "accord": 1.0
     }
    },
    "reference_seule": true
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-23T09:05:05+00:00",
-   "pinnacle_derniere_lecture": "2026-11-23T09:05:14+00:00",
-   "books_premiere_lecture": "2026-11-23T08:55:23+00:00",
-   "books_derniere_lecture": "2026-11-23T09:05:07+00:00",
-   "ecart_enveloppe_secondes": 591.0
+   "pinnacle_premiere_lecture": "2026-11-23T09:05:13+00:00",
+   "pinnacle_derniere_lecture": "2026-11-23T09:10:06+00:00",
+   "books_premiere_lecture": "2026-11-23T09:00:02+00:00",
+   "books_derniere_lecture": "2026-11-23T09:09:57+00:00",
+   "ecart_enveloppe_secondes": 604.0
   },
   "historique_cotes": {
-   "lignes": 1325
+   "lignes": 389
   },
   "marches_inconnus": {
-   "betclic": 877,
+   "betclic": 1183,
    "pmu": 897
   },
   "smarkets_cache": {
-   "reutilise": false,
-   "perime": false
+   "reutilise": true,
+   "perime": false,
+   "age_min": 4.8
   },
   "smarkets_dans_decision": false,
   "derive": {
-   "sources": 10,
+   "sources": 9,
    "constats": {},
    "alerte_envoyee": false
   },
   "historique_references": {
-   "references": 8005,
+   "references": 4500,
    "releves": 1,
-   "correspondances": 41
+   "correspondances": 2
   },
   "controle": {
    "conforme": 465,
    "a_verifier": 9,
    "non_conforme": 5,
-   "mesures": 25986,
+   "mesures": 25870,
    "matchs_suspects": 0
   },
   "props_joueurs": {
@@ -493,8 +516,8 @@
   },
   "mouvement": {
    "actif": true,
-   "ancres": 11329,
-   "mesures": 8028,
+   "ancres": 10901,
+   "mesures": 6878,
    "annotees": 1,
    "figees": 1
   },
@@ -502,21 +525,21 @@
    "surebets": 0,
    "suspects": 0,
    "verifies": 0,
-   "familles": 8048
+   "familles": 7948
   },
   "boosts": {
    "lus": 3,
    "evalues": 0,
    "couverts": 0,
    "par_bookmaker": {
-    "Winamax": 2,
-    "Unibet": 1
+    "Unibet": 1,
+    "Winamax": 2
    },
    "erreurs": {}
   },
   "euria": {
    "milieux": 117,
-   "conversions": 64
+   "conversions": 63
   },
   "origine": {},
   "redecision": {
@@ -533,27 +556,21 @@
    "dernier_reglement": "2026-11-23T08:34:52+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-23T09:06:50+00:00",
+  "fin": "2026-11-23T09:11:24+00:00",
   "cotes": {
    "francaises": 75252,
-   "pinnacle": 87029,
-   "polymarket": 15462,
+   "pinnacle": 87241,
+   "polymarket": 15628,
    "smarkets": 4063,
-   "matchbook": 7150,
+   "matchbook": 7148,
    "betfair": 0
   },
   "matchs_francais": 952,
-  "opportunites": 4,
+  "opportunites": 3,
   "opportunites_suspectes": 1,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-22T17:15:43+00:00",
-   "mode": "complet",
-   "opportunites": 3,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-22T17:20:27+00:00",
    "mode": "complet",
@@ -1752,6 +1769,12 @@
    "debut": "2026-11-23T09:05:04+00:00",
    "mode": "complet",
    "opportunites": 4,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-23T09:09:53+00:00",
+   "mode": "complet",
+   "opportunites": 3,
    "nouveaux_paris": 0
   }
  ],
