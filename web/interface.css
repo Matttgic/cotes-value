@@ -1233,3 +1233,14 @@ tr.total td{border-top-color:var(--filet)}
   main table:not(.strategies-table) td:not(:first-child)::before{font:400 11px var(--sans);letter-spacing:0;text-transform:none}
 }
 .puce-sport{text-transform:capitalize}
+
+/* Retour du 24/11 (mobile) : les grands chiffres en Geist Mono étaient trop larges (« +286,90 € » chevauchait la note).
+   Mono gardée pour les petits chiffres en colonne ; les grands chiffres passent en Familjen Grotesk à chiffres tabulaires. */
+.bu-kpis b,.analyse-kpis strong,.strategie-apercu strong,.analyse-graph-valeur,.anneau-total,.acc-kpi strong,.acc-cote{
+  font-family:var(--sans);font-weight:500;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.strategie-apercu{flex-wrap:wrap;align-items:flex-start;gap:12px 32px}
+.strategie-apercu>div{min-width:0}
+.strategie-apercu strong,.strategie-apercu .note-strategie{display:block;font-size:clamp(28px,7vw,36px);line-height:1.1;white-space:nowrap}
+.strategie-apercu small{display:block;margin-top:4px;font-size:12px;color:var(--doux)}
+.avis-verdict{font-weight:500;letter-spacing:0}
+.reglages-resume{font:500 14px var(--sans);font-variant-numeric:tabular-nums}
