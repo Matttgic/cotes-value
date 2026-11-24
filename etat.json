@@ -1,6 +1,6 @@
 {
  "dernier_cycle": {
-  "debut": "2026-11-24T10:48:40+00:00",
+  "debut": "2026-11-24T10:53:23+00:00",
   "mode": "complet",
   "etapes": {
    "betfair": {
@@ -9,66 +9,73 @@
     "desactive": true
    },
    "matchbook": {
-    "secondes": 2.8,
+    "secondes": 2.2,
     "ok": true
    },
    "draftkings": {
     "secondes": 2.9,
     "ok": true
    },
+   "winamax_direct": {
+    "secondes": 4.5,
+    "ok": false,
+    "degrade": true,
+    "erreurs": [
+     "sport:1 : réseau (CurlError 22)",
+     "connexion impossible (CurlError 22)",
+     "lecture vide"
+    ]
+   },
    "olybet": {
-    "secondes": 5.7,
+    "secondes": 5.2,
+    "ok": true
+   },
+   "fanduel": {
+    "secondes": 5.3,
     "ok": true
    },
    "polymarket": {
-    "secondes": 8.2,
+    "secondes": 7.4,
     "ok": true,
     "degrade": true,
     "erreurs": [
      "1N2 incomplet ou issues dupliquées : référence rejetée"
     ]
    },
-   "fanduel": {
-    "secondes": 8.6,
-    "ok": true
-   },
    "pinnacle": {
-    "secondes": 19.4,
+    "secondes": 14.7,
     "ok": true,
     "degrade": true,
     "erreurs": [
-     "sport 34 markets/straight : HTTP 403",
      "sport 45 matchups : HTTP 403"
-    ],
-    "reprise": 1144
-   },
-   "betclic_direct": {
-    "secondes": 30.2,
-    "ok": true
+    ]
    },
    "pmu_direct": {
-    "secondes": 34.2,
+    "secondes": 32.9,
     "ok": true
    },
-   "unibet_direct": {
-    "secondes": 34.3,
+   "betclic_direct": {
+    "secondes": 42.7,
     "ok": true
    },
    "netbet": {
-    "secondes": 52.7,
+    "secondes": 52.2,
     "ok": true
    },
-   "winamax_direct": {
-    "secondes": 63.2,
+   "unibet_direct": {
+    "secondes": 67.4,
     "ok": true
    },
    "smarkets": {
-    "secondes": 0.0,
+    "secondes": 20.0,
     "ok": true,
-    "cache": true
+    "degrade": true,
+    "erreurs": [
+     "budget"
+    ]
    },
    "association": {
-    "secondes": 2.6,
+    "secondes": 3.1,
     "ok": true
    },
    "comparaison": {
@@ -80,7 +87,7 @@
     "ok": true
    },
    "cotes_cloture": {
-    "secondes": 0.3,
+    "secondes": 0.2,
     "ok": true
    }
   },
@@ -106,25 +113,25 @@
    "requetes": 2,
    "erreurs": [],
    "matchs": 199,
-   "lignes": 8713
+   "lignes": 8482
   },
   "matchbook_fraicheur": {
-   "lignes": 8713,
-   "source_connue": 8711,
+   "lignes": 8482,
+   "source_connue": 8079,
    "source_inconnue": 0,
-   "source_invalide": 2,
+   "source_invalide": 403,
    "mouvement_min_s": 0,
-   "mouvement_max_s": 27262,
-   "reception": "2026-11-24T10:48:40+00:00"
+   "mouvement_max_s": 11740,
+   "reception": "2026-11-24T10:53:23+00:00"
   },
   "pinnacle_fraicheur": {
    "seuil_min": 10,
    "seuil_loin_min": 16,
    "proche_h": 2,
-   "age_max_s": 884,
-   "age_min_s": 78,
-   "lignes": 99327,
-   "lignes_perimees": 126,
+   "age_max_s": 818,
+   "age_min_s": 10,
+   "lignes": 100451,
+   "lignes_perimees": 130,
    "rechauffeur": "absent",
    "rechauffeur_cause": null,
    "rechauffeur_duree_s": null,
@@ -134,14 +141,15 @@
     "extrait": null
    },
    "choix_prix": {
-    "head_200": 56,
-    "choisi_fixe": 5,
-    "head_403": 6,
+    "head_200": 51,
+    "head_403": 4,
     "ortho_refusee": 2,
-    "complement": 3,
-    "complement_marches": 1112,
-    "reprise_403": 2,
-    "sport_vide": 4
+    "choisi_fixe": 3,
+    "complement": 8,
+    "complement_marches": 7408,
+    "choisi_autre": 2,
+    "sport_vide": 2,
+    "reprise_403": 1
    }
   },
   "polymarket_flux": {
@@ -149,10 +157,7 @@
    "utilises": 0
   },
   "reprise": {
-   "actif": true,
-   "Pinnacle": {
-    "volley": 1144
-   }
+   "actif": true
   },
   "sports_francais": {
    "source": "cycle précédent",
@@ -182,10 +187,10 @@
   },
   "unibet_rotation": {
    "secondaires": 63,
-   "depart": 21,
+   "depart": 53,
    "lances": 32,
    "props": 7,
-   "requetes": 50
+   "requetes": 77
   },
   "betclic_onglets": {
    "basket": {
@@ -227,8 +232,48 @@
   "olybet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 9,
    "comparaisons": [
+    {
+     "match": "Radnicki Nis – Zeleznicar Pancevo",
+     "source": "Pinnacle",
+     "cote_olybet": 3.93,
+     "cote_reference": 4.1,
+     "ecart_relatif": 0.0415,
+     "aberrant": false
+    },
+    {
+     "match": "Chapecoense – Palmeiras",
+     "source": "Pinnacle",
+     "cote_olybet": 3.01,
+     "cote_reference": 3.43,
+     "ecart_relatif": 0.1224,
+     "aberrant": false
+    },
+    {
+     "match": "Chapecoense – Palmeiras",
+     "source": "PMU",
+     "cote_olybet": 3.01,
+     "cote_reference": 3.15,
+     "ecart_relatif": 0.0444,
+     "aberrant": false
+    },
+    {
+     "match": "Earthquakes de San José – Houston Dynamo",
+     "source": "Pinnacle",
+     "cote_olybet": 2.01,
+     "cote_reference": 2.15,
+     "ecart_relatif": 0.0651,
+     "aberrant": false
+    },
+    {
+     "match": "Earthquakes de San José – Houston Dynamo",
+     "source": "PMU",
+     "cote_olybet": 2.01,
+     "cote_reference": 2.0,
+     "ecart_relatif": 0.005,
+     "aberrant": false
+    },
     {
      "match": "Holywell Town FC – Penybont FC",
      "source": "Pinnacle",
@@ -246,67 +291,19 @@
      "aberrant": false
     },
     {
-     "match": "Charlton Athletic – Lincoln City",
+     "match": "Glasgow Rangers – Aberdeen",
      "source": "Pinnacle",
-     "cote_olybet": 2.7,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.0909,
+     "cote_olybet": 1.18,
+     "cote_reference": 1.223,
+     "ecart_relatif": 0.0349,
      "aberrant": false
     },
     {
-     "match": "Charlton Athletic – Lincoln City",
+     "match": "Glasgow Rangers – Aberdeen",
      "source": "PMU",
-     "cote_olybet": 2.7,
-     "cote_reference": 2.5,
-     "ecart_relatif": 0.08,
-     "aberrant": false
-    },
-    {
-     "match": "Norwich City – Queens Park Rangers",
-     "source": "Pinnacle",
-     "cote_olybet": 1.87,
-     "cote_reference": 2.01,
-     "ecart_relatif": 0.0697,
-     "aberrant": false
-    },
-    {
-     "match": "Norwich City – Queens Park Rangers",
-     "source": "PMU",
-     "cote_olybet": 1.87,
-     "cote_reference": 1.87,
+     "cote_olybet": 1.18,
+     "cote_reference": 1.18,
      "ecart_relatif": 0.0,
-     "aberrant": false
-    },
-    {
-     "match": "Bolton Wanderers – West Bromwich",
-     "source": "Pinnacle",
-     "cote_olybet": 3.27,
-     "cote_reference": 3.63,
-     "ecart_relatif": 0.0992,
-     "aberrant": false
-    },
-    {
-     "match": "Bolton Wanderers – West Bromwich",
-     "source": "PMU",
-     "cote_olybet": 3.27,
-     "cote_reference": 3.2,
-     "ecart_relatif": 0.0219,
-     "aberrant": false
-    },
-    {
-     "match": "Stoke City – Millwall",
-     "source": "Pinnacle",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.22,
-     "ecart_relatif": 0.0631,
-     "aberrant": false
-    },
-    {
-     "match": "Stoke City – Millwall",
-     "source": "PMU",
-     "cote_olybet": 2.08,
-     "cote_reference": 2.15,
-     "ecart_relatif": 0.0326,
      "aberrant": false
     }
    ],
@@ -324,105 +321,106 @@
   "netbet_controle": {
    "ok": true,
    "seuil_relatif": 0.15,
-   "examines": 10,
+   "examines": 8,
    "comparaisons": [
     {
-     "match": "Bristol City – Wrexham",
+     "match": "Holywell – Penybont",
      "source": "Pinnacle",
-     "cote_netbet": 2.22,
-     "cote_reference": 2.51,
-     "ecart_relatif": 0.1155,
+     "cote_netbet": 12.0,
+     "cote_reference": 12.6,
+     "ecart_relatif": 0.0476,
      "aberrant": false
     },
     {
-     "match": "Bristol City – Wrexham",
+     "match": "Holywell – Penybont",
      "source": "PMU",
-     "cote_netbet": 2.22,
-     "cote_reference": 2.23,
-     "ecart_relatif": 0.0045,
-     "aberrant": false
+     "cote_netbet": 12.0,
+     "cote_reference": 10.0,
+     "ecart_relatif": 0.2,
+     "aberrant": true
     },
     {
-     "match": "Cardiff City – Preston North End",
+     "match": "FK Radnicki Nis – Zeleznicar Pancevo",
      "source": "Pinnacle",
-     "cote_netbet": 1.37,
-     "cote_reference": 1.508,
-     "ecart_relatif": 0.0913,
+     "cote_netbet": 3.95,
+     "cote_reference": 4.1,
+     "ecart_relatif": 0.0366,
      "aberrant": false
     },
     {
-     "match": "Cardiff City – Preston North End",
+     "match": "Kryvbas Kryvyi Rih – FC Kharkiv",
      "source": "PMU",
-     "cote_netbet": 1.37,
-     "cote_reference": 1.45,
-     "ecart_relatif": 0.0552,
+     "cote_netbet": 5.3,
+     "cote_reference": 5.5,
+     "ecart_relatif": 0.0364,
      "aberrant": false
     },
     {
-     "match": "Charlton Athletic – Lincoln City",
+     "match": "Feyenoord – FC Porto",
      "source": "Pinnacle",
-     "cote_netbet": 2.6,
-     "cote_reference": 2.97,
-     "ecart_relatif": 0.1246,
+     "cote_netbet": 2.97,
+     "cote_reference": 3.32,
+     "ecart_relatif": 0.1054,
      "aberrant": false
     },
     {
-     "match": "Charlton Athletic – Lincoln City",
+     "match": "Feyenoord – FC Porto",
      "source": "PMU",
-     "cote_netbet": 2.6,
-     "cote_reference": 2.5,
-     "ecart_relatif": 0.04,
+     "cote_netbet": 2.97,
+     "cote_reference": 3.05,
+     "ecart_relatif": 0.0262,
      "aberrant": false
     },
     {
-     "match": "Middlesbrough FC – Swansea City",
+     "match": "Sabah – FC Barcelone",
      "source": "Pinnacle",
-     "cote_netbet": 1.35,
-     "cote_reference": 1.476,
-     "ecart_relatif": 0.0855,
-     "aberrant": false
+     "cote_netbet": 19.0,
+     "cote_reference": 22.37,
+     "ecart_relatif": 0.1506,
+     "aberrant": true
     },
     {
-     "match": "Middlesbrough FC – Swansea City",
+     "match": "Sabah – FC Barcelone",
      "source": "PMU",
-     "cote_netbet": 1.35,
-     "cote_reference": 1.42,
-     "ecart_relatif": 0.0493,
-     "aberrant": false
-    },
-    {
-     "match": "Norwich – Queens Park Rangers",
-     "source": "Pinnacle",
-     "cote_netbet": 1.78,
-     "cote_reference": 2.01,
-     "ecart_relatif": 0.1144,
-     "aberrant": false
-    },
-    {
-     "match": "Norwich – Queens Park Rangers",
-     "source": "PMU",
-     "cote_netbet": 1.78,
-     "cote_reference": 1.87,
-     "ecart_relatif": 0.0481,
+     "cote_netbet": 19.0,
+     "cote_reference": 18.0,
+     "ecart_relatif": 0.0556,
      "aberrant": false
     }
    ],
-   "aberrants": []
+   "aberrants": [
+    {
+     "match": "Holywell – Penybont",
+     "source": "PMU",
+     "cote_netbet": 12.0,
+     "cote_reference": 10.0,
+     "ecart_relatif": 0.2,
+     "aberrant": true
+    },
+    {
+     "match": "Sabah – FC Barcelone",
+     "source": "Pinnacle",
+     "cote_netbet": 19.0,
+     "cote_reference": 22.37,
+     "ecart_relatif": 0.1506,
+     "aberrant": true
+    }
+   ]
   },
   "fanduel": {
    "mode": "direct",
    "ok": true,
    "requetes": 27,
    "matchs": 5,
-   "props": 252,
+   "props": 284,
    "ignores": 83,
    "avertissements": []
   },
   "props_fanduel": {
-   "fanduel": 126,
+   "fanduel": 142,
    "pinnacle": 261,
    "rapproches": 45,
-   "non_rapproches": 81,
+   "non_rapproches": 97,
    "ecart_proba_moyen": 0.00326,
    "ecart_absolu_moyen": 0.01251,
    "accord": 0.8222,
@@ -444,7 +442,7 @@
    "rapproches": 55,
    "non_rapproches": 116,
    "ecart_proba_moyen": -0.00186,
-   "ecart_absolu_moyen": 0.02098,
+   "ecart_absolu_moyen": 0.02083,
    "accord": 0.8727,
    "reference_seule": true
   },
@@ -470,23 +468,22 @@
    "reference_seule": true
   },
   "fraicheur_prematch": {
-   "pinnacle_premiere_lecture": "2026-11-24T10:44:06+00:00",
-   "pinnacle_derniere_lecture": "2026-11-24T10:48:58+00:00",
+   "pinnacle_premiere_lecture": "2026-11-24T10:53:25+00:00",
+   "pinnacle_derniere_lecture": "2026-11-24T10:53:37+00:00",
    "books_premiere_lecture": "2026-11-24T10:24:32+00:00",
-   "books_derniere_lecture": "2026-11-24T10:48:43+00:00",
-   "ecart_enveloppe_secondes": 1466.0
+   "books_derniere_lecture": "2026-11-24T10:53:27+00:00",
+   "ecart_enveloppe_secondes": 1745.0
   },
   "historique_cotes": {
-   "lignes": 2572
+   "lignes": 3325
   },
   "marches_inconnus": {
-   "betclic": 995,
+   "betclic": 3419,
    "pmu": 1218
   },
   "smarkets_cache": {
-   "reutilise": true,
-   "perime": false,
-   "age_min": 14.3
+   "reutilise": false,
+   "perime": false
   },
   "smarkets_dans_decision": false,
   "derive": {
@@ -495,23 +492,22 @@
    "alerte_envoyee": false
   },
   "historique_references": {
-   "references": 9122,
+   "references": 13897,
    "releves": 1,
-   "correspondances": 0
+   "correspondances": 11
   },
   "controle": {
    "conforme": 462,
    "a_verifier": 9,
    "non_conforme": 6,
-   "mesures": 26555,
+   "mesures": 21668,
    "matchs_suspects": 0
   },
   "props_joueurs": {
    "pinnacle": 522,
-   "Winamax": 2468,
    "Unibet": 313,
-   "rapproches": 73,
-   "valeur": 1
+   "rapproches": 5,
+   "valeur": 0
   },
   "props_papier": {
    "seuil": 0.02,
@@ -527,8 +523,8 @@
   },
   "mouvement": {
    "actif": true,
-   "ancres": 12089,
-   "mesures": 8351,
+   "ancres": 12031,
+   "mesures": 8349,
    "annotees": 1,
    "figees": 0
   },
@@ -536,22 +532,23 @@
    "surebets": 0,
    "suspects": 0,
    "verifies": 0,
-   "familles": 8518
+   "familles": 8432
   },
   "boosts": {
-   "lus": 9,
+   "lus": 7,
    "evalues": 1,
    "couverts": 0,
    "par_bookmaker": {
-    "OlyBet": 2,
     "Unibet": 5,
-    "Winamax": 2
+    "OlyBet": 2
    },
-   "erreurs": {}
+   "erreurs": {
+    "Winamax": "PageInattendue : sport:100000 : réseau (CurlError 22)"
+   }
   },
   "euria": {
    "milieux": 0,
-   "conversions": 59
+   "conversions": 50
   },
   "origine": {},
   "redecision": {
@@ -568,27 +565,21 @@
    "dernier_reglement": "2026-11-24T10:26:32+00:00"
   },
   "controle_publie": false,
-  "fin": "2026-11-24T10:49:59+00:00",
+  "fin": "2026-11-24T10:55:25+00:00",
   "cotes": {
-   "francaises": 86842,
-   "pinnacle": 100471,
-   "polymarket": 19686,
-   "smarkets": 4110,
-   "matchbook": 8713,
+   "francaises": 73608,
+   "pinnacle": 100451,
+   "polymarket": 19731,
+   "smarkets": 4111,
+   "matchbook": 8482,
    "betfair": 0
   },
-  "matchs_francais": 1108,
-  "opportunites": 3,
+  "matchs_francais": 913,
+  "opportunites": 2,
   "opportunites_suspectes": 0,
   "nouveaux_paris": 0
  },
  "historique": [
-  {
-   "debut": "2026-11-23T18:55:54+00:00",
-   "mode": "complet",
-   "opportunites": 1,
-   "nouveaux_paris": 0
-  },
   {
    "debut": "2026-11-23T19:00:31+00:00",
    "mode": "complet",
@@ -1787,6 +1778,12 @@
    "debut": "2026-11-24T10:48:40+00:00",
    "mode": "complet",
    "opportunites": 3,
+   "nouveaux_paris": 0
+  },
+  {
+   "debut": "2026-11-24T10:53:23+00:00",
+   "mode": "complet",
+   "opportunites": 2,
    "nouveaux_paris": 0
   }
  ],
