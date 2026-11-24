@@ -3,8 +3,7 @@
    Polices sous licence OFL, servies en WOFF2 depuis polices/ : titres, texte, chiffres. */
 @font-face{font-family:"Instrument Serif";font-display:swap;src:url("polices/InstrumentSerif-Regular.woff2") format("woff2")}
 @font-face{font-family:"Familjen Grotesk";font-weight:400 700;font-display:swap;src:url("polices/FamiljenGrotesk-VariableFont_wght.woff2") format("woff2")}
-@font-face{font-family:"Geist Mono";font-weight:100 900;font-display:swap;src:url("polices/GeistMono-VariableFont_wght.woff2") format("woff2")}
-:root{color-scheme:light;--serif:"Instrument Serif",Georgia,serif;--sans:"Familjen Grotesk",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
+:root{color-scheme:light;--serif:"Instrument Serif",Georgia,serif;--sans:"Familjen Grotesk",system-ui,sans-serif;--mono:var(--sans);
 --fond:#ECE9E1;--carte:#ECE9E1;--texte:#12120F;--doux:#6F6C63;--discret:#9A968C;--ligne:#C9C4B8;--accent:#12120F;--accent-f:#E3DFD5;
 --signal:#F2541B;--vert:#2F6B3F;--vert-f:#E3DFD5;--rouge:#9C3B2E;--rouge-f:#E4D8CF;--graph-neg:#9C3B2E;--jaune:#12120F;--jaune-f:#E3DFD5;
 --serie:#12120F;--attendu:#9A968C;--attente:var(--rouge);--vert-gagne:#2F6B3F}
@@ -1233,3 +1232,17 @@ tr.total td{border-top-color:var(--filet)}
   main table:not(.strategies-table) td:not(:first-child)::before{font:400 11px var(--sans);letter-spacing:0;text-transform:none}
 }
 .puce-sport{text-transform:capitalize}
+
+/* Retour du 24/11 (mobile) : une seule police partout. Geist Mono retirée : ses grands chiffres étaient trop larges
+   (« +286,90 € » chevauchait la note) et ses chiffres différaient du texte. Familjen Grotesk à chiffres tabulaires
+   pour tout, colonnes comprises. */
+:root{--mono:var(--sans)}
+body,input,select,button,textarea,svg text{font-variant-numeric:tabular-nums}
+.bu-kpis b,.analyse-kpis strong,.strategie-apercu strong,.analyse-graph-valeur,.anneau-total,.acc-kpi strong,.acc-cote{
+  font-family:var(--sans);font-weight:500;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.strategie-apercu{flex-wrap:wrap;align-items:flex-start;gap:12px 32px}
+.strategie-apercu>div{min-width:0}
+.strategie-apercu strong,.strategie-apercu .note-strategie{display:block;font-size:clamp(28px,7vw,36px);line-height:1.1;white-space:nowrap}
+.strategie-apercu small{display:block;margin-top:4px;font-size:12px;color:var(--doux)}
+.avis-verdict{font-weight:500;letter-spacing:0}
+.reglages-resume{font:500 14px var(--sans);font-variant-numeric:tabular-nums}
