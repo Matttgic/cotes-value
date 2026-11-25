@@ -51,7 +51,10 @@ FICHIERS: dict[str, Fichier] = {
     "boosts.json": Fichier("chaud", _COMPACT, [_CYCLE], [_SITE, _ALERTES, _CYCLE],
                            "boosts du cycle ; épisodes des 30 derniers jours (1 500 au plus)"),
     "euria.json": Fichier("chaud", _COMPACT, [_CYCLE], [_SITE, _ALERTES, _CYCLE],
-                          "page Euria : milieux et conversions de freebets du cycle ; épisodes des milieux (21 jours)"),
+                          "page Euria : milieux et conversions de freebets du cycle ; milieux pas encore réglés "
+                          "(60 jours, 5 000 au plus)"),
+    "euria_regles.json": Fichier("chaud", _COMPACT, [_CYCLE], [_SITE, _CYCLE],
+                                 "milieux réglés de la page Euria, matchs des 60 derniers jours, sans plafond"),
     "props_papier.json": Fichier("chaud", _COMPACT, ["cotes/props_papier.py"], [_CYCLE, _SITE]),
     "persistance_qwen.json": Fichier("chaud", _JSON, [_CYCLE], [_CYCLE]),
     "resultats_manuels.json": Fichier("chaud", "json écrit à la main", ["à la main"], [_CYCLE, "études"],
