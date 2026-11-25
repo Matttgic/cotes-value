@@ -134,7 +134,7 @@ n'a pas une des lignes, sa probabilité est estimée, marquée « estimée » : 
 proche pour les totaux de buts du football et du hockey, à 2 buts au plus ; loi normale ajustée sur au moins deux
 lignes connues ailleurs ; la cote doit rester à −30 %/+15 % de sa cote estimée) et, pour chaque
 bookmaker, les meilleurs paris pour **convertir un freebet** ou un « pari remboursé si perdant » en gain garanti.
-`donnees/euria.json` garde aussi les milieux pas encore réglés (tous ceux du cycle sont suivis, 300 seulement affichés ; 10 000 au plus) ; une fois réglés, ils passent dans `donnees/euria_regles/AAAA-MM.json` (mois du match), gardés pour toujours : bilan et Stats d'Euria, choix futur des critères. Le site publie `euria.json` (à venir seulement), lu par la
+`donnees/euria.json` garde aussi les milieux pas encore réglés (tous ceux du cycle sont suivis, 300 seulement affichés ; 10 000 au plus) ; une fois réglés, ils passent dans `donnees/euria_regles/AAAA-MM.json` (mois du match), gardés pour toujours : bilan et Stats d'Euria, choix futur des critères. Sont aussi suivis, dans tous les sports, les milieux presque en value (espérance jusqu'à −2 € pour 100 €, `SEUIL_SUIVI`) : marqués hors value (`en_value`), jamais affichés, alertés ni comptés dans le bilan, réglés et archivés pour l'onglet Stats. Le site publie `euria.json` (à venir seulement), lu par la
 page Euria (dépôt Euria, même origine matttgic.github.io), et `euria-stats.json` : tous les milieux réglés, une ligne
 par milieu (onglet Stats d'Euria : résultat par sport, type de pari, largeur, espérance, chance, bookmakers…). Case **Milieux en value** dans « Alertes Pushover » :
 espérance d'au moins `MILIEU_SEUIL_ALERTE` (2 %) de la mise, une fois par milieu.
