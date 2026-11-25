@@ -41,7 +41,11 @@ from statistics import NormalDist, median
 from . import surebets as SB
 
 TOTAL = 100.0
-MILIEUX_MAX = 300                 # milieux publiés (poids de la page) ; tous sont suivis pour le bilan et les Stats
+MILIEUX_MAX = 300                 # milieux en value publiés (poids de la page) ; tous sont suivis pour les Stats
+# Milieux suivis (réglés, archivés, onglet Stats) jusqu'à cette espérance, en € pour 100 € : les milieux presque en
+# value, de tous les sports, servent à choisir plus tard les critères (en value, seuls le basket et la NFL en donnaient
+# vraiment). Ils sont marqués « hors value » (en_value faux) : jamais affichés, alertés ni comptés dans le bilan.
+SEUIL_SUIVI = -2.0
 CONVERSIONS_PAR_BOOK = 8
 VALEUR_REMBOURSEMENT = 0.75
 SEUIL_ALERTE_MILIEU = 0.02
@@ -57,7 +61,7 @@ REGLES_PUBLIES = 60
 # découpages faits dans le navigateur). Colonnes dans l'ordre de STATS_COLONNES.
 STATS_COLONNES = ("debut", "match", "sport", "ligue", "marche", "periode", "largeur", "reference", "bookmakers", "cotes",
                   "esperance", "p_milieu", "estime", "milieu_100", "hors_100", "avance_h", "duree_min",
-                  "esperance_derniere", "resultat_100", "tombe")
+                  "esperance_derniere", "resultat_100", "tombe", "en_value")
 # Chance estimée quand Pinnacle n'a pas l'une des deux lignes : loi de Poisson ajustée sur la ligne connue la plus
 # proche (totaux de buts du football et du hockey), sinon loi normale ajustée sur au moins deux lignes connues du
 # match. Une ligne estimée doit rester proche des lignes connues, et sa cote proche de sa cote estimée.
@@ -213,7 +217,7 @@ def milieux(familles: dict, matchs: dict, maintenant: datetime, total: float = T
             m1 = total * c2 / (c1 + c2)
             m2 = total - m1
             esperance = m1 * (c1 * p1 - 1) + m2 * (c2 * p2 - 1)
-            if esperance <= 0:
+            if esperance <= SEUIL_SUIVI:
                 continue
             cle_m = "|".join(str(x) for x in (nom, mid, marche, periode, l1, l2))
             jambes = []
@@ -232,7 +236,8 @@ def milieux(familles: dict, matchs: dict, maintenant: datetime, total: float = T
                 "jambes": jambes, "estime": bool(estime),
                 "p_milieu": round(p_milieu, 4), "p_dessous": round(1 - p1, 4), "p_dessus": round(1 - p2, 4),
                 "mises_100": [round(m1, 2), round(m2, 2)], "milieu_100": round(m1 * c1 + m2 * c2 - total, 2),
-                "hors_100": round(m1 * c1 - total, 2), "esperance_100": round(esperance, 2)}
+                "hors_100": round(m1 * c1 - total, 2), "esperance_100": round(esperance, 2),
+                "en_value": esperance > 0}
     return sorted(meilleurs.values(), key=lambda x: -x["esperance_100"])
 
 
@@ -326,6 +331,25 @@ def calculer(francais: list[dict], index: dict, maintenant: datetime,
     return {"milieux": milieux(familles, matchs, maintenant), "conversions": conversions(familles, matchs, maintenant)}
 
 
+def _instantane(m: dict, t: str) -> dict:
+    """Ce qui règle un milieu et le décrit dans le bilan : lu à sa première lecture, ou à sa première lecture en value
+    s'il était hors value avant (``value_depuis``)."""
+    en_value = m.get("en_value", m["esperance_100"] > 0)
+    return {"esperance_initiale": m["esperance_100"], "p_milieu_initiale": m["p_milieu"], "estime": bool(m.get("estime")),
+            "en_value": en_value, **({"value_depuis": t} if en_value else {}),
+            "bookmakers": sorted({j["bookmaker"] for j in m["jambes"]}),
+            "cotes": [j["cote"] for j in m["jambes"]], "lignes": [j["ligne"] for j in m["jambes"]],
+            # pour le règlement (bilan) : équipes dans le sens de la référence, issues, mises et résultats prévus
+            "domicile": m.get("domicile"), "exterieur": m.get("exterieur"),
+            "issues": [j["issue"] for j in m["jambes"]], "mises_100": m["mises_100"],
+            "milieu_100": m["milieu_100"], "hors_100": m["hors_100"]}
+
+
+def en_value(e: dict) -> bool:
+    """Milieu en value (affiché, compté dans le bilan) ; les épisodes d'avant le suivi « hors value » l'étaient tous."""
+    return bool(e.get("en_value", True))
+
+
 def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime, archives: set | frozenset = frozenset()) -> list[dict]:
     """Un épisode par milieu (même match, marché, période et lignes) : première et dernière lecture, espérance et
     probabilité du milieu à la première lecture. Les milieux réglés déjà dans l'archive (clés ``archives``) sortent de
@@ -336,18 +360,14 @@ def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime, archive
     t = maintenant.isoformat(timespec="seconds")
     for m in actuels:
         e = episodes.get(m["cle"])
+        value_m = m.get("en_value", m["esperance_100"] > 0)
         if e is None:
             e = episodes[m["cle"]] = {
                 "cle": m["cle"], "id": m["id"], "premier": t, "cycles": 0,
                 **{k: m.get(k) for k in ("sport", "ligue", "match", "debut", "marche", "periode", "de", "a", "unite",
-                                         "reference")},
-                "esperance_initiale": m["esperance_100"], "p_milieu_initiale": m["p_milieu"], "estime": bool(m.get("estime")),
-                "bookmakers": sorted({j["bookmaker"] for j in m["jambes"]}),
-                "cotes": [j["cote"] for j in m["jambes"]], "lignes": [j["ligne"] for j in m["jambes"]],
-                # pour le règlement (bilan) : équipes dans le sens de la référence, issues, mises et résultats prévus
-                "domicile": m.get("domicile"), "exterieur": m.get("exterieur"),
-                "issues": [j["issue"] for j in m["jambes"]], "mises_100": m["mises_100"],
-                "milieu_100": m["milieu_100"], "hors_100": m["hors_100"]}
+                                         "reference")}, **_instantane(m, t)}
+        elif value_m and not e.get("en_value", True) and "resultat_100" not in e:
+            e.update(_instantane(m, t))                  # hors value devenu value : réglé aux cotes de la value
         e["dernier"], e["cycles"] = t, e["cycles"] + 1
         e["esperance_derniere"] = m["esperance_100"]
     limite = maintenant - timedelta(days=GARDER_JOURS)
@@ -358,10 +378,13 @@ def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime, archive
         # plus proche, commencés depuis moins d'un jour (bientôt réglés)
         veille = maintenant - timedelta(days=1)
         d = {id(e): _t(e.get("debut")) or maintenant for e in ouverts}
-        vieux = sorted((e for e in ouverts if d[id(e)] < veille), key=lambda e: d[id(e)])
-        a_venir = sorted((e for e in ouverts if d[id(e)] > maintenant), key=lambda e: d[id(e)], reverse=True)
-        recents = sorted((e for e in ouverts if veille <= d[id(e)] <= maintenant), key=lambda e: d[id(e)])
-        ouverts = (vieux + a_venir + recents)[-EPISODES_MAX:]
+        def ordre(es):
+            vieux = sorted((e for e in es if d[id(e)] < veille), key=lambda e: d[id(e)])
+            a_venir = sorted((e for e in es if d[id(e)] > maintenant), key=lambda e: d[id(e)], reverse=True)
+            recents = sorted((e for e in es if veille <= d[id(e)] <= maintenant), key=lambda e: d[id(e)])
+            return vieux + a_venir + recents
+        # les hors value partent avant les milieux en value
+        ouverts = (ordre([e for e in ouverts if not en_value(e)]) + ordre([e for e in ouverts if en_value(e)]))[-EPISODES_MAX:]
     garde = [e for e in garde if "resultat_100" in e] + ouverts
     return sorted(garde, key=lambda e: e.get("premier") or "")
 
@@ -458,7 +481,7 @@ def stats(episodes: list[dict]) -> dict:
     for e in sorted((e for e in episodes if isinstance(e, dict) and "resultat_100" in e),
                     key=lambda e: e.get("debut") or "", reverse=True):
         de, a = e.get("de"), e.get("a")
-        x = {**e, "esperance": e.get("esperance_initiale"), "p_milieu": e.get("p_milieu_initiale"),
+        x = {**e, "esperance": e.get("esperance_initiale"), "p_milieu": e.get("p_milieu_initiale"), "en_value": en_value(e),
              "largeur": a - de + 1 if isinstance(de, (int, float)) and isinstance(a, (int, float)) else None,
              "avance_h": _heures(e.get("premier"), e.get("debut"), 3600),
              "duree_min": _heures(e.get("premier"), e.get("dernier"), 60), "tombe": bool(e.get("tombe"))}
@@ -468,7 +491,8 @@ def stats(episodes: list[dict]) -> dict:
 
 def publier(calcul: dict, episodes: list[dict], maintenant: datetime) -> dict:
     """Document ``donnees/euria.json``."""
-    return {"maj": maintenant.isoformat(timespec="seconds"), **calcul, "milieux": (calcul.get("milieux") or [])[:MILIEUX_MAX],
+    value = [m for m in calcul.get("milieux") or [] if m.get("en_value", True)]
+    return {"maj": maintenant.isoformat(timespec="seconds"), **calcul, "milieux": value[:MILIEUX_MAX],
             "episodes_milieux": episodes}
 
 
@@ -484,8 +508,9 @@ def publie(doc: dict | None, surebets_publies: dict | None, boosts_publies: dict
     Boosts de Cote Value)."""
     doc = doc if isinstance(doc, dict) else {}
     regles = regles_connus(doc, archive)
-    episodes = [e for e in doc.get("episodes_milieux") or []
-                if isinstance(e, dict) and e.get("premier") and "resultat_100" not in e] + regles
+    episodes = [e for e in [x for x in doc.get("episodes_milieux") or []
+                            if isinstance(x, dict) and x.get("premier") and "resultat_100" not in x] + regles
+                if en_value(e)]                          # le bilan de la page : milieux en value seulement
     conv = {b: [x for x in liste if isinstance(x, dict) and _a_venir(x, maintenant)]
             for b, liste in (doc.get("conversions") or {}).items() if isinstance(liste, list)}
     sb = [s for s in (surebets_publies or {}).get("actuels") or [] if not s.get("suspect")]

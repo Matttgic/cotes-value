@@ -75,8 +75,10 @@ def test_milieu_sur_les_handicaps_et_match_ecrit_a_l_envers():
 
 
 def test_pas_de_milieu_sans_value_ni_cote_juste():
-    perdant = [{**l, "cote": round(l["cote"] - 0.15, 2)} for l in TOTAUX]   # deux jambes sous leur cote juste
+    perdant = [{**l, "cote": round(l["cote"] - 0.30, 2)} for l in TOTAUX]   # deux jambes loin sous leur cote juste
     assert E.milieux(*_calcul(perdant, _index(J_TOTAUX, J_TOTAUX)), T) == []
+    presque = [{**l, "cote": round(l["cote"] - 0.15, 2)} for l in TOTAUX]   # −1,5 € pour 100 € : suivi, hors value
+    assert [m["en_value"] for m in E.milieux(*_calcul(presque, _index(J_TOTAUX, J_TOTAUX)), T)] == [False]
     sans = {k: v for k, v in J_TOTAUX.items() if k[2] != 213.5}
     assert E.milieux(*_calcul(TOTAUX, _index(sans, sans)), T) == []
 
@@ -142,8 +144,8 @@ def test_cycle_suivi_alerte_et_message(tmp_path):
     from cotes.alertes.pushover import message_pushover
     from cotes.pipeline.analyse import euria_du_cycle
     idx = _index(J_TOTAUX, J_TOTAUX)
-    assert euria_du_cycle(tmp_path, TOTAUX, idx, None, {}, maintenant=T) == {"milieux": 1, "conversions": 2,
-                                                                          "archives": 0}
+    assert euria_du_cycle(tmp_path, TOTAUX, idx, None, {}, maintenant=T) == {"milieux": 1, "hors_value": 0,
+                                                                          "conversions": 2, "archives": 0}
     euria_du_cycle(tmp_path, TOTAUX, idx, None, {}, maintenant=T + timedelta(minutes=5))
     doc = json.loads((tmp_path / "euria.json").read_text())
     assert doc["episodes_milieux"][0]["cycles"] == 2 and len(doc["milieux"]) == 1
@@ -363,3 +365,48 @@ def test_plafond_sur_les_seuls_milieux_pas_encore_regles(monkeypatch):
     eps = [ep("loin", "2026-11-20T00:00:00+00:00"), ep("proche", "2026-11-16T15:00:00+00:00"),
            ep("en_cours", "2026-11-16T10:00:00+00:00")]
     assert sorted(x["cle"] for x in E.suivre({"episodes_milieux": eps}, [], T)) == ["en_cours", "proche"]
+
+
+# Moins de 213,5 à 1,75 chez Betclic (juste : 1,89) : espérance −0,39 € pour 100 €, milieu « hors value ».
+PRESQUE = [_l("Winamax", 1, "TOTAL", "PLUS", 1.95, 210.5), _l("Betclic", 2, "TOTAL", "MOINS", 1.75, 213.5)]
+
+
+def test_milieux_presque_en_value_suivis_hors_value(tmp_path):
+    """Jusqu'à −2 € pour 100 € (SEUIL_SUIVI), les milieux sont suivis, réglés, archivés et dans les Stats, marqués hors
+    value ; jamais affichés, alertés ni comptés dans le bilan de la page. Devenu value, un milieu est réglé aux cotes
+    de sa première lecture en value."""
+    from cotes.alertes import promos
+    from cotes.pipeline.analyse import euria_du_cycle
+    idx = _index(J_TOTAUX, J_TOTAUX)
+    (m,) = E.milieux(*_calcul(PRESQUE, idx), T)
+    assert m["esperance_100"] == pytest.approx(-0.39, abs=0.01) and m["en_value"] is False
+    assert euria_du_cycle(tmp_path, PRESQUE, idx, None, {}, maintenant=T) == {
+        "milieux": 0, "hors_value": 1, "conversions": 0, "archives": 0}
+    doc = json.loads((tmp_path / "euria.json").read_text())
+    (e,) = doc["episodes_milieux"]
+    assert doc["milieux"] == [] and e["en_value"] is False and "value_depuis" not in e
+    assert promos.alertes(tmp_path, {}, {"milieux"}, T + timedelta(minutes=1)) == []
+    d = E.publie(doc, None, None, T)
+    assert d["bilan_milieux"]["7"]["n"] == 0 and d["bilan_regle"]["tout"]["en_attente"] == 0
+    # réglé : dans les Stats (en_value faux), pas dans le bilan
+    assert PR.regler_episode(e, {"score": (110, 102), "periodes": [], "libelles": []})
+    s = E.stats([e])
+    assert dict(zip(s["colonnes"], s["lignes"][0]))["en_value"] is False
+    d = E.publie({"episodes_milieux": [e]}, None, None, T + timedelta(hours=6))
+    assert d["bilan_regle"]["tout"]["n"] == 0 and d["regles"] == []
+    # hors value puis value : instantané de la value (cotes, espérance), première lecture gardée
+    (v,) = E.milieux(*_calcul(TOTAUX, idx), T)
+    (h,) = E.suivre({}, [m], T)
+    (x,) = E.suivre({"episodes_milieux": [h]}, [v], T + timedelta(minutes=5))
+    assert x["en_value"] is True and x["esperance_initiale"] == v["esperance_100"] and x["cotes"] == [1.95, 2.0]
+    assert x["premier"] == ISO and x["value_depuis"] == (T + timedelta(minutes=5)).isoformat(timespec="seconds")
+    (y,) = E.suivre({"episodes_milieux": [x]}, [m], T + timedelta(minutes=10))      # repasse hors value : gardé
+    assert y["en_value"] is True and y["esperance_derniere"] == m["esperance_100"]
+
+
+def test_plafond_hors_value_d_abord(monkeypatch):
+    monkeypatch.setattr(E, "EPISODES_MAX", 1)
+    a_venir = "2026-11-17T00:00:00+00:00"
+    eps = [{"cle": "v", "premier": ISO, "dernier": ISO, "debut": a_venir, "en_value": True},
+           {"cle": "h", "premier": ISO, "dernier": ISO, "debut": "2026-11-16T15:00:00+00:00", "en_value": False}]
+    assert [x["cle"] for x in E.suivre({"episodes_milieux": eps}, [], T)] == ["v"]

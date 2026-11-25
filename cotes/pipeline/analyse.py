@@ -133,7 +133,8 @@ def euria_du_cycle(donnees: Path, francais: list[dict], index: dict, controle_du
             (donnees / "euria_regles.json").unlink()
         episodes = euria.suivre(etat, calcul["milieux"], maintenant, {e["cle"] for e in regles})
         ecrire_json(donnees / "euria.json", euria.publier(calcul, episodes, maintenant), compact=True)
-        return {"milieux": len(calcul["milieux"]),
+        value = sum(1 for m in calcul["milieux"] if m.get("en_value", True))
+        return {"milieux": value, "hors_value": len(calcul["milieux"]) - value,
                 "conversions": sum(len(x) for x in calcul["conversions"].values()), "archives": archives}
     except Exception as e:  # noqa: BLE001 - la page Euria ne doit jamais arrêter le cycle
         return {"erreur": echecs.noter(journal, "euria", e, maintenant)}
