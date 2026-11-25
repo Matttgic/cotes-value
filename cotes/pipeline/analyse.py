@@ -119,12 +119,19 @@ def euria_du_cycle(donnees: Path, francais: list[dict], index: dict, controle_du
         calcul = euria.calculer(francais, index, maintenant, controle_du_cycle)
         etat = lire_json(donnees / "euria.json", {})
         etat = etat if isinstance(etat, dict) else {}
-        # milieux réglés : archivés d'abord (euria_regles.json), retirés de euria.json ensuite
-        archive, archives = euria.archiver(lire_json(donnees / euria.ARCHIVE, {}), etat.get("episodes_milieux") or [],
-                                           maintenant)
-        if archives:
-            ecrire_json(donnees / euria.ARCHIVE, archive, compact=True)
-        episodes = euria.suivre(etat, calcul["milieux"], maintenant, {e["cle"] for e in archive["episodes"]})
+        # milieux réglés : archivés d'abord (euria_regles/AAAA-MM.json, gardés pour toujours), retirés de euria.json
+        # ensuite ; l'archive d'un seul fichier du 25/11 (euria_regles.json) est versée dans les mois puis supprimée
+        regles = [e for e in etat.get("episodes_milieux") or [] if isinstance(e, dict) and e.get("cle") and "resultat_100" in e]
+        ancienne = lire_json(donnees / "euria_regles.json", None)
+        if isinstance(ancienne, dict):
+            regles += [e for e in ancienne.get("episodes") or [] if isinstance(e, dict)]
+        modifies, archives = euria.archiver({m: lire_json(donnees / "euria_regles" / f"{m}.json", {})
+                                             for m in {euria.mois(e) for e in regles}}, regles, maintenant)
+        for m, doc in modifies.items():
+            ecrire_json(donnees / "euria_regles" / f"{m}.json", doc, compact=True)
+        if ancienne is not None:
+            (donnees / "euria_regles.json").unlink()
+        episodes = euria.suivre(etat, calcul["milieux"], maintenant, {e["cle"] for e in regles})
         ecrire_json(donnees / "euria.json", euria.publier(calcul, episodes, maintenant), compact=True)
         return {"milieux": len(calcul["milieux"]),
                 "conversions": sum(len(x) for x in calcul["conversions"].values()), "archives": archives}

@@ -51,10 +51,8 @@ FICHIERS: dict[str, Fichier] = {
     "boosts.json": Fichier("chaud", _COMPACT, [_CYCLE], [_SITE, _ALERTES, _CYCLE],
                            "boosts du cycle ; épisodes des 30 derniers jours (1 500 au plus)"),
     "euria.json": Fichier("chaud", _COMPACT, [_CYCLE], [_SITE, _ALERTES, _CYCLE],
-                          "page Euria : milieux et conversions de freebets du cycle ; milieux pas encore réglés "
-                          "(60 jours, 5 000 au plus)"),
-    "euria_regles.json": Fichier("chaud", _COMPACT, [_CYCLE], [_SITE, _CYCLE],
-                                 "milieux réglés de la page Euria, matchs des 60 derniers jours, sans plafond"),
+                          "page Euria : milieux et conversions de freebets du cycle (300 publiés, tous suivis) ; "
+                          "milieux pas encore réglés (60 jours, 10 000 au plus)"),
     "props_papier.json": Fichier("chaud", _COMPACT, ["cotes/props_papier.py"], [_CYCLE, _SITE]),
     "persistance_qwen.json": Fichier("chaud", _JSON, [_CYCLE], [_CYCLE]),
     "resultats_manuels.json": Fichier("chaud", "json écrit à la main", ["à la main"], [_CYCLE, "études"],
@@ -102,6 +100,10 @@ FICHIERS: dict[str, Fichier] = {
     "opportunites/*.jsonl.gz": Fichier("froid", _JSONL_GZ, [_CYCLE],
                                        ["cotes/recap_jouables.py", "cotes/analyse_marche/lecture.py", "études"],
                                        "permanent ; mois passés aussi en release"),
+    "euria_regles.json": Fichier("chaud", _COMPACT, ["à la main (25/11/2026)"], [_SITE, _CYCLE],
+                                 "ancienne archive des milieux réglés : versée dans euria_regles/ puis supprimée par le cycle"),
+    "euria_regles/*.json": Fichier("froid", _COMPACT, [_CYCLE], [_SITE, _CYCLE],
+                                   "permanent : milieux réglés de la page Euria, un fichier par mois du match"),
     "archives/paris-*.json.gz": Fichier("froid", "json gzip (stockage.archiver)", ["cotes/stockage.py"],
                                         [_SITE, _CYCLE, "études"], "permanent : paris réglés depuis plus de 30 jours"),
     # --- mémoire de travail (cache Actions memoire/, MEMOIRE_CHEMIN)

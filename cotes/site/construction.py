@@ -728,7 +728,15 @@ def charger_entrees(donnees: Path) -> dict:
             "actuelles": actuelles, "controle": controle,
             "surebets": _lire(donnees / "surebets.json", {}), "boosts": _lire(donnees / "boosts.json", {}),
             "boosts_resultats": _lire(donnees / "boosts_resultats.json", {}),
-            "euria": _lire(donnees / "euria.json", {}), "euria_regles": _lire(donnees / "euria_regles.json", {})}
+            "euria": _lire(donnees / "euria.json", {}), "euria_regles": _regles_euria(donnees)}
+
+
+def _regles_euria(donnees: Path) -> list[dict]:
+    """Milieux réglés de la page Euria : archives mensuelles (euria_regles/AAAA-MM.json) et ancienne archive d'un seul
+    fichier (euria_regles.json, avant sa migration par le cycle)."""
+    docs = [_lire(f, {}) for f in sorted((donnees / "euria_regles").glob("*.json"))]
+    docs.append(_lire(donnees / "euria_regles.json", {}))
+    return [e for d in docs if isinstance(d, dict) for e in d.get("episodes") or [] if isinstance(e, dict)]
 
 
 def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None = None,
@@ -989,7 +997,7 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     # Page Euria (autre dépôt, même origine) : fichier à part, hors de index.html (cotes/euria.py).
     from cotes import euria as euria_mod
     doc_euria = entrees.get("euria") if isinstance(entrees.get("euria"), dict) else {}
-    archive_euria = entrees.get("euria_regles") if isinstance(entrees.get("euria_regles"), dict) else {}
+    archive_euria = entrees.get("euria_regles") if isinstance(entrees.get("euria_regles"), list) else []
     euria = euria_mod.publie(doc_euria, data["surebets"], data["boosts"], _maintenant(instant), archive_euria)
     euria_stats = euria_mod.stats(euria_mod.regles_connus(doc_euria, archive_euria))
     return {"data": data, "actuelles": actuelles, "paris": paris, "retenus": retenus, "hors_plafond": hors_plafond,
