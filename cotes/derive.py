@@ -28,11 +28,12 @@ import math
 import os
 import zlib
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.request import urlopen
 
 from . import memoire
 from .echecs import alerter_pushover
+from .temps import instant_utc
 
 FICHIER = "derive_sources"
 PREFIXE = "dérive : "
@@ -47,6 +48,11 @@ LIGNES_MIN = 50                     # habitude en dessous : trop peu pour juger 
 CHUTE_COUVERTURE = 0.3              # marché présent sur moins de 30 % de sa part habituelle des matchs
 COUVERTURE_MIN = 0.3                # seuls les marchés habituellement présents sur 30 % des matchs du sport
 MATCHS_MIN = 10                     # matchs du sport chez la source pour mesurer ses marchés
+# Marchés de période (quart-temps, mi-temps…) : seuls les matchs qui commencent dans PROCHE_PERIODES_H heures comptent.
+# Pinnacle et PMU ne les affichent qu'à l'approche du match : la nuit, quand la NBA du soir joue en direct, les matchs
+# NBA du lendemain restent sans quart-temps, et la dérive signalait « basket HANDICAP QT1 » ou « TOTAL_DOM MT1 »
+# disparus toutes les nuits (Pinnacle les 21, 23, 24 et 25/11/2026, de 1 h à 9 h UTC ; PMU les 19 et 20/11).
+PROCHE_PERIODES_H = 6.0
 HABITUEL_LIGUE = 0.5                # compétition retenue pour un marché s'il y couvre la moitié des matchs
 HAUSSE_INCONNUS = 2.0               # part d'offres non reconnues doublée…
 INCONNUS_PLANCHER = 0.10            # … et en hausse d'au moins 10 points
@@ -66,35 +72,50 @@ NOMS = {"pmu": "PMU", "winamax": "Winamax", "betclic": "Betclic", "unibet-fr": "
 _MASQUE = (1 << 64) - 1
 
 
-def mesurer(lignes, prix: bool = True) -> dict:
+def _proche(ligne: dict, maintenant: datetime | None) -> bool:
+    if maintenant is None:
+        return True
+    debut = instant_utc(ligne.get("debut"))
+    return debut is None or debut <= maintenant + timedelta(hours=PROCHE_PERIODES_H)
+
+
+def mesurer(lignes, prix: bool = True, maintenant: datetime | None = None) -> dict:
     """Mesures d'une source sur un cycle : volume, matchs par sport, part des matchs qui ont chaque marché et, si
     ``prix``, une empreinte des prix indépendante de l'ordre (elle change dès qu'une cote change, apparaît ou
-    disparaît)."""
+    disparaît). Avec ``maintenant``, les marchés de période ne sont mesurés que sur les matchs proches
+    (``PROCHE_PERIODES_H``), rapportés aux matchs proches de leur compétition (``ligues_proches``)."""
     matchs, ligues, marches, somme, n = defaultdict(set), defaultdict(set), defaultdict(set), 0, 0
+    proches = defaultdict(set)
     for l in lignes or ():
         if not isinstance(l, dict):
             continue
         n += 1
         match, sport, marche = l.get("match_id"), str(l.get("sport") or "?"), str(l.get("marche") or "?")
-        ligue = str(l.get("ligue") or "?")
+        ligue, periode = str(l.get("ligue") or "?"), str(l.get("periode") or "?")
         matchs[sport].add(match)
         ligues[(sport, ligue)].add(match)
-        if not marche.startswith("JOUEUR:"):
-            marches[(sport, marche, str(l.get("periode") or "?"), ligue)].add(match)
+        proche = _proche(l, maintenant)
+        if proche:
+            proches[(sport, ligue)].add(match)
+        if not marche.startswith("JOUEUR:") and (proche or periode.startswith("MATCH")):
+            marches[(sport, marche, periode, ligue)].add(match)
         if prix:
             texte = f"{match}|{marche}|{l.get('periode')}|{l.get('ligne')}|{l.get('issue')}|{l.get('joueur')}|{l.get('cote')}"
             somme = (somme + zlib.crc32(texte.encode("utf-8", "replace")) * 2654435761) & _MASQUE
     sports = {s: len(m) for s, m in matchs.items()}
     # présence[marché][compétition] = matchs qui l'ont ; ligues[sport][compétition] = matchs de la compétition
-    presence, par_ligue = defaultdict(dict), defaultdict(dict)
+    presence, par_ligue, par_ligue_proche = defaultdict(dict), defaultdict(dict), defaultdict(dict)
     for (sport, ligue), m in ligues.items():
         if sports[sport] >= MATCHS_MIN:
             par_ligue[sport][ligue] = len(m)
+    for (sport, ligue), m in proches.items():
+        if sports[sport] >= MATCHS_MIN:
+            par_ligue_proche[sport][ligue] = len(m)
     for (sport, marche, periode, ligue), m in marches.items():
         if sports[sport] >= MATCHS_MIN:
             presence[f"{sport} {marche} {periode}"][ligue] = len(m)
     return {"lignes": n, "matchs": sum(sports.values()), "sports": sports, "empreinte": somme,
-            "ligues": dict(par_ligue), "presence": dict(presence)}
+            "ligues": dict(par_ligue), "ligues_proches": dict(par_ligue_proche), "presence": dict(presence)}
 
 
 def _minutes(depuis, maintenant: datetime) -> float | None:
@@ -152,7 +173,10 @@ def _juger_source(source: str, e: dict, m: dict, maintenant: datetime) -> tuple[
         if m["sports"].get(sport, 0) < MATCHS_MIN:
             continue                    # sport presque absent ce cycle : ses marchés ne sont pas jugés
         # Compétitions où le marché est d'habitude proposé : seuls leurs matchs comptent.
-        avant, ici, du_sport = series.get("c:" + cle) or {}, presence.get(cle) or {}, (m.get("ligues") or {}).get(sport) or {}
+        # Marché de période : rapporté aux matchs proches de sa compétition (mesurer, PROCHE_PERIODES_H).
+        periode = cle.rsplit(" ", 1)[-1]
+        base = "ligues" if periode.startswith("MATCH") or "ligues_proches" not in m else "ligues_proches"
+        avant, ici, du_sport = series.get("c:" + cle) or {}, presence.get(cle) or {}, (m.get(base) or {}).get(sport) or {}
         habituelles = set(avant.get("ligues") or ()) | {
             l for l, k in ici.items() if du_sport.get(l) and k >= HABITUEL_LIGUE * du_sport[l]}
         total = sum(du_sport.get(l, 0) for l in habituelles)
@@ -222,7 +246,8 @@ def envoyer(constats: dict[str, list[dict]], env=None, ouvrir=urlopen) -> bool:
     return alerter_pushover(f"Source qui dérive ({len(lignes)})", "\n".join(lignes), env, ouvrir)
 
 
-def mesures_du_cycle(etapes: dict, lignes_par_source: dict[str, list], releve_inconnus: dict | None = None) -> dict:
+def mesures_du_cycle(etapes: dict, lignes_par_source: dict[str, list], releve_inconnus: dict | None = None,
+                    maintenant: datetime | None = None) -> dict:
     """Mesures des sources lues normalement ce cycle. Étape en panne, coupée ou servie depuis un cache : pas de
     mesure (la panne est déjà suivie ailleurs, et une lecture en mémoire ne dit rien de la source)."""
     out = {}
@@ -230,7 +255,7 @@ def mesures_du_cycle(etapes: dict, lignes_par_source: dict[str, list], releve_in
         v = (etapes or {}).get(nom)
         if not isinstance(v, dict) or not v.get("ok") or v.get("desactive") or v.get("cache"):
             continue
-        m = mesurer(lignes_par_source.get(source) or [], prix=source in FIGEES_MIN)
+        m = mesurer(lignes_par_source.get(source) or [], prix=source in FIGEES_MIN, maintenant=maintenant)
         if source in FIGEES_MIN:            # bookmakers français : les seuls à noter leurs marchés non reconnus
             releve = (releve_inconnus or {}).get(source) or {}
             m["inconnus"] = sum(releve.values())

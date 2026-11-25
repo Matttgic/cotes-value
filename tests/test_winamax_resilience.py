@@ -89,7 +89,7 @@ def test_reponse_perdue_le_deja_lu_est_rendu_avant_le_budget(monkeypatch):
     ws.close()
 
 
-def test_connexion_refusee_abandonnee_apres_trois_ouvertures(monkeypatch):
+def test_connexion_refusee_abandonnee_apres_cinq_ouvertures(monkeypatch):
     pauses = []
     monkeypatch.setattr(winamax.time, "sleep", lambda s: pauses.append(s))
     essais = []
@@ -103,10 +103,10 @@ def test_connexion_refusee_abandonnee_apres_trois_ouvertures(monkeypatch):
 
     client = winamax.Socket(pause=(0, 0), connecter=connecter)
     lignes, meta = winamax.collecter(None, 36, transport=client, maintenant=MAINTENANT, echeance=Echeance(45))
-    assert len(essais) == winamax.OUVERTURES_MAX == 3          # et non 10 sports × 3 essais
+    assert len(essais) == winamax.OUVERTURES_MAX == 5          # et non 10 sports × 3 essais
     assert client.hors_service and lignes == [] and meta["ok"] is False
     assert "connexion impossible (Refus 22)" in meta["erreurs"]
-    assert [p for p in pauses if p >= 1] == [1.0, 2.0]          # attente croissante entre les ouvertures
+    assert [p for p in pauses if p >= 1] == [1.0, 2.0, 4.0, 8.0]  # attente croissante entre les ouvertures
 
 
 def test_une_coupure_isolee_ne_met_pas_hors_service(monkeypatch):

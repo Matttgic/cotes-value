@@ -166,6 +166,10 @@ def _heure(valeur):
 # Empreintes de navigateur essayées dans l'ordre pour l'accueil. Depuis le 8/11/2026, DataDome refuse (403) les
 # empreintes Chrome et Edge sur l'accueil ; Safari et Firefox passent (sonde Unibet du 11/11/2026).
 EMPREINTES = ("safari", "firefox", "chrome")
+# Second tour après une pause plus longue : du 15 au 24/11/2026, l'accueil refusé (403 sur les trois empreintes, en
+# 3 s sur 80 de budget) a coûté 101 cycles de lecture Unibet, presque tous isolés (le cycle suivant passait).
+SECOND_TOUR = ("safari", "firefox")
+PAUSE_SECOND_TOUR_S = 6.0
 
 
 def _page_chrome(empreinte: str = EMPREINTES[0]):
@@ -245,13 +249,15 @@ class Client:
                 return False
             if reste is not None:
                 delai = min(8.0, max(1.0, reste - 1))
-        # Refus 403 de l'accueil (DataDome) : un essai par empreinte de navigateur, après une courte pause,
-        # si le budget le permet, avant de renoncer. Une page fournie (tests) est essayée deux fois.
+        # Refus 403 de l'accueil (DataDome) : un essai par empreinte de navigateur, après une courte pause, puis un
+        # second tour (SECOND_TOUR) après PAUSE_SECOND_TOUR_S, si le budget le permet, avant de renoncer. Une page
+        # fournie (tests) est essayée deux fois.
         r = None
-        essais = 2 if self.page is not None else len(EMPREINTES)
+        ordre = EMPREINTES + SECOND_TOUR
+        essais = 2 if self.page is not None else len(ordre)
         for essai in range(essais):
             try:
-                lecteur = self.page if self.page is not None else _page_chrome(EMPREINTES[essai])
+                lecteur = self.page if self.page is not None else _page_chrome(ordre[essai])
                 r = lecteur.get(ACCUEIL, timeout=delai, headers={
                     "Accept": "text/html", "Accept-Language": "fr-FR"})
             except (requests.RequestException, OSError):
@@ -259,9 +265,10 @@ class Client:
             if getattr(r, "status_code", None) == 200:
                 break
             restant = self.echeance.reste() if self.echeance is not None else None
-            if essai == essais - 1 or (restant is not None and restant < _MARGE_S + 3):
+            attente = PAUSE_SECOND_TOUR_S if self.page is None and essai == len(EMPREINTES) - 1 else 1.0
+            if essai == essais - 1 or (restant is not None and restant < _MARGE_S + 2 + attente):
                 break
-            _pause(1.0)
+            _pause(attente)
         if r is None:
             self._noter("accueil")
             return False

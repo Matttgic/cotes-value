@@ -148,7 +148,11 @@ def _heure_unix(valeur):
 LECTURE_S = 12          # une demande (envoi et réponse, trames de plusieurs Mo comprises)
 CONNEXION_S = 10        # ouverture du socket
 MARGE_S = 3             # gardées sur le budget pour traduire et rendre ce qui est déjà lu
-OUVERTURES_MAX = 3      # ouvertures ratées de suite : Winamax n'est plus essayé de ce cycle
+# Ouvertures ratées de suite : Winamax n'est plus essayé de ce cycle. Le socket refusé (« CurlError 22 ») a fait perdre
+# toute la lecture Winamax 62 fois du 18 au 25/11/2026, en 4,5 s sur 80 de budget, chaque fois pour un seul cycle :
+# 5 ouvertures espacées de 1, 2, 4 puis 8 s (15 s d'attente au plus) au lieu de 3 en 3 s.
+OUVERTURES_MAX = 5
+ATTENTE_MAX_S = 8.0
 _CAUSES = ("ouverture", "namespace", "délai", "fermeture")
 
 
@@ -236,12 +240,12 @@ class Socket:
             raise OSError("namespace")
 
     def _assurer(self) -> None:
-        """Ouvre le socket s'il est fermé. Après un échec, attend 1 s puis 2 s ; au troisième de suite,
-        le socket est hors service pour le reste du cycle."""
+        """Ouvre le socket s'il est fermé. Après un échec, attend 1, 2, 4 puis 8 s ; au bout de ``OUVERTURES_MAX``
+        échecs de suite, le socket est hors service pour le reste du cycle."""
         if self._ws is not None:
             return
         if self._ouvertures_ratees:
-            attente = min(4.0, 2.0 ** (self._ouvertures_ratees - 1))
+            attente = min(ATTENTE_MAX_S, 2.0 ** (self._ouvertures_ratees - 1))
             reste = self._reste()
             if reste is not None and reste < attente + MARGE_S + 1:
                 raise TimeoutError("délai")

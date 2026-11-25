@@ -214,6 +214,8 @@ def noter_lecture(journal: dict, nom: str, meta: dict) -> None:
     signaler(journal, nom, list(meta.get("erreurs") or []))
     if meta.get("ok") is False and nom in journal["etapes"]:
         journal["etapes"][nom]["ok"] = False
+    if meta.get("repli") and nom in journal["etapes"]:           # lignes du passage précédent (completer_par_reserve)
+        journal["etapes"][nom]["repli"] = int(meta["repli"])
     if meta.get("relances") and nom in journal["etapes"]:        # demandes ratées puis relues avec succès
         journal["etapes"][nom]["relances"] = list(meta["relances"])[:10]
 
@@ -257,6 +259,20 @@ def repli_reserve(bloc: dict, maintenant: datetime) -> tuple[list[dict], dict]:
     if isinstance(bloc, dict) and bloc:
         meta["reserve"] = bloc
     return lignes, meta
+
+
+def completer_par_reserve(lues: list, meta: dict, bloc: dict, maintenant: datetime) -> tuple[list, dict]:
+    """Lecture vide en échec d'une source sans mémoire de lecture (Winamax) : ses lignes du passage précédent.
+
+    Socket Winamax refusé : 62 cycles sans aucune cote Winamax du 18 au 25/11/2026, chacun suivi d'une lecture
+    normale. Mêmes règles que ``repli_reserve`` (âge d'origine gardé, matchs commencés et lignes de plus de
+    ``AGE_REPLI_MIN`` minutes retirés). L'étape reste en échec avec ses erreurs : la panne se voit sur la page Santé."""
+    if lues or not isinstance(meta, dict) or meta.get("ok"):
+        return lues, meta
+    repli, _ = repli_reserve(bloc, maintenant)
+    if not repli:
+        return lues, meta
+    return repli, {**meta, "repli": len(repli)}
 
 
 # Un sport reste lu chez les bookmakers français 2 h après sa dernière présence chez les références : un 403
@@ -493,6 +509,8 @@ def collecter_prematch(mode: str, maintenant: datetime, journal: dict, donnees: 
         metas = {}
         for nom in ("pmu_direct", "winamax_direct", "unibet_direct", "betclic_direct"):
             lues, meta = recevoir(nom)
+            if nom == "winamax_direct":
+                lues, meta = completer_par_reserve(lues, meta, _reserve("winamax"), maintenant)
             noter_lecture(journal, nom, meta)
             lignes += list(lues)
             metas[nom] = meta
@@ -662,7 +680,7 @@ def collecter(ctx: Contexte) -> None:
         for l in francais:
             par_source.setdefault(l.get("bookmaker"), []).append(l)
         journal["derive"] = derive.mettre_a_jour(
-            donnees, derive.mesures_du_cycle(journal["etapes"], par_source, releve), maintenant)
+            donnees, derive.mesures_du_cycle(journal["etapes"], par_source, releve, maintenant), maintenant)
         for nom, textes in journal["derive"].pop("etapes", {}).items():
             if nom in journal["etapes"]:
                 journal["etapes"][nom] |= {"degrade": True, "erreurs": (
