@@ -46,7 +46,10 @@ CONVERSIONS_PAR_BOOK = 8
 VALEUR_REMBOURSEMENT = 0.75
 SEUIL_ALERTE_MILIEU = 0.02
 GARDER_JOURS = 60
-EPISODES_MAX = 2000
+EPISODES_MAX = 5000               # milieux pas encore réglés (les réglés partent dans euria_regles.json)
+# euria_regles.json : archive des milieux réglés (matchs des GARDER_JOURS derniers jours), sans plafond en nombre.
+# Avant le 25/11, les réglés restaient parmi les 2000 épisodes et les plus anciens disparaissaient du bilan.
+ARCHIVE = "euria_regles.json"
 REGLES_PUBLIES = 60
 # euria-stats.json : tous les milieux réglés, une ligne par milieu (onglet Stats de la page Euria, filtres et
 # découpages faits dans le navigateur). Colonnes dans l'ordre de STATS_COLONNES.
@@ -322,10 +325,13 @@ def calculer(francais: list[dict], index: dict, maintenant: datetime,
     return {"milieux": milieux(familles, matchs, maintenant), "conversions": conversions(familles, matchs, maintenant)}
 
 
-def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime) -> list[dict]:
+def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime, archives: set | frozenset = frozenset()) -> list[dict]:
     """Un épisode par milieu (même match, marché, période et lignes) : première et dernière lecture, espérance et
-    probabilité du milieu à la première lecture."""
-    episodes = {e["cle"]: e for e in ((etat or {}).get("episodes_milieux") or []) if isinstance(e, dict) and e.get("cle")}
+    probabilité du milieu à la première lecture. Les milieux réglés déjà dans l'archive (clés ``archives``) sortent de
+    la liste ; les autres réglés y restent. Plafond ``EPISODES_MAX`` sur les seuls milieux pas encore réglés : ceux dont
+    le match est le plus ancien partent les premiers."""
+    episodes = {e["cle"]: e for e in ((etat or {}).get("episodes_milieux") or [])
+                if isinstance(e, dict) and e.get("cle") and not ("resultat_100" in e and e["cle"] in archives)}
     t = maintenant.isoformat(timespec="seconds")
     for m in actuels:
         e = episodes.get(m["cle"])
@@ -344,9 +350,32 @@ def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime) -> list
         e["dernier"], e["cycles"] = t, e["cycles"] + 1
         e["esperance_derniere"] = m["esperance_100"]
     limite = maintenant - timedelta(days=GARDER_JOURS)
-    garde = sorted((e for e in episodes.values() if (_t(e.get("dernier")) or maintenant) >= limite),
-                   key=lambda e: e.get("premier") or "")
-    return garde[-EPISODES_MAX:]
+    garde = [e for e in episodes.values() if (_t(e.get("dernier")) or maintenant) >= limite]
+    ouverts = sorted((e for e in garde if "resultat_100" not in e), key=lambda e: e.get("debut") or "")
+    garde = [e for e in garde if "resultat_100" in e] + ouverts[-EPISODES_MAX:]
+    return sorted(garde, key=lambda e: e.get("premier") or "")
+
+
+def archiver(archive: dict | None, episodes: list[dict], maintenant: datetime) -> tuple[dict, int]:
+    """Archive ``euria_regles.json`` complétée des milieux réglés de ``episodes`` (une fois par clé), sans les matchs
+    de plus de ``GARDER_JOURS`` jours. Rend l'archive et le nombre de milieux ajoutés."""
+    par_cle = {e["cle"]: e for e in ((archive or {}).get("episodes") or []) if isinstance(e, dict) and e.get("cle")}
+    nouveaux = [e for e in episodes if isinstance(e, dict) and e.get("cle") and "resultat_100" in e
+                and e["cle"] not in par_cle]
+    par_cle.update((e["cle"], e) for e in nouveaux)
+    limite = maintenant - timedelta(days=GARDER_JOURS)
+    garde = sorted((e for e in par_cle.values() if (_t(e.get("debut")) or maintenant) >= limite),
+                   key=lambda e: e.get("debut") or "")
+    return {"maj": maintenant.isoformat(timespec="seconds"), "episodes": garde}, len(nouveaux)
+
+
+def regles_connus(doc: dict | None, archive: dict | None) -> list[dict]:
+    """Tous les milieux réglés : l'archive, plus ceux de ``euria.json`` pas encore archivés (même clé : l'archive)."""
+    out = {e["cle"]: e for e in ((doc or {}).get("episodes_milieux") or [])
+           if isinstance(e, dict) and e.get("cle") and "resultat_100" in e}
+    out.update((e["cle"], e) for e in ((archive or {}).get("episodes") or [])
+               if isinstance(e, dict) and e.get("cle") and "resultat_100" in e)
+    return list(out.values())
 
 
 def bilan(episodes: list[dict], maintenant: datetime, jours: int = 7) -> dict:
@@ -427,11 +456,15 @@ def _a_venir(x: dict, maintenant: datetime) -> bool:
     return debut is not None and debut > maintenant
 
 
-def publie(doc: dict | None, surebets_publies: dict | None, boosts_publies: dict | None, maintenant: datetime) -> dict:
-    """Fichier ``euria.json`` du site, lu par la page Euria : milieux et conversions à venir, bilan des milieux, nombre de
-    surebets et de boosts couverts du moment (onglet Boosts de Cote Value)."""
+def publie(doc: dict | None, surebets_publies: dict | None, boosts_publies: dict | None, maintenant: datetime,
+           archive: dict | None = None) -> dict:
+    """Fichier ``euria.json`` du site, lu par la page Euria : milieux et conversions à venir, bilan des milieux (milieux
+    pas encore réglés de ``doc`` et réglés de l'``archive``), nombre de surebets et de boosts couverts du moment (onglet
+    Boosts de Cote Value)."""
     doc = doc if isinstance(doc, dict) else {}
-    episodes = [e for e in doc.get("episodes_milieux") or [] if isinstance(e, dict) and e.get("premier")]
+    regles = regles_connus(doc, archive)
+    episodes = [e for e in doc.get("episodes_milieux") or []
+                if isinstance(e, dict) and e.get("premier") and "resultat_100" not in e] + regles
     conv = {b: [x for x in liste if isinstance(x, dict) and _a_venir(x, maintenant)]
             for b, liste in (doc.get("conversions") or {}).items() if isinstance(liste, list)}
     sb = [s for s in (surebets_publies or {}).get("actuels") or [] if not s.get("suspect")]

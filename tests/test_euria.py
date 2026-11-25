@@ -142,7 +142,8 @@ def test_cycle_suivi_alerte_et_message(tmp_path):
     from cotes.alertes.pushover import message_pushover
     from cotes.pipeline.analyse import euria_du_cycle
     idx = _index(J_TOTAUX, J_TOTAUX)
-    assert euria_du_cycle(tmp_path, TOTAUX, idx, None, {}, maintenant=T) == {"milieux": 1, "conversions": 2}
+    assert euria_du_cycle(tmp_path, TOTAUX, idx, None, {}, maintenant=T) == {"milieux": 1, "conversions": 2,
+                                                                          "archives": 0}
     euria_du_cycle(tmp_path, TOTAUX, idx, None, {}, maintenant=T + timedelta(minutes=5))
     doc = json.loads((tmp_path / "euria.json").read_text())
     assert doc["episodes_milieux"][0]["cycles"] == 2 and len(doc["milieux"]) == 1
@@ -303,3 +304,46 @@ def test_cote_loin_de_sa_cote_estimee_ecartee():
     j = {_cle("TOTAL", 2.5, "PLUS"): 0.55, _cle("TOTAL", 2.5, "MOINS"): 0.45}
     index = {"Pinnacle": {"betclic|1": _ref(j), "pmu|2": _ref(AUTRE)}}
     assert E.milieux(*_calcul(fr, index), T) == []
+
+
+def test_milieux_regles_archives_jamais_perdus(tmp_path):
+    """25/11 : les réglés restaient parmi les 2000 épisodes de euria.json et disparaissaient du bilan et des Stats quand
+    de nouveaux milieux arrivaient. Ils passent dans euria_regles.json, sans plafond ; le plafond ne touche plus que
+    les milieux pas encore réglés, ceux du match le plus ancien d'abord."""
+    from cotes.pipeline.analyse import euria_du_cycle
+    from cotes.site.construction import construire
+    idx = _index(J_TOTAUX, J_TOTAUX)
+    euria_du_cycle(tmp_path, TOTAUX, idx, None, {}, maintenant=T)
+    doc = json.loads((tmp_path / "euria.json").read_text())
+    (e,) = doc["episodes_milieux"]
+    assert PR.regler_episode(e, {"score": (110, 102), "periodes": [], "libelles": []})
+    (tmp_path / "euria.json").write_text(json.dumps(doc))
+    apres = T + timedelta(hours=6)
+    assert euria_du_cycle(tmp_path, [], idx, None, {}, maintenant=apres)["archives"] == 1
+    assert json.loads((tmp_path / "euria.json").read_text())["episodes_milieux"] == []
+    arch = json.loads((tmp_path / E.ARCHIVE).read_text())
+    assert [x["cle"] for x in arch["episodes"]] == [e["cle"]] and arch["episodes"][0]["tombe"] is True
+    assert euria_du_cycle(tmp_path, [], idx, None, {}, maintenant=apres)["archives"] == 0     # une fois par clé
+    construire(tmp_path, tmp_path / "site", apres)
+    site = json.loads((tmp_path / "site" / "euria.json").read_text())
+    assert site["bilan_regle"]["tout"]["n"] == 1 and len(site["regles"]) == 1
+    assert site["bilan_milieux"]["7"]["n"] == 1
+    assert len(json.loads((tmp_path / "site" / "euria-stats.json").read_text())["lignes"]) == 1
+    # réglé pas encore archivé : gardé dans euria.json et compté une seule fois
+    assert len(E.regles_connus({"episodes_milieux": [e]}, arch)) == 1
+    assert E.suivre({"episodes_milieux": [e]}, [], apres) == [e]
+    # archive : matchs de plus de 60 jours retirés
+    vieux, n = E.archiver(arch, [], T + timedelta(days=E.GARDER_JOURS + 1))
+    assert vieux["episodes"] == [] and n == 0
+
+
+def test_plafond_sur_les_seuls_milieux_pas_encore_regles(monkeypatch):
+    monkeypatch.setattr(E, "EPISODES_MAX", 2)
+    def ep(cle, debut, regle=False):
+        x = {"cle": cle, "premier": ISO, "dernier": ISO, "debut": debut}
+        return {**x, "resultat_100": 1.0} if regle else x
+    eps = [ep("r", "2026-01-01T00:00:00+00:00", True), ep("a", "2026-01-02T00:00:00+00:00"),
+           ep("b", "2026-01-04T00:00:00+00:00"), ep("c", "2026-01-03T00:00:00+00:00")]
+    garde = E.suivre({"episodes_milieux": eps}, [], T)
+    assert sorted(x["cle"] for x in garde) == ["b", "c", "r"]           # « a » : match le plus ancien
+    assert sorted(x["cle"] for x in E.suivre({"episodes_milieux": eps}, [], T, {"r"})) == ["b", "c"]

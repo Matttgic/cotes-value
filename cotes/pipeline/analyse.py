@@ -117,10 +117,17 @@ def euria_du_cycle(donnees: Path, francais: list[dict], index: dict, controle_du
         from cotes import euria
         maintenant = maintenant or datetime.now(timezone.utc)
         calcul = euria.calculer(francais, index, maintenant, controle_du_cycle)
-        episodes = euria.suivre(lire_json(donnees / "euria.json", {}), calcul["milieux"], maintenant)
+        etat = lire_json(donnees / "euria.json", {})
+        etat = etat if isinstance(etat, dict) else {}
+        # milieux réglés : archivés d'abord (euria_regles.json), retirés de euria.json ensuite
+        archive, archives = euria.archiver(lire_json(donnees / euria.ARCHIVE, {}), etat.get("episodes_milieux") or [],
+                                           maintenant)
+        if archives:
+            ecrire_json(donnees / euria.ARCHIVE, archive, compact=True)
+        episodes = euria.suivre(etat, calcul["milieux"], maintenant, {e["cle"] for e in archive["episodes"]})
         ecrire_json(donnees / "euria.json", euria.publier(calcul, episodes, maintenant), compact=True)
         return {"milieux": len(calcul["milieux"]),
-                "conversions": sum(len(x) for x in calcul["conversions"].values())}
+                "conversions": sum(len(x) for x in calcul["conversions"].values()), "archives": archives}
     except Exception as e:  # noqa: BLE001 - la page Euria ne doit jamais arrêter le cycle
         return {"erreur": echecs.noter(journal, "euria", e, maintenant)}
 
