@@ -369,6 +369,37 @@ def test_accueil_change_d_empreinte_quand_datadome_refuse(monkeypatch):
     assert unibet.EMPREINTES[:2] == ("safari", "firefox") and "chrome" not in unibet.EMPREINTES[:2]
 
 
+def test_accueil_refuse_sur_les_trois_empreintes_second_tour_apres_pause(monkeypatch):
+    """Refus DataDome passager (101 cycles du 15 au 24/11/2026) : second tour Safari puis Firefox après 6 s."""
+    pauses = []
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: pauses.append(s))
+    essayees = []
+
+    def page(empreinte="safari"):
+        essayees.append(empreinte)
+        return Page(status=403) if len(essayees) <= 3 else Page()
+
+    monkeypatch.setattr(unibet, "_page_chrome", page)
+    session = Session([(200, {"items": {}, "numberOfEvents": 0}, {})] * 60)
+    _, meta = unibet.collecter({"football"}, 36, session=session, pause=(0, 0), maintenant=MAINTENANT)
+    assert essayees == ["safari", "firefox", "chrome", "safari"] and not any("accueil" in e for e in meta["erreurs"])
+    assert pauses[:3] == [1.0, 1.0, unibet.PAUSE_SECOND_TOUR_S]
+
+
+def test_accueil_toujours_refuse_cinq_essais_puis_abandon(monkeypatch):
+    monkeypatch.setattr(unibet.time, "sleep", lambda s: None)
+    essayees = []
+
+    def page(empreinte="safari"):
+        essayees.append(empreinte)
+        return Page(status=403)
+
+    monkeypatch.setattr(unibet, "_page_chrome", page)
+    _, meta = unibet.collecter({"football"}, 36, session=Session([]), pause=(0, 0), maintenant=MAINTENANT)
+    assert essayees == ["safari", "firefox", "chrome", "safari", "firefox"]
+    assert meta["erreurs"] == ["accueil HTTP 403"] and meta["ok"] is False
+
+
 def test_budget_epuise_la_rotation_reprend_au_premier_filtre_non_lu(monkeypatch):
     """20/11/2026 : un cycle sur quatre s'arrêtait sur « budget » au milieu de la tranche ; le curseur avançait
     quand même de 20 et les filtres non lus attendaient un tour complet (~19 min) : leurs marchés sortaient de la

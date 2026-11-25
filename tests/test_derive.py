@@ -118,6 +118,41 @@ def test_marche_d_une_competition_absente_n_est_pas_juge():
         c["detail"] for c in vus[-1] if c["genre"] == "marche")
 
 
+def test_quart_temps_juge_seulement_sur_les_matchs_proches():
+    """Cas Pinnacle des nuits du 21 au 25/11 : les matchs NBA du lendemain n'ont pas encore leurs quarts-temps.
+    Seuls les matchs à moins de PROCHE_PERIODES_H heures comptent pour un marché de période."""
+    def basket(t, proches, loin, qt_loin=False, qt_proche=True):
+        out = []
+        for i in range(proches + loin):
+            proche = i < proches
+            debut = t + timedelta(hours=2 if proche else 20)
+            marches = [("FACE_A_FACE", "MATCH")] + ([("HANDICAP", "QT1")] if (qt_proche if proche else qt_loin) else [])
+            out += [{"bookmaker": "pinnacle", "sport": "basket", "ligue": "NBA", "match_id": f"p|{proche}{i}",
+                     "marche": k, "periode": p, "ligne": None, "issue": x, "cote": 1.9, "joueur": None,
+                     "debut": debut.isoformat()} for k, p in marches for x in ("DOM", "EXT")]
+        return out
+
+    def rejouer_t(suite):
+        etat, vus = {}, []
+        for i, f in enumerate(suite):
+            t = T0 + timedelta(minutes=5 * i)
+            etat, c = derive.suivre(etat, {"pinnacle": derive.mesurer(f(t), prix=False, maintenant=t)}, t)
+            vus.append(c.get("pinnacle", []))
+        return etat, vus
+
+    soir = [lambda t: basket(t, 12, 0)] * 14
+    nuit = [lambda t: basket(t, 0, 12)] * 8                       # NBA du lendemain seulement, sans quarts-temps
+    _, vus = rejouer_t(soir + nuit)
+    assert not any("marche" in genres(v) for v in vus)
+    m = derive.mesurer(basket(T0, 2, 12), maintenant=T0)
+    assert m["presence"]["basket HANDICAP QT1"] == {"NBA": 2} and m["ligues_proches"] == {"basket": {"NBA": 2}}
+    assert m["presence"]["basket FACE_A_FACE MATCH"] == {"NBA": 14}
+    perdu = [lambda t: basket(t, 12, 0, qt_proche=False)] * 5      # matchs proches sans quarts-temps : vraie disparition
+    _, vus = rejouer_t(soir + perdu)
+    assert "basket HANDICAP QT1 (0% des matchs, 100% d'habitude)" in next(
+        c["detail"] for c in vus[-1] if c["genre"] == "marche")
+
+
 def test_hausse_des_marches_non_reconnus():
     suite = [variees(40, i) for i in range(20)]
     _, vus = rejouer({}, "pmu", suite, inconnus=[20] * 14 + [200] * 6)
