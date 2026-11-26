@@ -39,7 +39,7 @@ _PAR_COUCHE = {
                   "cotes.strategie_conseil cotes.strategie_defi cotes.strategie_eden cotes.strategie_gemini "
                   "cotes.strategie_gemini_defi cotes.strategie_grok cotes.strategie_jules cotes.strategie_jules_v2 "
                   "cotes.strategie_liquidite cotes.strategie_m3 cotes.strategie_qwen",
-    "bilans": "cotes.analyste cotes.notation cotes.recommandations cotes.protocole cotes.decision cotes.regle_principale cotes.winamax_suivi cotes.evenements "
+    "bilans": "cotes.analyste cotes.notation cotes.recommandations cotes.protocole cotes.decision cotes.regle_principale cotes.winamax_suivi cotes.filtres_observes cotes.evenements "
               "cotes.analyse_marche cotes.analyse_marche.cache cotes.analyse_marche.lecture "
               "cotes.analyse_marche.meneurs cotes.analyse_marche.opportunites cotes.analyse_marche.segments",
     "alertes": "cotes.notifications cotes.ordres cotes.recap_jouables cotes.alertes cotes.alertes.webhook "

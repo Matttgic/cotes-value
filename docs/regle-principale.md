@@ -29,3 +29,21 @@ Conséquences :
   L'exclusion de Winamax est à revoir le 5/12/2026 sur cette mesure.
 - **Règlement manuel** : un statut saisi sous l'identifiant d'un pari exige une source et un score (ou un motif) ;
   une saisie par match exige une source. Revue des 87 statuts sans preuve : [manuels-sans-preuve.md](manuels-sans-preuve.md).
+
+## Filtres observés (26/11/2026)
+
+Sous-ensembles de la règle suivis sur les paris détectés depuis le 26/11/2026, sans être joués ni changer la règle
+(`cotes/filtres_observes.py`, page Décision) : cote repérée par 2 références ou plus, écart ≥ 5, 8 et 10 %. Constat
+du 26/11 sur les paris du 05/10 au 25/11 (optimiste, choisi sur ces données) :
+
+| 2 sources ou plus, écart | Paris | ROI (10 € fixes) | CLV [IC 95 %] |
+|---|---|---|---|
+| ≥ 3 % | 252 | +18,7 % | +7,8 % [+5,2 ; +10,3] |
+| ≥ 5 % | 117 | +25,4 % | +9,5 % [+6,3 ; +13,1] |
+| ≥ 8 % | 57 | +56,3 % | +10,6 % [+4,7 ; +16,2] |
+| ≥ 10 % | 34 | +91,0 % | +14,6 % [+5,6 ; +22,2] |
+
+Pas d'optimum net : la CLV monte avec le seuil, le gain net reste à peu près stable. Un seul test, sur ≥ 8 % : CLV
+Pinnacle > 0, Student unilatéral par match, seuil 5 %, à partir de 30 CLV. Lecture le 5/12, puis chaque mois.
+Limite : les sources d'une cote comptent les références qui l'ont repérée à tout moment, pas seulement avant la
+première détection.

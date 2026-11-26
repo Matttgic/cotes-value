@@ -113,3 +113,15 @@ test('quoi jouer : bilan de la règle rejouée, chiffres présents dans « Les c
   const gagnante=c.htmlDecision({decision:{...DEC,rejeu:{...rejeu,retenus:b({roi_ic:[0.5,9]})}},protocole:protocole()},[],MAINTENANT);
   assert.match(gagnante,/Oui, elle a gagné\./);assert.match(gagnante,/dec-etat jouer">Gagnante/);
 });
+
+test('filtres observés : un seul filtre testé, badge et chiffres ; rien sans bloc',()=>{
+  const c=contexte();
+  assert.equal(c.decHtmlObserves(undefined),'');
+  const O={gel:'2026-11-26T04:00:00+00:00',alpha:0.05,min_clv:30,revoir_le:'2026-12-05',filtres:[
+    {nom:'2 sources ou plus · écart ≥ 5 %',principal:false,paris:4,regles:0,roi:null,clv:null},
+    {nom:'2 sources ou plus · écart ≥ 8 %',principal:true,prouve:false,paris:2,regles:2,roi:12.5,roi_ic:[-5,30],clv:9.1,clv_ic:[1,17],clv_n:2,clv_p:null}]};
+  const h=c.decHtmlObserves(O);
+  assert.match(h,/26\/11\/2026/);assert.match(h,/05\/12\/2026/);
+  assert.equal((h.match(/badge en_cours/g)||[]).length,1);
+  assert.match(h,/CLV Pinnacle \+9,10 %/);assert.match(h,/aucun pari réglé/);
+});
