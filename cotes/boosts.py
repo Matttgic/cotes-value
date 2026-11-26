@@ -23,7 +23,9 @@ de la marge de Winamax (1 − cote d'avant / cote boostée) : un repère, pas un
 Verdict (``verdict``) : « jouer » ou « passer », affiché sur chaque boost. Avec une cote juste : jouer si la value est
 positive. Sans cote juste mais avec la cote d'avant : jouer si la marge seuil dépasse la marge habituelle d'un
 bookmaker français (``MARGE_HABITUELLE`` par sélection, cumulée sur les sélections d'un combiné) d'au moins
-``MARGE_SECURITE`` ; sinon, ou sans cote d'avant, passer (impossible à juger).
+``MARGE_SECURITE`` ; sinon, ou sans cote d'avant, passer (impossible à juger). Avant tout : passer le hockey, le
+football américain et le score exact, perdants sur l'historique de cotes-boostees (``EXCLUSIONS``). Bilan › Boosts
+suit les gagnés contre attendus par type (``bilan_types``), historique compris.
 
 Suivi (``suivre``) : un épisode par boost, de sa première lecture à la dernière. « Gain espéré » = mise maximale
 (10 € si inconnue) × value, sur les boosts qui ont une cote juste : une espérance, pas un résultat (les boosts ne sont
@@ -310,8 +312,103 @@ def selections(r: dict) -> int:
     return len([x for x in re.split(SEPARATEURS_COMBINE, normaliser(r.get("libelle"))) if x.strip()]) or 1
 
 
+# --- Historique de cotes-boostees : 979 boosts réglés jusqu'au 08/11/2026 (totaux de analyses/conseil-initial.json).
+# « Attendus » = somme des 1/cote : les gagnés d'un pari équitable à cette cote. Les types reprennent
+# boosts/conseil.py › type_pari de ce dépôt pour que l'historique et les boosts réglés ici se comparent.
+HISTORIQUE_SOURCE = "cotes-boostees, 979 boosts réglés jusqu'au 08/11/2026"
+HISTORIQUE_TYPES = {  # type : (boosts réglés, gagnés, gagnés attendus)
+    "joueur": (315, 100, 109.3), "combiné multi-matchs": (226, 68, 73.9), "simple": (173, 51, 57.0),
+    "combiné même match": (160, 63, 51.8), "score exact": (105, 23, 30.4)}
+# Groupes à ne plus jouer, quelle que soit la value : (dimension, groupe, nom, réglés, gagnés, attendus, ROI en %).
+EXCLUSIONS = (("sport", "hockey", "Hockey", 77, 15, 23.3, -43.4),
+              ("sport", "football_americain", "Football américain", 20, 3, 6.8, -57.8),
+              ("type", "score exact", "Score exact", 105, 23, 30.4, -26.9))
+KAPPA_TYPE = 8.0          # rappel vers la moyenne, en gagnés attendus (cotes-boostees › conseil.KAPPA)
+SEUIL_TYPE = 0.05         # « prendre » si ROI espéré ≥ +5 %, « éviter » si ≤ −5 %
+MIN_TYPE = 30             # boosts réglés du type, au moins
+RE_TYPE_JOUEUR = re.compile(r"\b(buteur|buteurs|decisif|passeur|points?|pts|rebonds|passes decisives|essais?|yards|"
+                            r"touchdowns?|realise|performance|meilleur marqueur|se qualifie|termine|podium|aces?|"
+                            r"tirs cadres|marque au moins \d+ points)\b|\b[a-z]\. ?[a-z]")
+RE_TYPE_MULTI = re.compile(r"\b(chacun|chacune|gagnent|tous|matchs|chaque equipe a domicile)\b")
+RE_LIGUES = {"hockey": re.compile(r"\b(nhl|khl|ahl|liiga|shl|magnus|hockey)\b"),
+             "football_americain": re.compile(r"\b(nfl|ncaaf|football americain)\b")}
+
+
+def type_boost(r: dict) -> str:
+    """Type de pari du boost, comme cotes-boostees : long terme, combiné multi-matchs, joueur, score exact, combiné
+    même match ou simple (« A.Zverev … » compte comme « joueur », comme là-bas)."""
+    t = normaliser(r.get("libelle"))
+    t = re.sub(r"\bgagne (le match )?(\d) sets? (a )?(\d)\b", r"gagne \2-\4", t)
+    t = re.sub(r"\(?\b\d{2}\.\d{2}\.\d{4}\)?", " ", t)
+    if r.get("long_terme"):
+        return "long terme"
+    if not (r.get("domicile") and r.get("exterieur")) or RE_TYPE_MULTI.search(t):
+        return "combiné multi-matchs"
+    if RE_TYPE_JOUEUR.search(t):
+        return "joueur"
+    if re.search(r"\d+\s*[-:/]\s*\d+", t):
+        return "score exact"
+    if " et " in t:
+        return "combiné même match"
+    return "simple"
+
+
+def sport_boost(r: dict) -> str | None:
+    """Sport du match relié ; sans match (combinés multi-matchs), deviné d'après la ligue (« KHL », « NFL »…)."""
+    if r.get("sport"):
+        return r["sport"]
+    texte = normaliser(" ".join(str(r.get(k) or "") for k in ("domicile", "titre")))
+    return next((s for s, rx in RE_LIGUES.items() if rx.search(texte)), None)
+
+
+def _fr(x: float, chiffres: int = 1) -> str:
+    return f"{x:.{chiffres}f}".replace(".", ",").replace("-", "−")
+
+
+def exclusion(r: dict) -> str | None:
+    """Motif quand le boost est d'un groupe à ne plus jouer (``EXCLUSIONS``), sinon None."""
+    valeurs = {"sport": sport_boost(r), "type": type_boost(r)}
+    for dim, groupe, nom, n, g, att, roi in EXCLUSIONS:
+        if valeurs[dim] == groupe:
+            return f"{nom} : {g} gagnés pour {_fr(att)} attendus sur {n} boosts de cotes-boostees (ROI {_fr(roi, 0)} %)"
+    return None
+
+
+def bilan_types(resultats: dict) -> dict:
+    """Gagnés contre attendus par type de pari : historique de cotes-boostees + boosts réglés ici (gagnés ou perdus,
+    remboursés à part). ROI espéré = (gagnés + κ·R) / (attendus + κ) − 1, R = rapport global rétréci de la même façon ;
+    « prendre » s'il atteint +5 % sur au moins 30 boosts réglés du type, « éviter » à −5 %, sinon « neutre »."""
+    ici: dict[str, list] = {}
+    for r in resultats.values():
+        if isinstance(r, dict) and r.get("statut") in ("gagne", "perdu") and (r.get("cote") or 0) > 1:
+            s = ici.setdefault(type_boost(r), [0, 0, 0.0])
+            s[0], s[1], s[2] = s[0] + 1, s[1] + (r["statut"] == "gagne"), s[2] + 1 / r["cote"]
+    types = list(HISTORIQUE_TYPES) + sorted(t for t in ici if t not in HISTORIQUE_TYPES)
+    total = {t: [a + b for a, b in zip(HISTORIQUE_TYPES.get(t, (0, 0, 0.0)), ici.get(t, (0, 0, 0.0)))] for t in types}
+    w, q = sum(v[1] for v in total.values()), sum(v[2] for v in total.values())
+    r_global = (w + KAPPA_TYPE) / (q + KAPPA_TYPE)
+    lignes = []
+    for t in types:
+        n, g, att = total[t]
+        roi = (g + KAPPA_TYPE * r_global) / (att + KAPPA_TYPE) - 1
+        conseil = "neutre" if n < MIN_TYPE else "prendre" if roi >= SEUIL_TYPE else "eviter" if roi <= -SEUIL_TYPE \
+            else "neutre"
+        h, i = HISTORIQUE_TYPES.get(t, (0, 0, 0.0)), ici.get(t, [0, 0, 0.0])
+        lignes.append({"type": t, "paris": n, "gagnes": g, "attendus": round(att, 1), "roi_espere": round(roi, 4),
+                       "conseil": conseil, "exclu": any(e[0] == "type" and e[1] == t for e in EXCLUSIONS),
+                       "historique": {"paris": h[0], "gagnes": h[1], "attendus": round(h[2], 1)},
+                       "ici": {"paris": i[0], "gagnes": i[1], "attendus": round(i[2], 1)}})
+    return {"source": HISTORIQUE_SOURCE, "kappa": KAPPA_TYPE, "seuil": SEUIL_TYPE, "min": MIN_TYPE,
+            "rapport_global": round(r_global, 4), "types": lignes,
+            "exclusions": [{"groupe": nom, "paris": n, "gagnes": g, "attendus": att, "roi_pct": roi}
+                           for _, _, nom, n, g, att, roi in EXCLUSIONS]}
+
+
 def verdict(r: dict) -> tuple[str, float | None]:
-    """(« jouer » ou « passer », marge habituelle attendue sur ce boost quand la cote juste manque)."""
+    """(« jouer » ou « passer », marge habituelle attendue sur ce boost quand la cote juste manque). Les groupes
+    perdants de l'historique (``EXCLUSIONS``) passent toujours."""
+    if exclusion(r):
+        return "passer", None
     if r.get("value") is not None:
         return ("jouer" if r["value"] > 0 else "passer"), None
     if r.get("marge_seuil") is None:
@@ -371,6 +468,7 @@ def evaluer(boosts: list[dict], francais: list[dict], index: dict, maintenant: d
             r["statut"] = "sans cote juste"
         out.append(r)
     for r in out:
+        r["type"], r["exclusion"] = type_boost(r), exclusion(r)
         r["verdict"], r["marge_attendue"] = verdict(r)
     out.sort(key=lambda x: (x.get("value") is None, -(x.get("value") or 0), -(x.get("hausse") or 0)))
     return out

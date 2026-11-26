@@ -206,6 +206,49 @@ def test_verdict_jouer_ou_passer():
     assert B.verdict({"value": None, "marge_seuil": None}) == ("passer", None)
 
 
+@pytest.mark.parametrize("boost, attendu", [
+    ({"libelle": "Daniil Medvedev gagne 2-1", "domicile": "D. Medvedev", "exterieur": "F. Cobolli"}, "score exact"),
+    ({"libelle": "Zverev gagne 2 sets à 0", "domicile": "A", "exterieur": "B"}, "score exact"),
+    ({"libelle": "Erling Haaland marque au moins un but", "domicile": "A", "exterieur": "B"}, "simple"),
+    ({"libelle": "Luka Doncic marque au moins 40 points", "domicile": "A", "exterieur": "B"}, "joueur"),
+    ({"libelle": "A.Zverev gagne le 1er set 6-3 ou 6-4 ?", "domicile": "A", "exterieur": "B"}, "joueur"),
+    ({"libelle": "Lyon gagne et plus de 2,5 buts", "domicile": "Lyon", "exterieur": "Nice"}, "combiné même match"),
+    ({"libelle": "Plus de 1,5 buts dans chacun des 4 matchs", "domicile": "Ligue 1", "exterieur": "21/11"},
+     "combiné multi-matchs"),
+    ({"libelle": "Chaque équipe à domicile gagne", "domicile": "Pro D2", "exterieur": None}, "combiné multi-matchs"),
+    ({"libelle": "Lyon gagne", "domicile": "Lyon", "exterieur": "Nice"}, "simple"),
+    ({"libelle": "Le PSG champion", "long_terme": True}, "long terme"),
+])
+def test_type_boost_comme_cotes_boostees(boost, attendu):
+    assert B.type_boost(boost) == attendu
+
+
+def test_exclusions_hockey_football_americain_score_exact():
+    match = {"domicile": "A", "exterieur": "B", "value": 0.2, "marge_seuil": 0.4}
+    assert B.verdict({**match, "libelle": "A gagne", "sport": "football"})[0] == "jouer"
+    for boost in ({**match, "libelle": "A gagne", "sport": "hockey"},
+                  {**match, "libelle": "A gagne", "sport": "football_americain"},
+                  {**match, "libelle": "A gagne 2-1", "sport": "football"},
+                  {"libelle": "Chaque équipe à domicile marque au moins 3 buts lors des 3 matchs", "domicile": "KHL",
+                   "value": None, "marge_seuil": 0.5}):
+        assert B.verdict(boost) == ("passer", None) and B.exclusion(boost)
+    assert B.exclusion({**match, "libelle": "A gagne", "sport": "hockey"}).startswith("Hockey : 15 gagnés pour 23,3")
+
+
+def test_bilan_types_historique_plus_regles_ici():
+    resultats = {"a": {"statut": "gagne", "cote": 2.0, "libelle": "A gagne et plus de 2,5 buts", "domicile": "A",
+                       "exterieur": "B"},
+                 "b": {"statut": "rembourse", "cote": 2.0, "libelle": "A gagne", "domicile": "A", "exterieur": "B"},
+                 "c": {"statut": "perdu", "cote": 4.0, "libelle": "A gagne", "domicile": "A", "exterieur": "B"}}
+    t = {x["type"]: x for x in B.bilan_types(resultats)["types"]}
+    cmm, simple = t["combiné même match"], t["simple"]
+    assert (cmm["paris"], cmm["gagnes"], cmm["ici"]) == (161, 64, {"paris": 1, "gagnes": 1, "attendus": 0.5})
+    assert (simple["paris"], simple["gagnes"], simple["attendus"]) == (174, 51, 57.2)
+    assert cmm["conseil"] == "prendre" and simple["conseil"] == "eviter" and t["score exact"]["exclu"]
+    vide = {x["type"]: x for x in B.bilan_types({})["types"]}
+    assert vide["joueur"]["paris"] == 315 and vide["joueur"]["ici"]["paris"] == 0
+
+
 @pytest.mark.parametrize("libelle, n", [
     ("PSG gagne + Mbappé marque + Plus de 2,5 buts", 3),
     ("Real gagne & Bellingham buteur", 2),
