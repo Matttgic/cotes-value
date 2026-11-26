@@ -55,6 +55,8 @@ FICHIERS: dict[str, Fichier] = {
                           "milieux pas encore réglés (60 jours, 10 000 au plus)"),
     "props_papier.json": Fichier("chaud", _COMPACT, ["cotes/props_papier.py"], [_CYCLE, _SITE]),
     "persistance_qwen.json": Fichier("chaud", _JSON, [_CYCLE], [_CYCLE]),
+    "winamax_suivi.json": Fichier("chaud", _JSON, [_CYCLE], [_CYCLE, _SITE],
+                                  "values Winamax notées sans pari depuis le 26/11/2026, gardées pour leur CLV"),
     "resultats_manuels.json": Fichier("chaud", "json écrit à la main", ["à la main"], [_CYCLE, "études"],
                                       "permanent ; « supprime » retire un pari"),
     "resultats_a_saisir.json": Fichier("chaud", _JSON, [_CYCLE], [_SITE]),

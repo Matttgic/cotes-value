@@ -27,6 +27,7 @@ from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
 from cotes.simulation import (COTE_MAX_PRISE, SOURCES_MAX, cle_selection_unique, dans_regle_sauf_bookmaker,  # noqa: E402
                               motif_hors_regle, sources_par_selection)
 from cotes import liens as liens_mod  # noqa: E402
+from cotes import winamax_suivi as winamax_suivi_mod  # noqa: E402
 from cotes.alertes import bankroll as bankroll_auto  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
@@ -759,6 +760,7 @@ def charger_entrees(donnees: Path) -> dict:
             "actuelles": actuelles, "controle": controle,
             "surebets": _lire(donnees / "surebets.json", {}), "boosts": _lire(donnees / "boosts.json", {}),
             "boosts_resultats": _lire(donnees / "boosts_resultats.json", {}),
+            "winamax_suivi": _lire(donnees / "winamax_suivi.json", []),
             "euria": _lire(donnees / "euria.json", {}), "euria_regles": _regles_euria(donnees)}
 
 
@@ -1022,6 +1024,8 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     data["sources_max"] = SOURCES_MAX
     data["boosts"] = boosts_publies(entrees.get("boosts"), _maintenant(instant), entrees.get("boosts_resultats"))
     data["winamax_a_part"] = winamax_a_part(entrees.get("actuelles"), _maintenant(instant))
+    suivi_wx = entrees.get("winamax_suivi")
+    data["winamax_suivi"] = winamax_suivi_mod.bilan(suivi_wx if isinstance(suivi_wx, list) else [])
     data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, _maintenant(instant))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs

@@ -100,11 +100,13 @@ def _id(*parts) -> str:
 
 
 def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | None = None,
-           exclus: set[str] | frozenset[str] = frozenset()) -> list[dict]:
+           exclus: set[str] | frozenset[str] = frozenset(), sans_exclusion_bookmaker: bool = False) -> list[dict]:
     """Ajoute les nouveaux paris (modifie `paris`) et renvoie ceux qui viennent d'être pris. Un pari par
     référence, bookmaker et sélection, à la première détection, rangé dans la tranche de son écart. Un même
     pari vu chez plusieurs bookmakers = paris distincts (on sait ainsi lequel se trompe le plus souvent).
-    ``exclus`` : identifiants à ne jamais reprendre (paris « supprime » de resultats_manuels.json)."""
+    ``exclus`` : identifiants à ne jamais reprendre (paris « supprime » de resultats_manuels.json).
+    ``sans_exclusion_bookmaker`` : la règle sans ``BOOKMAKERS_EXCLUS``, pour le suivi de Winamax
+    (cotes/winamax_suivi.py), jamais pour les paris."""
     deja = {p["id"] for p in paris} | set(exclus)
     nouveaux = []
     lot = maintenant or datetime.now(timezone.utc)
@@ -119,7 +121,8 @@ def placer(opportunites: list[dict], paris: list[dict], maintenant: datetime | N
             continue
         if not _lectures_fraiches(o, decision, debut):
             continue
-        if motif_hors_regle({**o, "detecte": decision.isoformat()}):
+        if motif_hors_regle({**o, "detecte": decision.isoformat(),
+                             **({"bookmaker": None} if sans_exclusion_bookmaker else {})}):
             continue
         code = simulation_de(o["ecart"], o["cote"])
         if code is None:
