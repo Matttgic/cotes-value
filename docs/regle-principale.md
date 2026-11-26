@@ -21,5 +21,8 @@ Conséquences :
   Au-delà de 5 minutes, un prix Pinnacle donnait une CLV de −1,82 % [−3,50 ; −0,02] contre +3,09 % en deçà.
 - **Registre gelé** : 97 stratégies, 77 inscriptions au protocole. `tests/test_regle_principale.py` échoue si l'une
   ou l'autre grandit. Le protocole continue de tourner pour les stratégies inscrites, sans nouvelle place.
+- **Winamax à part** (depuis le 26/11/2026) : collecté normalement mais hors règle (CLV Pinnacle négative). Ses values
+  du dernier relevé qui passeraient la règle sans cette exclusion sont listées sur l'Accueil, pour information :
+  aucun pari pris, rien dans les bilans (`winamax_a_part`, `cotes/site/construction.py`).
 - **Règlement manuel** : un statut saisi sous l'identifiant d'un pari exige une source et un score (ou un motif) ;
   une saisie par match exige une source. Revue des 87 statuts sans preuve : [manuels-sans-preuve.md](manuels-sans-preuve.md).
