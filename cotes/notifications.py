@@ -117,11 +117,13 @@ def empreinte_prix(p: dict) -> str:
 
 
 def flux(actuelles: list[dict], paris: list[dict], retenus: dict[str, set[int]],
-         maintenant: datetime | None = None, retenues: list | None = None) -> dict:
+         maintenant: datetime | None = None, retenues: list | None = None, exclues=()) -> dict:
     """``retenues`` (facultatif, rempli sur place) : les prises décidées il y a moins de 15 min dont l'alerte est
-    écartée parce que la cote française est trop ancienne ; sert au diagnostic, jamais transmis."""
+    écartée parce que la cote française est trop ancienne ; sert au diagnostic, jamais transmis. ``exclues`` : clés sans
+    alerte (stratégies retirées, cotes/pauses.py), comptées quand même dans les votes de la convergence."""
     maintenant = maintenant or datetime.now(timezone.utc)
     valides = {**retenus, "convergence": paris_convergence(paris, retenus)}
+    valides = {cle: ids for cle, ids in valides.items() if cle not in exclues}
     observations = {}
     for p in paris:
         t0 = heure(p.get("detecte"))

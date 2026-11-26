@@ -147,7 +147,7 @@ def recommander(lignes: list[dict], maximum: int = MAXIMUM) -> dict:
 
     Renvoie {"liste": [{rang, id, note, mesures}], "ecartees": [{id, note, raison}]} : les recommandées dans l'ordre,
     puis les candidates écartées comme doublons."""
-    candidates = [l for l in lignes if not l.get("base") and not raisons_refus(l.get("stats"))]
+    candidates = [l for l in lignes if not l.get("base") and not l.get("retiree") and not raisons_refus(l.get("stats"))]
     candidates.sort(key=lambda l: (-force(l["stats"]), str(l["id"])))
     retenues, ecartees = [], []
     for l in candidates:
@@ -216,13 +216,14 @@ def reviser(etat: dict | None, lignes: list[dict], aujourd_hui: date, maximum: i
 
     for a in etat["actuelles"]:
         l = par_id.get(a["id"])
-        raisons = raisons_refus(l.get("stats")) if l else ["stratégie disparue du classement"]
+        raisons = (["stratégie retirée"] if l.get("retiree") else raisons_refus(l.get("stats"))) if l \
+            else ["stratégie disparue du classement"]
         if raisons:
             sortir(a, ", ".join(raisons) + (" (critères version 2)" if etat.get("criteres", 1) != CRITERES else ""))
         else:
             restantes.append(a)
     ensemble = lambda a: par_id[a["id"]]["ensemble"]  # noqa: E731
-    candidates = sorted((l for l in lignes if not l.get("base") and not est_fusion(l["id"])
+    candidates = sorted((l for l in lignes if not l.get("base") and not l.get("retiree") and not est_fusion(l["id"])
                          and not raisons_refus(l.get("stats"))
                          and l["id"] not in {a["id"] for a in restantes}),
                         key=lambda l: (-force(l["stats"]), str(l["id"])))

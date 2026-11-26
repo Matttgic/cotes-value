@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from cotes import pauses, protection
 from cotes.decisions import appliquer
@@ -78,11 +78,39 @@ def test_durees_temps_propre():
 def test_strategies_retirees_sans_nouveaux_paris_et_hors_des_notifs():
     pauses.charger({})
     try:
-        avant = {"id": "a", "detecte": "2026-11-19T10:00:00+00:00"}
-        apres = {"id": "b", "detecte": "2026-11-20T10:00:00+00:00"}
-        for cle in pauses.RETIREES:
-            assert appliquer([avant, apres], {id(avant), id(apres)}, cle) == {id(avant)}
+        for cle, r in pauses.RETIREES.items():
+            depuis = datetime.fromisoformat(pauses.depuis_retrait(cle))
+            avant = {"id": "a", "detecte": (depuis - timedelta(hours=1)).isoformat()}
+            apres = {"id": "b", "detecte": (depuis + timedelta(hours=1)).isoformat()}
+            attendu = {id(avant), id(apres)} if r.get("votes") else {id(avant)}   # bases : votes de convergence gardés
+            assert appliquer([avant, apres], {id(avant), id(apres)}, cle) == attendu, cle
         liste = pauses.mettre_a_jour("/nexiste/pas", [], {}, lambda _: [], set(), T)["liste"]
         assert all(liste[r["id"]]["retiree"] for r in pauses.RETIREES.values())
+        assert liste["Qwen"]["depuis"] == pauses.RETIREES_27_11 and liste["Claude Défi 2 · Handicaps"]["depuis"] == \
+            pauses.RETIREES_DEPUIS
     finally:
         pauses.charger({})
+
+
+def test_retirees_identifiees_par_le_registre_et_jamais_membres_d_une_fusion():
+    from cotes.strategie_recommandee import MEMBRES
+    from cotes.strategies import registre
+    lignes = {s.cle: s.ligne for s in registre.toutes()}
+    assert all(lignes[cle] == r["id"] for cle, r in pauses.RETIREES.items())     # même nom que la ligne du site
+    assert not {r["id"] for r in pauses.RETIREES.values()} & set(MEMBRES)
+    assert all(r.get("votes") is None or cle in {"strategie", "jules", "jules_v2", "gemini"}
+               for cle, r in pauses.RETIREES.items())
+
+
+def test_retiree_jamais_recommandee():
+    from cotes.recommandations import recommander
+    stats = {"preuve": {"clv_ic": [2.0, 4.0]}, "regles": 200}
+    lignes = [{"id": "x", "stats": stats, "ensemble": {1}, "retiree": True}]
+    import cotes.recommandations as reco
+    avant = reco.raisons_refus
+    reco.raisons_refus = lambda _s: []
+    try:
+        assert recommander(lignes)["liste"] == []
+        assert recommander([{**lignes[0], "retiree": False}])["liste"][0]["id"] == "x"
+    finally:
+        reco.raisons_refus = avant

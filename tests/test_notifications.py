@@ -28,6 +28,13 @@ def test_flux_meme_prise_prix_et_plusieurs_strategies_sans_doublon():
     assert not flux([o],[p],{'strategie':set()},NOW)['alertes']
 
 
+def test_strategies_exclues_sans_alerte():
+    p=selection(); o=dict(p)
+    ids={"strategie":{id(p)},"claude_prudent":{id(p)}}
+    assert flux([o],[p],ids,NOW,exclues={"strategie"})['alertes'][0]['strategies']==['claude_prudent']
+    assert not flux([o],[p],ids,NOW,exclues={"strategie","claude_prudent"})['alertes']
+
+
 def test_flux_exclut_anciens_matches_commences_et_suspects():
     p=selection(); ids={'strategie':{id(p)}}
     for o in ({**p,'suspect':True},{**p,'debut':NOW.isoformat()}):

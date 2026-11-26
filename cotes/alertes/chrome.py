@@ -31,4 +31,5 @@ def preparer(donnees: Path, maintenant: datetime | None = None, retenues: list |
     retenus.update(selections_prudentes(paris, bases=retenus))
     retenus.update(selections_labo(paris))
     retenus.update(selections_bases(paris))         # bases du Bilan : sans effet sur les votes de convergence
-    return flux(actuelles, paris, retenus, maintenant, retenues=retenues)
+    # Stratégies retirées : plus d'alerte, même celles dont la sélection continue pour les votes de convergence.
+    return flux(actuelles, paris, retenus, maintenant, retenues=retenues, exclues=set(pauses.RETIREES))
