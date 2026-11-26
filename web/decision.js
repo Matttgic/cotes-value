@@ -33,6 +33,20 @@ sur les paris détectés depuis le ${decJour(P.regle.gel)}. <span class="dec-chi
 <span class="aide">${e(P.regle.texte)}. Un seul test : CLV &gt; 0, seuil ${decPct(100 * P.alpha, 0).replace('+', '')}.</span></li>`;
 }
 
+// Filtres observés (cotes/filtres_observes.py) : sous-ensembles de la règle suivis depuis le 26/11, jamais joués.
+function decHtmlObserves(O) {
+  if (!O || !(O.filtres || []).length) return '';
+  const ligne = F => {
+    const clv = F.clv == null ? 'CLV non mesurée' : `CLV Pinnacle ${decPct(F.clv)}${decIc(F.clv_ic)} · ${decPluriel(F.clv_n, 'mesuré')}${F.clv_p == null ? '' : ' · ' + decP(F.clv_p)}`;
+    const roi = F.roi == null ? 'aucun pari réglé' : `ROI ${decPct(F.roi, 1)}${decIc(F.roi_ic, 1)} · ${decPluriel(F.regles, 'réglé')}`;
+    const badge = F.principal ? `<span class="badge ${F.prouve ? 'gagne' : 'en_cours'}">${F.prouve ? 'Avantage mesuré' : 'Testé'}</span> ` : '';
+    return `<li>${badge}<b>${e(F.nom)}</b> : ${decPluriel(F.paris, 'pari')}. <span class="dec-chiffre">${e(clv)} · ${e(roi)}</span></li>`;
+  };
+  return `<li><span class="badge">Filtres observés</span> suivis depuis le ${decJour(O.gel)} sur les paris de la règle principale, sans être joués.
+<span class="aide">Un seul test, sur le filtre marqué : CLV &gt; 0, seuil ${decPct(100 * O.alpha, 0).replace('+', '')}, à partir de ${O.min_clv} CLV. À relire le ${decJour(O.revoir_le)}.</span>
+<ul>${O.filtres.map(ligne).join('')}</ul></li>`;
+}
+
 // 1. L'avantage est-il prouvé ? Seul le protocole fixé à l'avance peut le dire : une stratégie « validée ».
 function decisionAvantage(P, maintenant = Date.now()) {
   const R = (P && P.regles) || {}, lignes = Object.values((P && P.lignes) || {}).filter(l => l.statut !== 'hors_protocole');
@@ -192,7 +206,7 @@ function htmlDecision(D, fiches, maintenant = Date.now(), noms = null) {
 <p class="dec-reponse"><strong class="${A.prouve ? 'pos' : ''}">${A.prouve ? `Oui, pour ${decPluriel(A.validees.length, 'stratégie')}.` : 'Non.'}</strong>
 ${A.prouve ? 'Elles battent la clôture Pinnacle au seuil fixé avant les paris.' : "Aucune stratégie n'a passé le protocole fixé avant les paris, seul à pouvoir le dire."}
 ${decPreuve('protocole', compte + seuil)}</p>
-<ul class="dec-liste">${decHtmlPrincipale(DEC.principale)}${A.validees.map(l => `<li><b>${e(l.nom)}</b> : validée. ${decPreuve('protocole:' + l.cle, lecture(l))}</li>`).join('')}${etabli}${gain}${suite}</ul></section>`;
+<ul class="dec-liste">${decHtmlPrincipale(DEC.principale)}${decHtmlObserves(DEC.observes)}${A.validees.map(l => `<li><b>${e(l.nom)}</b> : validée. ${decPreuve('protocole:' + l.cle, lecture(l))}</li>`).join('')}${etabli}${gain}${suite}</ul></section>`;
 
   // --- 2. Quoi jouer aujourd'hui ?
   const jouables = lignes.filter(l => l.decision === 'jouer' && l.famille !== 'ensemble');
