@@ -706,7 +706,10 @@ def bilan_couverts(episodes: list[dict], maintenant: datetime, jours: int = 7) -
 # à la main. Chaque résultat garde une copie du boost (l'épisode disparaît de boosts.json après GARDER_JOURS) ; mise =
 # mise maximale du boost (10 € si inconnue), à la cote de la première lecture.
 STATUTS_BOOST = {"gagne": "gagné", "perdu": "perdu", "rembourse": "remboursé"}
-CHAMPS_REGLE = ("id", "bookmaker", "libelle", "pari", "domicile", "exterieur", "debut", "sport", "lien")
+CHAMPS_REGLE = ("id", "bookmaker", "libelle", "pari", "domicile", "exterieur", "debut", "sport", "lien", "premier")
+# Bilan remis à zéro à l'entrée en vigueur des exclusions (hockey, football américain, score exact) : seuls comptent
+# les boosts lus pour la première fois ensuite (``premier`` ; à défaut, match commencé ensuite).
+DATE_REGLES = "2026-11-26T04:00:00+00:00"
 
 
 def code_boost(ident: str) -> str:
@@ -740,9 +743,18 @@ def regler_boost(episode: dict, statut: str, maintenant: datetime, score: str | 
             "regle_le": maintenant.isoformat(timespec="seconds")}
 
 
-def bilan_regles(resultats: dict) -> dict:
-    """Bilan des boosts réglés à la main : nombre, gagnés, mises, gain net, ROI."""
+def _lu_le(r: dict) -> datetime | None:
+    return _t(r.get("premier")) or _t(r.get("debut"))
+
+
+def bilan_regles(resultats: dict, depuis: str | None = None, avant: str | None = None) -> dict:
+    """Bilan des boosts réglés à la main : nombre, gagnés, mises, gain net, ROI ; ``depuis`` / ``avant`` : boosts lus
+    pour la première fois à partir de / avant cet instant (``_lu_le``)."""
     rs = [r for r in resultats.values() if isinstance(r, dict) and r.get("statut") in STATUTS_BOOST]
+    if depuis:
+        rs = [r for r in rs if _lu_le(r) is not None and _lu_le(r) >= _t(depuis)]
+    if avant:
+        rs = [r for r in rs if _lu_le(r) is not None and _lu_le(r) < _t(avant)]
     mise = round(sum(r.get("mise") or 0 for r in rs if r["statut"] != "rembourse"), 2)
     gain = round(sum(r.get("gain") or 0 for r in rs), 2)
     return {"n": len(rs), "gagnes": sum(r["statut"] == "gagne" for r in rs), "mise": mise, "gain": gain,

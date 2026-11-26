@@ -139,7 +139,9 @@ def boosts_publies(doc: dict, maintenant: datetime, resultats: dict | None = Non
             "episodes_couverts": sorted(couverts, key=lambda x: x["premier"], reverse=True)[:20],
             "seuil_alerte": boosts_mod.SEUIL_ALERTE,
             "a_regler": boosts_mod.boosts_a_regler(episodes, resultats, maintenant),
-            "regles": regles[:100], "bilan_regles": boosts_mod.bilan_regles(resultats),
+            "regles": regles[:100], "bilan_regles": boosts_mod.bilan_regles(resultats, depuis=boosts_mod.DATE_REGLES),
+            "bilan_regles_avant": boosts_mod.bilan_regles(resultats, avant=boosts_mod.DATE_REGLES),
+            "date_regles": boosts_mod.DATE_REGLES,
             "bilan_types": boosts_mod.bilan_types(resultats)}
 
 

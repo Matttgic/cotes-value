@@ -174,12 +174,16 @@ function rendreBilanBoosts() {
   rendreBoostsListe();
   const B = D.boosts || {}, zone = document.getElementById('bb-a-regler');
   if (!zone) return;
-  const aRegler = B.a_regler || [], regles = B.regles || [], s = B.bilan_regles || {};
+  const aRegler = B.a_regler || [], regles = B.regles || [], s = B.bilan_regles || {}, av = B.bilan_regles_avant || {};
+  const depuis = B.date_regles ? ' depuis le ' + new Intl.DateTimeFormat('fr-FR', {timeZone: 'Europe/Paris', day: '2-digit',
+    month: '2-digit'}).format(new Date(B.date_regles)) : '';
   document.getElementById('bb-kpis').innerHTML = s.n ? kpis([
-    ['Gain net', (s.gain >= 0 ? '+' : '') + fr2(s.gain) + ' €', signe(s.gain), `${s.n} boosts réglés`],
+    ['Gain net', (s.gain >= 0 ? '+' : '') + fr2(s.gain) + ' €', signe(s.gain), `${s.n} boosts réglés${depuis}`],
     ['ROI', s.roi == null ? '—' : pct(s.roi), signe(s.gain), `${fr2(s.mise)} € misés`],
     ['Gagnés', `${s.gagnes}/${s.n}`, '', 'boosts gagnés']
-  ]) : '';
+  ]) : `<p class="aide">Aucun boost réglé${depuis} : le bilan repart de zéro avec les règles actuelles.</p>`;
+  document.getElementById('bb-avant').textContent = av.n ? `Avant les règles actuelles : ${av.n} réglés, `
+    + `${av.gagnes} gagnés, ${(av.gain >= 0 ? '+' : '') + fr2(av.gain)} € (ROI ${av.roi == null ? '—' : pct(av.roi)}).` : '';
   document.getElementById('bb-n').textContent = aRegler.length ? String(aRegler.length) : '';
   zone.innerHTML = aRegler.length
     ? `<textarea class="bb-texte" id="bb-texte" readonly rows="${Math.min(12, aRegler.length + 1)}">${e(texteBoostsARegler(aRegler))}</textarea>
