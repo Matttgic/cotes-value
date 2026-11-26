@@ -139,10 +139,9 @@ page Euria (dépôt Euria, même origine matttgic.github.io), et `euria-stats.js
 par milieu (onglet Stats d'Euria : résultat par sport, type de pari, largeur, espérance, chance, bookmakers…). Case **Milieux en value** dans « Alertes Pushover » :
 espérance d'au moins `MILIEU_SEUIL_ALERTE` (2 %) de la mise, une fois par milieu.
 
-### Deux stratégies suivies séparément
+### ChatGPT v1
 
-**Bilan → Stratégie** conserve la stratégie de Claude du 11/10.
-**Bilan → ChatGPT** suit une stratégie expérimentale indépendante à compter du
+**ChatGPT v1** suit une stratégie expérimentale indépendante à compter du
 14/10/2026 à 05:15 (Paris) : Pinnacle sans marge, cotes 1,50–3,00, edge 3–12 %,
 première détection entre 15 min et 6 h du match, une mise fictive de 10 € par match,
 cinq nouvelles mises maximum par jour. « Les paris » de sa fiche (Bilan › Stratégies) donne
@@ -150,38 +149,14 @@ ses sélections. Aucun appel API supplémentaire.
 
 [Règles, audit historique défavorable et limites](docs/strategie-chatgpt.md).
 
-**Qwen** (`qwen_persistence`, depuis le 20/10/2026) : Pinnacle, cotes 1,45–3,20, edge ≥ 3,5 %, Winamax et Betclic,
-15 min à 2 h avant le match, validée après deux cycles consécutifs, 3 paris par jour au plus.
-[Règles et limites](docs/strategie-qwen.md).
-Le backtest de conception est exclu du bilan prospectif : rentabilité non démontrée.
+### Stratégies retirées
 
-### JULES EDGE v1
-
-**Bilan → JULES EDGE** et **Stratégies → JULES EDGE V1** suivent les nouvelles
-détections depuis la première publication du code de Jules, le **14/10/2026 à
-23:04:13 (Paris)**. Pinnacle, cotes 1,30–2,50, edge 3–12 %, 15 min à 12 h avant
-le match, référence de 5 min maximum, une sélection par match et six par jour.
-Mise fictive de 10 € ; les lignes du tableau ouvrent les paris sélectionnés.
-
-Le rejeu complet au relevé du 14/10 à 23:03:59 compte **26 sélections, 21 réglées,
-+27,90 € et +13,29 % de ROI**. Ce passé est exclu du suivi après lancement.
-Les anciens chiffres annoncés par Jules ne correspondent pas au code livré.
-Voir [audit et limites](docs/strategie-jules.md), [rapport figé](docs/strategie-jules.json)
-et `scripts/verifier_strategie_jules.py`. Aucune rentabilité future démontrée.
-
-### Jules v2 reconstruite
-
-**Bilan → JULES EDGE v2** et **Stratégies → JULES EDGE V2** reprennent l'intention
-de Jules avec une identité des matchs reliée entre Pinnacle, Betfair et Polymarket.
-Cotes 1,30–2,80, edge 2,5–12 %, 15 min à 18 h avant le match, référence de 5 min
-maximum, une mise par événement identifiable et huit par jour au plus.
-Mise fictive de 10 €. Suivi à partir du **15/10/2026 à 00:30 (Paris)**.
-
-Sur le relevé commun 7–13 octobre : **34 sélections, 30 réglées, +38,30 €,
-ROI +12,77 %**, contre +13,50 % pour Claude. Résultat exploratoire, sans
-supériorité démontrée ; le suivi exclut ces gains passés. La v1 reste inchangée.
-[Protocole](docs/protocole-jules-v2.md), [audit et limites](docs/strategie-jules-v2.md),
-[rapport reproductible](docs/strategie-jules-v2.json).
+Plus de prise ni d'alerte, masquées sur la page Stratégies (« Afficher › Retirées » pour leur historique) :
+4 Claude Défi le 19/11, puis 18 stratégies le 27/11/2026 : ROI négatif avec au moins 100 paris réglés (dont Claude
+rejeu, JULES EDGE v1 et v2, Gemini Argon, Convergence ≥ 3) ou plus aucun pari (Grok 4 et 5, Optimisée + Polymarket,
+Qwen). Liste, chiffres et leçons : [docs/strategies-retirees.md](docs/strategies-retirees.md) (`cotes/pauses.py`,
+`RETIREES`). Règles d'origine : [Qwen](docs/strategie-qwen.md), [Jules v1](docs/strategie-jules.md),
+[Jules v2](docs/strategie-jules-v2.md).
 
 ### M3 MultiSport Value (analyse historique)
 

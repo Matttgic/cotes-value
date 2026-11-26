@@ -606,6 +606,10 @@ def recommandations_du_laboratoire(laboratoire: dict, paris: list[dict], donnees
                for nom, s in (laboratoire.get("comparateurs_futur") or {}).items()]
     lignes += [{"id": "base:" + nom, "stats": s, "ensemble": ensembles.get("base:" + nom, set()), "base": True}
                for nom, s in (laboratoire.get("bases_futur") or {}).items()]
+    retirees = {r["id"] for r in RETIREES.values()}          # cotes/pauses.py : jamais recommandées
+    for l in lignes:
+        if l["id"] in retirees:
+            l["retiree"] = True
     maintenant = _maintenant(instant)
     mesure = reco.mesurer_preuves(lignes, paris)       # ROI et CLV Pinnacle par match, corrigées : les critères
     etat = reco.mettre_a_jour(donnees, lignes, maintenant, reviser_permis=mesure)
@@ -1053,7 +1057,7 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
                             if isinstance(r, dict) and isinstance(r.get("regle"), dict) and "id" in r["regle"]]
     donnees_json = json_public(leger)
     differes_json = json_public({k: data[k] for k in BLOCS_DIFFERES if k in data})
-    flux_alertes = notifications_mod.flux(actuelles, paris, retenus, instant)
+    flux_alertes = notifications_mod.flux(actuelles, paris, retenus, instant, exclues=set(RETIREES))
     alertes_json = json_public(flux_alertes)
     ordres_json = json_public(ordres_mod.construire(flux_alertes, actuelles, instant))
     web = RACINE / "web"

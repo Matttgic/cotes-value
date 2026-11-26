@@ -1,9 +1,54 @@
 # Stratégies retirées
 
-Une stratégie retirée ne prend plus aucun nouveau pari. Son historique reste visible dans le Bilan, avec l'étiquette
-« Retirée ». Elle n'apparaît plus dans Notifs. La liste est dans `cotes/pauses.py` (`RETIREES`).
+Une stratégie retirée ne prend plus aucun nouveau pari et n'envoie plus d'alerte. Elle n'apparaît plus dans Notifs ni
+dans les recommandées. Sur la page Stratégies, elle est masquée : « Afficher › Retirées » montre son historique, avec
+l'étiquette « Retirée ». La liste est dans `cotes/pauses.py` (`RETIREES`).
 
 Pourquoi garder cette page : ne pas refaire une stratégie déjà essayée et perdante.
+
+## 27/11/2026 : dix-huit stratégies
+
+Chiffres du suivi depuis le lancement de chaque stratégie, 10 € fixes, relevé du 26/11/2026 au soir. « Au mieux » :
+borne haute à 95 % du ROI par match. Le code et les règles restent ; seules la prise, les alertes et l'affichage
+s'arrêtent le 27/11/2026 à 0 h UTC.
+
+**Perdantes avec assez de recul** : ROI négatif et au moins 100 paris réglés (sous ce seuil, l'analyste dit « Trop tôt
+pour juger »). Aucune n'est prouvée perdante (le meilleur cas reste au-dessus de zéro) : elles sont retirées parce
+qu'elles ne gagnent pas après plusieurs semaines, à la demande de l'utilisateur.
+
+| Stratégie | Réglés (matchs) | ROI | Au mieux | CLV par match |
+|---|---|---|---|---|
+| Convergence ≥ 3 hors M3 | 106 (105) | −11,8 % | +3,2 % | +1,3 % |
+| Claude Défi 4 · Gros écart hors Winamax | 103 (60) | −9,5 % | +20,3 % | +5,9 % |
+| JULES EDGE v2 (rejeu) | 170 (170) | −8,3 % | +4,0 % | +2,0 % |
+| JULES EDGE v1 (rejeu) | 133 (133) | −6,6 % | +6,8 % | +0,6 % |
+| Défi 1 · Écart fort, match proche | 207 (109) | −3,9 % | +15,6 % | +4,1 % |
+| Claude (rejeu) | 654 (412) | −1,9 % | +6,1 % | +2,5 % |
+| Conseil · bookmaker en retard (hors foot) | 114 (114) | −1,8 % | +15,3 % | +0,6 % |
+| Gemini Défi 1 · Indoor & Glace | 244 (128) | −1,8 % | +14,4 % | +0,9 % |
+| Gemini Argon v1 (rejeu) | 188 (181) | −1,6 % | +8,6 % | +2,6 % |
+| Claude 1/match · max 10/j | 198 (196) | −1,5 % | +9,3 % | +2,7 % |
+| Grok 6 · Pinnacle hors foot | 124 (124) | −0,9 % | +14,7 % | +0,5 % |
+| Grok 10 · Valeur Polymarket | 114 (64) | −0,3 % | +25,9 % | +2,2 % |
+| Gemini Défi 4 · Lignes asiatiques | 181 (92) | −0,2 % | +18,2 % | +1,9 % |
+| Liquidité sûre | 118 (118) | −0,1 % | +17,9 % | +0,5 % |
+
+Claude (rejeu), JULES EDGE v1 et v2 et Gemini Argon v1 sont des stratégies de base : leurs votes font tourner
+Convergence ≥ 2 (ROI +1,2 %, gardée). Leur sélection continue donc en coulisse (`votes` dans `RETIREES`) ; seuls
+l'affichage et les alertes s'arrêtent. Les arrêter vraiment changerait une règle déjà lancée.
+
+**Mortes** : plus de paris depuis la règle de prise du 19/11 (Winamax exclu, cote ≤ 5…), ou presque.
+
+| Stratégie | Réglés | Dernier pari |
+|---|---|---|
+| Grok 4 · Polymarket low-odds | 13 | 18/11 |
+| Grok 5 · Multi-sharp low | 16 | 18/11 |
+| Optimisée 19/11 + Polymarket | 2 | 22/11 |
+| Qwen | 12 | 24/11 |
+
+Gardées malgré un ROI négatif, faute de recul (moins de 100 réglés) : ChatGPT v1 (90, −8,7 %), Grok 2 (95, −3,9 %),
+Fusion 1 (95, −2,3 %), Cœur value (63, −4,6 %), Claude Opus · Handicaps (69, −5,6 %), Néon 2 (13, −14,4 %).
+À revoir quand elles passent 100 réglés.
 
 ## 19/11/2026 : quatre stratégies Claude Défi
 

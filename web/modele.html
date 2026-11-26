@@ -202,7 +202,7 @@
       <div id="strategies-dates"></div>
       <div class="filtres filtres-strategies">
         <div class="champ"><label for="strategies-ref">Afficher</label>
-        <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option></select></div>
+        <select id="strategies-ref"><option value="" selected>Toutes</option><option>Pinnacle</option><option>Polymarket</option><option value="comparateurs">Comparateurs</option><option value="bases">Bases du bilan</option><option value="retirees">Retirées</option></select></div>
         <div class="champ"><label for="strategies-avis">Verdict</label>
         <select id="strategies-avis"><option value="" selected>Toutes</option><option value="Bat la clôture">Bat la clôture</option><option value="Pas concluant">Pas concluant</option><option value="Sous la clôture">Sous la clôture</option><option value="Trop tôt pour juger">Trop tôt</option></select></div>
         <div class="champ"><label for="strategies-tri">Classer par</label>
@@ -1801,7 +1801,7 @@ function fiabilite(P) {
 // Pause automatique (cotes/pauses.py) et fiabilité, sous le nom de chaque stratégie.
 function etiquettesStrategie(r) {
   const p = (D.pauses?.liste || {})[r.id], j = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "";
-  const pause = p?.retiree ? `<small class="badge-pause neg" title="ROI ${p.roi} % (au mieux ${p.roi_haut} %) sur ${p.matchs} matchs">Retirée le ${j(p.depuis)} : perdante</small>`
+  const pause = p?.retiree ? `<small class="badge-pause neg" title="${p.roi != null ? `ROI ${p.roi} % (au mieux ${p.roi_haut} %) sur ${p.matchs} matchs` : `${p.regles} réglés, dernier pari le ${j(p.dernier)}`}">Retirée le ${j(p.depuis)} : ${e(p.motif || "perdante")}</small>`
     : p ? `<small class="badge-pause neg" title="CLV par pari ${p.clv} % (au mieux ${p.clv_haute} %) · par match ${p.clv_match} %">En pause depuis le ${j(p.depuis)} : perd contre la clôture</small>` : "";
   if (datesStratActives() || !r.stats?.regles) return pause;
   if (r.id.startsWith("base:") || r.id.startsWith("Fusion ")) return pause;      // ni bases ni fusions : pas mesurées
@@ -1943,7 +1943,10 @@ function rendreStrategies() {
     return;
   }
   const pp = n => n == null ? "—" : pct(n/100);
-  let rows = lignesStrategies();
+  // Stratégies retirées (cotes/pauses.py) : masquées, sauf avec « Afficher › Retirées » qui ne montre qu'elles.
+  const ref = document.getElementById("strategies-ref").value, retiree = r => !!(D.pauses?.liste || {})[r.id]?.retiree;
+  const toutesLignes = lignesStrategies(), nRetirees = toutesLignes.filter(retiree).length;
+  let rows = toutesLignes.filter(r => retiree(r) === (ref === "retirees"));
   // Dates choisies : chiffres et courbe de chaque stratégie recalculés sur ses paris détectés dans ces dates (sans note
   // /100, qui porte sur tout le suivi) ; les stratégies sans pari dans ces dates sont masquées.
   if (datesStratActives()) {
@@ -1957,8 +1960,7 @@ function rendreStrategies() {
   const courbeDe = courbeStrategie;
   attribuerMedailles(rows);       // étiquettes : meilleur ROI, gain, réussite et CLV (50 paris réglés minimum)
   attribuerValeur(rows);          // rang moyen ROI + CLV, calculé sur toutes les stratégies avant le filtre
-  const ref = document.getElementById("strategies-ref").value;
-  if (ref) rows = rows.filter(r => r.reference === ref);
+  if (ref && ref !== "retirees") rows = rows.filter(r => r.reference === ref);
   // Verdict unique : la CLV Pinnacle corrigée (fiabilite), le même que les recommandées et la page Décision.
   const avisChoisi = document.getElementById("strategies-avis")?.value || "", avantAvis = rows.length;
   if (avisChoisi) rows = rows.filter(r => fiabilite(preuveDe(r.id)).texte === avisChoisi);
@@ -1977,7 +1979,7 @@ function rendreStrategies() {
   });
   rendreDatesStrategies();
   const active = rows.filter(r => r.stats.paris), reglees = rows.filter(r => r.stats.regles);
-  document.getElementById("strategies-total").textContent = `${rows.length} stratégies${rows.length < avantAvis ? " sur " + avantAvis + " (filtre « Verdict »)" : ""} · ${reglees.length} avec des règlements · résultats non cumulables.`;
+  document.getElementById("strategies-total").textContent = `${rows.length} stratégies${rows.length < avantAvis ? " sur " + avantAvis + " (filtre « Verdict »)" : ""} · ${reglees.length} avec des règlements · résultats non cumulables.${nRetirees && ref !== "retirees" ? ` ${nRetirees} retirées masquées (« Afficher › Retirées »).` : ""}`;
   document.getElementById("strategies-quoi").textContent = "Suivi depuis le lancement propre à chaque stratégie : famille le 14/10 à 14 h, Gemini à 20 h, Jules v1 à 23 h 04, M3 le 15/10 à 0 h, Jules v2 à 00 h 30, convergence à 01 h, variantes prudentes le 15/10 à 06 h, M3 Max 3 le 17/10 à 03 h, Eden le 19/10 à 20 h (Paris), puis chaque nouvelle stratégie à son lancement. Les décisions sont figées ; les paris en attente ne sont pas comptés comme perdus. Avec des dates : seuls les paris détectés ces jours-là comptent, et la note /100 n'est pas recalculée." +
     ` ${(L.resultats || []).length} règles, ${Object.keys(L.comparateurs || {}).length} comparateurs et ${Object.keys(L.bases_futur || {}).length} bases du Bilan ; aucune rentabilité future démontrée.`;
   document.getElementById("strategies-table").innerHTML = `<thead><tr><th scope="col">Stratégie</th><th scope="col">Note<small>/100</small></th><th scope="col">Paris</th><th scope="col">Gagnés</th><th scope="col">Perdus</th><th scope="col">Réussite</th><th scope="col">ROI</th><th scope="col">CLV</th><th scope="col">Gains</th><th scope="col">Pertes</th><th scope="col">Gain net</th></tr></thead><tbody>` + rows.map(r => {
