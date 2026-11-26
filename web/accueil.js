@@ -91,6 +91,11 @@ function rendreAccueil() {
   document.getElementById('acc-boosts-n').textContent=boosts.length ? String(boosts.length) : '';
   document.getElementById('acc-boosts').innerHTML=boosts.length ? boosts.map(ligneAccueilBoost).join('')
     : '<p class="aide">Aucun boost à jouer pour l\'instant.</p>';
+  // Winamax à part (cotes/site/construction.py, winamax_a_part) : values du dernier relevé, jamais des paris.
+  const winamax=(D.winamax_a_part || []).map(o=>({...o, statut:'en_cours'}));
+  document.getElementById('acc-winamax-n').textContent=winamax.length ? String(winamax.length) : '';
+  document.getElementById('acc-winamax').innerHTML=winamax.length ? winamax.map(ligneAccueilPari).join('')
+    : '<p class="aide">Aucune value Winamax au dernier relevé.</p>';
   // Recommandées (cotes/recommandations.py) : la liste de la semaine, avec leur preuve et leur résultat depuis l'entrée.
   const noms=D.laboratoire && D.laboratoire.resultats ? new Map(lignesStrategies('futur').map(r=>[r.id, r.nomCourt || r.nom]))
     : nomsAvantLaboratoire();

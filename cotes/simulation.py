@@ -79,6 +79,11 @@ def motif_hors_regle(p: dict) -> str | None:
     return None
 
 
+def dans_regle_sauf_bookmaker(p: dict) -> bool:
+    """La règle de prise sans l'exclusion des bookmakers : sert à afficher à part les values Winamax, jamais prises."""
+    return motif_hors_regle({**p, "bookmaker": None}) is None
+
+
 def simulation_de(ecart: float, cote: float) -> str | None:
     """La simulation (une seule) d'une opportunité, ou None."""
     if not _nombre_fini(ecart) or not _cote_valide(cote):

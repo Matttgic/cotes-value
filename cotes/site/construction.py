@@ -24,7 +24,9 @@ from cotes.strategie_recommandee import FUSIONS_AUTO, RECOMMANDEE_FUSION, charge
 from cotes.reglement import GAIN, taux_manuel  # noqa: E402
 from cotes.sources_resultats import ou_chercher  # noqa: E402
 from cotes.stockage import lire_archives, fusionner_paris  # noqa: E402
-from cotes.simulation import COTE_MAX_PRISE, SOURCES_MAX, cle_selection_unique, motif_hors_regle, sources_par_selection  # noqa: E402
+from cotes.simulation import (COTE_MAX_PRISE, SOURCES_MAX, cle_selection_unique, dans_regle_sauf_bookmaker,  # noqa: E402
+                              motif_hors_regle, sources_par_selection)
+from cotes import liens as liens_mod  # noqa: E402
 from cotes.alertes import bankroll as bankroll_auto  # noqa: E402
 from cotes.strategie_chatgpt import CHATGPT, paris_chatgpt  # noqa: E402
 from cotes.strategie_gemini import GEMINI, paris_gemini  # noqa: E402
@@ -75,6 +77,35 @@ def _instant(texte):
 def _a_venir(x: dict, maintenant: datetime) -> bool:
     debut = _instant(x.get("debut"))
     return debut is None or debut > maintenant
+
+
+# Values Winamax affichées à part (choix du 26/11/2026) : Winamax reste hors de la règle de prise (CLV Pinnacle
+# négative, docs/strategie-mises.md), donc aucun pari n'est pris ni compté ; la page les montre pour information.
+WINAMAX_A_PART_MAX = 30
+CHAMPS_WINAMAX_A_PART = ("bookmaker", "sport", "ligue", "match_id", "domicile", "exterieur", "debut", "marche",
+                         "periode", "ligne", "issue", "joueur", "pari", "cote", "cote_juste", "ecart", "reference",
+                         "detecte", "lien", "lien_repli")
+
+
+def winamax_a_part(actuelles: list, maintenant: datetime) -> list[dict]:
+    """Values Winamax du dernier cycle qui passent la règle de prise une fois Winamax réadmis : une ligne par cote
+    (la plus grosse value), matchs pas commencés, triées par écart. Jamais des paris : rien n'est enregistré."""
+    vus, out = set(), []
+    for o in sorted((x for x in actuelles or [] if isinstance(x, dict)), key=lambda x: -(x.get("ecart") or 0)):
+        if o.get("bookmaker") != "Winamax" or o.get("suspect") or o.get("pariable") is False:
+            continue
+        if _instant(o.get("debut")) is None or not _a_venir(o, maintenant) or not dans_regle_sauf_bookmaker(o):
+            continue
+        cle = cle_selection_unique(o)
+        if cle is None or cle in vus:
+            continue
+        vus.add(cle)
+        ligne = {k: o.get(k) for k in CHAMPS_WINAMAX_A_PART}
+        liens_mod.completer_liens([ligne])
+        out.append(ligne)
+        if len(out) >= WINAMAX_A_PART_MAX:
+            break
+    return out
 
 
 def surebets_publies(doc: dict, maintenant: datetime) -> dict:
@@ -990,6 +1021,7 @@ def calculer_blocs(entrees: dict, donnees: Path, echecs_strategies: dict | None 
     data["surebets"] = surebets_publies(entrees.get("surebets"), _maintenant(instant))
     data["sources_max"] = SOURCES_MAX
     data["boosts"] = boosts_publies(entrees.get("boosts"), _maintenant(instant), entrees.get("boosts_resultats"))
+    data["winamax_a_part"] = winamax_a_part(entrees.get("actuelles"), _maintenant(instant))
     data["pannes_strategies"] = mettre_a_jour_pannes(donnees, echecs_strategies or {}, _maintenant(instant))
     if echecs_strategies:     # page Santé › « Erreurs non bloquantes » (copie en mémoire, etat.json inchangé)
         from cotes import echecs
