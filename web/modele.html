@@ -84,6 +84,9 @@
       <div class="bu-courbe" id="bu-bougies"></div>
       <div class="cache"><h3 class="bu-titre">Par écart de value</h3><div class="bu-table" id="bu-ecart"></div></div>
       <h3 class="bu-titre">Par tranche de cote</h3><div class="bu-table" id="bu-cote"></div>
+      <h3 class="bu-titre">Par mise <small id="bu-mise-mode"></small></h3><p class="aide" id="bu-mise-resume"></p>
+      <div class="bu-table" id="bu-mise"></div>
+      <p class="aide">Une grosse mise vient d'un gros écart annoncé (Kelly) ou d'une cote repérée par 2 ou 3 références (mise × sources). Ce tableau dit si elles rapportent vraiment plus que les petites. Change le mode dans « Mise des bilans » pour voir les autres.</p>
       <h3 class="bu-titre">Par sport</h3><div class="bu-table" id="bu-sport"></div>
       <h3 class="bu-titre">Carte de chaleur <small>ROI par sport et bookmaker</small></h3><div id="bu-chaleur"></div>
       <div class="cache"><h3 class="bu-titre">Par référence</h3>
@@ -1160,6 +1163,24 @@ function tableBU(groupes) {
     lignes.map(r => `<div class="bu-ligne"><span>${e(r.nom)}${r===meilleur ? ' <small class="avis-mini" title="Meilleur ROI, 50 paris ou plus">Meilleur ROI</small>' : ""}</span>
 <span>${r.n}</span><span>${pctEntier(r.reussite)}</span><span class="${signe(r.net)}">${eurC(r.net)}</span><b class="${signe(r.net)}">${pct(r.roi)}</b></div>`).join("");
 }
+// Tranches de mise, pour 1 000 € de bankroll (bornes basses incluses) ; affichées à la bankroll choisie.
+const TRANCHES_MISE = [[0,2],[2,5],[5,10],[10,20],[20,Infinity]];
+const nomTrancheMise = ([a,b]) => !a ? `moins de ${eurosNets(b)} €` : b === Infinity ? `${eurosNets(a)} € et plus` : `${eurosNets(a)} à ${eurosNets(b)} €`;
+// Mise moyenne, médiane et maximale des paris (mise du mode choisi, × sources) ; null sans pari.
+function statsMises(L) {
+  const m = L.map(p => p.mise ?? 10).filter(Number.isFinite).sort((a,b) => a-b);
+  if (!m.length) return null;
+  const milieu = m.length >> 1, mediane = m.length % 2 ? m[milieu] : (m[milieu-1] + m[milieu]) / 2;
+  return {n: m.length, moyenne: m.reduce((s,x) => s+x, 0) / m.length, mediane, max: m[m.length-1]};
+}
+function rendreParMise(L) {
+  const st = statsMises(L), euro = x => `${eurosNets(Math.round(100*x)/100)} €`;
+  document.getElementById("bu-mise-mode").textContent = nomMise();
+  document.getElementById("bu-mise-resume").textContent = st
+    ? `Mise moyenne ${euro(st.moyenne)} · médiane ${euro(st.mediane)} · max ${euro(st.max)} (mise × sources)` : "";
+  document.getElementById("bu-mise").innerHTML = tableBU(TRANCHES_MISE.map(t => [nomTrancheMise(t),
+    L.filter(p => (p.mise ?? 10) >= t[0] && (p.mise ?? 10) < t[1])]));
+}
 function rendreBilanUniques(maintenant=Date.now()) {
   const depuis = maintenant - Number(periodeBU)*86400000;
   const pr = suiviPeriode(), bo = suiviBornes(pr.depuis, pr.jusqua), perso = bo.depuis != null || bo.jusqua != null;
@@ -1194,6 +1215,7 @@ function rendreBilanUniques(maintenant=Date.now()) {
   if (typeof carteChaleur === "function") carteChaleur(L);
   document.getElementById("bu-ecart").innerHTML = tableBU(Object.entries(NOMS_ECART).map(([k,nom]) => [nom, L.filter(p => p.simulation===k)]));
   document.getElementById("bu-cote").innerHTML = tableBU((D.tranches || []).map(t => [t, L.filter(p => p.tranche===t)]));
+  rendreParMise(L);
   const parSport = new Map();
   for (const p of L) parSport.set(p.sport, [...(parSport.get(p.sport) || []), p]);
   const sports = [...parSport].sort((a,b) => b[1].length-a[1].length);
