@@ -31,6 +31,22 @@ def suivre_qwen(donnees: Path, registre: list, opportunites: list, maintenant: d
         journal["qwen"] = {"erreur": echecs.noter(journal, "qwen", e, maintenant)}
 
 
+def suivre_winamax(donnees: Path, opportunites: list, justes: dict, prudentes: set, maintenant: datetime,
+                   journal: dict) -> None:
+    """Winamax hors des paris : CLV de ses values dans la règle (cotes/winamax_suivi.py). Jamais bloquant."""
+    try:
+        from cotes import winamax_suivi
+        chemin = donnees / winamax_suivi.FICHIER
+        suivi = lire_json(chemin, [])
+        suivi = [x for x in suivi if isinstance(x, dict)] if isinstance(suivi, list) else []
+        nouvelles = winamax_suivi.noter(suivi, opportunites)
+        closes = winamax_suivi.suivre(suivi, justes, prudentes=prudentes)
+        ecrire_json(chemin, suivi)
+        journal["winamax_suivi"] = {"notees": len(nouvelles), "closes": closes, "total": len(suivi)}
+    except Exception as e:  # noqa: BLE001
+        journal["winamax_suivi"] = {"erreur": echecs.noter(journal, "winamax_suivi", e, maintenant)}
+
+
 def prendre(ctx: Contexte) -> None:
     """Remplit ``ctx.paris`` (paris de paris.json, suivis) et ``ctx.nouveaux`` (paris pris à ce cycle)."""
     donnees, maintenant, journal = ctx.donnees, ctx.maintenant, ctx.journal
@@ -60,4 +76,5 @@ def prendre(ctx: Contexte) -> None:
     justes = etape("cotes_cloture", journal, comparaison.cotes_justes_depuis, index,
                    hors_consensus=hors, prudentes=prudentes) or {}
     simulation.suivre_cloture(paris, justes, prudentes=prudentes)      # heure réelle : un match peut commencer pendant le cycle
+    suivre_winamax(donnees, opportunites, justes, prudentes, maintenant, journal)
     ctx.paris, ctx.nouveaux = paris, nouveaux

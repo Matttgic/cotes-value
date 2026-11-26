@@ -23,6 +23,7 @@ chaque jour terminé dans la release GitHub `references-AAAA-MM`. Pour une étud
 | `euria.json` | chaud | json compact (separators=(',', ':')), UTF-8 | scripts/cycle.py | scripts/site_web.py, scripts/envoyer_notifications.py, scripts/cycle.py | page Euria : milieux et conversions de freebets du cycle (300 publiés, tous suivis) ; milieux pas encore réglés (60 jours, 10 000 au plus) |
 | `props_papier.json` | chaud | json compact (separators=(',', ':')), UTF-8 | cotes/props_papier.py | scripts/cycle.py, scripts/site_web.py | réécrit à chaque passage |
 | `persistance_qwen.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py | réécrit à chaque passage |
+| `winamax_suivi.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/cycle.py, scripts/site_web.py | values Winamax notées sans pari depuis le 26/11/2026, gardées pour leur CLV |
 | `resultats_manuels.json` | chaud | json écrit à la main | à la main | scripts/cycle.py, études | permanent ; « supprime » retire un pari |
 | `resultats_a_saisir.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/cycle.py | scripts/site_web.py | réécrit à chaque passage |
 | `boosts_resultats.json` | chaud | json indent=1, UTF-8 (ensure_ascii=False) | scripts/regler_boosts.py | scripts/site_web.py | permanent ; résultats des boosts saisis à la main |

@@ -24,5 +24,8 @@ Conséquences :
 - **Winamax à part** (depuis le 26/11/2026) : collecté normalement mais hors règle (CLV Pinnacle négative). Ses values
   du dernier relevé qui passeraient la règle sans cette exclusion sont listées sur l'Accueil, pour information :
   aucun pari pris, rien dans les bilans (`winamax_a_part`, `cotes/site/construction.py`).
+  Ces values sont aussi notées sans pari (`donnees/winamax_suivi.json`, `cotes/winamax_suivi.py`) : CLV contre la
+  clôture Pinnacle (30 min avant le match), une par cote, moyenne et IC 95 % par match, affichées sur l'Accueil.
+  L'exclusion de Winamax est à revoir le 5/12/2026 sur cette mesure.
 - **Règlement manuel** : un statut saisi sous l'identifiant d'un pari exige une source et un score (ou un motif) ;
   une saisie par match exige une source. Revue des 87 statuts sans preuve : [manuels-sans-preuve.md](manuels-sans-preuve.md).

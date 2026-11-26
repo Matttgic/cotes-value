@@ -49,6 +49,14 @@ function ligneAccueilBoost(b) {
 <small class="acc-ref">au lieu de ${cote(b.cote_avant)}</small><i class="acc-mise">Mise max ${b.mise_max ? euros(b.mise_max) : 'inconnue : 10 €'}</i>
 ${boutonBookmaker({bookmaker: b.bookmaker, lien: b.lien, statut: 'en_cours'},true)}</div></article>`;
 }
+// CLV des values Winamax notées sans pari (cotes/winamax_suivi.py) : contre la clôture Pinnacle, une par cote.
+function texteSuiviWinamax(w) {
+  if(!w) return '';
+  const depuis=`${w.depuis.slice(8,10)}/${w.depuis.slice(5,7)}`, revoir=`${w.revoir_le.slice(8,10)}/${w.revoir_le.slice(5,7)}`;
+  if(!w.n) return `Mesure depuis le ${depuis} : ${w.notees} value${w.notees>1?'s':''} notée${w.notees>1?'s':''}, aucune clôture mesurée pour l'instant.`;
+  const ic=w.ic95 ? ` [${pct(w.ic95[0])} ; ${pct(w.ic95[1])}]` : '';
+  return `CLV Winamax depuis le ${depuis} : <b class="${signe(w.moyenne)}">${pct(w.moyenne)}</b>${ic} sur ${w.n} cote${w.n>1?'s':''} (${w.matchs} match${w.matchs>1?'s':''}). À revoir le ${revoir}.`;
+}
 // Noms des recommandées avant l'arrivée du laboratoire (bloc différé) : même numérotation que lignesStrategies
 // (« Pinnacle 12 », règles dans l'ordre du laboratoire) ; les variantes gardent leur nom.
 function nomsAvantLaboratoire() {
@@ -96,6 +104,7 @@ function rendreAccueil() {
   document.getElementById('acc-winamax-n').textContent=winamax.length ? String(winamax.length) : '';
   document.getElementById('acc-winamax').innerHTML=winamax.length ? winamax.map(ligneAccueilPari).join('')
     : '<p class="aide">Aucune value Winamax au dernier relevé.</p>';
+  document.getElementById('acc-winamax-clv').innerHTML=texteSuiviWinamax(D.winamax_suivi);
   // Recommandées (cotes/recommandations.py) : la liste de la semaine, avec leur preuve et leur résultat depuis l'entrée.
   const noms=D.laboratoire && D.laboratoire.resultats ? new Map(lignesStrategies('futur').map(r=>[r.id, r.nomCourt || r.nom]))
     : nomsAvantLaboratoire();
