@@ -36,4 +36,18 @@ def test_script_ecrit_les_resultats_et_le_site_les_publie(tmp_path):
     assert "gagné" in lignes[0] and "+28.00" in lignes[0]
     res = json.loads((tmp_path / "boosts_resultats.json").read_text(encoding="utf-8"))
     pub = boosts_publies({"episodes": EP}, T, res)
-    assert pub["a_regler"] == [] and pub["bilan_regles"]["gain"] == 28.0 and pub["regles"][0]["score"] == "6-4 6-3"
+    assert pub["a_regler"] == [] and pub["regles"][0]["score"] == "6-4 6-3"
+    # Boost lu le 18/11, avant les règles du 26/11 : compté dans « avant », bilan actuel à zéro.
+    assert pub["bilan_regles_avant"]["gain"] == 28.0 and pub["bilan_regles"]["n"] == 0
+    assert res[next(iter(res))]["premier"] == "2026-11-18T10:00:00+00:00"
+
+
+def test_bilan_coupe_a_la_date_des_regles():
+    ancien = B.regler_boost(EP[0], "gagne", T)
+    nouveau = B.regler_boost({**EP[0], "id": "n", "premier": "2026-11-26T09:00:00+00:00"}, "perdu", T)
+    sans_premier = {**B.regler_boost({**EP[0], "id": "s"}, "perdu", T), "premier": None,
+                    "debut": "2026-11-27T19:00:00+00:00"}
+    res = {"a": ancien, "n": nouveau, "s": sans_premier}
+    apres, avant = B.bilan_regles(res, depuis=B.DATE_REGLES), B.bilan_regles(res, avant=B.DATE_REGLES)
+    assert (apres["n"], apres["gain"], avant["n"], avant["gain"]) == (2, -40.0, 1, 28.0)
+    assert B.bilan_regles(res)["n"] == 3
