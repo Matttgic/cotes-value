@@ -197,4 +197,22 @@ function rendreBilanBoosts() {
 <small>${e(r.libelle)} · ${e(r.bookmaker)} ${fr2(r.cote)} · mise ${fr2(r.mise)} €${r.score ? ' · ' + e(r.score) : ''} · ${mot[r.statut] || e(r.statut)}</small></span>
 <b class="${signe(r.gain)}">${(r.gain >= 0 ? '+' : '') + fr2(r.gain)} €</b></div>`).join('')
     : '<p class="aide">Aucun boost réglé pour l’instant.</p>';
+  rendreTypesBoosts(B.bilan_types);
+}
+
+// Gagnés contre attendus par type de pari : historique de cotes-boostees + boosts réglés ici (cotes/boosts.py › bilan_types).
+function rendreTypesBoosts(T) {
+  const zone = document.getElementById('bb-types');
+  if (!zone) return;
+  if (!T || !(T.types || []).length) { zone.innerHTML = ''; return; }
+  const fr1 = x => Number(x).toFixed(1).replace('.', ',');
+  const mot = {prendre: 'Prendre', eviter: 'Éviter', neutre: 'Neutre'};
+  document.getElementById('bb-types-note').textContent = `Gagnés attendus = somme des 1/cote. Point de départ : ${T.source}, `
+    + `plus les boosts réglés ici. ROI espéré rétréci vers la moyenne ; « Prendre » à partir de ${pct(T.seuil)} sur `
+    + `au moins ${T.min} boosts réglés. Un suivi : seuls les types « ne plus jouer » changent le verdict.`;
+  zone.innerHTML = `<div class="tableau"><table><tr><th>Type</th><th>Réglés<small>dont ici</small></th>`
+    + `<th>Gagnés<small>attendus</small></th><th>ROI espéré</th><th>Conseil</th></tr>`
+    + T.types.map(t => `<tr><td>${e(t.type)}</td><td>${t.paris}<small>${t.ici.paris}</small></td>`
+      + `<td>${t.gagnes}<small>${fr1(t.attendus)}</small></td><td class="${signe(t.roi_espere)}">${pct(t.roi_espere)}</td>`
+      + `<td>${t.exclu ? 'Ne plus jouer' : mot[t.conseil] || e(t.conseil)}</td></tr>`).join('') + '</table></div>';
 }
