@@ -60,6 +60,7 @@ from . import controle as CT
 from . import surebets as SB
 from .comparaison import libelle_pari
 from .correspondance import ressemblance
+from .direct.boosts_sites import long_terme
 from .joueurs import stat_canonique
 from .marches import cle, inverser
 from .surebets import pivots
@@ -120,12 +121,43 @@ def _paris(marche: str, ligne, issue: str, sport, joueur=None) -> list[dict]:
 
 
 _VS = re.compile(r"\s*\((?:vs\.?|v|contre)\s+[^)]+\)")
+# Précisions de période (intitulés normalisés) : « (hors prol. et TAB) » = temps réglementaire, « (prol. inclus) ».
+_HORS_PROL = re.compile(r"\s*\(hors (?:prol\.?|prolongations?)(?: et (?:tab|tirs au but))?\)")
+_PROL_INCLUSE = re.compile(r"\s*\((?:prol\.?|prolongations?) (?:incluse?s?|comprises?)\)")
+_MT1 = r"(?:en|a la|lors de la) (?:premiere|1ere|1re) mi-temps"
+
+
+def _sans_match_en_tete(t: str, domicile: str | None, exterieur: str | None) -> str:
+    """« Troyes/Le Havre - Les deux équipes marquent » (NetBet) : le match rappelé en tête est retiré s'il est bien
+    celui du boost (les deux équipes reconnues)."""
+    tete, sep, reste = t.partition(" - ")
+    if not sep or "/" not in tete:
+        return t
+    for i in [k for k, c in enumerate(tete) if c == "/"]:
+        a, b = tete[:i].strip(), tete[i + 1:].strip()
+        if min(ressemblance(a, domicile), ressemblance(b, exterieur)) >= ASSOCIATION_MIN \
+                or min(ressemblance(a, exterieur), ressemblance(b, domicile)) >= ASSOCIATION_MIN:
+            return reste
+    return t
 
 
 def traduire(libelle: str, domicile: str | None, exterieur: str | None, sport: str | None) -> list[dict]:
-    """Paris standard que l'intitulé peut désigner, du plus probable au moins probable ; vide si combiné ou inconnu."""
+    """Paris standard que l'intitulé peut désigner, du plus probable au moins probable ; vide si combiné ou inconnu.
+    « (hors prol. et TAB) » ne garde que le temps réglementaire (le match, en football), « (prol. inclus) » le match."""
     t = normaliser(_VS.sub("", str(libelle or "")))          # « Lille (vs Arsenal) marque… » : l'adversaire en trop
     t = re.sub(r"^(?:cote boostee|super cote|boost)\s*:\s*", "", t).replace("les 2 equipes", "les deux equipes")
+    t = _sans_match_en_tete(t, domicile, exterieur)
+    periodes = None
+    if _HORS_PROL.search(t):
+        t, periodes = _HORS_PROL.sub("", t), ("TEMPS_REG",) if (sport or "") in PERIODES else ("MATCH",)
+    elif _PROL_INCLUSE.search(t):
+        t, periodes = _PROL_INCLUSE.sub("", t), ("MATCH",)
+    t = re.sub(r" ou \+$", " ou plus", t)
+    paris = _traduire(t, domicile, exterieur, sport)
+    return [p for p in paris if p["periode"] in periodes] if periodes else paris
+
+
+def _traduire(t: str, domicile: str | None, exterieur: str | None, sport: str | None) -> list[dict]:
     m = re.fullmatch(rf"(?P<s>.+?) (?:gagne|mene) a la mi-temps et (?:gagne )?a la fin du match", t)
     if m:
         camp = _camp(m["s"], domicile, exterieur)
@@ -133,8 +165,10 @@ def traduire(libelle: str, domicile: str | None, exterieur: str | None, sport: s
                  "joueur": None}] if camp else []
     if re.search(r"\bet\b|&|\+|\bpuis\b", t):
         return []                                            # combiné : probabilité jointe inconnue
+    # « gagne par au moins 3 buts (d'écart) », « gagne de 3 buts ou plus » (OlyBet) : l'écart final
     m = (re.fullmatch(rf"(?P<s>.+?) {_GAGNE} (?:le match )?(?:par|avec) (?P<q>au moins|plus de) {_N} {_U} d'ecart", t)
-         or re.fullmatch(rf"(?P<s>.+?) {_GAGNE} (?:le match )?par {_N} {_U} d'ecart (?P<q>ou plus)", t))
+         or re.fullmatch(rf"(?P<s>.+?) {_GAGNE} (?:le match )?par (?P<q>au moins|plus de) {_N} {_U}", t)
+         or re.fullmatch(rf"(?P<s>.+?) {_GAGNE} (?:le match )?(?:par|de) {_N} {_U}(?: d'ecart)? (?P<q>ou plus)", t))
     if m:
         camp, n = _camp(m["s"], domicile, exterieur), _nombre(m["n"])
         ligne = n if _demi(n) else n - 0.5 if m["q"] in ("au moins", "ou plus") else n + 0.5
@@ -142,6 +176,10 @@ def traduire(libelle: str, domicile: str | None, exterieur: str | None, sport: s
             return []
         marche = UNITES.get(m["u"], "") + "HANDICAP"
         return _paris(marche, -ligne if camp == "DOM" else ligne, camp, sport)
+    m = re.fullmatch(rf"(?P<s>.+?) {_GAGNE} le (?:premier|1er) set", t)
+    if m and sport == "tennis":                              # « Arthur Fils gagne le premier set »
+        camp = _camp(m["s"], domicile, exterieur)
+        return [{"marche": "VAINQUEUR", "periode": "SET1", "ligne": None, "issue": camp, "joueur": None}] if camp else []
     m = re.fullmatch(rf"(?P<s>.+?) {_GAGNE}(?: le match| la rencontre| la partie)?", t) or \
         re.fullmatch(r"victoire (?:de |d'|du |des )(?P<s>.+)", t)
     if m:
@@ -159,9 +197,16 @@ def traduire(libelle: str, domicile: str | None, exterieur: str | None, sport: s
         return _paris("DOUBLE_CHANCE", None, "HOME_DRAW" if camp == "DOM" else "DRAW_AWAY", sport) if camp else []
     if re.fullmatch(r"les deux equipes marquent(?: dans le match)?", t):
         return _paris("BOTH_TEAMS_TO_SCORE", None, "YES", sport)
+    if re.fullmatch(rf"les deux equipes marquent {_MT1}", t):
+        return [{"marche": "BOTH_TEAMS_TO_SCORE", "periode": "MT1", "ligne": None, "issue": "YES", "joueur": None}]
+    m = re.fullmatch(rf"(?P<s>.+?) marque au moins (?P<n>\d+|un) buts? {_MT1}", t)
+    if m:                                                    # total de l'équipe en 1re mi-temps ; joueur : pas de référence
+        camp, n = _camp(m["s"], domicile, exterieur), 1 if m["n"] == "un" else int(m["n"])
+        return [{"marche": "TOTAL_DOM" if camp == "DOM" else "TOTAL_EXT", "periode": "MT1", "ligne": n - 0.5,
+                 "issue": "PLUS", "joueur": None}] if camp and n >= 1 else []
     if re.fullmatch(r"les deux equipes ne marquent pas", t):
         return _paris("BOTH_TEAMS_TO_SCORE", None, "NO", sport)
-    m = re.fullmatch(rf"(?:il y a )?(?P<sens>plus|moins) de {_N} {_U}(?: dans le match| au total| dans la rencontre)?", t)
+    m = re.fullmatch(rf"(?:il y a )?(?P<sens>plus|moins) de {_N} {_U}(?: dans le match| au total| dans la rencontre| lors du match| au cours du match)?", t)
     if m:
         n = _nombre(m["n"])
         return _paris(UNITES.get(m["u"], "") + "TOTAL", n, "PLUS" if m["sens"] == "plus" else "MOINS", sport) \
@@ -176,7 +221,10 @@ def traduire(libelle: str, domicile: str | None, exterieur: str | None, sport: s
         score = f'{m["a"]}-{m["b"]}' if camp == "DOM" else f'{m["b"]}-{m["a"]}'
         return [{"marche": "CORRECT_SCORE", "periode": "MATCH", "ligne": None, "issue": score, "joueur": None}] \
             if camp else []
-    # « X marque … » : une équipe (total de l'équipe) ou un joueur (pari joueur) ; « X buteur »
+    # « X marque … » : une équipe (total de l'équipe) ou un joueur (pari joueur) ; « X buteur ». Pas « premier buteur »
+    # ni « X ou Y buteur » (un autre pari).
+    if re.search(r"\b(?:premier|1er|dernier) buteur\b|\bbuteurs?\(s\)", t):
+        return []
     m = (re.fullmatch(r"(?P<s>.+?) marque (?:au moins un but|au moins 1 but|un but|a tout moment)", t)
          or re.fullmatch(r"(?P<s>.+?) (?:buteur|marque)(?: dans le match)?", t))
     if m:
@@ -196,7 +244,7 @@ def _marque(sujet, ligne, issue, stat, domicile, exterieur, sport) -> list[dict]
     camp = _camp(sujet, domicile, exterieur)
     if camp and stat.startswith(("but", "point")):
         return _paris("TOTAL_DOM" if camp == "DOM" else "TOTAL_EXT", ligne, issue, sport)
-    if camp:
+    if camp or re.search(r"\bou\b|/| - ", sujet):          # « Gouiri ou Harit » : deux joueurs
         return []
     nom = stat_canonique(stat)
     return [{"marche": f"JOUEUR:{nom}", "periode": "MATCH", "ligne": ligne, "issue": issue, "joueur": sujet.title()}] \
@@ -406,8 +454,9 @@ def bilan_types(resultats: dict) -> dict:
 
 def verdict(r: dict) -> tuple[str, float | None]:
     """(« jouer » ou « passer », marge habituelle attendue sur ce boost quand la cote juste manque). Les groupes
-    perdants de l'historique (``EXCLUSIONS``) passent toujours."""
-    if exclusion(r):
+    perdants de l'historique (``EXCLUSIONS``) passent toujours, comme les paris de saison (« pari à long terme » : la marge
+    habituelle d'une sélection ne vaut pas pour eux, et ils ne se règlent pas avant des semaines)."""
+    if exclusion(r) or r.get("long_terme"):
         return "passer", None
     if r.get("value") is not None:
         return ("jouer" if r["value"] > 0 else "passer"), None
@@ -608,7 +657,7 @@ def couverts(evalues: list[dict], francais: list[dict], index: dict, maintenant:
 # --------------------------------------------------------------------------- suivi
 
 CHAMPS = ("bookmaker", "libelle", "domicile", "exterieur", "debut", "sport", "cote", "cote_avant", "mise_max",
-          "pari", "marche", "periode", "ligne", "issue", "joueur", "match_id", "lien")
+          "pari", "marche", "periode", "ligne", "issue", "joueur", "match_id", "lien", "long_terme")
 
 
 def suivre(etat: dict | None, actuels: list[dict], maintenant: datetime) -> dict:
@@ -717,13 +766,27 @@ def code_boost(ident: str) -> str:
     return "B-" + hashlib.sha1(str(ident).encode()).hexdigest()[:6].upper()
 
 
+def _meme_boost(e: dict) -> tuple:
+    """Un boost republié sous un autre identifiant (NetBet, Unibet : même intitulé, même match, autre cote)."""
+    return e.get("bookmaker"), normaliser(e.get("libelle")), e.get("debut")
+
+
+def _saison(e: dict) -> bool:
+    """Pari de saison (« Marseille podium de Ligue 1 ») : sa date est la fin de l'offre, pas celle du résultat."""
+    return bool(e.get("long_terme")) or long_terme(f'{e.get("libelle") or ""} {e.get("domicile") or ""} - '
+                                                   f'{e.get("exterieur") or ""}')
+
+
 def boosts_a_regler(episodes: list[dict], resultats: dict, maintenant: datetime) -> list[dict]:
-    """Boosts « jouer » dont le match a commencé, sans résultat saisi, du plus ancien au plus récent."""
-    out = []
-    for e in episodes:
+    """Boosts « jouer » dont le match a commencé, sans résultat saisi, du plus ancien au plus récent ; un boost republié
+    sous un autre identifiant n'est réglé qu'une fois, un pari de saison attend la fin de la compétition."""
+    regles = {_meme_boost(e) for e in episodes if e.get("id") in resultats}
+    out, vus = [], set()
+    for e in sorted(episodes, key=lambda x: x.get("premier") or ""):
         debut = _t(e.get("debut"))
         if (e.get("id") and e["id"] not in resultats and _verdict_episode(e) == "jouer" and debut and debut <= maintenant
-                and e.get("cote")):
+                and e.get("cote") and _meme_boost(e) not in regles | vus and not _saison(e)):
+            vus.add(_meme_boost(e))
             out.append({**{k: e.get(k) for k in CHAMPS_REGLE}, "code": code_boost(e["id"]), "cote": e["cote"],
                         "mise": e.get("mise_max") or MISE_DEFAUT, "mise_max_connue": bool(e.get("mise_max"))})
     return sorted(out, key=lambda x: x.get("debut") or "")
