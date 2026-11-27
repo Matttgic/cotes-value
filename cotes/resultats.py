@@ -360,7 +360,7 @@ def retrouver(p: dict, enregistrements: list[dict]) -> list[dict]:
 def _periodes_coherentes(sport: str, r: dict) -> bool:
     if not r["periodes"]:
         return False
-    if sport == "tennis":                          # jeux par set : le score en sets doit s'en déduire
+    if sport in ("tennis", "volley"):              # jeux ou points par set : le score en sets doit s'en déduire
         return (sum(a > b for a, b in r["periodes"]), sum(b > a for a, b in r["periodes"])) == r["score"]
     d, e = sum(x[0] for x in r["periodes"]), sum(x[1] for x in r["periodes"])
     if (d, e) == r["score"]:
