@@ -59,13 +59,15 @@ ${total ? '<p><button type="button" class="btn secondaire" id="journal-effacer">
   if (effacer) effacer.onclick = () => { journalEcrire({}); rendreJournal('Journal effacé.'); };
 }
 // L'ouverture d'un onglet réécrit l'ancre (history.replaceState) : on lit celle d'arrivée (ANCRE_DEPART, notée au
-// début du script de la page) puis l'URL donnée par chaque hashchange.
+// début du script de la page) puis l'URL donnée par chaque hashchange. Le dernier message est gardé : la page refait
+// le journal quand le catalogue des prises arrive (web/modele.html › chargerCatalogue).
+var journalMessageDepart = '';
 function initialiserJournal() {
   const depart = typeof ANCRE_DEPART === 'string' ? ANCRE_DEPART : location.hash;
-  rendreJournal(journalNoterDepuisAncre(depart));
+  rendreJournal(journalMessageDepart = journalNoterDepuisAncre(depart));
   window.addEventListener('hashchange', ev => {
     const url = String(ev.newURL || ''), i = url.indexOf('#');
     const m = journalNoterDepuisAncre(i < 0 ? '' : url.slice(i));
-    if (m) rendreJournal(m);
+    if (m) rendreJournal(journalMessageDepart = m);
   });
 }
