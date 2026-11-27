@@ -99,6 +99,8 @@ Toutes les 5 minutes (`scripts/cycle.py`) ; le règlement des paris, une fois pa
    règlement officiel (prolongations, tirs au but, abandon au tennis : voir `docs/reglements.md`) ;
    sinon « à régler à la main » sur le site (bouton « Copier » → coller la liste à Claude).
 7. **Site** (`scripts/site_web.py`, gabarit `web/modele.html`) publié sur GitHub Pages, en six onglets : Accueil, Décision, Paris, Boosts, Bilan, Notifs (Santé depuis l'en-tête).
+   La page n'embarque que ce que l'accueil affiche d'emblée : le catalogue des prises (`catalogue.json`) et les blocs
+   lourds (`donnees.json`) sont chargés juste après le premier affichage (900 Ko au lieu de 2,1 Mo, 203 Ko gzip).
    Polices OFL en WOFF2 dans `web/polices/`. La vitrine
    publique (`web/vitrine.html`, deux chiffres Kelly ¼ recalculés à chaque publication) est publiée à part, en
    `vitrine.html`, sans lien depuis l'interface ni bouton de connexion : l'interface reste la page d'accueil.

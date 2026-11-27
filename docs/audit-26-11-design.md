@@ -51,9 +51,13 @@ Tests : `tests/design_26_11.test.mjs` (lien du summary, carte de chaleur, dates,
 
 1. **`#bb-texte`** (texte à copier du Bilan Boosts) sans libellé : dans `web/boosts.js`, ajouter
    `aria-label="Boosts à régler, texte à copier"`.
-2. **Poids** : 77 % de `index.html` est le bloc de données, dont le catalogue (1 218 Ko, 2 411 lignes × 44 champs).
-   Le charger après l'affichage, comme `mises/*.json`, allégerait le premier chargement d'environ 60 %.
-   `decide_le` et `registre_version` (70 Ko bruts) ne sont pas lus par le JavaScript, mais font partie de l'export.
+2. **Poids** — *fait le 27/11* : le catalogue des prises est publié à part (`catalogue.json`, préchargé dès l'en-tête,
+   contrôlé par `json_public` et compté dans la version) et lu après le premier affichage ; l'accueil montre ses
+   chiffres « en chargement » (`aria-busy`) le temps qu'il arrive, les autres onglets l'attendent avec `donnees.json`.
+   Sur les données du 27/11 : `index.html` passe de 2 115 Ko (401 Ko gzip) à 901 Ko (203 Ko gzip), soit −57 % brut
+   et −49 % gzip ; `catalogue.json` pèse 1 219 Ko (199 Ko gzip). Textes visibles identiques avant/après dans chaque
+   onglet à 390 × 844 (Playwright), zéro erreur JS. Tests : `tests/test_catalogue_differe.py`.
+   Reste : `decide_le` et `registre_version` (70 Ko bruts) ne sont pas lus par le JavaScript, mais font partie de l'export.
 3. **Deux appels `pushover-lire`** à chaque ouverture (`voyant.js` et `pushover.js`) : les faire partager une seule requête.
 4. **Textes de 11 px** encore nombreux dans les tableaux denses (Stratégies : médailles, volumes, valeurs). Les
    grossir est un arbitrage entre lisibilité et densité, à faire avec l'utilisateur.
