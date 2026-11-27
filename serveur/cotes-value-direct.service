@@ -14,6 +14,17 @@ RestartSec=30
 # Le temps d'enregistrer les données et de rendre la main à GitHub à l'arrêt.
 TimeoutStopSec=300
 Nice=5
+# Durcissement (audit du 26/11/2026) : le programme n'écrit que dans /opt/cotes-value (code, données, mémoire)
+# et dans son /tmp privé ; /usr, /boot et /etc restent en lecture seule, aucun gain de privilège possible.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
 
 [Install]
 WantedBy=multi-user.target

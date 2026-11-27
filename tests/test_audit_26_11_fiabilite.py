@@ -90,3 +90,20 @@ def test_secret_configure_bloque_a_la_publication(nom):
 
 def test_variable_non_secrete_pas_bloquee():
     securite.verifier_public({"message": "x-api-key"}, env={"ALERTE_WEBHOOK_CLE_ENTETE": "x-api-key"})
+
+
+# --- Workflows et serveur
+
+def test_chaque_tache_des_workflows_a_une_limite_de_temps():
+    import yaml
+    sans = [f"{wf.name}:{nom}" for wf in sorted((RACINE / ".github/workflows").glob("*.yml"))
+            for nom, tache in (yaml.safe_load(wf.read_text(encoding="utf-8"))["jobs"] or {}).items()
+            if "timeout-minutes" not in tache]
+    assert sans == []
+
+
+def test_service_direct_durci():
+    service = (RACINE / "serveur/cotes-value-direct.service").read_text(encoding="utf-8")
+    for directive in ("NoNewPrivileges=yes", "PrivateTmp=yes", "ProtectSystem=full", "RestrictSUIDSGID=yes"):
+        assert directive in service
+    assert "ProtectSystem=strict" not in service          # /opt/cotes-value doit rester inscriptible (git pull, données)
