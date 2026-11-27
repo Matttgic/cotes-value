@@ -35,8 +35,10 @@ Z95 = 1.645
 # sa sélection continue (sinon cette règle lancée changerait), seuls l'affichage et les alertes s'arrêtent.
 RETIREES_DEPUIS = "2026-11-19T22:00:00+00:00"
 RETIREES_27_11 = "2026-11-27T00:00:00+00:00"
+RETIREES_27_11_CLV = "2026-11-27T18:00:00+00:00"
 _PERDANTE_27_11 = {"motif": "ROI négatif sur plus de 100 paris réglés", "depuis": RETIREES_27_11}
 _MORTE_27_11 = {"motif": "ne prend plus de paris", "depuis": RETIREES_27_11}
+_SOUS_REGLE_27_11 = {"motif": "CLV sous celle de la règle principale, même au mieux", "depuis": RETIREES_27_11_CLV}
 RETIREES = {
     # 19/11/2026 : perdantes même dans le meilleur cas, alors que leur CLV paraît bonne.
     "claude_defi_5": {"id": "Claude Défi 5 · Books lents, cotes courtes", "roi": -26.6, "roi_haut": -4.0, "matchs": 73},
@@ -46,8 +48,6 @@ RETIREES = {
     # 27/11/2026 : ROI négatif à 10 € fixes avec au moins 100 paris réglés (seuil « Trop tôt pour juger » de l'analyste).
     "convergence_3": {"id": "Convergence ≥ 3 hors M3", "roi": -11.8, "roi_haut": 3.2, "matchs": 105, "regles": 106,
                       **_PERDANTE_27_11},
-    "claude_defi_4": {"id": "Claude Défi 4 · Gros écart hors Winamax", "roi": -9.5, "roi_haut": 20.3, "matchs": 60,
-                      "regles": 103, **_PERDANTE_27_11},
     "defi_1": {"id": "Défi 1 · Écart fort, match proche", "roi": -3.9, "roi_haut": 15.6, "matchs": 109, "regles": 207,
                **_PERDANTE_27_11},
     "conseil_retard": {"id": "Conseil · bookmaker en retard (hors foot)", "roi": -1.8, "roi_haut": 15.3, "matchs": 114,
@@ -78,6 +78,16 @@ RETIREES = {
     "optimisee_19_11_polymarket": {"id": "Optimisée 19/11 + Polymarket", "regles": 2, "dernier": "2026-11-22",
                                    **_MORTE_27_11},
     "qwen_persistence": {"id": "Qwen", "regles": 12, "dernier": "2026-11-24", **_MORTE_27_11},
+    # 27/11/2026 à 18 h UTC (docs/audit-26-11-strategie.md) : au moins 50 CLV mesurées et borne haute à 95 % de la CLV
+    # sous celle de la règle principale (+3,4 %). Plus récentes (Drop Pinnacle, Drop z-score, Néon 1) : gardées.
+    "chatgpt": {"id": "ChatGPT v1 (rejeu)", "roi": -8.7, "roi_haut": 13.3, "matchs": 90, "regles": 90,
+                "votes": True, **_SOUS_REGLE_27_11},
+    "grok_2": {"id": "Grok 2 · Pinnacle low", "roi": -3.9, "roi_haut": 13.8, "matchs": 95, "regles": 95,
+               **_SOUS_REGLE_27_11},
+    "claude_opus_favoris": {"id": "Claude Opus · Favoris réguliers", "roi": 7.6, "roi_haut": 26.8, "matchs": 111,
+                            "regles": 170, **_SOUS_REGLE_27_11},
+    "coeur_value": {"id": "Cœur value", "roi": -4.6, "roi_haut": 18.4, "matchs": 63, "regles": 63,
+                    **_SOUS_REGLE_27_11},
 }
 _ACTIVES: dict[str, datetime] = {}
 

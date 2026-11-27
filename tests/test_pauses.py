@@ -98,7 +98,7 @@ def test_retirees_identifiees_par_le_registre_et_jamais_membres_d_une_fusion():
     lignes = {s.cle: s.ligne for s in registre.toutes()}
     assert all(lignes[cle] == r["id"] for cle, r in pauses.RETIREES.items())     # même nom que la ligne du site
     assert not {r["id"] for r in pauses.RETIREES.values()} & set(MEMBRES)
-    assert all(r.get("votes") is None or cle in {"strategie", "jules", "jules_v2", "gemini"}
+    assert all(r.get("votes") is None or cle in {"strategie", "chatgpt", "jules", "jules_v2", "gemini"}
                for cle, r in pauses.RETIREES.items())
 
 
@@ -114,3 +114,13 @@ def test_retiree_jamais_recommandee():
         assert recommander([{**lignes[0], "retiree": False}])["liste"][0]["id"] == "x"
     finally:
         reco.raisons_refus = avant
+
+
+def test_retrait_27_11_sur_la_clv_et_claude_defi_4_reactivee():
+    # audit du 26/11 : quatre stratégies sous la règle principale retirées, Claude Défi 4 (CLV +10,4 %) réactivée
+    assert {"chatgpt", "grok_2", "claude_opus_favoris", "coeur_value"} <= set(pauses.RETIREES)
+    assert "claude_defi_4" not in pauses.RETIREES
+    assert not {"claude_drop", "claude_drop_z", "neon_1"} & set(pauses.RETIREES)      # trop tôt pour juger
+    assert pauses.RETIREES["chatgpt"].get("votes")                                    # vote dans Convergence ≥ 2
+    assert all(pauses.depuis_retrait(c) == pauses.RETIREES_27_11_CLV
+               for c in ("chatgpt", "grok_2", "claude_opus_favoris", "coeur_value"))
