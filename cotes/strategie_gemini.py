@@ -146,8 +146,19 @@ def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
     basse. Respecte le plafond journalier Europe/Paris. Un autre bookmaker
     français qui cote mal le même match est une mise distincte.
     """
-    candidats = [p for p in paris if motif_refus_gemini(p, depuis) is None]
-    candidats.sort(
+    return une_par_book_et_match([p for p in paris if motif_refus_gemini(p, depuis) is None],
+                                 GEMINI["paris_max_jour"])
+
+
+def une_par_book_et_match(candidats: list[dict], maximum_jour: int | None = None) -> set[int]:
+    """Au plus une mise par bookmaker et par match parmi ``candidats`` (Gemini, Eden), dans l'ordre réel.
+
+    À détection simultanée : edge le plus élevé, puis cote la plus basse. Les alias d'un même match (référence,
+    identifiant du bookmaker, équipes et heure) sont réunis. ``maximum_jour`` : plafond par jour, heure de Paris
+    (Gemini) ; aucun si None (Eden).
+    """
+    candidats = sorted(
+        candidats,
         key=lambda p: (
             _heure(p["detecte"]),
             -float(p["ecart"]),
@@ -184,10 +195,14 @@ def paris_gemini(paris: list[dict], depuis: str = GEMINI["debut"]) -> set[int]:
             if all(noms):
                 cles.append(("equipes", sport, book, _heure(p["debut"]).astimezone(timezone.utc), noms))
         root = associer(cles)
-        jour = _heure(p["detecte"]).astimezone(PARIS).date()
-        if utilises.get(root) or par_jour[jour] >= GEMINI["paris_max_jour"]:
-            continue
+        if maximum_jour is None:
+            if utilises.get(root):
+                continue
+        else:
+            jour = _heure(p["detecte"]).astimezone(PARIS).date()
+            if utilises.get(root) or par_jour[jour] >= maximum_jour:
+                continue
+            par_jour[jour] += 1
         utilises[root] = True
-        par_jour[jour] += 1
         selection.add(id(p))
     return selection

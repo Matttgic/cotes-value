@@ -18,6 +18,7 @@ sont descriptives, recalculées sur tout l'historique, et ne lisent aucun test d
 from __future__ import annotations
 
 from datetime import datetime
+from functools import lru_cache
 
 from .protocole import clv_pinnacle, moyenne_par_match, p_student
 
@@ -39,8 +40,10 @@ def holm(pvals: list[float]) -> list[float]:
     return out
 
 
+@lru_cache(maxsize=4096)
 def quantile_student(ddl: float, niveau: float = 0.975) -> float:
-    """t tel que P(T ≤ t) = ``niveau`` (dichotomie sur ``p_student``)."""
+    """t tel que P(T ≤ t) = ``niveau`` (dichotomie sur ``p_student``). Fonction pure, mise en cache : 1 665 appels pour
+    401 valeurs distinctes par construction du site (audit du 26/11/2026, docs/audit-26-11-dette.md)."""
     bas, haut = 0.0, 1000.0
     for _ in range(80):
         milieu = (bas + haut) / 2

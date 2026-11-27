@@ -15,7 +15,8 @@ function bandeauBoursier(elements) {
   if(!elements.length){bandeau?.remove();return;}
   if(!bandeau){
     bandeau=document.createElement('div');bandeau.className='cv-bandeau';bandeau.setAttribute('role','region');
-    bandeau.setAttribute('aria-label','Cotation du jour');une.prepend(bandeau);
+    bandeau.setAttribute('aria-label','Cotation du jour');
+    bandeau.tabIndex=0;une.prepend(bandeau);   // défile au clavier aussi (WCAG 2.1.1)
   }
   const fleche=c=>c==='pos'?'▲':c==='neg'?'▼':'';
   const html=elements.map(([nom,valeur,variation,classe])=>`<span class="cv-cote"><span class="cv-sym">${e(nom)}</span> <b>${e(valeur)}</b>${variation||classe?` <i class="${classe||''}">${fleche(classe)}${variation?' '+e(variation):''}</i>`:''}</span>`).join('');

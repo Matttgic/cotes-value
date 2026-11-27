@@ -222,7 +222,7 @@ function rendreBilanBoosts() {
     + `${av.gagnes} gagnés, ${(av.gain >= 0 ? '+' : '') + fr2(av.gain)} € (ROI ${av.roi == null ? '—' : pct(av.roi)}).` : '';
   document.getElementById('bb-n').textContent = aRegler.length ? String(aRegler.length) : '';
   zone.innerHTML = aRegler.length
-    ? `<textarea class="bb-texte" id="bb-texte" readonly rows="${Math.min(12, aRegler.length + 1)}">${e(texteBoostsARegler(aRegler))}</textarea>
+    ? `<textarea class="bb-texte" id="bb-texte" aria-label="Boosts à régler, texte à copier" readonly rows="${Math.min(12, aRegler.length + 1)}">${e(texteBoostsARegler(aRegler))}</textarea>
 <p><button type="button" class="btn" id="bb-copier">Copier la liste</button> <span class="aide" id="bb-copie" role="status"></span></p>`
     : '<p class="aide">Rien à régler.</p>';
   const bouton = document.getElementById('bb-copier');

@@ -481,6 +481,12 @@ et validée sur l'autre, Kelly fractionné simulé contre la mise fixe par `etud
 mesurées par `etudes/cote_juste.py` ; aucun changement retenu.
 [Recherche](docs/recherche.md) (14/11/2026) : la clôture Pinnacle est-elle prévisible (tests hors échantillon par
 `etudes/recherche_cloture.py`), parier tôt ou attendre, autres références vérifiées.
+**Audit complet du 26/11/2026** par six agents en parallèle ([prompts réutilisables](docs/prompts-audit-26-11.md)) :
+[code cœur](docs/audit-26-11-code.md) (règlement rejoué sur 6 903 paris, volley en points réglé),
+[fiabilité](docs/audit-26-11-fiabilite.md) (fausses alertes Pinnacle, secrets, CI),
+[stratégie](docs/audit-26-11-strategie.md) (seule la CLV de la règle principale est prouvée ; `etudes/audit_26_11.py`),
+[boosts](docs/audit-26-11-boosts.md) (paris de saison, doublons, traductions), [design](docs/audit-26-11-design.md)
+(412 → 0 erreur d'accessibilité) et [dette](docs/audit-26-11-dette.md) (construction du site −11 %, sortie identique).
 Le retrait complet de la valeur guest Pinnacle reste conditionné à une configuration de remplacement validée. La revue détaillée de cinq moteurs de sélection reste ouverte ; les rapports ne certifient pas une rentabilité future.
 
 ## Règlement

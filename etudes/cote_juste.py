@@ -28,8 +28,8 @@ import gzip
 import json
 import math
 import sys
-from collections import Counter, defaultdict
-from datetime import datetime, timedelta, timezone
+from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -665,7 +665,7 @@ def instantanes(hist: dict, desc: dict, fin: float) -> dict[str, np.ndarray]:
         if not avant or debut - max(avant) > VIE_MAX_S:
             continue
         connu = {b: min(s[0][0] for s in sb.values()) for b, sb in series.items() if sb}
-        for k, serie_p in series["Pinnacle"].items():
+        for k in series["Pinnacle"]:
             presents = [b for b in autres if k in series[b]]
             cloture = {b: etat(series[b][k], debut) for b in ["Pinnacle"] + presents}
             if not presents or cloture["Pinnacle"] is None:
@@ -760,13 +760,6 @@ def ajuster(t: dict[str, np.ndarray], lignes: np.ndarray, actif: np.ndarray, cib
         m2 = 0.999 * m2 + 0.001 * grad * grad
         theta -= pas * (m1 / (1 - 0.9 ** i)) / (np.sqrt(m2 / (1 - 0.999 ** i)) + 1e-12)
     return theta
-
-
-def divergence(cible: np.ndarray, p: np.ndarray) -> np.ndarray:
-    """Divergence de Kullback-Leibler de la cible vers la prévision (le log-loss, quand la cible est une probabilité)."""
-    c = np.clip(cible, 1e-4, 1 - 1e-4)
-    q = np.clip(p, 1e-4, 1 - 1e-4)
-    return c * np.log(c / q) + (1 - c) * np.log((1 - c) / (1 - q))
 
 
 def _rmse(e: np.ndarray) -> str:

@@ -1246,3 +1246,57 @@ body,input,select,button,textarea,svg text{font-variant-numeric:tabular-nums}
 .strategie-apercu small{display:block;margin-top:4px;font-size:12px;color:var(--doux)}
 .avis-verdict{font-weight:500;letter-spacing:0}
 .reglages-resume{font:500 14px var(--sans);font-variant-numeric:tabular-nums}
+
+/* Audit design du 26/11 (docs/audit-26-11-design.md) : accessibilité, cibles tactiles, hiérarchie. Aucun chiffre changé. */
+.sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+/* Carte de chaleur : rangées ARIA sans effet sur la grille ; petit texte des cases colorées en encre pleine (AA). */
+.cv-rangee{display:contents}
+.cv-case[style] small{color:var(--texte)}
+/* Sous-onglets du bilan : largeur au texte, « Mes stratégies » n'est plus tronqué sur téléphone. */
+.bilan-onglets{display:flex!important}
+.bilan-onglets button{flex:1 1 auto;min-width:0;padding:0 6px;overflow:visible;text-overflow:clip}
+@media(max-width:360px){.bilan-onglets button[role=tab]{font-size:13px!important;padding:0 3px}}
+/* L'action d'abord : le bouton du bookmaker des paris et boosts à jouer de l'Accueil est plein. */
+:is(#acc-values,#acc-boosts) .lien-bookmaker.btn:not(.repli){background:var(--texte);border-color:var(--texte);color:var(--fond);font-weight:600}
+:is(#acc-values,#acc-boosts) .lien-bookmaker.btn:not(.repli):hover{background:var(--texte);color:var(--fond);opacity:.9}
+/* Boosts (web/boosts.js) : le résumé « N à jouer · gain attendu » en tête, le conseil en une ligne sous chaque boost. */
+.bo-resume{margin:4px 0 16px;padding:12px 16px;border-radius:var(--rayon-p,8px);background:var(--surface-2,var(--accent-f));
+  box-shadow:inset 3px 0 0 var(--vert);color:var(--texte);font-size:15px;line-height:1.45}
+.bo-resume b{font-weight:600}.bo-resume b.pos{color:var(--vert)}.bo-resume b.neg{color:var(--rouge)}
+.acc-pari .bo-conseil{grid-column:1/-1;margin:0;padding-top:8px;border-top:1px dashed var(--ligne);font-size:13px;line-height:1.4;color:var(--doux)}
+.bo-conseil b{color:var(--texte);font-weight:600}.bo-conseil b.pos{color:var(--vert)}.bo-conseil b.neg{color:var(--rouge)}
+.bo-conseil .badge{margin-left:4px;vertical-align:1px}
+/* Notifs : les quatre réponses du journal en 2 × 2 (la première n'occupe plus toute la ligne). */
+#journal-reel .bu-kpis>div:first-child{grid-column:auto}
+@media(max-width:760px){
+  /* Accueil : le gain net en grand, ROI, réussite et paris en cours sur une seule ligne dessous. */
+  .acc-kpis:has(>.acc-kpi:nth-child(4):last-child){grid-template-columns:repeat(3,minmax(0,1fr))}
+  .acc-kpis:has(>.acc-kpi:nth-child(4):last-child)>.acc-kpi:not(:first-child){padding:10px 12px 12px}
+  .acc-kpis:has(>.acc-kpi:nth-child(4):last-child)>.acc-kpi:not(:first-child) strong{font-size:22px}
+}
+/* Bureau : 24 px au moins (WCAG 2.5.8) pour le menu du thème, les replis d'aide, les filtres et les liens « Stratégies → ». */
+.palette-label select{min-height:24px}
+details.aide>summary,.notif-filtre{min-height:24px}
+.acc-lien{position:relative}.acc-lien::after{content:"";position:absolute;inset:-3px 0}
+/* Cibles tactiles de 44 px au moins (WCAG 2.5.5) sur téléphone ; la mise en page de bureau ne bouge pas. */
+@media(max-width:760px),(pointer:coarse){
+  .palette-label select{min-height:44px;padding:0 6px}
+  .reglages>summary{min-height:44px;align-items:center}
+  .mode-emploi>summary{min-height:44px}
+  details.aide>summary{min-height:44px;padding-block:12px;box-sizing:border-box}
+  .notif-filtre{min-height:44px;margin:0}
+  .paris-puces button,.puces button{min-height:44px}
+  .dec-preuve{position:relative;display:inline-flex;align-items:center;min-height:36px;padding:6px 10px}
+  .dec-preuve::after{content:"";position:absolute;inset:-4px 0}
+  .acc-lien::after{inset:-13px -4px}
+  .filtres select,.vue-strategies-toggle button{min-height:44px}
+}
+/* Téléphone : textes d'aide et libellés de commandes à 12-13 px au lieu de 11 (lisibilité, retour du 24/11). */
+@media(max-width:760px){
+  .aide,p.aide{font-size:12px}
+  .mode-emploi>summary{font-size:13px}
+  .reglages-mot{font-size:12px}
+  .lien-bookmaker.court{font-size:12px}
+}
+/* Copie du lien bookmaker dans une ligne repliée : un span (web/liens.js), au doigt comme un lien. */
+.lien-bookmaker[data-lien]{cursor:pointer}

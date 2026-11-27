@@ -144,8 +144,8 @@ const prisesSuivi = () => {
 
 function datesHtml() {
   const pr = suiviPeriode(), auj = suiviJourParis();
-  return `<div class="filtres periode-bilan"><div class="champ"><label>Du</label><input type="date" data-p="depuis" value="${e(pr.depuis || '')}" max="${auj}"></div>
-  <div class="champ"><label>Au</label><input type="date" data-p="jusqua" value="${e(pr.jusqua || '')}" max="${auj}"></div></div>`;
+  return `<div class="filtres periode-bilan"><div class="champ"><label aria-hidden="true">Du</label><input type="date" aria-label="Du : date de début" data-p="depuis" value="${e(pr.depuis || '')}" max="${auj}"></div>
+  <div class="champ"><label aria-hidden="true">Au</label><input type="date" aria-label="Au : date de fin" data-p="jusqua" value="${e(pr.jusqua || '')}" max="${auj}"></div></div>`;
 }
 function lierDates(racine, rapides) {
   const maj = v => { ecrire(CLE_PERIODE, JSON.stringify(v)); rendreBilanUniques(); rendreMesStrategies(); };
@@ -269,7 +269,7 @@ const LIGNE_SUIVI = {gagne: ['gagne', '✓ Gagné'], demi_gagne: ['gagne', '✓ 
   demi_perdu: ['perdu', '✗ ½ perdu'], rembourse: ['rembourse', 'Remboursé']};
 const REF_SUIVI = {Pinnacle: '', Polymarket: 'Poly ', Consensus: 'Cons. ', Smarkets: 'Sm. '};
 // Bouton « Parier chez … » de liens.js (absent quand ce fichier est testé seul).
-const boutonSuivi = (p, court = false) => typeof boutonBookmaker === 'function' ? boutonBookmaker(p, court) : '';
+const boutonSuivi = (p, court = false) => typeof boutonBookmaker === 'function' ? boutonBookmaker(p, court, court) : '';
 // Affichage seul : un pari pris par plusieurs stratégies suivies montre la mise totale (unitaire × nombre),
 // le détail reste en petit et en infobulle. Mise inconnue : 10 €, comme dans suiviBilan.
 const montantSuivi = x => suiviBankroll(x).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
