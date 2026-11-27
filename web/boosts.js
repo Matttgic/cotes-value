@@ -121,7 +121,29 @@ function rendreCouverts() {
     : '<p class="aide">Aucun épisode pour l’instant.</p>';
 }
 
-function carteBoost(b) {
+// Mise conseillée (mise max du boost, 10 € si inconnue, comme cotes/boosts.py › MISE_DEFAUT) et gain attendu
+// (mise × value, la même espérance que le « gain espéré » du bilan) : rien d'autre n'est calculé ici.
+function conseilBoost(b) {
+  const mise = b.mise_max || 10;
+  return {mise, gain: b.value != null ? mise * b.value : null};
+}
+
+function ligneConseil(b, seuil) {
+  const c = conseilBoost(b);
+  const gain = c.gain != null ? `gain attendu <b class="${signe(c.gain)}">${c.gain >= 0 ? '+' : ''}${fr2(c.gain)} €</b>`
+    : 'gain attendu inconnu (pas de cote juste)';
+  const fort = b.value != null && seuil != null && b.value >= seuil ? ' <span class="badge">value ≥ ' + pct(seuil) + '</span>' : '';
+  return `<p class="aide bo-conseil">Mise conseillée <b>${euros(c.mise)}</b>${b.mise_max ? '' : ' (mise max inconnue)'} · ${gain}${fort}</p>`;
+}
+
+function motifPasser(b) {
+  if (b.exclusion) return b.exclusion;
+  if (b.long_terme) return 'pari de saison : pas jugé';
+  if (b.value != null) return `value ${pct(b.value)}`;
+  return b.statut || '';
+}
+
+function carteBoost(b, seuil) {
   const p = {bookmaker: b.bookmaker, lien: b.lien, statut: 'en_cours'};
   const value = b.value != null
     ? `<i class="acc-ecart">${pct(b.value)}</i><small class="acc-ref">juste ${cote(b.cote_juste)} (${e(b.reference)})</small>`
@@ -131,16 +153,30 @@ function carteBoost(b) {
   return `<article class="acc-pari"><div class="acc-pari-texte"><span class="acc-meta">${b.sport ? e(nomSport(b.sport)) + ' · ' : ''}${e(b.domicile)} – ${e(b.exterieur)}</span>
 <b>${e(b.libelle)}</b><span>${detail}</span><span class="pari-debut">Match ${horairePari(b)}</span></div>
 <div class="acc-pari-prix"><span class="acc-book">${e(b.bookmaker)}${b.mise_max ? ' · mise max ' + euros(b.mise_max) : ''}</span>
-${verdict}<b class="acc-cote">${cote(b.cote)}</b><small class="acc-ref">avant ${cote(b.cote_avant)}</small>${value}${boutonBookmaker(p, true)}</div></article>`;
+${verdict}<b class="acc-cote">${cote(b.cote)}</b><small class="acc-ref">avant ${cote(b.cote_avant)}</small>${value}${boutonBookmaker(p, true)}</div>
+${b.verdict === 'jouer' ? ligneConseil(b, seuil) : `<p class="aide bo-conseil">${e(motifPasser(b))}</p>`}</article>`;
+}
+
+// « À jouer » en tête (value d'abord, de la plus forte à la plus faible, puis les boosts jugés sans cote juste), le
+// reste replié. L'ordre et le verdict viennent de cotes/boosts.py › evaluer ; rien n'est recalculé.
+function trierBoosts(actuels) {
+  const aJouer = actuels.filter(b => b.verdict === 'jouer'), aPasser = actuels.filter(b => b.verdict !== 'jouer');
+  aJouer.sort((a, b) => (a.value == null) - (b.value == null) || (b.value || 0) - (a.value || 0));
+  return {aJouer, aPasser};
 }
 
 function rendreBoostsListe() {
   const B = D.boosts || {}, zone = document.getElementById('bo-actuels');
   if (!zone) return;
   document.getElementById('bo-maj').textContent = B.maj ? 'relevé de ' + hm(B.maj) : 'aucun relevé';
-  const actuels = B.actuels || [], aJouer = actuels.filter(b => b.verdict === 'jouer');
-  zone.innerHTML = aJouer.length ? aJouer.map(carteBoost).join('')
-    : `<p class="vide">Aucun boost à jouer au dernier relevé${actuels.length ? ` (${actuels.length} à passer)` : ''}.</p>`;
+  const actuels = B.actuels || [], {aJouer, aPasser} = trierBoosts(actuels), seuil = B.seuil_alerte;
+  const attendu = aJouer.reduce((t, b) => t + (conseilBoost(b).gain || 0), 0);
+  const tete = aJouer.length ? `<p class="aide bo-resume"><b>${aJouer.length} à jouer</b> · gain attendu total `
+    + `<b class="${signe(attendu)}">${attendu >= 0 ? '+' : ''}${fr2(attendu)} €</b> à la mise conseillée</p>` : '';
+  const replies = aPasser.length ? `<details class="mode-emploi"><summary>À passer (${aPasser.length})</summary>`
+    + aPasser.map(b => carteBoost(b, seuil)).join('') + '</details>' : '';
+  zone.innerHTML = (aJouer.length ? tete + aJouer.map(b => carteBoost(b, seuil)).join('')
+    : `<p class="vide">Aucun boost à jouer au dernier relevé${actuels.length ? ` (${actuels.length} à passer)` : ''}.</p>`) + replies;
   const b = (B.bilan || {})['7'] || {};
   document.getElementById('bo-bilan').innerHTML = b.n && b.jouer != null ? kpis([
     ['À jouer (7 j)', String(b.jouer), b.jouer ? 'pos' : '', `sur ${b.n} boosts lus`]

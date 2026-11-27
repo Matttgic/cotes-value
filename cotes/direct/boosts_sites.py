@@ -24,9 +24,25 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 
 ENTETES = {"Accept-Language": "fr-FR,fr;q=0.9"}
-RE_LONG_TERME = re.compile(r"\b\d{2}/\d{2}\b|saison|playoffs?|play-?in|division|conf[ée]rence|meilleur "
-                           r"(?:marqueur|passeur|rebondeur|intercepteur|buteur)|vainqueur (?:de la|du) "
-                           r"(?:ligue|championnat|coupe)|titre", re.I)
+# Paris de saison ou de compétition (« paquet NBA 26/27 », « Marseille podium de Ligue 1 », « Les San Antonio Spurs
+# champions NBA », « La France remporte la Ligue des Nations ») : réglés dans des semaines ou des mois. « Meilleur
+# marqueur du match » : un seul match.
+RE_LONG_TERME = re.compile(
+    r"saison|playoffs?|play-?in|division|conf[ée]rence|titre"
+    r"|meilleur (?:marqueur|passeur|rebondeur|intercepteur|buteur)(?! du match| de la rencontre)"
+    r"|vainqueur (?:de la|du) (?:ligue|championnat|coupe)"
+    r"|\bchampions? (?:nba|nfl|nhl|mlb|wnba|de france|d'europe|du monde)\b"
+    r"|\bpodium (?:de|du|en) (?:la )?(?:ligue|championnat|liga|serie|bundesliga|premier league)"
+    r"|\bremporte (?:le tournoi|la ligue des nations|la coupe|le championnat|la ligue des champions|l'euro\b)", re.I)
+# « 26/27 », « 2026/2027 » : deux années qui se suivent, 20 ou plus (saison) ; « 20/11 », « (24/11) », « 11/12 » : une
+# date, pas une saison.
+RE_ANNEES = re.compile(r"(?<!\d)(?:20)?(\d{2})\s*/\s*(?:20)?(\d{2})(?!\d)")
+
+
+def long_terme(texte: str | None) -> bool:
+    """Pari de saison ou de compétition, d'après l'intitulé, le titre ou le nom de l'événement."""
+    t = str(texte or "")
+    return bool(RE_LONG_TERME.search(t)) or any(int(a) >= 20 and int(b) == int(a) + 1 for a, b in RE_ANNEES.findall(t))
 
 
 class PageInattendue(RuntimeError):
@@ -66,7 +82,7 @@ def _boost(bookmaker, ident, match, debut, libelle, cote, avant, mise, titre, mo
     dom, ext = _equipes(match)
     return {"bookmaker": bookmaker, "id": ident, "domicile": dom, "exterieur": ext, "debut": debut,
             "libelle": libelle, "cote": cote, "cote_avant": avant, "mise_max": mise, "titre": titre, "lu": moment,
-            "lien": lien, "long_terme": bool(RE_LONG_TERME.search(f"{libelle} {titre or ''}"))}
+            "lien": lien, "long_terme": long_terme(f"{libelle} {titre or ''}")}
 
 
 # --------------------------------------------------------------------------- Unibet
@@ -117,7 +133,7 @@ def boosts_unibet(e: dict, moment: str, lien: str | None = None) -> list[dict]:
                         _pari_unibet(desc), cote, _cote(fl.group(1)) if fl else None,
                         float(mise.group(1).replace(",", ".")) if mise else UNIBET_MISE, _texte(desc), moment,
                         lien or UNIBET_BOOSTS)
-            b_["long_terme"] = b_["long_terme"] or bool(RE_LONG_TERME.search(e.get("description") or ""))
+            b_["long_terme"] = b_["long_terme"] or long_terme(e.get("description"))
             out.append(b_)
     return out
 
