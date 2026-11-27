@@ -22,7 +22,6 @@ ce relevé.
 """
 from __future__ import annotations
 
-from datetime import timezone
 
 from .correspondance import normaliser
 from .decisions import figer_selecteur
@@ -32,6 +31,7 @@ from .strategie_commune import (
     ligne_non_quart,
     nombre_fini as _nombre,
 )
+from .strategie_gemini import une_par_book_et_match
 from .temps import instant as _heure
 
 EDEN = {
@@ -134,46 +134,4 @@ def paris_eden(paris: list[dict], depuis: str = EDEN["debut"]) -> set[int]:
     Un autre bookmaker français qui cote mal le même match est une mise distincte.
     Pas de plafond journalier : les plafonds essayés réduisaient le test.
     """
-    candidats = [p for p in paris if motif_refus_eden(p, depuis) is None]
-    candidats.sort(
-        key=lambda p: (
-            _heure(p["detecte"]),
-            -float(p["ecart"]),
-            float(p["cote"]),
-            str(p.get("bookmaker") or ""),
-            str(p.get("id") or p.get("match_id") or ""),
-        )
-    )
-    parents, utilises, selection = {}, {}, set()
-
-    def racine(cle):
-        parents.setdefault(cle, cle)
-        if parents[cle] != cle:
-            parents[cle] = racine(parents[cle])
-        return parents[cle]
-
-    def associer(cles):
-        root = racine(cles[0])
-        for cle in cles[1:]:
-            autre = racine(cle)
-            if autre != root:
-                parents[autre] = root
-                utilises[root] = utilises.get(root, False) or utilises.get(autre, False)
-        return root
-
-    for p in candidats:
-        sport, book = p.get("sport"), p.get("bookmaker")
-        preuve = p.get("preuve_prise") or {}
-        cles = [("reference", sport, book, p["reference"], str(preuve["match_id_reference"]))]
-        if p.get("match_id"):
-            cles.append(("bookmaker", sport, book, str(p["match_id"])))
-        if p.get("domicile") and p.get("exterieur"):
-            noms = tuple(sorted(normaliser(p[k])[0] for k in ("domicile", "exterieur")))
-            if all(noms):
-                cles.append(("equipes", sport, book, _heure(p["debut"]).astimezone(timezone.utc), noms))
-        root = associer(cles)
-        if utilises.get(root):
-            continue
-        utilises[root] = True
-        selection.add(id(p))
-    return selection
+    return une_par_book_et_match([p for p in paris if motif_refus_eden(p, depuis) is None])
