@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import Counter
 from itertools import groupby
+from operator import itemgetter
 from math import isfinite
 from zoneinfo import ZoneInfo
 
@@ -91,20 +92,17 @@ def _signature_selection(p: dict) -> tuple:
     return (p.get("marche"), p.get("periode"), p.get("ligne"), p.get("joueur"), p.get("issue"))
 
 
-def _selection_par_selection(paris: list[dict], eligibles: set[int], depuis: str) -> dict:
-    """Première prise par sélection, sans plafond journalier.
+def _cycles(paris: list[dict], eligibles: set[int], depart, unir):
+    """Cycles de détection dans l'ordre, après le lancement : (jour à Paris, [(candidat, racine de son match)]).
 
-    Même apprentissage d'alias que ``selection_unique`` : deux bookmakers du même
-    match partagent la sélection. Une fusion tardive est comptée et ne retire
-    jamais une mise déjà retenue. Les autres marchés du match restent jouables.
+    Les alias sont appris sur toutes les observations, y compris avant lancement et sur les prix écartés :
+    toutes les références d'un même cycle sont disponibles simultanément. ``unir(racine, autre)`` est appelé
+    à chaque fusion de deux matchs, avant le rattachement. Les candidats d'un cycle (paris de ``eligibles``)
+    sont rangés par edge décroissant puis identifiant.
     """
-    depart = heure(depuis)
-    if depart is None:
-        return {"selection": set(), "fusions_tardives": 0, "par_jour": {}}
-    lignes = sorted((p for p in paris if p.get("reference") != "Pinnacle brut"
-                     and heure(p.get("detecte"))), key=lambda p: heure(p["detecte"]))
-    parents, vues, jours, retenus = {}, {}, Counter(), set()
-    fusions = 0
+    lignes = sorted(((t, p) for p in paris if p.get("reference") != "Pinnacle brut"
+                     and (t := heure(p.get("detecte")))), key=itemgetter(0))
+    parents = {}
 
     def racine(cle):
         parents.setdefault(cle, cle)
@@ -117,27 +115,45 @@ def _selection_par_selection(paris: list[dict], eligibles: set[int], depuis: str
             cle = prochain
         return r
 
-    for t, batch in groupby(lignes, key=lambda p: heure(p["detecte"])):
-        batch = list(batch)
-        for p in batch:
-            cles = _cles_match(p)
+    for t, groupe in groupby(lignes, key=itemgetter(0)):
+        batch = [(p, _cles_match(p)) for _, p in groupe]
+        for p, cles in batch:
             root = racine(cles[0])
             for cle in cles[1:]:
                 autre = racine(cle)
                 if root != autre:
-                    a, b = vues.get(root), vues.get(autre)
-                    fusions += bool(a and b)
+                    unir(root, autre)
                     parents[autre] = root
-                    if b:
-                        vues[root] = (a or set()) | b
-                        del vues[autre]
         if t < depart:
             continue
-        candidats = sorted((p for p in batch if id(p) in eligibles),
-                            key=lambda p: (-(p.get("ecart") or 0), str(p.get("id") or "")))
-        jour = t.astimezone(PARIS).date().isoformat()
-        for p in candidats:
-            root = racine(_cles_match(p)[0])
+        candidats = sorted((pc for pc in batch if id(pc[0]) in eligibles),
+                           key=lambda pc: (-(pc[0].get("ecart") or 0), str(pc[0].get("id") or "")))
+        yield t.astimezone(PARIS).date().isoformat(), [(p, racine(cles[0])) for p, cles in candidats]
+
+
+def _selection_par_selection(paris: list[dict], eligibles: set[int], depuis: str) -> dict:
+    """Première prise par sélection, sans plafond journalier.
+
+    Même apprentissage d'alias que ``selection_unique`` : deux bookmakers du même
+    match partagent la sélection. Une fusion tardive est comptée et ne retire
+    jamais une mise déjà retenue. Les autres marchés du match restent jouables.
+    """
+    depart = heure(depuis)
+    if depart is None:
+        return {"selection": set(), "fusions_tardives": 0, "par_jour": {}}
+    vues, jours, retenus = {}, Counter(), set()
+    fusions = 0
+
+    def unir(root, autre):
+        nonlocal fusions
+        a, b = vues.get(root), vues.get(autre)
+        fusions += bool(a and b)
+        if b:
+            vues[root] = (a or set()) | b
+            del vues[autre]
+
+    for jour, candidats in _cycles(paris, eligibles, depart, unir):
+        for p, root in candidats:
             sig = _signature_selection(p)
             deja = vues.setdefault(root, set())
             if sig in deja:
@@ -167,43 +183,18 @@ def selection_unique(paris: list[dict], eligibles: set[int], depuis: str,
     depart = heure(depuis)
     if depart is None:
         return {"selection": set(), "fusions_tardives": 0, "par_jour": {}}
-    lignes = sorted((p for p in paris if p.get("reference") != "Pinnacle brut"
-                     and heure(p.get("detecte"))), key=lambda p: heure(p["detecte"]))
-    parents, prises, rencontres, jours, retenus = {}, {}, {}, Counter(), set()
+    prises, rencontres, jours, retenus = {}, {}, Counter(), set()
     fusions = 0
 
-    def racine(cle):
-        parents.setdefault(cle, cle)
-        r = cle
-        while parents[r] != r:
-            r = parents[r]
-        while parents[cle] != cle:
-            prochain = parents[cle]
-            parents[cle] = r
-            cle = prochain
-        return r
+    def unir(root, autre):
+        nonlocal fusions
+        a, b = prises.get(root, 0), prises.get(autre, 0)
+        fusions += bool(a and b)
+        prises[root] = a+b
+        rencontres[root] = rencontres.get(root, False) or rencontres.get(autre, False)
 
-    for t, batch in groupby(lignes, key=lambda p: heure(p["detecte"])):
-        batch = list(batch)
-        # Toutes les références d'un même cycle sont disponibles simultanément.
-        for p in batch:
-            cles = _cles_match(p)
-            root = racine(cles[0])
-            for cle in cles[1:]:
-                autre = racine(cle)
-                if root != autre:
-                    a, b = prises.get(root, 0), prises.get(autre, 0)
-                    fusions += bool(a and b)
-                    parents[autre] = root
-                    prises[root] = a+b
-                    rencontres[root] = rencontres.get(root, False) or rencontres.get(autre, False)
-        if t < depart:
-            continue
-        candidats = sorted((p for p in batch if id(p) in eligibles),
-                            key=lambda p: (-(p.get("ecart") or 0), str(p.get("id") or "")))
-        jour = t.astimezone(PARIS).date().isoformat()
-        for p in candidats:
-            root = racine(_cles_match(p)[0])
+    for jour, candidats in _cycles(paris, eligibles, depart, unir):
+        for p, root in candidats:
             if rencontres.get(root):
                 continue
             # La première occasion consomme l'événement, même si le plafond
