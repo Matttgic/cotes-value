@@ -1274,7 +1274,9 @@ body,input,select,button,textarea,svg text{font-variant-numeric:tabular-nums}
   .acc-kpis:has(>.acc-kpi:nth-child(4):last-child)>.acc-kpi:not(:first-child){padding:10px 12px 12px}
   .acc-kpis:has(>.acc-kpi:nth-child(4):last-child)>.acc-kpi:not(:first-child) strong{font-size:22px}
 }
-/* Bureau : 24 px au moins (WCAG 2.5.8) pour les liens « Stratégies → » de la Décision. */
+/* Bureau : 24 px au moins (WCAG 2.5.8) pour le menu du thème, les replis d'aide, les filtres et les liens « Stratégies → ». */
+.palette-label select{min-height:24px}
+details.aide>summary,.notif-filtre{min-height:24px}
 .acc-lien{position:relative}.acc-lien::after{content:"";position:absolute;inset:-3px 0}
 /* Cibles tactiles de 44 px au moins (WCAG 2.5.5) sur téléphone ; la mise en page de bureau ne bouge pas. */
 @media(max-width:760px),(pointer:coarse){
@@ -1288,6 +1290,13 @@ body,input,select,button,textarea,svg text{font-variant-numeric:tabular-nums}
   .dec-preuve::after{content:"";position:absolute;inset:-4px 0}
   .acc-lien::after{inset:-13px -4px}
   .filtres select,.vue-strategies-toggle button{min-height:44px}
+}
+/* Téléphone : textes d'aide et libellés de commandes à 12-13 px au lieu de 11 (lisibilité, retour du 24/11). */
+@media(max-width:760px){
+  .aide,p.aide{font-size:12px}
+  .mode-emploi>summary{font-size:13px}
+  .reglages-mot{font-size:12px}
+  .lien-bookmaker.court{font-size:12px}
 }
 /* Copie du lien bookmaker dans une ligne repliée : un span (web/liens.js), au doigt comme un lien. */
 .lien-bookmaker[data-lien]{cursor:pointer}
