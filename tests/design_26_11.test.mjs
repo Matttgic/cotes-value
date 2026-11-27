@@ -57,3 +57,9 @@ test('Dates des bilans nommées pour les lecteurs d\'écran', () => {
   assert.match(src, /aria-label="Du : date de début" data-p="depuis"/);
   assert.match(src, /aria-label="Au : date de fin" data-p="jusqua"/);
 });
+
+test('Chargement différé annoncé : aria-busy sur le contenu, levé à la fin', () => {
+  const src = lire('modele.html');
+  assert.match(src, /getElementById\("contenu"\)\?\.setAttribute\("aria-busy", String\(attente\)\)/);
+  assert.match(src, /classList\.remove\("chargement-differe"\);\n  document\.getElementById\("contenu"\)\?\.setAttribute\("aria-busy", "false"\)/);
+});

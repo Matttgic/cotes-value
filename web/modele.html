@@ -541,6 +541,7 @@ function ouvrir(o) {
   // Blocs différés pas encore là : l'onglet s'affiche vide (« Chargement… ») et sera rouvert par chargerDifferes().
   const attente = typeof differesEnAttente !== "undefined" && differesEnAttente && page !== "accueil";
   document.body?.classList?.toggle("chargement-differe", attente);
+  document.getElementById("contenu")?.setAttribute("aria-busy", String(attente));   // lecteurs d'écran : page en chargement
   if (attente) { pageEnAttente = o; return; }
   if (page === "bilan") montrerVueBilan(vueBilan);
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
@@ -2179,6 +2180,7 @@ async function chargerDifferes() {
   for (const f of fiches) f.trace = recentes.get(f.id)?.trace || [];
   differesEnAttente = false;
   document.body.classList.remove("chargement-differe");
+  document.getElementById("contenu")?.setAttribute("aria-busy", "false");
   appliquerMise(miseMode);
   resoudreDifferes();
   for (const page of Object.keys(PAGES_RENDUS)) pagesARendre.add(page);
