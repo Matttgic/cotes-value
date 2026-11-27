@@ -544,6 +544,7 @@ function ouvrir(o) {
   document.body?.classList?.toggle("chargement-differe", attente);
   document.getElementById("contenu")?.setAttribute("aria-busy", String(attente));   // lecteurs d'écran : page en chargement
   if (attente) { pageEnAttente = o; return; }
+  pageEnAttente = null;                    // revenu sur l'accueil avant les blocs différés : ne pas rouvrir l'onglet quitté
   if (page === "bilan") montrerVueBilan(vueBilan);
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
   if (page === "accueil") rendreAccueil();
