@@ -74,6 +74,11 @@ def detections(texte: str) -> list[dict]:
     return sorted(trouves.values(), key=lambda x: (x['ligne'], x['type']))
 
 
+SECRETS_ENV = re.compile(r'(?:PINNACLE_API_KEY|PINNODDS_API_KEY|PINBOOK_API_KEY|PULSESCORE_KEY|PROPLINE_API_KEY|'
+                         r'API_SPORTS_KEY|THE_ODDS_API_KEY(?:_[1-4])?|SUPABASE_SERVICE_ROLE_KEY|PUSHOVER_APP_TOKEN|'
+                         r'PUSHOVER_USER_KEY|PINNACLE_RECHAUFFEUR_SECRET|ALERTE_WEBHOOK_KEY|HC_PING_URL|GITHUB_TOKEN|GH_TOKEN)')
+
+
 def verifier_public(data, env=None) -> None:
     """Refuse une donnée privée avant écriture d'un artefact public."""
     vus = {}                                         # nom de clé -> privé ou non (les mêmes clés reviennent des milliers de fois)
@@ -95,10 +100,11 @@ def verifier_public(data, env=None) -> None:
     if detections(texte):
         raise ValueError('Publication bloquée : secret possible')
     env = os.environ if env is None else env
-    # Complément exact pour les secrets configurés dans le processus courant.
+    # Complément exact pour les secrets configurés dans le processus courant. Pushover, réchauffeur, webhook,
+    # Healthchecks et jeton GitHub (audit du 26/11/2026) : présents dans l'environnement qui construit le site
+    # (collecte.yml, /etc/cotes-value.env du serveur en direct) sans forme reconnaissable par ``detections``.
     for nom, valeur in env.items():
-        if re.fullmatch(r'(?:PINNACLE_API_KEY|PINNODDS_API_KEY|PINBOOK_API_KEY|PULSESCORE_KEY|PROPLINE_API_KEY|API_SPORTS_KEY|'
-                        r'THE_ODDS_API_KEY(?:_[1-4])?|SUPABASE_SERVICE_ROLE_KEY)', nom):
+        if re.fullmatch(SECRETS_ENV, nom):
             if isinstance(valeur, str) and len(valeur) >= 8 and valeur in texte:
                 raise ValueError('Publication bloquée : secret configuré')
 

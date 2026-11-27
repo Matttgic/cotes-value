@@ -52,7 +52,7 @@ _PAR_COUCHE = {
                "scripts.sonde_sources_us scripts.sonde_unibet scripts.sonde_boosts scripts.empreinte_site scripts.regler_boosts",
     "etudes": "etudes etudes.manuels_sans_preuve etudes.etude_surebets etudes.erreurs_systematiques etudes.analyse_chatgpt etudes.analyse_marche etudes.audit_bilans etudes.avantage_reel "
               "etudes.comparer_secours_pinnacle etudes.comparer_strategies etudes.cote_juste etudes.durer "
-              "etudes.etude_duree_values etudes.modele_prix etudes.recherche_cloture etudes.strategie_mises",
+              "etudes.etude_duree_values etudes.modele_prix etudes.recherche_cloture etudes.strategie_mises etudes.audit_26_11",
 }
 COUCHES = {m: c for c, noms in _PAR_COUCHE.items() for m in noms.split()}
 

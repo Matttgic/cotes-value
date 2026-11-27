@@ -154,7 +154,9 @@ ses sélections. Aucun appel API supplémentaire.
 Plus de prise ni d'alerte, masquées sur la page Stratégies (« Afficher › Retirées » pour leur historique) :
 4 Claude Défi le 19/11, puis 18 stratégies le 27/11/2026 : ROI négatif avec au moins 100 paris réglés (dont Claude
 rejeu, JULES EDGE v1 et v2, Gemini Argon, Convergence ≥ 3) ou plus aucun pari (Grok 4 et 5, Optimisée + Polymarket,
-Qwen). Liste, chiffres et leçons : [docs/strategies-retirees.md](docs/strategies-retirees.md) (`cotes/pauses.py`,
+Qwen). Le 27/11 à 18 h, jugées sur la CLV : ChatGPT v1, Grok 2, Opus Favoris et Cœur value retirées (CLV sous celle
+de la règle principale, même au mieux) ; Claude Défi 4 réactivée (CLV +10,4 %, seule confirmée hors échantillon).
+Liste, chiffres et leçons : [docs/strategies-retirees.md](docs/strategies-retirees.md) (`cotes/pauses.py`,
 `RETIREES`). Règles d'origine : [Qwen](docs/strategie-qwen.md), [Jules v1](docs/strategie-jules.md),
 [Jules v2](docs/strategie-jules-v2.md).
 

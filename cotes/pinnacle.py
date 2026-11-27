@@ -467,7 +467,11 @@ def _demander_rechauffe(sports: dict, echeance=None) -> None:
 
 
 def _get(path: str, essais: int = 3, echeance=None, sonde_403: bool = False):
-    """``sonde_403`` : un 403 rend None tout de suite, sans reprise ni erreur notée (l'appelant vérifie)."""
+    """``sonde_403`` : un 403 rend None tout de suite, sans reprise ni erreur notée (l'appelant vérifie).
+
+    Un échec passager (réseau, 408, 5xx) n'est noté que si aucune reprise ne réussit : du 25/11/2026 14:15 au
+    26/11 03:14, « sport 29 matchups : réseau indisponible » restait noté alors que la reprise rendait le football
+    (≈ 107 000 cotes et 1 400 matchs par cycle) ; la page Santé a gardé Pinnacle en alerte 162 cycles de suite."""
     global _bloque, _reprises_403, _dernier_code
     _dernier_code = None
     if echeance is None:
@@ -481,11 +485,18 @@ def _get(path: str, essais: int = 3, echeance=None, sonde_403: bool = False):
     m = re.match(r"^/sports/(\d+)/(matchups|markets/straight)(?:\?|$)", path)
     contexte = f"sport {m[1]} {m[2]}" if m else "requête"
     delai = 90 if echeance is None else max(1, min(10, echeance.timeout(10)))
+    echec = None                              # dernier échec passager, noté seulement si la requête échoue
+
+    def abandon(*messages):
+        for message in (echec, *messages):
+            if message:
+                _erreur(message)
+        return None
+
     i = 0
     while i < essais:
         if echeance is not None and not echeance.ok():
-            _erreur("budget")
-            return None
+            return abandon("budget")
         try:
             r = _http.get(base_api() + path, headers=headers(), timeout=delai)
             _dernier_code = r.status_code
@@ -493,44 +504,38 @@ def _get(path: str, essais: int = 3, echeance=None, sonde_403: bool = False):
                 try:
                     d = r.json()
                 except ValueError:
-                    _erreur(f"{contexte} : JSON invalide")
-                    return None
+                    return abandon(f"{contexte} : JSON invalide")
                 if isinstance(d, list):
                     _ages[path] = _lire_age(r)
                     _statuts[path] = _lire_statut_cache(r)
                     if reprise_403:
                         _compter("reprise_403_ok")
                     return d
-                _erreur(f"{contexte} : liste JSON attendue")
-                return None
+                return abandon(f"{contexte} : liste JSON attendue")
             if r.status_code == 403 and sonde_403:
-                return None
+                return abandon()
             if r.status_code == 403 and not reprise_403 and _reprises_403 < REPRISES_403_MAX:
                 _reprises_403 += 1            # refus aléatoire : un seul nouvel essai, sans noter d'erreur s'il passe
                 _compter("reprise_403")
                 reprise_403 = True
                 if echeance is not None and (echeance.reste() or 0) < PAUSE_REPRISE_403_S:
-                    _erreur("budget")
-                    return None
+                    return abandon("budget")
                 time.sleep(PAUSE_REPRISE_403_S)
                 continue
-            _erreur(f"{contexte} : HTTP {r.status_code}")
-            if r.status_code == 403:
-                return None                   # ce sport seulement ; les autres sports du cycle continuent
-            if r.status_code in (401, 429):
-                _bloque = True                # clé refusée ou quota : pas de rafale sur le reste du cycle
-                return None
+            message = f"{contexte} : HTTP {r.status_code}"
             if r.status_code != 408 and not 500 <= r.status_code <= 599:
-                return None
+                if r.status_code in (401, 429):
+                    _bloque = True            # clé refusée ou quota : pas de rafale sur le reste du cycle
+                return abandon(message)       # 403 : ce sport seulement ; les autres sports du cycle continuent
+            echec = message                   # 408 ou 5xx : nouvel essai
         except requests.RequestException:
-            _erreur(f"{contexte} : réseau indisponible")
+            echec = f"{contexte} : réseau indisponible"
         i += 1
         if i < essais:
             if echeance is not None and (echeance.reste() or 0) < 2 * i:
-                _erreur("budget")
-                return None
+                return abandon("budget")
             time.sleep(2 * i)
-    return None
+    return abandon()
 
 
 def _instant(valeur) -> datetime | None:

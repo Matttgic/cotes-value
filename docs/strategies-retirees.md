@@ -6,6 +6,31 @@ l'étiquette « Retirée ». La liste est dans `cotes/pauses.py` (`RETIREES`).
 
 Pourquoi garder cette page : ne pas refaire une stratégie déjà essayée et perdante.
 
+## 27/11/2026 à 18 h UTC : quatre stratégies sous la règle, Claude Défi 4 réactivée
+
+Jugées sur la **CLV** et non plus sur le ROI ([audit du 26/11](audit-26-11-strategie.md) : aucun ROI ne tient après
+correction pour tests multiples, la CLV si). Critère : au moins 50 CLV mesurées et borne haute à 95 % de la CLV
+(bootstrap par match) **sous celle de la règle principale** (+3,4 %). Elles font donc moins bien que la règle seule,
+même au mieux. Relevé du 26/11 à 23 h 05 UTC, 10 € fixes.
+
+| Stratégie | Réglés (matchs) | ROI | CLV [IC 95 %] | CLV mesurées |
+|---|---|---|---|---|
+| ChatGPT v1 (rejeu) | 90 (90) | −8,7 % | +0,7 % [−1,5 ; +2,5] | 73 |
+| Grok 2 · Pinnacle low | 95 (95) | −3,9 % | +0,2 % [−1,6 ; +2,0] | 84 |
+| Claude Opus · Favoris réguliers | 170 (111) | +7,6 % | +0,5 % [−1,5 ; +2,2] | 137 |
+| Cœur value | 63 (63) | −4,6 % | −1,3 % [−4,0 ; +1,0] | 54 |
+
+ChatGPT v1 vote dans Convergence ≥ 2 : sa sélection continue en coulisse (`votes`), comme les autres bases.
+
+**Gardées, trop tôt pour juger** (moins de 50 CLV, lancées les 18 et 20/11) : Claude · Drop Pinnacle (40 CLV,
+−0,5 % [−4,9 ; +3,0]), Claude · Drop z-score (31, −1,0 % [−6,6 ; +3,0]), Néon 1 · Socle sharp (34, +0,6 %
+[−3,5 ; +4,0]).
+
+**Claude Défi 4 · Gros écart hors Winamax réactivée** : retirée le 27/11 à 0 h sur son ROI (−9,5 %), c'est pourtant la
+seule stratégie confirmée hors échantillon : CLV +10,4 % [+5,7 ; +15,0] sur 67 mesurées, +10,1 % sur les 42 paris
+réglés après le gel du 15/11. Ses paris depuis le 27/11 à 0 h réapparaissent (la sélection est recalculée à chaque
+cycle) ; aucune alerte n'a été envoyée pour eux.
+
 ## 27/11/2026 : dix-huit stratégies
 
 Chiffres du suivi depuis le lancement de chaque stratégie, 10 € fixes, relevé du 26/11/2026 au soir. « Au mieux » :
@@ -19,7 +44,7 @@ qu'elles ne gagnent pas après plusieurs semaines, à la demande de l'utilisateu
 | Stratégie | Réglés (matchs) | ROI | Au mieux | CLV par match |
 |---|---|---|---|---|
 | Convergence ≥ 3 hors M3 | 106 (105) | −11,8 % | +3,2 % | +1,3 % |
-| Claude Défi 4 · Gros écart hors Winamax | 103 (60) | −9,5 % | +20,3 % | +5,9 % |
+| Claude Défi 4 · Gros écart hors Winamax (réactivée le 27/11 à 18 h) | 103 (60) | −9,5 % | +20,3 % | +5,9 % |
 | JULES EDGE v2 (rejeu) | 170 (170) | −8,3 % | +4,0 % | +2,0 % |
 | JULES EDGE v1 (rejeu) | 133 (133) | −6,6 % | +6,8 % | +0,6 % |
 | Défi 1 · Écart fort, match proche | 207 (109) | −3,9 % | +15,6 % | +4,1 % |

@@ -20,7 +20,9 @@ proxy français payant. Depuis GitHub, sans proxy (`scripts/sonde_boosts.py`) :
 | Genybet, Betsson | **non** (403, IP non française) | non lus |
 | Betclic, PMU | — | aucun boost dans ce que la collecte lit (PMU : boosts visibles seulement connecté) |
 
-Les paris de saison (« 26/27 », « playoffs »…) sont gardés mais pas évalués (« pari à long terme »).
+Les paris de saison (« 26/27 », « 2026/2027 », « playoffs », « champions NBA », « podium de Ligue 1 », « remporte
+la Ligue des Nations »…) sont gardés mais pas évalués (« pari à long terme ») : toujours « passer », jamais « à
+régler » (leur date est la fin de l'offre). Une date (« Ligue 2 - 20/11 ») n'est pas une saison (audit du 26/11).
 
 Exemples : Winamax « Carlos Alcaraz gagne par au moins 6 jeux d'écart » 2,80 (au lieu de 2,50) ; Unibet « Montauban
 gagne et Johnny Matthews marque au moins 1 essai » 2,75 (2,50) ; NetBet « Lille (vs Arsenal) marque au moins 1 but »
@@ -41,7 +43,10 @@ value contre la cote juste qui compte.
    début à 90 minutes près.
 2. **Pari standard** (`traduire`) : victoire, match nul, double chance, handicap (« gagne par au moins N jeux / buts /
    points d'écart » = handicap −(N − 0,5)), mi-temps/fin, total, total d'une équipe, les deux équipes marquent, but ou
-   total de points d'un joueur. Combinés (« … et … ») et intitulés inconnus : pas de traduction.
+   total de points d'un joueur ; depuis l'audit du 26/11 : premier set (tennis), total de sets, les deux équipes
+   marquent et total d'une équipe en 1re mi-temps, « gagne par au moins N buts » sans « d'écart », le match rappelé
+   en tête (« Troyes/Le Havre - … », NetBet), « (hors prol. et TAB) » (temps réglementaire). Combinés (« … et … »),
+   « premier buteur », « X ou Y buteur » et intitulés inconnus : pas de traduction. Bilan : [audit du 26/11](audit-26-11-boosts.md).
 3. **Période** : quand plusieurs sont possibles (hockey : temps réglementaire par défaut chez Winamax), celle dont la
    cote habituelle du bookmaker vaut la cote d'avant le boost (« vérifié »), à 8 % près ; un pari qui existe chez lui à
    une tout autre cote n'est pas retenu. Sans cote d'avant : la première période qui a une cote juste.

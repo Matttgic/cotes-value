@@ -158,6 +158,13 @@ def scores_par_periode(sport: str, score: tuple[int, int], periodes: list[tuple[
         out["SETS_TERMINES"] = sum(1 for _, t, _ in sets if t)
         if sets and (not all(t for _, t, _ in sets) or max(gagnes) < 2):
             out["ABANDON"] = True
+    elif sport == "volley":
+        out["MATCH"] = score                       # en sets
+        # points de chaque set (marchés « 1er set »), seulement si les sets gagnés s'en déduisent
+        if score and periodes and (sum(a > b for a, b in periodes), sum(b > a for a, b in periodes)) == tuple(score):
+            for i, p in enumerate(periodes):
+                out[f"SET{i + 1}"] = p
+            out["POINTS"] = somme(periodes)
     elif sport in ("handball", "rugby"):
         out["MATCH"] = score
         if len(reg) >= 2 and not any(l in hors_reg for l in lab[:2]):
@@ -220,7 +227,7 @@ def _deduire_sans_periode(p: dict, scores: dict) -> str | None:
     eu 2 buts dans le match."""
     fin = scores.get("MATCH")
     m, per, i, ligne = p["marche"], p["periode"], p["issue"], p.get("ligne")
-    if not fin or m.startswith(("CORNERS_", "CARTONS_", "JEUX_", "SETS_")):
+    if not fin or m.startswith(("CORNERS_", "CARTONS_", "JEUX_", "SETS_", "POINTS_")):
         return None
     d, e = fin
     if m == "HALF_TIME_FULL_TIME" and per == "MATCH":
@@ -262,6 +269,9 @@ def _regler(p: dict, scores: dict[str, tuple[int, int]]) -> str | None:
     elif m.startswith("SETS_"):
         m = m[5:]
         s = scores.get("MATCH")
+    elif m.startswith("POINTS_"):                  # volley : points d'un set, ou de tout le match
+        m = m[7:]
+        s = scores.get("POINTS") if per == "MATCH" else scores.get(per)
     else:
         s = scores.get(per)
     if not s:

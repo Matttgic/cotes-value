@@ -52,10 +52,13 @@ def problemes(etapes: dict) -> dict[str, tuple[str, str]]:
         elif v.get("degrade"):
             erreurs = [str(e) for e in (v.get("erreurs") or [])]
             derive = [e for e in erreurs if e.startswith(DERIVE)]     # cotes/derive.py : toutes les sources
+            # Le détail est la première erreur non bénigne : du 20 au 26/11/2026, 163 cycles d'alerte Pinnacle
+            # affichaient « sport N matchups : HTTP 403 » (bénin à lui seul) et cachaient la vraie cause.
+            graves = [e for e in erreurs if not any(b in e for b in BENINS)]
             if derive:
                 out[nom] = ("alerte", derive[0][:80])
-            elif nom in SURVEILLEES_DEGRADE and erreurs and not all(any(b in e for b in BENINS) for e in erreurs):
-                out[nom] = ("alerte", erreurs[0][:80])
+            elif nom in SURVEILLEES_DEGRADE and graves:
+                out[nom] = ("alerte", graves[0][:80])
     return out
 
 
