@@ -1052,13 +1052,16 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     data, actuelles, paris, retenus = blocs["data"], blocs["actuelles"], blocs["paris"], blocs["retenus"]
     hors_plafond, blocs_mises = blocs["hors_plafond"], blocs["blocs_mises"]
     # Blocs lourds hors de la page (donnees.json, chargé juste après l'accueil) : la page ne garde que ce que l'accueil lit.
-    leger = {k: v for k, v in data.items() if k not in BLOCS_DIFFERES}
+    # Le catalogue des prises (plus de la moitié de la page) a son propre fichier, catalogue.json, demandé dès l'en-tête
+    # (préchargement) et lu après le premier affichage ; l'accueil montre ses chiffres « en chargement » d'ici là.
+    leger = {k: v for k, v in data.items() if k not in BLOCS_DIFFERES and k != "catalogue"}
     # Noms des règles du laboratoire (« Pinnacle 12 ») pour les recommandées de l'accueil, avant donnees.json.
     leger["regles_labo"] = [[r["regle"]["id"], r["regle"]["reference"]]
                             for r in (data.get("laboratoire") or {}).get("resultats") or []
                             if isinstance(r, dict) and isinstance(r.get("regle"), dict) and "id" in r["regle"]]
     donnees_json = json_public(leger)
     differes_json = json_public({k: data[k] for k in BLOCS_DIFFERES if k in data})
+    catalogue_json = json_public(data.get("catalogue") or {"champs": [], "lignes": []})   # même contrôle que le reste
     flux_alertes = notifications_mod.flux(actuelles, paris, retenus, instant, exclues=set(RETIREES))
     alertes_json = json_public(flux_alertes)
     ordres_json = json_public(ordres_mod.construire(flux_alertes, actuelles, instant))
@@ -1082,7 +1085,8 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     html = html.replace("__ACTUALISATION_JS__", (web / "actualisation.js").read_text(encoding="utf-8"))
     html = html.replace("__BOOSTS_JS__", (web / "boosts.js").read_text(encoding="utf-8"))
     # Empreinte du contenu complet : une mise à jour du code déclenche aussi le renouvellement.
-    version = hashlib.sha256((html.replace("__DONNEES__", donnees_json, 1) + differes_json).encode("utf-8")).hexdigest()
+    version = hashlib.sha256((html.replace("__DONNEES__", donnees_json, 1) + differes_json + catalogue_json)
+                             .encode("utf-8")).hexdigest()
     html = html.replace("__VERSION_SITE__", version)
     # Les données externes ne passent jamais dans les remplacements du gabarit.
     html = html.replace("__DONNEES__", donnees_json, 1)
@@ -1091,7 +1095,7 @@ def rendre_pages(blocs: dict, instant: datetime | None = None) -> dict:
     for ref in ("Uniques", "Toutes"):
         gain = sum(b["gains"] for k, b in data["kelly"]["bilan"].items() if k.endswith("|" + ref))
         vitrine = vitrine.replace(f"__GAIN_{ref.upper()}_KELLY__", montant_vitrine(gain))
-    return {"index.html": html, "vitrine.html": vitrine, "donnees.json": differes_json,
+    return {"index.html": html, "vitrine.html": vitrine, "donnees.json": differes_json, "catalogue.json": catalogue_json,
             "hors_plafond.json": json.dumps(archive_hors_plafond(hors_plafond), ensure_ascii=False),
             "version.json": json.dumps({"version": version}),
             "mises": {mode: json_public(bloc) for mode, bloc in blocs_mises.items()},
@@ -1124,6 +1128,8 @@ def ecrire_site(sortie: Path, pages: dict) -> Path:
         (sortie / "mises" / f"{mode}.json").write_text(texte, encoding="utf-8")
     if "donnees.json" in pages:                               # blocs différés (BLOCS_DIFFERES), lus par la page
         (sortie / "donnees.json").write_text(pages["donnees.json"], encoding="utf-8")
+    if "catalogue.json" in pages:                             # catalogue des prises, lu par la page (chargerCatalogue)
+        (sortie / "catalogue.json").write_text(pages["catalogue.json"], encoding="utf-8")
     for nom in ("sw.js", "notifications.json", "ordres.json", ".nojekyll"):
         (sortie / nom).write_text(pages[nom], encoding="utf-8")
     if "euria.json" in pages:                                 # lu par la page Euria (cotes/euria.py)
