@@ -12,8 +12,8 @@
 @font-face{font-family:"Familjen Grotesk";font-weight:400 700;font-display:swap;src:url("polices/FamiljenGrotesk-VariableFont_wght.woff2") format("woff2")}
 @font-face{font-family:"Geist Mono";font-weight:100 900;font-display:swap;src:url("polices/GeistMono-VariableFont_wght.woff2") format("woff2")}
 :root{
-  --papier:#ECE9E1; --papier2:#E3DFD5; --encre:#12120F; --gris:#77746B; --trait:#C9C4B8;
-  --signal:#F2541B;
+  --papier:#ECE9E1; --papier2:#E3DFD5; --encre:#12120F; --gris:#625F57; --trait:#C9C4B8;
+  --signal:#F2541B; --signal-t:#E04A12; /* gris 5,3:1 et signal des grands titres 3,4:1 sur papier (WCAG AA) */
   --serif:"Instrument Serif",Georgia,serif; --sans:"Familjen Grotesk",sans-serif; --mono:"Geist Mono",monospace;
   --marge:48px;
 }
@@ -51,7 +51,7 @@ a{color:inherit;text-decoration:none}
 .titre{margin-top:44px;align-items:end}
 h1{grid-column:1/10;white-space:nowrap;font-family:var(--serif);font-weight:400;font-size:184px;line-height:.86;letter-spacing:-.035em}
 h1 i{display:block;padding-left:1.04em}
-h1 i span{color:var(--signal)}
+h1 i span{color:var(--signal-t)}
 .chapeau{grid-column:10/13;padding-bottom:14px}
 .chapeau p{font-size:19px;line-height:1.38;letter-spacing:-.005em;max-width:380px}
 .chapeau .actions{display:flex;align-items:center;gap:26px;margin-top:28px}
@@ -65,7 +65,7 @@ h1 i span{color:var(--signal)}
 .cote .mono{display:block;margin-bottom:6px}
 .cote strong{font-family:var(--serif);font-weight:400;font-size:112px;line-height:.9;letter-spacing:-.03em;display:block}
 .cote small{display:block;font-size:13px;color:var(--gris);margin-top:8px}
-.cote.fr strong{color:var(--signal)}
+.cote.fr strong{color:var(--signal-t)}
 .cote.ecart{border-right:0;background:var(--encre);color:var(--papier);padding-top:12px;padding-bottom:14px}
 .cote.ecart .mono{color:#A9A59A}
 .cote.ecart small{color:#A9A59A}
@@ -84,7 +84,7 @@ section.bloc{border-top:1px solid var(--encre);padding-top:22px}
 .ent{display:flex;justify-content:space-between;align-items:baseline}
 .ent .num{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em}
 h2{font-family:var(--serif);font-weight:400;font-size:104px;line-height:.9;letter-spacing:-.03em}
-h2 i{color:var(--signal)}
+h2 i{color:var(--signal-t)}
 
 /* methode */
 .methode{padding-bottom:96px}
@@ -97,7 +97,7 @@ h2 i{color:var(--signal)}
 .eq strong{font-family:var(--serif);font-weight:400;font-size:132px;line-height:.85;letter-spacing:-.03em;display:block}
 .eq p{font-size:14.5px;line-height:1.42;margin-top:18px;max-width:250px}
 .op{display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:72px;color:var(--gris);padding-top:30px}
-.eq.res strong{color:var(--signal)}
+.eq.res strong{color:var(--signal-t)}
 .ligne{margin-top:72px;position:relative}
 .ligne .rail{position:absolute;left:0;right:0;top:9px;height:1px;background:var(--encre)}
 .etapes{display:grid;grid-template-columns:repeat(4,1fr);column-gap:24px;position:relative}
@@ -148,7 +148,7 @@ h2 i{color:var(--signal)}
 .fin{border-top:1px solid var(--encre);padding-top:22px;padding-bottom:40px}
 .fin h2{font-size:200px;line-height:.84;letter-spacing:-.045em;margin-top:64px}
 .fin h2 i{color:var(--encre);font-style:italic}
-.fin h2 i span{color:var(--signal)}
+.fin h2 i span{color:var(--signal-t)}
 .fin .bas{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;margin-top:56px;align-items:end}
 .fin .bas p{grid-column:1/6;font-size:17px;line-height:1.45;max-width:440px}
 .fin .bas .actions{grid-column:7/13;display:flex;justify-content:flex-end;align-items:center;gap:30px}
