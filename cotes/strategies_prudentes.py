@@ -92,6 +92,17 @@ def _signature_selection(p: dict) -> tuple:
     return (p.get("marche"), p.get("periode"), p.get("ligne"), p.get("joueur"), p.get("issue"))
 
 
+@memoriser
+def _observations(paris: list[dict]) -> tuple[list[dict], tuple, tuple]:
+    """Paris datés hors « Pinnacle brut », dans l'ordre de détection : (paris, heures, clés de match).
+
+    Ne dépend que de la liste : pendant une construction du site (cotes/memo.py), calculé une seule fois pour
+    toutes les stratégies qui dédoublonnent par match sur cette liste."""
+    lignes = sorted(((t, p) for p in paris if p.get("reference") != "Pinnacle brut"
+                     and (t := heure(p.get("detecte")))), key=itemgetter(0))
+    return [p for _, p in lignes], tuple(t for t, _ in lignes), tuple(tuple(_cles_match(p)) for _, p in lignes)
+
+
 def _cycles(paris: list[dict], eligibles: set[int], depart, unir):
     """Cycles de détection dans l'ordre, après le lancement : (jour à Paris, [(candidat, racine de son match)]).
 
@@ -100,8 +111,7 @@ def _cycles(paris: list[dict], eligibles: set[int], depart, unir):
     à chaque fusion de deux matchs, avant le rattachement. Les candidats d'un cycle (paris de ``eligibles``)
     sont rangés par edge décroissant puis identifiant.
     """
-    lignes = sorted(((t, p) for p in paris if p.get("reference") != "Pinnacle brut"
-                     and (t := heure(p.get("detecte")))), key=itemgetter(0))
+    objets, heures, cles_match = _observations(paris)
     parents = {}
 
     def racine(cle):
@@ -115,8 +125,8 @@ def _cycles(paris: list[dict], eligibles: set[int], depart, unir):
             cle = prochain
         return r
 
-    for t, groupe in groupby(lignes, key=itemgetter(0)):
-        batch = [(p, _cles_match(p)) for _, p in groupe]
+    for t, groupe in groupby(zip(heures, objets, cles_match), key=itemgetter(0)):
+        batch = [(p, cles) for _, p, cles in groupe]
         for _, cles in batch:
             root = racine(cles[0])
             for cle in cles[1:]:
