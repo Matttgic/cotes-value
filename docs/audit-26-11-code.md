@@ -52,5 +52,14 @@ Aucun autre type fréquent ne peut être réglé automatiquement sans risque.
 - **Reports.** 210 paris ont été reportés ; 105 réglés après au moins 24 h de report (−220,5 €), 14 après 48 h.
   Le code attend jusqu'à 7 jours (`resultats.REPORT_MAX_J`). Les règles de report des bookmakers (remboursement
   au-delà d'un délai ?) n'ont pas été relues : à vérifier avant tout changement.
-- **Hockey, 3 « vainqueur » remboursés à tort** (`docs/audit-bilans.md`) : toujours pas corrigés dans
-  `resultats_manuels.json`.
+  **Décision du 27/11 : rien de changé.** Recherche faite : aucune page officielle de Winamax, Betclic ou Unibet
+  trouvée ; seuls des sites tiers parlent d'un délai de 48 h (96 h au tennis chez Unibet), et se contredisent sur le
+  report annoncé avant le match. Changer le règlement sur ces seules sources fausserait le bilan autant que le garder.
+  À reprendre avec le règlement officiel de chaque bookmaker (rubrique « Règlement » de chaque site, homologué par
+  l'ANJ) : un délai par bookmaker dans `resultats.REPORT_MAX_J`, et les 14 paris réglés après 48 h à revoir.
+- **Hockey, 3 « vainqueur » remboursés à tort** (`docs/audit-bilans.md`) : paris d'octobre, déjà archivés
+  (`archives/paris-2026-10.json.gz`), effet ±0,08 point sur le ROI. **Décision du 27/11 : non corrigés.** Recherche
+  faite : Grizzlys Wolfsbourg – Krefeld Pinguine du 15/10 donné 2-1 aux tirs au but par une seule source (sportschau.de),
+  ce qui ferait perdre le pari sur Krefeld (`b603d0cd9c7293e8`, −10 €) ; Colorado Eagles – Abbotsford Canucks du
+  10/10 introuvable. Le règlement exige plusieurs sources : à corriger dans l'archive seulement si un second score
+  confirme.
