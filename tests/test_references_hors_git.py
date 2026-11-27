@@ -16,7 +16,7 @@ HIER = "2026-11-15"
 
 
 def _gz(texte: str) -> bytes:
-    return gzip.compress(texte.encode())
+    return gzip.compress(texte.encode(), mtime=0)    # octets identiques à chaque écriture (en-tête sans heure)
 
 
 def _lignes(contenu: bytes) -> list[str]:
