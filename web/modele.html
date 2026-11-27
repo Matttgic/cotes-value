@@ -175,7 +175,7 @@
       <p class="aide" id="bb-types-note"></p>
       <div id="bb-types"></div>
     </div>
-    <div id="bilan-props" role="tabpanel" aria-labelledby="bt-props" hidden>
+    <div id="bilan-props" role="tabpanel" aria-label="Props" hidden>
       <div class="page-tete"><div><h2>Props</h2><p class="sous-texte">Paris fictifs NBA/NHL, 10 €, jamais notifiés. Seuil d'écart contre la cote juste Pinnacle.</p></div></div>
       <div class="bu-kpis" id="props-kpis"></div>
       <p class="aide" id="props-note"></p>
@@ -506,7 +506,7 @@ document.getElementById("fraicheur")?.setAttribute("title", "Santé du système 
 let vueBilan = "uniques";
 function montrerVueBilan(v) {
   vueBilan = v;
-  document.querySelectorAll("[data-bilan]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.bilan===v)));
+  document.querySelectorAll("[data-bilan]").forEach(b => { b.setAttribute("aria-selected", String(b.dataset.bilan===v)); b.tabIndex = b.dataset.bilan===v ? 0 : -1; });
   document.getElementById("bilan-uniques").hidden = v !== "uniques";
   document.getElementById("o-strategies").hidden = v !== "strategies";
   document.getElementById("o-mes").hidden = v !== "mes";
@@ -553,6 +553,13 @@ document.querySelectorAll("[data-bilan]").forEach(b => b.onclick = () => bascule
   montrerVueBilan(b.dataset.bilan); history.replaceState(null, "", "#"+hash);
   ecrire("onglet", hash);
 }));
+// Clavier : flèches gauche/droite, Début et Fin passent d'un onglet du bilan à l'autre (motif ARIA « tabs »).
+document.querySelector(".bilan-onglets")?.addEventListener("keydown", ev => {
+  const t = [...document.querySelectorAll(".bilan-onglets [role=tab]")], i = t.indexOf(document.activeElement);
+  const j = {ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: t.length - 1}[ev.key];
+  if (i < 0 || j === undefined) return;
+  ev.preventDefault(); const c = t[(j + t.length) % t.length]; c.focus(); c.click();
+});
 document.querySelectorAll("[data-aller]").forEach(b => b.onclick = () => basculer(() => {ouvrir(b.dataset.aller);window.scrollTo(0,0);}));
 document.querySelectorAll("nav button[data-o]").forEach(b => b.onclick = () => basculer(() => {ouvrir(b.dataset.o);window.scrollTo(0,0);}));
 
@@ -653,7 +660,7 @@ function rendreBilan() {
       return `écart vs ${nom} ${x.n ? pct(x.moyenne) : "—"}` + (x.n ? ` (${x.n})` : "");
     }).join(" · ");
   document.getElementById("puces-ref").innerHTML = refs.map(r =>
-    `<button data-r="${r}" class="${r===refBilan?"actif":""}">${NOMS_REF[r] || r}</button>`).join("");
+    `<button type="button" data-r="${r}" aria-pressed="${r===refBilan}" class="${r===refBilan?"actif":""}">${NOMS_REF[r] || r}</button>`).join("");
   document.getElementById("bilan-quoi").textContent = QUOI[refBilan] || `Paris repérés par ${refBilan}.`;
   document.querySelectorAll("#puces-ref button").forEach(b => b.onclick = () => { refBilan = b.dataset.r; rendreBilan(); });
   const ligne = (titre, b) => !b ? `<tr><td>${titre}</td><td>0</td><td>—</td><td>—</td></tr>`
@@ -1011,7 +1018,7 @@ const carteParis = p => { const [etat,libelle] = etatLigne(p); return `<details 
 <span class="ligne-nom pari-match">${e(p.domicile)} – ${e(p.exterieur)}</span><span class="pari-selection">${e(p.pari)}</span><span class="pari-debut">Match ${horairePari(p)}</span></span>
 <span class="pari-milieu"><span class="pari-bookmaker">${e(p.bookmaker)}${heureEnvoi(p) ? " · "+heureEnvoi(p) : ""}</span>
 <span><b class="ligne-cote" aria-label="Cote ${cote(p.cote)}">${cote(p.cote)}</b> <span class="pari-ref" title="Cote ${e(p.reference)} sans marge">(${e(REF_COURTE[p.reference] ?? (p.reference||"")+" ")}${cote(p.cote_juste)})</span></span></span>
-<span class="pari-droite"><b class="ligne-valeur">${p.gain!=null ? eur(p.gain) : pct(p.ecart)}</b><span class="pari-etat">${libelle}${p.mise!=null ? " · mise "+Number(p.mise).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €" : ""}</span>${boutonBookmaker(p, true)}</span></summary><div class="ligne-corps"><article class="carte">
+<span class="pari-droite"><b class="ligne-valeur">${p.gain!=null ? eur(p.gain) : pct(p.ecart)}</b><span class="pari-etat">${libelle}${p.mise!=null ? " · mise "+Number(p.mise).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €" : ""}</span>${boutonBookmaker(p, true, true)}</span></summary><div class="ligne-corps"><article class="carte">
 <div class="l1"><span class="match">${e(p.domicile)} – ${e(p.exterieur)}</span>${horairePari(p)}</div>
 ${boutonBookmaker(p) ? `<div class="l1">${boutonBookmaker(p)}</div>` : ""}
 <div class="l1">${collectePari(p)}</div>
@@ -1324,7 +1331,7 @@ const dansSeg = s => x => (!s.tranche || x[9] === s.tranche) && (!s.bookmaker ||
 const aVenir = s => (D.paris_a_venir_segments || []).filter(x => new Date(x[8]) > Date.now()).filter(dansSeg(s));
 function rendreSegments() {
   document.getElementById("puces-seg").innerHTML = Object.entries(TRIS).map(([k, v]) =>
-    `<button data-t="${k}" class="${k===triSeg?"actif":""}">${v}</button>`).join("");
+    `<button type="button" data-t="${k}" aria-pressed="${k===triSeg}" class="${k===triSeg?"actif":""}">${v}</button>`).join("");
   document.querySelectorAll("#puces-seg button").forEach(b => b.onclick = () => { triSeg = b.dataset.t; rendreSegments(); });
   const L = (D.segments || []).filter(s => triSeg === "roi" ? s.roi > 0 : s.ecart_sigma > 0)
     .sort((a, b) => triSeg === "roi" ? b.roi - a.roi : b.ecart_sigma - a.ecart_sigma).slice(0, 40);
@@ -1418,7 +1425,7 @@ let ctlVue = nbc("non_conforme") ? "non_conforme" : "a_verifier";
 const num = x => x==null ? "—" : Number(x).toFixed(2).replace(".", ",");
 function rendreControle() {
   document.getElementById("ctl-puces").innerHTML = [...Object.entries(CTL), ["matchs","Matchs"]].map(([k,v]) =>
-    `<button data-v="${k}" class="${k===ctlVue?"actif":""}">${v}</button>`).join("");
+    `<button type="button" data-v="${k}" aria-pressed="${k===ctlVue}" class="${k===ctlVue?"actif":""}">${v}</button>`).join("");
   document.querySelectorAll("#ctl-puces button").forEach(b => b.onclick = () => { ctlVue = b.dataset.v; rendreControle(); });
   let html;
   if (ctlVue === "matchs") {

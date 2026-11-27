@@ -72,15 +72,15 @@ function carteChaleur(L) {
   const cases=sports.map(sp=>books.map(b=>statsBU(L.filter(p=>p.sport===sp && p.bookmaker===b))));
   const fond=s=>{
     if(s.n<20 || !Number.isFinite(s.roi)) return '';
-    const force=Math.round(12+Math.min(1,Math.abs(s.roi)/0.2)*48);
+    const force=Math.round(12+Math.min(1,Math.abs(s.roi)/0.2)*36);   // 48 % au plus : texte lisible (AA) dans les deux thèmes
     return ` style="background:color-mix(in srgb, var(${s.roi>=0?'--vert':'--rouge'}) ${force}%, transparent)"`;
   };
   zone.style.setProperty('--cv-colonnes',books.length);
-  zone.innerHTML=`<div class="cv-chaleur" role="table" aria-label="ROI par sport et bookmaker"><span class="cv-chaleur-coin" role="columnheader"></span>${
-    books.map(b=>`<span class="cv-chaleur-tete" role="columnheader">${e(String(b).slice(0,7))}</span>`).join('')}${
-    sports.map((sp,i)=>`<span class="cv-chaleur-sport" role="rowheader">${e(nomSport(sp))}</span>${cases[i].map((s,j)=>
+  zone.innerHTML=`<div class="cv-chaleur" role="table" aria-label="ROI par sport et bookmaker"><div class="cv-rangee" role="row"><span class="cv-chaleur-coin" role="columnheader"><span class="sr-only">Sport</span></span>${
+    books.map(b=>`<span class="cv-chaleur-tete" role="columnheader" title="${e(b)}">${e(String(b).slice(0,7))}</span>`).join('')}</div>${
+    sports.map((sp,i)=>`<div class="cv-rangee" role="row"><span class="cv-chaleur-sport" role="rowheader">${e(nomSport(sp))}</span>${cases[i].map((s,j)=>
       `<span class="cv-case${s.n<20?' cv-peu':''}" role="cell"${fond(s)} title="${e(nomSport(sp))} · ${e(books[j])} : ${s.n} paris${s.n?', ROI '+pct(s.roi)+', '+eurC(s.net):''}">${
-        s.n<20?'<small>'+(s.n || '·')+'</small>':`<b>${pct(s.roi)}</b><small>${s.n}</small>`}</span>`).join('')}`).join('')}</div>
+        s.n<20?'<small>'+(s.n || '·')+'</small>':`<b>${pct(s.roi)}</b><small>${s.n}</small>`}</span>`).join('')}</div>`).join('')}</div>
 <p class="aide">Couleur : ROI, plus foncé jusqu'à ±20 %. Grisé : moins de 20 paris, trop peu pour juger. Chiffre du bas : nombre de paris.</p>`;
 }
 
