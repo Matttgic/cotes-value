@@ -10,14 +10,21 @@ modifier sans toucher au mémo).
 Actif seulement dans ``memoriser_selections()`` (site_web.construire) : le cycle, les notifications et les tests
 appellent les sélecteurs sans cache. Une liste sans identifiants uniques, ou un argument non traduisible, est
 calculée directement.
+
+Une même liste revient des milliers de fois par construction : ses identifiants sont gardés pour les deux dernières
+listes vues, et réutilisés seulement si la liste contient encore les mêmes objets, aux mêmes identifiants.
 """
 from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import date, datetime
 from functools import wraps
+from operator import eq, is_, itemgetter
 
 _CACHE: dict | None = None
+_LISTES: list = []        # (liste, ses objets, identifiants calculés), la plus récente en tête
+_LISTES_GARDEES = 2
+_ID = itemgetter("id")
 
 
 class _NonMemorisable(Exception):
@@ -26,17 +33,42 @@ class _NonMemorisable(Exception):
 
 @contextmanager
 def memoriser_selections():
-    global _CACHE
+    global _CACHE, _LISTES
     precedent, _CACHE = _CACHE, {}
+    listes, _LISTES = _LISTES, []
     try:
         yield
     finally:
-        _CACHE = precedent
+        _CACHE, _LISTES = precedent, listes
 
 
 def _identifiants(paris) -> tuple[tuple, dict[int, str], dict[str, dict]]:
     if not isinstance(paris, list):
         raise _NonMemorisable
+    for i, (liste, objets, calcul) in enumerate(_LISTES):
+        if liste is paris:
+            del _LISTES[i]
+            if _inchangee(paris, objets, calcul[0]):
+                _LISTES.insert(0, (liste, objets, calcul))
+                return calcul
+            break
+    calcul = _calculer_identifiants(paris)
+    _LISTES.insert(0, (paris, tuple(paris), calcul))
+    del _LISTES[_LISTES_GARDEES:]
+    return calcul
+
+
+def _inchangee(paris: list, objets: tuple, pids: tuple) -> bool:
+    """Mêmes objets, dans le même ordre, et chacun garde son identifiant : le calcul serait le même."""
+    if len(paris) != len(objets) or not all(map(is_, paris, objets)):
+        return False
+    try:
+        return all(map(eq, map(_ID, paris), pids))
+    except (KeyError, TypeError):
+        return False
+
+
+def _calculer_identifiants(paris: list) -> tuple[tuple, dict[int, str], dict[str, dict]]:
     pids, vers_pid, vers_objet = [], {}, {}
     for p in paris:
         pid = p.get("id") if isinstance(p, dict) else None
@@ -69,6 +101,12 @@ def _cle(v, vers_pid):
 
 
 _IMMUABLES = (str, int, float, bool, type(None), datetime, date)
+_TYPES_IMMUABLES = frozenset(_IMMUABLES)
+
+
+def _immuable(t: tuple) -> bool:
+    """Tuple de valeurs immuables (types exacts, tuples imbriqués compris) : rendu tel quel, sans copie."""
+    return all(type(x) in _TYPES_IMMUABLES or (type(x) is tuple and _immuable(x)) for x in t)
 
 
 def _figer(r, vers_pid):
@@ -84,9 +122,12 @@ def _figer(r, vers_pid):
     if type(r) is dict:
         if r and all(type(k) is int for k in r):
             try:
-                return ("dict_ids", tuple((vers_pid[k], _figer(x, vers_pid)) for k, x in r.items()))
+                valeurs = tuple((vers_pid[k], _figer(x, vers_pid)) for k, x in r.items())
             except KeyError:
                 raise _NonMemorisable from None
+            if all(f[0] == "val" for _, f in valeurs):
+                return ("dict_ids_val", tuple((pid, f[1]) for pid, f in valeurs))
+            return ("dict_ids", valeurs)
         return ("dict", tuple((k, _figer(x, vers_pid)) for k, x in r.items()))
     if type(r) is list:
         if r and all(type(x) is dict for x in r):
@@ -96,6 +137,8 @@ def _figer(r, vers_pid):
                 raise _NonMemorisable from None
         return ("liste", tuple(_figer(x, vers_pid) for x in r))
     if type(r) is tuple:
+        if _immuable(r):
+            return ("val", r)
         return ("tuple", tuple(_figer(x, vers_pid) for x in r))
     if type(r) in _IMMUABLES:
         return ("val", r)
@@ -105,8 +148,12 @@ def _figer(r, vers_pid):
 def _rendre(f, vers_objet):
     """Forme figée -> résultat pour les objets de la liste reçue, dans des conteneurs neufs."""
     genre = f[0]
+    if genre == "val":
+        return f[1]
     if genre == "ids":
         return {id(vers_objet[pid]) for pid in f[1]}
+    if genre == "dict_ids_val":
+        return {id(vers_objet[pid]): x for pid, x in f[1]}
     if genre == "ens":
         return f[1](f[2])
     if genre == "dict_ids":
