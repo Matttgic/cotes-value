@@ -65,6 +65,21 @@ function nomsAvantLaboratoire() {
   for (const [id, v] of Object.entries(D.variantes || {})) if (v && v.nom) noms.set(id, v.nom);
   return noms;
 }
+// Zones de l'accueil tirées du catalogue des prises : « en chargement » tant qu'il manque (aria-busy, comme les onglets
+// qui attendent donnees.json), puis un message si la connexion l'a empêché. Vrai quand l'accueil doit s'arrêter là.
+function accueilEnAttente(attente, echec) {
+  const zones=['acc-values','acc-courbe','acc-derniers'];
+  for (const id of ['acc-kpis', ...zones]) document.getElementById(id)?.setAttribute('aria-busy', String(attente && !echec));
+  if (!attente) return false;
+  document.getElementById('acc-kpis').innerHTML=['Gain net','ROI','Réussite','En cours'].map(t=>
+    `<div class="acc-kpi"><p>${e(t)}</p><strong>${echec ? '—' : '…'}</strong><span>${echec ? 'indisponible' : 'chargement'}</span></div>`).join('');
+  document.getElementById('acc-titre').textContent='Cotes Value';
+  document.getElementById('une-chapo').textContent='';
+  document.getElementById('acc-values-n').textContent='';
+  const aide=`<p class="aide">${echec ? 'Paris indisponibles (connexion) : recharge la page.' : 'Chargement des paris…'}</p>`;
+  for (const id of zones) document.getElementById(id).innerHTML=aide;
+  return true;
+}
 function rendreAccueil() {
   const cible=document.getElementById('acc-kpis');if(!cible) return;
   const maintenant=new Date();
@@ -72,6 +87,26 @@ function rendreAccueil() {
   const heure=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit'}).format(maintenant).replace(':',' h ');
   document.getElementById('une-date').textContent=`${jour} · relevé de ${heure}`;
   const mise=nomMiseAccueil(miseMode);
+  const boosts=((D.boosts || {}).actuels || []).filter(b=>b.verdict==='jouer');
+  document.getElementById('acc-boosts-n').textContent=boosts.length ? String(boosts.length) : '';
+  document.getElementById('acc-boosts').innerHTML=boosts.length ? boosts.map(ligneAccueilBoost).join('')
+    : '<p class="aide">Aucun boost à jouer pour l\'instant.</p>';
+  // Winamax à part (cotes/site/construction.py, winamax_a_part) : values du dernier relevé, jamais des paris.
+  const winamax=(D.winamax_a_part || []).map(o=>({...o, statut:'en_cours'}));
+  document.getElementById('acc-winamax-n').textContent=winamax.length ? String(winamax.length) : '';
+  document.getElementById('acc-winamax').innerHTML=winamax.length ? winamax.map(ligneAccueilPari).join('')
+    : '<p class="aide">Aucune value Winamax au dernier relevé.</p>';
+  document.getElementById('acc-winamax-clv').innerHTML=texteSuiviWinamax(D.winamax_suivi);
+  // Recommandées (cotes/recommandations.py) : la liste de la semaine, avec leur preuve et leur résultat depuis l'entrée.
+  const noms=D.laboratoire && D.laboratoire.resultats ? new Map(lignesStrategies('futur').map(r=>[r.id, r.nomCourt || r.nom]))
+    : nomsAvantLaboratoire();
+  const recos=(D.recommandees && D.recommandees.actuelles) || [];
+  document.getElementById('acc-top5').innerHTML=recos.length ? recos.map((x,i)=>carteRecommandee(x,i,noms)).join('')
+    : '<p class="aide">Aucune stratégie ne bat encore la clôture de façon prouvée.</p>';
+  // Catalogue des prises encore en route (catalogue.json, web/modele.html › chargerCatalogue) : les chiffres tirés des
+  // paris attendent (aria-busy), sans rien noter pour la visite suivante (comparerChiffres) ; le reste est déjà là.
+  const attente=typeof catalogueEnAttente!=='undefined' && catalogueEnAttente;
+  if (accueilEnAttente(attente, attente && typeof catalogueEchec!=='undefined' && catalogueEchec)) return;
   // Premier chiffre : les cotes de 10 au plus. Au-delà, c'est de la loterie (quelques gains sur des centaines de
   // paris) qui masquait tout le reste.
   const unes=fiches.filter(p=>p.unique_bilan && p.gain!=null && !(p.cote>10));
@@ -95,22 +130,6 @@ function rendreAccueil() {
   document.getElementById('acc-values-n').textContent=jouer.length ? `${jouer.length} sur ${enCours.length} en cours` : '';
   document.getElementById('acc-values').innerHTML=jouer.length ? jouer.map(x=>ligneAccueilPari(x.p)).join('')
     : '<p class="aide">Aucun pari ne passe la règle du jour.</p>';
-  const boosts=((D.boosts || {}).actuels || []).filter(b=>b.verdict==='jouer');
-  document.getElementById('acc-boosts-n').textContent=boosts.length ? String(boosts.length) : '';
-  document.getElementById('acc-boosts').innerHTML=boosts.length ? boosts.map(ligneAccueilBoost).join('')
-    : '<p class="aide">Aucun boost à jouer pour l\'instant.</p>';
-  // Winamax à part (cotes/site/construction.py, winamax_a_part) : values du dernier relevé, jamais des paris.
-  const winamax=(D.winamax_a_part || []).map(o=>({...o, statut:'en_cours'}));
-  document.getElementById('acc-winamax-n').textContent=winamax.length ? String(winamax.length) : '';
-  document.getElementById('acc-winamax').innerHTML=winamax.length ? winamax.map(ligneAccueilPari).join('')
-    : '<p class="aide">Aucune value Winamax au dernier relevé.</p>';
-  document.getElementById('acc-winamax-clv').innerHTML=texteSuiviWinamax(D.winamax_suivi);
-  // Recommandées (cotes/recommandations.py) : la liste de la semaine, avec leur preuve et leur résultat depuis l'entrée.
-  const noms=D.laboratoire && D.laboratoire.resultats ? new Map(lignesStrategies('futur').map(r=>[r.id, r.nomCourt || r.nom]))
-    : nomsAvantLaboratoire();
-  const recos=(D.recommandees && D.recommandees.actuelles) || [];
-  document.getElementById('acc-top5').innerHTML=recos.length ? recos.map((x,i)=>carteRecommandee(x,i,noms)).join('')
-    : '<p class="aide">Aucune stratégie ne bat encore la clôture de façon prouvée.</p>';
   // Gain cumulé des paris uniques (même courbe que le Bilan, tracée en marches), avec la ligne témoin : gain attendu
   // cumulé et marge du hasard (variance cumulée de chaque pari, 5e colonne).
   const zoneCourbe=document.getElementById('acc-courbe');

@@ -13,9 +13,11 @@ def test_version_publiee_correspond_au_html_et_change_avec_les_donnees(tmp_path)
     assert re.fullmatch(r"[a-f0-9]{64}", version)
     assert f'version:"{version}"' in html
     assert "__ACTUALISATION_JS__" not in html
-    # empreinte de la page et des blocs différés (donnees.json) : un changement de l'un ou l'autre la renouvelle
+    # empreinte de la page, des blocs différés (donnees.json) et du catalogue (catalogue.json) : un changement de l'un
+    # d'eux la renouvelle
     differes = (sortie / "donnees.json").read_text(encoding="utf-8")
-    assert hashlib.sha256((html.replace(version, "__VERSION_SITE__") + differes).encode()).hexdigest() == version
+    catalogue = (sortie / "catalogue.json").read_text(encoding="utf-8")
+    assert hashlib.sha256((html.replace(version, "__VERSION_SITE__") + differes + catalogue).encode()).hexdigest() == version
     (tmp_path / "etat.json").write_text(json.dumps({"dernier_cycle": {"debut": "2026-10-16T08:00:00Z"}}))
     construire(tmp_path, sortie)
     assert json.loads((sortie / "version.json").read_text())["version"] != version

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotes Value</title>
+<link rel="preload" href="catalogue.json?v=__VERSION_SITE__" as="fetch" crossorigin>
 <script>try{const t=localStorage.getItem("cv-theme-v1");if(t==="jour"||t==="nuit")document.documentElement.dataset.theme=t==="jour"?"light":"dark";}catch{}</script>
 <style>__INTERFACE_CSS__</style>
 </head>
@@ -543,6 +544,7 @@ function ouvrir(o) {
   document.body?.classList?.toggle("chargement-differe", attente);
   document.getElementById("contenu")?.setAttribute("aria-busy", String(attente));   // lecteurs d'écran : page en chargement
   if (attente) { pageEnAttente = o; return; }
+  pageEnAttente = null;                    // revenu sur l'accueil avant les blocs différés : ne pas rouvrir l'onglet quitté
   if (page === "bilan") montrerVueBilan(vueBilan);
   if (page === "analyses") requestAnimationFrame(() => rendreAnalyses());
   if (page === "accueil") rendreAccueil();
@@ -867,11 +869,22 @@ document.getElementById("infos").innerHTML = [
 
 // --- Paris : fiches déjà regroupées (un même pari pris par plusieurs simulations = une seule fiche)
 const recentes = new Map((D.paris || []).map(p => [p.id,p]));   // D.paris : bloc différé, complété au chargement
-const fiches = D.catalogue ? D.catalogue.lignes.map(ligne => {
-  const p = Object.fromEntries(D.catalogue.champs.map((cle,i) => [cle,ligne[i]]));
-  for (const cle of Object.keys(D.strategies_badges || {})) p[cle] = p.strategies.includes(cle);
-  return {...p, sims:[p.simulation], trace:recentes.get(p.id)?.trace || []};
-}) : (D.paris || []);
+// Catalogue des prises : fichier à part (catalogue.json), lu après le premier affichage (chargerCatalogue) ; un catalogue
+// embarqué dans D (tests) est lu tout de suite. Le tableau est rempli sur place : les vues gardent la même référence.
+// Tant qu'il manque, l'accueil montre ses chiffres « en chargement ». « var » : absent des tests découpés.
+const fiches = D.catalogue ? [] : (D.paris || []);
+var catalogueEnAttente = !D.catalogue, catalogueEchec = false;
+function remplirFiches(catalogue) {
+  const lignes = catalogue.lignes.map(ligne => {
+    const p = Object.fromEntries(catalogue.champs.map((cle,i) => [cle,ligne[i]]));
+    for (const cle of Object.keys(D.strategies_badges || {})) p[cle] = p.strategies.includes(cle);
+    return {...p, sims:[p.simulation], trace:recentes.get(p.id)?.trace || []};
+  });
+  fiches.length = 0;
+  for (const f of lignes) { f.mise_fixe = f.mise; f.gain_fixe = f.gain; fiches.push(f); }
+  catalogueEnAttente = false;
+}
+if (D.catalogue) remplirFiches(D.catalogue);
 // Lignes de navigation du laboratoire (bloc différé) : fusionnées avec les fiches par fusionnerNavigation().
 if (document.getElementById("nb-paris")) document.getElementById("nb-paris").textContent = fiches.length || "";
 var CLES_MISE = ["bilan", "bilan_tranches", "courbes", "segments", "paris_segments", "filtres", "laboratoire"];
@@ -2159,6 +2172,35 @@ function choisirBankroll(valeur) {
 noteMise();
 if (miseMode !== "fixe" || BANKROLL !== BANKROLL_BASE) rendreTout();     // les premiers rendus étaient en mise fixe
 initialiserJournal();
+// Catalogue des prises (catalogue.json, cotes/site/construction.py › rendre_pages) : hors de la page pour alléger le premier
+// chargement sur téléphone (audit design du 26/11/2026). Même modèle que mises/<mode>.json : adresse versionnée (préchargée
+// dans l'en-tête), délai, échec annoncé. À l'arrivée, la mise est réappliquée et l'accueil refait avec ses vrais chiffres.
+async function chargerCatalogue() {
+  if (!catalogueEnAttente) return true;
+  const url = new URL("./catalogue.json", location.href);
+  url.searchParams.set("v", "__VERSION_SITE__");
+  let catalogue = null;
+  for (let essai = 0; essai < 3 && !catalogue; essai++) {
+    try {
+      const r = await fetch(url, {signal: AbortSignal.timeout(60000)});
+      if (r.ok) catalogue = await r.json();
+    } catch {}
+  }
+  if (!Array.isArray(catalogue?.champs) || !Array.isArray(catalogue?.lignes)) {
+    catalogueEchec = true;
+    const z = document.getElementById("hors-ligne");
+    if (z) { z.hidden = false; z.textContent = "Paris indisponibles (connexion) : les chiffres de l'accueil manquent. Recharge la page."; }
+    if (pageActive === "accueil") rendreAccueil();
+    return false;
+  }
+  remplirFiches(catalogue);
+  appliquerMise(miseMode);
+  rendreJournal(journalMessageDepart);            // gain réel du journal : relu sur les fiches arrivées
+  pagesARendre.add("accueil");
+  if (pageActive === "accueil") rendrePage("accueil");
+  return true;
+}
+var CATALOGUE_PRET = chargerCatalogue();
 // Blocs différés (donnees.json, BLOCS_DIFFERES de cotes/site/construction.py) : chargés juste après l'accueil, puis
 // la mise est réappliquée, le laboratoire fusionné et l'onglet demandé construit. Sans réseau : un message.
 async function chargerDifferes() {
@@ -2174,6 +2216,7 @@ async function chargerDifferes() {
     if (z) { z.hidden = false; z.textContent = "Données détaillées indisponibles (connexion) : seul l'accueil est à jour. Recharge la page."; }
     return;
   }
+  if (!await CATALOGUE_PRET) return;           // sans les fiches, les autres onglets seraient faux : message déjà affiché
   for (const k of CLES_MISE) if (k in reste) D_FIXE[k] = reste[k];
   Object.assign(D, reste);
   for (const p of D.paris || []) recentes.set(p.id, p);

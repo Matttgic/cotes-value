@@ -69,7 +69,11 @@ def test_site_echappe_donnees_sans_perdre_match_ou_pari(tmp_path):
     assert f'<script>{THEME_SCRIPT}</script>' in html.split('</head>')[0]
     assert html.index('localStorage.getItem("cv-theme-v1")') < html.index('const D = ')
     assert p['pari'] not in html
-    assert '\\u003c!--\\u003cscript\\u003e' in html
+    # le pari est publié dans le catalogue des prises (catalogue.json, hors de la page), échappé de la même façon
+    catalogue = (tmp_path/'site'/'catalogue.json').read_text()
+    assert p['pari'] not in catalogue
+    assert '\\u003c!--\\u003cscript\\u003e' in catalogue
+    assert json.loads(catalogue)['lignes'][0][json.loads(catalogue)['champs'].index('pari')] == p['pari']
 
 
 def test_configuration_locale_ignoree_sans_mauvaises_variables():
