@@ -72,3 +72,11 @@ def test_memo_valeurs_immuables_et_conteneurs_neufs():
         premier[id(paris[0])].append("modifié par l'appelant")
         assert listes(paris) == listes.__wrapped__(paris)
         assert listes(copies) == {id(c): ["liste", c["x"]] for c in copies}
+
+
+def test_quantile_student_en_cache_meme_valeur():
+    from cotes import decision
+    decision.quantile_student.cache_clear()
+    a = decision.quantile_student(30)
+    assert decision.quantile_student(30) == a and decision.quantile_student.cache_info().hits == 1
+    assert abs(a - 2.042) < 1e-3                                   # t(0,975 ; 30) tabulé
