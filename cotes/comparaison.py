@@ -434,7 +434,7 @@ def libelle_pari(l: dict) -> str:
     dom, ext = l["domicile"], l["exterieur"]
     eq = {"DOM": dom, "EXT": ext, "NUL": "Match nul"}
     unite = ""
-    for p, u in (("CORNERS_", " corners"), ("JEUX_", " jeux"), ("SETS_", " sets")):
+    for p, u in (("CORNERS_", " corners"), ("JEUX_", " jeux"), ("SETS_", " sets"), ("POINTS_", " points")):
         if m.startswith(p):
             m, unite = m[len(p):], u
     if m in ("RESULTAT_1N2", "VAINQUEUR", "DRAW_NO_BET"):
