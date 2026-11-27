@@ -117,7 +117,7 @@ def _cycles(paris: list[dict], eligibles: set[int], depart, unir):
 
     for t, groupe in groupby(lignes, key=itemgetter(0)):
         batch = [(p, _cles_match(p)) for _, p in groupe]
-        for p, cles in batch:
+        for _, cles in batch:
             root = racine(cles[0])
             for cle in cles[1:]:
                 autre = racine(cle)

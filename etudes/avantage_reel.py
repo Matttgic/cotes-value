@@ -33,7 +33,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cotes import pauses, reglement, simulation, stockage  # noqa: E402
-from cotes.convergence import CONVERGENCE, STRATEGIES, cle_selection, paris_convergence  # noqa: E402
+from cotes.convergence import CONVERGENCE, STRATEGIES, paris_convergence  # noqa: E402
 from cotes.evenements import identites  # noqa: E402
 from cotes.laboratoire import DEBUT_SUIVI, REGLES as REGLES_LABO, selectionner  # noqa: E402
 from cotes.protocole import clv_pinnacle  # noqa: E402
